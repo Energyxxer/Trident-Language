@@ -1,0 +1,11 @@
+GUI Themes:
+-Trident Light
+-Trident Dark
+-Electron Dark
+
+Syntax Themes:
+-JSON Syntax Light
+-JSON Syntax Dark
+-Properties Syntax Dark
+-Properties Syntax Light
+-MCFunction Syntax Dark

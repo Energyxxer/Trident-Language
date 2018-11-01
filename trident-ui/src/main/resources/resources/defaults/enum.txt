@@ -1,0 +1,8 @@
+package $PACKAGE$;
+
+/**
+* Created by $USER$ on $DATE$/$MONTH$/$YEAR$.
+*/
+public enum $NAME$ {
+$INDENT$$END$
+}

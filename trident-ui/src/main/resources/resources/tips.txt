@@ -1,0 +1,7 @@
+Lines can be moved up and down with Alt+Up and Alt+Down
+You can use Ctrl+W to close the active tab.
+Themes can be reloaded using Ctrl+T
+You can create multiple carets using Alt+Shift+Click
+Hold Ctrl in an image viewer to show a crosshair
+Keep an eye on the status bar while in an image viewer to see UV coordinates
+Double-Click the Status Bar to open the Tool Board
