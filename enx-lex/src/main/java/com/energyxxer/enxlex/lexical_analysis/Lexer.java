@@ -16,24 +16,24 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * For tokenizing any file by rules given by Scanner Profiles
+ * For tokenizing any file by rules given by Lexer Profiles
  */
-public class Scanner {
+public class Lexer {
 	
 	private TokenStream stream;
 
 	private ArrayList<Notice> notices = new ArrayList<>();
 	
-	/*public Scanner(File directory, TokenStream stream) {
+	/*public Lexer(File directory, TokenStream stream) {
 		this.stream = stream;
 		parse(directory);
 	}*/
 
-	public Scanner(TokenStream stream) {
+	public Lexer(TokenStream stream) {
 		this.stream = stream;
 	}
 
-	public Scanner(File file, String str, TokenStream stream, ScannerProfile profile) {
+	public Lexer(File file, String str, TokenStream stream, ScannerProfile profile) {
 		this.stream = stream;
 		if(profile != null) tokenize(file, str, profile);
 	}

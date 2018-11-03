@@ -7,6 +7,7 @@ import com.energyxxer.trident.ui.Tab;
 import com.energyxxer.trident.ui.styledcomponents.StyledMenuItem;
 import com.energyxxer.trident.ui.styledcomponents.StyledPopupMenu;
 import com.energyxxer.trident.ui.theme.Theme;
+import com.energyxxer.trident.util.ImageUtil;
 import com.energyxxer.util.StringUtil;
 
 import javax.imageio.ImageIO;
@@ -38,7 +39,11 @@ public class TabItem extends TabListElement {
     }
 
     void updateIcon() {
-        if(associatedTab.path.endsWith(".png")) {
+        this.icon = associatedTab.token.getIcon();
+        if(this.icon != null) {
+            this.icon = ImageUtil.fitToSize(this.icon, 16, 16);
+        }
+        /*if(associatedTab.path.endsWith(".png")) {
             try {
                 BufferedImage img = ImageIO.read(new File(associatedTab.path));
                 Dimension size = new Dimension(img.getWidth(), img.getHeight());
@@ -63,7 +68,7 @@ public class TabItem extends TabListElement {
             this.icon = Commons.getIcon("entity").getScaledInstance(16, 16,java.awt.Image.SCALE_SMOOTH);
         } else {
             this.icon = Commons.getIcon("file").getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH);
-        }
+        }*/
     }
 
     @Override
@@ -157,7 +162,7 @@ public class TabItem extends TabListElement {
 
     @Override
     public String getToolTipText() {
-        return associatedTab.path;
+        return associatedTab.token.getHint();
     }
 
     @Override

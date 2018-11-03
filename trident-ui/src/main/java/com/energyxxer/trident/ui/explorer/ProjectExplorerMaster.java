@@ -6,7 +6,10 @@ import com.energyxxer.trident.global.Preferences;
 import com.energyxxer.trident.global.temp.projects.ProjectManager;
 import com.energyxxer.trident.ui.explorer.base.ExplorerFlag;
 import com.energyxxer.trident.ui.explorer.base.ExplorerMaster;
+import com.energyxxer.trident.ui.explorer.base.StandardExplorerItem;
 import com.energyxxer.trident.ui.explorer.base.elements.ExplorerSeparator;
+import com.energyxxer.trident.ui.modules.ModuleToken;
+import com.energyxxer.trident.ui.modules.WorkspaceRootModuleToken;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
 import com.energyxxer.util.logger.Debug;
 
@@ -21,7 +24,7 @@ import java.util.regex.Matcher;
  * Created by User on 5/16/2017.
  */
 public class ProjectExplorerMaster extends ExplorerMaster {
-    private File root;
+    private ArrayList<ModuleToken> tokenSources = new ArrayList<>();
 
     private ThemeListenerManager tlm = new ThemeListenerManager();
 
@@ -30,7 +33,6 @@ public class ProjectExplorerMaster extends ExplorerMaster {
             SHOW_PROJECT_FILES = new ExplorerFlag("Show Project Files");
 
     public ProjectExplorerMaster() {
-        updateRoot();
         tlm.addThemeChangeListener(t -> {
             colors.put("background",t.getColor(Color.WHITE, "Explorer.background"));
             colors.put("item.background",t.getColor(new Color(0,0,0,0), "Explorer.item.background"));
@@ -57,11 +59,9 @@ public class ProjectExplorerMaster extends ExplorerMaster {
         explorerFlags.put(SHOW_PROJECT_FILES, Preferences.get("explorer.show_project_files","false").equals("true"));
         explorerFlags.put(ExplorerFlag.DEBUG_WIDTH, Preferences.get("explorer.debug_width","false").equals("true"));
 
-        refresh();
-    }
+        this.tokenSources.add(new WorkspaceRootModuleToken());
 
-    private void updateRoot() {
-        this.root = new File(Preferences.get("workspace_dir", Preferences.DEFAULT_WORKSPACE_PATH));
+        refresh();
     }
 
     @Override
@@ -69,18 +69,23 @@ public class ProjectExplorerMaster extends ExplorerMaster {
         ProjectManager.setWorkspaceDir(Preferences.get("workspace_dir", Preferences.DEFAULT_WORKSPACE_PATH));
         ProjectManager.loadWorkspace();
 
-        updateRoot();
-
         clearSelected();
         refresh(new ArrayList<>(this.getExpandedElements()));
     }
 
-    private void refresh(ArrayList<String> toOpen) {
+    private void refresh(ArrayList<ModuleToken> toOpen) {
         children.clear();
         flatList.clear();
         this.getExpandedElements().clear();
 
-        File[] subfiles = root.listFiles();
+        for(ModuleToken source : tokenSources) {
+            for(ModuleToken token : source.getSubTokens()) {
+                this.children.add(new StandardExplorerItem(token, this, toOpen));
+            }
+            this.children.add(new ExplorerSeparator(this));
+        }
+
+        /*File[] subfiles = root.listFiles();
         if(subfiles == null) return;
 
         ArrayList<File> subfiles1 = new ArrayList<>();
@@ -112,7 +117,7 @@ public class ProjectExplorerMaster extends ExplorerMaster {
             for(File f : minecraftFiles) {
                 this.children.add(new ProjectExplorerItem(this, f, toOpen));
             }
-        }
+        }*/
 
         repaint();
     }
@@ -125,9 +130,9 @@ public class ProjectExplorerMaster extends ExplorerMaster {
 
     public void saveExplorerTree() {
         StringBuilder sb = new StringBuilder();
-        Collection<String> expandedElements = this.getExpandedElements();
-        for(String elem : expandedElements) {
-            sb.append(elem);
+        Collection<ModuleToken> expandedElements = this.getExpandedElements();
+        for(ModuleToken elem : expandedElements) {
+            sb.append(elem.getIdentifier());
             sb.append(File.pathSeparator);
         }
         Debug.log("Saving: " + sb);
@@ -137,6 +142,6 @@ public class ProjectExplorerMaster extends ExplorerMaster {
     public void openExplorerTree() {
         String openTree = Preferences.get("open_tree",null);
         Debug.log("Opening: " + openTree);
-        refresh(new ArrayList<>(Arrays.asList(openTree.split(Matcher.quoteReplacement(File.pathSeparator)))));
+        //refresh(new ArrayList<>(Arrays.asList(openTree.split(Matcher.quoteReplacement(File.pathSeparator)))));
     }
 }

@@ -4,15 +4,17 @@ import com.energyxxer.trident.global.temp.projects.Project;
 import com.energyxxer.trident.global.temp.projects.ProjectManager;
 import com.energyxxer.trident.main.window.TridentWindow;
 import com.energyxxer.trident.ui.Tab;
+import com.energyxxer.trident.ui.modules.FileModuleToken;
+import com.energyxxer.trident.ui.modules.ModuleToken;
 import com.energyxxer.trident.ui.theme.change.ThemeChangeListener;
 import com.energyxxer.util.ImageManager;
 import com.energyxxer.util.logger.Debug;
-import com.energyxxer.util.out.Console;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Commons {
@@ -64,12 +66,16 @@ public class Commons {
 
         Tab selectedTab = TabManager.getSelectedTab();
 
-        List<String> selectedFiles = TridentWindow.projectExplorer.getSelectedFiles();
+        List<ModuleToken> selectedTokens = TridentWindow.projectExplorer.getSelectedTokens();
+        ArrayList<FileModuleToken> selectedFiles = new ArrayList<>();
+        for(ModuleToken token : selectedTokens) {
+            if(token instanceof FileModuleToken) selectedFiles.add((FileModuleToken) token);
+        }
 
-        if(selectedTab != null && selectedTab.getLinkedProject() != null) {
+        /*if(selectedTab != null && selectedTab.getLinkedProject() != null) {
             selected = selectedTab.getLinkedProject();
-        } else if(selectedFiles.size() > 0) {
-            selected = ProjectManager.getAssociatedProject(new File(selectedFiles.get(0)));
+        } else */if(selectedFiles.size() > 0) {
+            selected = ProjectManager.getAssociatedProject(selectedFiles.get(0).getFile());
         }
         return selected;
     }

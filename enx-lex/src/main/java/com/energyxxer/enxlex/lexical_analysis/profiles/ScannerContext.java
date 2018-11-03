@@ -6,7 +6,7 @@ package com.energyxxer.enxlex.lexical_analysis.profiles;
 public interface ScannerContext {
     /**
      * Analyzes the given substring, starting at the
-     * current position of the Scanner, and returns information about the analysis.
+     * current position of the Lexer, and returns information about the analysis.
      *
      * @param str The substring to analyze.
      *

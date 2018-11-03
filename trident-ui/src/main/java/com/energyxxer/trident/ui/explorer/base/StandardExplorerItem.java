@@ -1,52 +1,84 @@
-package com.energyxxer.trident.ui.explorer;
+package com.energyxxer.trident.ui.explorer.base;
 
-import com.energyxxer.trident.global.Commons;
-import com.energyxxer.trident.global.temp.projects.ProjectManager;
-import com.energyxxer.trident.ui.explorer.base.ExplorerFlag;
-import com.energyxxer.trident.ui.explorer.base.ExplorerMaster;
+import com.energyxxer.trident.global.TabManager;
 import com.energyxxer.trident.ui.explorer.base.elements.ExplorerElement;
-import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.trident.ui.modules.FileModuleToken;
 import com.energyxxer.trident.ui.modules.ModuleToken;
+import com.energyxxer.trident.util.ImageUtil;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.List;
+import java.util.ArrayList;
 
-/**
- * Created by User on 5/16/2017.
- */
-public class NoticeGroupElement extends ExplorerElement {
-    private String label;
-    private List<Notice> notices;
+public class StandardExplorerItem extends ExplorerElement {
+    private ExplorerElement parent = null;
 
-    private int x;
+    private ModuleToken token = null;
+    private int indentation = 0;
+
+    private boolean expanded = false;
 
     private Image icon = null;
-    public int indentation = 0;
 
-    public NoticeGroupElement(ExplorerMaster master, String label, List<Notice> notices) {
-        super(master);
-        this.label = label;
-        this.notices = notices;
+    private int x = 0;
 
-        if(notices.size() > 0 && notices.get(0).getFilePath() != null) {
-            String iconName = ProjectManager.getIconFor(new File(notices.get(0).getFilePath()));
-            if (iconName == null) {
-                iconName = "file";
-            }
-            this.icon = Commons.getIcon(iconName).getScaledInstance(16, 16, Image.SCALE_SMOOTH);
-        }
-
-        this.x = master.getInitialIndent() + (indentation * master.getIndentPerLevel());
+    public StandardExplorerItem(ModuleToken token, StandardExplorerItem parent, ArrayList<ModuleToken> toOpen) {
+        this(parent, parent.getMaster(), token, toOpen);
     }
 
-    @Override
+    public StandardExplorerItem(ModuleToken token, ExplorerMaster master, ArrayList<ModuleToken> toOpen) {
+        this(null, master, token, toOpen);
+    }
+
+    private StandardExplorerItem(StandardExplorerItem parent, ExplorerMaster master, ModuleToken token, ArrayList<ModuleToken> toOpen) {
+        super(master);
+        this.parent = parent;
+        this.token = token;
+
+        if(toOpen.contains(this.token)) {
+            expand(toOpen);
+        }
+
+        this.icon = token.getIcon();
+        if(this.icon != null) this.icon = ImageUtil.fitToSize(this.icon, 16, 16);
+
+        if(parent != null) {
+            this.indentation = parent.indentation + 1;
+            this.x = indentation * master.getIndentPerLevel() + master.getInitialIndent();
+        }
+    }
+
+    private void expand(ArrayList<ModuleToken> toOpen) {
+        for(ModuleToken subToken : token.getSubTokens()) {
+            this.children.add(new StandardExplorerItem(subToken, this, toOpen));
+        }
+        expanded = true;
+        master.getExpandedElements().add(this.token);
+        master.repaint();
+    }
+
+    private void collapse() {
+        this.propagateCollapse();
+        this.children.clear();
+        expanded = false;
+        master.repaint();
+    }
+
+    private void propagateCollapse() {
+        master.getExpandedElements().remove(this.token);
+        for(ExplorerElement element : children) {
+            if(element instanceof StandardExplorerItem) ((StandardExplorerItem) element).propagateCollapse();
+        }
+    }
+
     public void render(Graphics g) {
+        g.setFont(master.getFont());
         int y = master.getOffsetY();
         master.getFlatList().add(this);
 
-        int x = master.getInitialIndent();
+        int x = (indentation * master.getIndentPerLevel()) + master.getInitialIndent();
 
         g.setColor((this.rollover || this.selected) ? master.getColorMap().get("item.rollover.background") : master.getColorMap().get("item.background"));
         g.fillRect(0, master.getOffsetY(), master.getWidth(), master.getRowHeight());
@@ -78,7 +110,7 @@ public class NoticeGroupElement extends ExplorerElement {
         }
 
         //Expand/Collapse button
-        {
+        if(token.isExpandable()){
             int margin = ((master.getRowHeight() - 16) / 2);
             if(expanded) {
                 g.drawImage(master.getAssetMap().get("collapse"),x,y + margin,16, 16,new Color(0,0,0,0),null);
@@ -89,9 +121,9 @@ public class NoticeGroupElement extends ExplorerElement {
         x += 23;
 
         //File Icon
-        {
+        if(icon != null) {
             int margin = ((master.getRowHeight() - 16) / 2);
-            g.drawImage(this.icon,x,y + margin,16, 16,new Color(0,0,0,0),null);
+            g.drawImage(this.icon,x + 8 - icon.getWidth(null)/2,y + margin + 8 - icon.getHeight(null)/2, null);
         }
         x += 25;
 
@@ -104,15 +136,18 @@ public class NoticeGroupElement extends ExplorerElement {
         } else {
             g.setColor(master.getColorMap().get("item.foreground"));
         }
-
-        Font originalFont = g.getFont();
-
-        g.setFont(g.getFont().deriveFont(Font.BOLD));
-
         FontMetrics metrics = g.getFontMetrics(g.getFont());
 
-        g.drawString(label, x, master.getOffsetY() + metrics.getAscent() + ((master.getRowHeight() - metrics.getHeight())/2));
-        x += metrics.stringWidth(label);
+        Graphics2D g2d = (Graphics2D) g;
+        Composite oldComposite = g2d.getComposite();
+        /*if(translucent) {
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+        }*/
+
+        g.drawString(token.getTitle(), x, master.getOffsetY() + metrics.getAscent() + ((master.getRowHeight() - metrics.getHeight())/2));
+        x += metrics.stringWidth(token.getTitle());
+
+        g2d.setComposite(oldComposite);
 
         if(master.getFlag(ExplorerFlag.DEBUG_WIDTH)) {
             g.setColor(Color.YELLOW);
@@ -121,8 +156,6 @@ public class NoticeGroupElement extends ExplorerElement {
             g.fillRect(x-2, master.getOffsetY(), 2, master.getRowHeight());
         }
 
-        g.setFont(originalFont);
-
         master.setOffsetY(master.getOffsetY() + master.getRowHeight());
         master.setContentWidth(Math.max(master.getContentWidth(), x));
         for(ExplorerElement i : children) {
@@ -130,34 +163,14 @@ public class NoticeGroupElement extends ExplorerElement {
         }
     }
 
-    private void expand() {
-        if(expanded) return;
-        for(Notice n : notices) {
-            children.add(new NoticeItem(this, n));
+    private void open() {
+        this.token.onInteract();
+        if(token.isExpandable()) {
+            if(expanded) collapse();
+            else expand(new ArrayList<>());
+        } else {
+            TabManager.openTab(token);
         }
-        expanded = true;
-
-        ///master.getExpandedElements().add(this.label);
-        master.repaint();
-    }
-
-    private void collapse() {
-        this.propagateCollapse();
-        this.children.clear();
-        expanded = false;
-        master.repaint();
-    }
-
-    private void propagateCollapse() {
-        master.getExpandedElements().remove(this.label);
-        for(ExplorerElement element : children) {
-            if(element instanceof NoticeGroupElement) ((NoticeGroupElement) element).propagateCollapse();
-        }
-    }
-
-    @Override
-    public ModuleToken getToken() {
-        return null;
     }
 
     @Override
@@ -168,30 +181,35 @@ public class NoticeGroupElement extends ExplorerElement {
     @Override
     public void mouseClicked(MouseEvent e) {
         if(e.getButton() == MouseEvent.BUTTON1 && !e.isControlDown() && e.getClickCount() % 2 == 0 && (e.getX() < x || e.getX() > x + master.getRowHeight())) {
-            if(expanded) collapse();
-            else expand();
+            this.open();
         }
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
         if(e.getButton() == MouseEvent.BUTTON1) {
-            if(e.getX() >= x && e.getX() <= x + 20) {
+            //x = indentation * master.getIndentPerLevel() + master.getInitialIndent();
+            if(token.isExpandable() && e.getX() >= x && e.getX() <= x + 20) {
                 if(expanded) collapse();
-                else expand();
+                else expand(new ArrayList<>());
             } else {
                 master.setSelected(this, e);
             }
-        } else if(e.getButton() == MouseEvent.BUTTON3) {
-            /*if(!this.selected) master.setSelected(this, new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), 0, e.getX(), e.getY(), e.getClickCount(), e.isPopupTrigger(), MouseEvent.BUTTON1));
-            StyledPopupMenu menu = this.generatePopup();
-            menu.show(e.getComponent(), e.getX(), e.getY());*/
         }
+        confirmActivationMenu(e);
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        confirmActivationMenu(e);
+    }
 
+    private void confirmActivationMenu(MouseEvent e) {
+        if(e.isPopupTrigger()) {
+            if(!this.selected) master.setSelected(this, new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), 0, e.getX(), e.getY(), e.getClickCount(), e.isPopupTrigger(), MouseEvent.BUTTON1));
+            JPopupMenu menu = token.generateMenu();
+            if(menu != null) menu.show(e.getComponent(), e.getX(), e.getY());
+        }
     }
 
     @Override
@@ -202,5 +220,10 @@ public class NoticeGroupElement extends ExplorerElement {
     @Override
     public void mouseExited(MouseEvent e) {
 
+    }
+
+    @Override
+    public ModuleToken getToken() {
+        return token;
     }
 }

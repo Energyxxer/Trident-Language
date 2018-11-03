@@ -1,6 +1,5 @@
 package com.energyxxer.trident.ui.audio;
 
-import com.energyxxer.trident.ui.Tab;
 import com.energyxxer.trident.ui.display.DisplayModule;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.media.Media;
@@ -11,16 +10,16 @@ import java.io.File;
 
 public class AudioPlayer extends JPanel implements DisplayModule {
 
-    private Tab tab;
+    private File file;
 
     private MediaPlayer player;
 
-    public AudioPlayer(Tab tab) {
-        this.tab = tab;
+    public AudioPlayer(File file) {
+        this.file = file;
 
         new JFXPanel();
 
-        Media m = new Media(new File(tab.path).toURI().toString());
+        Media m = new Media(file.toURI().toString());
         player = new MediaPlayer(m);
         player.play();
 

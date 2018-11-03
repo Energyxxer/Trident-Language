@@ -7,6 +7,7 @@ import com.energyxxer.trident.global.Preferences;
 import com.energyxxer.trident.global.TabManager;
 import com.energyxxer.trident.global.temp.projects.ProjectManager;
 import com.energyxxer.trident.main.window.TridentWindow;
+import com.energyxxer.trident.ui.modules.FileModuleToken;
 import com.energyxxer.trident.ui.styledcomponents.StyledButton;
 import com.energyxxer.trident.ui.styledcomponents.StyledDropdownMenu;
 import com.energyxxer.trident.ui.styledcomponents.StyledLabel;
@@ -241,7 +242,7 @@ public class UnitDialog {
                 return;
             }
 
-            if(newFile.exists()) TabManager.openTab(path,pos);
+            if(newFile.exists()) TabManager.openTab(new FileModuleToken(newFile),pos);
             TridentWindow.projectExplorer.refresh();
         } catch (IOException x) {
             x.printStackTrace();

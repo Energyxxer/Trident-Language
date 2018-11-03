@@ -1,6 +1,7 @@
 package com.energyxxer.trident.ui.explorer.base;
 
 import com.energyxxer.trident.ui.explorer.base.elements.ExplorerElement;
+import com.energyxxer.trident.ui.modules.ModuleToken;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,7 +23,7 @@ public class ExplorerMaster extends JComponent implements MouseListener, MouseMo
 
     protected ExplorerElement rolloverItem = null;
 
-    private ArrayList<String> expandedElements = new ArrayList<>();
+    private ArrayList<ModuleToken> expandedElements = new ArrayList<>();
 
     protected ArrayList<ExplorerElement> flatList = new ArrayList<>();
     private int contentWidth = 0;
@@ -195,10 +196,10 @@ public class ExplorerMaster extends JComponent implements MouseListener, MouseMo
         selectionUpdated();
     }
 
-    public List<String> getSelectedFiles() {
-        List<String> list = new ArrayList<>();
+    public List<ModuleToken> getSelectedTokens() {
+        List<ModuleToken> list = new ArrayList<>();
         selectedItems.forEach(item -> {
-            String path = item.getIdentifier();
+            ModuleToken path = item.getToken();
             if(path != null) list.add(path);
         });
         return list;
@@ -280,11 +281,11 @@ public class ExplorerMaster extends JComponent implements MouseListener, MouseMo
         this.offsetY = offsetY;
     }
 
-    public ArrayList<String> getExpandedElements() {
+    public ArrayList<ModuleToken> getExpandedElements() {
         return expandedElements;
     }
 
-    public void setExpandedElements(ArrayList<String> expandedElements) {
+    public void setExpandedElements(ArrayList<ModuleToken> expandedElements) {
         this.expandedElements = expandedElements;
     }
 

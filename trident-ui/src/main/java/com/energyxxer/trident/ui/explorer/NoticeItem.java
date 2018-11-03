@@ -5,11 +5,14 @@ import com.energyxxer.trident.ui.explorer.base.ExplorerFlag;
 import com.energyxxer.trident.ui.explorer.base.ExplorerMaster;
 import com.energyxxer.trident.ui.explorer.base.elements.ExplorerElement;
 import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.trident.ui.modules.FileModuleToken;
+import com.energyxxer.trident.ui.modules.ModuleToken;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
+import java.io.File;
 
 /**
  * Created by User on 5/16/2017.
@@ -106,7 +109,7 @@ public class NoticeItem extends ExplorerElement {
     }
 
     @Override
-    public String getIdentifier() {
+    public ModuleToken getToken() {
         return null;
     }
 
@@ -118,7 +121,7 @@ public class NoticeItem extends ExplorerElement {
     @Override
     public void mouseClicked(MouseEvent e) {
         if(e.getButton() == MouseEvent.BUTTON1 && !e.isControlDown() && e.getClickCount() % 2 == 0 && notice.getFilePath() != null) {
-            TabManager.openTab(notice.getFilePath(), notice.getLocationIndex(), notice.getLocationLength());
+            TabManager.openTab(new FileModuleToken(new File(notice.getFilePath())), notice.getLocationIndex(), notice.getLocationLength());
         }
     }
 

@@ -8,6 +8,8 @@ import com.energyxxer.trident.ui.common.MenuItems;
 import com.energyxxer.trident.ui.explorer.base.ExplorerFlag;
 import com.energyxxer.trident.ui.explorer.base.ExplorerMaster;
 import com.energyxxer.trident.ui.explorer.base.elements.ExplorerElement;
+import com.energyxxer.trident.ui.modules.FileModuleToken;
+import com.energyxxer.trident.ui.modules.ModuleToken;
 import com.energyxxer.trident.ui.styledcomponents.StyledMenu;
 import com.energyxxer.trident.ui.styledcomponents.StyledMenuItem;
 import com.energyxxer.trident.ui.styledcomponents.StyledPopupMenu;
@@ -158,7 +160,7 @@ public class ProjectExplorerItem extends ExplorerElement {
         }
 
         expanded = true;
-        master.getExpandedElements().add(this.path);
+        ///master.getExpandedElements().add(this.path);
         master.repaint();
     }
 
@@ -273,7 +275,7 @@ public class ProjectExplorerItem extends ExplorerElement {
             if(expanded) collapse();
             else expand(new ArrayList<>());
         } else {
-            TabManager.openTab(this.path);
+            TabManager.openTab(new FileModuleToken(new File(this.path)));
         }
     }
 
@@ -322,8 +324,9 @@ public class ProjectExplorerItem extends ExplorerElement {
     }
 
     @Override
-    public String getIdentifier() {
-        return path;
+    public ModuleToken getToken() {
+        ///return path;
+        return null;
     }
 
     private StyledPopupMenu generatePopup() {
@@ -334,7 +337,11 @@ public class ProjectExplorerItem extends ExplorerElement {
         else if(this.parent != null) newPath = this.parent.path;
         else newPath = new File(this.path).getParent();
 
-        List<String> selectedFiles = master.getSelectedFiles();
+        List<ModuleToken> selectedTokens = master.getSelectedTokens();
+        ArrayList<FileModuleToken> selectedFiles = new ArrayList<>();
+        for(ModuleToken token : selectedTokens) {
+            if(token instanceof FileModuleToken) selectedFiles.add((FileModuleToken) token);
+        }
 
         {
             StyledMenu newMenu = new StyledMenu("New");
@@ -453,7 +460,11 @@ public class ProjectExplorerItem extends ExplorerElement {
 
         StyledMenuItem deleteItem = MenuItems.fileItem(MenuItems.FileMenuItem.DELETE);
         deleteItem.setEnabled(selectedFiles.size() >= 1);
-        deleteItem.addActionListener(e -> FileManager.delete(selectedFiles));
+        ArrayList<String> selectedPaths = new ArrayList<>();
+        for(FileModuleToken file : selectedFiles) {
+            selectedPaths.add(file.getPath());
+        }
+        deleteItem.addActionListener(e -> FileManager.delete(selectedPaths));
         menu.add(deleteItem);
 
         menu.addSeparator();

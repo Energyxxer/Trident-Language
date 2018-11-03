@@ -6,6 +6,7 @@ import com.energyxxer.trident.ui.Tab;
 import com.energyxxer.trident.ui.dialogs.OptionDialog;
 import com.energyxxer.trident.ui.editor.TridentEditorModule;
 import com.energyxxer.trident.ui.editor.behavior.caret.CaretProfile;
+import com.energyxxer.trident.ui.modules.ModuleToken;
 import com.energyxxer.trident.ui.styledcomponents.StyledMenuItem;
 import com.energyxxer.trident.ui.styledcomponents.StyledPopupMenu;
 
@@ -29,24 +30,24 @@ public class TabManager {
 	
 	private static StyledPopupMenu menu;
 
-	public static void openTab(String path, int index) {
-		openTab(path);
+	public static void openTab(ModuleToken token, int index) {
+		openTab(token);
 		selectLocation(selectedTab, index, 0);
 	}
 
-	public static void openTab(String path, int index, int length) {
-		openTab(path);
+	public static void openTab(ModuleToken token, int index, int length) {
+		openTab(token);
 		selectLocation(selectedTab, index, length);
 	}
 
-	public static void openTab(String path) {
+	public static void openTab(ModuleToken token) {
 		for (int i = 0; i < openTabs.size(); i++) {
-			if (openTabs.get(i).path.equals(path)) {
+			if (openTabs.get(i).token.equals(token)) {
 				setSelectedTab(openTabs.get(i));
 				return;
 			}
 		}
-		Tab nt = new Tab(path);
+		Tab nt = new Tab(token);
 		openTabs.add(nt);
 		TridentWindow.tabList.addTab(nt);
 		setSelectedTab(nt);
@@ -131,7 +132,7 @@ public class TabManager {
 		if (tab != null) {
 			selectedTab = tab;
 			
-			Project linkedProject = tab.getLinkedProject();
+			Project linkedProject = null;///tab.getLinkedProject();
 			TridentWindow.setTitle(((linkedProject != null) ? linkedProject.getName() + " - " : "") + tab.getName());
 			TridentWindow.editArea.setContent(tab.getModuleComponent());
 			tab.onSelect();
@@ -150,7 +151,7 @@ public class TabManager {
 		return selectedTab;
 	}
 
-	public static void renameTab(String oldPath, String newPath) {
+	/*public static void renameTab(String oldPath, String newPath) {
 		File newFile = new File(newPath);
 		if (newFile.isFile()) {
 			for(Tab tab : openTabs) {
@@ -167,18 +168,18 @@ public class TabManager {
 				}
 			}
 		}
-	}
+	}*/
 
 	public static void saveOpenTabs() {
 		StringBuilder sb = new StringBuilder();
 		for(Tab tab : openTabs) {
 			if(selectedTab != tab) {
-				sb.append(tab.path);
+				sb.append(tab.token.getIdentifier());
 				sb.append(File.pathSeparatorChar);
 			}
 		}
 		if(selectedTab != null) {
-			sb.append(selectedTab.path);
+			sb.append(selectedTab.token.getIdentifier());
 			sb.append(File.pathSeparatorChar);
 		}
 		Preferences.put("open_tabs",sb.toString());
@@ -187,11 +188,11 @@ public class TabManager {
 	public static void openSavedTabs() {
 		String savedTabs = Preferences.get("open_tabs",null);
 		if(savedTabs != null) {
-			String[] paths = savedTabs.split(Matcher.quoteReplacement(File.pathSeparator));
-			for(String path : paths) {
-				if(new File(path).exists()) {
+			String[] identifiers = savedTabs.split(Matcher.quoteReplacement(File.pathSeparator));
+			for(String identifier : identifiers) {
+				/*if(new File(path).exists()) {
 					openTab(path);
-				}
+				}*/
 			}
 		}
 	}

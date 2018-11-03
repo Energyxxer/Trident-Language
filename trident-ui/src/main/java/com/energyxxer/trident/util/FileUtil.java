@@ -4,6 +4,8 @@ import com.energyxxer.trident.global.temp.projects.Project;
 import com.energyxxer.trident.global.temp.projects.ProjectManager;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.regex.Matcher;
 
 /**
@@ -69,6 +71,24 @@ public class FileUtil {
 								)
 						) : "src"
 		).replace(File.separator,".");
+	}
+
+	public static Collection<File> listFilesOrdered(File directory) {
+		if(!directory.isDirectory()) throw new IllegalArgumentException("Received non-directory file as parameter for FileUtil.listFilesOrdered(File)");
+		ArrayList<File> subFilesOrdered = new ArrayList<>();
+		int firstFileIndex = 0;
+		File[] subFiles = directory.listFiles();
+		if(subFiles != null) {
+			for(File file : subFiles) {
+				if(file.isDirectory()) {
+					subFilesOrdered.add(firstFileIndex, file);
+					firstFileIndex++;
+				} else {
+					subFilesOrdered.add(file);
+				}
+			}
+		}
+		return subFilesOrdered;
 	}
 
 	private FileUtil() {}

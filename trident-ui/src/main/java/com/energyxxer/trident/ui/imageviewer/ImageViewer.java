@@ -1,14 +1,12 @@
 package com.energyxxer.trident.ui.imageviewer;
 
 import com.energyxxer.trident.main.window.TridentWindow;
-import com.energyxxer.trident.ui.Tab;
 import com.energyxxer.trident.ui.display.DisplayModule;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
 import com.energyxxer.trident.util.MathUtil;
 import com.energyxxer.util.ImageManager;
 import com.energyxxer.util.StringUtil;
 import com.energyxxer.util.logger.Debug;
-import com.energyxxer.util.out.Console;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -27,7 +25,7 @@ public class ImageViewer extends JPanel implements DisplayModule, MouseWheelList
     private static final double MAX_SCALE = 50;
     private static final int CHECK_PATTERN_SIZE = 5;
 
-    private final Tab associatedTab;
+    private final File file;
 
     private BufferedImage img;
     private double scale = 1;
@@ -46,10 +44,10 @@ public class ImageViewer extends JPanel implements DisplayModule, MouseWheelList
 
     private ThemeListenerManager tlm = new ThemeListenerManager();
 
-    public ImageViewer(Tab tab) {
-        this.associatedTab = tab;
+    public ImageViewer(File file) {
+        this.file = file;
         try {
-            this.img = ImageIO.read(new File(tab.path));
+            this.img = ImageIO.read(file);
         } catch(IOException x) {
             this.img = ImageManager.load("null");
         }
@@ -167,7 +165,7 @@ public class ImageViewer extends JPanel implements DisplayModule, MouseWheelList
     public void displayCaretInfo() {
         TridentWindow.statusBar.setSelectionInfo("Pixel pos: " + posOnImage.x + ", " + posOnImage.y);
 
-        boolean animated = new File(associatedTab.path + ".mcmeta").exists();
+        boolean animated = new File(file.getPath() + ".mcmeta").exists();
 
         if(imgSize.width == imgSize.height) {
             TridentWindow.statusBar.setCaretInfo("UV pos: " + StringUtil.stripDecimals(MathUtil.truncateDecimals((double) (posOnImage.x * 16) / imgSize.width, 4)) + ", " + StringUtil.stripDecimals(MathUtil.truncateDecimals(((double) (posOnImage.y  * 16) / imgSize.height),4)));

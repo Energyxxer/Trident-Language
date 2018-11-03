@@ -7,7 +7,9 @@ import com.energyxxer.trident.ui.audio.AudioPlayer;
 import com.energyxxer.trident.ui.display.DisplayModule;
 import com.energyxxer.trident.ui.editor.TridentEditorModule;
 import com.energyxxer.trident.ui.imageviewer.ImageViewer;
+import com.energyxxer.trident.ui.modules.ModuleToken;
 import com.energyxxer.trident.ui.tablist.TabItem;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -18,8 +20,8 @@ import java.util.Date;
  * the clickable tab element.
  */
 public class Tab {
-	private Project linkedProject;
-	public String path;
+	//private Project linkedProject;
+	public ModuleToken token;
 	public DisplayModule module;
 	private Object savedValue;
 	public boolean visible = true;
@@ -31,28 +33,16 @@ public class Tab {
 
 	@Override
 	public String toString() {
-		return "Tab [title=" + getName() + ", path=" + path + ", visible=" + visible + "]";
+		return "Tab [title=" + getName() + ", token=" + token + ", visible=" + visible + "]";
 	}
 
-	public Tab(String path) {
-		this.path = path;
-		this.linkedProject = ProjectManager.getAssociatedProject(new File(path));
-		if(path.endsWith(".png")) {
-			module = new ImageViewer(this);
-		} else if(path.endsWith(".ogg") || path.endsWith(".mp3") || path.endsWith(".mid")) {
-			module = new AudioPlayer(this);
-		} else {
-			module = new TridentEditorModule(this);
-		}
+	public Tab(@NotNull ModuleToken token) {
+		this.token = token;
+		//this.linkedProject = ProjectManager.getAssociatedProject(new File(path));
+		module = token.createModule(this);
 		savedValue = module.getValue();
-
 		openedTimeStamp = new Date().getTime();
-
-		this.name = new File(path).getName();
-	}
-
-	private File getFile() {
-		return new File(path);
+		this.name = token.getTitle();
 	}
 
 	public void onSelect() {
@@ -91,9 +81,9 @@ public class Tab {
 		}
 	}
 
-	public Project getLinkedProject() {
+	/*public Project getLinkedProject() {
 		return linkedProject;
-	}
+	}*/
 
 	public JComponent getModuleComponent() {
 		return (JComponent) module;

@@ -125,14 +125,14 @@ public class MenuItems {
 			break;
 		case MOVE:
 			item = new StyledMenuItem("Move");
-			item.setEnabled(TridentWindow.projectExplorer.getSelectedFiles().size() > 0);
+			item.setEnabled(TridentWindow.projectExplorer.getSelectedTokens().size() > 0);
 			break;
 		case PASTE:
 			item = new StyledMenuItem("Paste");
 			break;
 		case RENAME:
 			item = new StyledMenuItem("Rename", "rename");
-			item.setEnabled(TridentWindow.projectExplorer.getSelectedFiles().size() == 1);
+			item.setEnabled(TridentWindow.projectExplorer.getSelectedTokens().size() == 1);
 			break;
 		default:
 			break;

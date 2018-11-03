@@ -1,6 +1,7 @@
 package com.energyxxer.trident.ui.explorer.base.elements;
 
 import com.energyxxer.trident.ui.explorer.base.ExplorerMaster;
+import com.energyxxer.trident.ui.modules.ModuleToken;
 
 import java.awt.Graphics;
 import java.awt.event.MouseListener;
@@ -39,7 +40,7 @@ public abstract class ExplorerElement implements MouseListener {
         this.rollover = rollover;
     }
 
-    public abstract String getIdentifier();
+    public abstract ModuleToken getToken();
 
     public abstract int getHeight();
 

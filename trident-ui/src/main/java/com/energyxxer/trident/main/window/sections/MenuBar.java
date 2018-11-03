@@ -6,6 +6,7 @@ import com.energyxxer.trident.main.Trident;
 import com.energyxxer.trident.main.window.TridentWindow;
 import com.energyxxer.trident.ui.dialogs.ProjectProperties;
 import com.energyxxer.trident.ui.dialogs.settings.Settings;
+import com.energyxxer.trident.ui.modules.FileModuleToken;
 import com.energyxxer.trident.ui.styledcomponents.StyledMenu;
 import com.energyxxer.trident.ui.styledcomponents.StyledMenuItem;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
@@ -269,7 +270,7 @@ public class MenuBar extends JMenuBar {
             {
                 StyledMenuItem item = new StyledMenuItem("Edit Electron Theme");
                 item.addActionListener(e -> {
-                    TabManager.openTab(System.getProperty("user.home") + File.separator + "Trident" + File.separator + "resources" + File.separator + "themes" + File.separator + "gui" + File.separator + "Electron Dark.properties");
+                    TabManager.openTab(new FileModuleToken(new File(System.getProperty("user.home") + File.separator + "Trident" + File.separator + "resources" + File.separator + "themes" + File.separator + "gui" + File.separator + "Electron Dark.properties")));
                 });
                 menu.add(item);
             }

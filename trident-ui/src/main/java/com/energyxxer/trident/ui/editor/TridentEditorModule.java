@@ -20,10 +20,7 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -34,20 +31,22 @@ import java.util.HashMap;
  */
 public class TridentEditorModule extends JScrollPane implements DisplayModule, UndoableEditListener, MouseListener, ThemeChangeListener {
 
-    Tab associatedTab;
+	File file;
+	Tab associatedTab;
 
-    public TridentEditorComponent editorComponent;
-    private TextLineNumber tln;
+	public TridentEditorComponent editorComponent;
+	private TextLineNumber tln;
 	protected Theme syntax;
 
 	private ArrayList<String> styles = new ArrayList<>();
 	HashMap<String, String[]> parserStyles = new HashMap<>();
 
+
     //public long lastToolTip = new Date().getTime();
 
-	public TridentEditorModule(Tab tab) {
-		super();
-        associatedTab = tab;
+	public TridentEditorModule(Tab tab, File file) {
+		this.file = file;
+        this.associatedTab = tab;
 
         editorComponent = new TridentEditorComponent(this);
         //editorComponent.setBorder(BorderFactory.createEmptyBorder(0,5,0,0));
@@ -110,7 +109,7 @@ public class TridentEditorModule extends JScrollPane implements DisplayModule, U
 	private void setTextToFileContents() {
 		byte[] encoded;
 		try {
-			encoded = Files.readAllBytes(Paths.get(this.associatedTab.path));
+			encoded = Files.readAllBytes(file.toPath());
 			String s = new String(encoded);
 			setText(s);
 			editorComponent.setCaretPosition(0);
@@ -257,7 +256,7 @@ public class TridentEditorModule extends JScrollPane implements DisplayModule, U
 		);
 		tln.setFont(new Font(t.getString("TridentEditorModule.lineNumber.font","default:monospaced"),0,12));
 
-		Lang lang = Lang.getLangForFile(associatedTab.path);
+		Lang lang = Lang.getLangForFile(file.getPath());
 		if(lang != null) {
 			setSyntax(ThemeManager.getSyntaxForGUITheme(lang, t));
 			editorComponent.highlight();
@@ -283,7 +282,7 @@ public class TridentEditorModule extends JScrollPane implements DisplayModule, U
 	public Object save() {
 		PrintWriter writer;
 		try {
-			writer = new PrintWriter(associatedTab.path, "UTF-8");
+			writer = new PrintWriter(file, "UTF-8");
 
 			String text = getText();
 			if(!text.endsWith("\n")) {

@@ -1,6 +1,7 @@
 package com.energyxxer.trident.ui.explorer.base.elements;
 
 import com.energyxxer.trident.ui.explorer.base.ExplorerMaster;
+import com.energyxxer.trident.ui.modules.ModuleToken;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -33,7 +34,7 @@ public class ExplorerSeparator extends ExplorerElement {
     }
 
     @Override
-    public String getIdentifier() {
+    public ModuleToken getToken() {
         return null;
     }
 

@@ -5,7 +5,7 @@ import com.energyxxer.trident.ui.editor.behavior.AdvancedEditor;
 import com.energyxxer.trident.ui.editor.behavior.editmanager.CharacterDriftHandler;
 import com.energyxxer.trident.ui.editor.inspector.Inspector;
 import com.energyxxer.trident.global.temp.Lang;
-import com.energyxxer.enxlex.lexical_analysis.Scanner;
+import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerProfile;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
@@ -69,9 +69,9 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
 
         String text = getText();
 
-        Lang lang = Lang.getLangForFile(parent.associatedTab.path);
+        Lang lang = Lang.getLangForFile(parent.file.getPath());
         ScannerProfile fileProfile = lang != null ? lang.createProfile() : null;
-        Scanner sc = new Scanner(new File(parent.associatedTab.path), text, new TokenStream(true), fileProfile);
+        Lexer sc = new Lexer(parent.file, text, new TokenStream(true), fileProfile);
         ArrayList<Notice> newNotices = new ArrayList<>(sc.getNotices());
 
         boolean doParsing = lang != null && lang.getParserProduction() != null;

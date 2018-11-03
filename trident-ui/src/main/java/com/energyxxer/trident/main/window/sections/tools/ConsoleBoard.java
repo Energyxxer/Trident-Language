@@ -1,6 +1,7 @@
 package com.energyxxer.trident.main.window.sections.tools;
 
 import com.energyxxer.trident.global.TabManager;
+import com.energyxxer.trident.ui.modules.FileModuleToken;
 import com.energyxxer.trident.ui.scrollbar.OverlayScrollBarUI;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
 import com.energyxxer.util.logger.Debug;
@@ -20,6 +21,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 
 /**
  * Created by User on 12/15/2016.
@@ -109,7 +111,7 @@ public class ConsoleBoard extends ToolBoard {
                     int location = Integer.parseInt((String) hyperlink.getAttribute("LOCATION"));
                     int length = Integer.parseInt((String) hyperlink.getAttribute("LENGTH"));
 
-                    TabManager.openTab(path, location, length);
+                    TabManager.openTab(new FileModuleToken(new File(path)), location, length);
                 }
             }
         });
