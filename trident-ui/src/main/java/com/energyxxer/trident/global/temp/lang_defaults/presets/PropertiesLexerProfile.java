@@ -1,8 +1,8 @@
 package com.energyxxer.trident.global.temp.lang_defaults.presets;
 
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContext;
+import com.energyxxer.enxlex.lexical_analysis.profiles.LexerContext;
 import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerProfile;
+import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 /**
  * Created by User on 4/8/2017.
  */
-public class PropertiesScannerProfile extends ScannerProfile {
+public class PropertiesLexerProfile extends LexerProfile {
 
     private static final TokenType
             COMMENT = new TokenType("COMMENT",false),
@@ -24,8 +24,8 @@ public class PropertiesScannerProfile extends ScannerProfile {
     /**
      * Creates a JSON Analysis Profile.
      * */
-    public PropertiesScannerProfile() {
-        ScannerContext propertyContext = str -> {
+    public PropertiesLexerProfile() {
+        LexerContext propertyContext = str -> {
             if(str.trim().length() <= 0) return new ScannerContextResponse(false);
             if(str.startsWith("\n")) {
                 stage = KEY;
@@ -67,7 +67,7 @@ public class PropertiesScannerProfile extends ScannerProfile {
             return null;
         };
 
-        ArrayList<ScannerContext> propertiesContexts = new ArrayList<>();
+        ArrayList<LexerContext> propertiesContexts = new ArrayList<>();
         propertiesContexts.add(propertyContext);
         this.contexts = propertiesContexts;
     }

@@ -9,6 +9,7 @@ public class TokenType {
 	public static final TokenType
 			FILE_HEADER = new TokenType("FILE_HEADER"), // Contains information about file type in attributes
 			UNKNOWN = new TokenType("UNKNOWN"), // Default
+			NEWLINE = new TokenType("NEWLINE"), // New line
 			END_OF_FILE = new TokenType("END_OF_FILE"); // End of file
 
 	private String name;

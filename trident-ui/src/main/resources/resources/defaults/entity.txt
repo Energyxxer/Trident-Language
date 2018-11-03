@@ -1,8 +1,0 @@
-package $PACKAGE$;
-
-/**
-* Created by $USER$ on $DATE$/$MONTH$/$YEAR$.
-*/
-public entity $NAME$$END$ {
-$INDENT$
-}

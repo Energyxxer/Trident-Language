@@ -9,3 +9,4 @@ Syntax Themes:
 -Properties Syntax Dark
 -Properties Syntax Light
 -MCFunction Syntax Dark
+-Trident Syntax Dark

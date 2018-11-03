@@ -1,8 +1,8 @@
 package com.energyxxer.enxlex.lexical_analysis;
 
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContext;
+import com.energyxxer.enxlex.lexical_analysis.profiles.LexerContext;
 import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerProfile;
+import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
@@ -33,7 +33,7 @@ public class Lexer {
 		this.stream = stream;
 	}
 
-	public Lexer(File file, String str, TokenStream stream, ScannerProfile profile) {
+	public Lexer(File file, String str, TokenStream stream, LexerProfile profile) {
 		this.stream = stream;
 		if(profile != null) tokenize(file, str, profile);
 	}
@@ -79,7 +79,7 @@ public class Lexer {
 
 	private HashMap<TokenSection, String> subSections = null;
 
-	public void tokenize(File file, String str, ScannerProfile profile) {
+	public void tokenize(File file, String str, LexerProfile profile) {
 		this.file = file;
 		stream.setProfile(profile);
 		profile.setStream(stream);
@@ -105,16 +105,9 @@ public class Lexer {
 
 			String sub = str.substring(i);
 
-			if (c.equals("\n")) {
-				line++;
-				column = -1;
-			} else {
-				column++;
-			}
-
-			for(ScannerContext ctx : profile.contexts) {
-				if(ctx.getCondition() == ScannerContext.ContextCondition.LEADING_WHITESPACE && token.length() > 0) continue;
-				if(ctx.getCondition() == ScannerContext.ContextCondition.LINE_START && column != 1) continue;
+			for(LexerContext ctx : profile.contexts) {
+				if(ctx.getCondition() == LexerContext.ContextCondition.LEADING_WHITESPACE && token.length() > 0) continue;
+				if(ctx.getCondition() == LexerContext.ContextCondition.LINE_START && column != 0) continue;
 				ScannerContextResponse response = ctx.analyze(sub);
 				if(response.errorMessage != null) {
 					notices.add(new Notice(NoticeType.ERROR, response.errorMessage, "\b" + file.getAbsolutePath() + "\b" + (i + response.errorIndex) + "\b" + response.errorLength));
@@ -123,7 +116,8 @@ public class Lexer {
 					flush();
 					updateTokenPos();
 					line += response.endLocation.line;
-					column += response.endLocation.column;
+					if(response.endLocation.line == 0) column += response.endLocation.column;
+					else column = response.endLocation.column;
 					i += response.value.length()-1;
 					token.append(response.value);
 					tokenType = response.tokenType;
@@ -131,6 +125,19 @@ public class Lexer {
 					flush();
 					continue mainLoop;
 				}
+			}
+
+			if (c.equals("\n")) {
+				if(profile.useNewlineTokens()) {
+					flush();
+					updateTokenPos();
+					token.append('\n');
+					tokenType = TokenType.NEWLINE;
+				}
+				line++;
+				column = 0;
+			} else {
+				column++;
 			}
 
 			if(isClosingIteration) {

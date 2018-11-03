@@ -1,8 +1,8 @@
 package com.energyxxer.trident.global.temp.lang_defaults.presets;
 
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContext;
+import com.energyxxer.enxlex.lexical_analysis.profiles.LexerContext;
 import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerProfile;
+import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 /**
  * Created by User on 2/6/2017.
  */
-public class JSONScannerProfile extends ScannerProfile {
+public class JSONLexerProfile extends LexerProfile {
 
     /**
      * Holds the previous token for multi-token analysis.
@@ -29,15 +29,14 @@ public class JSONScannerProfile extends ScannerProfile {
             COLON = new TokenType("COLON"), // case 8[:]
             NUMBER = new TokenType("NUMBER"), // 0.1f
             STRING_LITERAL = new TokenType("STRING_LITERAL"), // "STRING LITERAL"
-            BOOLEAN = new TokenType("BOOLEAN"), // true, false
-            IDENTIFIER = new TokenType("IDENTIFIER"); // Anything else
+            BOOLEAN = new TokenType("BOOLEAN"); // true, false
 
     /**
      * Creates a JSON Analysis Profile.
      * */
-    public JSONScannerProfile() {
+    public JSONLexerProfile() {
         //String
-        ScannerContext stringContext = new ScannerContext() {
+        LexerContext stringContext = new LexerContext() {
 
             String delimiters = "\"'";
 
@@ -77,7 +76,7 @@ public class JSONScannerProfile extends ScannerProfile {
             }
         };
         //Numbers
-        ScannerContext numberContext = new ScannerContext() {
+        LexerContext numberContext = new LexerContext() {
 
             private Pattern regex = Pattern.compile("(-?\\d+(\\.\\d+)?)");
 
@@ -92,7 +91,7 @@ public class JSONScannerProfile extends ScannerProfile {
             }
         };
         //Braces
-        ScannerContext braceContext = (str) -> {
+        LexerContext braceContext = (str) -> {
             if(str.length() <= 0) return new ScannerContextResponse(false);
             if("[]{}".contains(str.substring(0,1))) {
                 return new ScannerContextResponse(true, str.substring(0,1), BRACE);
@@ -101,7 +100,7 @@ public class JSONScannerProfile extends ScannerProfile {
         };
 
         //Misc
-        ScannerContext miscellaneousContext = new ScannerContext() {
+        LexerContext miscellaneousContext = new LexerContext() {
 
             String[] patterns = { ",", ":" };
             TokenType[] types = { COMMA, COLON };
@@ -118,7 +117,7 @@ public class JSONScannerProfile extends ScannerProfile {
             }
         };
 
-        ArrayList<ScannerContext> jsonContexts = new ArrayList<>();
+        ArrayList<LexerContext> jsonContexts = new ArrayList<>();
         jsonContexts.add(stringContext);
         jsonContexts.add(braceContext);
         jsonContexts.add(miscellaneousContext);

@@ -1,0 +1,7 @@
+#:on tick
+
+# $PACKAGE$
+# Created by $USER$ on $DATE$/$MONTH$/$YEAR$.
+#
+
+$END$

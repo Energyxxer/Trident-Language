@@ -3,7 +3,7 @@ package com.energyxxer.enxlex.lexical_analysis.profiles;
 /**
  * Defines sub-routines to analyze special-case tokens.
  */
-public interface ScannerContext {
+public interface LexerContext {
     /**
      * Analyzes the given substring, starting at the
      * current position of the Lexer, and returns information about the analysis.

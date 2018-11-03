@@ -173,7 +173,7 @@ public class TokenListMatch extends TokenPatternMatch {
 				}
 			}
 			tempStack.pop();
-			lastToken = tokens.get(i-1);
+			if(i > 0) lastToken = tokens.get(i-1);
 		}
 		st.pop();
 		return new TokenMatchResponse(hasMatched, faultyToken, length, expected, list);

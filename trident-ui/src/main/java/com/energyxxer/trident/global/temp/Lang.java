@@ -1,10 +1,11 @@
 package com.energyxxer.trident.global.temp;
 
+import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.global.temp.lang_defaults.parsing.MCFunctionProductions;
-import com.energyxxer.trident.global.temp.lang_defaults.presets.JSONScannerProfile;
-import com.energyxxer.trident.global.temp.lang_defaults.presets.MCFunctionScannerProfile;
-import com.energyxxer.trident.global.temp.lang_defaults.presets.PropertiesScannerProfile;
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerProfile;
+import com.energyxxer.trident.global.temp.lang_defaults.presets.JSONLexerProfile;
+import com.energyxxer.trident.global.temp.lang_defaults.presets.MCFunctionLexerProfile;
+import com.energyxxer.trident.global.temp.lang_defaults.presets.PropertiesLexerProfile;
+import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.util.Factory;
 
@@ -15,17 +16,20 @@ import java.util.List;
  * Created by User on 2/9/2017.
  */
 public enum Lang {
-    JSON(JSONScannerProfile::new, "json", "mcmeta"), PROPERTIES(PropertiesScannerProfile::new, "properties", "lang", "project"), MCFUNCTION(MCFunctionScannerProfile::new, MCFunctionProductions.FILE, "mcfunction");
+    JSON(JSONLexerProfile::new, "json", "mcmeta"),
+    PROPERTIES(PropertiesLexerProfile::new, "properties", "lang", "project"),
+    MCFUNCTION(MCFunctionLexerProfile::new, MCFunctionProductions.FILE, "mcfunction"),
+    TRIDENT(TridentLexerProfile::new, "tdn");
 
-    Factory<ScannerProfile> factory;
+    Factory<LexerProfile> factory;
     TokenPatternMatch parserProduction;
     List<String> extensions;
 
-    Lang(Factory<ScannerProfile> factory, String... extensions) {
+    Lang(Factory<LexerProfile> factory, String... extensions) {
         this(factory, null, extensions);
     }
 
-    Lang(Factory<ScannerProfile> factory, TokenPatternMatch parserProduction, String... extensions) {
+    Lang(Factory<LexerProfile> factory, TokenPatternMatch parserProduction, String... extensions) {
         this.factory = factory;
         this.parserProduction = parserProduction;
         this.extensions = Arrays.asList(extensions);
@@ -35,7 +39,7 @@ public enum Lang {
         return extensions;
     }
 
-    public ScannerProfile createProfile() {
+    public LexerProfile createProfile() {
         return factory.createInstance();
     }
 

@@ -23,7 +23,7 @@ public class AboutPane extends DecorationPane {
     private AboutPane() {
         super(TridentWindow.jframe, new Dimension(700, 460), ImageManager.load("/assets/logo/about.png"));
 
-        objects.add(new DecorationObject(470, 320, 0, 0) {
+        objects.add(new DecorationObject(512, 320, 0, 0) {
             @Override
             public void paint(Graphics g) {
                 g.setColor(new Color(187, 187, 187));

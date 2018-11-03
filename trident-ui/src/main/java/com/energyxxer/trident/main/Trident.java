@@ -51,7 +51,7 @@ public class Trident {
 				g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				g.setColor(new Color(187, 187, 187));
 				g.setFont(g.getFont().deriveFont(32f));
-				g.drawString("v." + VERSION.toString(), 470, 320);
+				g.drawString("v." + VERSION.toString(), 512, 320);
 				g.dispose();
 			}
 		});

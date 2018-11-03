@@ -1,6 +1,6 @@
 package com.energyxxer.enxlex.lexical_analysis.token;
 
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerProfile;
+import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -14,7 +14,7 @@ public class TokenStream implements Iterable<Token> {
 
 	private boolean includeInsignificantTokens = false;
 
-	private ScannerProfile profile = null;
+	private LexerProfile profile = null;
 
 	public TokenStream() {includeInsignificantTokens = false;}
 	public TokenStream(boolean includeInsignificantTokens) {
@@ -33,7 +33,7 @@ public class TokenStream implements Iterable<Token> {
 		}
 	}
 
-	public void setProfile(ScannerProfile profile) {
+	public void setProfile(LexerProfile profile) {
 		this.profile = profile;
 	}
 

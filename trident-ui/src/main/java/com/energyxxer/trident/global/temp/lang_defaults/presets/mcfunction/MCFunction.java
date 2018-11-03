@@ -18,11 +18,10 @@ public class MCFunction {
             TYPED_NUMBER = new TokenType("TYPED_NUMBER"), // 0.1f
             STRING_LITERAL = new TokenType("STRING_LITERAL"), // "STRING LITERAL"
             //BOOLEAN = new TokenType("BOOLEAN"), // true, false
-            NEWLINE = new TokenType("NEWLINE"),
             COMMENT = new TokenType("COMMENT"),
             LOWERCASE_IDENTIFIER = new TokenType("LOWERCASE_IDENTIFIER"), // anything else
             MIXED_IDENTIFIER = new TokenType("MIXED_IDENTIFIER"), // Anything else
             SYMBOL = new TokenType("SYMBOL"); // Anything else
 
-    public static final TokenType[] ALL_TYPES = {SELECTOR_HEADER, BRACE, DOT, COMMA, COLON, EQUALS, TILDE, CARET, INTEGER_NUMBER, REAL_NUMBER, TYPED_NUMBER, STRING_LITERAL, NEWLINE, COMMENT, LOWERCASE_IDENTIFIER, MIXED_IDENTIFIER, SYMBOL};
+    public static final TokenType[] ALL_TYPES = {SELECTOR_HEADER, BRACE, DOT, COMMA, COLON, EQUALS, TILDE, CARET, INTEGER_NUMBER, REAL_NUMBER, TYPED_NUMBER, STRING_LITERAL, COMMENT, LOWERCASE_IDENTIFIER, MIXED_IDENTIFIER, SYMBOL};
 }

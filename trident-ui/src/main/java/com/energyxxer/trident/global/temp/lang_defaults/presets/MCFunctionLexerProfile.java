@@ -1,9 +1,9 @@
 package com.energyxxer.trident.global.temp.lang_defaults.presets;
 
 import com.energyxxer.trident.global.temp.lang_defaults.presets.mcfunction.MCFunction;
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContext;
+import com.energyxxer.enxlex.lexical_analysis.profiles.LexerContext;
 import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerProfile;
+import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
@@ -14,13 +14,13 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MCFunctionScannerProfile extends ScannerProfile {
+public class MCFunctionLexerProfile extends LexerProfile {
 
-    public MCFunctionScannerProfile() {
+    public MCFunctionLexerProfile() {
 
-        ArrayList<ScannerContext> contexts = new ArrayList<>();
+        ArrayList<LexerContext> contexts = new ArrayList<>();
 
-        contexts.add(new ScannerContext() {
+        contexts.add(new LexerContext() {
 
             private String headers = "pears";
 
@@ -40,7 +40,7 @@ public class MCFunctionScannerProfile extends ScannerProfile {
             }
         });
         
-        contexts.add(new ScannerContext() {
+        contexts.add(new LexerContext() {
 
             String delimiters = "\"";
 
@@ -89,7 +89,7 @@ public class MCFunctionScannerProfile extends ScannerProfile {
             }
         });
 
-        contexts.add(new ScannerContext() {
+        contexts.add(new LexerContext() {
             @Override
             public ScannerContextResponse analyze(String str) {
                 if(!str.startsWith("#")) return new ScannerContextResponse(false);
@@ -104,10 +104,10 @@ public class MCFunctionScannerProfile extends ScannerProfile {
             }
         });
         
-        contexts.add(new ScannerContext() {
+        contexts.add(new LexerContext() {
 
-            String[] patterns = { ".", ",", ":", "=", "(", ")", "[", "]", "{", "}", "~", "^", "\n" };
-            TokenType[] types = { MCFunction.DOT, MCFunction.COMMA, MCFunction.COLON, MCFunction.EQUALS, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.TILDE, MCFunction.CARET, MCFunction.NEWLINE };
+            String[] patterns = { ".", ",", ":", "=", "(", ")", "[", "]", "{", "}", "~", "^" };
+            TokenType[] types = { MCFunction.DOT, MCFunction.COMMA, MCFunction.COLON, MCFunction.EQUALS, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.TILDE, MCFunction.CARET };
 
             @Override
             public ScannerContextResponse analyze(String str) {
@@ -121,7 +121,7 @@ public class MCFunctionScannerProfile extends ScannerProfile {
             }
         });
         
-        contexts.add(new ScannerContext() {
+        contexts.add(new LexerContext() {
 
             private Pattern regex = Pattern.compile("([+-]?\\d+(\\.\\d+)?[bdfsL]?)");
 
@@ -167,6 +167,11 @@ public class MCFunctionScannerProfile extends ScannerProfile {
 
     private boolean isValidIdentifierPart(char ch) {
         return ch != '$' && Character.isJavaIdentifierPart(ch);
+    }
+
+    @Override
+    public boolean useNewlineTokens() {
+        return true;
     }
 
     @Override

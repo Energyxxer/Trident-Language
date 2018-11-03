@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 public class FileDefaults {
     public static final HashMap<String, String> defaults = new HashMap<>();
 
-    private static final String[] indexes = "entity, item, feature, class, enum, world, model, lang, meta".split(", ");
+    private static final String[] indexes = "ontick".split(", ");
 
     public static void loadAll() {
         defaults.clear();

@@ -94,10 +94,10 @@ public class MCFunctionProductions {
     public static final TokenStructureMatch SORTING = new TokenStructureMatch("SORTING");
     public static final TokenStructureMatch SOUND_CHANNEL = new TokenStructureMatch("SOUND_CHANNEL");
 
-    private static final TokenGlue GLUE = new TokenGlue(false, new TokenItemMatch(MCFunction.NEWLINE));
+    private static final TokenGlue GLUE = new TokenGlue(false, new TokenItemMatch(TokenType.NEWLINE));
 
     static {
-        FILE.add(new TokenGroupMatch().append(new TokenListMatch(LINE, new TokenItemMatch(MCFunction.NEWLINE))).append(new TokenItemMatch(TokenType.END_OF_FILE)));
+        FILE.add(new TokenGroupMatch().append(new TokenListMatch(LINE, new TokenItemMatch(TokenType.NEWLINE))).append(new TokenItemMatch(TokenType.END_OF_FILE)));
 
         {
             LINE.add(COMMAND);
@@ -141,7 +141,7 @@ public class MCFunctionProductions {
 
         {
             for(TokenType type : MCFunction.ALL_TYPES) {
-                if(type != MCFunction.NEWLINE) ANY_STRING_PART.add(new TokenItemMatch(type));
+                ANY_STRING_PART.add(new TokenItemMatch(type));
             }
 
             ANY_STRING.add(new TokenListMatch(ANY_STRING_PART, new TokenGlue(true, ANY_STRING_PART)));

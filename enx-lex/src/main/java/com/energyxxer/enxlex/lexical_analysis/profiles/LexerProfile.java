@@ -3,16 +3,17 @@ package com.energyxxer.enxlex.lexical_analysis.profiles;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Defines a profile for the lexical analysis of files.
  */
-public abstract class ScannerProfile {
+public abstract class LexerProfile {
     /**
      * Contains a list of all custom analysis contexts.
      * */
-    public List<ScannerContext> contexts;
+    public ArrayList<LexerContext> contexts = new ArrayList<>();
     /**
      * Contains the token stream to which the tokens are being sent.
      * */
@@ -49,6 +50,10 @@ public abstract class ScannerProfile {
      * */
     public void setStream(TokenStream stream) {
         this.stream = stream;
+    }
+
+    public boolean useNewlineTokens() {
+        return false;
     }
 
     /**
