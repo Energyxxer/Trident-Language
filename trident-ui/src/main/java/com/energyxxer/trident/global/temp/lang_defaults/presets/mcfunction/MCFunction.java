@@ -18,7 +18,7 @@ public class MCFunction {
             TYPED_NUMBER = new TokenType("TYPED_NUMBER"), // 0.1f
             STRING_LITERAL = new TokenType("STRING_LITERAL"), // "STRING LITERAL"
             //BOOLEAN = new TokenType("BOOLEAN"), // true, false
-            COMMENT = new TokenType("COMMENT"),
+            COMMENT = new TokenType("COMMENT_S"),
             LOWERCASE_IDENTIFIER = new TokenType("LOWERCASE_IDENTIFIER"), // anything else
             MIXED_IDENTIFIER = new TokenType("MIXED_IDENTIFIER"), // Anything else
             SYMBOL = new TokenType("SYMBOL"); // Anything else

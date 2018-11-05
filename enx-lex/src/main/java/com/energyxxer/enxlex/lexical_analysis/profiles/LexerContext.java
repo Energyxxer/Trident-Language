@@ -27,6 +27,8 @@ public interface LexerContext {
         return ContextCondition.NONE;
     }
 
+    default boolean ignoreLeadingWhitespace() { return true; }
+
     Collection<TokenType> getHandledTypes();
 
     enum ContextCondition {

@@ -8,8 +8,6 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenPatternMatch;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.util.StringLocation;
 import com.energyxxer.util.StringLocationCache;
 import com.energyxxer.util.logger.Debug;
@@ -57,7 +55,7 @@ public class LazyLexer extends Lexer {
                 stream.write(token);
             }
         } else {
-            Debug.log("Did not match:" + matchResponse.faultyToken + " | " + matchResponse.faultyToken.loc);
+            Debug.log("Did not match:" + matchResponse.faultyToken + " | " + matchResponse.faultyToken.loc + " | expected " + matchResponse.expected);
         }
 
         {
@@ -91,12 +89,16 @@ public class LazyLexer extends Lexer {
     public Token retrieveTokenOfType(TokenType type) {
         for (LexerContext context : profile.contexts) {
             if (context.getHandledTypes().contains(type)) {
-                ScannerContextResponse response = context.analyzeExpectingType(getLookingAtTrimmed(), type, profile);
+                ScannerContextResponse response = context.analyzeExpectingType(context.ignoreLeadingWhitespace() ?
+                        getLookingAtTrimmed() :
+                        getLookingAt(), type, profile);
                 /*if (response.errorMessage != null) {
                     notices.add(new Notice(NoticeType.ERROR, response.errorMessage, "\b" + file.getAbsolutePath() + "\b" + (getLookingIndexTrimmed() + response.errorIndex) + "\b" + response.errorLength));
                 }*/
                 if (response.success && response.tokenType == type) {
-                    return new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(getLookingIndexTrimmed()), response.subSections);
+                    return new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(context.ignoreLeadingWhitespace() ?
+                            getLookingIndexTrimmed() :
+                            getCurrentIndex()), response.subSections);
                 }
             }
         }
@@ -130,12 +132,20 @@ public class LazyLexer extends Lexer {
 
     public Token retrieveAnyToken() {
         for (LexerContext context : profile.contexts) {
-            ScannerContextResponse response = context.analyze(getLookingAtTrimmed(), profile);
-            if (response.errorMessage != null) {
+            ScannerContextResponse response = context.analyze(
+                    context.ignoreLeadingWhitespace() ?
+                            getLookingAtTrimmed() :
+                            getLookingAt(),
+                    profile);
+            /*if (response.errorMessage != null) {
                 notices.add(new Notice(NoticeType.ERROR, response.errorMessage, "\b" + file.getAbsolutePath() + "\b" + (getLookingIndexTrimmed() + response.errorIndex) + "\b" + response.errorLength));
-            }
+            }*/
             if (response.success) {
-                return new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(getLookingIndexTrimmed()), response.subSections);
+                return new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(
+                        context.ignoreLeadingWhitespace() ?
+                                getLookingIndexTrimmed() :
+                                getCurrentIndex()
+                ), response.subSections);
             }
         }
         if(getLookingIndexTrimmed() == fileContents.length()) {

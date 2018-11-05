@@ -36,7 +36,7 @@ public class LazyTokenItemMatch extends LazyTokenPatternMatch {
 
     @Override
     public LazyTokenItemMatch setName(String name) {
-        this.name = name;
+        super.setName(name);
         return this;
     }
 

@@ -16,7 +16,7 @@ import java.util.Collection;
 public class PropertiesLexerProfile extends LexerProfile {
 
     private static final TokenType
-            COMMENT = new TokenType("COMMENT",false),
+            COMMENT = new TokenType("COMMENT_S",false),
             KEY = new TokenType("KEY"),
             SEPARATOR = new TokenType("SEPARATOR"),
             VALUE = new TokenType("VALUE");

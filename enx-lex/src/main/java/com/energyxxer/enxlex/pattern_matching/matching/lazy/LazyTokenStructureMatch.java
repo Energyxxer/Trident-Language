@@ -21,6 +21,12 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
         this.optional = optional;
     }
 
+    @Override
+    public LazyTokenStructureMatch setName(String name) {
+        super.setName(name);
+        return this;
+    }
+
     public LazyTokenStructureMatch add(LazyTokenPatternMatch g) {
         entries.add(g);
         return this;

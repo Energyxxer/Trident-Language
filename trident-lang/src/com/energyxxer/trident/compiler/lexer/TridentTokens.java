@@ -4,17 +4,23 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 
 import java.lang.reflect.Field;
 
-public class TridentTokens {
+public class TridentTokens {;
     public static TokenType
             COMMENT, DIRECTIVE_HEADER, DIRECTIVE_ON_KEYWORD,
-            DOT, COMMA, COLON, SEMICOLON,
+            DOT, COMMA, COLON, SEMICOLON, EQUALS, NOT,
             BRACE,
             NEWLINE,
-            STRING_LITERAL,
+            STRING_LITERAL, BOOLEAN,
             TILDE, CARET,
             INTEGER_NUMBER, REAL_NUMBER, TYPED_NUMBER,
             VERBATIM_COMMAND,
-            SYMBOL
+            SYMBOL,
+            KEYWORD,
+            COMMAND_HEADER,
+            SELECTOR_HEADER,
+            TRAILING_STRING,
+            SORTING, NUMERIC_DATA_TYPE, SOUND_CHANNEL, ANCHOR,
+            GLUE
     ;
 
     static {

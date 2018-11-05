@@ -37,10 +37,9 @@ public class MCFunctionProductions {
     public static final TokenStructureMatch RESOURCE_LOCATION = new TokenStructureMatch("RESOURCE_LOCATION");
     public static final TokenStructureMatch TEXT_COMPONENT = new TokenStructureMatch("TEXT_COMPONENT");
 
-    public static final TokenStructureMatch BLOCKSTATE = new TokenStructureMatch("BLOCKSTATE");
-
     public static final TokenStructureMatch COLOR = new TokenStructureMatch("COLOR");
 
+    public static final TokenStructureMatch BLOCKSTATE = new TokenStructureMatch("BLOCKSTATE");
     public static final TokenStructureMatch BLOCK = new TokenStructureMatch("BLOCK");
     public static final TokenStructureMatch BLOCK_TAGGED = new TokenStructureMatch("BLOCK_TAGGED");
     public static final TokenStructureMatch ITEM = new TokenStructureMatch("ITEM");

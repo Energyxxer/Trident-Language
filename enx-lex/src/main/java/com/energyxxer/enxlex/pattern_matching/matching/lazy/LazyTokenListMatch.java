@@ -59,6 +59,11 @@ public class LazyTokenListMatch extends LazyTokenPatternMatch {
         this.separator = separator;
     }
 
+    @Override
+    public LazyTokenListMatch setName(String name) {
+        super.setName(name);
+        return this;
+    }
 
     @Override
     public TokenMatchResponse match(int index, LazyLexer lexer, Stack st) {

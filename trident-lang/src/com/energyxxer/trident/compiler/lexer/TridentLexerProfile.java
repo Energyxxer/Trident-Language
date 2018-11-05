@@ -1,15 +1,16 @@
 package com.energyxxer.trident.compiler.lexer;
 
-import com.energyxxer.enxlex.lexical_analysis.profiles.LexerContext;
-import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
-import com.energyxxer.enxlex.lexical_analysis.profiles.StringMatchLexerContext;
+import com.energyxxer.enxlex.lexical_analysis.profiles.*;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
+import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
+import com.energyxxer.util.StringLocation;
+import com.energyxxer.util.logger.Debug;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -96,9 +97,9 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
-        contexts.add(new LexerContext() {
+        /*contexts.add(new LexerContext() {
 
-            String[] patterns = { ".", ",", ":", "=", "(", ")", "[", "]", "{", "}", "~", "^" };
+            String[] patterns = { ".", ",", ":", "(", ")", "[", "]", "{", "}", "~", "^" };
             TokenType[] types = { TridentTokens.DOT, TridentTokens.COMMA, TridentTokens.COLON, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.TILDE, TridentTokens.CARET };
 
             @Override
@@ -115,6 +116,33 @@ public class TridentLexerProfile extends LexerProfile {
             @Override
             public Collection<TokenType> getHandledTypes() {
                 return Arrays.asList(types);
+            }
+        });*/
+        contexts.add(new StringTypeMatchLexerContext(new String[] { ".", ",", ":", "=", "(", ")", "[", "]", "{", "}", "~", "^", "!" },
+                new TokenType[] { TridentTokens.DOT, TridentTokens.COMMA, TridentTokens.COLON, TridentTokens.EQUALS, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.TILDE, TridentTokens.CARET, TridentTokens.NOT }
+                ));
+
+        contexts.add(new LexerContext() {
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                Debug.log("Checking for glue in '" + str.substring(0, 5) + "'");
+                if(str.length() > 0 && Character.isWhitespace(str.charAt(0))) return new ScannerContextResponse(false);
+                return new ScannerContextResponse(true, "", TridentTokens.GLUE);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(GLUE);
+            }
+
+            @Override
+            public boolean ignoreLeadingWhitespace() {
+                return false;
             }
         });
 
@@ -138,7 +166,115 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        contexts.add(new LexerContext() {
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false );
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                if(str.contains("\n")) {
+                    return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), TRAILING_STRING);
+                } else return new ScannerContextResponse(true, str, TRAILING_STRING);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(TRAILING_STRING);
+            }
+        });
+
+        contexts.add(new LexerContext() {
+
+            String delimiters = "\"";
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                if(str.length() <= 0) return new ScannerContextResponse(false);
+                char startingCharacter = str.charAt(0);
+
+                if(delimiters.contains(Character.toString(startingCharacter))) {
+
+                    StringBuilder token = new StringBuilder(Character.toString(startingCharacter));
+                    StringLocation end = new StringLocation(1,0,1);
+
+                    HashMap<TokenSection, String> escapedChars = new HashMap<>();
+
+                    for(int i = 1; i < str.length(); i++) {
+                        char c = str.charAt(i);
+
+                        if(c == '\n') {
+                            end.line++;
+                            end.column = 0;
+                        } else {
+                            end.column++;
+                        }
+                        end.index++;
+
+                        if(c == '\n') {
+                            ScannerContextResponse response = new ScannerContextResponse(true, token.toString(), end, TridentTokens.STRING_LITERAL, escapedChars);
+                            response.setError("Illegal line end in string literal", i, 1);
+                            return response;
+                        }
+                        token.append(c);
+                        if(c == '\\') {
+                            token.append(str.charAt(i+1));
+                            escapedChars.put(new TokenSection(i,2), "string_literal.escape");
+                            i++;
+                        } else if(c == startingCharacter) {
+                            return new ScannerContextResponse(true, token.toString(), end, TridentTokens.STRING_LITERAL, escapedChars);
+                        }
+                    }
+                    //Unexpected end of input
+                    ScannerContextResponse response = new ScannerContextResponse(true, token.toString(), end, TridentTokens.STRING_LITERAL, escapedChars);
+                    response.setError("Unexpected end of input", str.length()-1, 1);
+                    return response;
+                } else return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(STRING_LITERAL);
+            }
+        });
+
+        contexts.add(new LexerContext() {
+
+            private String headers = "pears";
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                if(str.length() < 2) return new ScannerContextResponse(false);
+                if(!str.startsWith("@")) return new ScannerContextResponse(false);
+                if(headers.contains(str.charAt(1) + "")) {
+                    return new ScannerContextResponse(true, str.substring(0,2), SELECTOR_HEADER);
+                }
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ContextCondition getCondition() {
+                return ContextCondition.LEADING_WHITESPACE;
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(SELECTOR_HEADER);
+            }
+        });
+
         contexts.add(new StringMatchLexerContext(DIRECTIVE_ON_KEYWORD, "compile", "load", "tick"));
+        contexts.add(new StringMatchLexerContext(KEYWORD, "register", "mark", "do", "while", "within", "using"));
+        contexts.add(new StringMatchLexerContext(BOOLEAN, "true", "false"));
+        contexts.add(new StringMatchLexerContext(COMMAND_HEADER, "advancement,bossbar,clear,clone,data,defaultgamemode,difficulty,effect,enchant,experience,execute,fill,function,gamemode,gamerule,give,help,kill,list,locate,me,particle,playsound,recipe,replaceitem,say,scoreboard,seed,setblock,setworldspawn,spawnpoint,spreadplayers,stopsound,summon,tag,team,teleport,tell,tellraw,time,title,tp,trigger,weather,whitelist,worldborder".split(",")));
+
+        contexts.add(new StringMatchLexerContext(SORTING, "nearest", "farthest", "arbitrary", "random"));
+        contexts.add(new StringMatchLexerContext(NUMERIC_DATA_TYPE, "byte", "double", "float", "int", "long", "short"));
+        contexts.add(new StringMatchLexerContext(SOUND_CHANNEL, "ambient", "block", "hostile", "master", "music", "neutral", "player", "record", "voice", "weather"));
+        contexts.add(new StringMatchLexerContext(ANCHOR, "feet", "eyes"));
+
     }
 
     @Override

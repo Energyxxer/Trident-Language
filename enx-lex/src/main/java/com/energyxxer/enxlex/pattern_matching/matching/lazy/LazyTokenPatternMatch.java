@@ -12,4 +12,19 @@ public abstract class LazyTokenPatternMatch extends GeneralTokenPatternMatch {
     }
 
     public abstract TokenMatchResponse match(int index, LazyLexer lexer, Stack st);
+
+    @Override
+    public GeneralTokenPatternMatch setName(String name) {
+        super.setName(name);
+        return this;
+    }
+
+    public LazyTokenPatternMatch setOptional() {
+        return setOptional(true);
+    }
+
+    public LazyTokenPatternMatch setOptional(boolean optional) {
+        this.optional = optional;
+        return this;
+    }
 }

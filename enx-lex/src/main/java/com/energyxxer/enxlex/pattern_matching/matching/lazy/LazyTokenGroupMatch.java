@@ -25,6 +25,12 @@ public class LazyTokenGroupMatch extends LazyTokenPatternMatch {
         items = new ArrayList<>();
     }
 
+    @Override
+    public LazyTokenGroupMatch setName(String name) {
+        super.setName(name);
+        return this;
+    }
+
     public LazyTokenGroupMatch append(LazyTokenPatternMatch i) {
         items.add(i);
         return this; //I'm so sorry for this
