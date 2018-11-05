@@ -16,6 +16,7 @@ import com.energyxxer.trident.ui.editor.behavior.editmanager.edits.PasteEdit;
 import com.energyxxer.trident.ui.editor.behavior.editmanager.edits.TabInsertionEdit;
 import com.energyxxer.trident.util.linepainter.LinePainter;
 import com.energyxxer.util.StringLocation;
+import com.energyxxer.util.StringLocationCache;
 
 import javax.swing.AbstractAction;
 import javax.swing.InputMap;
@@ -51,8 +52,7 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
     private EditManager editManager = new EditManager(this);
     private LinePainter linePainter;
 
-    private HashMap<Integer, Integer> lineLocations = new HashMap<>();
-    //              (line)   (index)
+    private StringLocationCache lineCache = new StringLocationCache();
 
     private static final float BIAS_POINT = 0.4f;
 
@@ -84,10 +84,7 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
             }
         });
 
-        this.getDocument().addUndoableEditListener(e -> {
-            lineLocations.clear();
-            lineLocations.put(0,0);
-        });
+        this.getDocument().addUndoableEditListener(e -> lineCache.setText(this.getText()));
         this.setMargin(new Insets(0, 5, 100, 100));
     }
 
@@ -208,6 +205,10 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
         }
     }
 
+    public StringLocation getLocationForOffset(int index) {
+        return lineCache.getLocationForOffset(index);
+    }
+
     @Override
     public void keyReleased(KeyEvent e) {
 
@@ -236,49 +237,6 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
         } catch(BadLocationException x) {
             x.printStackTrace();
             return superResult;
-        }
-    }
-
-    public StringLocation getLocationForOffset(int index) {
-        int line = 0;
-        int lineStart = 0;
-        for(int l = 0; l < lineLocations.size(); l++) {
-            Integer loc = lineLocations.get(l);
-            if(loc == null) {
-                //Concurrent modification occurred.
-                break;
-            }
-            if(loc < index) {
-                line = l;
-                lineStart = loc;
-            } else if(loc == index) {
-                return new StringLocation(index, l+1, 1);
-            } else {
-                break;
-            }
-        }
-        Document doc = this.getDocument();
-        try {
-            String str = doc.getText(lineStart, doc.getLength() - lineStart);
-
-            int column = 0;
-
-            for(int i = 0; i < str.length(); i++) {
-                if(lineStart + i == index) {
-                    return new StringLocation(index, line + 1, column + 1);
-                }
-                if(str.charAt(i) == '\n') {
-                    line++;
-                    column = 0;
-                    lineLocations.putIfAbsent(line, lineStart + i + 1);
-                } else {
-                    column++;
-                }
-            }
-            return new StringLocation(index, line + 1, column + 1);
-        } catch (BadLocationException x) {
-            x.printStackTrace();
-            return null;
         }
     }
 

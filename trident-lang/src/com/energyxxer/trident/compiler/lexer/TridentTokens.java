@@ -6,7 +6,7 @@ import java.lang.reflect.Field;
 
 public class TridentTokens {
     public static TokenType
-            COMMENT, DIRECTIVE_HEADER,
+            COMMENT, DIRECTIVE_HEADER, DIRECTIVE_ON_KEYWORD,
             DOT, COMMA, COLON, SEMICOLON,
             BRACE,
             NEWLINE,

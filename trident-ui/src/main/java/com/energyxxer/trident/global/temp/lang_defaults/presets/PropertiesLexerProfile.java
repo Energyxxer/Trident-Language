@@ -7,6 +7,8 @@ import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Created by User on 4/8/2017.
@@ -25,46 +27,54 @@ public class PropertiesLexerProfile extends LexerProfile {
      * Creates a JSON Analysis Profile.
      * */
     public PropertiesLexerProfile() {
-        LexerContext propertyContext = str -> {
-            if(str.trim().length() <= 0) return new ScannerContextResponse(false);
-            if(str.startsWith("\n")) {
-                stage = KEY;
-                return new ScannerContextResponse(false);
-            }
-            if(stage == KEY) {
-                if(str.trim().startsWith("#")) {
-                    StringBuilder comment = new StringBuilder();
-                    for(char ch : str.toCharArray()) {
-                        if(ch == '\n') break;
-                        comment.append(ch);
-                    }
-                    return new ScannerContextResponse(true, comment.toString(), COMMENT);
-                } else {
-                    StringBuilder key = new StringBuilder();
-                    for(char ch : str.toCharArray()) {
-                        if(ch == '=') {
-                            stage = SEPARATOR;
-                            break;
-                        } else if(ch == '\n') {
-                            break;
-                        } else key.append(ch);
-                    }
-                    return new ScannerContextResponse(true, key.toString(), KEY);
+        LexerContext propertyContext = new LexerContext() {
+            @Override
+            public ScannerContextResponse analyze(String str) {
+                if(str.trim().length() <= 0) return new ScannerContextResponse(false);
+                if(str.startsWith("\n")) {
+                    stage = KEY;
+                    return new ScannerContextResponse(false);
                 }
-            } else if(stage == SEPARATOR) {
-                stage = VALUE;
-                return new ScannerContextResponse(true, "=", SEPARATOR);
-            } else if(stage == VALUE) {
-                StringBuilder value = new StringBuilder();
-                for(char ch : str.toCharArray()) {
-                    if(ch == '\n') {
-                        break;
-                    } else value.append(ch);
+                if(stage == KEY) {
+                    if(str.trim().startsWith("#")) {
+                        StringBuilder comment = new StringBuilder();
+                        for(char ch : str.toCharArray()) {
+                            if(ch == '\n') break;
+                            comment.append(ch);
+                        }
+                        return new ScannerContextResponse(true, comment.toString(), COMMENT);
+                    } else {
+                        StringBuilder key = new StringBuilder();
+                        for(char ch : str.toCharArray()) {
+                            if(ch == '=') {
+                                stage = SEPARATOR;
+                                break;
+                            } else if(ch == '\n') {
+                                break;
+                            } else key.append(ch);
+                        }
+                        return new ScannerContextResponse(true, key.toString(), KEY);
+                    }
+                } else if(stage == SEPARATOR) {
+                    stage = VALUE;
+                    return new ScannerContextResponse(true, "=", SEPARATOR);
+                } else if(stage == VALUE) {
+                    StringBuilder value = new StringBuilder();
+                    for(char ch : str.toCharArray()) {
+                        if(ch == '\n') {
+                            break;
+                        } else value.append(ch);
+                    }
+                    stage = KEY;
+                    return new ScannerContextResponse(true, value.toString(), VALUE);
                 }
-                stage = KEY;
-                return new ScannerContextResponse(true, value.toString(), VALUE);
+                return null;
             }
-            return null;
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Arrays.asList(KEY, SEPARATOR, VALUE, COMMENT);
+            }
         };
 
         ArrayList<LexerContext> propertiesContexts = new ArrayList<>();

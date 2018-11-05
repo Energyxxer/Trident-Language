@@ -180,7 +180,7 @@ public class StandardExplorerItem extends ExplorerElement {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if(e.getButton() == MouseEvent.BUTTON1 && !e.isControlDown() && e.getClickCount() % 2 == 0 && (e.getX() < x || e.getX() > x + master.getRowHeight())) {
+        if(e.getButton() == MouseEvent.BUTTON1 && !e.isControlDown() && e.getClickCount() % 2 == 0 && (!token.isExpandable() || e.getX() < x || e.getX() > x + master.getRowHeight())) {
             this.open();
         }
     }
@@ -189,7 +189,7 @@ public class StandardExplorerItem extends ExplorerElement {
     public void mousePressed(MouseEvent e) {
         if(e.getButton() == MouseEvent.BUTTON1) {
             //x = indentation * master.getIndentPerLevel() + master.getInitialIndent();
-            if(token.isExpandable() && e.getX() >= x && e.getX() <= x + 20) {
+            if(token.isExpandable() && e.getX() >= x && e.getX() <= x + master.getRowHeight()) {
                 if(expanded) collapse();
                 else expand(new ArrayList<>());
             } else {

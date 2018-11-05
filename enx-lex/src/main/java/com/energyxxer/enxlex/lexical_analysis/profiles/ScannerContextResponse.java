@@ -50,7 +50,7 @@ public class ScannerContextResponse {
 
     /**
      * Creates a response from the given success value. This should <b>only</b> be used
-     * when the analysis wasn't successful, otherwise the Lexer might throw a NullPointerException.
+     * when the analysis wasn't successful, otherwise the EagerLexer might throw a NullPointerException.
      *
      * @param success Whether the analysis was successful. For this constructor, it should only be false.
      * */

@@ -1,19 +1,18 @@
 package com.energyxxer.trident.ui.editor;
 
-import com.energyxxer.trident.main.window.TridentWindow;
-import com.energyxxer.trident.ui.editor.behavior.AdvancedEditor;
-import com.energyxxer.trident.ui.editor.behavior.editmanager.CharacterDriftHandler;
-import com.energyxxer.trident.ui.editor.inspector.Inspector;
-import com.energyxxer.trident.global.temp.Lang;
+import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
-import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
-import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.util.logger.Debug;
+import com.energyxxer.trident.global.temp.Lang;
+import com.energyxxer.trident.main.window.TridentWindow;
+import com.energyxxer.trident.main.window.sections.EditArea;
+import com.energyxxer.trident.ui.editor.behavior.AdvancedEditor;
+import com.energyxxer.trident.ui.editor.behavior.editmanager.CharacterDriftHandler;
+import com.energyxxer.trident.ui.editor.inspector.Inspector;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -52,6 +51,8 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
         Timer timer = new Timer(20, this);
         timer.start();
 
+        this.setTransferHandler(EditArea.dragToOpenFileHandler);
+
         //this.setOpaque(false);
     }
 
@@ -70,24 +71,21 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
         String text = getText();
 
         Lang lang = Lang.getLangForFile(parent.file.getPath());
-        LexerProfile fileProfile = lang != null ? lang.createProfile() : null;
-        Lexer sc = new Lexer(parent.file, text, new TokenStream(true), fileProfile);
-        ArrayList<Notice> newNotices = new ArrayList<>(sc.getNotices());
 
-        boolean doParsing = lang != null && lang.getParserProduction() != null;
+        Lexer lex = lang != null ? lang.createLexer(parent.file, text) : null;
+        if(lex == null) return;
 
-        ArrayList<Token> tokens = new ArrayList<>(sc.getStream().tokens);
+        ArrayList<Notice> newNotices = new ArrayList<>(lex.getNotices());
+
+        boolean doParsing = lang.getParserProduction() != null;
+
+        ArrayList<Token> tokens = new ArrayList<>(lex.getStream().tokens);
         tokens.remove(0);
 
         TokenMatchResponse match = null;
 
-        if(doParsing) {
-            ArrayList<Token> f = new ArrayList<>(tokens);
-            f.removeIf(t -> !t.isSignificant());
-
-            match = lang.getParserProduction().match(f);
-
-            match.pattern.validate();
+        if(doParsing && lex instanceof LazyLexer) {
+            match = ((LazyLexer) lex).getMatchResponse();
         }
 
         for(Token token : tokens) {
@@ -137,7 +135,7 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
         }
 
         if(this.inspector != null) {
-            this.inspector.inspect(sc.getStream());
+            this.inspector.inspect(lex.getStream());
             this.inspector.insertNotices(newNotices);
         }
     }

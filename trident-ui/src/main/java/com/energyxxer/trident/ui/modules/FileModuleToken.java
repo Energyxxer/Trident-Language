@@ -1,11 +1,18 @@
 package com.energyxxer.trident.ui.modules;
 
+import com.energyxxer.trident.files.FileType;
 import com.energyxxer.trident.global.Commons;
+import com.energyxxer.trident.global.FileManager;
+import com.energyxxer.trident.global.temp.projects.Project;
+import com.energyxxer.trident.global.temp.projects.ProjectManager;
 import com.energyxxer.trident.ui.Tab;
 import com.energyxxer.trident.ui.audio.AudioPlayer;
+import com.energyxxer.trident.ui.common.MenuItems;
 import com.energyxxer.trident.ui.display.DisplayModule;
 import com.energyxxer.trident.ui.editor.TridentEditorModule;
 import com.energyxxer.trident.ui.imageviewer.ImageViewer;
+import com.energyxxer.trident.ui.styledcomponents.StyledMenu;
+import com.energyxxer.trident.ui.styledcomponents.StyledMenuItem;
 import com.energyxxer.trident.ui.styledcomponents.StyledPopupMenu;
 import com.energyxxer.util.logger.Debug;
 
@@ -17,6 +24,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class FileModuleToken implements ModuleToken {
+    public static ModuleTokenFactory<FileModuleToken> factory = str -> {
+        if(!str.startsWith("file://")) return null;
+        String path = str.substring("file://".length());
+        File file = new File(path);
+        return file.exists() ? new FileModuleToken(file) : null;
+    };
+
     private final File file;
 
     public FileModuleToken(File file) {
@@ -122,7 +136,199 @@ public class FileModuleToken implements ModuleToken {
 
     @Override
     public StyledPopupMenu generateMenu() {
-        return null;
+        StyledPopupMenu menu = new StyledPopupMenu();
+
+        String path = getPath();
+
+        String newPath;
+        if(file.isDirectory()) newPath = path;
+        else newPath = file.getParent();
+
+        //List<ModuleToken> selectedTokens = master.getSelectedTokens();
+        ArrayList<FileModuleToken> selectedFiles = new ArrayList<>();
+        selectedFiles.add(this);
+        /*for(ModuleToken token : selectedTokens) {
+            if(token instanceof FileModuleToken) selectedFiles.add((FileModuleToken) token);
+        }*/
+
+        {
+            StyledMenu newMenu = new StyledMenu("New");
+
+            menu.add(newMenu);
+
+            // --------------------------------------------------
+
+            Project project = ProjectManager.getAssociatedProject(file);
+
+            String projectDir = (project != null) ? project.getDirectory().getPath() + File.separator : null;
+
+            int lastGroup = 0;
+
+            for(FileType type : FileType.values()) {
+                if(type.canCreate(projectDir, path + File.separator)) {
+                    if(type.group != lastGroup) {
+                        newMenu.addSeparator();
+                        lastGroup = type.group;
+                    }
+                    newMenu.add(type.createMenuItem(newPath));
+                }
+            }
+            /*
+            if((projectDir != null && (path + File.separator).startsWith(projectDir + "src" + File.separator)) || (path + File.separator).startsWith(Resources.nativeLib.getDir().getPath() + File.separator)) {
+
+                StyledMenuItem entityItem = new StyledMenuItem("Entity", "entity");
+                entityItem.addActionListener(e -> FileType.ENTITY.create(newPath));
+
+                newMenu.add(entityItem);
+
+                // --------------------------------------------------
+
+                StyledMenuItem itemItem = new StyledMenuItem("Item", "item");
+                itemItem.addActionListener(e -> FileType.ITEM.create(newPath));
+
+                newMenu.add(itemItem);
+
+                // --------------------------------------------------
+
+                StyledMenuItem classItem = new StyledMenuItem("Class", "class");
+                classItem.addActionListener(e -> FileType.CLASS.create(newPath));
+
+                newMenu.add(classItem);
+
+                // --------------------------------------------------
+
+                StyledMenuItem enumItem = new StyledMenuItem("Enum", "enum");
+                enumItem.addActionListener(e -> FileType.ENUM.create(newPath));
+
+                newMenu.add(enumItem);
+
+                // --------------------------------------------------
+
+                StyledMenuItem featureItem = new StyledMenuItem("Feature", "feature");
+                featureItem.addActionListener(e -> FileType.FEATURE.create(newPath));
+
+                newMenu.add(featureItem);
+
+                // --------------------------------------------------
+
+                newMenu.addSeparator();
+
+                // --------------------------------------------------
+
+                StyledMenuItem worldItem = new StyledMenuItem("World", "world");
+                worldItem.addActionListener(e -> FileType.WORLD.create(newPath));
+
+                newMenu.add(worldItem);
+
+                hasElements = true;
+            } else if(projectDir != null && (path + File.separator).startsWith(projectDir + "resources" + File.separator)) {
+
+                // --------------------------------------------------
+
+                StyledMenuItem modelItem = new StyledMenuItem("Model", "model");
+                modelItem.addActionListener(e -> FileType.MODEL.create(newPath));
+
+                newMenu.add(modelItem);
+
+                // --------------------------------------------------
+
+                StyledMenuItem langItem = new StyledMenuItem("Language File", "lang");
+                langItem.addActionListener(e -> FileType.LANG.create(newPath));
+
+                newMenu.add(langItem);
+
+                // --------------------------------------------------
+
+                StyledMenuItem mcmetaItem = new StyledMenuItem("META File", "meta");
+                mcmetaItem.addActionListener(e -> FileType.META.create(newPath));
+
+                newMenu.add(mcmetaItem);
+
+                hasElements = true;
+                // --------------------------------------------------
+            }
+
+            // --------------------------------------------------
+
+            if(hasElements) newMenu.addSeparator();
+
+            // --------------------------------------------------
+
+            StyledMenuItem packageItem = new StyledMenuItem("Package", "package");
+            packageItem.addActionListener(e -> FileType.PACKAGE.create(newPath));
+
+            newMenu.add(packageItem);*/
+
+        }
+        menu.addSeparator();
+
+
+        menu.add(MenuItems.fileItem(MenuItems.FileMenuItem.COPY));
+        menu.add(MenuItems.fileItem(MenuItems.FileMenuItem.PASTE));
+
+        StyledMenuItem deleteItem = MenuItems.fileItem(MenuItems.FileMenuItem.DELETE);
+        deleteItem.setEnabled(selectedFiles.size() >= 1);
+        ArrayList<String> selectedPaths = new ArrayList<>();
+        for(FileModuleToken file : selectedFiles) {
+            selectedPaths.add(file.getPath());
+        }
+        deleteItem.addActionListener(e -> FileManager.delete(selectedPaths));
+        menu.add(deleteItem);
+
+        menu.addSeparator();
+        StyledMenu refactorMenu = new StyledMenu("Refactor");
+        menu.add(refactorMenu);
+
+        StyledMenuItem renameItem = MenuItems.fileItem(MenuItems.FileMenuItem.RENAME);
+        /*renameItem.addActionListener(e -> {
+            if(ExplorerMaster.selectedLabels.size() != 1) return;
+
+            String path = ExplorerMaster.selectedLabels.get(0).parent.path;
+            String name = new File(path).getName();
+            String rawName = StringUtil.stripExtension(name);
+            final String extension = name.replaceAll(rawName, "");
+            final String pathToParent = path.substring(0, path.lastIndexOf(name));
+
+            String newName = StringPrompt.prompt("Rename", "Enter a new name for the file:", rawName,
+                    new StringValidator() {
+                        @Override
+                        public boolean validate(String str) {
+                            return str.trim().length() > 0 && FileUtil.validateFilename(str)
+                                    && !new File(pathToParent + str + extension).exists();
+                        }
+                    });
+
+            if (newName != null) {
+                if (ProjectManager.renameFile(new File(path), newName)) {
+                    com.energyxxer.trident.ui.projectExplorer.ProjectExplorerItem parentItem = ExplorerMaster.selectedLabels.get(0).parent;
+                    parentItem.path = pathToParent + newName + extension;
+                    if (parentItem.parent != null) {
+                        parentItem.parent.collapse();
+                        parentItem.parent.refresh();
+                    } else {
+                        TridentWindow.projectExplorer.refresh();
+                    }
+
+                    TabManager.renameTab(path, pathToParent + newName + extension);
+
+                } else {
+                    JOptionPane.showMessageDialog(null,
+                            "<html>The action can't be completed because the folder or file is open in another program.<br>Close the folder and try again.</html>",
+                            "An error occurred.", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });*/
+        refactorMenu.add(renameItem);
+        refactorMenu.add(MenuItems.fileItem(MenuItems.FileMenuItem.MOVE));
+
+        menu.addSeparator();
+
+        StyledMenuItem openInSystemItem = new StyledMenuItem("Show in System Explorer", "explorer");
+        openInSystemItem.addActionListener(e -> Commons.showInExplorer(path));
+
+        menu.add(openInSystemItem);
+
+        return menu;
     }
 
     public File getFile() {
@@ -135,7 +341,7 @@ public class FileModuleToken implements ModuleToken {
 
     @Override
     public String getIdentifier() {
-        return getPath();
+        return "file://" + getPath();
     }
 
     @Override

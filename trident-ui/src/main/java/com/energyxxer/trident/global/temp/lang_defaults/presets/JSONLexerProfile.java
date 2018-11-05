@@ -8,8 +8,7 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.util.StringLocation;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,37 +41,42 @@ public class JSONLexerProfile extends LexerProfile {
 
             @Override
             public ScannerContextResponse analyze(String str) {
-                if(str.length() <= 0) return new ScannerContextResponse(false);
+                if (str.length() <= 0) return new ScannerContextResponse(false);
                 char startingCharacter = str.charAt(0);
 
-                if(delimiters.contains(Character.toString(startingCharacter))) {
+                if (delimiters.contains(Character.toString(startingCharacter))) {
 
                     StringBuilder token = new StringBuilder(Character.toString(startingCharacter));
 
                     HashMap<TokenSection, String> escapedChars = new HashMap<>();
 
-                    for(int i = 1; i < str.length(); i++) {
+                    for (int i = 1; i < str.length(); i++) {
                         char c = str.charAt(i);
 
-                        if(c == '\n') {
-                            ScannerContextResponse response = new ScannerContextResponse(true, token.toString(), new StringLocation(i,0,i), STRING_LITERAL, escapedChars);
+                        if (c == '\n') {
+                            ScannerContextResponse response = new ScannerContextResponse(true, token.toString(), new StringLocation(i, 0, i), STRING_LITERAL, escapedChars);
                             response.setError("Illegal line end in string literal", i, 1);
                             return response;
                         }
                         token.append(c);
-                        if(c == '\\') {
-                            token.append(str.charAt(i+1));
-                            escapedChars.put(new TokenSection(i,2), "string_literal.escape");
+                        if (c == '\\') {
+                            token.append(str.charAt(i + 1));
+                            escapedChars.put(new TokenSection(i, 2), "string_literal.escape");
                             i++;
-                        } else if(c == startingCharacter) {
+                        } else if (c == startingCharacter) {
                             return new ScannerContextResponse(true, token.toString(), STRING_LITERAL, escapedChars);
                         }
                     }
                     //Unexpected end of input
                     ScannerContextResponse response = new ScannerContextResponse(true, token.toString(), new StringLocation(str.length(), 0, str.length()), STRING_LITERAL, escapedChars);
-                    response.setError("Unexpected end of input", str.length()-1, 1);
+                    response.setError("Unexpected end of input", str.length() - 1, 1);
                     return response;
                 } else return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(STRING_LITERAL);
             }
         };
         //Numbers
@@ -84,19 +88,32 @@ public class JSONLexerProfile extends LexerProfile {
             public ScannerContextResponse analyze(String str) {
                 Matcher matcher = regex.matcher(str);
 
-                if(matcher.lookingAt()) {
+                if (matcher.lookingAt()) {
                     int length = matcher.end();
-                    return new ScannerContextResponse(true, str.substring(0,length), NUMBER);
+                    return new ScannerContextResponse(true, str.substring(0, length), NUMBER);
                 } else return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(NUMBER);
             }
         };
         //Braces
-        LexerContext braceContext = (str) -> {
-            if(str.length() <= 0) return new ScannerContextResponse(false);
-            if("[]{}".contains(str.substring(0,1))) {
-                return new ScannerContextResponse(true, str.substring(0,1), BRACE);
+        LexerContext braceContext = new LexerContext() {
+            @Override
+            public ScannerContextResponse analyze(String str) {
+                if (str.length() <= 0) return new ScannerContextResponse(false);
+                if ("[]{}".contains(str.substring(0, 1))) {
+                    return new ScannerContextResponse(true, str.substring(0, 1), BRACE);
+                }
+                return new ScannerContextResponse(false);
             }
-            return new ScannerContextResponse(false);
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(BRACE);
+            }
         };
 
         //Misc
@@ -114,6 +131,11 @@ public class JSONLexerProfile extends LexerProfile {
                     }
                 }
                 return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Arrays.asList(types);
             }
         };
 

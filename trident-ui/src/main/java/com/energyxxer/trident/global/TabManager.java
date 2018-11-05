@@ -190,9 +190,8 @@ public class TabManager {
 		if(savedTabs != null) {
 			String[] identifiers = savedTabs.split(Matcher.quoteReplacement(File.pathSeparator));
 			for(String identifier : identifiers) {
-				/*if(new File(path).exists()) {
-					openTab(path);
-				}*/
+				ModuleToken created = ModuleToken.Static.createFromIdentifier(identifier);
+				if(created != null) openTab(created);
 			}
 		}
 	}

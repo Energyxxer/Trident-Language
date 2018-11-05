@@ -1,15 +1,21 @@
 package com.energyxxer.trident.main.window.sections;
 
+import com.energyxxer.trident.global.Commons;
 import com.energyxxer.trident.global.TabManager;
 import com.energyxxer.trident.main.window.TridentWindow;
 import com.energyxxer.trident.ui.ToolbarButton;
+import com.energyxxer.trident.ui.modules.FileModuleToken;
 import com.energyxxer.trident.ui.scrollbar.InvisibleScrollPaneLayout;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
+import com.energyxxer.util.logger.Debug;
 import com.energyxxer.xswing.Padding;
 import com.energyxxer.xswing.hints.Hint;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.io.File;
 
 /**
  * Created by User on 12/15/2016.
@@ -21,6 +27,49 @@ public class EditArea extends JPanel {
     private ThemeListenerManager tlm = new ThemeListenerManager();
 
     private JComponent content = null;
+
+    public static final TransferHandler dragToOpenFileHandler = new TransferHandler("filepath") {
+        @Override
+        public Image getDragImage() {
+            Debug.log("Retrieving drag image");
+            return Commons.getIcon("file");
+        }
+
+        public boolean canImport(TransferSupport support) {
+
+            if (!support.isDrop()) {
+                return false;
+            }
+
+            return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
+        }
+
+        @SuppressWarnings("unchecked")
+        public boolean importData(TransferSupport support) {
+
+            if (!canImport(support)) {
+                return false;
+            }
+
+            Transferable transferable = support.getTransferable();
+            java.util.List<File> files;
+
+            try {
+                files = (java.util.List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+            } catch (Exception e) {
+                Debug.log(e, Debug.MessageType.ERROR);
+                return false;
+            }
+
+            for(File file : files) {
+                if(file.isFile() && file.exists()) {
+                    TabManager.openTab(new FileModuleToken(file));
+                }
+            }
+
+            return true;
+        }
+    };
 
     {
         this.setLayout(new BorderLayout());
@@ -67,6 +116,9 @@ public class EditArea extends JPanel {
         tabListHolder.add(tabSP, BorderLayout.CENTER);
 
         this.setContent(TridentWindow.welcomePane);
+
+        this.setTransferHandler(dragToOpenFileHandler);
+
     }
 
     public void setContent(JComponent content) {

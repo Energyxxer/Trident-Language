@@ -9,10 +9,11 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.util.StringLocation;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.energyxxer.trident.global.temp.lang_defaults.presets.mcfunction.MCFunction.*;
 
 public class MCFunctionLexerProfile extends LexerProfile {
 
@@ -29,7 +30,7 @@ public class MCFunctionLexerProfile extends LexerProfile {
                 if(str.length() < 2) return new ScannerContextResponse(false);
                 if(!str.startsWith("@")) return new ScannerContextResponse(false);
                 if(headers.contains(str.charAt(1) + "")) {
-                    return new ScannerContextResponse(true, str.substring(0,2), MCFunction.SELECTOR_HEADER);
+                    return new ScannerContextResponse(true, str.substring(0,2), SELECTOR_HEADER);
                 }
                 return new ScannerContextResponse(false);
             }
@@ -37,6 +38,11 @@ public class MCFunctionLexerProfile extends LexerProfile {
             @Override
             public ContextCondition getCondition() {
                 return ContextCondition.LEADING_WHITESPACE;
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(SELECTOR_HEADER);
             }
         });
         
@@ -87,6 +93,11 @@ public class MCFunctionLexerProfile extends LexerProfile {
                     return response;
                 } else return new ScannerContextResponse(false);
             }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(STRING_LITERAL);
+            }
         });
 
         contexts.add(new LexerContext() {
@@ -101,6 +112,11 @@ public class MCFunctionLexerProfile extends LexerProfile {
             @Override
             public ContextCondition getCondition() {
                 return ContextCondition.LINE_START;
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(COMMENT);
             }
         });
         
@@ -118,6 +134,11 @@ public class MCFunctionLexerProfile extends LexerProfile {
                     }
                 }
                 return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Arrays.asList(types);
             }
         });
         
@@ -138,6 +159,11 @@ public class MCFunctionLexerProfile extends LexerProfile {
             @Override
             public ContextCondition getCondition() {
                 return ContextCondition.LEADING_WHITESPACE;
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Arrays.asList(TYPED_NUMBER, INTEGER_NUMBER, REAL_NUMBER);
             }
         });
         

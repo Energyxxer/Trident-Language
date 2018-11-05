@@ -1,14 +1,21 @@
 package com.energyxxer.trident.global.temp;
 
+import com.energyxxer.enxlex.lexical_analysis.EagerLexer;
+import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
+import com.energyxxer.enxlex.lexical_analysis.Lexer;
+import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
+import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
+import com.energyxxer.enxlex.pattern_matching.matching.GeneralTokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenPatternMatch;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
+import com.energyxxer.trident.compiler.lexer.TridentProductions;
 import com.energyxxer.trident.global.temp.lang_defaults.parsing.MCFunctionProductions;
 import com.energyxxer.trident.global.temp.lang_defaults.presets.JSONLexerProfile;
 import com.energyxxer.trident.global.temp.lang_defaults.presets.MCFunctionLexerProfile;
 import com.energyxxer.trident.global.temp.lang_defaults.presets.PropertiesLexerProfile;
-import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
-import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.util.Factory;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,17 +26,17 @@ public enum Lang {
     JSON(JSONLexerProfile::new, "json", "mcmeta"),
     PROPERTIES(PropertiesLexerProfile::new, "properties", "lang", "project"),
     MCFUNCTION(MCFunctionLexerProfile::new, MCFunctionProductions.FILE, "mcfunction"),
-    TRIDENT(TridentLexerProfile::new, "tdn");
+    TRIDENT(TridentLexerProfile::new, TridentProductions.FILE, "tdn");
 
     Factory<LexerProfile> factory;
-    TokenPatternMatch parserProduction;
+    GeneralTokenPatternMatch parserProduction;
     List<String> extensions;
 
     Lang(Factory<LexerProfile> factory, String... extensions) {
         this(factory, null, extensions);
     }
 
-    Lang(Factory<LexerProfile> factory, TokenPatternMatch parserProduction, String... extensions) {
+    Lang(Factory<LexerProfile> factory, GeneralTokenPatternMatch parserProduction, String... extensions) {
         this.factory = factory;
         this.parserProduction = parserProduction;
         this.extensions = Arrays.asList(extensions);
@@ -43,7 +50,7 @@ public enum Lang {
         return factory.createInstance();
     }
 
-    public TokenPatternMatch getParserProduction() {
+    public GeneralTokenPatternMatch getParserProduction() {
         return parserProduction;
     }
 
@@ -56,5 +63,21 @@ public enum Lang {
             }
         }
         return null;
+    }
+
+    public boolean isLazy() {
+        return parserProduction instanceof LazyTokenPatternMatch;
+    }
+
+    public Lexer createLexer(File file, String text) {
+        if(isLazy()) {
+            LazyLexer lexer = new LazyLexer(new TokenStream(true), (LazyTokenPatternMatch) parserProduction);
+            lexer.tokenizeParse(file, text, createProfile());
+            return lexer;
+        } else {
+            EagerLexer lexer = new EagerLexer(new TokenStream(true));
+            lexer.tokenize(file, text, createProfile());
+            return lexer;
+        }
     }
 }

@@ -84,7 +84,7 @@ public class TokenListMatch extends TokenPatternMatch {
 		boolean hasMatched = true;
 		Token faultyToken = null;
 		int length = 0;
-		TokenPatternMatch expected = null;
+		GeneralTokenPatternMatch expected = null;
 		TokenList list = new TokenList().setName(this.name).addTags(this.tags);
 
 		Stack tempStack = st.clone();

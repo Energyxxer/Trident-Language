@@ -60,7 +60,7 @@ public class TokenGroupMatch extends TokenPatternMatch {
 		boolean hasMatched = true;
 		Token faultyToken = null;
 		int length = 0;
-		TokenPatternMatch expected = null;
+		GeneralTokenPatternMatch expected = null;
 		itemLoop: for (int i = 0; i < items.size(); i++) {
 
 			if (currentToken >= tokens.size() && !items.get(i).optional) {
