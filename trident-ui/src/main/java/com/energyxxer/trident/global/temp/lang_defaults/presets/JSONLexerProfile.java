@@ -40,7 +40,7 @@ public class JSONLexerProfile extends LexerProfile {
             String delimiters = "\"'";
 
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if (str.length() <= 0) return new ScannerContextResponse(false);
                 char startingCharacter = str.charAt(0);
 
@@ -85,7 +85,7 @@ public class JSONLexerProfile extends LexerProfile {
             private Pattern regex = Pattern.compile("(-?\\d+(\\.\\d+)?)");
 
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 Matcher matcher = regex.matcher(str);
 
                 if (matcher.lookingAt()) {
@@ -102,7 +102,7 @@ public class JSONLexerProfile extends LexerProfile {
         //Braces
         LexerContext braceContext = new LexerContext() {
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if (str.length() <= 0) return new ScannerContextResponse(false);
                 if ("[]{}".contains(str.substring(0, 1))) {
                     return new ScannerContextResponse(true, str.substring(0, 1), BRACE);
@@ -123,7 +123,7 @@ public class JSONLexerProfile extends LexerProfile {
             TokenType[] types = { COMMA, COLON };
 
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if(str.length() <= 0) return new ScannerContextResponse(false);
                 for(int i = 0; i < patterns.length; i++) {
                     if(str.startsWith(patterns[i])) {

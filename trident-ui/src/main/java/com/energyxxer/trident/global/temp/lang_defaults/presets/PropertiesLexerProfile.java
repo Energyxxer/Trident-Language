@@ -29,7 +29,7 @@ public class PropertiesLexerProfile extends LexerProfile {
     public PropertiesLexerProfile() {
         LexerContext propertyContext = new LexerContext() {
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if(str.trim().length() <= 0) return new ScannerContextResponse(false);
                 if(str.startsWith("\n")) {
                     stage = KEY;

@@ -20,7 +20,7 @@ public class TridentLexerProfile extends LexerProfile {
     public TridentLexerProfile() {
         contexts.add(new LexerContext() {
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if(!str.startsWith("#")) return new ScannerContextResponse(false);
                 if(str.startsWith("#:")) return new ScannerContextResponse(true, str.substring(0, 2), DIRECTIVE_HEADER);
                 if(str.contains("\n")) {
@@ -29,7 +29,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
 
             @Override
-            public ScannerContextResponse analyzeExpectingType(String str, TokenType type) {
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
                 if(!str.startsWith("#")) return new ScannerContextResponse(false);
                 if(str.startsWith("#:")) {
                     if(type == DIRECTIVE_HEADER) {
@@ -59,7 +59,7 @@ public class TridentLexerProfile extends LexerProfile {
             private Pattern regex = Pattern.compile("([+-]?\\d+(\\.\\d+)?[bdfsL]?)");
 
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 Matcher matcher = regex.matcher(str);
 
                 if(matcher.lookingAt()) {
@@ -69,7 +69,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
 
             @Override
-            public ScannerContextResponse analyzeExpectingType(String str, TokenType type) {
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
                 Matcher matcher = regex.matcher(str);
 
                 if(matcher.lookingAt()) {
@@ -102,7 +102,7 @@ public class TridentLexerProfile extends LexerProfile {
             TokenType[] types = { TridentTokens.DOT, TridentTokens.COMMA, TridentTokens.COLON, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.TILDE, TridentTokens.CARET };
 
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if(str.length() <= 0) return new ScannerContextResponse(false);
                 for(int i = 0; i < patterns.length; i++) {
                     if(str.startsWith(patterns[i])) {
@@ -123,7 +123,7 @@ public class TridentLexerProfile extends LexerProfile {
             String header = "/";
 
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if(str.length() <= 0) return new ScannerContextResponse(false);
                 if(!str.startsWith(header)) return new ScannerContextResponse(false);
 

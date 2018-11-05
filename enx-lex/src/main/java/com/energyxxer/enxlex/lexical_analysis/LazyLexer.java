@@ -91,7 +91,7 @@ public class LazyLexer extends Lexer {
     public Token retrieveTokenOfType(TokenType type) {
         for (LexerContext context : profile.contexts) {
             if (context.getHandledTypes().contains(type)) {
-                ScannerContextResponse response = context.analyzeExpectingType(getLookingAtTrimmed(), type);
+                ScannerContextResponse response = context.analyzeExpectingType(getLookingAtTrimmed(), type, profile);
                 /*if (response.errorMessage != null) {
                     notices.add(new Notice(NoticeType.ERROR, response.errorMessage, "\b" + file.getAbsolutePath() + "\b" + (getLookingIndexTrimmed() + response.errorIndex) + "\b" + response.errorLength));
                 }*/
@@ -130,7 +130,7 @@ public class LazyLexer extends Lexer {
 
     public Token retrieveAnyToken() {
         for (LexerContext context : profile.contexts) {
-            ScannerContextResponse response = context.analyze(getLookingAtTrimmed());
+            ScannerContextResponse response = context.analyze(getLookingAtTrimmed(), profile);
             if (response.errorMessage != null) {
                 notices.add(new Notice(NoticeType.ERROR, response.errorMessage, "\b" + file.getAbsolutePath() + "\b" + (getLookingIndexTrimmed() + response.errorIndex) + "\b" + response.errorLength));
             }

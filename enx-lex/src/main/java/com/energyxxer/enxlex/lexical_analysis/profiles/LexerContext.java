@@ -14,12 +14,13 @@ public interface LexerContext {
      *
      * @param str The substring to analyze.
      *
+     * @param profile
      * @return A semanticContext response object containing information about the analysis.
      * */
-    ScannerContextResponse analyze(String str);
+    ScannerContextResponse analyze(String str, LexerProfile profile);
 
-    default ScannerContextResponse analyzeExpectingType(String str, TokenType type) {
-        return analyze(str);
+    default ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+        return analyze(str, profile);
     }
 
     default ContextCondition getCondition() {

@@ -15,15 +15,15 @@ public class StringTypeMatchLexerContext implements LexerContext {
     }
 
     @Override
-    public ScannerContextResponse analyze(String str) {
+    public ScannerContextResponse analyze(String str, LexerProfile profile) {
         for(int i = 0; i < strings.length; i++) {
-            if(str.startsWith(strings[i])) return new ScannerContextResponse(true, strings[i], types[i]);
+            if(str.startsWith(strings[i]) && (str.length() == strings[i].length() || !(profile.canMerge(str.charAt(strings[i].length()-1), str.charAt(strings[i].length()))))) return new ScannerContextResponse(true, strings[i], types[i]);
         }
         return new ScannerContextResponse(false);
     }
 
     @Override
-    public ScannerContextResponse analyzeExpectingType(String str, TokenType type) {
+    public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
         for(int i = 0; i < strings.length; i++) {
             if(type == types[i] && str.startsWith(strings[i])) {
                 return new ScannerContextResponse(true, strings[i], types[i]);

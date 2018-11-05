@@ -26,7 +26,7 @@ public class MCFunctionLexerProfile extends LexerProfile {
             private String headers = "pears";
 
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if(str.length() < 2) return new ScannerContextResponse(false);
                 if(!str.startsWith("@")) return new ScannerContextResponse(false);
                 if(headers.contains(str.charAt(1) + "")) {
@@ -51,7 +51,7 @@ public class MCFunctionLexerProfile extends LexerProfile {
             String delimiters = "\"";
 
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if(str.length() <= 0) return new ScannerContextResponse(false);
                 char startingCharacter = str.charAt(0);
 
@@ -102,7 +102,7 @@ public class MCFunctionLexerProfile extends LexerProfile {
 
         contexts.add(new LexerContext() {
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if(!str.startsWith("#")) return new ScannerContextResponse(false);
                 if(str.contains("\n")) {
                     return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), MCFunction.COMMENT);
@@ -126,7 +126,7 @@ public class MCFunctionLexerProfile extends LexerProfile {
             TokenType[] types = { MCFunction.DOT, MCFunction.COMMA, MCFunction.COLON, MCFunction.EQUALS, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.BRACE, MCFunction.TILDE, MCFunction.CARET };
 
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if(str.length() <= 0) return new ScannerContextResponse(false);
                 for(int i = 0; i < patterns.length; i++) {
                     if(str.startsWith(patterns[i])) {
@@ -147,7 +147,7 @@ public class MCFunctionLexerProfile extends LexerProfile {
             private Pattern regex = Pattern.compile("([+-]?\\d+(\\.\\d+)?[bdfsL]?)");
 
             @Override
-            public ScannerContextResponse analyze(String str) {
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 Matcher matcher = regex.matcher(str);
 
                 if(matcher.lookingAt()) {

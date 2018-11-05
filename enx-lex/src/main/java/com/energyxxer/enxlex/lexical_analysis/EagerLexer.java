@@ -104,7 +104,7 @@ public class EagerLexer extends Lexer {
 			for(LexerContext ctx : profile.contexts) {
 				if(ctx.getCondition() == LexerContext.ContextCondition.LEADING_WHITESPACE && token.length() > 0) continue;
 				if(ctx.getCondition() == LexerContext.ContextCondition.LINE_START && column != 0) continue;
-				ScannerContextResponse response = ctx.analyze(sub);
+				ScannerContextResponse response = ctx.analyze(sub, profile);
 				if(response.errorMessage != null) {
 					notices.add(new Notice(NoticeType.ERROR, response.errorMessage, "\b" + file.getAbsolutePath() + "\b" + (i + response.errorIndex) + "\b" + response.errorLength));
 				}
