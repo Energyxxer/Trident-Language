@@ -5,7 +5,6 @@ import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.util.StringLocation;
-import com.energyxxer.util.logger.Debug;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,41 +18,6 @@ import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 public class TridentLexerProfile extends LexerProfile {
 
     public TridentLexerProfile() {
-        contexts.add(new LexerContext() {
-            @Override
-            public ScannerContextResponse analyze(String str, LexerProfile profile) {
-                if(!str.startsWith("#")) return new ScannerContextResponse(false);
-                if(str.startsWith("#:")) return new ScannerContextResponse(true, str.substring(0, 2), DIRECTIVE_HEADER);
-                if(str.contains("\n")) {
-                    return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), COMMENT);
-                } else return new ScannerContextResponse(true, str, COMMENT);
-            }
-
-            @Override
-            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
-                if(!str.startsWith("#")) return new ScannerContextResponse(false);
-                if(str.startsWith("#:")) {
-                    if(type == DIRECTIVE_HEADER) {
-                        return new ScannerContextResponse(true, str.substring(0, 2), DIRECTIVE_HEADER);
-                    } else {
-                        return new ScannerContextResponse(false);
-                    }
-                }
-                if(str.contains("\n")) {
-                    return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), COMMENT);
-                } else return new ScannerContextResponse(true, str, COMMENT);
-            }
-
-            @Override
-            public ContextCondition getCondition() {
-                return ContextCondition.LINE_START;
-            }
-
-            @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Arrays.asList(COMMENT, DIRECTIVE_HEADER);
-            }
-        });
 
         contexts.add(new LexerContext() {
 
@@ -78,7 +42,8 @@ public class TridentLexerProfile extends LexerProfile {
 
                     TokenType obtainedType = Character.isLetter(str.charAt(length-1)) ? TridentTokens.TYPED_NUMBER : ((str.substring(0, length).contains(".")) ? TridentTokens.REAL_NUMBER : TridentTokens.INTEGER_NUMBER);
 
-                    if(type == REAL_NUMBER && obtainedType == INTEGER_NUMBER) obtainedType = REAL_NUMBER;
+                    if(type == TYPED_NUMBER) obtainedType = type;
+                    else if(type == REAL_NUMBER && obtainedType == INTEGER_NUMBER) obtainedType = REAL_NUMBER;
 
                     if(type == obtainedType) {
                         return new ScannerContextResponse(true, str.substring(0,length), type);
@@ -94,6 +59,26 @@ public class TridentLexerProfile extends LexerProfile {
             @Override
             public Collection<TokenType> getHandledTypes() {
                 return Arrays.asList(TridentTokens.TYPED_NUMBER, TridentTokens.INTEGER_NUMBER, TridentTokens.REAL_NUMBER);
+            }
+        });
+
+        contexts.add(new LexerContext() {
+
+            private Pattern regex = Pattern.compile("(\\d+(\\.\\d+)?[tsd]?)");
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                Matcher matcher = regex.matcher(str);
+
+                if(matcher.lookingAt()) {
+                    int length = matcher.end();
+                    return new ScannerContextResponse(true, str.substring(0,length), TridentTokens.TIME);
+                } else return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(TIME);
             }
         });
 
@@ -118,9 +103,11 @@ public class TridentLexerProfile extends LexerProfile {
                 return Arrays.asList(types);
             }
         });*/
-        contexts.add(new StringTypeMatchLexerContext(new String[] { ".", ",", ":", "=", "(", ")", "[", "]", "{", "}", "~", "^", "!" },
-                new TokenType[] { TridentTokens.DOT, TridentTokens.COMMA, TridentTokens.COLON, TridentTokens.EQUALS, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.TILDE, TridentTokens.CARET, TridentTokens.NOT }
+        contexts.add(new StringTypeMatchLexerContext(new String[] { ".", ",", ":", "=", "(", ")", "[", "]", "{", "}", "~", "^", "!", "#" },
+                new TokenType[] { DOT, COMMA, COLON, EQUALS, BRACE, BRACE, BRACE, BRACE, BRACE, BRACE, TILDE, CARET, NOT, HASH }
                 ));
+
+        contexts.add(new StringMatchLexerContext(TridentTokens.SCOREBOARD_OPERATOR, "%=", "*=", "+=", "-=", "/=", "<", "=", ">", "><"));
 
         contexts.add(new LexerContext() {
             @Override
@@ -130,7 +117,6 @@ public class TridentLexerProfile extends LexerProfile {
 
             @Override
             public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
-                Debug.log("Checking for glue in '" + str.substring(0, 5) + "'");
                 if(str.length() > 0 && Character.isWhitespace(str.charAt(0))) return new ScannerContextResponse(false);
                 return new ScannerContextResponse(true, "", TridentTokens.GLUE);
             }
@@ -138,6 +124,33 @@ public class TridentLexerProfile extends LexerProfile {
             @Override
             public Collection<TokenType> getHandledTypes() {
                 return Collections.singletonList(GLUE);
+            }
+
+            @Override
+            public boolean ignoreLeadingWhitespace() {
+                return false;
+            }
+        });
+
+        contexts.add(new LexerContext() {
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                for(int i = 0; i < str.length(); i++) {
+                    char c = str.charAt(i);
+                    if(c == '\n') return new ScannerContextResponse(false);
+                    if(!Character.isWhitespace(c)) return new ScannerContextResponse(true, "", TridentTokens.LINE_GLUE);
+                }
+                return new ScannerContextResponse(true, "", TridentTokens.LINE_GLUE);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(LINE_GLUE);
             }
 
             @Override
@@ -265,10 +278,94 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        contexts.add(new LexerContext() {
+
+            private String acceptedNamespaceChars = "[a-z0-9_\\.-]";
+            private String acceptedPathChars = "[a-z0-9_/\\.-]";
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                boolean namespaceFound = false;
+                int nonNamespaceCharIndex = -1;
+                int index = 0;
+                for(char c : str.toCharArray()) {
+                    boolean validNs = (""+c).matches(acceptedNamespaceChars);
+                    boolean validPt = (""+c).matches(acceptedPathChars);
+                    if(!validNs && !validPt) {
+                        if(!namespaceFound && c == ':') {
+                            namespaceFound = true;
+                            if(nonNamespaceCharIndex >= 0) break;
+                        } else break;
+                    } else {
+                        if(!namespaceFound && !validNs) {
+                            if(nonNamespaceCharIndex <= 0) nonNamespaceCharIndex = index;
+                        } else if(namespaceFound && !validPt) {
+                            break;
+                        }
+                    }
+                    if(Character.isWhitespace(c)) break;
+                    index++;
+                }
+                if(nonNamespaceCharIndex >= 0) index = nonNamespaceCharIndex;
+                if(index == 0) return new ScannerContextResponse(false);
+                else return new ScannerContextResponse(true, str.substring(0, index), RESOURCE_LOCATION);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(RESOURCE_LOCATION);
+            }
+        });
+
+        contexts.add(new LexerContext() {
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                if(!str.startsWith("#")) return new ScannerContextResponse(false);
+                if(str.startsWith("#:")) return new ScannerContextResponse(true, str.substring(0, 2), DIRECTIVE_HEADER);
+                if(str.contains("\n")) {
+                    return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), COMMENT);
+                } else return new ScannerContextResponse(true, str, COMMENT);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                if(!str.startsWith("#")) return new ScannerContextResponse(false);
+                if(str.startsWith("#:")) {
+                    if(type == DIRECTIVE_HEADER) {
+                        return new ScannerContextResponse(true, str.substring(0, 2), DIRECTIVE_HEADER);
+                    } else {
+                        return new ScannerContextResponse(false);
+                    }
+                }
+                if(str.contains("\n")) {
+                    return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), COMMENT);
+                } else return new ScannerContextResponse(true, str, COMMENT);
+            }
+
+            @Override
+            public ContextCondition getCondition() {
+                return ContextCondition.LINE_START;
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Arrays.asList(COMMENT, DIRECTIVE_HEADER);
+            }
+        });
+
+        contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_A, "[a-zA-Z0-9._\\-+]"));
+
         contexts.add(new StringMatchLexerContext(DIRECTIVE_ON_KEYWORD, "compile", "load", "tick"));
         contexts.add(new StringMatchLexerContext(KEYWORD, "register", "mark", "do", "while", "within", "using"));
         contexts.add(new StringMatchLexerContext(BOOLEAN, "true", "false"));
-        contexts.add(new StringMatchLexerContext(COMMAND_HEADER, "advancement,bossbar,clear,clone,data,defaultgamemode,difficulty,effect,enchant,experience,execute,fill,function,gamemode,gamerule,give,help,kill,list,locate,me,particle,playsound,recipe,replaceitem,say,scoreboard,seed,setblock,setworldspawn,spawnpoint,spreadplayers,stopsound,summon,tag,team,teleport,tell,tellraw,time,title,tp,trigger,weather,whitelist,worldborder".split(",")));
+        contexts.add(new StringMatchLexerContext(COMMAND_HEADER, "advancement,bossbar,clear,clone,data,defaultgamemode,difficulty,drop,effect,enchant,experience,execute,fill,function,gamemode,gamerule,give,help,kill,list,locate,me,particle,playsound,recipe,replaceitem,say,scoreboard,seed,schedule,setblock,setworldspawn,spawnpoint,spreadplayers,stopsound,summon,tag,team,teleport,tell,tellraw,time,title,tp,trigger,weather,whitelist,worldborder,xp".split(",")));
+
+        contexts.add(new StringMatchLexerContext(SYMBOL, "*"));
 
         contexts.add(new StringMatchLexerContext(SORTING, "nearest", "farthest", "arbitrary", "random"));
         contexts.add(new StringMatchLexerContext(NUMERIC_DATA_TYPE, "byte", "double", "float", "int", "long", "short"));
