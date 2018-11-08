@@ -1,5 +1,6 @@
 package com.energyxxer.trident.global;
 
+import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.global.temp.projects.Project;
 import com.energyxxer.trident.global.temp.projects.ProjectManager;
 import com.energyxxer.trident.main.window.TridentWindow;
@@ -9,6 +10,7 @@ import com.energyxxer.trident.ui.modules.ModuleToken;
 import com.energyxxer.trident.ui.theme.change.ThemeChangeListener;
 import com.energyxxer.util.ImageManager;
 import com.energyxxer.util.logger.Debug;
+import com.energyxxer.util.out.Console;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -72,9 +74,9 @@ public class Commons {
             if(token instanceof FileModuleToken) selectedFiles.add((FileModuleToken) token);
         }
 
-        /*if(selectedTab != null && selectedTab.getLinkedProject() != null) {
-            selected = selectedTab.getLinkedProject();
-        } else */if(selectedFiles.size() > 0) {
+        if(selectedTab.token instanceof FileModuleToken) {
+            selected = ProjectManager.getAssociatedProject(((FileModuleToken) selectedTab.token).getFile());
+        } else if(selectedFiles.size() > 0) {
             selected = ProjectManager.getAssociatedProject(selectedFiles.get(0).getFile());
         }
         return selected;
@@ -82,15 +84,16 @@ public class Commons {
 
     public static void compileActive() {
         if(Commons.getActiveProject() == null) return;
-        /*Compiler c = new Compiler(Commons.getActiveProject());
-        c.setLibrary(Resources.nativeLib);
+        TridentCompiler c = new TridentCompiler(Commons.getActiveProject().getDirectory());
+        //c.setLibrary(Resources.nativeLib);
         c.addProgressListener(TridentWindow::setStatus);
         c.addCompletionListener(() -> {
+            Debug.log("ha");
             TridentWindow.noticeExplorer.setNotices(c.getReport().groupByLabel());
-            if(c.getReport().getTotal() > 0) TridentWindow.noticeBoard.open();
+            if (c.getReport().getTotal() > 0) TridentWindow.noticeBoard.open();
             c.getReport().getWarnings().forEach(Console.warn::println);
             c.getReport().getErrors().forEach(Console.err::println);
         });
-        c.compile();*/
+        c.compile();
     }
 }

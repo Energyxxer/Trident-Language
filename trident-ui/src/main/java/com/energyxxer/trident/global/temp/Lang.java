@@ -7,6 +7,7 @@ import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.matching.GeneralTokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenPatternMatch;
+import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
 import com.energyxxer.trident.global.temp.lang_defaults.parsing.MCFunctionProductions;
@@ -23,8 +24,8 @@ import java.util.List;
  * Created by User on 2/9/2017.
  */
 public enum Lang {
-    JSON(JSONLexerProfile::new, "json", "mcmeta"),
-    PROPERTIES(PropertiesLexerProfile::new, "properties", "lang", "project"),
+    JSON(JSONLexerProfile::new, "json", "mcmeta", TridentCompiler.PROJECT_FILE_NAME.substring(1)),
+    PROPERTIES(PropertiesLexerProfile::new, "properties", "lang"),
     MCFUNCTION(MCFunctionLexerProfile::new, MCFunctionProductions.FILE, "mcfunction"),
     TRIDENT(TridentLexerProfile::new, TridentProductions.FILE, "tdn");
 

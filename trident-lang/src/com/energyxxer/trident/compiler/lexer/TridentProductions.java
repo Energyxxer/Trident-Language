@@ -29,6 +29,8 @@ public class TridentProductions {
     public static final LazyTokenStructureMatch SELECTOR_ARGUMENT;
     public static final LazyTokenStructureMatch TEXT_COMPONENT;
 
+    public static final LazyTokenStructureMatch PLAYER_NAME;
+
     public static final LazyTokenStructureMatch TEXT_COLOR;
 
     public static final LazyTokenStructureMatch INTEGER_NUMBER_RANGE = new LazyTokenStructureMatch("INTEGER_NUMBER_RANGE");
@@ -73,6 +75,9 @@ public class TridentProductions {
 
     public static final LazyTokenStructureMatch STRING_LITERAL_OR_UNKNOWN = new LazyTokenStructureMatch("STRING_LITERAL_OR_UNKNOWN");
 
+    //grouped arguments
+    public static final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
+    public static final LazyTokenGroupMatch VARIABLE_MARKER = group(ofType(VARIABLE_MARKER_START), identifierA(), ofType(VARIABLE_MARKER_END)).setName("VARIABLE_MARKER");
 
     static {
         FILE = new LazyTokenStructureMatch("FILE");
@@ -81,6 +86,7 @@ public class TridentProductions {
         TEXT_COMPONENT = new LazyTokenStructureMatch("TEXT_COMPONENT");
         SELECTOR = new LazyTokenStructureMatch("SELECTOR");
         SELECTOR_ARGUMENT = new LazyTokenStructureMatch("SELECTOR_ARGUMENT");
+        PLAYER_NAME = choice(identifierB());
 
         COMMENT_S = new LazyTokenItemMatch(COMMENT);
         VERBATIM_COMMAND_S = new LazyTokenItemMatch(VERBATIM_COMMAND);
@@ -112,6 +118,11 @@ public class TridentProductions {
 
         TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "light_gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white");
 
+
+        ENTITY.add(PLAYER_NAME);
+        ENTITY.add(SELECTOR);
+        ENTITY.add(VARIABLE_MARKER);
+
         //region Commands
         //region say
         {
@@ -125,7 +136,7 @@ public class TridentProductions {
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "tellraw"));
-            g.append(SELECTOR);
+            g.append(ENTITY);
             g.append(TEXT_COMPONENT);
             COMMAND.add(g);
         }
@@ -143,7 +154,7 @@ public class TridentProductions {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "gamemode"));
             g.append(GAMEMODE);
-            g.append(new LazyTokenGroupMatch(true).append(SELECTOR).setName("PLAYER"));
+            g.append(new LazyTokenGroupMatch(true).append(ENTITY).setName("PLAYER"));
             COMMAND.add(g);
         }
         //endregion
@@ -151,7 +162,7 @@ public class TridentProductions {
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "tag"));
-            g.append(SELECTOR);
+            g.append(ENTITY);
             {
                 LazyTokenStructureMatch s = new LazyTokenStructureMatch("SUBCOMMAND");
                 s.add(literal("list"));
@@ -170,9 +181,9 @@ public class TridentProductions {
                 LazyTokenStructureMatch u = choice("points", "levels");
 
                 LazyTokenStructureMatch s = new LazyTokenStructureMatch("SUBCOMMAND");
-                s.add(new LazyTokenGroupMatch().append(literal("add")).append(SELECTOR).append(integer()).append(new LazyTokenGroupMatch(true).append(u)));
-                s.add(new LazyTokenGroupMatch().append(literal("set")).append(SELECTOR).append(integer()).append(new LazyTokenGroupMatch(true).append(u)));
-                s.add(new LazyTokenGroupMatch().append(literal("query")).append(SELECTOR).append(new LazyTokenGroupMatch(true).append(u)));
+                s.add(new LazyTokenGroupMatch().append(literal("add")).append(ENTITY).append(integer()).append(new LazyTokenGroupMatch(true).append(u)));
+                s.add(new LazyTokenGroupMatch().append(literal("set")).append(ENTITY).append(integer()).append(new LazyTokenGroupMatch(true).append(u)));
+                s.add(new LazyTokenGroupMatch().append(literal("query")).append(ENTITY).append(new LazyTokenGroupMatch(true).append(u)));
                 g.append(s);
             }
             COMMAND.add(g);
@@ -187,7 +198,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "give"),
-                    SELECTOR,
+                    ENTITY,
                     ITEM,
                     integer().setOptional()
             ));
@@ -198,7 +209,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "clear"),
                     group(
-                            SELECTOR, group(
+                            ENTITY, group(
                                     ofType(LINE_GLUE),
                                     ITEM_TAGGED,
                                     integer().setOptional()
@@ -220,8 +231,8 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "effect"),
                     choice(
-                            group(literal("clear"), SELECTOR, optional(EFFECT_ID)),
-                            group(literal("give"), SELECTOR, EFFECT_ID, optional(integer(), integer().setOptional()))
+                            group(literal("clear"), ENTITY, optional(EFFECT_ID)),
+                            group(literal("give"), ENTITY, EFFECT_ID, optional(integer(), integer().setOptional()))
                     )
             ));
         }
@@ -230,7 +241,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "enchant"),
-                    SELECTOR,
+                    ENTITY,
                     ENCHANTMENT_ID,
                     integer().setOptional()
             ));
@@ -268,7 +279,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "kill"),
-                    optional(SELECTOR)
+                    optional(ENTITY)
             ));
         }
         //endregion
@@ -300,7 +311,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     choice(matchItem(COMMAND_HEADER, "msg"), matchItem(COMMAND_HEADER, "w")),
-                    SELECTOR,
+                    ENTITY,
                     ofType(TRAILING_STRING)
             ));
         }
@@ -322,7 +333,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "playsound"),
                     ofType(RESOURCE_LOCATION),
                     ofType(SOUND_CHANNEL),
-                    SELECTOR,
+                    ENTITY,
                     optional(
                             COORDINATE_SET,
                             optional(real(),
@@ -379,7 +390,7 @@ public class TridentProductions {
                                     integer(),
                                     optional(
                                             choice("force", "normal"),
-                                            optional(SELECTOR)
+                                            optional(ENTITY)
                                     )
                             )
                     )
@@ -391,7 +402,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "recipe"),
                     choice("give", "take"),
-                    SELECTOR,
+                    ENTITY,
                     choice(
                             matchItem(SYMBOL, "*"),
                             ofType(RESOURCE_LOCATION)
@@ -405,7 +416,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "replaceitem"),
                     choice(
                             group(literal("block"), COORDINATE_SET),
-                            group(literal("entity"), SELECTOR)
+                            group(literal("entity"), ENTITY)
                     ),
                     SLOT_ID,
                     ITEM
@@ -446,7 +457,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "spawnpoint"),
                     optional(
-                            SELECTOR,
+                            ENTITY,
                             optional(COORDINATE_SET)
                     )
             ));
@@ -468,7 +479,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "stopsound"),
-                    SELECTOR,
+                    ENTITY,
                     optional(
                             choice(
                                     group(ofType(SOUND_CHANNEL), ofType(RESOURCE_LOCATION).setOptional()),
@@ -493,14 +504,14 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     choice(matchItem(COMMAND_HEADER, "teleport"), matchItem(COMMAND_HEADER, "tp")),
-                    choice(SELECTOR, COORDINATE_SET),
+                    choice(ENTITY, COORDINATE_SET),
                     optional(
-                            choice(SELECTOR, COORDINATE_SET),
+                            choice(ENTITY, COORDINATE_SET),
                             optional(
                                     literal("facing"),
                                     choice(
                                             COORDINATE_SET,
-                                            group(literal("entity"), SELECTOR, ofType(ANCHOR).setOptional())
+                                            group(literal("entity"), ENTITY, ofType(ANCHOR).setOptional())
                                     )
                             )
                     )
@@ -523,7 +534,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "title"),
-                    SELECTOR,
+                    ENTITY,
                     choice(
                             group(choice("title", "subtitle", "actionbar"), TEXT_COMPONENT),
                             choice("clear", "reset"),
@@ -583,8 +594,8 @@ public class TridentProductions {
                     choice(
                             group(literal("add"), identifierA(), optional(TEXT_COMPONENT)),
                             group(literal("empty"), identifierA()),
-                            group(literal("join"), identifierA(), optional(SELECTOR)),
-                            group(literal("leave"), SELECTOR),
+                            group(literal("join"), identifierA(), optional(ENTITY)),
+                            group(literal("leave"), ENTITY),
                             group(literal("list"), optional(sameLine(), identifierA())),
                             group(literal("modify"), identifierA(), teamOptions),
                             group(literal("remove"), identifierA())
@@ -608,12 +619,12 @@ public class TridentProductions {
                                     group(literal("setdisplay"), identifierA().setName("DISPLAY_SLOT"), optional(sameLine(), identifierA()))
                             )),
                             group(literal("players"), choice(
-                                    group(choice("add", "remove", "set"), SELECTOR, identifierA(), integer()),
-                                    group(literal("enable"), SELECTOR, identifierA()),
-                                    group(literal("get"), SELECTOR, identifierA()),
-                                    group(literal("list"), optional(SELECTOR)),
-                                    group(literal("operation"), SELECTOR, identifierA(), ofType(SCOREBOARD_OPERATOR), SELECTOR, identifierA()),
-                                    group(literal("reset"), SELECTOR, optional(sameLine(), identifierA()))
+                                    group(choice("add", "remove", "set"), ENTITY, identifierA(), integer()),
+                                    group(literal("enable"), ENTITY, identifierA()),
+                                    group(literal("get"), ENTITY, identifierA()),
+                                    group(literal("list"), optional(ENTITY)),
+                                    group(literal("operation"), ENTITY, identifierA(), ofType(SCOREBOARD_OPERATOR), ENTITY, identifierA()),
+                                    group(literal("reset"), ENTITY, optional(sameLine(), identifierA()))
                             ))
                     )
             ));
@@ -624,7 +635,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "advancement"),
                     choice("grant", "revoke"),
-                    SELECTOR,
+                    ENTITY,
                     choice(
                             literal("everything"),
                             group(choice("from", "through", "until"), ofType(RESOURCE_LOCATION)),
@@ -646,7 +657,7 @@ public class TridentProductions {
                                     group(literal("color"), choice("blue", "green", "pink", "purple", "red", "white", "yellow")),
                                     group(literal("max"), integer()),
                                     group(literal("name"), TEXT_COMPONENT),
-                                    group(literal("players"), SELECTOR),
+                                    group(literal("players"), ENTITY),
                                     group(literal("style"), choice("progress", "notched_6", "notched_10", "notched_12", "notched_20")),
                                     group(literal("value"), integer()),
                                     group(literal("visible"), ofType(BOOLEAN))
@@ -660,7 +671,7 @@ public class TridentProductions {
 
             LazyTokenStructureMatch target = choice(
                     group(literal("block"), COORDINATE_SET),
-                    group(literal("entity"), SELECTOR)
+                    group(literal("entity"), ENTITY)
             );
 
             LazyTokenStructureMatch source = choice(
@@ -695,14 +706,14 @@ public class TridentProductions {
                             group(literal("distribute")),
                             group(literal("insert"), SLOT_ID)
                     )),
-                    group(literal("entity"), SELECTOR, SLOT_ID),
-                    group(literal("player"), SELECTOR),
+                    group(literal("entity"), ENTITY, SLOT_ID),
+                    group(literal("player"), ENTITY),
                     group(literal("world"), COORDINATE_SET)
             );
 
             LazyTokenStructureMatch source = choice(
                     group(literal("fish"), ofType(RESOURCE_LOCATION), COORDINATE_SET, optional(tool)),
-                    group(literal("kill"), SELECTOR),
+                    group(literal("kill"), ENTITY),
                     group(literal("loot"), ofType(RESOURCE_LOCATION)),
                     group(literal("mine"), COORDINATE_SET, optional(tool))
             );
@@ -1379,6 +1390,10 @@ public class TridentProductions {
         } catch (IOException x) {
             Debug.log("Error in loading standard definition pack for Minecraft Java Edition 1.13: " + x.getMessage(), Debug.MessageType.ERROR);
         }
+    }
+
+    private static LazyTokenPatternMatch identifierB() {
+        return ofType(IDENTIFIER_TYPE_B);
     }
 
     private static LazyTokenItemMatch literal(String text) {

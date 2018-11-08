@@ -1,5 +1,6 @@
 package com.energyxxer.trident.global.temp.projects;
 
+import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.util.FileUtil;
 
 import java.io.File;
@@ -22,7 +23,7 @@ public class ProjectManager {
 
 		//ArrayList<File> files = new ArrayList<>();
 		for(File file : fileList) {
-			if (file.isDirectory() && new File(file.getAbsolutePath() + File.separator + ".project").exists()) {
+			if (file.isDirectory() && new File(file.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME).exists()) {
 				//files.add(file);
 				loadedProjects.add(new Project(new File(file.getAbsolutePath())));
 			}
@@ -60,7 +61,7 @@ public class ProjectManager {
 				} else return "model";
 			} else if(filename.endsWith(".lang")) {
 				return "lang";
-			} else if(filename.endsWith(".mcmeta") || filename.endsWith(".project")) {
+			} else if(filename.endsWith(".mcmeta") || filename.endsWith(TridentCompiler.PROJECT_FILE_NAME)) {
 				return "meta";
 			} else if(filename.endsWith(".ogg")) {
 				return "audio";
@@ -68,6 +69,8 @@ public class ProjectManager {
 				return "structure";
 			} else if(filename.endsWith(".mcfunction")) {
 				return "function";
+			} else if(filename.endsWith(".tdn")) {
+				return "trident_file";
 			}
 			//TODO: Make this extension-to-icon mapping data-driven by the selected UI theme.
 

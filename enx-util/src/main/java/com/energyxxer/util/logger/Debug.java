@@ -5,8 +5,6 @@ import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
 
 public class Debug {
@@ -30,6 +28,10 @@ public class Debug {
 
     public static void log(Object object) {
         log(String.valueOf(object));
+    }
+
+    public static void log() {
+        log("");
     }
 
     public static void log(String message) {

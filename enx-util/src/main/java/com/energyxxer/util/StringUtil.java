@@ -104,6 +104,7 @@ public class StringUtil {
 	}
 
 	public static int getSequenceCount(String str, String pattern, int start) {
+		if(pattern.length() == 0) throw new IllegalArgumentException("Pattern length to count must not be empty");
 		int count = 0;
 
 		for(int i = start; i < str.length();) {

@@ -45,7 +45,7 @@ public class ProjectProperties {
 			ComponentResizer sidebarResizer = new ComponentResizer(sidebar);
 			sidebarResizer.setResizable(false, false, false, true);
 
-			String[] sections = new String[] { "General", "Compiler", "TridentEditorModule", "Code Style", "Resources" };
+			String[] sections = new String[] { "General", "TridentCompiler", "TridentEditorModule", "Code Style", "Resources" };
 
 			StyledList<String> navigator = new StyledList<>(sections, "ProjectProperties");
 			sidebar.setBackground(navigator.getBackground());
@@ -80,7 +80,7 @@ public class ProjectProperties {
 					header.add(padding, BorderLayout.WEST);
 				}
 				
-				JLabel label = new JLabel("Compiler");
+				JLabel label = new JLabel("TridentCompiler");
 				label.setForeground(t.getColor(Color.BLACK, "ProjectProperties.content.header.foreground"));
 				label.setFont(new Font(t.getString("ProjectProperties.content.header.font","General.font","default:Tahoma"),1,20));
 				header.add(label, BorderLayout.CENTER);

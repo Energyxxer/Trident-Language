@@ -1,18 +1,13 @@
 package com.energyxxer.trident.global.temp.projects;
 
+import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.util.StringUtil;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.Files;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
 public class Project {
 
@@ -36,56 +31,10 @@ public class Project {
 	public Project(File directory) {
 		this.directory = directory;
 		this.source = new File(directory.getAbsolutePath() + File.separator + "src");
-		File config = new File(directory.getAbsolutePath() + File.separator + ".project");
-		if(config.exists() && config.isFile() && config.getName().equals(".project")) {
-			byte[] encoded;
-			try {
-				encoded = Files.readAllBytes(config.toPath());
-			} catch (IOException e) {
-				this.name = this.prefix = this.world = null;
-				this.directory = null;
-				e.printStackTrace();
-				return;
-			}
-			
-			this.directory = config.getParentFile();
-			
-			String s = new String(encoded);
-			
-			List<String> lines = Arrays.asList(s.split("\n"));
-			for(String line : lines) {
-				if(line.contains("=")) {
-					String key = line.substring(0,line.indexOf("="));
-					String value = line.substring(line.indexOf("=")+1);
+		File config = new File(directory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
+		this.name = directory.getName();
+		if(config.exists() && config.isFile() && config.getName().equals(TridentCompiler.PROJECT_FILE_NAME)) {
 
-					if(value.length() <= 0) continue;
-
-					switch(key) {
-						case "name": {
-							this.name = value;
-							break;
-						}
-						case "prefix": {
-							this.prefix = value;
-							break;
-						}
-						case "out": {
-							this.world = value;
-							break;
-						}
-						case "icons": {
-							String[] files = value.split("\\|");
-							for(String file : files) {
-								String[] segments = file.split("\\?");
-								if(segments.length < 2) continue;
-								icons.put(segments[0].intern(), segments[1]);
-							}
-							break;
-						}
-					}
-				}
-			}
-			this.fixIfCorrupted();
 			return;
 		}
 		this.directory = null;
@@ -109,7 +58,7 @@ public class Project {
 	}
 	
 	public void updateConfig() {
-		File config = new File(directory.getAbsolutePath() + File.separator + ".project");
+		File config = new File(directory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
 		PrintWriter writer;
 		try {
 			writer = new PrintWriter(config, "UTF-8");
@@ -129,7 +78,7 @@ public class Project {
 	public void createNew() {
 		if(!exists()) {
 			this.source.mkdirs();
-			File config = new File(directory.getAbsolutePath() + File.separator + ".project");
+			File config = new File(directory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
 			try {
 				config.createNewFile();
 				updateConfig();

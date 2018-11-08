@@ -8,9 +8,10 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenPatternMatch;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.util.StringLocation;
 import com.energyxxer.util.StringLocationCache;
-import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
 
@@ -49,14 +50,16 @@ public class LazyLexer extends Lexer {
         matchResponse = pattern.match(0, this);
 
         if(matchResponse.matched) {
-            Debug.log("Successfully matched: " + matchResponse.pattern);
+            //Debug.log("Successfully matched: " + matchResponse.pattern);
             matchResponse.pattern.validate();
             for(Token token : matchResponse.pattern.flattenTokens()) {
                 stream.write(token);
             }
         } else {
-            Debug.log("Did not match:" + matchResponse.faultyToken + " | " + matchResponse.faultyToken.loc + " | expected " + matchResponse.expected);
+            this.notices.add(new Notice(NoticeType.ERROR, matchResponse.getErrorMessage(), matchResponse.faultyToken));
+            //Debug.log("Did not match:" + matchResponse.faultyToken + " | " + matchResponse.faultyToken.loc + " | expected " + matchResponse.expected);
         }
+
 
         {
             Token eof = new Token("", TokenType.END_OF_FILE, file, lineCache.getLocationForOffset(fileContents.length()));

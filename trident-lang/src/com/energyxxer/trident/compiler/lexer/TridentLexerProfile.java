@@ -359,6 +359,7 @@ public class TridentLexerProfile extends LexerProfile {
         });
 
         contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_A, "[a-zA-Z0-9._\\-+]"));
+        contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_B, "\\S"));
 
         contexts.add(new StringMatchLexerContext(DIRECTIVE_ON_KEYWORD, "compile", "load", "tick"));
         contexts.add(new StringMatchLexerContext(KEYWORD, "register", "mark", "do", "while", "within", "using"));
@@ -366,6 +367,9 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new StringMatchLexerContext(COMMAND_HEADER, "advancement,bossbar,clear,clone,data,defaultgamemode,difficulty,drop,effect,enchant,experience,execute,fill,function,gamemode,gamerule,give,help,kill,list,locate,me,particle,playsound,recipe,replaceitem,say,scoreboard,seed,schedule,setblock,setworldspawn,spawnpoint,spreadplayers,stopsound,summon,tag,team,teleport,tell,tellraw,time,title,tp,trigger,weather,whitelist,worldborder,xp".split(",")));
 
         contexts.add(new StringMatchLexerContext(SYMBOL, "*"));
+
+        contexts.add(new StringMatchLexerContext(VARIABLE_MARKER_START, "${"));
+        contexts.add(new StringMatchLexerContext(VARIABLE_MARKER_END, "}"));
 
         contexts.add(new StringMatchLexerContext(SORTING, "nearest", "farthest", "arbitrary", "random"));
         contexts.add(new StringMatchLexerContext(NUMERIC_DATA_TYPE, "byte", "double", "float", "int", "long", "short"));

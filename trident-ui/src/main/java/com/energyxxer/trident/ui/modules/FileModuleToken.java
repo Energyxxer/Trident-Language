@@ -1,5 +1,6 @@
 package com.energyxxer.trident.ui.modules;
 
+import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.files.FileType;
 import com.energyxxer.trident.global.Commons;
 import com.energyxxer.trident.global.FileManager;
@@ -22,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 public class FileModuleToken implements ModuleToken {
     public static ModuleTokenFactory<FileModuleToken> factory = str -> {
@@ -32,9 +34,13 @@ public class FileModuleToken implements ModuleToken {
     };
 
     private final File file;
+    private boolean isProjectRoot;
+    private String overrideIconName = null;
 
     public FileModuleToken(File file) {
         this.file = file;
+
+        this.isProjectRoot = file.isDirectory() && Objects.requireNonNull(file.listFiles(f -> TridentCompiler.PROJECT_FILE_NAME.equals(f.getName()))).length > 0;
     }
 
     @Override
@@ -44,7 +50,11 @@ public class FileModuleToken implements ModuleToken {
 
     @Override
     public Image getIcon() {
+        if(overrideIconName != null) return Commons.getIcon(overrideIconName);
         if(file.isDirectory()) {
+            if(isProjectRoot) {
+                return Commons.getIcon("project");
+            }
             return Commons.getIcon("package");
         } else {
             String extension = file.getName().substring(file.getName().lastIndexOf("."));
@@ -75,7 +85,7 @@ public class FileModuleToken implements ModuleToken {
                         return Commons.getIcon("model");
                 }
                 case ".mcmeta":
-                case ".tdnproj":
+                case TridentCompiler.PROJECT_FILE_NAME:
                     return Commons.getIcon("meta");
                 case ".nbt":
                     return Commons.getIcon("structure");
@@ -96,7 +106,10 @@ public class FileModuleToken implements ModuleToken {
         File[] subFiles = file.listFiles();
         if(subFiles != null) {
             for (File subDir : subFiles) {
-                ModuleToken subToken = new FileModuleToken(subDir);
+                FileModuleToken subToken = new FileModuleToken(subDir);
+                if(this.isProjectRoot) {
+                    subToken.overrideIconName = subDir.getName().equals("datapack") ? "data" : subDir.getName().equals("resources") ? "resources" : null;
+                }
                 if (subDir.isDirectory()) {
                     children.add(firstFileIndex, subToken);
                     firstFileIndex++;

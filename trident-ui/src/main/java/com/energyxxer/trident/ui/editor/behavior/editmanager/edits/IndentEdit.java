@@ -59,7 +59,9 @@ public class IndentEdit extends Edit {
 
                 int spacesChanged = 0;
 
-                for(int l = start; l <= end + characterDrift; l = new Dot(l, editor).getPositionBelow()) {
+                int previousL = -1;
+
+                for(int l = start; l <= end + characterDrift && l != previousL; previousL = l, l = new Dot(l, editor).getPositionBelow()) {
                     int spaces = StringUtil.getSequenceCount(text," ", l - characterDrift);
                     if(!reverse) {
                         int spacesToAdd = 4 - (spaces % 4);
@@ -74,7 +76,7 @@ public class IndentEdit extends Edit {
                         spacesChanged += spacesToAdd;
                     } else {
                         if(spaces == 0) {
-                            if(l == end + characterDrift) break; continue;
+                            continue;
                         }
                         int spacesToRemove = (spaces % 4 == 0) ? 4 : spaces % 4;
                         if(spacesToRemove != 0) {
