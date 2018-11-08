@@ -4,7 +4,7 @@ import com.energyxxer.trident.global.Preferences;
 import com.energyxxer.trident.ui.Tab;
 import com.energyxxer.trident.ui.display.DisplayModule;
 import com.energyxxer.trident.ui.styledcomponents.StyledPopupMenu;
-import com.energyxxer.trident.util.FileUtil;
+import com.energyxxer.util.FileUtil;
 
 import java.awt.*;
 import java.io.File;

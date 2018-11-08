@@ -9,7 +9,7 @@ import com.energyxxer.trident.ui.styledcomponents.StyledIcon;
 import com.energyxxer.trident.ui.styledcomponents.StyledLabel;
 import com.energyxxer.trident.ui.styledcomponents.StyledTextField;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
-import com.energyxxer.trident.util.FileUtil;
+import com.energyxxer.util.FileUtil;
 import com.energyxxer.xswing.Padding;
 
 import javax.swing.*;

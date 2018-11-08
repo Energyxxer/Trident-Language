@@ -335,12 +335,8 @@ public class TridentLexerProfile extends LexerProfile {
             @Override
             public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
                 if(!str.startsWith("#")) return new ScannerContextResponse(false);
-                if(str.startsWith("#:")) {
-                    if(type == DIRECTIVE_HEADER) {
-                        return new ScannerContextResponse(true, str.substring(0, 2), DIRECTIVE_HEADER);
-                    } else {
-                        return new ScannerContextResponse(false);
-                    }
+                if(str.startsWith("#:") && type == DIRECTIVE_HEADER) {
+                    return new ScannerContextResponse(true, str.substring(0, 2), DIRECTIVE_HEADER);
                 }
                 if(str.contains("\n")) {
                     return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), COMMENT);

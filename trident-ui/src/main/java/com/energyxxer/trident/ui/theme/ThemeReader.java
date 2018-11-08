@@ -1,6 +1,6 @@
 package com.energyxxer.trident.ui.theme;
 
-import com.energyxxer.trident.util.FileUtil;
+import com.energyxxer.util.FileUtil;
 import com.energyxxer.trident.util.LineReader;
 import com.energyxxer.trident.util.Range;
 

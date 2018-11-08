@@ -1,7 +1,7 @@
 package com.energyxxer.trident.global.temp.projects;
 
 import com.energyxxer.trident.compiler.TridentCompiler;
-import com.energyxxer.trident.util.FileUtil;
+import com.energyxxer.util.FileUtil;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -10,7 +10,7 @@ import com.energyxxer.trident.ui.modules.FileModuleToken;
 import com.energyxxer.trident.ui.styledcomponents.StyledMenu;
 import com.energyxxer.trident.ui.styledcomponents.StyledMenuItem;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
-import com.energyxxer.trident.util.FileUtil;
+import com.energyxxer.util.FileUtil;
 
 import javax.swing.*;
 import java.awt.*;

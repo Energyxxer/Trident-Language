@@ -14,7 +14,7 @@ public abstract class LazyTokenPatternMatch extends GeneralTokenPatternMatch {
     public abstract TokenMatchResponse match(int index, LazyLexer lexer, Stack st);
 
     @Override
-    public GeneralTokenPatternMatch setName(String name) {
+    public LazyTokenPatternMatch setName(String name) {
         super.setName(name);
         return this;
     }

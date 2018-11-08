@@ -2,9 +2,9 @@ package com.energyxxer.trident.global;
 
 import com.energyxxer.trident.main.window.TridentWindow;
 import com.energyxxer.trident.ui.dialogs.ConfirmDialog;
-import com.energyxxer.trident.util.FileUtil;
+import com.energyxxer.util.FileUtil;
+import com.energyxxer.trident.util.ProjectUtil;
 import com.energyxxer.util.logger.Debug;
-import com.energyxxer.util.out.Console;
 
 import java.io.File;
 import java.util.HashMap;
@@ -75,7 +75,7 @@ public class FileManager {
             File file = new File(files.get(0));
             if(file.isDirectory()) {
                 subject.append('\'');
-                String _package = FileUtil.getPackageInclusive(file);
+                String _package = ProjectUtil.getPackageInclusive(file);
                 if(_package.equals("")) _package = file.getName();
                 subject.append(_package);
             } else {

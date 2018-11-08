@@ -4,11 +4,13 @@ import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -17,8 +19,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TridentCompiler {
 
@@ -34,6 +39,8 @@ public class TridentCompiler {
     private CompilerReport report = null;
 
     private Thread thread;
+
+    private HashMap<File, TokenPattern<?>> filePatterns = new HashMap<>();
 
     public TridentCompiler(File rootDir) {
         this.rootDir = rootDir;
@@ -78,6 +85,16 @@ public class TridentCompiler {
             return;
         }
 
+        Path dataRoot = new File(rootDir, "datapack" + File.separator + "data").toPath();
+
+        for(Map.Entry<File, TokenPattern<?>> entry : filePatterns.entrySet()) {
+            Path relativePath = dataRoot.relativize(entry.getKey().toPath());
+            if("functions".equals(relativePath.getName(1).toString())) new TridentFile(this, relativePath, entry.getValue());
+            else {
+                report.addNotice(new Notice(NoticeType.WARNING, "Found .tdn file outside of a function folder, ignoring: " + relativePath, entry.getValue()));
+            }
+        }
+
         this.setProgress("Compilation completed with " + report.getTotalsString(), false);
         finalizeCompilation();
     }
@@ -99,6 +116,10 @@ public class TridentCompiler {
                 try {
                     String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
                     lex.tokenizeParse(file, str, new TridentLexerProfile());
+
+                    if(lex.getMatchResponse().matched) {
+                        filePatterns.put(file, lex.getMatchResponse().pattern);
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -135,6 +156,10 @@ public class TridentCompiler {
 
     public CompilerReport getReport() {
         return report;
+    }
+
+    public CommandModule getModule() {
+        return module;
     }
 
     public void setReport(CompilerReport report) {

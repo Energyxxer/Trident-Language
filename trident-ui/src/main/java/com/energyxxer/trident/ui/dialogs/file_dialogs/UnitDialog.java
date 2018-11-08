@@ -13,9 +13,9 @@ import com.energyxxer.trident.ui.styledcomponents.StyledDropdownMenu;
 import com.energyxxer.trident.ui.styledcomponents.StyledLabel;
 import com.energyxxer.trident.ui.styledcomponents.StyledTextField;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
-import com.energyxxer.trident.util.FileUtil;
+import com.energyxxer.util.FileUtil;
+import com.energyxxer.trident.util.ProjectUtil;
 import com.energyxxer.util.logger.Debug;
-import com.energyxxer.util.out.Console;
 import com.energyxxer.xswing.Padding;
 
 import javax.swing.*;
@@ -217,7 +217,7 @@ public class UnitDialog {
 
                 //<editor-fold desc="File Template Variables">
                 HashMap<String, String> variables = new HashMap<>();
-                variables.put("package", FileUtil.getPackage(newFile));
+                variables.put("package", ProjectUtil.getPackage(newFile));
                 variables.put("name", filename);
                 variables.put("user", Preferences.get("username", "User"));
                 variables.put("indent", "    ");

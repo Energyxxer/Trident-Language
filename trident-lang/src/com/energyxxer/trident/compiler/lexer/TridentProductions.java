@@ -102,7 +102,6 @@ public class TridentProductions {
         RESOURCE_LOCATION_TAGGED = group(optional(hash(), ofType(GLUE)), ofType(RESOURCE_LOCATION)).setName("RESOURCE_LOCATION_TAGGED");
 
         ENTRY.add(COMMENT_S);
-        ENTRY.add(DIRECTIVE);
         ENTRY.add(COMMAND);
         ENTRY.add(VERBATIM_COMMAND_S);
 
@@ -113,7 +112,7 @@ public class TridentProductions {
             LazyTokenGroupMatch separator = new LazyTokenGroupMatch(true);
             separator.append(new LazyTokenListMatch(TokenType.NEWLINE, true));
             LazyTokenListMatch l = new LazyTokenListMatch(new LazyTokenGroupMatch(true).append(ENTRY), separator, true);
-            FILE.add(l);
+            FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l));
         }
 
         TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "light_gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white");
