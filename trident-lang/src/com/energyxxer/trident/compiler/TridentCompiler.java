@@ -8,6 +8,7 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.commands.parsers.CommandParser;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -58,6 +59,11 @@ public class TridentCompiler {
     }
 
     private void runCompilation() {
+
+        this.setProgress("Initializing default command parsers");
+
+        CommandParser.Static.initialize();
+
         this.setProgress("Reading project settings file");
         try {
             properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
@@ -107,7 +113,6 @@ public class TridentCompiler {
             finalizeCompilation();
             return;
         }
-
 
 
         this.setProgress("Generating data pack");
@@ -200,5 +205,9 @@ public class TridentCompiler {
 
     public void removeCompletionListener(Runnable r) {
         completionListeners.remove(r);
+    }
+
+    public JsonObject getProperties() {
+        return properties;
     }
 }

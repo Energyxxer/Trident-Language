@@ -12,6 +12,7 @@ import com.energyxxer.trident.compiler.CompilerExtension;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.RawCommand;
+import com.energyxxer.trident.compiler.commands.parsers.CommandParser;
 import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
@@ -71,18 +72,20 @@ public class TridentFile implements CompilerExtension {
         Debug.log("Resolving entries for " + function);
         TokenPattern<?>[] entries = ((TokenList) this.pattern.find(".ENTRIES")).getContents();
 
+        boolean exportComments = compiler.getProperties().get("export-comments") == null || compiler.getProperties().get("export-comments").getAsBoolean();
+
         for(TokenPattern<?> pattern : entries) {
             if(!pattern.getName().equals("LINE_PADDING")) {
                 TokenStructure entry = (TokenStructure) pattern.find("ENTRY");
 
                 TokenPattern<?> inner = entry.getContents();
-                Debug.log(inner.getName());
 
                 switch(inner.getName()) {
                     case "COMMAND":
+                        CommandParser.Static.parse(((TokenStructure) inner).getContents(), this);
                         break;
                     case "COMMENT":
-                        function.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
+                        if(exportComments) function.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
                         break;
                     case "VERBATIM_COMMAND":
                         function.append(new RawCommand(inner.flattenTokens().get(0).value.substring(1)));
@@ -90,5 +93,9 @@ public class TridentFile implements CompilerExtension {
                 }
             }
         }
+    }
+
+    public Function getFunction() {
+        return function;
     }
 }

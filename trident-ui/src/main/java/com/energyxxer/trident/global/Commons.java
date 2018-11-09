@@ -88,7 +88,6 @@ public class Commons {
         //c.setLibrary(Resources.nativeLib);
         c.addProgressListener(TridentWindow::setStatus);
         c.addCompletionListener(() -> {
-            Debug.log("ha");
             TridentWindow.noticeExplorer.setNotices(c.getReport().groupByLabel());
             if (c.getReport().getTotal() > 0) TridentWindow.noticeBoard.open();
             c.getReport().getWarnings().forEach(Console.warn::println);
