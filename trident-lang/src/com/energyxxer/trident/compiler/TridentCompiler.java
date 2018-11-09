@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler;
 
 import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.module.ModulePackGenerator;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
@@ -41,6 +42,7 @@ public class TridentCompiler {
     private Thread thread;
 
     private HashMap<File, TokenPattern<?>> filePatterns = new HashMap<>();
+    private HashMap<File, TridentFile> files = new HashMap<>();
 
     public TridentCompiler(File rootDir) {
         this.rootDir = rootDir;
@@ -89,11 +91,37 @@ public class TridentCompiler {
 
         for(Map.Entry<File, TokenPattern<?>> entry : filePatterns.entrySet()) {
             Path relativePath = dataRoot.relativize(entry.getKey().toPath());
-            if("functions".equals(relativePath.getName(1).toString())) new TridentFile(this, relativePath, entry.getValue());
+            if("functions".equals(relativePath.getName(1).toString())) {
+                files.put(entry.getKey(), new TridentFile(this, relativePath, entry.getValue()));
+            }
             else {
                 report.addNotice(new Notice(NoticeType.WARNING, "Found .tdn file outside of a function folder, ignoring: " + relativePath, entry.getValue()));
             }
         }
+
+        for(Map.Entry<File, TridentFile> file : files.entrySet()) {
+            file.getValue().resolveEntries();
+        }
+
+        if(report.hasErrors()) {
+            finalizeCompilation();
+            return;
+        }
+
+
+
+        this.setProgress("Generating data pack");
+
+        {
+            Path path = new File(properties.get("datapack-output").getAsString()).toPath();
+            try {
+                module.compile(path.toFile().getParentFile(), path.endsWith(".zip") ? ModulePackGenerator.OutputType.ZIP : ModulePackGenerator.OutputType.FOLDER);
+            } catch(IOException x) {
+                logException(x);
+                finalizeCompilation();
+            }
+        }
+
 
         this.setProgress("Compilation completed with " + report.getTotalsString(), false);
         finalizeCompilation();

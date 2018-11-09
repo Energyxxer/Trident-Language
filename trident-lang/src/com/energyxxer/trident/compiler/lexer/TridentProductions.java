@@ -88,15 +88,16 @@ public class TridentProductions {
         SELECTOR_ARGUMENT = new LazyTokenStructureMatch("SELECTOR_ARGUMENT");
         PLAYER_NAME = choice(identifierB());
 
-        COMMENT_S = new LazyTokenItemMatch(COMMENT);
-        VERBATIM_COMMAND_S = new LazyTokenItemMatch(VERBATIM_COMMAND);
+        COMMENT_S = new LazyTokenItemMatch(COMMENT).setName("COMMENT");
+        VERBATIM_COMMAND_S = new LazyTokenItemMatch(VERBATIM_COMMAND).setName("VERBATIM_COMMAND");
 
-        DIRECTIVE = new LazyTokenGroupMatch();
-        DIRECTIVE.setName("DIRECTIVE");
         {
-            DIRECTIVE.append(new LazyTokenItemMatch(DIRECTIVE_HEADER));
-            DIRECTIVE.append(literal("on"));
-            DIRECTIVE.append(ofType(DIRECTIVE_ON_KEYWORD));
+            LazyTokenStructureMatch directiveBody = new LazyTokenStructureMatch("DIRECTIVE_BODY");
+
+            DIRECTIVE = group(ofType(DIRECTIVE_HEADER), directiveBody).setName("DIRECTIVE");
+
+            directiveBody.add(group(literal("on"), ofType(DIRECTIVE_ON_KEYWORD)).setName("ON_DIRECTIVE"));
+            directiveBody.add(group(literal("tag"), ofType(RESOURCE_LOCATION)).setName("TAG_DIRECTIVE"));
         }
 
         RESOURCE_LOCATION_TAGGED = group(optional(hash(), ofType(GLUE)), ofType(RESOURCE_LOCATION)).setName("RESOURCE_LOCATION_TAGGED");
@@ -109,9 +110,9 @@ public class TridentProductions {
         STRING_LITERAL_OR_UNKNOWN.add(ofType(TokenType.UNKNOWN));
 
         {
-            LazyTokenGroupMatch separator = new LazyTokenGroupMatch(true);
+            LazyTokenGroupMatch separator = new LazyTokenGroupMatch(true).setName("LINE_PADDING");
             separator.append(new LazyTokenListMatch(TokenType.NEWLINE, true));
-            LazyTokenListMatch l = new LazyTokenListMatch(new LazyTokenGroupMatch(true).append(ENTRY), separator, true);
+            LazyTokenListMatch l = new LazyTokenListMatch(new LazyTokenGroupMatch(true).append(ENTRY), separator, true).setName("ENTRIES");
             FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l));
         }
 

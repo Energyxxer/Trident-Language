@@ -357,7 +357,7 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_A, "[a-zA-Z0-9._\\-+]"));
         contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_B, "\\S"));
 
-        contexts.add(new StringMatchLexerContext(DIRECTIVE_ON_KEYWORD, "compile", "load", "tick"));
+        contexts.add(new StringMatchLexerContext(DIRECTIVE_ON_KEYWORD, "compile"));
         contexts.add(new StringMatchLexerContext(KEYWORD, "register", "mark", "do", "while", "within", "using"));
         contexts.add(new StringMatchLexerContext(BOOLEAN, "true", "false"));
         contexts.add(new StringMatchLexerContext(COMMAND_HEADER, "advancement,bossbar,clear,clone,data,defaultgamemode,difficulty,drop,effect,enchant,experience,execute,fill,function,gamemode,gamerule,give,help,kill,list,locate,me,particle,playsound,recipe,replaceitem,say,scoreboard,seed,schedule,setblock,setworldspawn,spawnpoint,spreadplayers,stopsound,summon,tag,team,teleport,tell,tellraw,time,title,tp,trigger,weather,whitelist,worldborder,xp".split(",")));

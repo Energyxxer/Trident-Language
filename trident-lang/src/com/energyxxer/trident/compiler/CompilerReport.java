@@ -11,6 +11,7 @@ public class CompilerReport {
     private final ArrayList<Notice> errors = new ArrayList<>();
     private final ArrayList<Notice> warnings = new ArrayList<>();
     private final ArrayList<Notice> info = new ArrayList<>();
+    private final ArrayList<Notice> debug = new ArrayList<>();
 
     public CompilerReport() {
     }
@@ -31,6 +32,10 @@ public class CompilerReport {
             }
             case INFO: {
                 info.add(n);
+                break;
+            }
+            case DEBUG: {
+                debug.add(n);
                 break;
             }
             default: {
@@ -63,6 +68,14 @@ public class CompilerReport {
         return !info.isEmpty();
     }
 
+    public ArrayList<Notice> getDebug() {
+        return debug;
+    }
+
+    public boolean hasDebug() {
+        return !debug.isEmpty();
+    }
+
     public HashMap<String, ArrayList<Notice>> groupByLabel() {
         HashMap<String, ArrayList<Notice>> map = new HashMap<>();
 
@@ -78,6 +91,10 @@ public class CompilerReport {
             if(!map.containsKey(n.getLabel())) map.put(n.getLabel(), new ArrayList<>());
             map.get(n.getLabel()).add(n);
         }
+        for(Notice n : getDebug()) {
+            if(!map.containsKey(n.getLabel())) map.put(n.getLabel(), new ArrayList<>());
+            map.get(n.getLabel()).add(n);
+        }
 
         return map;
     }
@@ -90,7 +107,7 @@ public class CompilerReport {
     }
 
     public int getTotal() {
-        return info.size() + warnings.size() + errors.size();
+        return info.size() + warnings.size() + errors.size() + debug.size();
     }
 
     public List<Notice> getAllNotices() {
@@ -98,6 +115,7 @@ public class CompilerReport {
         list.addAll(errors);
         list.addAll(warnings);
         list.addAll(info);
+        list.addAll(debug);
         return list;
     }
 
@@ -105,5 +123,6 @@ public class CompilerReport {
         errors.clear();
         warnings.clear();
         info.clear();
+        debug.clear();
     }
 }
