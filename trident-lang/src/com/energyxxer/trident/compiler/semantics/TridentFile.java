@@ -13,6 +13,7 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.RawCommand;
 import com.energyxxer.trident.compiler.commands.parsers.CommandParser;
+import com.energyxxer.trident.compiler.commands.parsers.EntryParsingException;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -78,16 +79,22 @@ public class TridentFile implements CompilerExtension {
 
                 TokenPattern<?> inner = entry.getContents();
 
-                switch(inner.getName()) {
-                    case "COMMAND":
-                        CommandParser.Static.parse(((TokenStructure) inner).getContents(), this);
-                        break;
-                    case "COMMENT":
-                        if(exportComments) function.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
-                        break;
-                    case "VERBATIM_COMMAND":
-                        function.append(new RawCommand(inner.flattenTokens().get(0).value.substring(1)));
-                        break;
+                try {
+
+                    switch (inner.getName()) {
+                        case "COMMAND":
+                            CommandParser.Static.parse(((TokenStructure) inner).getContents(), this);
+                            break;
+                        case "COMMENT":
+                            if (exportComments)
+                                function.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
+                            break;
+                        case "VERBATIM_COMMAND":
+                            function.append(new RawCommand(inner.flattenTokens().get(0).value.substring(1)));
+                            break;
+                    }
+                } catch(EntryParsingException x) {
+                    //Silently ignore; serves as a multi-function break;
                 }
             }
         }

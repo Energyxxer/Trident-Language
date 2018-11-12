@@ -76,6 +76,7 @@ public class TridentCompiler {
         this.setProgress("Importing vanilla definitions");
         try {
             module.importDefinitions(StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT);
+            Debug.log(module.minecraft.tags.itemTags.getAll());
         } catch(IOException x) {
             logException(x);
             return;

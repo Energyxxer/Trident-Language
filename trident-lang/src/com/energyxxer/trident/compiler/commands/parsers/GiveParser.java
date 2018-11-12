@@ -13,7 +13,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class GiveParser implements CommandParser {
     @Override
     public void parse(TokenPattern<?> pattern, TridentFile file) {
-        Item item = CommonParsers.parseItem(pattern.find("ITEM"), file.getCompiler().getModule());
+        Item item = CommonParsers.parseItem(pattern.find("ITEM"), file.getCompiler());
         TokenPattern<?> amountPattern = pattern.find("AMOUNT");
         int amount = amountPattern != null ? Integer.parseInt(amountPattern.flattenTokens().get(0).value) : 1;
         file.getFunction().append(new GiveCommand(new GenericEntity(new Selector(Selector.BaseSelector.SENDER)), item, amount));

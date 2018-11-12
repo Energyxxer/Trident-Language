@@ -209,10 +209,11 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "clear"),
                     group(
-                            ENTITY, group(
+                            ENTITY,
+                            group(
                                     ofType(LINE_GLUE),
                                     ITEM_TAGGED,
-                                    integer().setOptional()
+                                    integer().setOptional().setName("AMOUNT")
                             ).setOptional()
                     ).setOptional()
             ));
@@ -779,7 +780,7 @@ public class TridentProductions {
 
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
-            g.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(ofType(RESOURCE_LOCATION)).setName("RESOURCE_NAME"));
+            g.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM_TAGGED.add(g);
         }
