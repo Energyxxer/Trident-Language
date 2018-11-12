@@ -200,7 +200,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "give"),
                     ENTITY,
                     ITEM,
-                    integer().setOptional()
+                    integer().setOptional().setName("AMOUNT")
             ));
         }
         //endregion
@@ -828,24 +828,24 @@ public class TridentProductions {
                     g2.append(new LazyTokenGroupMatch().append(STRING_LITERAL_OR_UNKNOWN).setName("NBT_KEY"));
                     g2.append(colon());
                     g2.append(NBT_VALUE);
-                    g.append(new LazyTokenListMatch(g2, comma(), true));
+                    g.append(new LazyTokenListMatch(g2, comma(), true).setName("NBT_COMPOUND_ENTRIES"));
                 }
                 g.append(brace("}"));
-                NBT_VALUE.add(g);
                 NBT_COMPOUND.add(g);
+                NBT_VALUE.add(NBT_COMPOUND);
             }
             {
                 LazyTokenGroupMatch g = new LazyTokenGroupMatch();
                 g.append(brace("["));
-                g.append(optional().append(new LazyTokenListMatch(NBT_VALUE, comma(), true)));
+                g.append(optional().append(new LazyTokenListMatch(NBT_VALUE, comma(), true).setName("NBT_LIST_ENTRIES")));
                 g.append(brace("]"));
-                NBT_VALUE.add(g);
                 NBT_LIST.add(g);
+                NBT_VALUE.add(NBT_LIST);
             }
             NBT_VALUE.add(string());
-            NBT_VALUE.add(ofType(IDENTIFIER_TYPE_A));
-            NBT_VALUE.add(ofType(TYPED_NUMBER));
-            NBT_VALUE.add(ofType(BOOLEAN));
+            NBT_VALUE.add(ofType(IDENTIFIER_TYPE_A).setName("RAW_STRING"));
+            NBT_VALUE.add(ofType(TYPED_NUMBER).setName("NBT_NUMBER"));
+            NBT_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
         }
         //endregion
 
@@ -1154,7 +1154,7 @@ public class TridentProductions {
 
                     g.append(ns);
 
-                    s = new LazyTokenStructureMatch("BLOCK_NAME");
+                    s = new LazyTokenStructureMatch("TYPE_NAME");
                     g.append(s);
 
                     namespaceGroups.put(def.getNamespace(), s);
@@ -1180,7 +1180,7 @@ public class TridentProductions {
 
                     g.append(ns);
 
-                    s = new LazyTokenStructureMatch("ITEM_NAME");
+                    s = new LazyTokenStructureMatch("TYPE_NAME");
                     g.append(s);
 
                     namespaceGroups.put(def.getNamespace(), s);
@@ -1206,7 +1206,7 @@ public class TridentProductions {
 
                     g.append(ns);
 
-                    s = new LazyTokenStructureMatch("ENTITY_NAME");
+                    s = new LazyTokenStructureMatch("TYPE_NAME");
                     g.append(s);
 
                     namespaceGroups.put(def.getNamespace(), s);
@@ -1232,7 +1232,7 @@ public class TridentProductions {
 
                     g.append(ns);
 
-                    s = new LazyTokenStructureMatch("EFFECT_NAME");
+                    s = new LazyTokenStructureMatch("TYPE_NAME");
                     g.append(s);
 
                     namespaceGroups.put(def.getNamespace(), s);
@@ -1258,7 +1258,7 @@ public class TridentProductions {
 
                     g.append(ns);
 
-                    s = new LazyTokenStructureMatch("ENCHANTMENT_NAME");
+                    s = new LazyTokenStructureMatch("TYPE_NAME");
                     g.append(s);
 
                     namespaceGroups.put(def.getNamespace(), s);
@@ -1286,7 +1286,7 @@ public class TridentProductions {
 
                 g.append(ns);
 
-                g.append(literal(def.getName()).setName("PARTICLE_NAME"));
+                g.append(literal(def.getName()).setName("TYPE_NAME"));
 
                 PARTICLE_ID.add(g);
 
@@ -1401,7 +1401,7 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch matchItem(TokenType type, String text) {
-        return new LazyTokenItemMatch(type, text);
+        return new LazyTokenItemMatch(type, text).setName("ITEM_MATCH");
     }
 
     private static LazyTokenItemMatch brace(String brace) {
@@ -1413,7 +1413,7 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch comma() {
-        return ofType(COMMA);
+        return ofType(COMMA).setName("COMMA");
     }
 
     private static LazyTokenItemMatch dot() {
@@ -1441,15 +1441,15 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch string() {
-        return ofType(STRING_LITERAL);
+        return ofType(STRING_LITERAL).setName("STRING_LITERAL");
     }
 
     private static LazyTokenItemMatch integer() {
-        return ofType(INTEGER_NUMBER);
+        return ofType(INTEGER_NUMBER).setName("INTEGER");
     }
 
     private static LazyTokenItemMatch real() {
-        return ofType(REAL_NUMBER);
+        return ofType(REAL_NUMBER).setName("REAL");
     }
 
     private static LazyTokenItemMatch glue() {

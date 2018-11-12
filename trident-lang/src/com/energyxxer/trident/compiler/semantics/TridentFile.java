@@ -13,7 +13,6 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.RawCommand;
 import com.energyxxer.trident.compiler.commands.parsers.CommandParser;
-import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -69,7 +68,6 @@ public class TridentFile implements CompilerExtension {
     }
 
     public void resolveEntries() {
-        Debug.log("Resolving entries for " + function);
         TokenPattern<?>[] entries = ((TokenList) this.pattern.find(".ENTRIES")).getContents();
 
         boolean exportComments = compiler.getProperties().get("export-comments") == null || compiler.getProperties().get("export-comments").getAsBoolean();
