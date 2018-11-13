@@ -113,6 +113,7 @@ public class TridentEditorModule extends JScrollPane implements DisplayModule, U
 			String s = new String(encoded);
 			setText(s);
 			editorComponent.setCaretPosition(0);
+			associatedTab.updateSavedValue();
 			startEditListeners();
 		} catch (IOException e) {
 			e.printStackTrace();

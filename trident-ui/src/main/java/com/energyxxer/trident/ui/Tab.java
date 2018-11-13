@@ -81,10 +81,10 @@ public class Tab {
 		}
 	}
 
+
 	/*public Project getLinkedProject() {
 		return linkedProject;
 	}*/
-
 	public JComponent getModuleComponent() {
 		return (JComponent) module;
 	}
@@ -93,11 +93,18 @@ public class Tab {
 		return saved;
 	}
 
-	public void setSaved(boolean saved) {
+	private void setSaved(boolean saved) {
 		if(this.saved != saved) {
 			this.saved = saved;
 			updateList();
 		}
+	}
+
+	public void updateSavedValue() {
+		if(module != null) {
+            savedValue = module.getValue();
+            setSaved(true);
+        }
 	}
 
 	private void updateList() {
