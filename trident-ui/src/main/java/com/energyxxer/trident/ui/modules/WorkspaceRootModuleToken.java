@@ -35,8 +35,10 @@ public class WorkspaceRootModuleToken implements ModuleToken {
         this.root = new File(Preferences.get("workspace_dir", Preferences.DEFAULT_WORKSPACE_PATH));
 
         ArrayList<ModuleToken> subTokens = new ArrayList<>();
-        for(File file : FileUtil.listFilesOrdered(root)) {
-            subTokens.add(new FileModuleToken(file));
+        if(root.exists()) {
+            for(File file : FileUtil.listFilesOrdered(root)) {
+                subTokens.add(new FileModuleToken(file));
+            }
         }
 
         return subTokens;

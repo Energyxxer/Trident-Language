@@ -106,8 +106,22 @@ public class TridentCompiler {
             }
         }
 
-        for(Map.Entry<File, TridentFile> file : files.entrySet()) {
-            file.getValue().resolveEntries();
+        files.values().forEach(TridentFile::checkCircularRequires);
+
+        ArrayList<TridentFile> sortedFiles = new ArrayList<>(files.values());
+
+        sortedFiles.sort((a,b) ->
+                (a.isCompileOnly() != b.isCompileOnly()) ?
+                        a.isCompileOnly() ? -1 : 1 :
+                (a.getRequires().contains(b.getResourceLocation())) ?
+                        1 :
+                        (b.getRequires().contains(a.getResourceLocation())) ?
+                            -1 :
+                            0
+        );
+
+        for(TridentFile file : sortedFiles) {
+            file.resolveEntries();
         }
 
         if(report.hasErrors()) {
@@ -210,5 +224,12 @@ public class TridentCompiler {
 
     public JsonObject getProperties() {
         return properties;
+    }
+
+    public TridentFile getFile(TridentUtil.ResourceLocation loc) {
+        for(TridentFile file : files.values()) {
+            if(file.getResourceLocation().equals(loc)) return file;
+        }
+        return null;
     }
 }

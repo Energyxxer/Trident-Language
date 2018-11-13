@@ -74,7 +74,7 @@ public class Commons {
             if(token instanceof FileModuleToken) selectedFiles.add((FileModuleToken) token);
         }
 
-        if(selectedTab.token instanceof FileModuleToken) {
+        if(selectedTab != null && selectedTab.token instanceof FileModuleToken) {
             selected = ProjectManager.getAssociatedProject(((FileModuleToken) selectedTab.token).getFile());
         } else if(selectedFiles.size() > 0) {
             selected = ProjectManager.getAssociatedProject(selectedFiles.get(0).getFile());
