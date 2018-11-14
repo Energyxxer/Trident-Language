@@ -135,11 +135,11 @@ public class TridentProductions {
         //endregion
         //region tellraw
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch();
-            g.append(matchItem(COMMAND_HEADER, "tellraw"));
-            g.append(ENTITY);
-            g.append(TEXT_COMPONENT);
-            COMMAND.add(g);
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "tellraw"),
+                    ENTITY,
+                    TEXT_COMPONENT
+            ));
         }
         //endregion
         //region defaultgamemode
@@ -793,28 +793,28 @@ public class TridentProductions {
             LazyTokenStructureMatch JSON_ELEMENT = new LazyTokenStructureMatch("JSON_ELEMENT");
 
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("JSON_OBJECT");
                 g.append(brace("{"));
                 {
                     LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
-                    g2.append(string());
+                    g2.append(string().setName("JSON_OBJECT_KEY"));
                     g2.append(colon());
                     g2.append(JSON_ELEMENT);
-                    g.append(new LazyTokenListMatch(g2, comma(), true));
+                    g.append(new LazyTokenListMatch(g2, comma(), true).setName("JSON_OBJECT_ENTRIES"));
                 }
                 g.append(brace("}"));
                 JSON_ELEMENT.add(g);
             }
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("JSON_ARRAY");
                 g.append(brace("["));
-                g.append(new LazyTokenListMatch(JSON_ELEMENT, comma(), true));
+                g.append(new LazyTokenListMatch(JSON_ELEMENT, comma(), true).setName("JSON_ARRAY_ENTRIES"));
                 g.append(brace("]"));
                 JSON_ELEMENT.add(g);
             }
-            JSON_ELEMENT.add(string());
-            JSON_ELEMENT.add(real());
-            JSON_ELEMENT.add(ofType(BOOLEAN));
+            JSON_ELEMENT.add(string().setName("STRING_LITERAL"));
+            JSON_ELEMENT.add(real().setName("NUMBER"));
+            JSON_ELEMENT.add(ofType(BOOLEAN).setName("BOOLEAN"));
 
             TEXT_COMPONENT.add(JSON_ELEMENT);
         }

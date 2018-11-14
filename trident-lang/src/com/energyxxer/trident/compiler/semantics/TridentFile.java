@@ -147,12 +147,11 @@ public class TridentFile implements CompilerExtension {
         return requires.values();
     }
 
-    public boolean checkCircularRequires() {
-        return this.checkCircularRequires(new ArrayList<>());
+    public void checkCircularRequires() {
+        this.checkCircularRequires(new ArrayList<>());
     }
 
-    public boolean checkCircularRequires(ArrayList<TridentUtil.ResourceLocation> previous) {
-        boolean returnValue = false;
+    private void checkCircularRequires(ArrayList<TridentUtil.ResourceLocation> previous) {
         previous.add(this.location);
         for(Map.Entry<TokenPattern<?>, TridentUtil.ResourceLocation> entry : requires.entrySet()) {
             if(previous.contains(entry.getValue())) {
@@ -160,15 +159,12 @@ public class TridentFile implements CompilerExtension {
             } else {
                 TridentFile next = getCompiler().getFile(entry.getValue());
                 if(next != null) {
-                    if(next.checkCircularRequires(previous)) {
-                        returnValue = true;
-                    }
+                    next.checkCircularRequires(previous);
                 } else {
                     getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Required Trident function '" + entry.getKey() + "' does not exist"));
                 }
             }
         }
-        return returnValue;
     }
 
     public TridentUtil.ResourceLocation getResourceLocation() {

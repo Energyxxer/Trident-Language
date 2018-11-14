@@ -1,18 +1,12 @@
 package com.energyxxer.trident.ui;
 
-import com.energyxxer.trident.global.temp.projects.Project;
-import com.energyxxer.trident.global.temp.projects.ProjectManager;
 import com.energyxxer.trident.main.window.TridentWindow;
-import com.energyxxer.trident.ui.audio.AudioPlayer;
 import com.energyxxer.trident.ui.display.DisplayModule;
-import com.energyxxer.trident.ui.editor.TridentEditorModule;
-import com.energyxxer.trident.ui.imageviewer.ImageViewer;
 import com.energyxxer.trident.ui.modules.ModuleToken;
 import com.energyxxer.trident.ui.tablist.TabItem;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.Date;
 
 /**
