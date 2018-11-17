@@ -13,8 +13,8 @@ import com.energyxxer.trident.ui.styledcomponents.StyledDropdownMenu;
 import com.energyxxer.trident.ui.styledcomponents.StyledLabel;
 import com.energyxxer.trident.ui.styledcomponents.StyledTextField;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
-import com.energyxxer.util.FileUtil;
 import com.energyxxer.trident.util.ProjectUtil;
+import com.energyxxer.util.FileUtil;
 import com.energyxxer.util.logger.Debug;
 import com.energyxxer.xswing.Padding;
 
@@ -232,8 +232,8 @@ public class UnitDialog {
                 //</editor-fold>
 
                 String text = FileDefaults.populateTemplate(FileDefaults.defaults.get(type.toString().toLowerCase()), variables);
-                pos = Math.max(0, text.indexOf("$END$"));
-                text = text.replace("$END$", "");
+                pos = Math.max(0, text.indexOf("\$END$"));
+                text = text.replace("\$END$", "");
 
                 writer.print(text);
                 writer.close();

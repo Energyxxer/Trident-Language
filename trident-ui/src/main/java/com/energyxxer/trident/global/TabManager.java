@@ -175,12 +175,12 @@ public class TabManager {
 		for(Tab tab : openTabs) {
 			if(selectedTab != tab) {
 				sb.append(tab.token.getIdentifier());
-				sb.append(File.pathSeparatorChar);
+				sb.append(File.pathSeparator);
 			}
 		}
 		if(selectedTab != null) {
 			sb.append(selectedTab.token.getIdentifier());
-			sb.append(File.pathSeparatorChar);
+			sb.append(File.pathSeparator);
 		}
 		Preferences.put("open_tabs",sb.toString());
 	}
