@@ -1,6 +1,7 @@
 package com.energyxxer.trident.ui.editor;
 
 import com.energyxxer.trident.global.TabManager;
+import com.energyxxer.trident.global.temp.Lang;
 import com.energyxxer.trident.ui.Tab;
 import com.energyxxer.trident.ui.display.DisplayModule;
 import com.energyxxer.trident.ui.scrollbar.OverlayScrollPaneLayout;
@@ -8,9 +9,7 @@ import com.energyxxer.trident.ui.theme.Theme;
 import com.energyxxer.trident.ui.theme.ThemeManager;
 import com.energyxxer.trident.ui.theme.change.ThemeChangeListener;
 import com.energyxxer.trident.util.linenumber.TextLineNumber;
-import com.energyxxer.trident.global.temp.Lang;
 import com.energyxxer.util.logger.Debug;
-import com.energyxxer.util.out.Console;
 
 import javax.swing.*;
 import javax.swing.event.UndoableEditEvent;
@@ -22,7 +21,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -221,8 +219,22 @@ public class TridentEditorModule extends JScrollPane implements DisplayModule, U
 
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
-		
+
 	}
+
+	public void ensureVisible(int index) {
+        try {
+            Rectangle view = this.getViewport().getViewRect();
+            Rectangle rect = editorComponent.modelToView(index);
+            if(rect == null) return;
+            rect.width = 2;
+            rect.x -= view.x;
+            rect.y -= view.y;
+            this.getViewport().scrollRectToVisible(rect);
+        } catch (BadLocationException x) {
+            x.printStackTrace();
+        }
+    }
 
 	@Override
 	public void themeChanged(Theme t) {

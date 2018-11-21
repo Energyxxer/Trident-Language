@@ -8,8 +8,7 @@ import javax.swing.plaf.TextUI;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.Highlighter;
-import java.awt.Graphics;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -51,11 +50,13 @@ public class EditorCaret extends DefaultCaret {
         for(Dot dot : dots) {
             if(dot.handleEvent(e)) actionPerformed = true;
         }
-        if(actionPerformed) update();
+        if(actionPerformed) {
+            removeDuplicates();
+            update();
+        }
     }
 
     private void update() {
-        removeDuplicates();
         editor.repaint();
         this.setVisible(true);
         readjustRect();
@@ -65,9 +66,7 @@ public class EditorCaret extends DefaultCaret {
     public void setPosition(int pos) {
         dots.clear();
         addDot(new Dot(pos, editor));
-        /*readjustRect();
-        repaint();
-        this.fireStateChanged();*/
+        update();
     }
 
     public void addDot(int... pos) {
@@ -75,18 +74,12 @@ public class EditorCaret extends DefaultCaret {
             Dot newDot = new Dot(dot, editor);
             if(!dots.contains(newDot)) dots.add(newDot);
         }
-        readjustRect();
-        editor.repaint();
-        this.fireStateChanged();
     }
 
     public void addDot(Dot... newDots) {
         for(Dot dot : newDots) {
             if(!dots.contains(dot)) dots.add(dot);
         }
-        readjustRect();
-        editor.repaint();
-        this.fireStateChanged();
     }
 
     public void removeDuplicates() {
@@ -196,9 +189,7 @@ public class EditorCaret extends DefaultCaret {
             }
         }
 
-        readjustRect();
-        repaint();
-        this.fireStateChanged();
+        update();
     }
 
     public void deselect() {
@@ -234,6 +225,7 @@ public class EditorCaret extends DefaultCaret {
         for(int i = 0; i < profile.size(); i += 2) {
             addDot(new Dot(r.clamp(profile.get(i)),r.clamp(profile.get(i+1)), editor));
         }
+        removeDuplicates();
         update();
     }
 
@@ -266,12 +258,9 @@ public class EditorCaret extends DefaultCaret {
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        //bufferedDot.index = module.viewToModel(e.getPoint());
         editor.repaint();
         this.setVisible(true);
         readjustRect();
-        this.fireStateChanged();
-        adjustFocus();
         e.consume();
     }
 
@@ -295,10 +284,7 @@ public class EditorCaret extends DefaultCaret {
     @Override
     public void mouseDragged(MouseEvent e) {
         if(bufferedDot != null) bufferedDot.index = editor.viewToModel(e.getPoint());
-        editor.repaint();
-        this.setVisible(true);
-        readjustRect();
-        this.fireStateChanged();
+        update();
         //super.mouseDragged(e);
     }
 

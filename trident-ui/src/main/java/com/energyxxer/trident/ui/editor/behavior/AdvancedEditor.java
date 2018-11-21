@@ -7,40 +7,25 @@ import com.energyxxer.trident.ui.editor.behavior.caret.Dot;
 import com.energyxxer.trident.ui.editor.behavior.caret.EditorCaret;
 import com.energyxxer.trident.ui.editor.behavior.editmanager.CharacterDriftHandler;
 import com.energyxxer.trident.ui.editor.behavior.editmanager.EditManager;
-import com.energyxxer.trident.ui.editor.behavior.editmanager.edits.DeletionEdit;
-import com.energyxxer.trident.ui.editor.behavior.editmanager.edits.IndentEdit;
-import com.energyxxer.trident.ui.editor.behavior.editmanager.edits.InsertionEdit;
-import com.energyxxer.trident.ui.editor.behavior.editmanager.edits.LineMoveEdit;
-import com.energyxxer.trident.ui.editor.behavior.editmanager.edits.NewlineEdit;
-import com.energyxxer.trident.ui.editor.behavior.editmanager.edits.PasteEdit;
-import com.energyxxer.trident.ui.editor.behavior.editmanager.edits.TabInsertionEdit;
+import com.energyxxer.trident.ui.editor.behavior.editmanager.edits.*;
 import com.energyxxer.trident.util.linepainter.LinePainter;
 import com.energyxxer.util.StringLocation;
 import com.energyxxer.util.StringLocationCache;
 
-import javax.swing.AbstractAction;
-import javax.swing.InputMap;
-import javax.swing.JComponent;
-import javax.swing.JTextPane;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.StyledDocument;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Insets;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.HashMap;
 
 /**
  * Created by User on 1/5/2017.
@@ -60,7 +45,6 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
 
     {
         this.addKeyListener(this);
-        this.addCaretListener(this);
 
         linePainter = new LinePainter(this);
         this.setCaret(this.caret = new EditorCaret(this));
@@ -216,7 +200,6 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
 
     @Override
     public void caretUpdate(CaretEvent e) {
-
     }
 
     @Override

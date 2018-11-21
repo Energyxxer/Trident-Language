@@ -13,6 +13,7 @@ import com.energyxxer.trident.main.window.sections.EditArea;
 import com.energyxxer.trident.ui.editor.behavior.AdvancedEditor;
 import com.energyxxer.trident.ui.editor.behavior.editmanager.CharacterDriftHandler;
 import com.energyxxer.trident.ui.editor.inspector.Inspector;
+import com.energyxxer.util.logger.Debug;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -58,7 +59,9 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
 
     @Override
     public void caretUpdate(CaretEvent e) {
+        super.caretUpdate(e);
         displayCaretInfo();
+        parent.ensureVisible(getCaret().getProfile().get(0));
     }
 
     private void highlightSyntax() {
