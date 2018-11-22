@@ -871,7 +871,7 @@ public class TridentProductions {
         //region Selector
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
-            g.append(ofType(SELECTOR_HEADER));
+            g.append(ofType(SELECTOR_HEADER).setName("SELECTOR_HEADER"));
 
             {
                 LazyTokenGroupMatch g2 = new LazyTokenGroupMatch(true);
