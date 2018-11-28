@@ -1,7 +1,7 @@
 package com.energyxxer.trident.compiler.commands.parsers;
 
-import com.energyxxer.trident.compiler.commands.CommandParserAnnotation;
+import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 
-@CommandParserAnnotation(headerCommand = "setblock")
+@ParserMember(key = "setblock")
 public class SetblockParser {
 }
