@@ -1,39 +1,53 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
+import com.energyxxer.commodore.block.Block;
+import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.item.Item;
+import com.energyxxer.commodore.tags.BlockTag;
 import com.energyxxer.commodore.tags.ItemTag;
 import com.energyxxer.commodore.types.Type;
-import com.energyxxer.commodore.types.defaults.EntityType;
-import com.energyxxer.commodore.types.defaults.ItemType;
+import com.energyxxer.commodore.types.TypeDictionary;
+import com.energyxxer.commodore.types.defaults.TypeManager;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.parsers.EntryParsingException;
 
 public class CommonParsers {
-    public static EntityType parseEntityType(TokenPattern<?> id, TridentCompiler compiler) {
-        TokenPattern<?> namespacePattern = id.find("NAMESPACE");
-        String namespace = namespacePattern != null ? namespacePattern.flattenTokens().get(0).value : null;
-        return (namespace != null ? compiler.getModule().getNamespace(namespace) : compiler.getModule().minecraft).types.entity.get(id.find("TYPE_NAME").flattenTokens().get(0).value);
+    public static Type parseEntityType(TokenPattern<?> id, TridentCompiler compiler) {
+        return parseType(id, compiler, m -> m.entity);
     }
-    public static ItemType parseItemType(TokenPattern<?> id, TridentCompiler compiler) {
-        TokenPattern<?> namespacePattern = id.find("NAMESPACE");
-        String namespace = namespacePattern != null ? namespacePattern.flattenTokens().get(0).value : null;
-        return (namespace != null ? compiler.getModule().getNamespace(namespace) : compiler.getModule().minecraft).types.item.get(id.find("TYPE_NAME").flattenTokens().get(0).value);
+    public static Type parseItemType(TokenPattern<?> id, TridentCompiler compiler) {
+        return parseType(id, compiler, m -> m.item);
     }
+    public static Type parseBlockType(TokenPattern<?> id, TridentCompiler compiler) {
+        return parseType(id, compiler, m -> m.block);
+    }
+    public static Type parseType(TokenPattern<?> id, TridentCompiler compiler, TypeGroupPicker picker) {
+        TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id);
+        return picker.pick(compiler.getModule().getNamespace(typeLoc.namespace).types).get(typeLoc.body);
+    }
+
+
     public static ItemTag parseItemTag(TokenPattern<?> id, TridentCompiler compiler) {
-        String str = id.flattenTokens().get(0).value;
-        String namespace = "minecraft";
-        if(str.contains(":")) {
-            namespace = str.substring(0, str.indexOf(':'));
-            str = str.substring(str.indexOf(":")+1);
-        }
-        ItemTag returned = compiler.getModule().getNamespace(namespace).tags.itemTags.get(str);
+        TridentUtil.ResourceLocation tagLoc = new TridentUtil.ResourceLocation(id.flattenTokens().get(0).value);
+        ItemTag returned = compiler.getModule().getNamespace(tagLoc.namespace).tags.itemTags.get(tagLoc.body);
         if(returned == null) {
-            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "No such item tag exists: #" + namespace + ":" + str, id));
+            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "No such item tag exists: #" + tagLoc, id));
+            throw new EntryParsingException();
+        }
+        return returned;
+    }
+    public static BlockTag parseBlockTag(TokenPattern<?> id, TridentCompiler compiler) {
+        TridentUtil.ResourceLocation tagLoc = new TridentUtil.ResourceLocation(id.flattenTokens().get(0).value);
+        BlockTag returned = compiler.getModule().getNamespace(tagLoc.namespace).tags.blockTags.get(tagLoc.body);
+        if(returned == null) {
+            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "No such block tag exists: #" + tagLoc, id));
             throw new EntryParsingException();
         }
         return returned;
@@ -56,9 +70,52 @@ public class CommonParsers {
         return new Item(type, tag);
     }
 
+    public static Block parseBlock(TokenPattern<?> pattern, TridentCompiler compiler) {
+        if(pattern.getName().equals("BLOCK_TAGGED") || pattern.getName().equals("BLOCK")) return parseBlock(((TokenStructure) pattern).getContents(), compiler);
+
+        boolean isStandalone = pattern.getName().equals("CONCRETE_RESOURCE");
+
+        Type type;
+
+        if(isStandalone) {
+            type = parseBlockType(pattern.find("RESOURCE_NAME.BLOCK_ID"), compiler);
+        } else {
+            type = parseBlockTag(pattern.find("RESOURCE_NAME.RESOURCE_LOCATION"), compiler);
+        }
+
+
+        Blockstate state = parseBlockstate(pattern.find("BLOCKSTATE_CLAUSE.BLOCKSTATE"));
+        TagCompound tag = NBTParser.parseCompound(pattern.find("NBT_CLAUSE.NBT_COMPOUND"));
+        return new Block(type, state, tag);
+    }
+
+    public static Blockstate parseBlockstate(TokenPattern<?> pattern) {
+        if(pattern == null) return null;
+        TokenPattern<?> rawList = pattern.find("BLOCKSTATE_LIST");
+
+        Blockstate blockstate = null;
+        if(rawList instanceof TokenList) {
+            TokenList list = (TokenList) rawList;
+            for(TokenPattern<?> inner : list.getContents()) {
+                if(inner.getName().equals("BLOCKSTATE_PROPERTY")) {
+                    String key = inner.find("BLOCKSTATE_PROPERTY_KEY").flattenTokens().get(0).value;
+                    String value = inner.find("BLOCKSTATE_PROPERTY_VALUE").flattenTokens().get(0).value;
+
+                    if(blockstate == null) blockstate = new Blockstate();
+                    blockstate.put(key, value);
+                }
+            }
+        }
+        return blockstate;
+    }
+
     /**
      * CommonParsers should not be instantiated.
      * */
     private CommonParsers() {
+    }
+
+    public interface TypeGroupPicker {
+        TypeDictionary<?> pick(TypeManager m);
     }
 }

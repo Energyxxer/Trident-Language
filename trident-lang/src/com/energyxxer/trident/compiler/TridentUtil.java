@@ -18,7 +18,7 @@ public class TridentUtil {
 
         public ResourceLocation(TokenPattern<?> typeGroup) {
             TokenPattern<?> namespacePattern = typeGroup.find("NAMESPACE");
-            namespace = namespacePattern != null ? namespacePattern.flatten(false) : "minecraft";
+            namespace = namespacePattern != null ? namespacePattern.flattenTokens().get(0).value : "minecraft";
             body = typeGroup.find("TYPE_NAME").flatten(true);
         }
 

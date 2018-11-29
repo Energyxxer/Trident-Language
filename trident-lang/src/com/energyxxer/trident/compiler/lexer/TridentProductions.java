@@ -22,6 +22,7 @@ public class TridentProductions {
     public static final LazyTokenGroupMatch DIRECTIVE;
     //public static final LazyTokenItemMatch INSTRUCTION;
     public static final LazyTokenStructureMatch COMMAND;
+    public static final LazyTokenStructureMatch MODIFIER;
 
     public static final LazyTokenGroupMatch RESOURCE_LOCATION_TAGGED;
 
@@ -83,6 +84,7 @@ public class TridentProductions {
         FILE = new LazyTokenStructureMatch("FILE");
         ENTRY = new LazyTokenStructureMatch("ENTRY");
         COMMAND = new LazyTokenStructureMatch("COMMAND");
+        MODIFIER = new LazyTokenStructureMatch("MODIFIER");
         TEXT_COMPONENT = new LazyTokenStructureMatch("TEXT_COMPONENT");
         SELECTOR = new LazyTokenStructureMatch("SELECTOR");
         SELECTOR_ARGUMENT = new LazyTokenStructureMatch("SELECTOR_ARGUMENT");
@@ -440,7 +442,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "setblock"),
                     COORDINATE_SET,
                     BLOCK,
-                    choice("destroy", "keep", "replace").setOptional()
+                    choice("destroy", "keep", "replace").setOptional().setName("OLD_BLOCK_HANDLING")
             ));
         }
         //endregion
@@ -504,17 +506,25 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     choice(matchItem(COMMAND_HEADER, "teleport"), matchItem(COMMAND_HEADER, "tp")),
-                    choice(ENTITY, COORDINATE_SET),
-                    optional(
-                            choice(ENTITY, COORDINATE_SET),
-                            optional(
-                                    literal("facing"),
+                    choice(
+                            group(
+                                    ENTITY,
                                     choice(
-                                            COORDINATE_SET,
-                                            group(literal("entity"), ENTITY, ofType(ANCHOR).setOptional())
-                                    )
-                            )
-                    )
+                                            ENTITY,
+                                            group(
+                                                    COORDINATE_SET,
+                                                    optional(
+                                                        literal("facing"),
+                                                        choice(
+                                                                COORDINATE_SET,
+                                                                group(literal("entity"), ENTITY, ofType(ANCHOR).setOptional().setName("ANCHOR"))
+                                                        )
+                                                    ).setName("FACING_CLAUSE")
+                                            )
+                                    ).setOptional()
+                            ),
+                            COORDINATE_SET
+                    ).setName("SUBCOMMAND")
             ));
         }
         //endregion
@@ -724,9 +734,65 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //region execute
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "execute"),
+                    list(MODIFIER).setOptional(true).setName("MODIFIER_LIST"),
+                    optional(
+                            literal("run"),
+                            COMMAND
+                    ).setName("CHAINED_COMMAND")
+            ));
+        }
+        //endregion
         //endregion
 
-
+        //region Execute Modifiers
+        //region anchored
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "anchored"),
+                    ofType(ANCHOR)
+            ));
+        }
+        //endregion
+        //region as
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "as"),
+                    ENTITY
+            ));
+        }
+        //endregion
+        //region at
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "at"),
+                    ENTITY
+            ));
+        }
+        //endregion
+        //region facing
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "facing"),
+                    choice(
+                            group(literal("entity").setOptional(), ENTITY).setName("ENTITY_BRANCH"),
+                            group(COORDINATE_SET).setName("BLOCK_BRANCH")
+                    )
+            ));
+        }
+        //endregion
+        //region in
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "in"),
+                    DIMENSION_ID
+            ));
+        }
+        //endregion
+        //endregion
 
         //region Blockstate
         {
@@ -743,7 +809,7 @@ public class TridentProductions {
                     s.add(ofType(IDENTIFIER_TYPE_A));
                     g2.append(s);
                 }
-                g.append(new LazyTokenListMatch(g2, comma(), true));
+                g.append(new LazyTokenListMatch(g2, comma(), true).setName("BLOCKSTATE_LIST"));
             }
             g.append(brace("]"));
 
@@ -754,8 +820,8 @@ public class TridentProductions {
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE");
             g.append(new LazyTokenGroupMatch().append(BLOCK_ID).setName("RESOURCE_NAME"));
-            g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE));
-            g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
+            g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE).setName("BLOCKSTATE_CLAUSE"));
+            g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND).setName("NBT_CLAUSE"));
             BLOCK.add(g);
             BLOCK_TAGGED.add(BLOCK);
         }
@@ -783,6 +849,7 @@ public class TridentProductions {
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM_TAGGED.add(g);
         }
+        //endregion
         //endregion
 
 
