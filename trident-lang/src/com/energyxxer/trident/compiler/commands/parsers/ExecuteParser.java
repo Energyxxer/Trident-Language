@@ -24,7 +24,8 @@ public class ExecuteParser implements CommandParser {
             for(TokenPattern<?> inner : list.getContents()) {
                 ModifierParser parser = ParserManager.getParser(ModifierParser.class, inner.flattenTokens().get(0).value);;
                 if(parser != null) {
-                    modifiers.add(parser.parse(inner, file.getCompiler()));
+                    ExecuteModifier modifier = parser.parse(inner, file.getCompiler());
+                    if(modifier != null) modifiers.add(modifier);
                 }
             }
         }

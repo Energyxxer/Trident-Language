@@ -3,12 +3,14 @@ package com.energyxxer.trident.compiler.commands.parsers.constructs;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
+import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.tags.BlockTag;
 import com.energyxxer.commodore.tags.ItemTag;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.TypeManager;
+import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -17,6 +19,8 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.parsers.EntryParsingException;
+
+import java.util.List;
 
 public class CommonParsers {
     public static Type parseEntityType(TokenPattern<?> id, TridentCompiler compiler) {
@@ -107,6 +111,46 @@ public class CommonParsers {
             }
         }
         return blockstate;
+    }
+
+    public static NumberRange<Integer> parseIntRange(TokenPattern<?> pattern) {
+        TokenPattern<?> exact = pattern.find("EXACT");
+        if(exact != null) return new NumberRange<>(Integer.parseInt(pattern.flatten(false)));
+        List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
+        List<TokenPattern<?>> maxRaw = pattern.searchByName("MAX");
+        Integer min = null;
+        Integer max = null;
+        if(!minRaw.isEmpty()) {
+            min = Integer.parseInt(minRaw.get(0).flatten(false));
+        }
+        if(!maxRaw.isEmpty()) {
+            max = Integer.parseInt(maxRaw.get(0).flatten(false));
+        }
+        return new NumberRange<>(min, max);
+    }
+
+    public static NumberRange<Double> parseRealRange(TokenPattern<?> pattern) {
+        TokenPattern<?> exact = pattern.find("EXACT");
+        if(exact != null) return new NumberRange<>(Double.parseDouble(pattern.flatten(false)));
+        List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
+        List<TokenPattern<?>> maxRaw = pattern.searchByName("MAX");
+        Double min = null;
+        Double max = null;
+        if(!minRaw.isEmpty()) {
+            min = Double.parseDouble(minRaw.get(0).flatten(false));
+        }
+        if(!maxRaw.isEmpty()) {
+            max = Double.parseDouble(maxRaw.get(0).flatten(false));
+        }
+        return new NumberRange<>(min, max);
+    }
+
+    public static Objective parseObjective(TokenPattern<?> pattern, TridentCompiler compiler) {
+        String name = pattern.flatten(true);
+        if(compiler.getModule().getObjectiveManager().get(name) == null) {
+            compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Unregistered objective name '" + name + "'"));
+        }
+        return compiler.getModule().getObjectiveManager().create(name, true);
     }
 
     /**

@@ -792,6 +792,21 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //region if/unless
+        {
+            MODIFIER.add(group(
+                    choice(matchItem(MODIFIER_HEADER, "if"), matchItem(MODIFIER_HEADER, "unless")).setName("HEADER"),
+                    choice(
+                            group(literal("entity"), ENTITY).setName("ENTITY_CONDITION"),
+                            group(literal("block"), COORDINATE_SET, BLOCK_TAGGED).setName("BLOCK_CONDITION"),
+                            group(literal("score"), ENTITY, identifierA().setName("OBJECTIVE"), choice(
+                                    group(choice(symbol("<"), symbol("<="), symbol("="), symbol(">="), symbol(">"), symbol("!=")), ENTITY, identifierA().setName("OBJECTIVE")),
+                                    group(literal("matches"), INTEGER_NUMBER_RANGE)
+                            )).setName("SCORE_CONDITION")
+                    ).setName("SUBJECT")
+            ));
+        }
+        //endregion
         //endregion
 
         //region Blockstate
@@ -950,37 +965,45 @@ public class TridentProductions {
         //endregion
         //region Number Ranges
         {
-            INTEGER_NUMBER_RANGE.add(integer());
+            INTEGER_NUMBER_RANGE.add(integer().setName("EXACT"));
             {
                 LazyTokenGroupMatch g = new LazyTokenGroupMatch();
-                g.append(integer());
+                g.append(integer().setName("MIN"));
+                g.append(glue());
                 g.append(dot());
+                g.append(glue());
                 g.append(dot());
-                g.append(new LazyTokenGroupMatch(true).append(integer()));
+                g.append(optional(glue(), integer().setName("MAX")));
                 INTEGER_NUMBER_RANGE.add(g);
             }
             {
                 LazyTokenGroupMatch g = new LazyTokenGroupMatch();
                 g.append(dot());
+                g.append(glue());
                 g.append(dot());
-                g.append(integer());
+                g.append(glue());
+                g.append(integer().setName("MAX"));
                 INTEGER_NUMBER_RANGE.add(g);
             }
 
-            REAL_NUMBER_RANGE.add(real());
+            REAL_NUMBER_RANGE.add(real().setName("EXACT"));
             {
                 LazyTokenGroupMatch g = new LazyTokenGroupMatch();
-                g.append(real());
+                g.append(real().setName("MIN"));
+                g.append(glue());
                 g.append(dot());
+                g.append(glue());
                 g.append(dot());
-                g.append(new LazyTokenGroupMatch(true).append(real()));
+                g.append(optional(glue(), real().setName("MAX")));
                 REAL_NUMBER_RANGE.add(g);
             }
             {
                 LazyTokenGroupMatch g = new LazyTokenGroupMatch();
                 g.append(dot());
+                g.append(glue());
                 g.append(dot());
-                g.append(real());
+                g.append(glue());
+                g.append(real().setName("MAX"));
                 REAL_NUMBER_RANGE.add(g);
             }
         }
@@ -1503,6 +1526,10 @@ public class TridentProductions {
 
     private static LazyTokenItemMatch literal(String text) {
         return new LazyTokenItemMatch(TokenType.UNKNOWN, text);
+    }
+
+    private static LazyTokenItemMatch symbol(String text) {
+        return new LazyTokenItemMatch(SYMBOL, text);
     }
 
     private static LazyTokenItemMatch matchItem(TokenType type, String text) {
