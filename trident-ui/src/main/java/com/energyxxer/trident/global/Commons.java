@@ -38,7 +38,7 @@ public class Commons {
     public static void showInExplorer(String path) {
         try {
             if(System.getProperty("os.name").startsWith("Windows")) {
-                Runtime.getRuntime().exec("Explorer.exe /select," + path);
+                Runtime.getRuntime().exec("Explorer.exe /pick," + path);
             } else if(Desktop.isDesktopSupported()) {
                 Desktop desktop = Desktop.getDesktop();
                 desktop.open(new File(path).getParentFile());

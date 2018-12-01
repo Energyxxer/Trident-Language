@@ -1,9 +1,9 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
 import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
-import com.energyxxer.commodore.functionlogic.score.FakePlayer;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
+import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.textcomponents.*;
 import com.energyxxer.commodore.textcomponents.events.ClickEvent;
@@ -77,7 +77,7 @@ public class TextParser {
                     String objectiveName = s.get("objective").getAsStringOrNull();
                     if(objectiveName == null) delegate.report("Missing 'objective' string for 'score' text component", s);
                     Objective objective = compiler.getModule().getObjectiveManager().create(objectiveName);
-                    component = new ScoreTextComponent(new LocalScore(objective, new FakePlayer(name)));
+                    component = new ScoreTextComponent(new LocalScore(objective, new PlayerName(name)));
                 }).otherwise(v -> delegate.report("Expected object in 'score'", obj.get("score")));
             } else if(obj.has("selector")) {
                 using(obj.get("selector").getAsStringOrNull())

@@ -22,6 +22,7 @@ public class TridentProductions {
     public static final LazyTokenGroupMatch DIRECTIVE;
     //public static final LazyTokenItemMatch INSTRUCTION;
     public static final LazyTokenStructureMatch COMMAND;
+    public static final LazyTokenStructureMatch MODIFIER;
 
     public static final LazyTokenGroupMatch RESOURCE_LOCATION_TAGGED;
 
@@ -73,20 +74,21 @@ public class TridentProductions {
     public static final LazyTokenStructureMatch STRUCTURE = new LazyTokenStructureMatch("STRUCTURE");
     public static final LazyTokenStructureMatch DIFFICULTY = new LazyTokenStructureMatch("DIFFICULTY");
 
-    public static final LazyTokenStructureMatch STRING_LITERAL_OR_UNKNOWN = new LazyTokenStructureMatch("STRING_LITERAL_OR_UNKNOWN");
+    public static final LazyTokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_A = new LazyTokenStructureMatch("STRING_LITERAL_OR_IDENTIFIER_A");
 
     //grouped arguments
     public static final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
-    public static final LazyTokenGroupMatch VARIABLE_MARKER = group(ofType(VARIABLE_MARKER_START), identifierA(), ofType(VARIABLE_MARKER_END)).setName("VARIABLE_MARKER");
+    public static final LazyTokenGroupMatch VARIABLE_MARKER = group(ofType(VARIABLE_MARKER_START), identifierA().setName("VARIABLE_NAME"), ofType(VARIABLE_MARKER_END)).setName("VARIABLE_MARKER");
 
     static {
         FILE = new LazyTokenStructureMatch("FILE");
         ENTRY = new LazyTokenStructureMatch("ENTRY");
         COMMAND = new LazyTokenStructureMatch("COMMAND");
+        MODIFIER = new LazyTokenStructureMatch("MODIFIER");
         TEXT_COMPONENT = new LazyTokenStructureMatch("TEXT_COMPONENT");
         SELECTOR = new LazyTokenStructureMatch("SELECTOR");
         SELECTOR_ARGUMENT = new LazyTokenStructureMatch("SELECTOR_ARGUMENT");
-        PLAYER_NAME = choice(identifierB());
+        PLAYER_NAME = choice(identifierB()).setName("PLAYER_NAME");
 
         COMMENT_S = new LazyTokenItemMatch(COMMENT).setName("COMMENT");
         VERBATIM_COMMAND_S = new LazyTokenItemMatch(VERBATIM_COMMAND).setName("VERBATIM_COMMAND");
@@ -107,8 +109,8 @@ public class TridentProductions {
         ENTRY.add(COMMAND);
         ENTRY.add(VERBATIM_COMMAND_S);
 
-        STRING_LITERAL_OR_UNKNOWN.add(string());
-        STRING_LITERAL_OR_UNKNOWN.add(ofType(TokenType.UNKNOWN));
+        STRING_LITERAL_OR_IDENTIFIER_A.add(string());
+        STRING_LITERAL_OR_IDENTIFIER_A.add(identifierA());
 
         {
             LazyTokenGroupMatch separator = new LazyTokenGroupMatch(true).setName("LINE_PADDING");
@@ -164,13 +166,11 @@ public class TridentProductions {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "tag"));
             g.append(ENTITY);
-            {
-                LazyTokenStructureMatch s = new LazyTokenStructureMatch("SUBCOMMAND");
-                s.add(literal("list"));
-                s.add(new LazyTokenGroupMatch().append(literal("add")).append(ofType(IDENTIFIER_TYPE_A)));
-                s.add(new LazyTokenGroupMatch().append(literal("remove")).append(ofType(IDENTIFIER_TYPE_A)));
-                g.append(s);
-            }
+            g.append(choice(
+                    literal("list"),
+                    group(literal("add"), ofType(IDENTIFIER_TYPE_A)),
+                    group(literal("remove"), ofType(IDENTIFIER_TYPE_A))
+            ));
             COMMAND.add(g);
         }
         //endregion
@@ -442,7 +442,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "setblock"),
                     COORDINATE_SET,
                     BLOCK,
-                    choice("destroy", "keep", "replace").setOptional()
+                    choice("destroy", "keep", "replace").setOptional().setName("OLD_BLOCK_HANDLING")
             ));
         }
         //endregion
@@ -506,17 +506,25 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     choice(matchItem(COMMAND_HEADER, "teleport"), matchItem(COMMAND_HEADER, "tp")),
-                    choice(ENTITY, COORDINATE_SET),
-                    optional(
-                            choice(ENTITY, COORDINATE_SET),
-                            optional(
-                                    literal("facing"),
+                    choice(
+                            group(
+                                    ENTITY,
                                     choice(
-                                            COORDINATE_SET,
-                                            group(literal("entity"), ENTITY, ofType(ANCHOR).setOptional())
-                                    )
-                            )
-                    )
+                                            ENTITY,
+                                            group(
+                                                    COORDINATE_SET,
+                                                    optional(
+                                                        literal("facing"),
+                                                        choice(
+                                                                COORDINATE_SET,
+                                                                group(literal("entity"), ENTITY, ofType(ANCHOR).setOptional().setName("ANCHOR"))
+                                                        )
+                                                    ).setName("FACING_CLAUSE")
+                                            )
+                                    ).setOptional()
+                            ),
+                            COORDINATE_SET
+                    ).setName("SUBCOMMAND")
             ));
         }
         //endregion
@@ -726,9 +734,65 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //region execute
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "execute"),
+                    list(MODIFIER).setOptional(true).setName("MODIFIER_LIST"),
+                    optional(
+                            literal("run"),
+                            COMMAND
+                    ).setName("CHAINED_COMMAND")
+            ));
+        }
+        //endregion
         //endregion
 
-
+        //region Execute Modifiers
+        //region anchored
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "anchored"),
+                    ofType(ANCHOR)
+            ));
+        }
+        //endregion
+        //region as
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "as"),
+                    ENTITY
+            ));
+        }
+        //endregion
+        //region at
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "at"),
+                    ENTITY
+            ));
+        }
+        //endregion
+        //region facing
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "facing"),
+                    choice(
+                            group(literal("entity").setOptional(), ENTITY).setName("ENTITY_BRANCH"),
+                            group(COORDINATE_SET).setName("BLOCK_BRANCH")
+                    )
+            ));
+        }
+        //endregion
+        //region in
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "in"),
+                    DIMENSION_ID
+            ));
+        }
+        //endregion
+        //endregion
 
         //region Blockstate
         {
@@ -745,7 +809,7 @@ public class TridentProductions {
                     s.add(ofType(IDENTIFIER_TYPE_A));
                     g2.append(s);
                 }
-                g.append(new LazyTokenListMatch(g2, comma(), true));
+                g.append(new LazyTokenListMatch(g2, comma(), true).setName("BLOCKSTATE_LIST"));
             }
             g.append(brace("]"));
 
@@ -756,8 +820,8 @@ public class TridentProductions {
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE");
             g.append(new LazyTokenGroupMatch().append(BLOCK_ID).setName("RESOURCE_NAME"));
-            g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE));
-            g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
+            g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE).setName("BLOCKSTATE_CLAUSE"));
+            g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND).setName("NBT_CLAUSE"));
             BLOCK.add(g);
             BLOCK_TAGGED.add(BLOCK);
         }
@@ -785,6 +849,7 @@ public class TridentProductions {
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM_TAGGED.add(g);
         }
+        //endregion
         //endregion
 
 
@@ -827,7 +892,7 @@ public class TridentProductions {
                 g.append(brace("{"));
                 {
                     LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
-                    g2.append(new LazyTokenGroupMatch().append(STRING_LITERAL_OR_UNKNOWN).setName("NBT_KEY"));
+                    g2.append(new LazyTokenGroupMatch().append(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_KEY"));
                     g2.append(colon());
                     g2.append(NBT_VALUE);
                     g.append(new LazyTokenListMatch(g2, comma(), true).setName("NBT_COMPOUND_ENTRIES"));
@@ -859,30 +924,28 @@ public class TridentProductions {
                             glue(),
                             dot().setName("NBT_PATH_SEPARATOR"),
                             glue(),
-                            group(STRING_LITERAL_OR_UNKNOWN).setName("NBT_PATH_KEY_LABEL")
+                            group(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_PATH_KEY_LABEL")
                     ).setName("NBT_PATH_KEY"));
 
             NBT_PATH_NODE.add(group(glue(), brace("["), integer(), brace("]")).setName("NBT_PATH_INDEX"));
 
-            NBT_PATH.add(group(group(group(STRING_LITERAL_OR_UNKNOWN).setName("NBT_PATH_KEY_LABEL")).setName("NBT_PATH_KEY"),
+            NBT_PATH.add(group(group(group(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_PATH_KEY_LABEL")).setName("NBT_PATH_KEY"),
                     list(NBT_PATH_NODE, glue()).setOptional()));
         }
 
         //region Selector
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch();
-            g.append(ofType(SELECTOR_HEADER));
-
-            {
-                LazyTokenGroupMatch g2 = new LazyTokenGroupMatch(true);
-                g2.append(ofType(GLUE));
-                g2.append(brace("["));
-                g2.append(new LazyTokenListMatch(SELECTOR_ARGUMENT, comma(), true));
-                g2.append(brace("]"));
-                g.append(g2);
-            }
-
-            SELECTOR.add(g);
+            SELECTOR.add(
+                    group(
+                            ofType(SELECTOR_HEADER).setName("SELECTOR_HEADER"),
+                            optional(
+                                    glue(),
+                                    brace("["),
+                                    list(SELECTOR_ARGUMENT, comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST"),
+                                    brace("]")
+                            )
+                    )
+            );
         }
         //endregion
         //region Number Ranges
@@ -987,11 +1050,10 @@ public class TridentProductions {
         }
 
         {
-            //String Arguments
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("STRING_ARGUMENT");
+            //Identifier Arguments
+            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("IDENTIFIER_ARGUMENT");
 
             LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
-            s.add(literal("name"));
             s.add(literal("tag"));
             s.add(literal("team"));
 
@@ -1000,7 +1062,26 @@ public class TridentProductions {
             g.append(not().setOptional());
 
             LazyTokenStructureMatch s2 = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_VALUE", true);
-            s2.add(STRING_LITERAL_OR_UNKNOWN);
+            s2.add(identifierA());
+
+            g.append(s2);
+
+            SELECTOR_ARGUMENT.add(g);
+        }
+
+        {
+            //String Arguments
+            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("STRING_ARGUMENT");
+
+            LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
+            s.add(literal("name"));
+
+            g.append(s);
+            g.append(equals());
+            g.append(not().setOptional());
+
+            LazyTokenStructureMatch s2 = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_VALUE", true);
+            s2.add(STRING_LITERAL_OR_IDENTIFIER_A);
 
             g.append(s2);
 
@@ -1435,7 +1516,7 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch not() {
-        return ofType(NOT);
+        return ofType(NOT).setName("NEGATED");
     }
 
     private static LazyTokenItemMatch hash() {

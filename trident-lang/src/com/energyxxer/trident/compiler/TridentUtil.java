@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler;
 
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 
 import java.util.Objects;
 
@@ -14,6 +15,12 @@ public class TridentUtil {
     public static class ResourceLocation {
         public String namespace;
         public String body;
+
+        public ResourceLocation(TokenPattern<?> typeGroup) {
+            TokenPattern<?> namespacePattern = typeGroup.find("NAMESPACE");
+            namespace = namespacePattern != null ? namespacePattern.flattenTokens().get(0).value : "minecraft";
+            body = typeGroup.find("TYPE_NAME").flatten(true);
+        }
 
         public ResourceLocation(Token token) {
             this(token.value);

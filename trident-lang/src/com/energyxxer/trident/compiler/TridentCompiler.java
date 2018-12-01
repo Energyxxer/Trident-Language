@@ -8,7 +8,7 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.parsers.CommandParser;
+import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -62,7 +62,7 @@ public class TridentCompiler {
 
         this.setProgress("Initializing default command parsers");
 
-        CommandParser.Static.initialize();
+        ParserManager.initialize();
 
         this.setProgress("Reading project settings file");
         try {

@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.semantics;
 
+import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.functionlogic.functions.FunctionComment;
 import com.energyxxer.commodore.module.CommandModule;
@@ -14,6 +15,7 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.RawCommand;
 import com.energyxxer.trident.compiler.commands.parsers.CommandParser;
 import com.energyxxer.trident.compiler.commands.parsers.EntryParsingException;
+import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -113,7 +115,13 @@ public class TridentFile implements CompilerExtension {
                     switch (inner.getName()) {
                         case "COMMAND":
                             if(!compileOnly) {
-                                CommandParser.Static.parse(((TokenStructure) inner).getContents(), this);
+                                CommandParser parser = ParserManager.getParser(CommandParser.class, inner.flattenTokens().get(0).value);
+                                if(parser != null) {
+                                    Command command = parser.parse(((TokenStructure) inner).getContents(), this);
+                                    if(command != null) {
+                                        function.append(command);
+                                    }
+                                }
                             } else if(!reportedNoCommands) {
                                 getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
                                 reportedNoCommands = true;
