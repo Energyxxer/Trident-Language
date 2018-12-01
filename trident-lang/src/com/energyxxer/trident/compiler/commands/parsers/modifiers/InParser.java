@@ -11,6 +11,6 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 public class InParser implements ModifierParser {
     @Override
     public ExecuteModifier parse(TokenPattern<?> pattern, TridentCompiler compiler) {
-        return new ExecuteInDimension(CommonParsers.parseType(pattern.find("DIMENSION_TYPE"), compiler, m -> m.dimension));
+        return new ExecuteInDimension(CommonParsers.parseType(pattern.find("DIMENSION_ID"), compiler, m -> m.dimension));
     }
 }

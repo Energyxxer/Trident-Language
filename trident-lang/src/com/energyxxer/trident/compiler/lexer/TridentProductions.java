@@ -1193,6 +1193,8 @@ public class TridentProductions {
             DefinitionPack defpack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
             defpack.load();
 
+            HashMap<String, LazyTokenStructureMatch> namespaceGroups = new HashMap<>();
+
             for (DefinitionBlueprint def : defpack.getBlueprints("structure")) {
                 STRUCTURE.add(literal(def.getName()));
             }
@@ -1206,8 +1208,29 @@ public class TridentProductions {
             }
 
             for (DefinitionBlueprint def : defpack.getBlueprints("dimension")) {
-                DIMENSION_ID.add(literal(def.getName()));
+                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
+
+                if (s == null) {
+                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("DIMENSION_ID");
+
+                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
+                    ns.append(literal(def.getNamespace()));
+                    ns.append(colon());
+
+                    g.append(ns);
+
+                    s = new LazyTokenStructureMatch("TYPE_NAME");
+                    g.append(s);
+
+                    namespaceGroups.put(def.getNamespace(), s);
+
+                    DIMENSION_ID.add(g);
+                }
+
+                s.add(literal(def.getName()));
             }
+
+            namespaceGroups.clear();
 
             for (DefinitionBlueprint def : defpack.getBlueprints("slot")) {
                 String[] parts = def.getName().split("\\.");
@@ -1222,7 +1245,6 @@ public class TridentProductions {
                 SLOT_ID.add(g);
             }
 
-            HashMap<String, LazyTokenStructureMatch> namespaceGroups = new HashMap<>();
 
             for (DefinitionBlueprint def : defpack.getBlueprints("block")) {
 
