@@ -117,7 +117,7 @@ public class CommonParsers {
         TokenPattern<?> exact = pattern.find("EXACT");
         if(exact != null) return new NumberRange<>(Integer.parseInt(pattern.flatten(false)));
         List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
-        List<TokenPattern<?>> maxRaw = pattern.searchByName("MAX");
+        List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
         Integer min = null;
         Integer max = null;
         if(!minRaw.isEmpty()) {
@@ -133,7 +133,7 @@ public class CommonParsers {
         TokenPattern<?> exact = pattern.find("EXACT");
         if(exact != null) return new NumberRange<>(Double.parseDouble(pattern.flatten(false)));
         List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
-        List<TokenPattern<?>> maxRaw = pattern.searchByName("MAX");
+        List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
         Double min = null;
         Double max = null;
         if(!minRaw.isEmpty()) {
@@ -147,10 +147,12 @@ public class CommonParsers {
 
     public static Objective parseObjective(TokenPattern<?> pattern, TridentCompiler compiler) {
         String name = pattern.flatten(true);
-        if(compiler.getModule().getObjectiveManager().get(name) == null) {
-            compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Unregistered objective name '" + name + "'"));
+        if(!compiler.getModule().getObjectiveManager().contains(name)) {
+            compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Unregistered objective name '" + name + "'", pattern));
+            return compiler.getModule().getObjectiveManager().create(name, true);
+        } else {
+            return compiler.getModule().getObjectiveManager().get(name);
         }
-        return compiler.getModule().getObjectiveManager().create(name, true);
     }
 
     /**

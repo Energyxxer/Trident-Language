@@ -1,10 +1,9 @@
 package com.energyxxer.trident.compiler.commands.parsers.modifiers;
 
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCondition;
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteConditionBlock;
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteConditionEntity;
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
+import com.energyxxer.commodore.functionlogic.commands.execute.*;
+import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreComparison;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
+import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.TridentCompiler;
@@ -36,8 +35,15 @@ public class ConditionalParser implements ModifierParser {
             }
             case "SCORE_CONDITION": {
                 LocalScore scoreA = new LocalScore(CommonParsers.parseObjective(subject.find("OBJECTIVE"), compiler), EntityParser.parseEntity(subject.find("ENTITY"), compiler));
-
-                break;
+                TokenStructure choice = (TokenStructure) subject.find("CHOICE");
+                if(choice.getContents().getName().equals("COMPARISON")) {
+                    LocalScore scoreB = new LocalScore(CommonParsers.parseObjective(choice.find("OBJECTIVE"), compiler), EntityParser.parseEntity(choice.find("ENTITY"), compiler));
+                    String rawOp = choice.find("OPERATOR").flatten(false);
+                    return new ExecuteConditionScoreComparison(conditionType, scoreA, ScoreComparison.getValueForSymbol(rawOp), scoreB);
+                } else {
+                    NumberRange<Integer> range = CommonParsers.parseIntRange(choice.find("INTEGER_NUMBER_RANGE"));
+                    return new ExecuteConditionScoreMatch(conditionType, scoreA, range);
+                }
             }
         }
 

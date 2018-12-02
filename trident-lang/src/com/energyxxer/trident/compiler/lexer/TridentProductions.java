@@ -800,8 +800,8 @@ public class TridentProductions {
                             group(literal("entity"), ENTITY).setName("ENTITY_CONDITION"),
                             group(literal("block"), COORDINATE_SET, BLOCK_TAGGED).setName("BLOCK_CONDITION"),
                             group(literal("score"), ENTITY, identifierA().setName("OBJECTIVE"), choice(
-                                    group(choice(symbol("<"), symbol("<="), symbol("="), symbol(">="), symbol(">"), symbol("!=")), ENTITY, identifierA().setName("OBJECTIVE")),
-                                    group(literal("matches"), INTEGER_NUMBER_RANGE)
+                                    group(choice(symbol("<"), symbol("<="), symbol("="), symbol(">="), symbol(">")).setName("OPERATOR"), ENTITY, identifierA().setName("OBJECTIVE")).setName("COMPARISON"),
+                                    group(literal("matches"), INTEGER_NUMBER_RANGE).setName("MATCHES")
                             )).setName("SCORE_CONDITION")
                     ).setName("SUBJECT")
             ));
