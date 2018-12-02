@@ -10,13 +10,11 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.util.logger.Debug;
 
 @ParserMember(key = "tag")
 public class TagParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Debug.log(pattern);
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file.getCompiler());
         switch(pattern.find("CHOICE").flattenTokens().get(0).value) {
             case "list": return new TagQueryCommand(entity);

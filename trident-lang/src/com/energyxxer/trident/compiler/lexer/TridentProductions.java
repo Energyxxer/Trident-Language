@@ -975,16 +975,19 @@ public class TridentProductions {
 
             NBT_PATH_NODE.add(
                     group(
-                            glue(),
                             dot().setName("NBT_PATH_SEPARATOR"),
                             glue(),
                             group(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_PATH_KEY_LABEL")
                     ).setName("NBT_PATH_KEY"));
 
-            NBT_PATH_NODE.add(group(glue(), brace("["), integer(), brace("]")).setName("NBT_PATH_INDEX"));
+            NBT_PATH_NODE.add(group(brace("["), integer(), brace("]")).setName("NBT_PATH_INDEX"));
 
-            NBT_PATH.add(group(group(group(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_PATH_KEY_LABEL")).setName("NBT_PATH_KEY"),
-                    list(NBT_PATH_NODE, glue()).setOptional()));
+            NBT_PATH_NODE.add(group(brace("["), NBT_COMPOUND, brace("]")).setName("NBT_PATH_LIST_MATCH"));
+
+            NBT_PATH_NODE.add(group(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH"));
+
+            NBT_PATH.add(group(choice(group(group(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_PATH_KEY_LABEL")).setName("NBT_PATH_KEY")).setName("NBT_PATH_NODE"),
+                    list(NBT_PATH_NODE, glue()).setOptional().setName("OTHER_NODES")));
         }
 
         //region Selector
@@ -1614,7 +1617,7 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch glue() {
-        return ofType(GLUE);
+        return ofType(GLUE).setName("GLUE");
     }
 
     private static LazyTokenItemMatch sameLine() {

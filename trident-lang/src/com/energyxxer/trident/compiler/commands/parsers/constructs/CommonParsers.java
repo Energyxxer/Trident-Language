@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
+import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
@@ -153,6 +154,17 @@ public class CommonParsers {
         } else {
             return compiler.getModule().getObjectiveManager().get(name);
         }
+    }
+
+    public static String parseStringLiteralOrIdentifierA(TokenPattern<?> pattern) {
+        String str = "";
+        if(pattern != null) {
+            str = pattern.flatten(false);
+            if(!pattern.deepSearchByName("STRING_LITERAL").isEmpty()) {
+                str = CommandUtils.parseQuotedString(str);
+            }
+        }
+        return str;
     }
 
     /**

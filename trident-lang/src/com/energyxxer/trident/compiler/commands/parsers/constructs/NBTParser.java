@@ -2,13 +2,13 @@ package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.functionlogic.nbt.*;
-import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
+import com.energyxxer.commodore.functionlogic.nbt.path.*;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.util.logger.Debug;
 
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +37,6 @@ public class NBTParser {
                         compound.add(value);
                     }
                 }
-                Debug.log(pattern.getContents());
                 return compound;
             }
             case "NBT_LIST": {
@@ -103,6 +102,42 @@ public class NBTParser {
     }
 
     public static NBTPath parsePath(TokenPattern<?> pattern) {
-        return new NBTPath("Inventory");
+        NBTPathNode start = parsePathNode(pattern.find("NBT_PATH_NODE"));
+        ArrayList<NBTPathNode> nodes = new ArrayList<>();
+        nodes.add(start);
+
+        TokenList otherNodes = (TokenList) pattern.find("OTHER_NODES");
+        if(otherNodes != null) {
+            for(TokenPattern<?> node : otherNodes.getContents()) {
+                if(!node.getName().equals("GLUE")) {
+                    nodes.add(parsePathNode(node));
+                }
+            }
+        }
+
+        return new NBTPath(nodes.toArray(new NBTPathNode[0]));
+    }
+
+    private static NBTPathNode parsePathNode(TokenPattern<?> pattern) {
+        switch(pattern.getName()) {
+            case "NBT_PATH_NODE": {
+                return parsePathNode(((TokenStructure) pattern).getContents());
+            }
+            case "NBT_PATH_KEY": {
+                return new NBTPathKey(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("NBT_PATH_KEY_LABEL")));
+            }
+            case "NBT_PATH_INDEX": {
+                return new NBTPathIndex(Integer.parseInt(pattern.find("INTEGER").flatten(false)));
+            }
+            case "NBT_PATH_LIST_MATCH": {
+                return new NBTListMatch(parseCompound(pattern.find("NBT_COMPOUND")));
+            }
+            case "NBT_PATH_COMPOUND_MATCH": {
+                return new NBTObjectMatch(parseCompound(pattern.find("NBT_COMPOUND")));
+            }
+            default: {
+                throw new IllegalArgumentException("Unknown NBT path grammar pattern name '" + pattern.getName() + "'");
+            }
+        }
     }
 }
