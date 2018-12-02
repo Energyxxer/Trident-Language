@@ -233,8 +233,8 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "effect"),
                     choice(
-                            group(literal("clear"), ENTITY, optional(EFFECT_ID)),
-                            group(literal("give"), ENTITY, EFFECT_ID, optional(integer(), integer().setOptional()))
+                            group(literal("clear"), ENTITY, optional(EFFECT_ID)).setName("CLEAR"),
+                            group(literal("give"), ENTITY, EFFECT_ID, optional(integer().setName("DURATION"), optional(integer().setName("AMPLIFIER"), ofType(TridentTokens.BOOLEAN).setName("HIDE_PARTICLES")))).setName("GIVE")
                     )
             ));
         }
@@ -1557,7 +1557,7 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch literal(String text) {
-        return new LazyTokenItemMatch(TokenType.UNKNOWN, text);
+        return new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL");
     }
 
     private static LazyTokenItemMatch symbol(String text) {

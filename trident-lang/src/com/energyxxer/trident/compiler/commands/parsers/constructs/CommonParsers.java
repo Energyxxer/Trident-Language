@@ -34,6 +34,7 @@ public class CommonParsers {
         return parseType(id, compiler, m -> m.block);
     }
     public static Type parseType(TokenPattern<?> id, TridentCompiler compiler, TypeGroupPicker picker) {
+        if(id == null) return null;
         TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id);
         return picker.pick(compiler.getModule().getNamespace(typeLoc.namespace).types).get(typeLoc.body);
     }
