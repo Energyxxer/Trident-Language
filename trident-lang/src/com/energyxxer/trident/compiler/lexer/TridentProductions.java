@@ -662,19 +662,19 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "bossbar"),
                     choice(
-                            literal("list"),
-                            group(literal("add"), ofType(RESOURCE_LOCATION), TEXT_COMPONENT),
-                            group(literal("get"), ofType(RESOURCE_LOCATION), choice("max", "players", "value", "visible")),
-                            group(literal("remove"), ofType(RESOURCE_LOCATION)),
+                            literal("list").setName("LIST"),
+                            group(literal("add"), ofType(RESOURCE_LOCATION), TEXT_COMPONENT).setName("ADD"),
+                            group(literal("get"), ofType(RESOURCE_LOCATION), choice("max", "players", "value", "visible")).setName("GET"),
+                            group(literal("remove"), ofType(RESOURCE_LOCATION)).setName("REMOVE"),
                             group(literal("set"), ofType(RESOURCE_LOCATION), choice(
-                                    group(literal("color"), choice("blue", "green", "pink", "purple", "red", "white", "yellow")),
-                                    group(literal("max"), integer()),
-                                    group(literal("name"), TEXT_COMPONENT),
-                                    group(literal("players"), ENTITY),
-                                    group(literal("style"), choice("progress", "notched_6", "notched_10", "notched_12", "notched_20")),
-                                    group(literal("value"), integer()),
-                                    group(literal("visible"), ofType(BOOLEAN))
-                            ))
+                                    group(literal("color"), choice("blue", "green", "pink", "purple", "red", "white", "yellow")).setName("SET_COLOR"),
+                                    group(literal("max"), integer()).setName("SET_MAX"),
+                                    group(literal("name"), TEXT_COMPONENT).setName("SET_NAME"),
+                                    group(literal("players"), ENTITY).setName("SET_PLAYERS"),
+                                    group(literal("style"), choice("progress", "notched_6", "notched_10", "notched_12", "notched_20")).setName("SET_STYLE"),
+                                    group(literal("value"), integer()).setName("SET_VALUE"),
+                                    group(literal("visible"), ofType(BOOLEAN)).setName("SET_VISIBLE")
+                            )).setName("SET")
                     )
             ));
         }
