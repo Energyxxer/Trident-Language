@@ -835,6 +835,17 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //region rotated
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "rotated"),
+                    choice(
+                            group(literal("as").setOptional(), ENTITY).setName("ENTITY_BRANCH"),
+                            TWO_COORDINATE_SET
+                    )
+            ));
+        }
+        //endregion
         //endregion
 
         //region Blockstate
