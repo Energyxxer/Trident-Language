@@ -6,6 +6,8 @@ import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
@@ -36,13 +38,24 @@ public class ConditionalParser implements ModifierParser {
             case "SCORE_CONDITION": {
                 LocalScore scoreA = new LocalScore(CommonParsers.parseObjective(subject.find("OBJECTIVE"), compiler), EntityParser.parseEntity(subject.find("ENTITY"), compiler));
                 TokenStructure choice = (TokenStructure) subject.find("CHOICE");
-                if(choice.getContents().getName().equals("COMPARISON")) {
-                    LocalScore scoreB = new LocalScore(CommonParsers.parseObjective(choice.find("OBJECTIVE"), compiler), EntityParser.parseEntity(choice.find("ENTITY"), compiler));
-                    String rawOp = choice.find("OPERATOR").flatten(false);
-                    return new ExecuteConditionScoreComparison(conditionType, scoreA, ScoreComparison.getValueForSymbol(rawOp), scoreB);
-                } else {
-                    NumberRange<Integer> range = CommonParsers.parseIntRange(choice.find("INTEGER_NUMBER_RANGE"));
-                    return new ExecuteConditionScoreMatch(conditionType, scoreA, range);
+                String branchName = choice.getContents().getName();
+                switch(branchName) {
+                    case "COMPARISON": {
+                        LocalScore scoreB = new LocalScore(CommonParsers.parseObjective(choice.find("OBJECTIVE"), compiler), EntityParser.parseEntity(choice.find("ENTITY"), compiler));
+                        String rawOp = choice.find("OPERATOR").flatten(false);
+                        return new ExecuteConditionScoreComparison(conditionType, scoreA, ScoreComparison.getValueForSymbol(rawOp), scoreB);
+                    }
+                    case "MATCHES": {
+                        NumberRange<Integer> range = CommonParsers.parseIntRange(choice.find("INTEGER_NUMBER_RANGE"));
+                        return new ExecuteConditionScoreMatch(conditionType, scoreA, range);
+                    }
+                    case "ISSET": {
+                        return new ExecuteConditionScoreMatch(conditionType, scoreA, new NumberRange<>(Integer.MIN_VALUE, Integer.MAX_VALUE));
+                    }
+                    default: {
+                        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branchName + "'"));
+                        return null;
+                    }
                 }
             }
         }

@@ -4,7 +4,7 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 
 import java.lang.reflect.Field;
 
-public class TridentTokens {;
+public class TridentTokens {
     public static TokenType
             COMMENT, DIRECTIVE_HEADER, DIRECTIVE_ON_KEYWORD,
             DOT, COMMA, COLON, SEMICOLON, EQUALS, HASH, NOT,
@@ -19,6 +19,7 @@ public class TridentTokens {;
             MODIFIER_HEADER,
             SELECTOR_HEADER,
             TRAILING_STRING,
+            SYNTACTIC_SUGAR,
             SORTING, NUMERIC_DATA_TYPE, SOUND_CHANNEL, ANCHOR,
             IDENTIFIER_TYPE_A, IDENTIFIER_TYPE_B, RESOURCE_LOCATION,
             GLUE, LINE_GLUE
