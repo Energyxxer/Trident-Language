@@ -786,7 +786,7 @@ public class TridentProductions {
             MODIFIER.add(group(
                     matchItem(MODIFIER_HEADER, "facing"),
                     choice(
-                            group(literal("entity").setOptional(), ENTITY).setName("ENTITY_BRANCH"),
+                            group(literal("entity").setOptional(), ENTITY, ofType(ANCHOR).setOptional()).setName("ENTITY_BRANCH"),
                             group(COORDINATE_SET).setName("BLOCK_BRANCH")
                     )
             ));
