@@ -245,7 +245,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "enchant"),
                     ENTITY,
                     ENCHANTMENT_ID,
-                    integer().setOptional()
+                    integer().setOptional().setName("LEVEL")
             ));
         }
         //endregion
