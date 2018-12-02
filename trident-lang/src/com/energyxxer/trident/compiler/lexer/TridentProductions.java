@@ -647,13 +647,13 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "advancement"),
-                    choice("grant", "revoke"),
+                    choice("grant", "revoke").setName("ACTION"),
                     ENTITY,
                     choice(
-                            literal("everything"),
-                            group(choice("from", "through", "until"), ofType(RESOURCE_LOCATION)),
-                            group(literal("only"), ofType(RESOURCE_LOCATION), optional(sameLine(), ofType(TRAILING_STRING)))
-                    )
+                            literal("everything").setName("EVERYTHING"),
+                            group(choice("from", "through", "until").setName("LIMIT"), ofType(RESOURCE_LOCATION)).setName("FROM_THROUGH_UNTIL"),
+                            group(literal("only"), ofType(RESOURCE_LOCATION), list(identifierC(), sameLine()).setOptional().setName("CRITERIA")).setName("ONLY")
+                    ).setName("INNER")
             ));
         }
         //endregion
@@ -1553,10 +1553,6 @@ public class TridentProductions {
         }
     }
 
-    private static LazyTokenPatternMatch identifierB() {
-        return ofType(IDENTIFIER_TYPE_B);
-    }
-
     private static LazyTokenItemMatch literal(String text) {
         return new LazyTokenItemMatch(TokenType.UNKNOWN, text);
     }
@@ -1622,13 +1618,21 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch sameLine() {
-        return ofType(LINE_GLUE);
+        return ofType(LINE_GLUE).setName("LINE_GLUE");
     }
 
 
 
     private static LazyTokenItemMatch identifierA() {
         return ofType(IDENTIFIER_TYPE_A);
+    }
+
+    private static LazyTokenPatternMatch identifierB() {
+        return ofType(IDENTIFIER_TYPE_B);
+    }
+
+    private static LazyTokenPatternMatch identifierC() {
+        return ofType(IDENTIFIER_TYPE_C);
     }
 
     private static LazyTokenItemMatch ofType(TokenType type) {
