@@ -347,17 +347,17 @@ public class TridentProductions {
         //endregion
         //region clone
         {
-            LazyTokenStructureMatch mode = choice("force", "move", "normal");
+            LazyTokenPatternMatch mode = choice("force", "move", "normal").setOptional().setName("CLONE_MODE");
 
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "clone"),
-                    COORDINATE_SET,
-                    COORDINATE_SET,
-                    COORDINATE_SET,
+                    group(COORDINATE_SET).setName("FROM"),
+                    group(COORDINATE_SET).setName("TO"),
+                    group(COORDINATE_SET).setName("DESTINATION"),
                     choice(
-                            group(literal("filtered"), ofType(LINE_GLUE), BLOCK_TAGGED, optional(mode)),
-                            group(literal("masked"), optional(mode)),
-                            group(literal("replace"), optional(mode))
+                            group(literal("filtered"), ofType(LINE_GLUE), BLOCK_TAGGED, mode).setName("FILTERED"),
+                            group(literal("masked"), mode).setName("MASKED"),
+                            group(literal("replace"), mode).setName("REPLACE")
                     ).setOptional()
             ));
         }
@@ -882,7 +882,7 @@ public class TridentProductions {
 
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
-            g.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(ofType(RESOURCE_LOCATION)).setName("RESOURCE_NAME"));
+            g.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             BLOCK_TAGGED.add(g);
