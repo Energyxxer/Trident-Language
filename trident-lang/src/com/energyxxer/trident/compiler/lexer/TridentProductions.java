@@ -176,17 +176,15 @@ public class TridentProductions {
         //endregion
         //region experience
         {
+            LazyTokenPatternMatch unit = choice("points", "levels").setName("UNIT").setOptional();
+
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
             g.append(choice(matchItem(COMMAND_HEADER, "experience"), matchItem(COMMAND_HEADER, "xp")));
-            {
-                LazyTokenStructureMatch u = choice("points", "levels");
-
-                LazyTokenStructureMatch s = new LazyTokenStructureMatch("SUBCOMMAND");
-                s.add(new LazyTokenGroupMatch().append(literal("add")).append(ENTITY).append(integer()).append(new LazyTokenGroupMatch(true).append(u)));
-                s.add(new LazyTokenGroupMatch().append(literal("set")).append(ENTITY).append(integer()).append(new LazyTokenGroupMatch(true).append(u)));
-                s.add(new LazyTokenGroupMatch().append(literal("query")).append(ENTITY).append(new LazyTokenGroupMatch(true).append(u)));
-                g.append(s);
-            }
+            g.append(choice(
+                    group(literal("add"), ENTITY, integer(), unit).setName("ADD"),
+                    group(literal("set"), ENTITY, integer(), unit).setName("SET"),
+                    group(literal("query"), ENTITY, unit).setName("QUERY")
+            ).setName("SUBCOMMAND"));
             COMMAND.add(g);
         }
         //endregion
