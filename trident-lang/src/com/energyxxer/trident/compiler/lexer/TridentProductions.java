@@ -364,15 +364,15 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "fill"),
-                    COORDINATE_SET,
-                    COORDINATE_SET,
+                    group(COORDINATE_SET).setName("FROM"),
+                    group(COORDINATE_SET).setName("TO"),
                     BLOCK,
                     choice(
                             literal("destroy"),
                             literal("hollow"),
                             literal("keep"),
                             literal("outline"),
-                            group(literal("replace"), optional(BLOCK_TAGGED))
+                            group(literal("replace"), optional(BLOCK_TAGGED)).setName("REPLACE")
                     ).setOptional()
             ));
         }
@@ -650,7 +650,7 @@ public class TridentProductions {
                     choice(
                             literal("everything").setName("EVERYTHING"),
                             group(choice("from", "through", "until").setName("LIMIT"), ofType(RESOURCE_LOCATION)).setName("FROM_THROUGH_UNTIL"),
-                            group(literal("only"), ofType(RESOURCE_LOCATION), list(identifierC(), sameLine()).setOptional().setName("CRITERIA")).setName("ONLY")
+                            group(literal("only"), ofType(RESOURCE_LOCATION), group(sameLine(), list(identifierC(), sameLine()).setName("CRITERIA_LIST")).setOptional().setName("CRITERIA")).setName("ONLY")
                     ).setName("INNER")
             ));
         }
@@ -1555,7 +1555,7 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch literal(String text) {
-        return new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL");
+        return new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase());
     }
 
     private static LazyTokenItemMatch symbol(String text) {

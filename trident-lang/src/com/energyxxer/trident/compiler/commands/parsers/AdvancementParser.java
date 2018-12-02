@@ -34,7 +34,7 @@ public class AdvancementParser implements CommandParser {
             }
             case "ONLY": {
                 TridentUtil.ResourceLocation advancement = new TridentUtil.ResourceLocation(inner.search(TridentTokens.RESOURCE_LOCATION).get(0).value);
-                TokenList criteriaList = (TokenList) (inner.find("CRITERIA"));
+                TokenList criteriaList = (TokenList) (inner.find("CRITERIA.CRITERIA_LIST"));
                 ArrayList<String> criteria = new ArrayList<>();
                 if(criteriaList != null) {
                     for(TokenPattern<?> criterion : criteriaList.getContents()) {
