@@ -2,6 +2,7 @@ package com.energyxxer.trident.compiler.commands.parsers.modifiers;
 
 import com.energyxxer.commodore.functionlogic.commands.execute.*;
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreComparison;
+import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -50,13 +51,20 @@ public class ConditionalParser implements ModifierParser {
                         return new ExecuteConditionScoreMatch(conditionType, scoreA, range);
                     }
                     case "ISSET": {
-                        return new ExecuteConditionScoreMatch(conditionType, scoreA, new NumberRange<>(Integer.MIN_VALUE, Integer.MAX_VALUE));
+                        return new ExecuteConditionScoreMatch(conditionType, scoreA, new NumberRange<>(Integer.MIN_VALUE, null));
                     }
                     default: {
                         compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branchName + "'"));
                         return null;
                     }
                 }
+            }
+            case "REGION_CONDITION": {
+                CoordinateSet from = CoordinateParser.parse(subject.find("FROM.COORDINATE_SET"));
+                CoordinateSet to = CoordinateParser.parse(subject.find("TO.COORDINATE_SET"));
+                CoordinateSet template = CoordinateParser.parse(subject.find("TEMPLATE.COORDINATE_SET"));
+
+                return new ExecuteConditionRegion(conditionType, from, to, template, subject.find("AIR_POLICY").flatten(false).equals("masked") ? ExecuteConditionRegion.AirPolicy.MASKED : ExecuteConditionRegion.AirPolicy.ALL);
             }
         }
 

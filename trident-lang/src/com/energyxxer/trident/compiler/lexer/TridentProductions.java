@@ -803,7 +803,12 @@ public class TridentProductions {
                                     matchItem(TridentTokens.SYNTACTIC_SUGAR, "isset").setName("ISSET"),
                                     group(choice(symbol("<"), symbol("<="), symbol("="), symbol(">="), symbol(">")).setName("OPERATOR"), ENTITY, identifierA().setName("OBJECTIVE")).setName("COMPARISON"),
                                     group(literal("matches"), INTEGER_NUMBER_RANGE).setName("MATCHES")
-                            )).setName("SCORE_CONDITION")
+                            )).setName("SCORE_CONDITION"),
+                            group(literal("blocks"),
+                                    group(COORDINATE_SET).setName("FROM"),
+                                    group(COORDINATE_SET).setName("TO"),
+                                    group(COORDINATE_SET).setName("TEMPLATE"),
+                                    choice("all", "masked").setName("AIR_POLICY")).setName("REGION_CONDITION")
                     ).setName("SUBJECT")
             ));
         }
