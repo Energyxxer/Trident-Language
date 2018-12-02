@@ -15,6 +15,7 @@ public class TridentTokens {
             VERBATIM_COMMAND,
             KEYWORD, VARIABLE_MARKER_START, VARIABLE_MARKER_END,
             SYMBOL, SCOREBOARD_OPERATOR,
+            SWIZZLE,
             COMMAND_HEADER,
             MODIFIER_HEADER,
             SELECTOR_HEADER,

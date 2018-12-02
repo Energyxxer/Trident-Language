@@ -253,6 +253,7 @@ public class EditorCaret extends DefaultCaret {
         }
         addDot(bufferedDot);
         e.consume();
+        update();
         //super.mousePressed(e);
     }
 

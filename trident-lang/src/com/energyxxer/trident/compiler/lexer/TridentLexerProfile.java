@@ -6,10 +6,7 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.util.StringLocation;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -351,6 +348,47 @@ public class TridentLexerProfile extends LexerProfile {
             @Override
             public Collection<TokenType> getHandledTypes() {
                 return Arrays.asList(COMMENT, DIRECTIVE_HEADER);
+            }
+        });
+
+        contexts.add(new LexerContext() {
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            private String extractIdentifierA(String str) {
+                int i = 0;
+                while (i < str.length() && Character.toString(str.charAt(i)).matches("[a-zA-Z0-9._\\-+]")) {
+                    i++;
+                }
+                return str.substring(0, i);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                str = extractIdentifierA(str);
+                if(str.length() == 0 || str.length() > 3) return new ScannerContextResponse(false);
+
+                ArrayList<Character> possibleChars = new ArrayList<>();
+                possibleChars.add('x');
+                possibleChars.add('y');
+                possibleChars.add('z');
+                for(int i = 0; i < str.length(); i++) {
+                    char c = str.charAt(i);
+                    if(possibleChars.contains(c)) {
+                        possibleChars.remove((Character)c);
+                    } else {
+                        return new ScannerContextResponse(false);
+                    }
+                }
+
+                return new ScannerContextResponse(true, str, SWIZZLE);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(SWIZZLE);
             }
         });
 

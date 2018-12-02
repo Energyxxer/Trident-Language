@@ -749,6 +749,14 @@ public class TridentProductions {
         //endregion
 
         //region Execute Modifiers
+        //region align
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "align"),
+                    ofType(SWIZZLE)
+            ));
+        }
+        //endregion
         //region anchored
         {
             MODIFIER.add(group(
