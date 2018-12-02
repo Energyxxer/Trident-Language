@@ -1542,6 +1542,7 @@ public class TridentProductions {
                     }
                 }
 
+                g2.append(sameLine());
                 g2.append(argsGroup);
 
                 GAMERULE_SETTER.add(g2);
