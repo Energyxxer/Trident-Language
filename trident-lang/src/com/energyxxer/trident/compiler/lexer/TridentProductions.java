@@ -513,13 +513,16 @@ public class TridentProductions {
                                             ENTITY,
                                             group(
                                                     COORDINATE_SET,
-                                                    optional(
-                                                        literal("facing"),
-                                                        choice(
-                                                                COORDINATE_SET,
-                                                                group(literal("entity"), ENTITY, ofType(ANCHOR).setOptional().setName("ANCHOR"))
-                                                        )
-                                                    ).setName("FACING_CLAUSE")
+                                                    choice(
+                                                            group(
+                                                                    literal("facing"),
+                                                                    choice(
+                                                                            COORDINATE_SET,
+                                                                            group(literal("entity"), ENTITY, ofType(ANCHOR).setOptional().setName("ANCHOR"))
+                                                                    )
+                                                            ).setName("FACING_CLAUSE"),
+                                                            TWO_COORDINATE_SET
+                                                    ).setOptional().setName("ROTATION_OPTION")
                                             )
                                     ).setOptional()
                             ),
@@ -1213,12 +1216,6 @@ public class TridentProductions {
                 LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("MIXED_TWO_COORDINATE_SET");
                 g.append(MIXABLE_COORDINATE);
                 g.append(MIXABLE_COORDINATE);
-                TWO_COORDINATE_SET.add(g);
-            }
-            {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("LOCAL_TWO_COORDINATE_SET");
-                g.append(LOCAL_COORDINATE);
-                g.append(LOCAL_COORDINATE);
                 TWO_COORDINATE_SET.add(g);
             }
         }

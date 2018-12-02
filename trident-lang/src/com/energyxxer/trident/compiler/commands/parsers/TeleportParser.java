@@ -8,9 +8,11 @@ import com.energyxxer.commodore.functionlogic.commands.teleport.destination.Enti
 import com.energyxxer.commodore.functionlogic.commands.teleport.destination.TeleportDestination;
 import com.energyxxer.commodore.functionlogic.commands.teleport.facing.BlockFacing;
 import com.energyxxer.commodore.functionlogic.commands.teleport.facing.EntityFacing;
+import com.energyxxer.commodore.functionlogic.commands.teleport.facing.RotationFacing;
 import com.energyxxer.commodore.functionlogic.commands.teleport.facing.TeleportFacing;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
@@ -38,18 +40,29 @@ public class TeleportParser implements CommandParser {
                     destination = new EntityDestination(EntityParser.parseEntity(rawDestinationEntity, file.getCompiler()));
                 } else {
                     destination = new BlockDestination(CoordinateParser.parse(rawDestination.find(".COORDINATE_SET")));
-                    TokenPattern<?> facingClause = rawDestination.find(".FACING_CLAUSE");
-                    if(facingClause != null) {
-                        TokenPattern<?> facingBlock = facingClause.find("CHOICE.COORDINATE_SET");
-                        if(facingBlock != null) {
-                            facing = new BlockFacing(CoordinateParser.parse(facingBlock));
-                        } else {
-                            Entity facingEntity = EntityParser.parseEntity(facingClause.find("CHOICE..ENTITY"), file.getCompiler());
-                            TokenPattern<?> rawAnchor = facingClause.find("CHOICE..ANCHOR");
-                            if(rawAnchor != null) {
-                                facing = new EntityFacing(facingEntity, EntityAnchor.valueOf(rawAnchor.flatten(false).toUpperCase()));
-                            } else {
-                                facing = new EntityFacing(facingEntity);
+                    TokenPattern<?> rotationOption = rawDestination.find("ROTATION_OPTION");
+                    if(rotationOption != null) rotationOption = ((TokenStructure)rotationOption).getContents();
+
+                    if(rotationOption != null) {
+                        switch(rotationOption.getName()) {
+                            case "FACING_CLAUSE": {
+                                TokenPattern<?> facingBlock = rotationOption.find("CHOICE.COORDINATE_SET");
+                                if(facingBlock != null) {
+                                    facing = new BlockFacing(CoordinateParser.parse(facingBlock));
+                                } else {
+                                    Entity facingEntity = EntityParser.parseEntity(rotationOption.find("CHOICE..ENTITY"), file.getCompiler());
+                                    TokenPattern<?> rawAnchor = rotationOption.find("CHOICE..ANCHOR");
+                                    if(rawAnchor != null) {
+                                        facing = new EntityFacing(facingEntity, EntityAnchor.valueOf(rawAnchor.flatten(false).toUpperCase()));
+                                    } else {
+                                        facing = new EntityFacing(facingEntity);
+                                    }
+                                }
+                                break;
+                            }
+                            case "TWO_COORDINATE_SET": {
+                                facing = new RotationFacing(CoordinateParser.parseRotation(rotationOption));
+                                break;
                             }
                         }
                     }

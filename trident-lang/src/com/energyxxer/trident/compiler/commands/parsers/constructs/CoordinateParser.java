@@ -2,6 +2,8 @@ package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
 import com.energyxxer.commodore.functionlogic.coordinates.Coordinate;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
+import com.energyxxer.commodore.functionlogic.rotation.Rotation;
+import com.energyxxer.commodore.functionlogic.rotation.RotationUnit;
 import com.energyxxer.commodore.util.Axis;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
@@ -45,5 +47,30 @@ public class CoordinateParser {
         double num = Double.parseDouble(value);
         if(axis != Axis.Y && !value.contains(".")) num += 0.5;
         return num;
+    }
+
+    public static Rotation parseRotation(TokenPattern<?> pattern) {
+        if(pattern == null) return null;
+        TokenPattern<?>[] tuple = ((TokenGroup) pattern.getContents()).getContents();
+        RotationUnit yaw =  parseRotationUnit(tuple[0]);
+        RotationUnit pitch = parseRotationUnit(tuple[1]);
+        return new Rotation(yaw, pitch);
+    }
+
+    public static RotationUnit parseRotationUnit(TokenPattern<?> pattern) {
+        List<Token> flattened;
+        switch(pattern.getName()) {
+            case "MIXABLE_COORDINATE":
+                return parseRotationUnit((TokenStructure)pattern.getContents());
+            case "RELATIVE_COORDINATE":
+                flattened = pattern.flattenTokens();
+                return new RotationUnit(RotationUnit.Type.RELATIVE, flattened.size() >= 3 ? Double.parseDouble(flattened.get(2).value) : 0);
+            case "ABSOLUTE_COORDINATE":
+                return new RotationUnit(RotationUnit.Type.ABSOLUTE, Double.parseDouble(pattern.flattenTokens().get(0).value));
+            default:
+                Debug.log("What is this: " + pattern.getName());
+                break;
+        }
+        return null;
     }
 }
