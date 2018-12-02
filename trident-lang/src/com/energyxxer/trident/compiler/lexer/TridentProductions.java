@@ -103,7 +103,7 @@ public class TridentProductions {
             directiveBody.add(group(literal("require"), ofType(RESOURCE_LOCATION)).setName("REQUIRE_DIRECTIVE"));
         }
 
-        RESOURCE_LOCATION_TAGGED = group(optional(hash(), ofType(GLUE)), ofType(RESOURCE_LOCATION)).setName("RESOURCE_LOCATION_TAGGED");
+        RESOURCE_LOCATION_TAGGED = group(optional(hash(), ofType(GLUE)), ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RESOURCE_LOCATION_TAGGED");
 
         ENTRY.add(COMMENT_S);
         ENTRY.add(COMMAND);
@@ -251,7 +251,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "function"),
-                    ofType(LINE_GLUE),
+                    sameLine(),
                     RESOURCE_LOCATION_TAGGED
             ));
         }

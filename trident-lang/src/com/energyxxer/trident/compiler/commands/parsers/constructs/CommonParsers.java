@@ -6,10 +6,14 @@ import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.item.Item;
+import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.tags.BlockTag;
 import com.energyxxer.commodore.tags.ItemTag;
+import com.energyxxer.commodore.tags.TagGroup;
+import com.energyxxer.commodore.tags.TagManager;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeDictionary;
+import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.commodore.types.defaults.TypeManager;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
@@ -39,6 +43,57 @@ public class CommonParsers {
         return picker.pick(compiler.getModule().getNamespace(typeLoc.namespace).types).get(typeLoc.body);
     }
 
+    public static Type parseTag(TokenPattern<?> id, TridentCompiler compiler, String category, TypeGroupPicker typePicker, TagGroupPicker tagPicker) {
+        if(id == null) return null;
+        boolean isTag = id.find("") != null;
+        TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id.find("RESOURCE_LOCATION").flatten(false));
+        Namespace ns = compiler.getModule().getNamespace(typeLoc.namespace);
+
+        Type type = null;
+
+        if(isTag) {
+            type = tagPicker.pick(ns.tags).get(typeLoc.body);
+        } else {
+            type = typePicker.pick(ns.types).get(typeLoc.body);
+        }
+
+        if(type == null) {
+            if(isTag) {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "No such " + category + " tag exists: #" + typeLoc, id));
+            } else {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "No such " + category + " type exists: " + typeLoc, id));
+            }
+            throw new EntryParsingException();
+        }
+
+        return type;
+    }
+
+    public static Type parseFunctionTag(TokenPattern<?> id, TridentCompiler compiler) {
+        if(id == null) return null;
+        boolean isTag = id.find("") != null;
+        TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id.find("RESOURCE_LOCATION").flatten(false));
+        Namespace ns = compiler.getModule().getNamespace(typeLoc.namespace);
+
+        Type type = null;
+
+        if(isTag) {
+            type = ns.tags.functionTags.get(typeLoc.body);
+        } else if(ns.functions.contains(typeLoc.body)) {
+            type = new FunctionReference(ns.functions.get(typeLoc.body));
+        }
+
+        if(type == null) {
+            if(isTag) {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "No such function tag exists: #" + typeLoc, id));
+            } else {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "No such function exists: " + typeLoc, id));
+            }
+            throw new EntryParsingException();
+        }
+
+        return type;
+    }
 
     public static ItemTag parseItemTag(TokenPattern<?> id, TridentCompiler compiler) {
         TridentUtil.ResourceLocation tagLoc = new TridentUtil.ResourceLocation(id.flattenTokens().get(0).value);
@@ -49,6 +104,7 @@ public class CommonParsers {
         }
         return returned;
     }
+
     public static BlockTag parseBlockTag(TokenPattern<?> id, TridentCompiler compiler) {
         TridentUtil.ResourceLocation tagLoc = new TridentUtil.ResourceLocation(id.flattenTokens().get(0).value);
         BlockTag returned = compiler.getModule().getNamespace(tagLoc.namespace).tags.blockTags.get(tagLoc.body);
@@ -176,5 +232,9 @@ public class CommonParsers {
 
     public interface TypeGroupPicker {
         TypeDictionary<?> pick(TypeManager m);
+    }
+
+    public interface TagGroupPicker {
+        TagGroup<?> pick(TagManager m);
     }
 }
