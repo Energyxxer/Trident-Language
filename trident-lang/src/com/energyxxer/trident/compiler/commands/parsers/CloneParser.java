@@ -38,7 +38,7 @@ public class CloneParser implements CommandParser {
                     return new CloneCommand(from, to, destination, parseMode(inner.find("CLONE_MODE")));
                 }
                 default: {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'"));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
                     return null;
                 }
             }

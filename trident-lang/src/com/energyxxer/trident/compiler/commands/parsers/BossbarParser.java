@@ -36,7 +36,7 @@ public class BossbarParser implements CommandParser {
             case "REMOVE": return parseRemove(inner, file.getCompiler());
             case "SET": return parseSet(inner, file.getCompiler());
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'"));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
                 return null;
             }
         }

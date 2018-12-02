@@ -54,7 +54,7 @@ public class ConditionalParser implements ModifierParser {
                         return new ExecuteConditionScoreMatch(conditionType, scoreA, new NumberRange<>(Integer.MIN_VALUE, null));
                     }
                     default: {
-                        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branchName + "'"));
+                        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branchName + "'", choice));
                         return null;
                     }
                 }

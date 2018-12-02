@@ -18,7 +18,7 @@ public class NBTParser {
         return (TagCompound)parseValue(pattern);
     }
 
-    private static NBTTag parseValue(TokenPattern<?> pattern) {
+    public static NBTTag parseValue(TokenPattern<?> pattern) {
         switch(pattern.getName()) {
             case "NBT_VALUE": {
                 return parseValue(((TokenStructure)pattern).getContents());
@@ -102,6 +102,7 @@ public class NBTParser {
     }
 
     public static NBTPath parsePath(TokenPattern<?> pattern) {
+        if(pattern == null) return null;
         NBTPathNode start = parsePathNode(pattern.find("NBT_PATH_NODE"));
         ArrayList<NBTPathNode> nodes = new ArrayList<>();
         nodes.add(start);

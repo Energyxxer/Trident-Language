@@ -46,7 +46,7 @@ public class AdvancementParser implements CommandParser {
                 return new AdvancementCommand(action, entity, AdvancementCommand.Limit.ONLY, advancement.toString(), criteria);
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'"));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
                 return null;
             }
         }

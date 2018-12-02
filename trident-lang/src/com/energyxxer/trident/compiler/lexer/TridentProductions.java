@@ -688,8 +688,8 @@ public class TridentProductions {
             ).setName("DATA_TARGET");
 
             LazyTokenStructureMatch source = choice(
-                    group(literal("from"), target, optional(NBT_PATH)),
-                    group(literal("value"), NBT_VALUE)
+                    group(literal("from"), target, optional(glue(), NBT_PATH).setName("PATH_CLAUSE")).setName("TARGET_SOURCE"),
+                    group(literal("value"), NBT_VALUE).setName("LITERAL_SOURCE")
             ).setName("DATA_SOURCE");
 
             COMMAND.add(group(
@@ -698,11 +698,11 @@ public class TridentProductions {
                             group(literal("get"), target, optional(NBT_PATH, real().setOptional().setName("SCALE")).setName("PATH_CLAUSE")).setName("GET"),
                             group(literal("merge"), target, NBT_COMPOUND).setName("MERGE"),
                             group(literal("modify"), target, NBT_PATH, choice(
-                                    group(literal("append"), source),
-                                    group(literal("insert"), choice("before", "after"), integer(), source),
-                                    group(literal("merge"), source),
-                                    group(literal("prepend"), source),
-                                    group(literal("set"), source)
+                                    group(literal("append"), source).setName("MODIFY_APPEND"),
+                                    group(literal("insert"), choice("before", "after"), integer(), source).setName("MODIFY_INSERT"),
+                                    group(literal("merge"), source).setName("MODIFY_MERGE"),
+                                    group(literal("prepend"), source).setName("MODIFY_PREPEND"),
+                                    group(literal("set"), source).setName("MODIFY_SET")
                             )).setName("MODIFY"),
                             group(literal("remove"), target, NBT_PATH).setName("REMOVE")
                     )
@@ -1623,8 +1623,6 @@ public class TridentProductions {
     private static LazyTokenItemMatch sameLine() {
         return ofType(LINE_GLUE).setName("LINE_GLUE");
     }
-
-
 
     private static LazyTokenItemMatch identifierA() {
         return ofType(IDENTIFIER_TYPE_A);

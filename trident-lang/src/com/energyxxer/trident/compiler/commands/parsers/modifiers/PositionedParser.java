@@ -24,7 +24,7 @@ public class PositionedParser implements ModifierParser {
                 return CoordinateParser.parse(branch.find("COORDINATE_SET"));
             }
             default: {
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branch.getName() + "'"));
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branch.getName() + "'", branch));
                 return null;
             }
         }

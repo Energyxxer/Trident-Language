@@ -24,7 +24,7 @@ public class RotatedParser implements ModifierParser {
                 return CoordinateParser.parseRotation(branch);
             }
             default: {
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branch.getName() + "'"));
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branch.getName() + "'", branch));
                 return null;
             }
         }
