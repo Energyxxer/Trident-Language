@@ -683,28 +683,28 @@ public class TridentProductions {
         {
 
             LazyTokenStructureMatch target = choice(
-                    group(literal("block"), COORDINATE_SET),
-                    group(literal("entity"), ENTITY)
-            );
+                    group(literal("block"), COORDINATE_SET).setName("BLOCK_TARGET"),
+                    group(literal("entity"), ENTITY).setName("ENTITY_TARGET")
+            ).setName("DATA_TARGET");
 
             LazyTokenStructureMatch source = choice(
                     group(literal("from"), target, optional(NBT_PATH)),
                     group(literal("value"), NBT_VALUE)
-            );
+            ).setName("DATA_SOURCE");
 
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "data"),
                     choice(
-                            group(literal("get"), target, optional(NBT_PATH, real().setOptional())),
-                            group(literal("merge"), target, NBT_COMPOUND),
+                            group(literal("get"), target, optional(NBT_PATH, real().setOptional().setName("SCALE")).setName("PATH_CLAUSE")).setName("GET"),
+                            group(literal("merge"), target, NBT_COMPOUND).setName("MERGE"),
                             group(literal("modify"), target, NBT_PATH, choice(
                                     group(literal("append"), source),
                                     group(literal("insert"), choice("before", "after"), integer(), source),
                                     group(literal("merge"), source),
                                     group(literal("prepend"), source),
                                     group(literal("set"), source)
-                            )),
-                            group(literal("remove"), target, NBT_PATH)
+                            )).setName("MODIFY"),
+                            group(literal("remove"), target, NBT_PATH).setName("REMOVE")
                     )
             ));
         }
@@ -1085,7 +1085,7 @@ public class TridentProductions {
             LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
             s.add(literal("limit"));
 
-            g.append(new LazyTokenGroupMatch().setName("INTEGER_RANGE_ARGUMENT_VALUE").append(s));
+            g.append(new LazyTokenGroupMatch().setName("INTEGER_ARGUMENT_VALUE").append(s));
             g.append(equals());
             g.append(integer());
 

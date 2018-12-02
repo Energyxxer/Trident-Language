@@ -2,6 +2,7 @@ package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -99,5 +100,9 @@ public class NBTParser {
      * NBTParser should not be instantiated.
      * */
     private NBTParser() {
+    }
+
+    public static NBTPath parsePath(TokenPattern<?> pattern) {
+        return new NBTPath("Inventory");
     }
 }
