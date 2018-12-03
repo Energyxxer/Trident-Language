@@ -1143,11 +1143,29 @@ public class TridentProductions {
 
         {
             //Advancements argument
-            /*SELECTOR_ARGUMENT.add(group(
+
+            LazyTokenPatternMatch advancementArgumentBlock = group(
+                    brace("{"),
+                    list(group(
+                            ofType(RESOURCE_LOCATION).setName("ADVANCEMENT_ENTRY_KEY"),
+                            equals(),
+                            choice(
+                                    ofType(BOOLEAN).setName("BOOLEAN"),
+                                    group(
+                                            brace("{"),
+                                            list(group(identifierA().setName("CRITERION_NAME"), equals(), ofType(BOOLEAN).setName("BOOLEAN")).setName("CRITERION_ENTRY"), comma()).setOptional().setName("CRITERION_LIST"),
+                                            brace("}")
+                                    ).setName("CRITERION_GROUP")
+                            ).setName("ADVANCEMENT_ENTRY_VALUE")
+                    ).setName("ADVANCEMENT_ENTRY"), comma()).setOptional().setName("ADVANCEMENT_LIST"),
+                    brace("}")
+            ).setName("ADVANCEMENT_ARGUMENT_BLOCK");
+
+            SELECTOR_ARGUMENT.add(group(
                     choice("advancements").setName("SELECTOR_ARGUMENT_KEY"),
                     equals(),
-                    choice().setName("SELECTOR_ARGUMENT_VALUE")
-            ));*/
+                    choice(advancementArgumentBlock).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
         }
         //endregion
 
