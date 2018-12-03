@@ -76,13 +76,15 @@ public class ConditionalParser implements ModifierParser {
                     case "BLOCK_SUBJECT": return new ExecuteConditionDataBlock(conditionType, CoordinateParser.parse(dataSubject.find("COORDINATE_SET")), path);
                     case "ENTITY_SUBJECT": return new ExecuteConditionDataEntity(conditionType, EntityParser.parseEntity(dataSubject.find("ENTITY"), compiler), path);
                     default: {
-                        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + dataSubject + "'", dataSubject));
+                        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + dataSubject.getName() + "'", dataSubject));
                         return null;
                     }
                 }
             }
+            default: {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + subject.getName() + "'", subject));
+                return null;
+            }
         }
-
-        return null;
     }
 }

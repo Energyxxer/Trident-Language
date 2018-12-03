@@ -859,6 +859,20 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //region store
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "store"),
+                    choice("result", "success").setName("STORE_VALUE"),
+                    choice(
+                            group(literal("block"), COORDINATE_SET, NBT_PATH, ofType(NUMERIC_DATA_TYPE).setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_BLOCK"),
+                            group(literal("bossbar"), ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION"), choice("max", "value").setName("BOSSBAR_VARIABLE")).setName("STORE_BOSSBAR"),
+                            group(literal("entity"), ENTITY, NBT_PATH, ofType(NUMERIC_DATA_TYPE).setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_ENTITY"),
+                            group(literal("score"), ENTITY, identifierA().setName("OBJECTIVE")).setName("STORE_SCORE")
+                    )
+            ));
+        }
+        //endregion
         //endregion
 
         //region Blockstate
