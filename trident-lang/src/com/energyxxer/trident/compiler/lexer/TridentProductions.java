@@ -119,7 +119,7 @@ public class TridentProductions {
             FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l));
         }
 
-        TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "light_gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white");
+        TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "light_gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white").setName("TEXT_COLOR");
 
 
         ENTITY.add(PLAYER_NAME);
@@ -593,27 +593,27 @@ public class TridentProductions {
         //region team
         {
             LazyTokenStructureMatch teamOptions = choice(
-                    group(literal("collisionRule"), choice("always", "never", "pushOtherTeams", "pushOwnTeam")),
-                    group(literal("color"), TEXT_COLOR),
-                    group(literal("deathMessageVisibility"), choice("always", "hideForOtherTeams", "hideForOwnTeam", "never")),
-                    group(literal("displayName"), TEXT_COMPONENT),
-                    group(literal("friendlyFire"), ofType(BOOLEAN)),
-                    group(literal("nametagVisibility"), choice("always", "hideForOtherTeams", "hideForOwnTeam", "never")),
-                    group(literal("prefix"), TEXT_COMPONENT),
-                    group(literal("suffix"), TEXT_COMPONENT),
-                    group(literal("seeFriendlyInvisibles"), ofType(BOOLEAN))
-            );
+                    group(literal("collisionRule"), choice("always", "never", "pushOtherTeams", "pushOwnTeam")).setName("TEAM_COMPARISON_ARG"),
+                    group(literal("color"), TEXT_COLOR).setName("COLOR_ARG"),
+                    group(literal("deathMessageVisibility"), choice("always", "hideForOtherTeams", "hideForOwnTeam", "never")).setName("TEAM_COMPARISON_ARG"),
+                    group(literal("displayName"), TEXT_COMPONENT).setName("TEXT_COMPONENT_ARG"),
+                    group(literal("friendlyFire"), ofType(BOOLEAN).setName("BOOLEAN")).setName("BOOLEAN_ARG"),
+                    group(literal("nametagVisibility"), choice("always", "hideForOtherTeams", "hideForOwnTeam", "never")).setName("TEAM_COMPARISON_ARG"),
+                    group(literal("prefix"), TEXT_COMPONENT).setName("TEXT_COMPONENT_ARG"),
+                    group(literal("suffix"), TEXT_COMPONENT).setName("TEXT_COMPONENT_ARG"),
+                    group(literal("seeFriendlyInvisibles"), ofType(BOOLEAN).setName("BOOLEAN")).setName("BOOLEAN_ARG")
+            ).setName("TEAM_OPTIONS");
 
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "team"),
                     choice(
-                            group(literal("add"), identifierA(), optional(TEXT_COMPONENT)),
-                            group(literal("empty"), identifierA()),
-                            group(literal("join"), identifierA(), optional(sameLine(), ENTITY)),
-                            group(literal("leave"), ENTITY),
-                            group(literal("list"), optional(sameLine(), identifierA())),
-                            group(literal("modify"), identifierA(), teamOptions),
-                            group(literal("remove"), identifierA())
+                            group(literal("add"), identifierA().setName("TEAM"), optional(TEXT_COMPONENT).setName("DISPLAY_NAME")).setName("ADD"),
+                            group(literal("empty"), identifierA().setName("TEAM")).setName("EMPTY"),
+                            group(literal("join"), identifierA().setName("TEAM"), optional(sameLine(), ENTITY).setName("SUBJECT")).setName("JOIN"),
+                            group(literal("leave"), ENTITY).setName("LEAVE"),
+                            group(literal("list"), optional(sameLine(), identifierA().setName("TEAM"))).setName("LIST"),
+                            group(literal("modify"), identifierA().setName("TEAM"), teamOptions).setName("MODIFY"),
+                            group(literal("remove"), identifierA().setName("TEAM")).setName("REMOVE")
                     )
             ));
         }
