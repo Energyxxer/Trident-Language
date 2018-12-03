@@ -157,7 +157,7 @@ public class TridentProductions {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "gamemode"));
             g.append(GAMEMODE);
-            g.append(new LazyTokenGroupMatch(true).append(ENTITY).setName("PLAYER"));
+            g.append(new LazyTokenGroupMatch(true).append(sameLine()).append(ENTITY).setName("PLAYER"));
             COMMAND.add(g);
         }
         //endregion
