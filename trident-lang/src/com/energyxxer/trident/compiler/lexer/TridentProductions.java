@@ -1187,6 +1187,16 @@ public class TridentProductions {
                     choice(scoreArgumentBlock).setName("SELECTOR_ARGUMENT_VALUE")
             ));
         }
+
+        {
+            //NBT argument
+
+            SELECTOR_ARGUMENT.add(group(
+                    choice("nbt").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(group(not().setOptional(), NBT_COMPOUND)).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
+        }
         //endregion
 
         //region Coordinates
