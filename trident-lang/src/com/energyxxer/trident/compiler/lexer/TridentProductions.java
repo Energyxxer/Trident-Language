@@ -401,7 +401,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "recipe"),
-                    choice("give", "take"),
+                    choice("give", "take").setName("ACTION"),
                     ENTITY,
                     choice(
                             matchItem(SYMBOL, "*"),
