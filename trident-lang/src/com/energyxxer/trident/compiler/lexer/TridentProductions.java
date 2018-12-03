@@ -485,11 +485,10 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "stopsound"),
                     ENTITY,
-                    optional(
-                            choice(
-                                    group(ofType(SOUND_CHANNEL), ofType(RESOURCE_LOCATION).setOptional()),
-                                    group(matchItem(SYMBOL, "*"), ofType(RESOURCE_LOCATION)))
-                    )
+                    choice(
+                            group(ofType(SOUND_CHANNEL).setName("CHANNEL"), optional(sameLine(), ofType(RESOURCE_LOCATION)).setName("RESOURCE_LOCATION")).setName("STOP_BY_CHANNEL"),
+                            group(matchItem(SYMBOL, "*"), sameLine(), ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("STOP_BY_EVENT")
+                    ).setOptional()
             ));
         }
         //endregion

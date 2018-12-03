@@ -113,7 +113,7 @@ public class LazyLexer extends Lexer {
         if(type == TokenType.NEWLINE) {
             int index = currentIndex;
             while(index < fileContents.length() && fileContents.charAt(index) != '\n' && Character.isWhitespace(fileContents.charAt(index))) index++;
-            if(fileContents.charAt(index) == '\n') return new Token("\n", TokenType.NEWLINE, file, lineCache.getLocationForOffset(index));
+            if(index < fileContents.length() && fileContents.charAt(index) == '\n') return new Token("\n", TokenType.NEWLINE, file, lineCache.getLocationForOffset(index));
         }
         if (type == TokenType.UNKNOWN) {
             StringBuilder sb = new StringBuilder();
