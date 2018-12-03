@@ -3,6 +3,7 @@ package com.energyxxer.trident.compiler.commands.parsers.modifiers;
 import com.energyxxer.commodore.functionlogic.commands.execute.*;
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreComparison;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -13,6 +14,7 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 
 public class ConditionalParser implements ModifierParser {
@@ -65,6 +67,19 @@ public class ConditionalParser implements ModifierParser {
                 CoordinateSet template = CoordinateParser.parse(subject.find("TEMPLATE.COORDINATE_SET"));
 
                 return new ExecuteConditionRegion(conditionType, from, to, template, subject.find("AIR_POLICY").flatten(false).equals("masked") ? ExecuteConditionRegion.AirPolicy.MASKED : ExecuteConditionRegion.AirPolicy.ALL);
+            }
+            case "DATA_CONDITION": {
+                NBTPath path = NBTParser.parsePath(subject.find("NBT_PATH"));
+
+                TokenPattern<?> dataSubject = ((TokenStructure)subject.find("CHOICE")).getContents();
+                switch(dataSubject.getName()) {
+                    case "BLOCK_SUBJECT": return new ExecuteConditionDataBlock(conditionType, CoordinateParser.parse(dataSubject.find("COORDINATE_SET")), path);
+                    case "ENTITY_SUBJECT": return new ExecuteConditionDataEntity(conditionType, EntityParser.parseEntity(dataSubject.find("ENTITY"), compiler), path);
+                    default: {
+                        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + dataSubject + "'", dataSubject));
+                        return null;
+                    }
+                }
             }
         }
 
