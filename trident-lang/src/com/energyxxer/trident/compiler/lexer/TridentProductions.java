@@ -457,6 +457,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "spawnpoint"),
                     optional(
+                            sameLine(),
                             ENTITY,
                             optional(COORDINATE_SET)
                     )
