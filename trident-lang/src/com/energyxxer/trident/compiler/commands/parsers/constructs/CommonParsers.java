@@ -16,6 +16,7 @@ import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.commodore.types.defaults.TypeManager;
 import com.energyxxer.commodore.util.NumberRange;
+import com.energyxxer.commodore.util.TimeSpan;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -228,6 +229,21 @@ public class CommonParsers {
      * CommonParsers should not be instantiated.
      * */
     private CommonParsers() {
+    }
+
+    public static TimeSpan parseTime(TokenPattern<?> time, TridentCompiler compiler) {
+        String raw = time.flatten(false);
+        TimeSpan.Units units = TimeSpan.Units.TICKS;
+
+        for(TimeSpan.Units unitValue : TimeSpan.Units.values()) {
+            if(raw.endsWith(unitValue.suffix)) {
+                units = unitValue;
+                raw = raw.substring(0, raw.length() - unitValue.suffix.length());
+                break;
+            }
+        }
+
+        return new TimeSpan(Double.parseDouble(raw), units);
     }
 
     public interface TypeGroupPicker {

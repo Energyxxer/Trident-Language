@@ -434,7 +434,7 @@ public class TridentProductions {
                     literal("function"),
                     ofType(LINE_GLUE),
                     RESOURCE_LOCATION_TAGGED,
-                    ofType(TIME)
+                    ofType(TIME).setName("TIME")
             ));
         }
         //endregion
@@ -539,8 +539,8 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "time"),
                     choice(
                             group(literal("query"), choice("day", "daytime", "gametime")),
-                            group(literal("add"), choice(ofType(TIME), choice("day", "midnight", "night", "noon"))),
-                            group(literal("set"), ofType(TIME))
+                            group(literal("add"), choice(ofType(TIME).setName("TIME"), choice("day", "midnight", "night", "noon"))),
+                            group(literal("set"), ofType(TIME).setName("TIME"))
                     )
             ));
         }
