@@ -331,14 +331,14 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "playsound"),
-                    ofType(RESOURCE_LOCATION),
-                    ofType(SOUND_CHANNEL),
+                    ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION"),
+                    ofType(SOUND_CHANNEL).setName("CHANNEL"),
                     ENTITY,
                     optional(
                             COORDINATE_SET,
-                            optional(real(),
-                                    optional(real(),
-                                            real().setOptional()))
+                            real().setOptional(),
+                            real().setOptional(),
+                            real().setOptional()
                     )
             ));
         }
