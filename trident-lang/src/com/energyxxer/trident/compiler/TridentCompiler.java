@@ -1,7 +1,6 @@
 package com.energyxxer.trident.compiler;
 
 import com.energyxxer.commodore.module.CommandModule;
-import com.energyxxer.commodore.module.ModulePackGenerator;
 import com.energyxxer.commodore.module.options.UnusedCommandPolicy;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
@@ -48,9 +47,8 @@ public class TridentCompiler {
 
     public TridentCompiler(File rootDir) {
         this.rootDir = rootDir;
-        module = new CommandModule(rootDir.getName());
+        module = new CommandModule(rootDir.getName(), "Command Module created with Trident", null);
         module.getOptionManager().UNUSED_COMMAND_POLICY.setValue(UnusedCommandPolicy.COMMENT_OUT);
-        module.getOptionManager().EXPORT_ACCESS_LOGS.setValue(true);
 
     }
 
@@ -137,13 +135,12 @@ public class TridentCompiler {
         {
             Path path = new File(properties.get("datapack-output").getAsString()).toPath();
             try {
-                module.compile(path.toFile().getParentFile(), path.endsWith(".zip") ? ModulePackGenerator.OutputType.ZIP : ModulePackGenerator.OutputType.FOLDER);
+                module.compile(path.toFile());
             } catch(IOException x) {
                 logException(x);
                 finalizeCompilation();
             }
         }
-
 
         this.setProgress("Compilation completed with " + report.getTotalsString(), false);
         finalizeCompilation();

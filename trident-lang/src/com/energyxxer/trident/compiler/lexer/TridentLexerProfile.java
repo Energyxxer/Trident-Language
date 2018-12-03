@@ -61,6 +61,31 @@ public class TridentLexerProfile extends LexerProfile {
 
         contexts.add(new LexerContext() {
 
+            private Pattern regex = Pattern.compile("([+-]?\\d*(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                Matcher matcher = regex.matcher(str);
+
+                if(matcher.lookingAt() && matcher.end() > 0) {
+                    int length = matcher.end();
+                    return new ScannerContextResponse(true, str.substring(0,length), SHORT_REAL_NUMBER);
+                } else return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singleton(SHORT_REAL_NUMBER);
+            }
+        });
+
+        contexts.add(new LexerContext() {
+
             private Pattern regex = Pattern.compile("(\\d+(\\.\\d+)?[tsd]?)");
 
             @Override

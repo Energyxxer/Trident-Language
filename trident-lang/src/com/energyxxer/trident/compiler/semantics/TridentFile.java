@@ -12,10 +12,11 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.CompilerExtension;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.RawCommand;
 import com.energyxxer.trident.compiler.commands.parsers.commands.CommandParser;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
+import com.energyxxer.trident.compiler.commands.parsers.instructions.Instruction;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -99,49 +100,56 @@ public class TridentFile implements CompilerExtension {
 
         if(function != null) tags.forEach(l -> module.createNamespace(l.namespace).tags.functionTags.create(l.body).addValue(new FunctionReference(this.function)));
 
+        TokenList entryList = (TokenList) this.pattern.find(".ENTRIES");
 
-        TokenPattern<?>[] entries = ((TokenList) this.pattern.find(".ENTRIES")).getContents();
+        if(entryList != null) {
+            TokenPattern<?>[] entries = (entryList).getContents();
+            boolean exportComments = compiler.getProperties().get("export-comments") == null || compiler.getProperties().get("export-comments").getAsBoolean();
+            for (TokenPattern<?> pattern : entries) {
+                if (!pattern.getName().equals("LINE_PADDING")) {
+                    TokenStructure entry = (TokenStructure) pattern.find("ENTRY");
 
-        boolean exportComments = compiler.getProperties().get("export-comments") == null || compiler.getProperties().get("export-comments").getAsBoolean();
+                    TokenPattern<?> inner = entry.getContents();
 
-        for(TokenPattern<?> pattern : entries) {
-            if(!pattern.getName().equals("LINE_PADDING")) {
-                TokenStructure entry = (TokenStructure) pattern.find("ENTRY");
-
-                TokenPattern<?> inner = entry.getContents();
-
-                try {
-
-                    switch (inner.getName()) {
-                        case "COMMAND":
-                            if(!compileOnly) {
-                                CommandParser parser = ParserManager.getParser(CommandParser.class, inner.flattenTokens().get(0).value);
-                                if(parser != null) {
-                                    Command command = parser.parse(((TokenStructure) inner).getContents(), this);
-                                    if(command != null) {
-                                        function.append(command);
+                    try {
+                        switch (inner.getName()) {
+                            case "COMMAND":
+                                if (!compileOnly) {
+                                    CommandParser parser = ParserManager.getParser(CommandParser.class, inner.flattenTokens().get(0).value);
+                                    if (parser != null) {
+                                        Command command = parser.parse(((TokenStructure) inner).getContents(), this);
+                                        if (command != null) {
+                                            function.append(command);
+                                        }
                                     }
+                                } else if (!reportedNoCommands) {
+                                    getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
+                                    reportedNoCommands = true;
                                 }
-                            } else if(!reportedNoCommands) {
-                                getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
-                                reportedNoCommands = true;
+                                break;
+                            case "COMMENT":
+                                if (exportComments && function != null)
+                                    function.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
+                                break;
+                            case "VERBATIM_COMMAND":
+                                if (!compileOnly) {
+                                    function.append(new RawCommand(inner.flattenTokens().get(0).value.substring(1)));
+                                } else if (!reportedNoCommands) {
+                                    getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
+                                    reportedNoCommands = true;
+                                }
+                                break;
+                            case "INSTRUCTION": {
+                                Instruction instruction = ParserManager.getParser(Instruction.class, inner.flattenTokens().get(0).value);
+                                if (instruction != null) {
+                                    instruction.run(((TokenStructure) inner).getContents(), this);
+                                }
+                                break;
                             }
-                            break;
-                        case "COMMENT":
-                            if (exportComments && function != null)
-                                function.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
-                            break;
-                        case "VERBATIM_COMMAND":
-                            if(!compileOnly) {
-                                function.append(new RawCommand(inner.flattenTokens().get(0).value.substring(1)));
-                            } else if(!reportedNoCommands) {
-                                getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
-                                reportedNoCommands = true;
-                            }
-                            break;
+                        }
+                    } catch (EntryParsingException x) {
+                        //Silently ignore; serves as a multi-scope break;
                     }
-                } catch(EntryParsingException x) {
-                    //Silently ignore; serves as a multi-function break;
                 }
             }
         }

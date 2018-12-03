@@ -20,7 +20,7 @@ public class TridentProductions {
     public static final LazyTokenItemMatch COMMENT_S;
     public static final LazyTokenItemMatch VERBATIM_COMMAND_S;
     public static final LazyTokenGroupMatch DIRECTIVE;
-    //public static final LazyTokenItemMatch INSTRUCTION;
+    public static final LazyTokenStructureMatch INSTRUCTION;
     public static final LazyTokenStructureMatch COMMAND;
     public static final LazyTokenStructureMatch MODIFIER;
 
@@ -84,6 +84,7 @@ public class TridentProductions {
         FILE = new LazyTokenStructureMatch("FILE");
         ENTRY = new LazyTokenStructureMatch("ENTRY");
         COMMAND = new LazyTokenStructureMatch("COMMAND");
+        INSTRUCTION = new LazyTokenStructureMatch("INSTRUCTION");
         MODIFIER = new LazyTokenStructureMatch("MODIFIER");
         TEXT_COMPONENT = new LazyTokenStructureMatch("TEXT_COMPONENT");
         SELECTOR = new LazyTokenStructureMatch("SELECTOR");
@@ -107,6 +108,7 @@ public class TridentProductions {
 
         ENTRY.add(COMMENT_S);
         ENTRY.add(COMMAND);
+        ENTRY.add(INSTRUCTION);
         ENTRY.add(VERBATIM_COMMAND_S);
 
         STRING_LITERAL_OR_IDENTIFIER_A.add(string());
@@ -875,6 +877,7 @@ public class TridentProductions {
         //endregion
         //endregion
 
+        //region Constructs
         //region Blockstate
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
@@ -931,8 +934,6 @@ public class TridentProductions {
             ITEM_TAGGED.add(g);
         }
         //endregion
-        //endregion
-
 
         //region Text Components
         {
@@ -965,7 +966,6 @@ public class TridentProductions {
             TEXT_COMPONENT.add(JSON_ELEMENT);
         }
         //endregion
-
         //region NBT
         {
             {
@@ -995,7 +995,6 @@ public class TridentProductions {
             NBT_VALUE.add(ofType(TYPED_NUMBER).setName("NBT_NUMBER"));
             NBT_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
         }
-        //endregion
 
         {
             LazyTokenStructureMatch NBT_PATH_NODE = new LazyTokenStructureMatch("NBT_PATH_NODE");
@@ -1016,7 +1015,7 @@ public class TridentProductions {
             NBT_PATH.add(group(choice(group(group(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_PATH_KEY_LABEL")).setName("NBT_PATH_KEY")).setName("NBT_PATH_NODE"),
                     list(NBT_PATH_NODE, glue()).setOptional().setName("OTHER_NODES")));
         }
-
+        //endregion
         //region Selector
         {
             SELECTOR.add(
@@ -1220,14 +1219,13 @@ public class TridentProductions {
             ));
         }
         //endregion
-
         //region Coordinates
         {
-            LOCAL_COORDINATE.add(new LazyTokenGroupMatch().append(caret()).append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(real())));
+            LOCAL_COORDINATE.add(new LazyTokenGroupMatch().append(caret()).append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(ofType(SHORT_REAL_NUMBER))));
 
-            ABSOLUTE_COORDINATE.add(real());
+            ABSOLUTE_COORDINATE.add(ofType(SHORT_REAL_NUMBER));
 
-            RELATIVE_COORDINATE.add(new LazyTokenGroupMatch().append(tilde()).append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(real())));
+            RELATIVE_COORDINATE.add(new LazyTokenGroupMatch().append(tilde()).append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(ofType(SHORT_REAL_NUMBER))));
 
             MIXABLE_COORDINATE.add(ABSOLUTE_COORDINATE);
             MIXABLE_COORDINATE.add(RELATIVE_COORDINATE);
@@ -1258,9 +1256,9 @@ public class TridentProductions {
             }
         }
         //endregion
+        //endregion
 
-
-
+        //region Definition Pack grammar
         try {
             DefinitionPack defpack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
             defpack.load();
@@ -1568,6 +1566,23 @@ public class TridentProductions {
         } catch (IOException x) {
             Debug.log("Error in loading standard definition pack for Minecraft Java Edition 1.13: " + x.getMessage(), Debug.MessageType.ERROR);
         }
+        //endregion
+
+        //region Instructions
+        {
+            INSTRUCTION.add(
+                    group(literal("register"),
+                            choice(
+                                    group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("REGISTER_OBJECTIVE")
+                            )
+                    )
+            );
+        }
+        //endregion
+
+
+
+
     }
 
     private static LazyTokenItemMatch literal(String text) {
