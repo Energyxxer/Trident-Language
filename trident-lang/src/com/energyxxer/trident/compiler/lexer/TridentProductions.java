@@ -559,8 +559,8 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "trigger"),
-                    ofType(IDENTIFIER_TYPE_A),
-                    optional(choice("add", "set"), integer())
+                    ofType(IDENTIFIER_TYPE_A).setName("OBJECTIVE_NAME"),
+                    optional(choice("add", "set"), integer()).setName("INNER")
             ));
         }
         //endregion
