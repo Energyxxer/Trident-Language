@@ -551,9 +551,9 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "title"),
                     ENTITY,
                     choice(
-                            group(choice("title", "subtitle", "actionbar"), TEXT_COMPONENT),
-                            choice("clear", "reset"),
-                            group(literal("times"), integer(), integer(), integer())
+                            group(choice("title", "subtitle", "actionbar").setName("DISPLAY"), TEXT_COMPONENT).setName("SHOW"),
+                            choice("clear", "reset").setName("CLEAR_RESET"),
+                            group(literal("times"), integer().setName("FADEIN"), integer().setName("STAY"), integer().setName("FADEOUT")).setName("TIMES")
                     )
             ));
         }
