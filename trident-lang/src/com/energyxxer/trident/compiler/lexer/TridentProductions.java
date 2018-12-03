@@ -473,10 +473,10 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "spreadplayers"),
                     TWO_COORDINATE_SET,
-                    real(),
-                    real(),
-                    ofType(BOOLEAN),
-                    SELECTOR
+                    real().setName("SPREAD_DISTANCE"),
+                    real().setName("MAX_RANGE"),
+                    ofType(BOOLEAN).setName("RESPECT_TEAMS"),
+                    ENTITY
             ));
         }
         //endregion
@@ -690,7 +690,7 @@ public class TridentProductions {
             ).setName("DATA_TARGET");
 
             LazyTokenStructureMatch source = choice(
-                    group(literal("from"), target, optional(glue(), NBT_PATH).setName("PATH_CLAUSE")).setName("TARGET_SOURCE"),
+                    group(literal("from"), target, optional(sameLine(), NBT_PATH).setName("PATH_CLAUSE")).setName("TARGET_SOURCE"),
                     group(literal("value"), NBT_VALUE).setName("LITERAL_SOURCE")
             ).setName("DATA_SOURCE");
 
