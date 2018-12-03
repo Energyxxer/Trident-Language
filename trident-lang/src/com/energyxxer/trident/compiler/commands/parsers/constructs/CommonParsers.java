@@ -24,7 +24,7 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.commands.parsers.EntryParsingException;
+import com.energyxxer.trident.compiler.commands.EntryParsingException;
 
 import java.util.List;
 

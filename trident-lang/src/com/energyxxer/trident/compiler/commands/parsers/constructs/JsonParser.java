@@ -7,7 +7,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
-import com.energyxxer.trident.compiler.commands.parsers.EntryParsingException;
+import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

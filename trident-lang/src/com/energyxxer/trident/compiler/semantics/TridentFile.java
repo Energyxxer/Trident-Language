@@ -13,8 +13,8 @@ import com.energyxxer.trident.compiler.CompilerExtension;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.RawCommand;
-import com.energyxxer.trident.compiler.commands.parsers.CommandParser;
-import com.energyxxer.trident.compiler.commands.parsers.EntryParsingException;
+import com.energyxxer.trident.compiler.commands.parsers.commands.CommandParser;
+import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 
 import java.io.File;
