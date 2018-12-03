@@ -538,9 +538,9 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "time"),
                     choice(
-                            group(literal("query"), choice("day", "daytime", "gametime")),
-                            group(literal("add"), choice(ofType(TIME).setName("TIME"), choice("day", "midnight", "night", "noon"))),
-                            group(literal("set"), ofType(TIME).setName("TIME"))
+                            group(literal("query"), choice("day", "daytime", "gametime")).setName("QUERY"),
+                            group(literal("set"), choice(ofType(TIME).setName("TIME"), choice("day", "midnight", "night", "noon"))).setName("SET"),
+                            group(literal("add"), ofType(TIME).setName("TIME")).setName("ADD")
                     )
             ));
         }
