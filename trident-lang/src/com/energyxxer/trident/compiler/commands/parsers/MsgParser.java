@@ -20,5 +20,8 @@ public class MsgParser implements CommandParser {
     }
 
     @ParserMember(key = "w")
-    public static class MsgParserAlias extends MsgParser implements CommandParser {}
+    public static class MsgParserAlias0 extends MsgParser implements CommandParser {}
+
+    @ParserMember(key = "tell")
+    public static class MsgParserAlias1 extends MsgParser implements CommandParser {}
 }

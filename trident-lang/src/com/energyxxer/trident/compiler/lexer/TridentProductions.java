@@ -707,30 +707,33 @@ public class TridentProductions {
             ));
         }
         //endregion
-        //region drop
+        //region loot
         {
 
-            LazyTokenStructureMatch tool = choice(literal("mainhand"), literal("offhand"), ITEM);
+            LazyTokenPatternMatch tool = choice(literal("mainhand"), literal("offhand"), ITEM).setOptional().setName("TOOL");
 
             LazyTokenStructureMatch destination = choice(
-                    group(literal("block"), COORDINATE_SET, choice(
-                            group(literal("distribute")),
-                            group(literal("insert"), SLOT_ID)
-                    )),
-                    group(literal("entity"), ENTITY, SLOT_ID),
-                    group(literal("player"), ENTITY),
-                    group(literal("world"), COORDINATE_SET)
-            );
+                    group(literal("give"), ENTITY).setName("GIVE"),
+                    group(literal("insert"), COORDINATE_SET).setName("INSERT"),
+                    group(literal("replace"),
+                            choice(
+                                    group(literal("block"), COORDINATE_SET),
+                                    group(literal("entity"), ENTITY)
+                            ),
+                            SLOT_ID
+                    ).setName("REPLACE"),
+                    group(literal("spawn"), COORDINATE_SET).setName("SPAWN")
+            ).setName("LOOT_DESTINATION");
 
             LazyTokenStructureMatch source = choice(
-                    group(literal("fish"), ofType(RESOURCE_LOCATION), COORDINATE_SET, optional(tool)),
-                    group(literal("kill"), ENTITY),
-                    group(literal("loot"), ofType(RESOURCE_LOCATION)),
-                    group(literal("mine"), COORDINATE_SET, optional(tool))
-            );
+                    group(literal("fish"), ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION"), COORDINATE_SET, tool).setName("FISH"),
+                    group(literal("kill"), ENTITY).setName("KILL"),
+                    group(literal("loot"), ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("LOOT"),
+                    group(literal("mine"), COORDINATE_SET, tool).setName("MINE")
+            ).setName("LOOT_SOURCE");
 
             COMMAND.add(group(
-                    matchItem(COMMAND_HEADER, "drop"),
+                    matchItem(COMMAND_HEADER, "loot"),
                     destination, source
             ));
         }
