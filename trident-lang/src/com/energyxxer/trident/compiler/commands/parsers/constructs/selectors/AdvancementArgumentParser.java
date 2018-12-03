@@ -22,7 +22,6 @@ public class AdvancementArgumentParser implements SelectorArgumentParser {
 
         AdvancementArgument advancements = new AdvancementArgument();
 
-
         if(advancementList != null) {
             for(TokenPattern<?> rawArg : advancementList.getContents()) {
                 if(rawArg.getName().equals("ADVANCEMENT_ENTRY")) {

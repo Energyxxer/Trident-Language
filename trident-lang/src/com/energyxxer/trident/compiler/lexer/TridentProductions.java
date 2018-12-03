@@ -1167,6 +1167,26 @@ public class TridentProductions {
                     choice(advancementArgumentBlock).setName("SELECTOR_ARGUMENT_VALUE")
             ));
         }
+
+        {
+            //Scores argument
+
+            LazyTokenPatternMatch scoreArgumentBlock = group(
+                    brace("{"),
+                    list(group(
+                            identifierA().setName("OBJECTIVE_NAME"),
+                            equals(),
+                            INTEGER_NUMBER_RANGE
+                    ).setName("SCORE_ENTRY"), comma()).setOptional().setName("SCORE_LIST"),
+                    brace("}")
+            ).setName("SCORE_ARGUMENT_BLOCK");
+
+            SELECTOR_ARGUMENT.add(group(
+                    choice("scores").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(scoreArgumentBlock).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
+        }
         //endregion
 
         //region Coordinates
