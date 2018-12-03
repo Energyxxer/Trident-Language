@@ -2,6 +2,7 @@ package com.energyxxer.trident.compiler;
 
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.ModulePackGenerator;
+import com.energyxxer.commodore.module.options.UnusedCommandPolicy;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
@@ -48,7 +49,8 @@ public class TridentCompiler {
     public TridentCompiler(File rootDir) {
         this.rootDir = rootDir;
         module = new CommandModule(rootDir.getName());
-
+        module.getOptionManager().UNUSED_COMMAND_POLICY.setValue(UnusedCommandPolicy.COMMENT_OUT);
+        module.getOptionManager().EXPORT_ACCESS_LOGS.setValue(true);
 
     }
 
