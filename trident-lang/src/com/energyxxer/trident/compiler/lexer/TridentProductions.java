@@ -421,7 +421,7 @@ public class TridentProductions {
                     choice(
                             group(literal("block"), COORDINATE_SET),
                             group(literal("entity"), ENTITY)
-                    ),
+                    ).setName("TARGET"),
                     SLOT_ID,
                     ITEM
             ));
