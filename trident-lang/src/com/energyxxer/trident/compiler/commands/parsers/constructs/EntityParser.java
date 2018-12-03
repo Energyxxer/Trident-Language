@@ -26,7 +26,7 @@ public class EntityParser {
                 if(rawArg.getName().equals("SELECTOR_ARGUMENT")) {
                     SelectorArgumentParser parser = ParserManager.getParser(SelectorArgumentParser.class, rawArg.flattenTokens().get(0).value);
                     if(parser != null) {
-                        SelectorArgument arg = parser.parse(((TokenStructure) rawArg).getContents(), compiler);
+                        SelectorArgument arg = parser.parse(((TokenStructure) rawArg).getContents().find("SELECTOR_ARGUMENT_VALUE"), compiler);
                         if(arg != null) {
                             selector.addArgument(arg);
                         }

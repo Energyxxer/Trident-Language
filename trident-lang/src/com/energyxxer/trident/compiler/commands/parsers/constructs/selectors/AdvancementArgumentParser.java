@@ -9,6 +9,7 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 public class AdvancementArgumentParser implements SelectorArgumentParser {
     @Override
     public SelectorArgument parse(TokenPattern<?> pattern, TridentCompiler compiler) {
+        
         return null;
     }
 }

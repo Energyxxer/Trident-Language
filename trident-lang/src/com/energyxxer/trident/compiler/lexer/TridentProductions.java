@@ -1058,158 +1058,96 @@ public class TridentProductions {
         //region Selector Arguments
         {
             //Integer Range Arguments
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("INTEGER_RANGE_ARGUMENT");
-
-            LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
-            s.add(literal("level"));
-
-            g.append(new LazyTokenGroupMatch().setName("INTEGER_ARGUMENT_VALUE").append(s));
-            g.append(equals());
-            g.append(INTEGER_NUMBER_RANGE);
-
-            SELECTOR_ARGUMENT.add(g);
+            SELECTOR_ARGUMENT.add(group(
+                    choice("level").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(INTEGER_NUMBER_RANGE).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
         }
 
         {
             //Real Number Range Arguments
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("REAL_RANGE_ARGUMENT");
-
-            LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
-            s.add(literal("distance"));
-            s.add(literal("x_rotation"));
-            s.add(literal("y_rotation"));
-
-            g.append(new LazyTokenGroupMatch().setName("REAL_NUMBER_RANGE_ARGUMENT_VALUE").append(s));
-            g.append(equals());
-            g.append(REAL_NUMBER_RANGE);
-
-            SELECTOR_ARGUMENT.add(g);
+            SELECTOR_ARGUMENT.add(group(
+                    choice("distance", "x_rotation", "y_rotation").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(REAL_NUMBER_RANGE).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
         }
 
         {
             //Integer Number Arguments
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("INTEGER_NUMBER_ARGUMENT");
-
-            LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
-            s.add(literal("limit"));
-
-            g.append(new LazyTokenGroupMatch().setName("INTEGER_ARGUMENT_VALUE").append(s));
-            g.append(equals());
-            g.append(integer());
-
-            SELECTOR_ARGUMENT.add(g);
+            SELECTOR_ARGUMENT.add(group(
+                    choice("limit").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(integer()).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
         }
 
         {
             //Real Number Arguments
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("REAL_NUMBER_ARGUMENT");
-
-            LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
-            s.add(literal("x"));
-            s.add(literal("y"));
-            s.add(literal("z"));
-            s.add(literal("dx"));
-            s.add(literal("dy"));
-            s.add(literal("dz"));
-
-            g.append(new LazyTokenGroupMatch().setName("REAL_NUMBER_ARGUMENT_VALUE").append(s));
-            g.append(equals());
-            g.append(real());
-
-            SELECTOR_ARGUMENT.add(g);
+            SELECTOR_ARGUMENT.add(group(
+                    choice("x", "y", "z", "dx", "dy", "dz").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(real()).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
         }
 
         {
             //Identifier Arguments
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("IDENTIFIER_ARGUMENT");
-
-            LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
-            s.add(literal("tag"));
-            s.add(literal("team"));
-
-            g.append(s);
-            g.append(equals());
-            g.append(not().setOptional());
-
-            LazyTokenStructureMatch s2 = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_VALUE", true);
-            s2.add(identifierA());
-
-            g.append(s2);
-
-            SELECTOR_ARGUMENT.add(g);
+            SELECTOR_ARGUMENT.add(group(
+                    choice("tag", "team").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(
+                            group(not().setOptional(), identifierA().setOptional())
+                    ).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
         }
 
         {
             //String Arguments
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("STRING_ARGUMENT");
-
-            LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
-            s.add(literal("name"));
-
-            g.append(s);
-            g.append(equals());
-            g.append(not().setOptional());
-
-            LazyTokenStructureMatch s2 = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_VALUE", true);
-            s2.add(STRING_LITERAL_OR_IDENTIFIER_A);
-
-            g.append(s2);
-
-            SELECTOR_ARGUMENT.add(g);
+            SELECTOR_ARGUMENT.add(group(
+                    choice("name").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(
+                            group(not().setOptional(), STRING_LITERAL_OR_IDENTIFIER_A.setOptional())
+                    ).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
         }
 
         {
             //Gamemode argument
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("GAMEMODE_ARGUMENT");
-
-            LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
-            s.add(literal("gamemode"));
-
-            g.append(s);
-            g.append(equals());
-
-            LazyTokenStructureMatch s2 = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_VALUE");
-            s2.add(new LazyTokenGroupMatch().append(not().setOptional()).append(GAMEMODE));
-
-            g.append(s2);
-
-            SELECTOR_ARGUMENT.add(g);
+            SELECTOR_ARGUMENT.add(group(
+                    choice("gamemode").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(group(not().setOptional(), GAMEMODE)).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
         }
 
         {
             //Type argument
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("TYPE_ARGUMENT");
-
-            LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
-            s.add(literal("type"));
-
-            g.append(s);
-            g.append(equals());
-
-            LazyTokenStructureMatch s2 = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_VALUE");
-            s2.add(new LazyTokenGroupMatch().append(not().setOptional()).append(ENTITY_ID));
-
-            g.append(s2);
-
-            SELECTOR_ARGUMENT.add(g);
+            SELECTOR_ARGUMENT.add(group(
+                    choice("type").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(group(not().setOptional(), ENTITY_ID)).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
         }
 
         {
             //Sort argument
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("SORT_ARGUMENT");
+            SELECTOR_ARGUMENT.add(group(
+                    choice("sort").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(ofType(SORTING)).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
+        }
 
-            LazyTokenStructureMatch s = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_KEY");
-            s.add(literal("sort"));
-
-            g.append(s);
-            g.append(equals());
-
-            LazyTokenStructureMatch s2 = new LazyTokenStructureMatch("SELECTOR_ARGUMENT_VALUE");
-            s2.add(ofType(SORTING));
-
-            g.append(s2);
-
-            SELECTOR_ARGUMENT.add(g);
+        {
+            //Advancements argument
+            /*SELECTOR_ARGUMENT.add(group(
+                    choice("advancements").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice().setName("SELECTOR_ARGUMENT_VALUE")
+            ));*/
         }
         //endregion
 
@@ -1631,15 +1569,15 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch identifierA() {
-        return ofType(IDENTIFIER_TYPE_A);
+        return ofType(IDENTIFIER_TYPE_A).setName("IDENTIFIER_A");
     }
 
     private static LazyTokenPatternMatch identifierB() {
-        return ofType(IDENTIFIER_TYPE_B);
+        return ofType(IDENTIFIER_TYPE_B).setName("IDENTIFIER_B");
     }
 
     private static LazyTokenPatternMatch identifierC() {
-        return ofType(IDENTIFIER_TYPE_C);
+        return ofType(IDENTIFIER_TYPE_C).setName("IDENTIFIER_C");
     }
 
     private static LazyTokenItemMatch ofType(TokenType type) {

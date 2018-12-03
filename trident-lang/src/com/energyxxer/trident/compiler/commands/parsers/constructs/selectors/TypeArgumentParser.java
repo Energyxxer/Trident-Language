@@ -12,9 +12,8 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 public class TypeArgumentParser implements SelectorArgumentParser {
     @Override
     public SelectorArgument parse(TokenPattern<?> pattern, TridentCompiler compiler) {
-        TokenPattern<?> rawValue = pattern.find("SELECTOR_ARGUMENT_VALUE");
-        TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(rawValue.find("ENTITY_ID"));
+        TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(pattern.find("ENTITY_ID"));
         Type type = compiler.getModule().getNamespace(typeLoc.namespace).types.entity.get(typeLoc.body);
-        return new TypeArgument(type, rawValue.find("NEGATED") != null);
+        return new TypeArgument(type, pattern.find("NEGATED") != null);
     }
 }
