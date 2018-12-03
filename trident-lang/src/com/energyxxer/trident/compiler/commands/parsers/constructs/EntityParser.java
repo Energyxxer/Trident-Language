@@ -8,6 +8,8 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgumen
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.selectors.SelectorArgumentParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
@@ -28,7 +30,11 @@ public class EntityParser {
                     if(parser != null) {
                         SelectorArgument arg = parser.parse(((TokenStructure)((TokenStructure) rawArg).getContents().find("SELECTOR_ARGUMENT_VALUE")).getContents(), compiler);
                         if(arg != null) {
-                            selector.addArgument(arg);
+                            try {
+                                selector.addArgument(arg);
+                            } catch(IllegalArgumentException x) {
+                                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, x.getMessage(), rawArg));
+                            }
                         }
                     }
                     //selector.addArgument(parseArgument(((TokenStructure)rawArg).getContents()));
