@@ -621,15 +621,15 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "scoreboard"),
                     choice(
                             group(literal("objectives"), choice(
-                                    group(literal("add"), identifierA(), ofType(RESOURCE_LOCATION), optional(TEXT_COMPONENT)),
-                                    literal("list"),
-                                    group(literal("modify"), identifierA(), choice(
-                                            group(literal("displayname"), TEXT_COMPONENT),
-                                            group(literal("rendertype"), choice("integer", "hearts"))
-                                    )),
-                                    group(literal("remove"), identifierA()),
-                                    group(literal("setdisplay"), identifierA().setName("DISPLAY_SLOT"), optional(sameLine(), identifierA()))
-                            )),
+                                    group(literal("add"), identifierA().setName("OBJECTIVE_NAME"), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT)).setName("ADD"),
+                                    literal("list").setName("LIST"),
+                                    group(literal("modify"), identifierA().setName("OBJECTIVE"), choice(
+                                            group(literal("displayname"), TEXT_COMPONENT).setName("DISPLAYNAME"),
+                                            group(literal("rendertype"), choice("integer", "hearts")).setName("RENDERTYPE")
+                                    )).setName("MODIFY"),
+                                    group(literal("remove"), identifierA().setName("OBJECTIVE")).setName("REMOVE"),
+                                    group(literal("setdisplay"), identifierA().setName("DISPLAY_SLOT"), optional(sameLine(), identifierA().setName("OBJECTIVE")).setName("OBJECTIVE_CLAUSE")).setName("SETDISPLAY")
+                            )).setName("OBJECTIVES"),
                             group(literal("players"), choice(
                                     group(choice("add", "remove", "set"), ENTITY, identifierA(), integer()),
                                     group(literal("enable"), ENTITY, identifierA()),
@@ -637,7 +637,7 @@ public class TridentProductions {
                                     group(literal("list"), optional(ENTITY)),
                                     group(literal("operation"), ENTITY, identifierA(), ofType(SCOREBOARD_OPERATOR), ENTITY, identifierA()),
                                     group(literal("reset"), ENTITY, optional(sameLine(), identifierA()))
-                            ))
+                            )).setName("PLAYERS")
                     )
             ));
         }

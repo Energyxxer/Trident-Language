@@ -23,6 +23,7 @@ import static com.energyxxer.trident.compiler.util.Using.using;
 public class TextParser {
 
     public static TextComponent parseTextComponent(TokenPattern<?> pattern, TridentCompiler compiler) {
+        if(pattern == null) return null;
         switch(pattern.getName()) {
             case "TEXT_COMPONENT": {
                 return parseTextComponent(JsonParser.parseJson(((TokenStructure) pattern).getContents(), compiler), compiler, pattern, TextComponentContext.CHAT);
