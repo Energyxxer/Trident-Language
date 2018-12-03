@@ -578,11 +578,11 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "worldborder"),
                     choice(
-                            literal("get"),
-                            group(choice("add", "set"), real(), integer().setOptional()),
-                            group(literal("center"), TWO_COORDINATE_SET),
-                            group(literal("damage"), choice("amount", "buffer"), real()),
-                            group(literal("warning"), choice("distance", "time"), integer())
+                            literal("get").setName("GET"),
+                            group(choice("add", "set"), real().setName("DISTANCE"), integer().setOptional().setName("TIME")).setName("CHANGE"),
+                            group(literal("center"), TWO_COORDINATE_SET).setName("CENTER"),
+                            group(literal("damage"), choice("amount", "buffer"), real().setName("DAMAGE_OR_DISTANCE")).setName("DAMAGE"),
+                            group(literal("warning"), choice("distance", "time"), integer().setName("DISTANCE_OR_TIME")).setName("WARNING")
                     )
             ));
         }

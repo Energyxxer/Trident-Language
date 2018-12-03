@@ -16,11 +16,24 @@ import java.util.List;
 public class CoordinateParser {
     public static CoordinateSet parse(TokenPattern<?> pattern) {
         if(pattern == null) return null;
-        TokenPattern<?>[] triple = ((TokenGroup) pattern.getContents()).getContents();
-        Coordinate x =  parseCoordinate(triple[0], Axis.X);
-        Coordinate y =  parseCoordinate(triple[1], Axis.Y);
-        Coordinate z =  parseCoordinate(triple[2], Axis.Z);
-        return new CoordinateSet(x, y, z);
+        Coordinate x, y, z;
+        switch (pattern.getName()) {
+            case "COORDINATE_SET":
+                TokenPattern<?>[] triple = ((TokenGroup) pattern.getContents()).getContents();
+                x = parseCoordinate(triple[0], Axis.X);
+                y = parseCoordinate(triple[1], Axis.Y);
+                z = parseCoordinate(triple[2], Axis.Z);
+                break;
+            case "TWO_COORDINATE_SET":
+                TokenPattern<?>[] tuple = ((TokenGroup) pattern.getContents()).getContents();
+                x = parseCoordinate(tuple[0], Axis.X);
+                y = new Coordinate(Coordinate.Type.RELATIVE, 0);
+                z = parseCoordinate(tuple[1], Axis.Z);
+                break;
+            default:
+                return null;
+        }
+        return x != null && y != null && z != null ? new CoordinateSet(x, y, z) : null;
     }
 
     private static Coordinate parseCoordinate(TokenPattern<?> pattern, Axis axis) {
