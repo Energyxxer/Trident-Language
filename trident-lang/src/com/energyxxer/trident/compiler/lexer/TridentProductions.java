@@ -750,7 +750,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "execute"),
                     list(MODIFIER).setOptional(true).setName("MODIFIER_LIST"),
                     optional(
-                            literal("run").setOptional(),
+                            literal("run"),
                             COMMAND
                     ).setName("CHAINED_COMMAND")
             ));

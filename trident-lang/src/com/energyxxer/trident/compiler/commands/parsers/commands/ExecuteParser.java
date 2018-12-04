@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.commands.parsers.commands;
 
 import com.energyxxer.commodore.functionlogic.commands.Command;
+import com.energyxxer.commodore.functionlogic.commands.EmptyCommand;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
@@ -38,6 +39,6 @@ public class ExecuteParser implements CommandParser {
                 if(command != null) return new ExecuteCommand(command, modifiers);
             }
         }
-        return null;
+        return new ExecuteCommand(new EmptyCommand(), modifiers);
     }
 }
