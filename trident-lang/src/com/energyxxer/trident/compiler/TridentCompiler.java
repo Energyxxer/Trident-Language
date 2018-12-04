@@ -1,8 +1,14 @@
 package com.energyxxer.trident.compiler;
 
 import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.module.Namespace;
+import com.energyxxer.commodore.module.RawExportable;
 import com.energyxxer.commodore.module.options.UnusedCommandPolicy;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
+import com.energyxxer.commodore.tags.Tag;
+import com.energyxxer.commodore.tags.TagGroup;
+import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -14,8 +20,7 @@ import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.util.logger.Debug;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 
 import java.io.File;
 import java.io.FileReader;
@@ -45,11 +50,18 @@ public class TridentCompiler {
     private HashMap<File, TokenPattern<?>> filePatterns = new HashMap<>();
     private HashMap<File, TridentFile> files = new HashMap<>();
 
+    private Gson gson;
+
     public TridentCompiler(File rootDir) {
         this.rootDir = rootDir;
         module = new CommandModule(rootDir.getName(), "Command Module created with Trident", null);
         module.getOptionManager().UNUSED_COMMAND_POLICY.setValue(UnusedCommandPolicy.COMMENT_OUT);
+        module.getOptionManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
 
+
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.setPrettyPrinting();
+        this.gson = gsonBuilder.create();
     }
 
     public void compile() {
@@ -157,19 +169,87 @@ public class TridentCompiler {
                     recursivelyParse(lex, file);
                 }
             } else {
-                if(!name.endsWith(".tdn")) continue;
-                Debug.log("Parsing " + name);
+                if(name.endsWith(".tdn")) {
+                    Debug.log("Parsing " + name);
 
-                try {
-                    String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
-                    lex.tokenizeParse(file, str, new TridentLexerProfile());
+                    try {
+                        String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
+                        lex.tokenizeParse(file, str, new TridentLexerProfile());
 
-                    if(lex.getMatchResponse().matched) {
-                        filePatterns.put(file, lex.getMatchResponse().pattern);
+                        if(lex.getMatchResponse().matched) {
+                            filePatterns.put(file, lex.getMatchResponse().pattern);
+                        }
+                    } catch (IOException x) {
+                        report.addNotice(new Notice(NoticeType.ERROR, "IOException: " + x.getMessage()));
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } else {
+                    if(file.toPath().startsWith(rootDir.toPath().resolve("datapack"))) {
+                        Path dataPath = rootDir.toPath().resolve("datapack").resolve("data");
+                        try {
+                            if (name.endsWith(".json") && file.toPath().startsWith(dataPath) && dataPath.relativize(file.toPath()).getName(1).startsWith("tags")) {
+                                loadTag(file);
+                            } else {
+                                Path relPath = rootDir.toPath().resolve("datapack").relativize(file.toPath());
+                                String fileContent = new String(Files.readAllBytes(file.toPath()));
+                                module.exportables.add(new RawExportable(relPath.toString().replace(File.separator, "/"), fileContent));
+                            }
+                        } catch (IOException x) {
+                            report.addNotice(new Notice(NoticeType.ERROR, "IOException: " + x.getMessage()));
+                        }
+                    }
                 }
+            }
+        }
+    }
+
+    private void loadTag(File file) throws IOException {
+        Path dataPath = rootDir.toPath().resolve("datapack").resolve("data");
+
+        String namespaceName = dataPath.relativize(file.toPath()).getName(0).toString();
+        Namespace namespace = module.createNamespace(namespaceName);
+
+        Path relPath = dataPath.relativize(file.toPath());
+        relPath = relPath.subpath(2, relPath.getNameCount());
+        String tagDir = relPath.getName(0).toString();
+        relPath = relPath.subpath(1, relPath.getNameCount());
+
+        String tagName = relPath.toString().replace(File.separator, "/");
+        tagName = tagName.substring(0, tagName.length() - ".json".length());
+
+        for(TagGroup<?> group : namespace.tags.getGroups()) {
+            if(group.getDirectoryName().equals(tagDir)) {
+                Tag tag = group.create(tagName);
+                Debug.log("Created tag " + tag);
+                tag.setExport(true);
+
+                JsonObject obj = gson.fromJson(new FileReader(file), JsonObject.class);
+
+                tag.setOverridePolicy(Tag.OverridePolicy.valueOf(obj.getAsBoolean("replace", Tag.OverridePolicy.DEFAULT_POLICY.valueBool)));
+                tag.setExport(true);
+                JsonArray values = obj.getAsJsonArray("values");
+
+                for(JsonElement elem : values) {
+                    String value = elem.getAsStringOrNull();
+                    if(value == null) continue;
+                    boolean isTag = value.startsWith("#");
+                    if(isTag) value = value.substring(1);
+                    TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(value);
+
+                    if(isTag) {
+                        Tag created = module.createNamespace(loc.namespace).getTagManager().getGroup(group.getCategory()).create(loc.body);
+                        tag.addValue(created);
+                    } else {
+                        Type created;
+                        if(group.getCategory().equals(FunctionReference.CATEGORY)) {
+                            created = new FunctionReference(module.createNamespace(loc.namespace), loc.body);
+                        } else {
+                            created = module.createNamespace(loc.namespace).getTypeManager().createDictionary(group.getCategory(), true).create(loc.body);
+                        }
+                        tag.addValue(created);
+                    }
+                }
+
+                break;
             }
         }
     }

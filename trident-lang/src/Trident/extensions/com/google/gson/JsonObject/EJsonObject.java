@@ -41,4 +41,23 @@ public class EJsonObject {
             return null;
         }
     }
+
+    public static boolean getAsBoolean(@This JsonObject thiz, String key, boolean def) {
+        JsonElement elem = thiz.get(key);
+        return elem != null ? elem.getAsBoolean() : def;
+    }
+
+    public static String getAsString(@This JsonObject thiz, String key) {
+        return getAsString(thiz, key, null);
+    }
+
+    public static String getAsString(@This JsonObject thiz, String key, String def) {
+        JsonElement elem = thiz.get(key);
+        return elem != null ? elem.getAsString() : def;
+    }
+
+    public static int getAsInt(@This JsonObject thiz, String key, int def) {
+        JsonElement elem = thiz.get(key);
+        return elem != null ? elem.getAsInt() : def;
+    }
 }

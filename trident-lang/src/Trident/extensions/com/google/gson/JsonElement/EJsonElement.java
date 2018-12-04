@@ -1,5 +1,6 @@
 package Trident.extensions.com.google.gson.JsonElement;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import manifold.ext.api.Extension;
@@ -31,6 +32,12 @@ public class EJsonElement {
     public static JsonObject getAsJsonObjectOrNull(@This JsonElement thiz) {
         return (thiz != null && thiz.isJsonObject()) ?
                 thiz.getAsJsonObject() :
+                null;
+    }
+
+    public static JsonArray getAsJsonArrayOrNull(@This JsonElement thiz) {
+        return (thiz != null && thiz.isJsonArray()) ?
+                thiz.getAsJsonArray() :
                 null;
     }
 }

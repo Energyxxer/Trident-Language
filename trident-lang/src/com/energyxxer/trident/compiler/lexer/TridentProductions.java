@@ -107,7 +107,7 @@ public class TridentProductions {
         RESOURCE_LOCATION_TAGGED = group(optional(hash(), ofType(GLUE)), ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RESOURCE_LOCATION_TAGGED");
 
         ENTRY.add(COMMENT_S);
-        ENTRY.add(COMMAND);
+        ENTRY.add(group(list(MODIFIER).setOptional().setName("MODIFIERS"), literal("run").setOptional(), COMMAND).setName("COMMAND_WRAPPER"));
         ENTRY.add(INSTRUCTION);
         ENTRY.add(VERBATIM_COMMAND_S);
 
@@ -750,7 +750,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "execute"),
                     list(MODIFIER).setOptional(true).setName("MODIFIER_LIST"),
                     optional(
-                            literal("run"),
+                            literal("run").setOptional(),
                             COMMAND
                     ).setName("CHAINED_COMMAND")
             ));

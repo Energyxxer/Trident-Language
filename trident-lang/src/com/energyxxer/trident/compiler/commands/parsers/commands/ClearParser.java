@@ -16,7 +16,7 @@ public class ClearParser implements CommandParser {
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         Item item = CommonParsers.parseItem(pattern.find("..ITEM_TAGGED"), file.getCompiler());
         TokenPattern<?> amountPattern = pattern.find("..AMOUNT");
-        int amount = amountPattern != null ? Integer.parseInt(amountPattern.flattenTokens().get(0).value) : 1;
+        int amount = amountPattern != null ? Integer.parseInt(amountPattern.flattenTokens().get(0).value) : -1;
         return new ClearCommand(new GenericEntity(new Selector(Selector.BaseSelector.SENDER)), item, amount);
     }
 }

@@ -1,6 +1,8 @@
 package com.energyxxer.trident.compiler.semantics;
 
 import com.energyxxer.commodore.functionlogic.commands.Command;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.functionlogic.functions.FunctionComment;
 import com.energyxxer.commodore.module.CommandModule;
@@ -17,6 +19,7 @@ import com.energyxxer.trident.compiler.commands.RawCommand;
 import com.energyxxer.trident.compiler.commands.parsers.commands.CommandParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.instructions.Instruction;
+import com.energyxxer.trident.compiler.commands.parsers.modifiers.ModifierParser;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -113,13 +116,29 @@ public class TridentFile implements CompilerExtension {
 
                     try {
                         switch (inner.getName()) {
-                            case "COMMAND":
+                            case "COMMAND_WRAPPER":
                                 if (!compileOnly) {
-                                    CommandParser parser = ParserManager.getParser(CommandParser.class, inner.flattenTokens().get(0).value);
+
+                                    ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
+
+                                    TokenList modifierList = (TokenList) inner.find("MODIFIERS");
+                                    if(modifierList != null) {
+                                        for(TokenPattern<?> rawModifier : modifierList.getContents()) {
+                                            ModifierParser parser = ParserManager.getParser(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
+                                            if(parser != null) {
+                                                ExecuteModifier modifier = parser.parse(rawModifier, compiler);
+                                                if(modifier != null) modifiers.add(modifier);
+                                            }
+                                        }
+                                    }
+
+                                    TokenPattern<?> commandPattern = inner.find("COMMAND");
+                                    CommandParser parser = ParserManager.getParser(CommandParser.class, commandPattern.flattenTokens().get(0).value);
                                     if (parser != null) {
-                                        Command command = parser.parse(((TokenStructure) inner).getContents(), this);
+                                        Command command = parser.parse(((TokenStructure) commandPattern).getContents(), this);
                                         if (command != null) {
-                                            function.append(command);
+                                            if(modifiers.isEmpty()) function.append(command);
+                                            else function.append(new ExecuteCommand(command, modifiers));
                                         }
                                     }
                                 } else if (!reportedNoCommands) {
