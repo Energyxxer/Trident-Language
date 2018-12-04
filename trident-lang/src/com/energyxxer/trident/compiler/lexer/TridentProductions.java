@@ -1573,7 +1573,8 @@ public class TridentProductions {
             INSTRUCTION.add(
                     group(literal("register").setName("INSTRUCTION_KEYWORD"),
                             choice(
-                                    group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("REGISTER_OBJECTIVE")
+                                    group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("REGISTER_OBJECTIVE"),
+                                    group(literal("datastore"), identifierA().setName("DATASTORE_NAME"), POINTER).setName("REGISTER_DATASTORE")
                             )
                     )
             );
@@ -1586,6 +1587,27 @@ public class TridentProductions {
                             string()
                             //choice(integer(), real(), string(), ENTITY, COORDINATE_SET, NBT_COMPOUND, NBT_PATH, TEXT_COMPONENT)
                     )
+            );
+        }
+        {
+            LazyTokenPatternMatch scale = group(symbol("*"), real()).setOptional();
+            LazyTokenPatternMatch typeCast = group(brace("("), ofType(NUMERIC_DATA_TYPE), brace(")")).setOptional();
+
+            LazyTokenPatternMatch scoreHead = group(ofType(ARROW), identifierA(), scale);
+            LazyTokenPatternMatch nbtHead = group(dot(), NBT_PATH, scale, typeCast);
+
+            LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead);
+
+            LazyTokenPatternMatch varPointer = group(VARIABLE_MARKER, anyHead);
+            LazyTokenPatternMatch entityPointer = group(ENTITY, anyHead);
+            LazyTokenPatternMatch blockPointer = group(brace("("), COORDINATE_SET, brace(")"), nbtHead);
+
+            LazyTokenStructureMatch pointer = choice(varPointer, entityPointer, blockPointer);
+
+
+            INSTRUCTION.add(
+                    group(literal("expr").setName("INSTRUCTION_KEYWORD"),
+                            pointer, equals(), pointer)
             );
         }
         //endregion
