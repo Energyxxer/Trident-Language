@@ -12,6 +12,7 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.util.StringLocation;
 import com.energyxxer.util.StringLocationCache;
+import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
 
@@ -140,9 +141,6 @@ public class LazyLexer extends Lexer {
                             getLookingAtTrimmed() :
                             getLookingAt(),
                     profile);
-            /*if (response.errorMessage != null) {
-                notices.add(new Notice(NoticeType.ERROR, response.errorMessage, "\b" + file.getAbsolutePath() + "\b" + (getLookingIndexTrimmed() + response.errorIndex) + "\b" + response.errorLength));
-            }*/
             if (response.success) {
                 return new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(
                         context.ignoreLeadingWhitespace() ?
@@ -153,11 +151,6 @@ public class LazyLexer extends Lexer {
         }
         if(getLookingIndexTrimmed() == fileContents.length()) {
             return new Token("", TokenType.END_OF_FILE, file, lineCache.getLocationForOffset(fileContents.length()));
-        }
-        {
-            int index = currentIndex;
-            while(index < fileContents.length() && fileContents.charAt(index) != '\n' && Character.isWhitespace(fileContents.charAt(index))) index++;
-            if(fileContents.charAt(index) == '\n') return new Token("\n", TokenType.NEWLINE, file, lineCache.getLocationForOffset(index));
         }
         {
             StringBuilder sb = new StringBuilder();
@@ -172,7 +165,12 @@ public class LazyLexer extends Lexer {
                 }
                 sb.append(fileContents.charAt(i));
             }
-            if(sb.length() > 0) return new Token(sb.toString(), TokenType.UNKNOWN, file, lineCache.getLocationForOffset(getLookingIndexTrimmed()));
+            if(sb.length() > 0) {
+                return new Token(sb.toString(), TokenType.UNKNOWN, file, lineCache.getLocationForOffset(getLookingIndexTrimmed()));
+            } else {
+                boolean a = true;
+                Debug.log(a);
+            }
         }
         return null;
     }

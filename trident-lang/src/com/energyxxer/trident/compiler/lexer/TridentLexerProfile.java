@@ -16,6 +16,7 @@ public class TridentLexerProfile extends LexerProfile {
 
     public TridentLexerProfile() {
 
+        //Numbers
         contexts.add(new LexerContext() {
 
             private Pattern regex = Pattern.compile("([+-]?\\d+(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
@@ -59,6 +60,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        //Short numbers ('.0', '.5' ...)
         contexts.add(new LexerContext() {
 
             private Pattern regex = Pattern.compile("([+-]?\\d*(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
@@ -84,6 +86,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        //Time literal
         contexts.add(new LexerContext() {
 
             private Pattern regex = Pattern.compile("(\\d+(\\.\\d+)?[tsd]?)");
@@ -104,33 +107,13 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
-        /*contexts.add(new LexerContext() {
-
-            String[] patterns = { ".", ",", ":", "(", ")", "[", "]", "{", "}", "~", "^" };
-            TokenType[] types = { TridentTokens.DOT, TridentTokens.COMMA, TridentTokens.COLON, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.BRACE, TridentTokens.TILDE, TridentTokens.CARET };
-
-            @Override
-            public ScannerContextResponse analyze(String str, LexerProfile profile) {
-                if(str.length() <= 0) return new ScannerContextResponse(false);
-                for(int i = 0; i < patterns.length; i++) {
-                    if(str.startsWith(patterns[i])) {
-                        return new ScannerContextResponse(true, patterns[i], types[i]);
-                    }
-                }
-                return new ScannerContextResponse(false);
-            }
-
-            @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Arrays.asList(types);
-            }
-        });*/
         contexts.add(new StringTypeMatchLexerContext(new String[] { ".", ",", ":", "=", "(", ")", "[", "]", "{", "}", "~", "^", "!", "#" },
                 new TokenType[] { DOT, COMMA, COLON, EQUALS, BRACE, BRACE, BRACE, BRACE, BRACE, BRACE, TILDE, CARET, NOT, HASH }
                 ));
 
         contexts.add(new StringMatchLexerContext(TridentTokens.SCOREBOARD_OPERATOR, "%=", "*=", "+=", "-=", "/=", "><", "=", ">", "<"));
 
+        //Glue
         contexts.add(new LexerContext() {
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
@@ -154,6 +137,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        //Line glue
         contexts.add(new LexerContext() {
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
@@ -181,12 +165,18 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        //Verbatim commands
         contexts.add(new LexerContext() {
 
             String header = "/";
 
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
                 if(str.length() <= 0) return new ScannerContextResponse(false);
                 if(!str.startsWith(header)) return new ScannerContextResponse(false);
 
@@ -201,6 +191,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        //Trailing string
         contexts.add(new LexerContext() {
 
             @Override
@@ -221,6 +212,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        //String literals
         contexts.add(new LexerContext() {
 
             String delimiters = "\"";
@@ -275,6 +267,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        //Selector headers
         contexts.add(new LexerContext() {
 
             private String headers = "pears";
@@ -300,6 +293,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        //Resource Locations
         contexts.add(new LexerContext() {
 
             private String acceptedNamespaceChars = "[a-z0-9_\\.-]";
@@ -344,6 +338,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        //Comments and directive headers
         contexts.add(new LexerContext() {
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
@@ -376,6 +371,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        //Swizzle
         contexts.add(new LexerContext() {
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
@@ -429,6 +425,7 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new IdentifierLexerContext(MODIFIER_HEADER, "[a-zA-Z0-9._\\-+]"));
 
         contexts.add(new StringMatchLexerContext(SYMBOL, "*", "<=", ">=", "<", ">", "!=", "="));
+        contexts.add(new StringMatchLexerContext(ARROW, "->"));
 
         contexts.add(new StringMatchLexerContext(VARIABLE_MARKER_START, "${"));
         contexts.add(new StringMatchLexerContext(VARIABLE_MARKER_END, "}"));
