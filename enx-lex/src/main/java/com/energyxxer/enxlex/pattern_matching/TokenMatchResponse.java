@@ -17,10 +17,7 @@ public class TokenMatchResponse {
 	public static final int COMPLETE_MATCH = 2;
 
 	public TokenMatchResponse(boolean matched, Token faultyToken, int length, TokenPattern<?> pattern) {
-		this.matched = matched;
-		this.faultyToken = faultyToken;
-		this.length = length;
-		this.pattern = pattern;
+		this(matched, faultyToken, length, null, pattern);
 	}
 	
 	public TokenMatchResponse(boolean matched, Token faultyToken, int length, GeneralTokenPatternMatch expected, TokenPattern<?> pattern) {
@@ -51,10 +48,7 @@ public class TokenMatchResponse {
 
 	public String getErrorMessage() {
 		if (!matched) {
-			if(faultyToken == null) {
-				return "Expected " + expected.toTrimmedString();
-			}
-			if(faultyToken.type == TokenType.END_OF_FILE) {
+			if(faultyToken == null || faultyToken.type == TokenType.END_OF_FILE) {
 				return "Expected " + expected.toTrimmedString();
 			}
 			return "Unexpected token '" + faultyToken.value + "'. " + expected.toTrimmedString() + " expected";

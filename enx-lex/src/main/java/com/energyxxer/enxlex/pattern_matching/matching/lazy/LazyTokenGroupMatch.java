@@ -58,7 +58,7 @@ public class LazyTokenGroupMatch extends LazyTokenPatternMatch {
         GeneralTokenPatternMatch expected = null;
         itemLoop: for (int i = 0; i < items.size(); i++) {
 
-            if (currentIndex >= lexer.getFileLength() && !items.get(i).optional) {
+            if (currentIndex > lexer.getFileLength() && !items.get(i).optional) {
                 hasMatched = false;
                 expected = items.get(i);
                 break;

@@ -118,7 +118,7 @@ public class TridentProductions {
             LazyTokenGroupMatch separator = new LazyTokenGroupMatch(true).setName("LINE_PADDING");
             separator.append(new LazyTokenListMatch(TokenType.NEWLINE, true));
             LazyTokenListMatch l = new LazyTokenListMatch(new LazyTokenGroupMatch(true).append(ENTRY), separator, true).setName("ENTRIES");
-            FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l));
+            FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l,ofType(TokenType.END_OF_FILE)));
         }
 
         TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "light_gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white").setName("TEXT_COLOR");
@@ -1571,10 +1571,20 @@ public class TridentProductions {
         //region Instructions
         {
             INSTRUCTION.add(
-                    group(literal("register"),
+                    group(literal("register").setName("INSTRUCTION_KEYWORD"),
                             choice(
                                     group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("REGISTER_OBJECTIVE")
                             )
+                    )
+            );
+        }
+        {
+            INSTRUCTION.add(
+                    group(choice("global", "local").setOptional(), choice("var", "const").setName("INSTRUCTION_KEYWORD"),
+                            identifierA().setName("VAR_NAME"),
+                            equals(),
+                            string()
+                            //choice(integer(), real(), string(), ENTITY, COORDINATE_SET, NBT_COMPOUND, NBT_PATH, TEXT_COMPONENT)
                     )
             );
         }
