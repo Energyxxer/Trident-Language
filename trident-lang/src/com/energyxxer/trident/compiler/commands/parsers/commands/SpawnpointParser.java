@@ -16,7 +16,7 @@ public class SpawnpointParser implements CommandParser {
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         Entity entity = EntityParser.parseEntity(pattern.find(".ENTITY"), file.getCompiler());
         TokenPattern<?> rawCoords = pattern.find("..COORDINATE_SET");
-        CoordinateSet pos = rawCoords != null ? CoordinateParser.parse(rawCoords) : null;
+        CoordinateSet pos = rawCoords != null ? CoordinateParser.parse(rawCoords, file.getCompiler()) : null;
         return new SpawnpointCommand(entity, pos);
     }
 }

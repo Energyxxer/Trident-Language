@@ -38,7 +38,7 @@ public class WorldBorderParser implements CommandParser {
                 else return new WorldBorderSetWarningTime(distanceOrTime);
             }
             case "CENTER": {
-                return new WorldBorderSetCenter(CoordinateParser.parse(inner.find("TWO_COORDINATE_SET")));
+                return new WorldBorderSetCenter(CoordinateParser.parse(inner.find("TWO_COORDINATE_SET"), file.getCompiler()));
             }
             default: {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));

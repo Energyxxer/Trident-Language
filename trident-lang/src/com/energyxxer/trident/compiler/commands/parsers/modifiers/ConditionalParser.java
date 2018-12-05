@@ -36,7 +36,7 @@ public class ConditionalParser implements ModifierParser {
                 return new ExecuteConditionEntity(conditionType, EntityParser.parseEntity(subject.find("ENTITY"), compiler));
             }
             case "BLOCK_CONDITION": {
-                return new ExecuteConditionBlock(conditionType, CoordinateParser.parse(subject.find("COORDINATE_SET")), CommonParsers.parseBlock(subject.find("BLOCK_TAGGED"), compiler));
+                return new ExecuteConditionBlock(conditionType, CoordinateParser.parse(subject.find("COORDINATE_SET"), compiler), CommonParsers.parseBlock(subject.find("BLOCK_TAGGED"), compiler));
             }
             case "SCORE_CONDITION": {
                 LocalScore scoreA = new LocalScore(CommonParsers.parseObjective(subject.find("OBJECTIVE"), compiler), EntityParser.parseEntity(subject.find("ENTITY"), compiler));
@@ -62,9 +62,9 @@ public class ConditionalParser implements ModifierParser {
                 }
             }
             case "REGION_CONDITION": {
-                CoordinateSet from = CoordinateParser.parse(subject.find("FROM.COORDINATE_SET"));
-                CoordinateSet to = CoordinateParser.parse(subject.find("TO.COORDINATE_SET"));
-                CoordinateSet template = CoordinateParser.parse(subject.find("TEMPLATE.COORDINATE_SET"));
+                CoordinateSet from = CoordinateParser.parse(subject.find("FROM.COORDINATE_SET"), compiler);
+                CoordinateSet to = CoordinateParser.parse(subject.find("TO.COORDINATE_SET"), compiler);
+                CoordinateSet template = CoordinateParser.parse(subject.find("TEMPLATE.COORDINATE_SET"), compiler);
 
                 return new ExecuteConditionRegion(conditionType, from, to, template, subject.find("AIR_POLICY").flatten(false).equals("masked") ? ExecuteConditionRegion.AirPolicy.MASKED : ExecuteConditionRegion.AirPolicy.ALL);
             }
@@ -73,7 +73,7 @@ public class ConditionalParser implements ModifierParser {
 
                 TokenPattern<?> dataSubject = ((TokenStructure)subject.find("CHOICE")).getContents();
                 switch(dataSubject.getName()) {
-                    case "BLOCK_SUBJECT": return new ExecuteConditionDataBlock(conditionType, CoordinateParser.parse(dataSubject.find("COORDINATE_SET")), path);
+                    case "BLOCK_SUBJECT": return new ExecuteConditionDataBlock(conditionType, CoordinateParser.parse(dataSubject.find("COORDINATE_SET"), compiler), path);
                     case "ENTITY_SUBJECT": return new ExecuteConditionDataEntity(conditionType, EntityParser.parseEntity(dataSubject.find("ENTITY"), compiler), path);
                     default: {
                         compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + dataSubject.getName() + "'", dataSubject));

@@ -23,7 +23,7 @@ public class PlaySoundParser implements CommandParser {
 
         TokenPattern<?> sub = pattern.find("");
         if(sub != null) {
-            CoordinateSet pos = CoordinateParser.parse(sub.find("COORDINATE_SET"));
+            CoordinateSet pos = CoordinateParser.parse(sub.find("COORDINATE_SET"), file.getCompiler());
 
             float maxVol = -1;
             float pitch = -1;

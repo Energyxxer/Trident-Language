@@ -21,7 +21,7 @@ public class PositionedParser implements ModifierParser {
                 return new ExecutePositionedAsEntity(EntityParser.parseEntity(branch.find("ENTITY"), compiler));
             }
             case "BLOCK_BRANCH": {
-                return CoordinateParser.parse(branch.find("COORDINATE_SET"));
+                return CoordinateParser.parse(branch.find("COORDINATE_SET"), compiler);
             }
             default: {
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branch.getName() + "'", branch));

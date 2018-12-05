@@ -13,7 +13,6 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.selectors.SelectorArgumentParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
-import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.util.logger.Debug;
 
 public class EntityParser {
@@ -59,18 +58,7 @@ public class EntityParser {
             case "SELECTOR": return new GenericEntity(parseSelector(inner, compiler));
             case "PLAYER_NAME": return new PlayerName(inner.flatten(false));
             case "VARIABLE_MARKER": {
-                String name = inner.find("VARIABLE_NAME").flatten(false);
-                Symbol symbol = compiler.getStack().search(name);
-                if(symbol != null) {
-                    if(symbol.getValue() instanceof Entity) return (Entity) symbol.getValue();
-                    else {
-                        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + name + "' does not contain an Entity value", pattern));
-                        return null;
-                    }
-                } else {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + name + "' is not defined", pattern));
-                    return null;
-                }
+                return CommonParsers.retrieveSymbol(inner, compiler, Entity.class);
             }
         }
         Debug.log(pattern);

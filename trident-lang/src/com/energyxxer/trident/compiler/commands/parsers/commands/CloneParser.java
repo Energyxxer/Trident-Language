@@ -19,9 +19,9 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class CloneParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"));
-        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"));
-        CoordinateSet destination = CoordinateParser.parse(pattern.find("DESTINATION.COORDINATE_SET"));
+        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file.getCompiler());
+        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file.getCompiler());
+        CoordinateSet destination = CoordinateParser.parse(pattern.find("DESTINATION.COORDINATE_SET"), file.getCompiler());
 
         TokenPattern<?> inner = pattern.find("CHOICE");
         if(inner != null) {

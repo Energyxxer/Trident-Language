@@ -9,29 +9,42 @@ import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.util.logger.Debug;
 
 import java.util.List;
 
 public class CoordinateParser {
-    public static CoordinateSet parse(TokenPattern<?> pattern) {
+    public static CoordinateSet parse(TokenPattern<?> pattern, TridentCompiler compiler) {
         if(pattern == null) return null;
         Coordinate x, y, z;
         switch (pattern.getName()) {
-            case "COORDINATE_SET":
-                TokenPattern<?>[] triple = ((TokenGroup) pattern.getContents()).getContents();
+            case "TWO_COORDINATE_SET":
+            case "COORDINATE_SET": {
+                return parse(((TokenStructure) pattern).getContents(), compiler);
+            }
+            case "VARIABLE_MARKER": {
+                return CommonParsers.retrieveSymbol(pattern, compiler, CoordinateSet.class);
+            }
+            case "MIXED_COORDINATE_SET":
+            case "LOCAL_COORDINATE_SET":
+                TokenPattern<?>[] triple = ((TokenGroup) pattern).getContents();
                 x = parseCoordinate(triple[0], Axis.X);
                 y = parseCoordinate(triple[1], Axis.Y);
                 z = parseCoordinate(triple[2], Axis.Z);
                 break;
-            case "TWO_COORDINATE_SET":
-                TokenPattern<?>[] tuple = ((TokenGroup) pattern.getContents()).getContents();
+            case "MIXED_TWO_COORDINATE_SET":
+                TokenPattern<?>[] tuple = ((TokenGroup) pattern).getContents();
                 x = parseCoordinate(tuple[0], Axis.X);
                 y = new Coordinate(Coordinate.Type.RELATIVE, 0);
                 z = parseCoordinate(tuple[1], Axis.Z);
                 break;
             default:
-                return null;
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
+                throw new EntryParsingException();
         }
         return x != null && y != null && z != null ? new CoordinateSet(x, y, z) : null;
     }

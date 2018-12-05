@@ -25,6 +25,7 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.semantics.Symbol;
 
 import java.util.List;
 
@@ -260,7 +261,7 @@ public class CommonParsers {
             case "ITEM":
                 return parseItem(pattern, compiler);
             case "COORDINATE_SET":
-                return CoordinateParser.parse(pattern);
+                return CoordinateParser.parse(pattern, compiler);
             case "NBT_COMPOUND":
                 return NBTParser.parseCompound(pattern);
             case "NBT_PATH":
@@ -271,6 +272,28 @@ public class CommonParsers {
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown value grammar name: '" + pattern.getName() + "'"));
                 return null;
             }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T retrieveSymbol(TokenPattern<?> pattern, TridentCompiler compiler, Class<T> expected) {
+        Object obj = retrieveSymbol(pattern, compiler);
+        if(expected.isInstance(obj)) {
+            return (T) obj;
+        } else {
+            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.find("VARIABLE_NAME").flatten(false) + "' does not contain a value of type " + expected.getSimpleName(), pattern));
+            return null;
+        }
+    }
+
+    public static Object retrieveSymbol(TokenPattern<?> pattern, TridentCompiler compiler) {
+        String name = pattern.find("VARIABLE_NAME").flatten(false);
+        Symbol symbol = compiler.getStack().search(name);
+        if(symbol != null) {
+            return symbol.getValue();
+        } else {
+            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + name + "' is not defined", pattern));
+            return null;
         }
     }
 

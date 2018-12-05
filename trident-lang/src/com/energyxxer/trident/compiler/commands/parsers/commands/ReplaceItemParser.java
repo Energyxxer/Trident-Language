@@ -21,7 +21,7 @@ public class ReplaceItemParser implements CommandParser {
 
         TokenPattern<?> rawCoords = pattern.find("TARGET.COORDINATE_SET");
         if(rawCoords != null) {
-            return new ReplaceItemBlockCommand(CoordinateParser.parse(rawCoords), slot, item);
+            return new ReplaceItemBlockCommand(CoordinateParser.parse(rawCoords, file.getCompiler()), slot, item);
         } else return new ReplaceItemEntityCommand(EntityParser.parseEntity(pattern.find("TARGET.ENTITY"), file.getCompiler()), slot, item);
     }
 }

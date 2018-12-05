@@ -28,7 +28,7 @@ public class FacingParser implements ModifierParser {
                 return new ExecuteFacingEntity(EntityParser.parseEntity(branch.find("ENTITY"), compiler), (!anchorToken.isEmpty() && anchorToken.get(0).value.equals("eyes")) ? EntityAnchor.EYES : EntityAnchor.FEET);
             }
             case "BLOCK_BRANCH": {
-                return new ExecuteFacingBlock(CoordinateParser.parse(branch.find("COORDINATE_SET")));
+                return new ExecuteFacingBlock(CoordinateParser.parse(branch.find("COORDINATE_SET"), compiler));
             }
             default: {
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branch.getName() + "'", branch));

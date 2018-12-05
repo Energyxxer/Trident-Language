@@ -18,7 +18,7 @@ public class SummonParser implements CommandParser {
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         TokenPattern<?> id = pattern.find("ENTITY_ID");
         Type type = CommonParsers.parseEntityType(id, file.getCompiler());
-        CoordinateSet pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"));
+        CoordinateSet pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"), file.getCompiler());
         TagCompound nbt = NBTParser.parseCompound(pattern.find("..NBT_COMPOUND"));
         return new SummonCommand(type, pos, nbt);
     }

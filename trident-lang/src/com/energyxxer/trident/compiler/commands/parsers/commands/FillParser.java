@@ -17,8 +17,8 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class FillParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"));
-        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"));
+        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file.getCompiler());
+        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file.getCompiler());
         Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), file.getCompiler());
         FillCommand.FillMode mode = new FillReplaceMode();
 

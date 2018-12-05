@@ -14,7 +14,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class SpreadPlayersParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        CoordinateSet pos = CoordinateParser.parse(pattern.find("TWO_COORDINATE_SET"));
+        CoordinateSet pos = CoordinateParser.parse(pattern.find("TWO_COORDINATE_SET"), file.getCompiler());
         double spreadDistance = Double.parseDouble(pattern.find("SPREAD_DISTANCE").flatten(false));
         double maxRange = Double.parseDouble(pattern.find("MAX_RANGE").flatten(false));
         boolean respectTeams = pattern.find("RESPECT_TEAMS").flatten(false).equals("true");

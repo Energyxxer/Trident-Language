@@ -13,6 +13,6 @@ public class SetWorldSpawnParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         TokenPattern<?> rawCoords = pattern.find(".COORDINATE_SET");
-        return rawCoords != null ? new SetWorldSpawnCommand(CoordinateParser.parse(rawCoords)) : new SetWorldSpawnCommand(new CoordinateSet());
+        return rawCoords != null ? new SetWorldSpawnCommand(CoordinateParser.parse(rawCoords, file.getCompiler())) : new SetWorldSpawnCommand(new CoordinateSet());
     }
 }

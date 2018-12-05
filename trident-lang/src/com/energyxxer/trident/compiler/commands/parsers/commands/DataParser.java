@@ -127,7 +127,7 @@ public class DataParser implements CommandParser {
 
     private Object parseTarget(TokenPattern<?> pattern, TridentCompiler compiler) {
         TokenPattern<?> rawCoords = pattern.find("COORDINATE_SET");
-        if(rawCoords != null) return CoordinateParser.parse(rawCoords);
+        if(rawCoords != null) return CoordinateParser.parse(rawCoords, compiler);
         else return EntityParser.parseEntity(pattern.find("ENTITY"), compiler);
     }
 

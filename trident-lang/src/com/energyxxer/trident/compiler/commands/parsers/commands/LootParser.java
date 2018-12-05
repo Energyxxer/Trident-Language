@@ -32,17 +32,17 @@ public class LootParser implements CommandParser {
                 return new LootGive(EntityParser.parseEntity(pattern.find("ENTITY"), compiler));
             }
             case "INSERT": {
-                return new LootInsertBlock(CoordinateParser.parse(pattern.find("COORDINATE_SET")));
+                return new LootInsertBlock(CoordinateParser.parse(pattern.find("COORDINATE_SET"), compiler));
             }
             case "REPLACE": {
                 Type slot = compiler.getModule().minecraft.types.slot.get(pattern.find("SLOT_ID").flatten(false));
 
                 TokenPattern<?> rawCoord = pattern.find("CHOICE.COORDINATE_SET");
-                if(rawCoord != null) return new LootReplaceBlock(CoordinateParser.parse(rawCoord), slot);
+                if(rawCoord != null) return new LootReplaceBlock(CoordinateParser.parse(rawCoord, compiler), slot);
                 else return new LootReplaceEntity(EntityParser.parseEntity(pattern.find("CHOICE.ENTITY"), compiler), slot);
             }
             case "SPAWN": {
-                return new LootSpawn(CoordinateParser.parse(pattern.find("COORDINATE_SET")));
+                return new LootSpawn(CoordinateParser.parse(pattern.find("COORDINATE_SET"), compiler));
             }
             default: {
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
@@ -56,7 +56,7 @@ public class LootParser implements CommandParser {
         switch(pattern.getName()) {
             case "FISH": {
                 TridentUtil.ResourceLocation table = new TridentUtil.ResourceLocation(pattern.find("RESOURCE_LOCATION").flatten(false));
-                CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"));
+                CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"), compiler);
                 ToolOrHand tool = parseTool(pattern.find("TOOL"), compiler);
                 return new LootFromFish(table.toString(), pos, tool);
             }
@@ -68,7 +68,7 @@ public class LootParser implements CommandParser {
                 return new LootFromLoot(table.toString());
             }
             case "MINE": {
-                CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"));
+                CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"), compiler);
                 ToolOrHand tool = parseTool(pattern.find("TOOL"), compiler);
                 return new LootFromMine(pos, tool);
             }

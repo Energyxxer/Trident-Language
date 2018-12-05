@@ -28,7 +28,7 @@ public class ParticleParser implements CommandParser {
         Particle particle = parseParticle(pattern.find("PARTICLE"), file.getCompiler());
         TokenPattern<?> sub = pattern.find("");
         if(sub != null) {
-            CoordinateSet pos = CoordinateParser.parse(sub.find("COORDINATE_SET"));
+            CoordinateSet pos = CoordinateParser.parse(sub.find("COORDINATE_SET"), file.getCompiler());
             TokenPattern<?> sub1 = sub.find("");
             if(sub1 != null) {
                 Delta delta = new Delta(

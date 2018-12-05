@@ -29,7 +29,7 @@ public class StoreParser implements ModifierParser {
         TokenPattern<?> inner = ((TokenStructure) pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "STORE_BLOCK": {
-                CoordinateSet pos = CoordinateParser.parse(inner.find("COORDINATE_SET"));
+                CoordinateSet pos = CoordinateParser.parse(inner.find("COORDINATE_SET"), compiler);
                 NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"));
                 NumericNBTType type = parseNumericType(inner.find("NUMERIC_TYPE"));
                 double scale = Double.parseDouble(inner.find("SCALE").flatten(false));

@@ -14,7 +14,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class SetblockParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"));
+        CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"), file.getCompiler());
         Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), file.getCompiler());
         SetblockCommand.OldBlockHandlingMode mode = SetblockCommand.OldBlockHandlingMode.DEFAULT;
 

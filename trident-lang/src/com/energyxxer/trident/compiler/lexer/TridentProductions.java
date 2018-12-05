@@ -1257,6 +1257,9 @@ public class TridentProductions {
                 g.append(MIXABLE_COORDINATE);
                 TWO_COORDINATE_SET.add(g);
             }
+
+            COORDINATE_SET.add(VARIABLE_MARKER);
+            TWO_COORDINATE_SET.add(VARIABLE_MARKER);
         }
         //endregion
         //endregion

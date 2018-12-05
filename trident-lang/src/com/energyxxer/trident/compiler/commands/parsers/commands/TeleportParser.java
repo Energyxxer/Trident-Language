@@ -29,7 +29,7 @@ public class TeleportParser implements CommandParser {
         TokenPattern<?> rawDestination = pattern.find("SUBCOMMAND.COORDINATE_SET");
         if(rawDestination != null) {
             victim = null;
-            destination = new BlockDestination(CoordinateParser.parse(rawDestination));
+            destination = new BlockDestination(CoordinateParser.parse(rawDestination, file.getCompiler()));
         } else {
             Entity first = EntityParser.parseEntity(pattern.find("SUBCOMMAND..ENTITY"), file.getCompiler());
             rawDestination = pattern.find("SUBCOMMAND..CHOICE");
@@ -39,7 +39,7 @@ public class TeleportParser implements CommandParser {
                 if(rawDestinationEntity != null) {
                     destination = new EntityDestination(EntityParser.parseEntity(rawDestinationEntity, file.getCompiler()));
                 } else {
-                    destination = new BlockDestination(CoordinateParser.parse(rawDestination.find(".COORDINATE_SET")));
+                    destination = new BlockDestination(CoordinateParser.parse(rawDestination.find(".COORDINATE_SET"), file.getCompiler()));
                     TokenPattern<?> rotationOption = rawDestination.find("ROTATION_OPTION");
                     if(rotationOption != null) rotationOption = ((TokenStructure)rotationOption).getContents();
 
@@ -48,7 +48,7 @@ public class TeleportParser implements CommandParser {
                             case "FACING_CLAUSE": {
                                 TokenPattern<?> facingBlock = rotationOption.find("CHOICE.COORDINATE_SET");
                                 if(facingBlock != null) {
-                                    facing = new BlockFacing(CoordinateParser.parse(facingBlock));
+                                    facing = new BlockFacing(CoordinateParser.parse(facingBlock, file.getCompiler()));
                                 } else {
                                     Entity facingEntity = EntityParser.parseEntity(rotationOption.find("CHOICE..ENTITY"), file.getCompiler());
                                     TokenPattern<?> rawAnchor = rotationOption.find("CHOICE..ANCHOR");
