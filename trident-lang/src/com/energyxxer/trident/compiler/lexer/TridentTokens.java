@@ -13,7 +13,7 @@ public class TridentTokens {
             TILDE, CARET,
             INTEGER_NUMBER, REAL_NUMBER, SHORT_REAL_NUMBER, TYPED_NUMBER, TIME,
             VERBATIM_COMMAND,
-            KEYWORD, VARIABLE_MARKER_START, VARIABLE_MARKER_END,
+            KEYWORD,
             SYMBOL, SCOREBOARD_OPERATOR,
             SWIZZLE,
             COMMAND_HEADER,

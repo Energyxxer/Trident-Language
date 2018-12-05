@@ -424,11 +424,8 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new IdentifierLexerContext(COMMAND_HEADER, "[a-zA-Z0-9._\\-+]"));
         contexts.add(new IdentifierLexerContext(MODIFIER_HEADER, "[a-zA-Z0-9._\\-+]"));
 
-        contexts.add(new StringMatchLexerContext(SYMBOL, "*", "<=", ">=", "<", ">", "!=", "="));
+        contexts.add(new StringMatchLexerContext(SYMBOL, "*", "<=", ">=", "<", ">", "!=", "=", "$"));
         contexts.add(new StringMatchLexerContext(ARROW, "->"));
-
-        contexts.add(new StringMatchLexerContext(VARIABLE_MARKER_START, "${"));
-        contexts.add(new StringMatchLexerContext(VARIABLE_MARKER_END, "}"));
 
         contexts.add(new StringMatchLexerContext(SORTING, "nearest", "farthest", "arbitrary", "random"));
         contexts.add(new StringMatchLexerContext(NUMERIC_DATA_TYPE, "byte", "double", "float", "int", "long", "short"));

@@ -76,7 +76,10 @@ public class TridentProductions {
 
     //grouped arguments
     public static final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
-    public static final LazyTokenGroupMatch VARIABLE_MARKER = group(ofType(VARIABLE_MARKER_START), identifierA().setName("VARIABLE_NAME"), ofType(VARIABLE_MARKER_END)).setName("VARIABLE_MARKER");
+    public static final LazyTokenStructureMatch VARIABLE_MARKER = choice(
+            group(symbol("$"), glue(), brace("{"), identifierA().setName("VARIABLE_NAME"), brace("}")),
+            group(symbol("$"), glue(), identifierA().setName("VARIABLE_NAME"))
+    ).setName("VARIABLE_MARKER");
 
     public static final LazyTokenStructureMatch POINTER;
 
