@@ -63,7 +63,7 @@ public class TridentLexerProfile extends LexerProfile {
         //Short numbers ('.0', '.5' ...)
         contexts.add(new LexerContext() {
 
-            private Pattern regex = Pattern.compile("([+-]?\\d*(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
+            private Pattern regex = Pattern.compile("[+-]?\\d*(\\.\\d+)?", Pattern.CASE_INSENSITIVE);
 
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
