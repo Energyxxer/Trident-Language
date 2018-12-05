@@ -1197,7 +1197,7 @@ public class TridentProductions {
                     list(group(
                             identifierA().setName("OBJECTIVE_NAME"),
                             equals(),
-                            INTEGER_NUMBER_RANGE
+                            choice(matchItem(SYNTACTIC_SUGAR, "isset").setName("ISSET"), INTEGER_NUMBER_RANGE).setName("SCORE_VALUE")
                     ).setName("SCORE_ENTRY"), comma()).setOptional().setName("SCORE_LIST"),
                     brace("}")
             ).setName("SCORE_ARGUMENT_BLOCK");
