@@ -18,4 +18,20 @@ public class Symbol {
         this.name = name;
         this.access = access;
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public SymbolAccess getAccess() {
+        return access;
+    }
+
+    public Object getValue() {
+        return value;
+    }
+
+    public void setValue(Object value) {
+        this.value = value;
+    }
 }

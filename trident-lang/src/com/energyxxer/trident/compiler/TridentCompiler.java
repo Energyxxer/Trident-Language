@@ -18,6 +18,7 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
+import com.energyxxer.trident.compiler.semantics.SymbolStack;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.*;
@@ -51,6 +52,8 @@ public class TridentCompiler {
     private HashMap<File, TridentFile> files = new HashMap<>();
 
     private Gson gson;
+
+    private SymbolStack stack = new SymbolStack();
 
     public TridentCompiler(File rootDir) {
         this.rootDir = rootDir;
@@ -310,5 +313,9 @@ public class TridentCompiler {
             if(file.getResourceLocation().equals(loc)) return file;
         }
         return null;
+    }
+
+    public SymbolStack getStack() {
+        return stack;
     }
 }

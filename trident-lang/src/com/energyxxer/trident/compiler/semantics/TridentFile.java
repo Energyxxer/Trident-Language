@@ -90,7 +90,6 @@ public class TridentFile implements CompilerExtension {
             }
         }
         this.function = compileOnly ? null : namespace.functions.create(functionPath);
-
     }
 
     public TridentCompiler getCompiler() {
@@ -104,6 +103,9 @@ public class TridentFile implements CompilerExtension {
         if(function != null) tags.forEach(l -> module.createNamespace(l.namespace).tags.functionTags.create(l.body).addValue(new FunctionReference(this.function)));
 
         TokenList entryList = (TokenList) this.pattern.find(".ENTRIES");
+
+        SymbolTable table = new SymbolTable(this);
+        compiler.getStack().push(table);
 
         if(entryList != null) {
             TokenPattern<?>[] entries = (entryList).getContents();
@@ -173,6 +175,8 @@ public class TridentFile implements CompilerExtension {
                 }
             }
         }
+
+        compiler.getStack().pop();
     }
 
     public Function getFunction() {

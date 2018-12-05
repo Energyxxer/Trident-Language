@@ -246,6 +246,34 @@ public class CommonParsers {
         return new TimeSpan(Double.parseDouble(raw), units);
     }
 
+    public static Object parseAnything(TokenPattern<?> pattern, TridentCompiler compiler) {
+        switch(pattern.getName()) {
+            case "INTEGER": return Integer.parseInt(pattern.flatten(false));
+            case "REAL": return Double.parseDouble(pattern.flatten(false));
+            case "STRING_LITERAL": return CommandUtils.parseQuotedString(pattern.flatten(false));
+            case "BOOLEAN": return pattern.flatten(false).equals("true");
+            case "ENTITY": return EntityParser.parseEntity(pattern, compiler);
+            case "BLOCK_TAGGED":
+            case "BLOCK":
+                return parseBlock(pattern, compiler);
+            case "ITEM_TAGGED":
+            case "ITEM":
+                return parseItem(pattern, compiler);
+            case "COORDINATE_SET":
+                return CoordinateParser.parse(pattern);
+            case "NBT_COMPOUND":
+                return NBTParser.parseCompound(pattern);
+            case "NBT_PATH":
+                return NBTParser.parsePath(pattern);
+            case "TEXT_COMPONENT":
+                return TextParser.parseTextComponent(pattern, compiler);
+            default: {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown value grammar name: '" + pattern.getName() + "'"));
+                return null;
+            }
+        }
+    }
+
     public interface TypeGroupPicker {
         TypeDictionary<?> pick(TypeManager m);
     }

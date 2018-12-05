@@ -11,6 +11,6 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 public class NameArgumentParser implements SelectorArgumentParser {
     @Override
     public SelectorArgument parse(TokenPattern<?> pattern, TridentCompiler compiler) {
-        return new NameArgument(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("STRING_LITERAL_OR_IDENTIFIER_A")), pattern.find("NEGATED") != null);
+        return new NameArgument(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find(".STRING_LITERAL_OR_IDENTIFIER_A")), pattern.find("NEGATED") != null);
     }
 }
