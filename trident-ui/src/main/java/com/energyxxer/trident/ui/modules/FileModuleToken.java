@@ -7,7 +7,6 @@ import com.energyxxer.trident.global.FileManager;
 import com.energyxxer.trident.global.temp.projects.Project;
 import com.energyxxer.trident.global.temp.projects.ProjectManager;
 import com.energyxxer.trident.ui.Tab;
-import com.energyxxer.trident.ui.audio.AudioPlayer;
 import com.energyxxer.trident.ui.common.MenuItems;
 import com.energyxxer.trident.ui.display.DisplayModule;
 import com.energyxxer.trident.ui.editor.TridentEditorModule;
@@ -134,7 +133,7 @@ public class FileModuleToken implements ModuleToken {
             if(name.endsWith(".png")) {
                 return new ImageViewer(file);
             } else if(name.endsWith(".ogg") || name.endsWith(".mp3")) {
-                return new AudioPlayer(file);
+
             } else {
                 return new TridentEditorModule(tab, file);
             }

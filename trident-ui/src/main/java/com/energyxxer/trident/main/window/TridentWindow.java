@@ -85,12 +85,12 @@ public class TridentWindow {
 		mainContent.add(editArea = new EditArea(), BorderLayout.CENTER);
 
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((e) -> {
-            if((e.getKeyCode() == KeyEvent.VK_X || Character.toLowerCase(e.getKeyChar()) == 'x') && e.getModifiers() == InputEvent.SHIFT_MASK + InputEvent.ALT_MASK) {
+            if((e.getKeyCode() == KeyEvent.VK_X || Character.toLowerCase(e.getKeyChar()) == 'x') && e.getModifiersEx() == InputEvent.SHIFT_DOWN_MASK + InputEvent.ALT_DOWN_MASK) {
                 if(e.getID() == KeyEvent.KEY_PRESSED) {
                     Commons.compileActive();
                 }
                 return true;
-            } else if((e.getKeyCode() == KeyEvent.VK_W || Character.toLowerCase(e.getKeyChar()) == 'w') && e.getModifiers() == InputEvent.CTRL_MASK) {
+            } else if((e.getKeyCode() == KeyEvent.VK_W || Character.toLowerCase(e.getKeyChar()) == 'w') && e.getModifiersEx() == InputEvent.CTRL_DOWN_MASK) {
                 if(e.getID() == KeyEvent.KEY_PRESSED) {
                     TabManager.closeSelectedTab();
                 }

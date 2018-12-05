@@ -4,6 +4,7 @@ import com.energyxxer.trident.compiler.commands.RawCommand;
 import com.energyxxer.util.logger.Debug;
 import org.reflections.Reflections;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 
 public class ParserManager {
@@ -29,7 +30,7 @@ public class ParserManager {
                     if(toPut != null) {
                         hasGroup = true;
                         String key = cls.getAnnotation(ParserMember.class).key();
-                        Object parser = cls.newInstance();
+                        Object parser = cls.getConstructor().newInstance();
                         toPut.put(key, parser);
                         Debug.log("Registered '" + interf.getSimpleName() + "' member '" + cls.getSimpleName() + "'");
                     }
@@ -37,7 +38,7 @@ public class ParserManager {
                 if(!hasGroup) {
                     Debug.log("ParserMember '" + cls + "' doesn't implement any parser group interface", Debug.MessageType.WARN);
                 }
-            } catch (InstantiationException | IllegalAccessException e) {
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
                 e.printStackTrace();
             }
         }

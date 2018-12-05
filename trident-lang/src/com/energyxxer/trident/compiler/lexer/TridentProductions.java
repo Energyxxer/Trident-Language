@@ -1,7 +1,5 @@
 package com.energyxxer.trident.compiler.lexer;
 
-import com.energyxxer.commodore.defpacks.DefinitionBlueprint;
-import com.energyxxer.commodore.defpacks.DefinitionPack;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
@@ -80,6 +78,8 @@ public class TridentProductions {
     public static final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
     public static final LazyTokenGroupMatch VARIABLE_MARKER = group(ofType(VARIABLE_MARKER_START), identifierA().setName("VARIABLE_NAME"), ofType(VARIABLE_MARKER_END)).setName("VARIABLE_MARKER");
 
+    public static final LazyTokenStructureMatch POINTER;
+
     static {
         FILE = new LazyTokenStructureMatch("FILE");
         ENTRY = new LazyTokenStructureMatch("ENTRY");
@@ -95,7 +95,7 @@ public class TridentProductions {
         VERBATIM_COMMAND_S = new LazyTokenItemMatch(VERBATIM_COMMAND).setName("VERBATIM_COMMAND");
 
         {
-            LazyTokenStructureMatch directiveBody = new LazyTokenStructureMatch("DIRECTIVE_BODY");
+            var directiveBody = new LazyTokenStructureMatch("DIRECTIVE_BODY");
 
             DIRECTIVE = group(ofType(DIRECTIVE_HEADER), directiveBody).setName("DIRECTIVE");
 
@@ -115,9 +115,9 @@ public class TridentProductions {
         STRING_LITERAL_OR_IDENTIFIER_A.add(identifierA());
 
         {
-            LazyTokenGroupMatch separator = new LazyTokenGroupMatch(true).setName("LINE_PADDING");
+            var separator = new LazyTokenGroupMatch(true).setName("LINE_PADDING");
             separator.append(new LazyTokenListMatch(TokenType.NEWLINE, true));
-            LazyTokenListMatch l = new LazyTokenListMatch(new LazyTokenGroupMatch(true).append(ENTRY), separator, true).setName("ENTRIES");
+            var l = new LazyTokenListMatch(new LazyTokenGroupMatch(true).append(ENTRY), separator, true).setName("ENTRIES");
             FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l,ofType(TokenType.END_OF_FILE)));
         }
 
@@ -131,7 +131,7 @@ public class TridentProductions {
         //region Commands
         //region say
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+            var g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "say"));
             g.append(ofType(TRAILING_STRING));
             COMMAND.add(g);
@@ -148,7 +148,7 @@ public class TridentProductions {
         //endregion
         //region defaultgamemode
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+            var g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "defaultgamemode"));
             g.append(GAMEMODE);
             COMMAND.add(g);
@@ -156,7 +156,7 @@ public class TridentProductions {
         //endregion
         //region gamemode
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+            var g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "gamemode"));
             g.append(GAMEMODE);
             g.append(new LazyTokenGroupMatch(true).append(sameLine()).append(ENTITY).setName("PLAYER"));
@@ -165,7 +165,7 @@ public class TridentProductions {
         //endregion
         //region tag
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+            var g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "tag"));
             g.append(ENTITY);
             g.append(choice(
@@ -178,9 +178,9 @@ public class TridentProductions {
         //endregion
         //region experience
         {
-            LazyTokenPatternMatch unit = choice("points", "levels").setName("UNIT").setOptional();
+            var unit = choice("points", "levels").setName("UNIT").setOptional();
 
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+            var g = new LazyTokenGroupMatch();
             g.append(choice(matchItem(COMMAND_HEADER, "experience"), matchItem(COMMAND_HEADER, "xp")));
             g.append(choice(
                     group(literal("add"), ENTITY, integer(), unit).setName("ADD"),
@@ -347,7 +347,7 @@ public class TridentProductions {
         //endregion
         //region clone
         {
-            LazyTokenPatternMatch mode = choice("force", "move", "normal").setOptional().setName("CLONE_MODE");
+            var mode = choice("force", "move", "normal").setOptional().setName("CLONE_MODE");
 
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "clone"),
@@ -594,7 +594,7 @@ public class TridentProductions {
         //endregion
         //region team
         {
-            LazyTokenStructureMatch teamOptions = choice(
+            var teamOptions = choice(
                     group(literal("collisionRule"), choice("always", "never", "pushOtherTeams", "pushOwnTeam")).setName("TEAM_COMPARISON_ARG"),
                     group(literal("color"), TEXT_COLOR).setName("COLOR_ARG"),
                     group(literal("deathMessageVisibility"), choice("always", "hideForOtherTeams", "hideForOwnTeam", "never")).setName("TEAM_COMPARISON_ARG"),
@@ -686,12 +686,12 @@ public class TridentProductions {
         //region data
         {
 
-            LazyTokenStructureMatch target = choice(
+            var target = choice(
                     group(literal("block"), COORDINATE_SET).setName("BLOCK_TARGET"),
                     group(literal("entity"), ENTITY).setName("ENTITY_TARGET")
             ).setName("DATA_TARGET");
 
-            LazyTokenStructureMatch source = choice(
+            var source = choice(
                     group(literal("from"), target, optional(sameLine(), NBT_PATH).setName("PATH_CLAUSE")).setName("TARGET_SOURCE"),
                     group(literal("value"), NBT_VALUE).setName("LITERAL_SOURCE")
             ).setName("DATA_SOURCE");
@@ -716,9 +716,9 @@ public class TridentProductions {
         //region loot
         {
 
-            LazyTokenPatternMatch tool = choice(literal("mainhand"), literal("offhand"), ITEM).setOptional().setName("TOOL");
+            var tool = choice(literal("mainhand"), literal("offhand"), ITEM).setOptional().setName("TOOL");
 
-            LazyTokenStructureMatch destination = choice(
+            var destination = choice(
                     group(literal("give"), ENTITY).setName("GIVE"),
                     group(literal("insert"), COORDINATE_SET).setName("INSERT"),
                     group(literal("replace"),
@@ -731,7 +731,7 @@ public class TridentProductions {
                     group(literal("spawn"), COORDINATE_SET).setName("SPAWN")
             ).setName("LOOT_DESTINATION");
 
-            LazyTokenStructureMatch source = choice(
+            var source = choice(
                     group(literal("fish"), ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION"), COORDINATE_SET, tool).setName("FISH"),
                     group(literal("kill"), ENTITY).setName("KILL"),
                     group(literal("loot"), ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("LOOT"),
@@ -880,14 +880,14 @@ public class TridentProductions {
         //region Constructs
         //region Blockstate
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+            var g = new LazyTokenGroupMatch();
             g.append(brace("["));
             {
-                LazyTokenGroupMatch g2 = new LazyTokenGroupMatch().setName("BLOCKSTATE_PROPERTY");
+                var g2 = new LazyTokenGroupMatch().setName("BLOCKSTATE_PROPERTY");
                 g2.append(ofType(IDENTIFIER_TYPE_A).setName("BLOCKSTATE_PROPERTY_KEY"));
                 g2.append(equals());
                 {
-                    LazyTokenStructureMatch s = new LazyTokenStructureMatch("BLOCKSTATE_PROPERTY_VALUE");
+                    var s = new LazyTokenStructureMatch("BLOCKSTATE_PROPERTY_VALUE");
                     s.add(real());
                     s.add(ofType(BOOLEAN));
                     s.add(ofType(IDENTIFIER_TYPE_A));
@@ -902,7 +902,7 @@ public class TridentProductions {
         //endregion
         //region Block
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE");
+            var g = new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE");
             g.append(new LazyTokenGroupMatch().append(BLOCK_ID).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE).setName("BLOCKSTATE_CLAUSE"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND).setName("NBT_CLAUSE"));
@@ -911,7 +911,7 @@ public class TridentProductions {
         }
 
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
+            var g = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
             g.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
@@ -920,7 +920,7 @@ public class TridentProductions {
         //endregion
         //region Item
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE");
+            var g = new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE");
             g.append(new LazyTokenGroupMatch().append(ITEM_ID).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM.add(g);
@@ -928,7 +928,7 @@ public class TridentProductions {
         }
 
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
+            var g = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
             g.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM_TAGGED.add(g);
@@ -937,13 +937,13 @@ public class TridentProductions {
 
         //region Text Components
         {
-            LazyTokenStructureMatch JSON_ELEMENT = new LazyTokenStructureMatch("JSON_ELEMENT");
+            var JSON_ELEMENT = new LazyTokenStructureMatch("JSON_ELEMENT");
 
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("JSON_OBJECT");
+                var g = new LazyTokenGroupMatch().setName("JSON_OBJECT");
                 g.append(brace("{"));
                 {
-                    LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
+                    var g2 = new LazyTokenGroupMatch();
                     g2.append(string().setName("JSON_OBJECT_KEY"));
                     g2.append(colon());
                     g2.append(JSON_ELEMENT);
@@ -953,7 +953,7 @@ public class TridentProductions {
                 JSON_ELEMENT.add(g);
             }
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("JSON_ARRAY");
+                var g = new LazyTokenGroupMatch().setName("JSON_ARRAY");
                 g.append(brace("["));
                 g.append(new LazyTokenListMatch(JSON_ELEMENT, comma(), true).setName("JSON_ARRAY_ENTRIES"));
                 g.append(brace("]"));
@@ -969,10 +969,10 @@ public class TridentProductions {
         //region NBT
         {
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                var g = new LazyTokenGroupMatch();
                 g.append(brace("{"));
                 {
-                    LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
+                    var g2 = new LazyTokenGroupMatch();
                     g2.append(new LazyTokenGroupMatch().append(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_KEY"));
                     g2.append(colon());
                     g2.append(NBT_VALUE);
@@ -983,7 +983,7 @@ public class TridentProductions {
                 NBT_VALUE.add(NBT_COMPOUND);
             }
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                var g = new LazyTokenGroupMatch();
                 g.append(brace("["));
                 g.append(optional().append(new LazyTokenListMatch(NBT_VALUE, comma(), true).setName("NBT_LIST_ENTRIES")));
                 g.append(brace("]"));
@@ -997,7 +997,7 @@ public class TridentProductions {
         }
 
         {
-            LazyTokenStructureMatch NBT_PATH_NODE = new LazyTokenStructureMatch("NBT_PATH_NODE");
+            var NBT_PATH_NODE = new LazyTokenStructureMatch("NBT_PATH_NODE");
 
             NBT_PATH_NODE.add(
                     group(
@@ -1035,7 +1035,7 @@ public class TridentProductions {
         {
             INTEGER_NUMBER_RANGE.add(integer().setName("EXACT"));
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                var g = new LazyTokenGroupMatch();
                 g.append(integer().setName("MIN"));
                 g.append(glue());
                 g.append(dot());
@@ -1045,7 +1045,7 @@ public class TridentProductions {
                 INTEGER_NUMBER_RANGE.add(g);
             }
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                var g = new LazyTokenGroupMatch();
                 g.append(dot());
                 g.append(glue());
                 g.append(dot());
@@ -1056,7 +1056,7 @@ public class TridentProductions {
 
             REAL_NUMBER_RANGE.add(real().setName("EXACT"));
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                var g = new LazyTokenGroupMatch();
                 g.append(real().setName("MIN"));
                 g.append(glue());
                 g.append(dot());
@@ -1066,7 +1066,7 @@ public class TridentProductions {
                 REAL_NUMBER_RANGE.add(g);
             }
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                var g = new LazyTokenGroupMatch();
                 g.append(dot());
                 g.append(glue());
                 g.append(dot());
@@ -1234,14 +1234,14 @@ public class TridentProductions {
             SINGLE_COORDINATE.add(LOCAL_COORDINATE);
 
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("MIXED_COORDINATE_SET");
+                var g = new LazyTokenGroupMatch().setName("MIXED_COORDINATE_SET");
                 g.append(MIXABLE_COORDINATE);
                 g.append(MIXABLE_COORDINATE);
                 g.append(MIXABLE_COORDINATE);
                 COORDINATE_SET.add(g);
             }
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("LOCAL_COORDINATE_SET");
+                var g = new LazyTokenGroupMatch().setName("LOCAL_COORDINATE_SET");
                 g.append(LOCAL_COORDINATE);
                 g.append(LOCAL_COORDINATE);
                 g.append(LOCAL_COORDINATE);
@@ -1249,7 +1249,7 @@ public class TridentProductions {
             }
 
             {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("MIXED_TWO_COORDINATE_SET");
+                var g = new LazyTokenGroupMatch().setName("MIXED_TWO_COORDINATE_SET");
                 g.append(MIXABLE_COORDINATE);
                 g.append(MIXABLE_COORDINATE);
                 TWO_COORDINATE_SET.add(g);
@@ -1260,30 +1260,30 @@ public class TridentProductions {
 
         //region Definition Pack grammar
         try {
-            DefinitionPack defpack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
+            var defpack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
             defpack.load();
 
             HashMap<String, LazyTokenStructureMatch> namespaceGroups = new HashMap<>();
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("structure")) {
+            for (var def : defpack.getBlueprints("structure")) {
                 STRUCTURE.add(literal(def.getName()));
             }
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("difficulty")) {
+            for (var def : defpack.getBlueprints("difficulty")) {
                 DIFFICULTY.add(literal(def.getName()));
             }
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("gamemode")) {
+            for (var def : defpack.getBlueprints("gamemode")) {
                 GAMEMODE.add(literal(def.getName()));
             }
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("dimension")) {
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
+            for (var def : defpack.getBlueprints("dimension")) {
+                var s = namespaceGroups.get(def.getNamespace());
 
                 if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("DIMENSION_ID");
+                    var g = new LazyTokenGroupMatch().setName("DIMENSION_ID");
 
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
+                    var ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
                     ns.append(literal(def.getNamespace()));
                     ns.append(colon());
 
@@ -1302,12 +1302,12 @@ public class TridentProductions {
 
             namespaceGroups.clear();
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("slot")) {
-                String[] parts = def.getName().split("\\.");
+            for (var def : defpack.getBlueprints("slot")) {
+                var parts = def.getName().split("\\.");
 
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                var g = new LazyTokenGroupMatch();
 
-                for (int i = 0; i < parts.length; i++) {
+                for (var i = 0; i < parts.length; i++) {
                     g.append(literal(parts[i]));
                     if (i < parts.length - 1) g.append(dot());
                 }
@@ -1316,14 +1316,14 @@ public class TridentProductions {
             }
 
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("block")) {
+            for (var def : defpack.getBlueprints("block")) {
 
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
+                var s = namespaceGroups.get(def.getNamespace());
 
                 if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("BLOCK_ID");
+                    var g = new LazyTokenGroupMatch().setName("BLOCK_ID");
 
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
+                    var ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
                     ns.append(literal(def.getNamespace()));
                     ns.append(colon());
 
@@ -1342,14 +1342,14 @@ public class TridentProductions {
 
             namespaceGroups.clear();
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("item")) {
+            for (var def : defpack.getBlueprints("item")) {
 
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
+                var s = namespaceGroups.get(def.getNamespace());
 
                 if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ITEM_ID");
+                    var g = new LazyTokenGroupMatch().setName("ITEM_ID");
 
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
+                    var ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
                     ns.append(literal(def.getNamespace()));
                     ns.append(colon());
 
@@ -1368,14 +1368,14 @@ public class TridentProductions {
 
             namespaceGroups.clear();
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("entity")) {
+            for (var def : defpack.getBlueprints("entity")) {
 
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
+                var s = namespaceGroups.get(def.getNamespace());
 
                 if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ENTITY_ID");
+                    var g = new LazyTokenGroupMatch().setName("ENTITY_ID");
 
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
+                    var ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
                     ns.append(literal(def.getNamespace()));
                     ns.append(colon());
 
@@ -1394,14 +1394,14 @@ public class TridentProductions {
 
             namespaceGroups.clear();
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("effect")) {
+            for (var def : defpack.getBlueprints("effect")) {
 
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
+                var s = namespaceGroups.get(def.getNamespace());
 
                 if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("EFFECT_ID");
+                    var g = new LazyTokenGroupMatch().setName("EFFECT_ID");
 
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
+                    var ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
                     ns.append(literal(def.getNamespace()));
                     ns.append(colon());
 
@@ -1420,14 +1420,14 @@ public class TridentProductions {
 
             namespaceGroups.clear();
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("enchantment")) {
+            for (var def : defpack.getBlueprints("enchantment")) {
 
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
+                var s = namespaceGroups.get(def.getNamespace());
 
                 if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ENCHANTMENT_ID");
+                    var g = new LazyTokenGroupMatch().setName("ENCHANTMENT_ID");
 
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
+                    var ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
                     ns.append(literal(def.getNamespace()));
                     ns.append(colon());
 
@@ -1446,16 +1446,16 @@ public class TridentProductions {
 
             namespaceGroups.clear();
 
-            LazyTokenGroupMatch COLOR = new LazyTokenGroupMatch().setName("COLOR")
+            var COLOR = new LazyTokenGroupMatch().setName("COLOR")
                     .append(real().setName("RED_COMPONENT"))
                     .append(real().setName("GREEN_COMPONENT"))
                     .append(real().setName("BLUE_COMPONENT"));
 
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("particle")) {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("PARTICLE_ID");
+            for (var def : defpack.getBlueprints("particle")) {
+                var g = new LazyTokenGroupMatch().setName("PARTICLE_ID");
 
-                LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
+                var ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
                 ns.append(literal(def.getNamespace()));
                 ns.append(colon());
 
@@ -1465,16 +1465,16 @@ public class TridentProductions {
 
                 PARTICLE_ID.add(g);
 
-                LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
+                var g2 = new LazyTokenGroupMatch();
 
                 g2.append(g);
 
-                LazyTokenGroupMatch argsGroup = new LazyTokenGroupMatch().setName("PARTICLE_ARGUMENTS");
+                var argsGroup = new LazyTokenGroupMatch().setName("PARTICLE_ARGUMENTS");
 
-                String allArgs = def.getProperties().get("argument");
+                var allArgs = def.getProperties().get("argument");
                 if (!allArgs.equals("none")) {
-                    String[] args = allArgs.split("-");
-                    for (String arg : args) {
+                    var args = allArgs.split("-");
+                    for (var arg : args) {
                         switch (arg) {
                             case "int": {
                                 argsGroup.append(integer());
@@ -1510,20 +1510,20 @@ public class TridentProductions {
 
             namespaceGroups.clear();
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("gamerule")) {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("GAMERULE_ID");
+            for (var def : defpack.getBlueprints("gamerule")) {
+                var g = new LazyTokenGroupMatch().setName("GAMERULE_ID");
 
                 g.append(literal(def.getName()).setName("GAMERULE"));
 
                 GAMERULE.add(g);
 
-                LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
+                var g2 = new LazyTokenGroupMatch();
 
                 g2.append(g);
 
-                LazyTokenGroupMatch argsGroup = new LazyTokenGroupMatch().setName("GAMERULE_ARGUMENT");
+                var argsGroup = new LazyTokenGroupMatch().setName("GAMERULE_ARGUMENT");
 
-                String arg = def.getProperties().get("argument");
+                var arg = def.getProperties().get("argument");
 
                 switch (arg) {
                     case "boolean": {
@@ -1569,6 +1569,28 @@ public class TridentProductions {
         //endregion
 
         //region Instructions
+
+        {
+            var scale = group(symbol("*"), real()).setOptional();
+            var typeCast = group(brace("("), ofType(NUMERIC_DATA_TYPE), brace(")")).setOptional();
+
+            var scoreHead = group(ofType(ARROW), identifierA(), scale);
+            var nbtHead = group(dot(), NBT_PATH, scale, typeCast);
+
+            var anyHead = choice(scoreHead, nbtHead);
+
+            var varPointer = group(VARIABLE_MARKER, anyHead);
+            var entityPointer = group(ENTITY, anyHead);
+            var blockPointer = group(brace("("), COORDINATE_SET, brace(")"), nbtHead);
+
+            POINTER = choice(varPointer, entityPointer, blockPointer);
+
+
+            INSTRUCTION.add(
+                    group(literal("expr").setName("INSTRUCTION_KEYWORD"),
+                            POINTER, equals(), POINTER)
+            );
+        }
         {
             INSTRUCTION.add(
                     group(literal("register").setName("INSTRUCTION_KEYWORD"),
@@ -1587,27 +1609,6 @@ public class TridentProductions {
                             string()
                             //choice(integer(), real(), string(), ENTITY, COORDINATE_SET, NBT_COMPOUND, NBT_PATH, TEXT_COMPONENT)
                     )
-            );
-        }
-        {
-            LazyTokenPatternMatch scale = group(symbol("*"), real()).setOptional();
-            LazyTokenPatternMatch typeCast = group(brace("("), ofType(NUMERIC_DATA_TYPE), brace(")")).setOptional();
-
-            LazyTokenPatternMatch scoreHead = group(ofType(ARROW), identifierA(), scale);
-            LazyTokenPatternMatch nbtHead = group(dot(), NBT_PATH, scale, typeCast);
-
-            LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead);
-
-            LazyTokenPatternMatch varPointer = group(VARIABLE_MARKER, anyHead);
-            LazyTokenPatternMatch entityPointer = group(ENTITY, anyHead);
-            LazyTokenPatternMatch blockPointer = group(brace("("), COORDINATE_SET, brace(")"), nbtHead);
-
-            LazyTokenStructureMatch pointer = choice(varPointer, entityPointer, blockPointer);
-
-
-            INSTRUCTION.add(
-                    group(literal("expr").setName("INSTRUCTION_KEYWORD"),
-                            pointer, equals(), pointer)
             );
         }
         //endregion
@@ -1707,8 +1708,8 @@ public class TridentProductions {
 
     private static LazyTokenStructureMatch choice(LazyTokenPatternMatch... options) {
         if(options.length == 0) throw new IllegalArgumentException("Need one or more options for choice");
-        LazyTokenStructureMatch s = struct("CHOICE");
-        for(LazyTokenPatternMatch option : options) {
+        var s = struct("CHOICE");
+        for(var option : options) {
             s.add(option);
         }
         return s;
@@ -1716,8 +1717,8 @@ public class TridentProductions {
 
     private static LazyTokenStructureMatch choice(String... options) {
         if(options.length == 0) throw new IllegalArgumentException("Need one or more options for choice");
-        LazyTokenStructureMatch s = struct("CHOICE");
-        for(String option : options) {
+        var s = struct("CHOICE");
+        for(var option : options) {
             s.add(literal(option));
         }
         return s;
@@ -1728,8 +1729,8 @@ public class TridentProductions {
     }
 
     private static LazyTokenGroupMatch group(LazyTokenPatternMatch... items) {
-        LazyTokenGroupMatch g = new LazyTokenGroupMatch();
-        for(LazyTokenPatternMatch item : items) {
+        var g = new LazyTokenGroupMatch();
+        for(var item : items) {
             g.append(item);
         }
         return g;
@@ -1744,7 +1745,7 @@ public class TridentProductions {
     }
 
     private static LazyTokenGroupMatch optional(LazyTokenPatternMatch... items) {
-        LazyTokenGroupMatch g = group(items);
+        var g = group(items);
         g.setOptional();
         return g;
     }

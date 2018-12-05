@@ -159,7 +159,7 @@ public class TridentFile implements CompilerExtension {
                                 }
                                 break;
                             case "INSTRUCTION": {
-                                String instructionKey = ((TokenStructure) inner).getContents().searchByName("INSTRUCTON_KEYWORD").get(0).flatten(false);
+                                String instructionKey = ((TokenStructure) inner).getContents().searchByName("INSTRUCTION_KEYWORD").get(0).flatten(false);
                                 Instruction instruction = ParserManager.getParser(Instruction.class, instructionKey);
                                 if (instruction != null) {
                                     instruction.run(((TokenStructure) inner).getContents(), this);
