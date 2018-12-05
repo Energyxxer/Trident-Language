@@ -1,8 +1,9 @@
 package com.energyxxer.trident.compiler.commands.parsers.general;
 
-import com.energyxxer.trident.compiler.commands.RawCommand;
 import com.energyxxer.util.logger.Debug;
 import org.reflections.Reflections;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -13,7 +14,12 @@ public class ParserManager {
     static {
 
         Debug.log("Starting command parser caching");
-        Reflections r = new Reflections(RawCommand.class.getPackage());
+        long start = System.currentTimeMillis();
+
+        ConfigurationBuilder builder = new ConfigurationBuilder();
+        builder.addUrls(ClasspathHelper.forJavaClassPath());
+        Reflections r = new Reflections(builder);
+
         for(Class<?> cls : r.getTypesAnnotatedWith(ParserGroup.class, true)) {
             if(!cls.isInterface()) {
                 Debug.log("Class marked with ParserGroup is not an interface: '" + cls.getSimpleName() + "'", Debug.MessageType.WARN);
@@ -42,7 +48,9 @@ public class ParserManager {
                 e.printStackTrace();
             }
         }
-        Debug.log("Finished command parser caching");
+
+        long time = System.currentTimeMillis() - start;
+        Debug.log("Finished command parser caching in " + time + " ms");
     }
 
     @SuppressWarnings("unchecked")
