@@ -7,9 +7,9 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 
 @ParserMember(key = "limit")
-public class LimitArgumentParser implements SelectorArgumentParser {
+public class LimitArgumentParser implements SimpleSelectorArgumentParser {
     @Override
-    public SelectorArgument parse(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
         return new LimitArgument(Integer.parseInt(pattern.find("INTEGER").flatten(false)));
     }
 }

@@ -7,9 +7,9 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 
 @ParserMember(key = "z")
-public class ZArgumentParser implements SelectorArgumentParser {
+public class ZArgumentParser implements SimpleSelectorArgumentParser {
     @Override
-    public SelectorArgument parse(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
         return new ZArgument(Double.parseDouble(pattern.flatten(false)));
     }
 }

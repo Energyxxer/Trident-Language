@@ -6,6 +6,8 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 public class ParserManager {
@@ -31,7 +33,7 @@ public class ParserManager {
         for(Class<?> cls : r.getTypesAnnotatedWith(ParserMember.class)) {
             try {
                 boolean hasGroup = false;
-                for(Class<?> interf : cls.getInterfaces()) {
+                for(Class<?> interf : getInterfaces(cls)) {
                     HashMap<String, Object> toPut = groups.get(interf);
                     if(toPut != null) {
                         hasGroup = true;
@@ -51,6 +53,15 @@ public class ParserManager {
 
         long time = System.currentTimeMillis() - start;
         Debug.log("Finished command parser caching in " + time + " ms");
+    }
+
+    private static Collection<Class> getInterfaces(Class cls) {
+        ArrayList<Class> interfaces = new ArrayList<>();
+        for(Class<?> interf : cls.getInterfaces()) {
+            interfaces.add(interf);
+            interfaces.addAll(getInterfaces(interf));
+        }
+        return interfaces;
     }
 
     @SuppressWarnings("unchecked")

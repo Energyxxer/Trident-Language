@@ -8,9 +8,9 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 
 @ParserMember(key = "name")
-public class NameArgumentParser implements SelectorArgumentParser {
+public class NameArgumentParser implements SimpleSelectorArgumentParser {
     @Override
-    public SelectorArgument parse(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
         return new NameArgument(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find(".STRING_LITERAL_OR_IDENTIFIER_A")), pattern.find("NEGATED") != null);
     }
 }

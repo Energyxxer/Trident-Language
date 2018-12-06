@@ -7,9 +7,9 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 
 @ParserMember(key = "gamemode")
-public class GamemodeArgumentParser implements SelectorArgumentParser {
+public class GamemodeArgumentParser implements SimpleSelectorArgumentParser {
     @Override
-    public SelectorArgument parse(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
         return new GamemodeArgument(compiler.getModule().minecraft.types.gamemode.get(pattern.find("GAMEMODE").flatten(false)), pattern.find("NEGATED") != null);
     }
 }

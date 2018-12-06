@@ -8,9 +8,9 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 
 @ParserMember(key = "x_rotation")
-public class YawArgumentParser implements SelectorArgumentParser {
+public class YawArgumentParser implements SimpleSelectorArgumentParser {
     @Override
-    public SelectorArgument parse(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
         return new YawArgument(CommonParsers.parseRealRange(pattern));
     }
 }

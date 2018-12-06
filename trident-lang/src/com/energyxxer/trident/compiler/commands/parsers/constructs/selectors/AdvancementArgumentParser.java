@@ -15,9 +15,9 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 
 @ParserMember(key = "advancements")
-public class AdvancementArgumentParser implements SelectorArgumentParser {
+public class AdvancementArgumentParser implements SimpleSelectorArgumentParser, SelectorArgumentParser {
     @Override
-    public SelectorArgument parse(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
         TokenList advancementList = (TokenList) pattern.find("ADVANCEMENT_LIST");
 
         AdvancementArgument advancements = new AdvancementArgument();

@@ -14,9 +14,9 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 
 @ParserMember(key = "scores")
-public class ScoresArgumentParser implements SelectorArgumentParser {
+public class ScoresArgumentParser implements SimpleSelectorArgumentParser {
     @Override
-    public SelectorArgument parse(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
         TokenList scoreList = (TokenList) pattern.find("SCORE_LIST");
 
         ScoreArgument scores = new ScoreArgument();

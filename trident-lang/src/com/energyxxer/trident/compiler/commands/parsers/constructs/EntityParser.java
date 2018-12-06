@@ -15,6 +15,8 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.selectors.Sel
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.util.logger.Debug;
 
+import java.util.Collection;
+
 public class EntityParser {
 
     public static Selector parseSelector(TokenPattern<?> pattern, TridentCompiler compiler) {
@@ -28,10 +30,10 @@ public class EntityParser {
                 if(rawArg.getName().equals("SELECTOR_ARGUMENT")) {
                     SelectorArgumentParser parser = ParserManager.getParser(SelectorArgumentParser.class, rawArg.flattenTokens().get(0).value);
                     if(parser != null) {
-                        SelectorArgument arg = parser.parse(((TokenStructure)((TokenStructure) rawArg).getContents().find("SELECTOR_ARGUMENT_VALUE")).getContents(), compiler);
-                        if(arg != null) {
+                        Collection<SelectorArgument> arg = parser.parse(((TokenStructure)((TokenStructure) rawArg).getContents().find("SELECTOR_ARGUMENT_VALUE")).getContents(), compiler);
+                        if(arg != null && !arg.isEmpty()) {
                             try {
-                                selector.addArgument(arg);
+                                selector.addArguments(arg);
                             } catch(IllegalArgumentException x) {
                                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, x.getMessage(), rawArg));
                             }

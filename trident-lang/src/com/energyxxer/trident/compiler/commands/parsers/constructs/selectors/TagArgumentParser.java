@@ -8,9 +8,9 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 
 @ParserMember(key = "tag")
-public class TagArgumentParser implements SelectorArgumentParser {
+public class TagArgumentParser implements SimpleSelectorArgumentParser {
     @Override
-    public SelectorArgument parse(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
         TokenPattern<?> rawValue = pattern.find("IDENTIFIER_A");
         String str = "";
         if(rawValue != null) {
