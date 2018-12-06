@@ -5,7 +5,10 @@ import java.util.Stack;
 public class SymbolStack {
     private Stack<SymbolTable> stack = new Stack<>();
 
+    private SymbolTable global;
+
     public SymbolStack() {
+        global = new SymbolTable(null);
     }
 
     public SymbolTable push(SymbolTable item) {
@@ -25,9 +28,14 @@ public class SymbolStack {
     }
 
     public Symbol search(String name) {
-        for(SymbolTable symbol : stack) {
-            if(symbol.containsKey(name)) return symbol.get(name);
+        for(SymbolTable table : stack) {
+            if(table.containsKey(name)) return table.get(name);
         }
+        if(global.containsKey(name)) return global.get(name);
         return null;
+    }
+
+    public SymbolTable getGlobal() {
+        return global;
     }
 }

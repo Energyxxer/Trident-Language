@@ -26,15 +26,17 @@ public class NBTParser {
             case "NBT_COMPOUND": {
                 TagCompound compound = new TagCompound();
                 TokenList entries = (TokenList) pattern.find(".NBT_COMPOUND_ENTRIES");
-                for(TokenPattern<?> inner : entries.getContents()) {
-                    if(inner instanceof TokenGroup) {
-                        String key = inner.find("NBT_KEY").flattenTokens().get(0).value;
-                        if(key.startsWith("\"")) {
-                            key = CommandUtils.parseQuotedString(key);
+                if(entries != null) {
+                    for (TokenPattern<?> inner : entries.getContents()) {
+                        if (inner instanceof TokenGroup) {
+                            String key = inner.find("NBT_KEY").flattenTokens().get(0).value;
+                            if (key.startsWith("\"")) {
+                                key = CommandUtils.parseQuotedString(key);
+                            }
+                            NBTTag value = parseValue(inner.find("NBT_VALUE"));
+                            value.setName(key);
+                            compound.add(value);
                         }
-                        NBTTag value = parseValue(inner.find("NBT_VALUE"));
-                        value.setName(key);
-                        compound.add(value);
                     }
                 }
                 return compound;

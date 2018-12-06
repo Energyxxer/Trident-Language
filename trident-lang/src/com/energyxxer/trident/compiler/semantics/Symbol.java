@@ -15,8 +15,13 @@ public class Symbol {
     }
 
     public Symbol(String name, SymbolAccess access) {
+        this(name, access, null);
+    }
+
+    public Symbol(String name, SymbolAccess access, Object value) {
         this.name = name;
         this.access = access;
+        this.value = value;
     }
 
     public String getName() {

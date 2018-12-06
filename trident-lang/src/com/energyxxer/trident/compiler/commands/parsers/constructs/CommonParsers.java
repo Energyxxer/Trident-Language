@@ -26,12 +26,19 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class CommonParsers {
     public static Type parseEntityType(TokenPattern<?> id, TridentCompiler compiler) {
         return parseType(id, compiler, m -> m.entity);
+    }
+    public static Object parseEntityReference(TokenPattern<?> id, TridentCompiler compiler) {
+        if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("VARIABLE_MARKER")) {
+            return retrieveSymbol(((TokenStructure) id).getContents(), compiler, Type.class, CustomEntity.class);
+        } else return parseType(id, compiler, m -> m.entity);
     }
     public static Type parseItemType(TokenPattern<?> id, TridentCompiler compiler) {
         return parseType(id, compiler, m -> m.item);
@@ -41,6 +48,9 @@ public class CommonParsers {
     }
     public static Type parseType(TokenPattern<?> id, TridentCompiler compiler, TypeGroupPicker picker) {
         if(id == null) return null;
+        if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("VARIABLE_MARKER")) {
+            return retrieveSymbol(((TokenStructure) id).getContents(), compiler, Type.class);
+        }
         TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id);
         return picker.pick(compiler.getModule().getNamespace(typeLoc.namespace).types).get(typeLoc.body);
     }
@@ -282,8 +292,18 @@ public class CommonParsers {
             return (T) obj;
         } else {
             compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.find("VARIABLE_NAME").flatten(false) + "' does not contain a value of type " + expected.getSimpleName(), pattern));
-            return null;
+            throw new EntryParsingException();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Object retrieveSymbol(TokenPattern<?> pattern, TridentCompiler compiler, Class... expected) {
+        Object obj = retrieveSymbol(pattern, compiler);
+        for(Class cls : expected) {
+            if(cls.isInstance(obj)) return obj;
+        }
+        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.find("VARIABLE_NAME").flatten(false) + "' does not contain a value of type " + Arrays.asList(expected).map((Class c) -> c.getSimpleName()).toSet().join(", "), pattern));
+        throw new EntryParsingException();
     }
 
     public static Object retrieveSymbol(TokenPattern<?> pattern, TridentCompiler compiler) {
@@ -293,7 +313,7 @@ public class CommonParsers {
             return symbol.getValue();
         } else {
             compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + name + "' is not defined", pattern));
-            return null;
+            throw new EntryParsingException();
         }
     }
 

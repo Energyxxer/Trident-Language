@@ -294,49 +294,8 @@ public class TridentLexerProfile extends LexerProfile {
         });
 
         //Resource Locations
-        contexts.add(new LexerContext() {
-
-            private String acceptedNamespaceChars = "[a-z0-9_\\.-]";
-            private String acceptedPathChars = "[a-z0-9_/\\.-]";
-
-            @Override
-            public ScannerContextResponse analyze(String str, LexerProfile profile) {
-                return new ScannerContextResponse(false);
-            }
-
-            @Override
-            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
-                boolean namespaceFound = false;
-                int nonNamespaceCharIndex = -1;
-                int index = 0;
-                for(char c : str.toCharArray()) {
-                    boolean validNs = (""+c).matches(acceptedNamespaceChars);
-                    boolean validPt = (""+c).matches(acceptedPathChars);
-                    if(!validNs && !validPt) {
-                        if(!namespaceFound && c == ':') {
-                            namespaceFound = true;
-                            if(nonNamespaceCharIndex >= 0) break;
-                        } else break;
-                    } else {
-                        if(!namespaceFound && !validNs) {
-                            if(nonNamespaceCharIndex <= 0) nonNamespaceCharIndex = index;
-                        } else if(namespaceFound && !validPt) {
-                            break;
-                        }
-                    }
-                    if(Character.isWhitespace(c)) break;
-                    index++;
-                }
-                if(nonNamespaceCharIndex >= 0) index = nonNamespaceCharIndex;
-                if(index == 0) return new ScannerContextResponse(false);
-                else return new ScannerContextResponse(true, str.substring(0, index), RESOURCE_LOCATION);
-            }
-
-            @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(RESOURCE_LOCATION);
-            }
-        });
+        contexts.add(new ResourceLocationContext("[a-z0-9_\\.-]","[a-z0-9_/\\.-]", RESOURCE_LOCATION));
+        contexts.add(new ResourceLocationContext("[a-zA-Z0-9_\\.-]","[a-zA-Z0-9_/\\.-]", CASE_INSENSITIVE_RESOURCE_LOCATION));
 
         //Comments and directive headers
         contexts.add(new LexerContext() {
@@ -452,5 +411,57 @@ public class TridentLexerProfile extends LexerProfile {
     public void putHeaderInfo(Token header) {
         header.attributes.put("TYPE","tdn");
         header.attributes.put("DESC","Trident Function File");
+    }
+
+    static class ResourceLocationContext implements LexerContext {
+        private final String acceptedNamespaceChars;
+        private final String acceptedPathChars;
+
+        private final TokenType tokenType;
+
+        public ResourceLocationContext(String acceptedNamespaceChars, String acceptedPathChars, TokenType tokenType) {
+            this.acceptedNamespaceChars = acceptedNamespaceChars;
+            this.acceptedPathChars = acceptedPathChars;
+
+            this.tokenType = tokenType;
+        }
+
+        @Override
+        public ScannerContextResponse analyze(String str, LexerProfile profile) {
+            return new ScannerContextResponse(false);
+        }
+
+        @Override
+        public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+            boolean namespaceFound = false;
+            int nonNamespaceCharIndex = -1;
+            int index = 0;
+            for(char c : str.toCharArray()) {
+                boolean validNs = (""+c).matches(acceptedNamespaceChars);
+                boolean validPt = (""+c).matches(acceptedPathChars);
+                if(!validNs && !validPt) {
+                    if(!namespaceFound && c == ':') {
+                        namespaceFound = true;
+                        if(nonNamespaceCharIndex >= 0) break;
+                    } else break;
+                } else {
+                    if(!namespaceFound && !validNs) {
+                        if(nonNamespaceCharIndex <= 0) nonNamespaceCharIndex = index;
+                    } else if(namespaceFound && !validPt) {
+                        break;
+                    }
+                }
+                if(Character.isWhitespace(c)) break;
+                index++;
+            }
+            if(nonNamespaceCharIndex >= 0) index = nonNamespaceCharIndex;
+            if(index == 0) return new ScannerContextResponse(false);
+            else return new ScannerContextResponse(true, str.substring(0, index), tokenType);
+        }
+
+        @Override
+        public Collection<TokenType> getHandledTypes() {
+            return Collections.singletonList(tokenType);
+        }
     }
 }

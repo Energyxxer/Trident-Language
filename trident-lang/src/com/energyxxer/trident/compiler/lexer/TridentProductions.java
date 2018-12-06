@@ -77,10 +77,9 @@ public class TridentProductions {
     //grouped arguments
     public static final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
     public static final LazyTokenStructureMatch VARIABLE_MARKER = choice(
-            group(symbol("$"), glue(), brace("{"), identifierA().setName("VARIABLE_NAME"), brace("}")),
-            group(symbol("$"), glue(), identifierA().setName("VARIABLE_NAME"))
+            group(symbol("$"), glue(), brace("{"), ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"), brace("}")),
+            group(symbol("$"), glue(), ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"))
     ).setName("VARIABLE_MARKER");
-
     public static final LazyTokenStructureMatch POINTER;
 
     static {
@@ -1379,7 +1378,7 @@ public class TridentProductions {
                 var s = namespaceGroups.get(def.getNamespace());
 
                 if (s == null) {
-                    var g = new LazyTokenGroupMatch().setName("ENTITY_ID");
+                    var g = new LazyTokenGroupMatch().setName("ENTITY_ID_DEFAULT");
 
                     var ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
                     ns.append(literal(def.getNamespace()));
@@ -1397,6 +1396,8 @@ public class TridentProductions {
 
                 s.add(literal(def.getName()));
             }
+
+            ENTITY_ID.add(VARIABLE_MARKER);
 
             namespaceGroups.clear();
 
@@ -1599,11 +1600,23 @@ public class TridentProductions {
         );
 
         {
+            var entityBodyEntry = choice(
+                    group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT")
+            );
+
+            var entityBody = group(
+                    brace("{"),
+                    list(entityBodyEntry).setOptional().setName("ENTITY_BODY_ENTRIES"),
+                    brace("}")
+            ).setOptional().setName("ENTITY_DECLARATION_BODY");
+
+
             INSTRUCTION.add(
                     group(literal("register").setName("INSTRUCTION_KEYWORD"),
                             choice(
                                     group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("REGISTER_OBJECTIVE"),
-                                    group(literal("databank"), identifierA().setName("DATABANK_NAME"), nbtPointer).setName("REGISTER_DATABANK")
+                                    group(literal("databank"), identifierA().setName("DATABANK_NAME"), nbtPointer).setName("REGISTER_DATABANK"),
+                                    group(literal("entity"), ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("ENTITY_NAME"), ENTITY_ID, entityBody).setName("REGISTER_ENTITY")
                             )
                     )
             );
@@ -1611,7 +1624,7 @@ public class TridentProductions {
         {
             INSTRUCTION.add(
                     group(choice("global", "local").setOptional(), choice("var", "const").setName("INSTRUCTION_KEYWORD"),
-                            identifierA().setName("VARIABLE_NAME"),
+                            ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"),
                             equals(),
                             choice(integer(), real(), string(), ofType(BOOLEAN).setName("BOOLEAN"), ENTITY, BLOCK_TAGGED, ITEM_TAGGED, COORDINATE_SET, NBT_COMPOUND, NBT_PATH, TEXT_COMPONENT).setName("VARIABLE_VALUE")
                     )
