@@ -35,7 +35,7 @@ public class ExecuteParser implements CommandParser {
         if(rawCommand != null) {
             CommandParser parser = ParserManager.getParser(CommandParser.class, rawCommand.flattenTokens().get(0).value);
             if(parser != null) {
-                Command command = parser.parse(rawCommand, file);
+                Command command = parser.parse((TokenPattern<?>) (rawCommand.getContents()), file);
                 if(command != null) return new ExecuteCommand(command, modifiers);
             }
         }
