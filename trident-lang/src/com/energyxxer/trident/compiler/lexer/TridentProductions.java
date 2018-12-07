@@ -1623,10 +1623,22 @@ public class TridentProductions {
         }
         {
             INSTRUCTION.add(
-                    group(choice("global", "local").setOptional(), choice("var", "const").setName("INSTRUCTION_KEYWORD"),
+                    group(literal("var").setName("INSTRUCTION_KEYWORD"),
                             ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"),
-                            equals(),
-                            choice(integer(), real(), string(), ofType(BOOLEAN).setName("BOOLEAN"), ENTITY, BLOCK_TAGGED, ITEM_TAGGED, COORDINATE_SET, NBT_COMPOUND, NBT_PATH, TEXT_COMPONENT).setName("VARIABLE_VALUE")
+                            choice(
+                                    group(optional(brace("<"), literal("integer"), brace(">")), equals(), group(integer()).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("real"), brace(">")), equals(), group(real()).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("string"), brace(">")), equals(), group(string()).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("bool"), brace(">")), equals(), group(ofType(BOOLEAN).setName("BOOLEAN")).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("entity"), brace(">")), equals(), group(ENTITY).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("block"), brace(">")), equals(), group(BLOCK_TAGGED).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("item"), brace(">")), equals(), group(ITEM_TAGGED).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("coordinates"), brace(">")), equals(), group(COORDINATE_SET).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("nbt_compound"), brace(">")), equals(), group(NBT_COMPOUND).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("nbt_path"), brace(">")), equals(), group(NBT_PATH).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("text_component"), brace(">")), equals(), group(TEXT_COMPONENT).setName("VARIABLE_VALUE")),
+                                    group(equals(), choice(integer(), real(), string(), ofType(BOOLEAN).setName("BOOLEAN"), ENTITY, BLOCK_TAGGED, ITEM_TAGGED, COORDINATE_SET, NBT_COMPOUND, NBT_PATH, TEXT_COMPONENT).setName("VARIABLE_VALUE"))
+                            )
                     )
             );
         }
