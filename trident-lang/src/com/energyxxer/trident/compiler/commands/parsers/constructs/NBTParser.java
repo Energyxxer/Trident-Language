@@ -112,6 +112,9 @@ public class NBTParser {
 
     public static NBTPath parsePath(TokenPattern<?> pattern, TridentCompiler compiler) {
         if(pattern == null) return null;
+        if((((TokenStructure)pattern).getContents()).getName().equals("VARIABLE_MARKER")) {
+            return CommonParsers.retrieveSymbol(((TokenStructure) pattern).getContents(), compiler, NBTPath.class);
+        }
         NBTPathNode start = parsePathNode(pattern.find("NBT_PATH_NODE"), compiler);
         ArrayList<NBTPathNode> nodes = new ArrayList<>();
         nodes.add(start);

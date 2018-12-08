@@ -1023,8 +1023,9 @@ public class TridentProductions {
 
             NBT_PATH_NODE.add(group(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH"));
 
+            NBT_PATH.add(VARIABLE_MARKER);
             NBT_PATH.add(group(choice(group(group(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_PATH_KEY_LABEL")).setName("NBT_PATH_KEY")).setName("NBT_PATH_NODE"),
-                    list(NBT_PATH_NODE, glue()).setOptional().setName("OTHER_NODES")));
+                    list(NBT_PATH_NODE, glue()).setOptional().setName("OTHER_NODES")).setName("RAW_NBT_PATH"));
         }
         //endregion
         //region Selector
