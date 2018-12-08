@@ -36,6 +36,7 @@ public class TridentFile implements CompilerExtension {
     private TokenPattern<?> pattern;
     private final HashMap<TokenPattern<?>, TridentUtil.ResourceLocation> requires = new HashMap<>();
     private final ArrayList<TridentUtil.ResourceLocation> tags = new ArrayList<>();
+    private final Path relSourcePath;
 
     private Function function;
     private final TridentUtil.ResourceLocation location;
@@ -48,6 +49,7 @@ public class TridentFile implements CompilerExtension {
         this.module = compiler.getModule();
         this.namespace = module.createNamespace(relSourcePath.getName(0).toString());
         this.pattern = filePattern;
+        this.relSourcePath = relSourcePath;
 
         String functionPath = relSourcePath.subpath(2, relSourcePath.getNameCount()).toString();
         functionPath = functionPath.substring(0, functionPath.length()-".tdn".length()).replaceAll(Matcher.quoteReplacement(File.separator), "/");
@@ -209,6 +211,14 @@ public class TridentFile implements CompilerExtension {
 
     public TridentUtil.ResourceLocation getResourceLocation() {
         return location;
+    }
+
+    public Namespace getNamespace() {
+        return namespace;
+    }
+
+    public Path getPath() {
+        return relSourcePath;
     }
 
     public boolean isCompileOnly() {

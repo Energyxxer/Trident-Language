@@ -17,7 +17,7 @@ public class VariableInstruction implements Instruction {
         Symbol symbol = new Symbol(pattern.find("VARIABLE_NAME").flatten(false));
         table.put(symbol);
 
-        Object value = CommonParsers.parseAnything((TokenPattern<?>) ((pattern.find("VARIABLE_VALUE")).getContents()), file.getCompiler());
+        Object value = CommonParsers.parseAnything((TokenPattern<?>) ((pattern.find("VARIABLE_INITIALIZATION.VARIABLE_VALUE")).getContents()), file.getCompiler());
 
         symbol.setValue(value);
     }

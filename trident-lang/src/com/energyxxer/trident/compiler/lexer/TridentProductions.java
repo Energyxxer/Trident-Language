@@ -13,6 +13,7 @@ import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 public class TridentProductions {
 
     public static final LazyTokenStructureMatch FILE;
+    public static final LazyTokenStructureMatch FILE_INNER;
     public static final LazyTokenStructureMatch ENTRY;
 
     public static final LazyTokenItemMatch COMMENT_S;
@@ -84,6 +85,7 @@ public class TridentProductions {
 
     static {
         FILE = new LazyTokenStructureMatch("FILE");
+        FILE_INNER = new LazyTokenStructureMatch("FILE_INNER");
         ENTRY = new LazyTokenStructureMatch("ENTRY");
         COMMAND = new LazyTokenStructureMatch("COMMAND");
         INSTRUCTION = new LazyTokenStructureMatch("INSTRUCTION");
@@ -117,9 +119,8 @@ public class TridentProductions {
         STRING_LITERAL_OR_IDENTIFIER_A.add(identifierA());
 
         {
-            var separator = new LazyTokenGroupMatch(true).setName("LINE_PADDING");
-            separator.append(new LazyTokenListMatch(TokenType.NEWLINE, true));
-            var l = new LazyTokenListMatch(new LazyTokenGroupMatch(true).append(ENTRY), separator, true).setName("ENTRIES");
+            var l = new LazyTokenListMatch(optional(ENTRY, ofType(TokenType.NEWLINE).setOptional().setName("LINE_PADDING")), true).setName("ENTRIES");
+            FILE_INNER.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l));
             FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l,ofType(TokenType.END_OF_FILE)));
         }
 
@@ -1601,7 +1602,9 @@ public class TridentProductions {
 
         {
             var entityBodyEntry = choice(
-                    group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT")
+                    group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT"),
+                    group(literal("default"), literal("passengers"), brace("["), list(group(ENTITY_ID, optional(NBT_COMPOUND).setName("PASSENGER_NBT")).setName("PASSENGER"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
+                    group(literal("function"), literal("tick"), brace("{"), FILE_INNER, brace("}")).setName("TICK_FUNCTION")
             );
 
             var entityBody = group(
@@ -1626,19 +1629,19 @@ public class TridentProductions {
                     group(literal("var").setName("INSTRUCTION_KEYWORD"),
                             ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"),
                             choice(
-                                    group(optional(brace("<"), literal("integer"), brace(">")), equals(), group(integer()).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("real"), brace(">")), equals(), group(real()).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("string"), brace(">")), equals(), group(string()).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("bool"), brace(">")), equals(), group(ofType(BOOLEAN).setName("BOOLEAN")).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("entity"), brace(">")), equals(), group(ENTITY).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("block"), brace(">")), equals(), group(BLOCK_TAGGED).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("item"), brace(">")), equals(), group(ITEM_TAGGED).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("coordinates"), brace(">")), equals(), group(COORDINATE_SET).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("nbt_compound"), brace(">")), equals(), group(NBT_COMPOUND).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("nbt_path"), brace(">")), equals(), group(NBT_PATH).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("text_component"), brace(">")), equals(), group(TEXT_COMPONENT).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("integer"), brace(">")), equals(), choice(integer()).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("real"), brace(">")), equals(), choice(real()).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("string"), brace(">")), equals(), choice(string()).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("bool"), brace(">")), equals(), choice(ofType(BOOLEAN).setName("BOOLEAN")).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("entity"), brace(">")), equals(), choice(ENTITY).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("block"), brace(">")), equals(), choice(BLOCK_TAGGED).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("item"), brace(">")), equals(), choice(ITEM_TAGGED).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("coordinates"), brace(">")), equals(), choice(COORDINATE_SET).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("nbt_compound"), brace(">")), equals(), choice(NBT_COMPOUND).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("nbt_path"), brace(">")), equals(), choice(NBT_PATH).setName("VARIABLE_VALUE")),
+                                    group(optional(brace("<"), literal("text_component"), brace(">")), equals(), choice(TEXT_COMPONENT).setName("VARIABLE_VALUE")),
                                     group(equals(), choice(integer(), real(), string(), ofType(BOOLEAN).setName("BOOLEAN"), ENTITY, BLOCK_TAGGED, ITEM_TAGGED, COORDINATE_SET, NBT_COMPOUND, NBT_PATH, TEXT_COMPONENT).setName("VARIABLE_VALUE"))
-                            )
+                            ).setName("VARIABLE_INITIALIZATION")
                     )
             );
         }

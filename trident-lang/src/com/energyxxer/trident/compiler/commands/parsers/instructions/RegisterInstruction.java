@@ -1,20 +1,35 @@
 package com.energyxxer.trident.compiler.commands.parsers.instructions;
 
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAsEntity;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAtEntity;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
+import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
+import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
+import com.energyxxer.commodore.functionlogic.functions.Function;
+import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
+import com.energyxxer.commodore.functionlogic.nbt.TagList;
+import com.energyxxer.commodore.functionlogic.nbt.TagString;
+import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.TextParser;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.selectors.TypeArgumentParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
+
+import java.nio.file.Path;
 
 @ParserMember(key = "register")
 public class RegisterInstruction implements Instruction {
@@ -69,6 +84,53 @@ public class RegisterInstruction implements Instruction {
                 switch(entry.getName()) {
                     case "DEFAULT_NBT": {
                         entityDecl.setDefaultNBT(NBTParser.parseCompound(entry.find("NBT_COMPOUND")));
+                        break;
+                    }
+                    case "DEFAULT_PASSENGERS": {
+                        TagCompound oldNBT = entityDecl.getDefaultNBT();
+
+                        if(oldNBT == null) oldNBT = new TagCompound();
+
+                        TagList passengersTag = new TagList("Passengers");
+
+                        for(var rawPassenger : ((TokenList)entry.find("PASSENGER_LIST")).getContents()) {
+                            if(rawPassenger.getName().equals("PASSENGER")) {
+
+                                TagCompound passengerCompound;
+
+                                Object reference = CommonParsers.parseEntityReference(rawPassenger.find("ENTITY_ID"), file.getCompiler());
+
+                                if(reference instanceof Type) {
+                                    passengerCompound = new TagCompound(new TagString("id", reference.toString()));
+                                } else if(reference instanceof CustomEntity) {
+                                    passengerCompound = ((CustomEntity) reference).getDefaultNBT().merge(new TagCompound(new TagString("id", ((CustomEntity) reference).getDefaultType().toString())));
+                                } else {
+                                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID")));
+                                    throw new EntryParsingException();
+                                }
+                                var auxNBT = rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND");
+                                if(auxNBT != null) passengerCompound = passengerCompound.merge(NBTParser.parseCompound(auxNBT));
+
+                                passengersTag.add(passengerCompound);
+                            }
+                        }
+
+                        entityDecl.setDefaultNBT(oldNBT.merge(new TagCompound(passengersTag)));
+                        break;
+                    }
+                    case "TICK_FUNCTION": {
+                        var innerFilePattern = entry.find("FILE_INNER");
+
+                        String innerFilePathRaw = file.getPath().toString();
+                        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
+
+                        TridentFile innerFile = new TridentFile(file.getCompiler(), Path.of(innerFilePathRaw).resolve("tick.tdn"), innerFilePattern);
+                        innerFile.resolveEntries();
+                        Function entityTickFunction = file.getNamespace().functions.get("trident_entity_tick");
+                        var tickTag = file.getCompiler().getModule().minecraft.tags.functionTags.create("tick");
+                        var functionReference = new FunctionReference(entityTickFunction);
+                        if(!tickTag.getValues().contains(functionReference)) tickTag.addValue(new FunctionReference(entityTickFunction));
+                        entityTickFunction.append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteAsEntity(TypeArgumentParser.getSelectorForCustomEntity(entityDecl)), new ExecuteAtEntity(new GenericEntity(new Selector(Selector.BaseSelector.SENDER)))));
                         break;
                     }
                     default:
