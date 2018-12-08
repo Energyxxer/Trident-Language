@@ -932,6 +932,7 @@ public class TridentProductions {
             g.append(new LazyTokenGroupMatch().append(ITEM_ID).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM.add(g);
+            ITEM.add(VARIABLE_MARKER);
             ITEM_TAGGED.add(ITEM);
         }
 

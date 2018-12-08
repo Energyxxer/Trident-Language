@@ -132,6 +132,10 @@ public class CommonParsers {
     public static Item parseItem(TokenPattern<?> pattern, TridentCompiler compiler) {
         if(pattern.getName().equals("ITEM_TAGGED") || pattern.getName().equals("ITEM")) return parseItem(((TokenStructure) pattern).getContents(), compiler);
 
+        if(pattern.getName().equals("VARIABLE_MARKER")) {
+            return retrieveSymbol(pattern, compiler, Item.class);
+        }
+
         boolean isStandalone = pattern.getName().equals("CONCRETE_RESOURCE");
 
         Type type;
