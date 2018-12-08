@@ -98,7 +98,7 @@ public class ScoreboardParser implements CommandParser {
             case "CHANGE": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), compiler);
                 Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), compiler);
-                int amount = Integer.parseInt(inner.find("INTEGER").flatten(false));
+                int amount = CommonParsers.parseInt(inner.find("INTEGER"), compiler);
 
                 if(inner.find("CHOICE.LITERAL_SET") != null) return new ScoreSet(new LocalScore(entity, objective), amount);
                 if(inner.find("CHOICE.LITERAL_REMOVE") != null) amount *= -1;

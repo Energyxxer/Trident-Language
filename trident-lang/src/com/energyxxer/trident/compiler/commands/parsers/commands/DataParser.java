@@ -11,6 +11,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
@@ -62,7 +63,7 @@ public class DataParser implements CommandParser {
                         inner.find("CHOICE").flatten(false).equals("AFTER") ?
                                 DataModifyCommand.InsertOrder.AFTER :
                                 DataModifyCommand.InsertOrder.BEFORE,
-                        Integer.parseInt(inner.find("INTEGER").flatten(false)));
+                        CommonParsers.parseInt(inner.find("INTEGER"), compiler));
                 break;
             }
             case "MODIFY_MERGE":

@@ -1713,8 +1713,8 @@ public class TridentProductions {
         return ofType(STRING_LITERAL).setName("STRING_LITERAL");
     }
 
-    private static LazyTokenItemMatch integer() {
-        return ofType(INTEGER_NUMBER).setName("INTEGER");
+    private static LazyTokenStructureMatch integer() {
+        return choice(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"), VARIABLE_MARKER).setName("INTEGER");
     }
 
     private static LazyTokenItemMatch real() {

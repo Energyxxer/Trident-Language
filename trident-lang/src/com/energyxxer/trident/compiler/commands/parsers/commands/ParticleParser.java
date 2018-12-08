@@ -37,7 +37,7 @@ public class ParticleParser implements CommandParser {
                         Double.parseDouble(sub1.find("DELTA.DZ").flatten(false))
                 );
                 double speed = Double.parseDouble(sub1.find("SPEED").flatten(false));
-                int count = Integer.parseInt(sub1.find("COUNT").flatten(false));
+                int count = CommonParsers.parseInt(sub1.find("COUNT"), file.getCompiler());
                 TokenPattern<?> sub2 = sub1.find("");
                 if(sub2 != null) {
                     boolean force = sub2.find("CHOICE").flatten(false).equals("force");
@@ -56,7 +56,7 @@ public class ParticleParser implements CommandParser {
             for(TokenPattern<?> arg : argsGroup.getContents()) {
                 switch(arg.getName()) {
                     case "INTEGER":
-                        arguments.add(Integer.parseInt(arg.flatten(false)));
+                        arguments.add(CommonParsers.parseInt(arg, compiler));
                         break;
                     case "REAL":
                         arguments.add(Double.parseDouble(arg.flatten(false)));

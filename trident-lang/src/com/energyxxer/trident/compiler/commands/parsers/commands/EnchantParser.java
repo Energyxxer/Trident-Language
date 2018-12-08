@@ -21,7 +21,7 @@ public class EnchantParser implements CommandParser {
         int level = 1;
         TokenPattern<?> rawLevel = pattern.find("LEVEL");
         if(rawLevel != null) {
-            level = Integer.parseInt(rawLevel.flatten(false));
+            level = CommonParsers.parseInt(rawLevel, file.getCompiler());
         }
         try {
             return new EnchantCommand(entity, enchantment, level);

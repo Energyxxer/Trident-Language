@@ -10,6 +10,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -25,13 +26,13 @@ public class ExperienceParser implements CommandParser {
         switch(inner.getName()) {
             case "ADD": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file.getCompiler());
-                int amount = Integer.parseInt(inner.find("INTEGER").flatten(false));
+                int amount = CommonParsers.parseInt(inner.find("INTEGER"), file.getCompiler());
                 ExperienceCommand.Unit unit = parseUnit(inner.find("UNIT"));
                 return new ExperienceAddCommand(entity, amount, unit);
             }
             case "SET": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file.getCompiler());
-                int amount = Integer.parseInt(inner.find("INTEGER").flatten(false));
+                int amount = CommonParsers.parseInt(inner.find("INTEGER"), file.getCompiler());
                 ExperienceCommand.Unit unit = parseUnit(inner.find("UNIT"));
                 return new ExperienceSetCommand(entity, amount, unit);
             }

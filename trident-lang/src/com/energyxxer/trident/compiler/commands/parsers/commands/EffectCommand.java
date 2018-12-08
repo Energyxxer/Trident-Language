@@ -31,8 +31,8 @@ public class EffectCommand implements CommandParser {
             case "GIVE": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file.getCompiler());
                 StatusEffect effect = new StatusEffect(CommonParsers.parseType(inner.find("EFFECT_ID"), file.getCompiler(), d->d.effect));
-                using(inner.find(".DURATION")).notIfNull().run(p -> effect.setDuration(20 * Integer.parseInt(p.flatten(false))));
-                using(inner.find("..AMPLIFIER")).notIfNull().run(p -> effect.setAmplifier(Integer.parseInt(p.flatten(false))));
+                using(inner.find(".DURATION")).notIfNull().run(p -> effect.setDuration(20 * CommonParsers.parseInt(p, file.getCompiler())));
+                using(inner.find("..AMPLIFIER")).notIfNull().run(p -> effect.setAmplifier(CommonParsers.parseInt(p, file.getCompiler())));
                 using(inner.find("..HIDE_PARTICLES")).notIfNull().run(p -> effect.setVisibility(p.flatten(false).equals("true") ? StatusEffect.ParticleVisibility.HIDDEN : StatusEffect.ParticleVisibility.VISIBLE));
                 return new EffectGiveCommand(entity, effect);
             }

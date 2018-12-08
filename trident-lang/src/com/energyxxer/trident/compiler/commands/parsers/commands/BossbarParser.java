@@ -18,6 +18,7 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.TextParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
@@ -81,7 +82,7 @@ public class BossbarParser implements CommandParser {
             case "SET_COLOR":
                 return new BossbarSetColorCommand(ref, BossbarCommand.BossbarColor.valueOf(inner.find("CHOICE").flatten(false).toUpperCase()));
             case "SET_MAX":
-                return new BossbarSetMaxCommand(ref, Integer.parseInt(inner.find("INTEGER").flatten(false)));
+                return new BossbarSetMaxCommand(ref, CommonParsers.parseInt(inner.find("INTEGER"), compiler));
             case "SET_NAME":
                 return new BossbarSetNameCommand(ref, TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), compiler));
             case "SET_PLAYERS":
@@ -89,7 +90,7 @@ public class BossbarParser implements CommandParser {
             case "SET_STYLE":
                 return new BossbarSetStyleCommand(ref, BossbarCommand.BossbarStyle.valueOf(inner.find("CHOICE").flatten(false).toUpperCase()));
             case "SET_VALUE":
-                return new BossbarSetValueCommand(ref, Integer.parseInt(inner.find("INTEGER").flatten(false)));
+                return new BossbarSetValueCommand(ref, CommonParsers.parseInt(inner.find("INTEGER"), compiler));
             case "SET_VISIBLE":
                 return new BossbarSetVisibleCommand(ref, inner.search(TridentTokens.BOOLEAN).get(0).value.equals("true"));
             default: {

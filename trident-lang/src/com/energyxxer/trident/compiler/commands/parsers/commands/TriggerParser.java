@@ -24,7 +24,7 @@ public class TriggerParser implements CommandParser {
         TokenPattern<?> inner = pattern.find("INNER");
         if(inner != null) {
             action = inner.find("CHOICE").flatten(false).equals("set") ? TriggerCommand.Action.SET : TriggerCommand.Action.ADD;
-            amount = Integer.parseInt(inner.find("INTEGER").flatten(false));
+            amount = CommonParsers.parseInt(inner.find("INTEGER"), file.getCompiler());
         }
         return new TriggerCommand(objective, action, amount);
     }

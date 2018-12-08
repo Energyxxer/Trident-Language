@@ -11,6 +11,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.TextParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
@@ -33,9 +34,9 @@ public class TitleCommand implements CommandParser {
                 return inner.find("LITERAL_CLEAR") != null ? new TitleClearCommand(entity) : new TitleResetCommand(entity);
             }
             case "TIMES": {
-                int fadeIn = Integer.parseInt(inner.find("FADEIN").flatten(false));
-                int stay = Integer.parseInt(inner.find("STAY").flatten(false));
-                int fadeOut = Integer.parseInt(inner.find("FADEOUT").flatten(false));
+                int fadeIn = CommonParsers.parseInt(inner.find("FADEIN"), file.getCompiler());
+                int stay = CommonParsers.parseInt(inner.find("STAY"), file.getCompiler());
+                int fadeOut = CommonParsers.parseInt(inner.find("FADEOUT"), file.getCompiler());
                 return new TitleTimesCommand(entity, fadeIn, stay, fadeOut);
             }
             default: {

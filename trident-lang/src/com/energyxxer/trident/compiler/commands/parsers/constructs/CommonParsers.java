@@ -360,6 +360,18 @@ public class CommonParsers {
         }
     }
 
+    public static int parseInt(TokenPattern<?> pattern, TridentCompiler compiler) {
+        TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
+        switch(inner.getName()) {
+            case "RAW_INTEGER": return Integer.parseInt(inner.flatten(false));
+            case "VARIABLE_MARKER": return retrieveSymbol(pattern, compiler, Integer.class);
+            default: {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
+                throw new EntryParsingException();
+            }
+        }
+    }
+
     public interface TypeGroupPicker {
         TypeDictionary<?> pick(TypeManager m);
     }

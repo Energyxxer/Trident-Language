@@ -18,7 +18,7 @@ public class GiveParser implements CommandParser {
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         Item item = CommonParsers.parseItem(pattern.find("ITEM"), file.getCompiler());
         TokenPattern<?> amountPattern = pattern.find("AMOUNT");
-        int amount = amountPattern != null ? Integer.parseInt(amountPattern.flattenTokens().get(0).value) : 1;
+        int amount = amountPattern != null ? CommonParsers.parseInt(amountPattern, file.getCompiler()) : 1;
 
         if(!item.getItemType().isStandalone()) {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Item tags aren't allowed in this context", pattern.find("ITEM")));

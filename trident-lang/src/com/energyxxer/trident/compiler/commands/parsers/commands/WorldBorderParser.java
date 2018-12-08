@@ -6,6 +6,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -22,7 +23,7 @@ public class WorldBorderParser implements CommandParser {
             case "CHANGE": {
                 double distance = Double.parseDouble(inner.find("DISTANCE").flatten(false));
                 int seconds = 0;
-                if(inner.find("TIME") != null) seconds = Integer.parseInt(inner.find("TIME").flatten(false));
+                if(inner.find("TIME") != null) seconds = CommonParsers.parseInt(inner.find("TIME"), file.getCompiler());
 
                 if(inner.find("CHOICE.LITERAL_ADD") != null) return new WorldBorderAddDistance(distance, seconds);
                 else return new WorldBorderSetDistance(distance, seconds);
@@ -33,7 +34,7 @@ public class WorldBorderParser implements CommandParser {
                 else return new WorldBorderSetDamageBuffer(damageOrDistance);
             }
             case "WARNING": {
-                int distanceOrTime = Integer.parseInt(inner.find("DISTANCE_OR_TIME").flatten(false));
+                int distanceOrTime = CommonParsers.parseInt(inner.find("DISTANCE_OR_TIME"), file.getCompiler());
                 if(inner.find("CHOICE.LITERAL_DISTANCE") != null) return new WorldBorderSetWarningDistance(distanceOrTime);
                 else return new WorldBorderSetWarningTime(distanceOrTime);
             }
