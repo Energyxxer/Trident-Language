@@ -8,6 +8,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
@@ -20,6 +21,10 @@ public class FillParser implements CommandParser {
         CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file.getCompiler());
         CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file.getCompiler());
         Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), file.getCompiler());
+        if(!block.getBlockType().isStandalone()) {
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Block tags aren't allowed in this context", pattern.find("BLOCK")));
+            throw new EntryParsingException();
+        }
         FillCommand.FillMode mode = new FillReplaceMode();
 
         TokenPattern<?> inner = pattern.find("CHOICE");

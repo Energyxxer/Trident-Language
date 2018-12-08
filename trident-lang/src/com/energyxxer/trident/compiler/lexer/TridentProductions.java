@@ -914,6 +914,7 @@ public class TridentProductions {
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE).setName("BLOCKSTATE_CLAUSE"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND).setName("NBT_CLAUSE"));
             BLOCK.add(g);
+            BLOCK.add(VARIABLE_MARKER);
             BLOCK_TAGGED.add(BLOCK);
         }
 

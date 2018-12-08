@@ -105,6 +105,7 @@ public class TridentCompiler {
 
         this.getReport().addNotices(lex.getNotices());
         if(lex.getNotices().size() > 0) {
+            this.setProgress("Compilation interrupted with " + report.getTotalsString(), false);
             finalizeCompilation();
             return;
         }
@@ -140,6 +141,7 @@ public class TridentCompiler {
         }
 
         if(report.hasErrors()) {
+            this.setProgress("Compilation interrupted with " + report.getTotalsString(), false);
             finalizeCompilation();
             return;
         }
