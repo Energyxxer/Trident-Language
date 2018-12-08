@@ -110,7 +110,7 @@ public class DataParser implements CommandParser {
             TokenPattern<?> scalePattern = pathClause.find("SCALE");
             double scale = 1;
             if(scalePattern != null) {
-                scale = Double.parseDouble(scalePattern.flatten(false));
+                scale = CommonParsers.parseDouble(scalePattern, compiler);
             }
             if(target instanceof CoordinateSet) {
                 return new DataGetCommand((CoordinateSet) target, path, scale);

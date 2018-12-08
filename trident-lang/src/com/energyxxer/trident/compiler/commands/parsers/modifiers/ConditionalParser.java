@@ -49,7 +49,7 @@ public class ConditionalParser implements ModifierParser {
                         return new ExecuteConditionScoreComparison(conditionType, scoreA, ScoreComparison.getValueForSymbol(rawOp), scoreB);
                     }
                     case "MATCHES": {
-                        NumberRange<Integer> range = CommonParsers.parseIntRange(choice.find("INTEGER_NUMBER_RANGE"));
+                        NumberRange<Integer> range = CommonParsers.parseIntRange(choice.find("INTEGER_NUMBER_RANGE"), compiler);
                         return new ExecuteConditionScoreMatch(conditionType, scoreA, range);
                     }
                     case "ISSET": {

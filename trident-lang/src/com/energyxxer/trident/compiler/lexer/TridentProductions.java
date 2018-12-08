@@ -914,7 +914,7 @@ public class TridentProductions {
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE).setName("BLOCKSTATE_CLAUSE"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND).setName("NBT_CLAUSE"));
             BLOCK.add(g);
-            BLOCK.add(group(VARIABLE_MARKER, optional(BLOCKSTATE).setName("APPENDED_BLOCKSTATE"), optional(NBT_COMPOUND).setName("APPENDED_NBT")).setName("BLOCK_VARIABLE"));
+            BLOCK.add(group(VARIABLE_MARKER, optional(glue(), BLOCKSTATE).setName("APPENDED_BLOCKSTATE"), optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("BLOCK_VARIABLE"));
             BLOCK_TAGGED.add(BLOCK);
         }
 
@@ -932,7 +932,7 @@ public class TridentProductions {
             g.append(new LazyTokenGroupMatch().append(ITEM_ID).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM.add(g);
-            ITEM.add(group(VARIABLE_MARKER, optional(NBT_COMPOUND).setName("APPENDED_NBT")).setName("ITEM_VARIABLE"));
+            ITEM.add(group(VARIABLE_MARKER, optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("ITEM_VARIABLE"));
             ITEM_TAGGED.add(ITEM);
         }
 
@@ -1010,22 +1010,27 @@ public class TridentProductions {
         {
             var NBT_PATH_NODE = new LazyTokenStructureMatch("NBT_PATH_NODE");
 
+            var STRING_LITERAL_OR_IDENTIFIER_D = choice(string(), ofType(IDENTIFIER_TYPE_D).setName("IDENTIFIER_D")).setName("STRING_LITERAL_OR_IDENTIFIER_D");
+
             NBT_PATH_NODE.add(
                     group(
                             dot().setName("NBT_PATH_SEPARATOR"),
                             glue(),
-                            group(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_PATH_KEY_LABEL")
+                            group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL")
                     ).setName("NBT_PATH_KEY"));
 
             NBT_PATH_NODE.add(group(brace("["), integer(), brace("]")).setName("NBT_PATH_INDEX"));
 
             NBT_PATH_NODE.add(group(brace("["), NBT_COMPOUND, brace("]")).setName("NBT_PATH_LIST_MATCH"));
 
+            NBT_PATH_NODE.add(group(brace("["), VARIABLE_MARKER, brace("]")).setName("NBT_PATH_LIST_UNKNOWN"));
+
             NBT_PATH_NODE.add(group(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH"));
 
             NBT_PATH.add(VARIABLE_MARKER);
-            NBT_PATH.add(group(choice(group(group(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_PATH_KEY_LABEL")).setName("NBT_PATH_KEY")).setName("NBT_PATH_NODE"),
-                    list(NBT_PATH_NODE, glue()).setOptional().setName("OTHER_NODES")).setName("RAW_NBT_PATH"));
+            NBT_PATH.add(group(
+                    choice(group(group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL")).setName("NBT_PATH_KEY")).setName("NBT_PATH_NODE"),
+                    list(group(glue(), NBT_PATH_NODE)).setOptional().setName("OTHER_NODES")).setName("RAW_NBT_PATH"));
         }
         //endregion
         //region Selector
@@ -1717,8 +1722,8 @@ public class TridentProductions {
         return choice(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"), VARIABLE_MARKER).setName("INTEGER");
     }
 
-    private static LazyTokenItemMatch real() {
-        return ofType(REAL_NUMBER).setName("REAL");
+    private static LazyTokenStructureMatch real() {
+        return choice(ofType(REAL_NUMBER).setName("RAW_REAL"), VARIABLE_MARKER).setName("REAL");
     }
 
     private static LazyTokenItemMatch glue() {

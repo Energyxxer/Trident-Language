@@ -11,6 +11,6 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 public class PitchArgumentParser implements SimpleSelectorArgumentParser {
     @Override
     public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
-        return new PitchArgument(CommonParsers.parseRealRange(pattern));
+        return new PitchArgument(CommonParsers.parseRealRange(pattern, compiler));
     }
 }

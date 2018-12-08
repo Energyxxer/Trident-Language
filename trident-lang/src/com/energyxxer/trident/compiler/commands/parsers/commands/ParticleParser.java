@@ -32,11 +32,11 @@ public class ParticleParser implements CommandParser {
             TokenPattern<?> sub1 = sub.find("");
             if(sub1 != null) {
                 Delta delta = new Delta(
-                        Double.parseDouble(sub1.find("DELTA.DX").flatten(false)),
-                        Double.parseDouble(sub1.find("DELTA.DY").flatten(false)),
-                        Double.parseDouble(sub1.find("DELTA.DZ").flatten(false))
+                        CommonParsers.parseDouble(sub1.find("DELTA.DX"), file.getCompiler()),
+                        CommonParsers.parseDouble(sub1.find("DELTA.DY"), file.getCompiler()),
+                        CommonParsers.parseDouble(sub1.find("DELTA.DZ"), file.getCompiler())
                 );
-                double speed = Double.parseDouble(sub1.find("SPEED").flatten(false));
+                double speed = CommonParsers.parseDouble(sub1.find("SPEED"), file.getCompiler());
                 int count = CommonParsers.parseInt(sub1.find("COUNT"), file.getCompiler());
                 TokenPattern<?> sub2 = sub1.find("");
                 if(sub2 != null) {
@@ -59,13 +59,13 @@ public class ParticleParser implements CommandParser {
                         arguments.add(CommonParsers.parseInt(arg, compiler));
                         break;
                     case "REAL":
-                        arguments.add(Double.parseDouble(arg.flatten(false)));
+                        arguments.add(CommonParsers.parseDouble(arg, compiler));
                         break;
                     case "COLOR": {
                         arguments.add(new ParticleColor(
-                                Double.parseDouble(arg.find("RED_COMPONENT").flatten(false)),
-                                Double.parseDouble(arg.find("GREEN_COMPONENT").flatten(false)),
-                                Double.parseDouble(arg.find("BLUE_COMPONENT").flatten(false))
+                                CommonParsers.parseDouble(arg.find("RED_COMPONENT"), compiler),
+                                CommonParsers.parseDouble(arg.find("GREEN_COMPONENT"), compiler),
+                                CommonParsers.parseDouble(arg.find("BLUE_COMPONENT"), compiler)
                         ));
                         break;
                     }

@@ -30,7 +30,7 @@ public class ScoresArgumentParser implements SimpleSelectorArgumentParser {
                     var valueInner = ((TokenStructure) rawArg.find("SCORE_VALUE")).getContents();
                     switch(valueInner.getName()) {
                         case "INTEGER_NUMBER_RANGE":
-                            range = CommonParsers.parseIntRange(valueInner);
+                            range = CommonParsers.parseIntRange(valueInner, compiler);
                             break;
                         case "ISSET":
                             range = new NumberRange<>(Integer.MIN_VALUE, null);

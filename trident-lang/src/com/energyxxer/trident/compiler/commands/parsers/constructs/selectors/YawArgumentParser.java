@@ -11,6 +11,6 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 public class YawArgumentParser implements SimpleSelectorArgumentParser {
     @Override
     public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
-        return new YawArgument(CommonParsers.parseRealRange(pattern));
+        return new YawArgument(CommonParsers.parseRealRange(pattern, compiler));
     }
 }

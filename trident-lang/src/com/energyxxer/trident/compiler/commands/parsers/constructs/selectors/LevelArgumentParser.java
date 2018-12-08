@@ -11,6 +11,6 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 public class LevelArgumentParser implements SimpleSelectorArgumentParser {
     @Override
     public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
-        return new LevelArgument(CommonParsers.parseIntRange(pattern));
+        return new LevelArgument(CommonParsers.parseIntRange(pattern, compiler));
     }
 }

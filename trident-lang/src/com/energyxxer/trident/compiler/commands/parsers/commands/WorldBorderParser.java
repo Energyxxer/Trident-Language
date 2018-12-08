@@ -21,7 +21,7 @@ public class WorldBorderParser implements CommandParser {
                 return new WorldBorderGetWidth();
             }
             case "CHANGE": {
-                double distance = Double.parseDouble(inner.find("DISTANCE").flatten(false));
+                double distance = CommonParsers.parseDouble(inner.find("DISTANCE"), file.getCompiler());
                 int seconds = 0;
                 if(inner.find("TIME") != null) seconds = CommonParsers.parseInt(inner.find("TIME"), file.getCompiler());
 
@@ -29,7 +29,7 @@ public class WorldBorderParser implements CommandParser {
                 else return new WorldBorderSetDistance(distance, seconds);
             }
             case "DAMAGE": {
-                double damageOrDistance = Double.parseDouble(inner.find("DAMAGE_OR_DISTANCE").flatten(false));
+                double damageOrDistance = CommonParsers.parseDouble(inner.find("DAMAGE_OR_DISTANCE"), file.getCompiler());
                 if(inner.find("CHOICE.LITERAL_AMOUNT") != null) return new WorldBorderSetDamageAmount(damageOrDistance);
                 else return new WorldBorderSetDamageBuffer(damageOrDistance);
             }

@@ -7,7 +7,10 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.commands.EntryParsingException;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -122,9 +125,7 @@ public class NBTParser {
         TokenList otherNodes = (TokenList) pattern.find("OTHER_NODES");
         if(otherNodes != null) {
             for(TokenPattern<?> node : otherNodes.getContents()) {
-                if(!node.getName().equals("GLUE")) {
-                    nodes.add(parsePathNode(node, compiler));
-                }
+                nodes.add(parsePathNode(node.find("NBT_PATH_NODE"), compiler));
             }
         }
 
@@ -140,10 +141,21 @@ public class NBTParser {
                 return new NBTPathKey(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("NBT_PATH_KEY_LABEL")));
             }
             case "NBT_PATH_INDEX": {
-                return new NBTPathIndex(Integer.parseInt(pattern.find("INTEGER").flatten(false)));
+                return new NBTPathIndex(CommonParsers.parseInt(pattern.find("INTEGER"), compiler));
             }
             case "NBT_PATH_LIST_MATCH": {
                 return new NBTListMatch(parseCompound(pattern.find("NBT_COMPOUND"), compiler));
+            }
+            case "NBT_PATH_LIST_UNKNOWN": {
+                Object val = CommonParsers.retrieveSymbol(pattern.find("VARIABLE_MARKER"), compiler, Integer.class, TagCompound.class);
+                if(val instanceof Integer) {
+                    return new NBTPathIndex((int) val);
+                } else if(val instanceof TagCompound){
+                    return new NBTListMatch((TagCompound) val);
+                } else {
+                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown symbol return type: " + val.getClass().getSimpleName(), pattern));
+                    throw new EntryParsingException();
+                }
             }
             case "NBT_PATH_COMPOUND_MATCH": {
                 return new NBTObjectMatch(parseCompound(pattern.find("NBT_COMPOUND"), compiler));

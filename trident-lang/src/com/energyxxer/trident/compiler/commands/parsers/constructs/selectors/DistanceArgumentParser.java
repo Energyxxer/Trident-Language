@@ -11,6 +11,6 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 public class DistanceArgumentParser implements SimpleSelectorArgumentParser {
     @Override
     public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
-        return new DistanceArgument(CommonParsers.parseRealRange(pattern));
+        return new DistanceArgument(CommonParsers.parseRealRange(pattern, compiler));
     }
 }

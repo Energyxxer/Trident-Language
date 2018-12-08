@@ -216,9 +216,9 @@ public class CommonParsers {
         return blockstate;
     }
 
-    public static NumberRange<Integer> parseIntRange(TokenPattern<?> pattern) {
+    public static NumberRange<Integer> parseIntRange(TokenPattern<?> pattern, TridentCompiler compiler) {
         TokenPattern<?> exact = pattern.find("EXACT");
-        if(exact != null) return new NumberRange<>(Integer.parseInt(pattern.flatten(false)));
+        if(exact != null) return new NumberRange<>(parseInt(pattern, compiler));
         List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
         List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
         Integer min = null;
@@ -232,18 +232,18 @@ public class CommonParsers {
         return new NumberRange<>(min, max);
     }
 
-    public static NumberRange<Double> parseRealRange(TokenPattern<?> pattern) {
+    public static NumberRange<Double> parseRealRange(TokenPattern<?> pattern, TridentCompiler compiler) {
         TokenPattern<?> exact = pattern.find("EXACT");
-        if(exact != null) return new NumberRange<>(Double.parseDouble(pattern.flatten(false)));
+        if(exact != null) return new NumberRange<>(parseDouble(pattern, compiler));
         List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
         List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
         Double min = null;
         Double max = null;
         if(!minRaw.isEmpty()) {
-            min = Double.parseDouble(minRaw.get(0).flatten(false));
+            min = CommonParsers.parseDouble(minRaw.get(0), compiler);
         }
         if(!maxRaw.isEmpty()) {
-            max = Double.parseDouble(maxRaw.get(0).flatten(false));
+            max = CommonParsers.parseDouble(maxRaw.get(0), compiler);
         }
         return new NumberRange<>(min, max);
     }
@@ -292,8 +292,8 @@ public class CommonParsers {
 
     public static Object parseAnything(TokenPattern<?> pattern, TridentCompiler compiler) {
         switch(pattern.getName()) {
-            case "INTEGER": return Integer.parseInt(pattern.flatten(false));
-            case "REAL": return Double.parseDouble(pattern.flatten(false));
+            case "INTEGER": return parseInt(pattern, compiler);
+            case "REAL": return parseDouble(pattern, compiler);
             case "STRING_LITERAL": return CommandUtils.parseQuotedString(pattern.flatten(false));
             case "BOOLEAN": return pattern.flatten(false).equals("true");
             case "ENTITY": return EntityParser.parseEntity(pattern, compiler);
@@ -365,6 +365,18 @@ public class CommonParsers {
         switch(inner.getName()) {
             case "RAW_INTEGER": return Integer.parseInt(inner.flatten(false));
             case "VARIABLE_MARKER": return retrieveSymbol(pattern, compiler, Integer.class);
+            default: {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
+                throw new EntryParsingException();
+            }
+        }
+    }
+
+    public static double parseDouble(TokenPattern<?> pattern, TridentCompiler compiler) {
+        TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
+        switch(inner.getName()) {
+            case "RAW_REAL": return Double.parseDouble(inner.flatten(false));
+            case "VARIABLE_MARKER": return retrieveSymbol(pattern, compiler, Double.class);
             default: {
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
                 throw new EntryParsingException();
