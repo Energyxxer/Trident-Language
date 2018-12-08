@@ -169,7 +169,7 @@ public class CommonParsers {
             if(appendedState != null) {
                 Blockstate state = block.getBlockstate();
                 if(state == null) state = new Blockstate();
-                block = new Block(block.getBlockType(), parseBlockstate(appendedState), block.getNBT()); //TODO for Commodore: add Blockstate#merge
+                block = new Block(block.getBlockType(), state.merge(parseBlockstate(appendedState)), block.getNBT()); //TODO for Commodore: add Blockstate#merge
             }
             var appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
             if(appendedNBT != null) {
