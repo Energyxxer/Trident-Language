@@ -26,7 +26,13 @@ public class TextParser {
         if(pattern == null) return null;
         switch(pattern.getName()) {
             case "TEXT_COMPONENT": {
-                return parseTextComponent(JsonParser.parseJson(((TokenStructure) pattern).getContents(), compiler), compiler, pattern, TextComponentContext.CHAT);
+                return parseTextComponent(((TokenStructure)pattern).getContents(), compiler);
+            }
+            case "VARIABLE_MARKER": {
+                return CommonParsers.retrieveSymbol(pattern, compiler, TextComponent.class);
+            }
+            case "JSON_ELEMENT": {
+                return parseTextComponent(JsonParser.parseJson(pattern, compiler), compiler, pattern, TextComponentContext.CHAT);
             }
             default: {
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown text component production: '" + pattern.getName() + "'", pattern));

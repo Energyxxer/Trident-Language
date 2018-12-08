@@ -970,6 +970,7 @@ public class TridentProductions {
             JSON_ELEMENT.add(real().setName("NUMBER"));
             JSON_ELEMENT.add(ofType(BOOLEAN).setName("BOOLEAN"));
 
+            TEXT_COMPONENT.add(VARIABLE_MARKER);
             TEXT_COMPONENT.add(JSON_ELEMENT);
         }
         //endregion
@@ -1645,7 +1646,7 @@ public class TridentProductions {
                                     group(optional(brace("<"), literal("nbt_compound"), brace(">")), equals(), choice(NBT_COMPOUND).setName("VARIABLE_VALUE")),
                                     group(optional(brace("<"), literal("nbt_path"), brace(">")), equals(), choice(NBT_PATH).setName("VARIABLE_VALUE")),
                                     group(optional(brace("<"), literal("text_component"), brace(">")), equals(), choice(TEXT_COMPONENT).setName("VARIABLE_VALUE")),
-                                    group(equals(), choice(integer(), real(), string(), ofType(BOOLEAN).setName("BOOLEAN"), ENTITY, BLOCK_TAGGED, ITEM_TAGGED, COORDINATE_SET, NBT_COMPOUND, NBT_PATH, TEXT_COMPONENT).setName("VARIABLE_VALUE"))
+                                    group(equals(), choice(NBT_PATH, integer(), real(), string(), ofType(BOOLEAN).setName("BOOLEAN"), ENTITY, BLOCK_TAGGED, ITEM_TAGGED, COORDINATE_SET, NBT_COMPOUND, TEXT_COMPONENT).setName("VARIABLE_VALUE"))
                             ).setName("VARIABLE_INITIALIZATION")
                     )
             );
