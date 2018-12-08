@@ -30,7 +30,7 @@ public class StoreParser implements ModifierParser {
         switch(inner.getName()) {
             case "STORE_BLOCK": {
                 CoordinateSet pos = CoordinateParser.parse(inner.find("COORDINATE_SET"), compiler);
-                NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"));
+                NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"), compiler);
                 NumericNBTType type = parseNumericType(inner.find("NUMERIC_TYPE"));
                 double scale = Double.parseDouble(inner.find("SCALE").flatten(false));
                 return new ExecuteStoreBlock(storeValue, pos, path, type, scale);
@@ -43,7 +43,7 @@ public class StoreParser implements ModifierParser {
             }
             case "STORE_ENTITY": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), compiler);
-                NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"));
+                NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"), compiler);
                 NumericNBTType type = parseNumericType(inner.find("NUMERIC_TYPE"));
                 double scale = Double.parseDouble(inner.find("SCALE").flatten(false));
                 return new ExecuteStoreEntity(storeValue, entity, path, type, scale);

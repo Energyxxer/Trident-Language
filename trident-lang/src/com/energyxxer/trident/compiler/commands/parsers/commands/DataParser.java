@@ -36,7 +36,7 @@ public class DataParser implements CommandParser {
 
     private Command parseRemove(TokenPattern<?> inner, TridentCompiler compiler) {
         Object target = parseTarget(inner.find("DATA_TARGET"), compiler);
-        NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"));
+        NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"), compiler);
 
         if(target instanceof CoordinateSet) {
             return new DataRemoveCommand((CoordinateSet) target, path);
@@ -47,7 +47,7 @@ public class DataParser implements CommandParser {
 
     private Command parseModify(TokenPattern<?> pattern, TridentCompiler compiler) {
         Object target = parseTarget(pattern.find("DATA_TARGET"), compiler);
-        NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"));
+        NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"), compiler);
         DataModifyCommand.ModifyOperation operation = null;
 
 
@@ -91,7 +91,7 @@ public class DataParser implements CommandParser {
 
     private Command parseMerge(TokenPattern<?> inner, TridentCompiler compiler) {
         Object target = parseTarget(inner.find("DATA_TARGET"), compiler);
-        TagCompound nbt = NBTParser.parseCompound(inner.find("NBT_COMPOUND"));
+        TagCompound nbt = NBTParser.parseCompound(inner.find("NBT_COMPOUND"), compiler);
 
         if(target instanceof CoordinateSet) {
             return new DataMergeCommand((CoordinateSet) target, nbt);
@@ -105,7 +105,7 @@ public class DataParser implements CommandParser {
 
         TokenPattern<?> pathClause = inner.find("PATH_CLAUSE");
         if(pathClause != null) {
-            NBTPath path = NBTParser.parsePath(pathClause.find("NBT_PATH"));
+            NBTPath path = NBTParser.parsePath(pathClause.find("NBT_PATH"), compiler);
             TokenPattern<?> scalePattern = pathClause.find("SCALE");
             double scale = 1;
             if(scalePattern != null) {
@@ -135,11 +135,11 @@ public class DataParser implements CommandParser {
         TokenPattern<?> inner = ((TokenStructure)pattern).getContents();
         switch(inner.getName()) {
             case "LITERAL_SOURCE": {
-                return new ModifySourceValue(NBTParser.parseValue(inner.find("NBT_VALUE")));
+                return new ModifySourceValue(NBTParser.parseValue(inner.find("NBT_VALUE"), compiler));
             }
             case "TARGET_SOURCE": {
                 Object target = parseTarget(inner.find("DATA_TARGET"), compiler);
-                NBTPath path = NBTParser.parsePath(inner.find("PATH_CLAUSE.NBT_PATH"));
+                NBTPath path = NBTParser.parsePath(inner.find("PATH_CLAUSE.NBT_PATH"), compiler);
 
                 if(target instanceof CoordinateSet) {
                     return new ModifySourceFromBlock((CoordinateSet) target, path);

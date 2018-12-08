@@ -77,10 +77,7 @@ public class TridentProductions {
 
     //grouped arguments
     public static final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
-    public static final LazyTokenStructureMatch VARIABLE_MARKER = choice(
-            group(symbol("$"), glue(), brace("{"), ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"), brace("}")),
-            group(symbol("$"), glue(), ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"))
-    ).setName("VARIABLE_MARKER");
+    public static final LazyTokenStructureMatch VARIABLE_MARKER;
     public static final LazyTokenStructureMatch POINTER;
 
     static {
@@ -126,6 +123,13 @@ public class TridentProductions {
 
         TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "light_gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white").setName("TEXT_COLOR");
 
+        {
+            var variableModifierHeader = group(choice("nbt").setName("VARIABLE_MODIFIER_FUNCTION"), colon()).setOptional().setName("VARIABLE_MODIFIER");
+            VARIABLE_MARKER = choice(
+                    group(symbol("$"), glue(), brace("{"), variableModifierHeader, ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"), brace("}")),
+                    group(symbol("$"), glue(), variableModifierHeader, ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"))
+            ).setName("VARIABLE_MARKER");
+        }
 
         ENTITY.add(PLAYER_NAME);
         ENTITY.add(SELECTOR);
@@ -972,7 +976,7 @@ public class TridentProductions {
         //region NBT
         {
             {
-                var g = new LazyTokenGroupMatch();
+                var g = new LazyTokenGroupMatch().setName("NBT_COMPOUND_GROUP");
                 g.append(brace("{"));
                 {
                     var g2 = new LazyTokenGroupMatch();
@@ -983,6 +987,7 @@ public class TridentProductions {
                 }
                 g.append(brace("}"));
                 NBT_COMPOUND.add(g);
+                NBT_COMPOUND.add(VARIABLE_MARKER);
                 NBT_VALUE.add(NBT_COMPOUND);
             }
             {
@@ -1604,7 +1609,7 @@ public class TridentProductions {
             var entityBodyEntry = choice(
                     group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT"),
                     group(literal("default"), literal("passengers"), brace("["), list(group(ENTITY_ID, optional(NBT_COMPOUND).setName("PASSENGER_NBT")).setName("PASSENGER"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
-                    group(literal("function"), literal("tick"), brace("{"), FILE_INNER, brace("}")).setName("TICK_FUNCTION")
+                    group(literal("ticking").setOptional(), literal("function"), ofType(RESOURCE_LOCATION).setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")).setName("INNER_FUNCTION")
             );
 
             var entityBody = group(

@@ -69,7 +69,7 @@ public class ConditionalParser implements ModifierParser {
                 return new ExecuteConditionRegion(conditionType, from, to, template, subject.find("AIR_POLICY").flatten(false).equals("masked") ? ExecuteConditionRegion.AirPolicy.MASKED : ExecuteConditionRegion.AirPolicy.ALL);
             }
             case "DATA_CONDITION": {
-                NBTPath path = NBTParser.parsePath(subject.find("NBT_PATH"));
+                NBTPath path = NBTParser.parsePath(subject.find("NBT_PATH"), compiler);
 
                 TokenPattern<?> dataSubject = ((TokenStructure)subject.find("CHOICE")).getContents();
                 switch(dataSubject.getName()) {

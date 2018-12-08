@@ -25,6 +25,8 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
+import com.energyxxer.trident.compiler.commands.parsers.variable_functions.VariableFunction;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 
@@ -140,7 +142,7 @@ public class CommonParsers {
             type = parseItemTag(pattern.find("RESOURCE_NAME.RESOURCE_LOCATION"), compiler);
         }
 
-        TagCompound tag = NBTParser.parseCompound(pattern.find(".NBT_COMPOUND"));
+        TagCompound tag = NBTParser.parseCompound(pattern.find(".NBT_COMPOUND"), compiler);
         return new Item(type, tag);
     }
 
@@ -159,7 +161,7 @@ public class CommonParsers {
 
 
         Blockstate state = parseBlockstate(pattern.find("BLOCKSTATE_CLAUSE.BLOCKSTATE"));
-        TagCompound tag = NBTParser.parseCompound(pattern.find("NBT_CLAUSE.NBT_COMPOUND"));
+        TagCompound tag = NBTParser.parseCompound(pattern.find("NBT_CLAUSE.NBT_COMPOUND"), compiler);
         return new Block(type, state, tag);
     }
 
@@ -273,9 +275,9 @@ public class CommonParsers {
             case "COORDINATE_SET":
                 return CoordinateParser.parse(pattern, compiler);
             case "NBT_COMPOUND":
-                return NBTParser.parseCompound(pattern);
+                return NBTParser.parseCompound(pattern, compiler);
             case "NBT_PATH":
-                return NBTParser.parsePath(pattern);
+                return NBTParser.parsePath(pattern, compiler);
             case "TEXT_COMPONENT":
                 return TextParser.parseTextComponent(pattern, compiler);
             default: {
@@ -308,8 +310,18 @@ public class CommonParsers {
 
     public static Object retrieveSymbol(TokenPattern<?> pattern, TridentCompiler compiler) {
         String name = pattern.find("VARIABLE_NAME").flatten(false);
+        var modPattern = pattern.find("VARIABLE_MODIFIER.VARIABLE_MODIFIER_FUNCTION");
+        String mod = modPattern != null ? modPattern.flatten(false) : null;
+
         Symbol symbol = compiler.getStack().search(name);
+
         if(symbol != null) {
+
+            if(mod != null) {
+                VariableFunction varFunction = ParserManager.getParser(VariableFunction.class, mod);
+                if (varFunction != null) return varFunction.process(symbol.getValue(), pattern, compiler);
+            }
+
             return symbol.getValue();
         } else {
             compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + name + "' is not defined", pattern));

@@ -7,25 +7,32 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.trident.compiler.TridentCompiler;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NBTParser {
-    public static TagCompound parseCompound(TokenPattern<?> pattern) {
+    public static TagCompound parseCompound(TokenPattern<?> pattern, TridentCompiler compiler) {
         if(pattern == null) return null;
-        return (TagCompound)parseValue(pattern);
+        return (TagCompound)parseValue(pattern, compiler);
     }
 
-    public static NBTTag parseValue(TokenPattern<?> pattern) {
+    public static NBTTag parseValue(TokenPattern<?> pattern, TridentCompiler compiler) {
         switch(pattern.getName()) {
             case "NBT_VALUE": {
-                return parseValue(((TokenStructure)pattern).getContents());
+                return parseValue(((TokenStructure)pattern).getContents(), compiler);
             }
             case "NBT_COMPOUND": {
+                return parseValue(((TokenStructure)pattern).getContents(), compiler);
+            }
+            case "VARIABLE_MARKER": {
+                return CommonParsers.retrieveSymbol(pattern, compiler, TagCompound.class);
+            }
+            case "NBT_COMPOUND_GROUP": {
                 TagCompound compound = new TagCompound();
-                TokenList entries = (TokenList) pattern.find(".NBT_COMPOUND_ENTRIES");
+                TokenList entries = (TokenList) pattern.find("NBT_COMPOUND_ENTRIES");
                 if(entries != null) {
                     for (TokenPattern<?> inner : entries.getContents()) {
                         if (inner instanceof TokenGroup) {
@@ -33,7 +40,7 @@ public class NBTParser {
                             if (key.startsWith("\"")) {
                                 key = CommandUtils.parseQuotedString(key);
                             }
-                            NBTTag value = parseValue(inner.find("NBT_VALUE"));
+                            NBTTag value = parseValue(inner.find("NBT_VALUE"), compiler);
                             value.setName(key);
                             compound.add(value);
                         }
@@ -47,7 +54,7 @@ public class NBTParser {
                 if(entries != null) {
                     for (TokenPattern<?> inner : entries.getContents()) {
                         if (!inner.getName().equals("COMMA")) {
-                            NBTTag value = parseValue(inner.find("NBT_VALUE"));
+                            NBTTag value = parseValue(inner.find("NBT_VALUE"), compiler);
                             list.add(value);
                         }
                     }
@@ -103,9 +110,9 @@ public class NBTParser {
     private NBTParser() {
     }
 
-    public static NBTPath parsePath(TokenPattern<?> pattern) {
+    public static NBTPath parsePath(TokenPattern<?> pattern, TridentCompiler compiler) {
         if(pattern == null) return null;
-        NBTPathNode start = parsePathNode(pattern.find("NBT_PATH_NODE"));
+        NBTPathNode start = parsePathNode(pattern.find("NBT_PATH_NODE"), compiler);
         ArrayList<NBTPathNode> nodes = new ArrayList<>();
         nodes.add(start);
 
@@ -113,7 +120,7 @@ public class NBTParser {
         if(otherNodes != null) {
             for(TokenPattern<?> node : otherNodes.getContents()) {
                 if(!node.getName().equals("GLUE")) {
-                    nodes.add(parsePathNode(node));
+                    nodes.add(parsePathNode(node, compiler));
                 }
             }
         }
@@ -121,10 +128,10 @@ public class NBTParser {
         return new NBTPath(nodes.toArray(new NBTPathNode[0]));
     }
 
-    private static NBTPathNode parsePathNode(TokenPattern<?> pattern) {
+    private static NBTPathNode parsePathNode(TokenPattern<?> pattern, TridentCompiler compiler) {
         switch(pattern.getName()) {
             case "NBT_PATH_NODE": {
-                return parsePathNode(((TokenStructure) pattern).getContents());
+                return parsePathNode(((TokenStructure) pattern).getContents(), compiler);
             }
             case "NBT_PATH_KEY": {
                 return new NBTPathKey(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("NBT_PATH_KEY_LABEL")));
@@ -133,10 +140,10 @@ public class NBTParser {
                 return new NBTPathIndex(Integer.parseInt(pattern.find("INTEGER").flatten(false)));
             }
             case "NBT_PATH_LIST_MATCH": {
-                return new NBTListMatch(parseCompound(pattern.find("NBT_COMPOUND")));
+                return new NBTListMatch(parseCompound(pattern.find("NBT_COMPOUND"), compiler));
             }
             case "NBT_PATH_COMPOUND_MATCH": {
-                return new NBTObjectMatch(parseCompound(pattern.find("NBT_COMPOUND")));
+                return new NBTObjectMatch(parseCompound(pattern.find("NBT_COMPOUND"), compiler));
             }
             default: {
                 throw new IllegalArgumentException("Unknown NBT path grammar pattern name '" + pattern.getName() + "'");

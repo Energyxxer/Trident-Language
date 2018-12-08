@@ -10,6 +10,7 @@ public class CustomEntity {
     private final Type defaultType;
     private TagCompound defaultNBT;
     private String idTag;
+    private boolean fullyDeclared = false;
 
     public CustomEntity(String id, Type defaultType) {
         this.id = id;
@@ -40,5 +41,13 @@ public class CustomEntity {
 
     private TagCompound getBaseNBT() {
         return new TagCompound(new TagList("Tags", new TagString(idTag)));
+    }
+
+    public boolean isFullyDeclared() {
+        return fullyDeclared;
+    }
+
+    public void endDeclaration() {
+        fullyDeclared = true;
     }
 }

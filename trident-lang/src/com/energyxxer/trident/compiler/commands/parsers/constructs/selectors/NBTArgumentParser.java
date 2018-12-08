@@ -11,6 +11,6 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 public class NBTArgumentParser implements SimpleSelectorArgumentParser {
     @Override
     public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
-        return new NBTArgument(NBTParser.parseCompound(pattern.find("NBT_COMPOUND")), pattern.find("NEGATED") != null);
+        return new NBTArgument(NBTParser.parseCompound(pattern.find("NBT_COMPOUND"), compiler), pattern.find("NEGATED") != null);
     }
 }

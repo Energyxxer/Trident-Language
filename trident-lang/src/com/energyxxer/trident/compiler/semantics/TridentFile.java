@@ -203,7 +203,7 @@ public class TridentFile implements CompilerExtension {
                 if(next != null) {
                     next.checkCircularRequires(previous);
                 } else {
-                    getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Required Trident function '" + entry.getKey() + "' does not exist"));
+                    getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Required Trident function '" + entry.getValue() + "' does not exist", entry.getKey()));
                 }
             }
         }
