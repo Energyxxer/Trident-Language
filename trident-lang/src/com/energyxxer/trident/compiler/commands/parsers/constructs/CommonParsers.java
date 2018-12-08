@@ -132,8 +132,15 @@ public class CommonParsers {
     public static Item parseItem(TokenPattern<?> pattern, TridentCompiler compiler) {
         if(pattern.getName().equals("ITEM_TAGGED") || pattern.getName().equals("ITEM")) return parseItem(((TokenStructure) pattern).getContents(), compiler);
 
-        if(pattern.getName().equals("VARIABLE_MARKER")) {
-            return retrieveSymbol(pattern, compiler, Item.class);
+        if(pattern.getName().equals("ITEM_VARIABLE")) {
+            Item item = retrieveSymbol(pattern.find("VARIABLE_MARKER"), compiler, Item.class);
+            var appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
+            if(appendedNBT != null) {
+                TagCompound nbt = item.getNBT();
+                if(nbt == null) nbt = new TagCompound();
+                item = new Item(item.getItemType(), nbt.merge(NBTParser.parseCompound(appendedNBT, compiler)));
+            }
+            return item;
         }
 
         boolean isStandalone = pattern.getName().equals("CONCRETE_RESOURCE");
@@ -155,6 +162,22 @@ public class CommonParsers {
 
         if(pattern.getName().equals("VARIABLE_MARKER")) {
             return retrieveSymbol(pattern, compiler, Block.class);
+        }
+        if(pattern.getName().equals("BLOCK_VARIABLE")) {
+            Block block = retrieveSymbol(pattern.find("VARIABLE_MARKER"), compiler, Block.class);
+            var appendedState = pattern.find("APPENDED_BLOCKSTATE.BLOCKSTATE");
+            if(appendedState != null) {
+                Blockstate state = block.getBlockstate();
+                if(state == null) state = new Blockstate();
+                block = new Block(block.getBlockType(), parseBlockstate(appendedState), block.getNBT()); //TODO for Commodore: add Blockstate#merge
+            }
+            var appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
+            if(appendedNBT != null) {
+                TagCompound nbt = block.getNBT();
+                if(nbt == null) nbt = new TagCompound();
+                block = new Block(block.getBlockType(), block.getBlockstate(), nbt.merge(NBTParser.parseCompound(appendedNBT, compiler)));
+            }
+            return block;
         }
 
         boolean isStandalone = pattern.getName().equals("CONCRETE_RESOURCE");

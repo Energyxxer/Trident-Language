@@ -914,7 +914,7 @@ public class TridentProductions {
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE).setName("BLOCKSTATE_CLAUSE"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND).setName("NBT_CLAUSE"));
             BLOCK.add(g);
-            BLOCK.add(VARIABLE_MARKER);
+            BLOCK.add(group(VARIABLE_MARKER, optional(BLOCKSTATE).setName("APPENDED_BLOCKSTATE"), optional(NBT_COMPOUND).setName("APPENDED_NBT")).setName("BLOCK_VARIABLE"));
             BLOCK_TAGGED.add(BLOCK);
         }
 
@@ -932,7 +932,7 @@ public class TridentProductions {
             g.append(new LazyTokenGroupMatch().append(ITEM_ID).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM.add(g);
-            ITEM.add(VARIABLE_MARKER);
+            ITEM.add(group(VARIABLE_MARKER, optional(NBT_COMPOUND).setName("APPENDED_NBT")).setName("ITEM_VARIABLE"));
             ITEM_TAGGED.add(ITEM);
         }
 
