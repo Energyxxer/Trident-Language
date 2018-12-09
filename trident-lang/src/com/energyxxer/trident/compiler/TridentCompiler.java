@@ -56,6 +56,8 @@ public class TridentCompiler {
 
     private SymbolStack stack = new SymbolStack();
 
+    private int languageLevel = 1;
+
     public TridentCompiler(File rootDir) {
         this.rootDir = rootDir;
         module = new CommandModule(rootDir.getName(), "Command Module created with Trident", null);
@@ -83,9 +85,17 @@ public class TridentCompiler {
         this.setProgress("Reading project settings file");
         try {
             properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
-        } catch(IOException x) {
+        } catch(JsonSyntaxException | IOException x) {
             logException(x);
             return;
+        }
+
+        if(properties.has("language-level") && properties.get("language-level").isJsonPrimitive() && properties.get("language-level").getAsJsonPrimitive().isNumber()) {
+            languageLevel = properties.get("language-level").getAsInt();
+            if(languageLevel < 1 || languageLevel > 3) {
+                report.addNotice(new Notice(NoticeType.ERROR, "Invalid language level: " + languageLevel));
+                languageLevel = 1;
+            }
         }
 
 
@@ -104,9 +114,8 @@ public class TridentCompiler {
         LazyLexer lex = new LazyLexer(ts, TridentProductions.FILE);
         recursivelyParse(lex, rootDir);
 
-        this.getReport().addNotices(lex.getNotices());
-        if(lex.getNotices().size() > 0) {
-            this.setProgress("Compilation interrupted with " + report.getTotalsString(), false);
+        report.addNotices(lex.getNotices());
+        if(report.getTotal() > 0) {
             finalizeCompilation();
             return;
         }
@@ -142,7 +151,6 @@ public class TridentCompiler {
         }
 
         if(report.hasErrors()) {
-            this.setProgress("Compilation interrupted with " + report.getTotalsString(), false);
             finalizeCompilation();
             return;
         }
@@ -165,7 +173,6 @@ public class TridentCompiler {
             }
         }
 
-        this.setProgress("Compilation completed with " + report.getTotalsString(), false);
         finalizeCompilation();
     }
 
@@ -271,6 +278,7 @@ public class TridentCompiler {
     }
 
     private void finalizeCompilation() {
+        this.setProgress("Compilation " + (report.getErrors().isEmpty() ? "completed" : "interrupted") + " with " + report.getTotalsString(), false);
         completionListeners.forEach(Runnable::run);
         progressListeners.clear();
         completionListeners.clear();
@@ -325,5 +333,9 @@ public class TridentCompiler {
 
     public SymbolStack getStack() {
         return stack;
+    }
+
+    public int getLanguageLevel() {
+        return languageLevel;
     }
 }

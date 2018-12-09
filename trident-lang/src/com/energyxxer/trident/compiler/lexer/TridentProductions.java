@@ -1633,7 +1633,7 @@ public class TridentProductions {
                     group(
                             choice(
                                     group(literal("on"), choice(
-                                            group(choice("used", "broken", "crafted", "dropped", "picked_up").setName("ITEM_CRITERIA_KEY"), literal("persistent").setOptional()).setName("ITEM_CRITERIA")
+                                            group(choice("used", "broken", "crafted", "dropped", "picked_up").setName("ITEM_CRITERIA_KEY")).setName("ITEM_CRITERIA")
                                     ).setName("FUNCTION_ON_INNER")).setName("FUNCTION_ON")
                             ).setOptional().setName("INNER_FUNCTION_MODIFIERS"),
                             literal("function"),
@@ -1652,8 +1652,8 @@ public class TridentProductions {
                             choice(
                                     group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("REGISTER_OBJECTIVE"),
                                     group(literal("databank"), identifierA().setName("DATABANK_NAME"), nbtPointer).setName("REGISTER_DATABANK"),
-                                    group(literal("entity"), ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("ENTITY_NAME"), ENTITY_ID, entityBody).setName("REGISTER_ENTITY"),
-                                    group(literal("item"), ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("REGISTER_ITEM")
+                                    group(literal("entity"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ENTITY_NAME"), ENTITY_ID, entityBody).setName("REGISTER_ENTITY"),
+                                    group(literal("item"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("REGISTER_ITEM")
                             )
                     )
             );

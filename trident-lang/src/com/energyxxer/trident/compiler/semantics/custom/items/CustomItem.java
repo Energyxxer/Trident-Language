@@ -89,21 +89,30 @@ public class CustomItem {
         String entityName = pattern.find("ITEM_NAME").flatten(false);
         Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), file.getCompiler());
 
-        CustomItem itemDecl = new CustomItem(entityName, defaultType);
-
+        CustomItem itemDecl = null;
         var rawCustomModelData = pattern.find("CUSTOM_MODEL_DATA.INTEGER");
-        if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, file.getCompiler()));
+
+        if(!entityName.equals("default")) {
+            itemDecl = new CustomItem(entityName, defaultType);
+            if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, file.getCompiler()));
+
+            SymbolTable table = file.getCompiler().getStack().getGlobal();
+            table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, itemDecl));
+        } else if(rawCustomModelData != null) {
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default items don't support custom model data specifiers", rawCustomModelData));
+        }
 
         var bodyEntries = (TokenList) pattern.find("ITEM_DECLARATION_BODY.ITEM_BODY_ENTRIES");
-
-        SymbolTable table = file.getCompiler().getStack().getGlobal();
-        table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, itemDecl));
 
         if(bodyEntries != null) {
             for(var rawEntry : bodyEntries.getContents()) {
                 var entry = ((TokenStructure) rawEntry).getContents();
                 switch(entry.getName()) {
                     case "DEFAULT_NBT": {
+                        if(itemDecl == null) {
+                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default items", entry));
+                            break;
+                        }
                         itemDecl.setDefaultNBT(NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler()));
                         break;
                     }
@@ -126,13 +135,16 @@ public class CustomItem {
                                     var onWhat = ((TokenStructure)modifiers.find("FUNCTION_ON_INNER")).getContents();
 
                                     if(onWhat.getName().equals("ITEM_CRITERIA")) {
-                                        boolean persistent = onWhat.find("LITERAL_PERSISTENT") != null;
+                                        if(itemDecl != null && file.getCompiler().getLanguageLevel() < 2) {
+                                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Custom non-default item events are only supported in language level 2 and up", entry));
+                                            break;
+                                        }
 
                                         String criteriaKey = onWhat.find("ITEM_CRITERIA_KEY").flatten(false);
 
-                                        String criteria = "minecraft." + criteriaKey + ":" + itemDecl.getDefaultType().toString().replace(':','.');
+                                        String criteria = "minecraft." + criteriaKey + ":" + defaultType.toString().replace(':','.');
 
-                                        Objective objective = file.getCompiler().getModule().getObjectiveManager().create(criteriaKey.charAt(0) + "item." + new TridentUtil.ResourceLocation(itemDecl.getDefaultType().toString()).body.hashCode(), criteria, new StringTextComponent(criteriaKey + " item " + itemDecl.getDefaultType()), true);
+                                        Objective objective = file.getCompiler().getModule().getObjectiveManager().create(criteriaKey.charAt(0) + "item." + new TridentUtil.ResourceLocation(defaultType.toString()).body.hashCode(), criteria, new StringTextComponent(criteriaKey + " item " + defaultType), true);
 
                                         ScoreArgument scores = new ScoreArgument();
                                         scores.put(objective, new NumberRange<>(1, null));
@@ -152,6 +164,6 @@ public class CustomItem {
             }
         }
 
-        itemDecl.endDeclaration();
+        if(itemDecl != null) itemDecl.endDeclaration();
     }
 }

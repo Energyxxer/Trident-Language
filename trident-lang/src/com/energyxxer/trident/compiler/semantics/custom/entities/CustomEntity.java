@@ -4,11 +4,13 @@ import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAsEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAtEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
+import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.nbt.TagList;
 import com.energyxxer.commodore.functionlogic.nbt.TagString;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
+import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -84,22 +86,32 @@ public class CustomEntity {
         String entityName = pattern.find("ENTITY_NAME").flatten(false);
         Type defaultType = CommonParsers.parseEntityType(pattern.find("ENTITY_ID"), file.getCompiler());
 
-        CustomEntity entityDecl = new CustomEntity(entityName, defaultType);
+        CustomEntity entityDecl = null;
+        if(!entityName.equals("default")) {
+            entityDecl = new CustomEntity(entityName, defaultType);
+            SymbolTable table = file.getCompiler().getStack().getGlobal();
+            table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, entityDecl));
+        }
 
         var bodyEntries = (TokenList) pattern.find("ENTITY_DECLARATION_BODY.ENTITY_BODY_ENTRIES");
-
-        SymbolTable table = file.getCompiler().getStack().getGlobal();
-        table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, entityDecl));
 
         if(bodyEntries != null) {
             for(var rawEntry : bodyEntries.getContents()) {
                 var entry = ((TokenStructure) rawEntry).getContents();
                 switch(entry.getName()) {
                     case "DEFAULT_NBT": {
+                        if(entityDecl == null) {
+                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default entities", entry));
+                            break;
+                        }
                         entityDecl.setDefaultNBT(NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler()));
                         break;
                     }
                     case "DEFAULT_PASSENGERS": {
+                        if(entityDecl == null) {
+                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default passengers aren't allowed for default entities", entry));
+                            break;
+                        }
                         TagCompound oldNBT = entityDecl.getDefaultNBT();
 
                         if(oldNBT == null) oldNBT = new TagCompound();
@@ -144,7 +156,10 @@ public class CustomEntity {
                         innerFile.resolveEntries();
 
                         if(ticking) {
-                            file.getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteAsEntity(TypeArgumentParser.getSelectorForCustomEntity(entityDecl)), new ExecuteAtEntity(new GenericEntity(new Selector(Selector.BaseSelector.SENDER)))));
+                            Entity selector = entityDecl != null ?
+                                    TypeArgumentParser.getSelectorForCustomEntity(entityDecl) :
+                                    new GenericEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES, new TypeArgument(defaultType)));
+                            file.getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteAsEntity(selector), new ExecuteAtEntity(new GenericEntity(new Selector(Selector.BaseSelector.SENDER)))));
                         }
                         break;
                     }
@@ -154,6 +169,6 @@ public class CustomEntity {
             }
         }
 
-        entityDecl.endDeclaration();
+        if(entityDecl != null) entityDecl.endDeclaration();
     }
 }
