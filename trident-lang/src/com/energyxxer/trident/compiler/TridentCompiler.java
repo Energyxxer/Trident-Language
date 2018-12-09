@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler;
 
+import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.module.RawExportable;
@@ -146,6 +147,11 @@ public class TridentCompiler {
             return;
         }
 
+        Function initFunction = module.minecraft.functions.get("trident_start");
+
+        Tag loadTag = module.minecraft.tags.functionTags.create("load");
+        loadTag.addValue(new FunctionReference(initFunction));
+        module.getObjectiveManager().setCreationFunction(initFunction);
 
         this.setProgress("Generating data pack");
 

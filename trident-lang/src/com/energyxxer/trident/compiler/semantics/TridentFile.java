@@ -7,6 +7,7 @@ import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.functionlogic.functions.FunctionComment;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
+import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.enxlex.pattern_matching.structures.*;
 import com.energyxxer.enxlex.report.Notice;
@@ -223,6 +224,17 @@ public class TridentFile implements CompilerExtension {
 
     public boolean isCompileOnly() {
         return compileOnly;
+    }
+
+    public Function getTickFunction() {
+        boolean creating = !namespace.functions.contains("trident_tick");
+        Function tickFunction = namespace.functions.get("trident_tick");
+
+        if(creating) {
+            Tag tickTag = compiler.getModule().minecraft.tags.functionTags.create("tick");
+            tickTag.addValue(new FunctionReference(tickFunction));
+        }
+        return tickFunction;
     }
 
     @Override

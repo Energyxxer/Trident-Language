@@ -1633,8 +1633,8 @@ public class TridentProductions {
                     group(
                             choice(
                                     group(literal("on"), choice(
-                                            group(literal("use"), literal("persistent").setOptional())
-                                    ))
+                                            group(choice("used", "broken", "crafted", "dropped", "picked_up").setName("ITEM_CRITERIA_KEY"), literal("persistent").setOptional()).setName("ITEM_CRITERIA")
+                                    ).setName("FUNCTION_ON_INNER")).setName("FUNCTION_ON")
                             ).setOptional().setName("INNER_FUNCTION_MODIFIERS"),
                             literal("function"),
                             ofType(RESOURCE_LOCATION).setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")).setName("INNER_FUNCTION")

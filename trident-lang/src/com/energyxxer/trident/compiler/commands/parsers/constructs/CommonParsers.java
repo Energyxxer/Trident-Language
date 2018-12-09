@@ -218,7 +218,7 @@ public class CommonParsers {
 
     public static NumberRange<Integer> parseIntRange(TokenPattern<?> pattern, TridentCompiler compiler) {
         TokenPattern<?> exact = pattern.find("EXACT");
-        if(exact != null) return new NumberRange<>(parseInt(pattern, compiler));
+        if(exact != null) return new NumberRange<>(parseInt(exact, compiler));
         List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
         List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
         Integer min = null;
@@ -234,7 +234,7 @@ public class CommonParsers {
 
     public static NumberRange<Double> parseRealRange(TokenPattern<?> pattern, TridentCompiler compiler) {
         TokenPattern<?> exact = pattern.find("EXACT");
-        if(exact != null) return new NumberRange<>(parseDouble(pattern, compiler));
+        if(exact != null) return new NumberRange<>(parseDouble(exact, compiler));
         List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
         List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
         Double min = null;
