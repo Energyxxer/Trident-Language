@@ -28,6 +28,7 @@ import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.variable_functions.VariableFunction;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 
 import java.util.Arrays;
@@ -83,11 +84,15 @@ public class CommonParsers {
         return type;
     }
 
-    public static Type parseFunctionTag(TokenPattern<?> id, TridentCompiler compiler) {
+    public static Type parseFunctionTag(TokenPattern<?> id, TridentFile file) {
         if(id == null) return null;
         boolean isTag = id.find("") != null;
-        TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id.find("RESOURCE_LOCATION").flatten(false));
-        Namespace ns = compiler.getModule().getNamespace(typeLoc.namespace);
+        String flat = id.find("RESOURCE_LOCATION").flatten(false);
+        if(flat.startsWith('/')) {
+            flat = file.getFunction().getFullName() + flat;
+        }
+        TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(flat);
+        Namespace ns = file.getCompiler().getModule().getNamespace(typeLoc.namespace);
 
         Type type = null;
 
@@ -99,9 +104,9 @@ public class CommonParsers {
 
         if(type == null) {
             if(isTag) {
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "No such function tag exists: #" + typeLoc, id));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such function tag exists: #" + typeLoc, id));
             } else {
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "No such function exists: " + typeLoc, id));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such function exists: " + typeLoc, id));
             }
             throw new EntryParsingException();
         }

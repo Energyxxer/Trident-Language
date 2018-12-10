@@ -18,7 +18,7 @@ public class FunctionParser implements CommandParser {
         var choice = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(choice.getName()) {
             case "RESOURCE_LOCATION_TAGGED": {
-                return new FunctionCommand(CommonParsers.parseFunctionTag(choice, file.getCompiler()));
+                return new FunctionCommand(CommonParsers.parseFunctionTag(choice, file));
             }
             case "ANONYMOUS_INNER_FUNCTION": {
                 TridentFile inner = TridentFile.createInnerFile(choice, file);

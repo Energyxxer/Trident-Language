@@ -457,7 +457,15 @@ public class TridentLexerProfile extends LexerProfile {
             }
             if(namespaceFound && nonNamespaceCharIndex >= 0) index = nonNamespaceCharIndex;
             if(index == 0) return new ScannerContextResponse(false);
-            else return new ScannerContextResponse(true, str.substring(0, index), tokenType);
+            else {
+                HashMap<TokenSection, String> tokenSections = new HashMap<>();
+                boolean relative = str.startsWith('/');
+                if(relative) {
+                    tokenSections.put(new TokenSection(0, 1), "resource_location.relative");
+                }
+
+                return new ScannerContextResponse(true, str.substring(0, index), tokenType, tokenSections);
+            }
         }
 
         @Override

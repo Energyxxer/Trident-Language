@@ -84,6 +84,9 @@ public class TridentFile implements CompilerExtension {
         String functionName;
         if(namePattern != null) {
             functionName = new TridentUtil.ResourceLocation(namePattern.flatten(false)).body;
+            while(functionName.startsWith('/')) {
+                functionName = functionName.substring(1);
+            }
         } else {
             functionName = "anonymous" + parent.anonymousChildren;
             parent.anonymousChildren++;

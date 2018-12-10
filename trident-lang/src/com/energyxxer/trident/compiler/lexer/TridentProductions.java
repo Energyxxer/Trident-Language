@@ -1744,7 +1744,7 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch hash() {
-        return ofType(HASH);
+        return ofType(HASH).setName("HASH");
     }
 
     private static LazyTokenItemMatch string() {
