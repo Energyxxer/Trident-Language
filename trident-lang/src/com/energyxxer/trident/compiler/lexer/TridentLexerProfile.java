@@ -455,7 +455,7 @@ public class TridentLexerProfile extends LexerProfile {
                 if(Character.isWhitespace(c)) break;
                 index++;
             }
-            if(nonNamespaceCharIndex >= 0) index = nonNamespaceCharIndex;
+            if(namespaceFound && nonNamespaceCharIndex >= 0) index = nonNamespaceCharIndex;
             if(index == 0) return new ScannerContextResponse(false);
             else return new ScannerContextResponse(true, str.substring(0, index), tokenType);
         }
