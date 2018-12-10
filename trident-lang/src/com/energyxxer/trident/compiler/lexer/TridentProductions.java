@@ -1649,12 +1649,12 @@ public class TridentProductions {
 
 
             INSTRUCTION.add(
-                    group(literal("register").setName("INSTRUCTION_KEYWORD"),
+                    group(keyword("define").setName("INSTRUCTION_KEYWORD"),
                             choice(
-                                    group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("REGISTER_OBJECTIVE"),
-                                    group(literal("databank"), identifierA().setName("DATABANK_NAME"), nbtPointer).setName("REGISTER_DATABANK"),
-                                    group(literal("entity"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ENTITY_NAME"), ENTITY_ID, entityBody).setName("REGISTER_ENTITY"),
-                                    group(literal("item"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("REGISTER_ITEM")
+                                    group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE"),
+                                    group(literal("databank"), identifierA().setName("DATABANK_NAME"), nbtPointer).setName("DEFINE_DATABANK"),
+                                    group(literal("entity"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ENTITY_NAME"), ENTITY_ID, entityBody).setName("DEFINE_ENTITY"),
+                                    group(literal("item"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM")
                             )
                     )
             );
@@ -1693,6 +1693,10 @@ public class TridentProductions {
 
     private static LazyTokenItemMatch symbol(String text) {
         return new LazyTokenItemMatch(SYMBOL, text);
+    }
+
+    private static LazyTokenItemMatch keyword(String text) {
+        return matchItem(KEYWORD, text).setName("KEYWORD_" + text.toUpperCase());
     }
 
     private static LazyTokenItemMatch matchItem(TokenType type, String text) {

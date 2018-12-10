@@ -85,7 +85,7 @@ public class CustomItem {
 
 
 
-    public static void registerItem(TokenPattern<?> pattern, TridentFile file) {
+    public static void defineItem(TokenPattern<?> pattern, TridentFile file) {
         String entityName = pattern.find("ITEM_NAME").flatten(false);
         Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), file.getCompiler());
 

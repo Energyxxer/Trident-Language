@@ -251,7 +251,7 @@ public class CommonParsers {
     public static Objective parseObjective(TokenPattern<?> pattern, TridentCompiler compiler) {
         String name = pattern.flatten(true);
         if(!compiler.getModule().getObjectiveManager().contains(name)) {
-            compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Unregistered objective name '" + name + "'", pattern));
+            compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Undefined objective name '" + name + "'", pattern));
             return compiler.getModule().getObjectiveManager().create(name, true);
         } else {
             return compiler.getModule().getObjectiveManager().get(name);

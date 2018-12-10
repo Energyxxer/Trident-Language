@@ -82,7 +82,7 @@ public class CustomEntity {
 
 
 
-    public static void registerEntity(TokenPattern<?> pattern, TridentFile file) {
+    public static void defineEntity(TokenPattern<?> pattern, TridentFile file) {
         String entityName = pattern.find("ENTITY_NAME").flatten(false);
         Type defaultType = CommonParsers.parseEntityType(pattern.find("ENTITY_ID"), file.getCompiler());
 

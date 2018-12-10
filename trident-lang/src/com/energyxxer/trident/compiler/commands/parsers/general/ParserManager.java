@@ -27,7 +27,7 @@ public class ParserManager {
                 Debug.log("Class marked with ParserGroup is not an interface: '" + cls.getSimpleName() + "'", Debug.MessageType.WARN);
             } else {
                 groups.put(cls, new HashMap<>());
-                Debug.log("Registered parser group '" + cls.getSimpleName() + "'");
+                Debug.log("Defined parser group '" + cls.getSimpleName() + "'");
             }
         }
         for(Class<?> cls : r.getTypesAnnotatedWith(ParserMember.class)) {
@@ -40,7 +40,7 @@ public class ParserManager {
                         String key = cls.getAnnotation(ParserMember.class).key();
                         Object parser = cls.getConstructor().newInstance();
                         toPut.put(key, parser);
-                        Debug.log("Registered '" + interf.getSimpleName() + "' member '" + cls.getSimpleName() + "'");
+                        Debug.log("Defined '" + interf.getSimpleName() + "' member '" + cls.getSimpleName() + "'");
                     }
                 }
                 if(!hasGroup) {

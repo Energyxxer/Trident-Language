@@ -11,20 +11,20 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 
-@ParserMember(key = "register")
-public class RegisterInstruction implements Instruction {
+@ParserMember(key = "define")
+public class DefineInstruction implements Instruction {
     @Override
     public void run(TokenPattern<?> pattern, TridentFile file) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
-            case "REGISTER_OBJECTIVE":
-                registerObjective(inner, file);
+            case "DEFINE_OBJECTIVE":
+                defineObjective(inner, file);
                 break;
-            case "REGISTER_ENTITY":
-                CustomEntity.registerEntity(inner, file);
+            case "DEFINE_ENTITY":
+                CustomEntity.defineEntity(inner, file);
                 break;
-            case "REGISTER_ITEM":
-                CustomItem.registerItem(inner, file);
+            case "DEFINE_ITEM":
+                CustomItem.defineItem(inner, file);
                 break;
             default: {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
@@ -32,7 +32,7 @@ public class RegisterInstruction implements Instruction {
         }
     }
 
-    private void registerObjective(TokenPattern<?> pattern, TridentFile file) {
+    private void defineObjective(TokenPattern<?> pattern, TridentFile file) {
         String objectiveName = pattern.find("OBJECTIVE_NAME").flatten(false);
         String criteria = "dummy";
         TextComponent displayName = null;
@@ -47,7 +47,7 @@ public class RegisterInstruction implements Instruction {
         }
 
         if(file.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "An objective with the name '" + objectiveName + "' has already been registered", pattern));
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "An objective with the name '" + objectiveName + "' has already been defined", pattern));
         } else {
             file.getCompiler().getModule().getObjectiveManager().create(objectiveName, criteria, displayName, true);
         }
