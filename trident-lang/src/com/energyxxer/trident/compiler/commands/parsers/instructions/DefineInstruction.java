@@ -26,6 +26,9 @@ public class DefineInstruction implements Instruction {
             case "DEFINE_ITEM":
                 CustomItem.defineItem(inner, file);
                 break;
+            case "DEFINE_FUNCTION":
+                TridentFile.createInnerFile(inner.find("INNER_FUNCTION"), file);
+                break;
             default: {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
             }

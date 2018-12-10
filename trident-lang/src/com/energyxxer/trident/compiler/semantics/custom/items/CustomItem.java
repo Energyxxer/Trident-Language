@@ -26,8 +26,6 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
-import java.nio.file.Path;
-
 public class CustomItem {
     private final String id;
     private final Type defaultType;
@@ -116,15 +114,8 @@ public class CustomItem {
                         itemDecl.setDefaultNBT(NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler()));
                         break;
                     }
-                    case "INNER_FUNCTION": {
-                        String functionName = new TridentUtil.ResourceLocation(entry.find("INNER_FUNCTION_NAME").flatten(false)).body;
-
-                        var innerFilePattern = entry.find("FILE_INNER");
-                        String innerFilePathRaw = file.getPath().toString();
-                        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
-
-                        TridentFile innerFile = new TridentFile(file.getCompiler(), Path.of(innerFilePathRaw).resolve(functionName + ".tdn"), innerFilePattern);
-                        innerFile.resolveEntries();
+                    case "ITEM_INNER_FUNCTION": {
+                        TridentFile innerFile = TridentFile.createInnerFile(entry.find("INNER_FUNCTION"), file);
 
                         var rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
                         if(rawFunctionModifiers != null) {

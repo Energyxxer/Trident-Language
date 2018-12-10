@@ -105,7 +105,12 @@ public class TokenGroup extends TokenPattern<TokenPattern<?>[]> {
 
 	@Override
 	public File getFile() {
-		return (patterns != null && patterns.size() > 0) ? patterns.get(0).getFile() : null;
+		if(patterns == null) return null;
+		for(TokenPattern pattern : patterns) {
+			File file = pattern.getFile();
+			if(file != null) return file;
+		}
+		return null;
 	}
 
 	@Override

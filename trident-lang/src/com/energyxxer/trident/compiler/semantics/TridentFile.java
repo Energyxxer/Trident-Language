@@ -44,8 +44,11 @@ public class TridentFile implements CompilerExtension {
     private final TridentUtil.ResourceLocation location;
 
     private boolean compileOnly = false;
+    private boolean valid = true;
 
     private int languageLevel;
+
+    private int anonymousChildren = 0;
 
     public TridentFile(TridentFile parent, Path relSourcePath, TokenPattern<?> filePattern) {
         this(parent.getCompiler(), relSourcePath, filePattern, parent.languageLevel);
@@ -69,8 +72,30 @@ public class TridentFile implements CompilerExtension {
         this.location = new TridentUtil.ResourceLocation(this.namespace.getName() + ":" + functionPath);
 
         resolveDirectives();
+        if(!compileOnly && namespace.functions.contains(functionPath)) {
+            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "A function by the name '" + namespace.getName() + ":" + functionPath + "' already exists", pattern));
+        }
 
-        this.function = compileOnly ? null : namespace.functions.create(functionPath);
+        this.function = compileOnly ? null : namespace.functions.get(functionPath);
+    }
+
+    public static TridentFile createInnerFile(TokenPattern<?> pattern, TridentFile parent) {
+        var namePattern = pattern.find("INNER_FUNCTION_NAME");
+        String functionName;
+        if(namePattern != null) {
+            functionName = new TridentUtil.ResourceLocation(namePattern.flatten(false)).body;
+        } else {
+            functionName = "anonymous" + parent.anonymousChildren;
+            parent.anonymousChildren++;
+        }
+
+        var innerFilePattern = pattern.find("FILE_INNER");
+        String innerFilePathRaw = parent.getPath().toString();
+        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
+
+        TridentFile innerFile = new TridentFile(parent.getCompiler(), Path.of(innerFilePathRaw).resolve(functionName + ".tdn"), innerFilePattern);
+        innerFile.resolveEntries();
+        return innerFile;
     }
 
     private void resolveDirectives() {
@@ -122,6 +147,7 @@ public class TridentFile implements CompilerExtension {
     private boolean reportedNoCommands = false;
 
     public void resolveEntries() {
+        if(!valid) return;
 
         if(function != null) tags.forEach(l -> module.createNamespace(l.namespace).tags.functionTags.create(l.body).addValue(new FunctionReference(this.function)));
 

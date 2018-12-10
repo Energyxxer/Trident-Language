@@ -14,6 +14,8 @@ public class TridentProductions {
 
     public static final LazyTokenStructureMatch FILE;
     public static final LazyTokenStructureMatch FILE_INNER;
+    public static final LazyTokenStructureMatch INNER_FUNCTION;
+    public static final LazyTokenStructureMatch ANONYMOUS_INNER_FUNCTION;
     public static final LazyTokenStructureMatch ENTRY;
 
     public static final LazyTokenItemMatch COMMENT_S;
@@ -83,6 +85,8 @@ public class TridentProductions {
     static {
         FILE = new LazyTokenStructureMatch("FILE");
         FILE_INNER = new LazyTokenStructureMatch("FILE_INNER");
+        INNER_FUNCTION = new LazyTokenStructureMatch("INNER_FUNCTION");
+        ANONYMOUS_INNER_FUNCTION = new LazyTokenStructureMatch("ANONYMOUS_INNER_FUNCTION");
         ENTRY = new LazyTokenStructureMatch("ENTRY");
         COMMAND = new LazyTokenStructureMatch("COMMAND");
         INSTRUCTION = new LazyTokenStructureMatch("INSTRUCTION");
@@ -135,6 +139,9 @@ public class TridentProductions {
         ENTITY.add(PLAYER_NAME);
         ENTITY.add(SELECTOR);
         ENTITY.add(VARIABLE_MARKER);
+
+        INNER_FUNCTION.add(group(ofType(RESOURCE_LOCATION).setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")));
+        ANONYMOUS_INNER_FUNCTION.add(group(brace("{"), FILE_INNER, brace("}")));
 
         //region Commands
         //region say
@@ -262,7 +269,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "function"),
                     sameLine(),
-                    RESOURCE_LOCATION_TAGGED
+                    choice(RESOURCE_LOCATION_TAGGED, ANONYMOUS_INNER_FUNCTION)
             ));
         }
         //endregion
@@ -1619,7 +1626,7 @@ public class TridentProductions {
             var entityBodyEntry = choice(
                     group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT"),
                     group(literal("default"), literal("passengers"), brace("["), list(group(ENTITY_ID, optional(NBT_COMPOUND).setName("PASSENGER_NBT")).setName("PASSENGER"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
-                    group(literal("ticking").setOptional(), literal("function"), ofType(RESOURCE_LOCATION).setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")).setName("INNER_FUNCTION")
+                    group(literal("ticking").setOptional(), literal("function"), INNER_FUNCTION).setName("ENTITY_INNER_FUNCTION")
             );
 
             var entityBody = group(
@@ -1638,7 +1645,7 @@ public class TridentProductions {
                                     ).setName("FUNCTION_ON_INNER")).setName("FUNCTION_ON")
                             ).setOptional().setName("INNER_FUNCTION_MODIFIERS"),
                             literal("function"),
-                            ofType(RESOURCE_LOCATION).setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")).setName("INNER_FUNCTION")
+                            INNER_FUNCTION).setName("ITEM_INNER_FUNCTION")
             );
 
             var itemBody = group(
@@ -1654,7 +1661,8 @@ public class TridentProductions {
                                     group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE"),
                                     group(literal("databank"), identifierA().setName("DATABANK_NAME"), nbtPointer).setName("DEFINE_DATABANK"),
                                     group(literal("entity"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ENTITY_NAME"), ENTITY_ID, entityBody).setName("DEFINE_ENTITY"),
-                                    group(literal("item"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM")
+                                    group(literal("item"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM"),
+                                    group(literal("function"), INNER_FUNCTION).setName("DEFINE_FUNCTION")
                             )
                     )
             );

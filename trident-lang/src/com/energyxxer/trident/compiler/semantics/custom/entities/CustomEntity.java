@@ -17,7 +17,6 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
@@ -25,8 +24,6 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.selectors.Typ
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
-
-import java.nio.file.Path;
 
 public class CustomEntity {
     private final String id;
@@ -143,17 +140,10 @@ public class CustomEntity {
                         entityDecl.setDefaultNBT(oldNBT.merge(new TagCompound(passengersTag)));
                         break;
                     }
-                    case "INNER_FUNCTION": {
+                    case "ENTITY_INNER_FUNCTION": {
                         boolean ticking = entry.find("LITERAL_TICKING") != null;
 
-                        String functionName = new TridentUtil.ResourceLocation(entry.find("INNER_FUNCTION_NAME").flatten(false)).body;
-
-                        var innerFilePattern = entry.find("FILE_INNER");
-                        String innerFilePathRaw = file.getPath().toString();
-                        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
-
-                        TridentFile innerFile = new TridentFile(file.getCompiler(), Path.of(innerFilePathRaw).resolve(functionName + ".tdn"), innerFilePattern);
-                        innerFile.resolveEntries();
+                        TridentFile innerFile = TridentFile.createInnerFile(entry.find("INNER_FUNCTION"), file);
 
                         if(ticking) {
                             Entity selector = entityDecl != null ?
