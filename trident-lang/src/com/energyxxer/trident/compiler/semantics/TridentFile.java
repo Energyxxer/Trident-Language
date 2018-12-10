@@ -18,6 +18,7 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.RawCommand;
 import com.energyxxer.trident.compiler.commands.parsers.commands.CommandParser;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.instructions.Instruction;
 import com.energyxxer.trident.compiler.commands.parsers.modifiers.ModifierParser;
@@ -44,19 +45,36 @@ public class TridentFile implements CompilerExtension {
 
     private boolean compileOnly = false;
 
+    private int languageLevel;
+
+    public TridentFile(TridentFile parent, Path relSourcePath, TokenPattern<?> filePattern) {
+        this(parent.getCompiler(), relSourcePath, filePattern, parent.languageLevel);
+    }
 
     public TridentFile(TridentCompiler compiler, Path relSourcePath, TokenPattern<?> filePattern) {
+        this(compiler, relSourcePath, filePattern, compiler.getLanguageLevel());
+    }
+
+    private TridentFile(TridentCompiler compiler, Path relSourcePath, TokenPattern<?> filePattern, int languageLevel) {
         this.compiler = compiler;
         this.module = compiler.getModule();
         this.namespace = module.createNamespace(relSourcePath.getName(0).toString());
         this.pattern = filePattern;
         this.relSourcePath = relSourcePath;
 
+        this.languageLevel = languageLevel;
+
         String functionPath = relSourcePath.subpath(2, relSourcePath.getNameCount()).toString();
         functionPath = functionPath.substring(0, functionPath.length()-".tdn".length()).replaceAll(Matcher.quoteReplacement(File.separator), "/");
         this.location = new TridentUtil.ResourceLocation(this.namespace.getName() + ":" + functionPath);
 
-        TokenPattern<?> directiveList = filePattern.find("..DIRECTIVES");
+        resolveDirectives();
+
+        this.function = compileOnly ? null : namespace.functions.create(functionPath);
+    }
+
+    private void resolveDirectives() {
+        TokenPattern<?> directiveList = pattern.find("..DIRECTIVES");
         if(directiveList != null) {
             TokenPattern<?>[] directives = ((TokenList) directiveList).getContents();
             for(TokenPattern<?> rawDirective : directives) {
@@ -86,17 +104,19 @@ public class TridentFile implements CompilerExtension {
                         requires.put(directiveBody, loc);
                         break;
                     }
+                    case "LANGUAGE_LEVEL_DIRECTIVE": {
+                        int level = CommonParsers.parseInt(directiveBody.find("INTEGER"), compiler);
+                        if(level < 1 || level > 3) {
+                            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Invalid language level: " + level, directiveBody.find("INTEGER")));
+                        } else this.languageLevel = level;
+                        break;
+                    }
                     default: {
                         reportNotice(new Notice(NoticeType.DEBUG, "Unknown directive type '" + directiveBody.getName() + "'", directiveBody));
                     }
                 }
             }
         }
-        this.function = compileOnly ? null : namespace.functions.create(functionPath);
-    }
-
-    public TridentCompiler getCompiler() {
-        return compiler;
     }
 
     private boolean reportedNoCommands = false;
@@ -182,6 +202,10 @@ public class TridentFile implements CompilerExtension {
         compiler.getStack().pop();
     }
 
+    public TridentCompiler getCompiler() {
+        return compiler;
+    }
+
     public Function getFunction() {
         return function;
     }
@@ -224,6 +248,10 @@ public class TridentFile implements CompilerExtension {
 
     public boolean isCompileOnly() {
         return compileOnly;
+    }
+
+    public int getLanguageLevel() {
+        return languageLevel;
     }
 
     public Function getTickFunction() {

@@ -95,16 +95,6 @@ public class TridentProductions {
         COMMENT_S = new LazyTokenItemMatch(COMMENT).setName("COMMENT");
         VERBATIM_COMMAND_S = new LazyTokenItemMatch(VERBATIM_COMMAND).setName("VERBATIM_COMMAND");
 
-        {
-            var directiveBody = new LazyTokenStructureMatch("DIRECTIVE_BODY");
-
-            DIRECTIVE = group(ofType(DIRECTIVE_HEADER), directiveBody).setName("DIRECTIVE");
-
-            directiveBody.add(group(literal("on"), ofType(DIRECTIVE_ON_KEYWORD)).setName("ON_DIRECTIVE"));
-            directiveBody.add(group(literal("tag"), ofType(RESOURCE_LOCATION)).setName("TAG_DIRECTIVE"));
-            directiveBody.add(group(literal("require"), ofType(RESOURCE_LOCATION)).setName("REQUIRE_DIRECTIVE"));
-        }
-
         RESOURCE_LOCATION_TAGGED = group(optional(hash(), ofType(GLUE)), ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RESOURCE_LOCATION_TAGGED");
 
         ENTRY.add(COMMENT_S);
@@ -116,20 +106,31 @@ public class TridentProductions {
         STRING_LITERAL_OR_IDENTIFIER_A.add(identifierA());
 
         {
-            var l = new LazyTokenListMatch(optional(ENTRY, ofType(TokenType.NEWLINE).setOptional().setName("LINE_PADDING")), true).setName("ENTRIES");
-            FILE_INNER.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l));
-            FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l,ofType(TokenType.END_OF_FILE)));
-        }
-
-        TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "light_gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white").setName("TEXT_COLOR");
-
-        {
             var variableModifierHeader = group(choice("nbt").setName("VARIABLE_MODIFIER_FUNCTION"), colon()).setOptional().setName("VARIABLE_MODIFIER");
             VARIABLE_MARKER = choice(
                     group(symbol("$"), glue(), brace("{"), variableModifierHeader, ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"), brace("}")),
                     group(symbol("$"), glue(), variableModifierHeader, ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"))
             ).setName("VARIABLE_MARKER");
         }
+
+        {
+            var directiveBody = new LazyTokenStructureMatch("DIRECTIVE_BODY");
+
+            DIRECTIVE = group(ofType(DIRECTIVE_HEADER), directiveBody).setName("DIRECTIVE");
+
+            directiveBody.add(group(literal("on"), ofType(DIRECTIVE_ON_KEYWORD)).setName("ON_DIRECTIVE"));
+            directiveBody.add(group(literal("tag"), ofType(RESOURCE_LOCATION)).setName("TAG_DIRECTIVE"));
+            directiveBody.add(group(literal("require"), ofType(RESOURCE_LOCATION)).setName("REQUIRE_DIRECTIVE"));
+            directiveBody.add(group(literal("language_level"), integer()).setName("LANGUAGE_LEVEL_DIRECTIVE"));
+        }
+
+        {
+            var l = new LazyTokenListMatch(optional(ENTRY, ofType(TokenType.NEWLINE).setOptional().setName("LINE_PADDING")), true).setName("ENTRIES");
+            FILE_INNER.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l));
+            FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l,ofType(TokenType.END_OF_FILE)));
+        }
+
+        TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "light_gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white").setName("TEXT_COLOR");
 
         ENTITY.add(PLAYER_NAME);
         ENTITY.add(SELECTOR);

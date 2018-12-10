@@ -135,7 +135,7 @@ public class CustomItem {
                                     var onWhat = ((TokenStructure)modifiers.find("FUNCTION_ON_INNER")).getContents();
 
                                     if(onWhat.getName().equals("ITEM_CRITERIA")) {
-                                        if(itemDecl != null && file.getCompiler().getLanguageLevel() < 2) {
+                                        if(itemDecl != null && file.getLanguageLevel() < 2) {
                                             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Custom non-default item events are only supported in language level 2 and up", entry));
                                             break;
                                         }
