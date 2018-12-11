@@ -17,6 +17,7 @@ import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathKey;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
+import com.energyxxer.commodore.functionlogic.score.ObjectiveManager;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.NBTArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.ScoreArgument;
@@ -79,12 +80,14 @@ public class ItemEventFile extends SpecialFile {
         function = compiler.getModule().createNamespace(compiler.getDefaultNamespace()).functions.create("trident/item_events");
         parent.getTickFunction().append(new ExecuteCommand(new FunctionCommand(function), new ExecuteAsEntity(new GenericEntity(new Selector(Selector.BaseSelector.ALL_PLAYERS))), new ExecuteAtEntity(new GenericEntity(new Selector(Selector.BaseSelector.SENDER)))));
 
-        Objective mainhand = compiler.getModule().getObjectiveManager().create("tdci_mainhand", true);
-        Objective offhand = compiler.getModule().getObjectiveManager().create("tdci_offhand", true);
-        Objective held = compiler.getModule().getObjectiveManager().create("tdci_held", true);
-        Objective oldMainhand = compiler.getModule().getObjectiveManager().create("oldtdci_mainhand", true);
-        Objective oldOffhand = compiler.getModule().getObjectiveManager().create("oldtdci_offhand", true);
-        Objective oldHeld = compiler.getModule().getObjectiveManager().create("oldtdci_held", true);
+        ObjectiveManager objMgr = compiler.getModule().getObjectiveManager();
+        
+        Objective mainhand = objMgr.contains("tdci_mainhand") ? objMgr.get("tdci_mainhand") : objMgr.create("tdci_mainhand", true);
+        Objective offhand = objMgr.contains("tdci_offhand") ? objMgr.get("tdci_offhand") : objMgr.create("tdci_offhand", true);
+        Objective held = objMgr.contains("tdci_held") ? objMgr.get("tdci_held") : objMgr.create("tdci_held", true);
+        Objective oldMainhand = objMgr.contains("oldtdci_mainhand") ? objMgr.get("oldtdci_mainhand") : objMgr.create("oldtdci_mainhand", true);
+        Objective oldOffhand = objMgr.contains("oldtdci_offhand") ? objMgr.get("oldtdci_offhand") : objMgr.create("oldtdci_offhand", true);
+        Objective oldHeld = objMgr.contains("oldtdci_held") ? objMgr.get("oldtdci_held") : objMgr.create("oldtdci_held", true);
 
         Function prepareHeldItems;
         {
@@ -109,7 +112,7 @@ public class ItemEventFile extends SpecialFile {
                 Type itemType = typeEntry.getKey();
 
                 String criteria = "minecraft." + eventType.name().toLowerCase() + ":" + itemType.toString().replace(':','.');
-                Objective objective = compiler.getModule().getObjectiveManager().create(eventType.name().toLowerCase().charAt(0) + "item." + new TridentUtil.ResourceLocation(itemType.toString()).body.hashCode(), criteria, new StringTextComponent(eventType.name().toLowerCase() + " item " + itemType), true);
+                Objective objective = objMgr.create(eventType.name().toLowerCase().charAt(0) + "item." + new TridentUtil.ResourceLocation(itemType.toString()).body.hashCode(), criteria, new StringTextComponent(eventType.name().toLowerCase() + " item " + itemType), true);
 
                 ScoreArgument scores = new ScoreArgument();
                 scores.put(objective, new NumberRange<>(1, null));

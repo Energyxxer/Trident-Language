@@ -1688,6 +1688,15 @@ public class TridentProductions {
                     )
             );
         }
+
+        {
+            INSTRUCTION.add(
+                    group(literal("within").setName("INSTRUCTION_KEYWORD"),
+                            ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"),
+                            group(COORDINATE_SET).setName("FROM"), group(COORDINATE_SET).setName("TO"), ANONYMOUS_INNER_FUNCTION
+                            )
+            );
+        }
         //endregion
 
 
