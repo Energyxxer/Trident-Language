@@ -18,6 +18,7 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinatePar
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
 import java.util.ArrayList;
 
@@ -73,7 +74,7 @@ public class ParticleParser implements CommandParser {
                         arguments.add(CommonParsers.parseBlock(arg, compiler));
                         break;
                     case "ITEM":
-                        arguments.add(CommonParsers.parseItem(arg, compiler));
+                        arguments.add(CommonParsers.parseItem(arg, compiler, NBTMode.SETTING));
                         break;
                     default: {
                         compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + arg.getName() + "'", arg));

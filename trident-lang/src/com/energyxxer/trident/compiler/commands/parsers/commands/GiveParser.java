@@ -11,12 +11,13 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
 @ParserMember(key = "give")
 public class GiveParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Item item = CommonParsers.parseItem(pattern.find("ITEM"), file.getCompiler());
+        Item item = CommonParsers.parseItem(pattern.find("ITEM"), file.getCompiler(), NBTMode.SETTING);
         TokenPattern<?> amountPattern = pattern.find("AMOUNT");
         int amount = amountPattern != null ? CommonParsers.parseInt(amountPattern, file.getCompiler()) : 1;
 

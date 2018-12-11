@@ -1,30 +1,23 @@
 package com.energyxxer.trident.compiler.semantics.custom.items;
 
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAsEntity;
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAtEntity;
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
-import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
-import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreAdd;
-import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
-import com.energyxxer.commodore.functionlogic.score.LocalScore;
-import com.energyxxer.commodore.functionlogic.score.Objective;
-import com.energyxxer.commodore.functionlogic.selector.Selector;
-import com.energyxxer.commodore.functionlogic.selector.arguments.ScoreArgument;
-import com.energyxxer.commodore.textcomponents.StringTextComponent;
+import com.energyxxer.commodore.functionlogic.nbt.TagInt;
+import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.types.Type;
-import com.energyxxer.commodore.util.NumberRange;
+import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventCollection;
+
+import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
 public class CustomItem {
     private final String id;
@@ -37,6 +30,7 @@ public class CustomItem {
     public CustomItem(String id, Type defaultType) {
         this.id = id;
         this.defaultType = defaultType;
+        this.defaultNBT = new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
     }
 
     public String getId() {
@@ -69,6 +63,7 @@ public class CustomItem {
 
     public void setCustomModelData(int customModelData) {
         this.customModelData = customModelData;
+        defaultNBT = defaultNBT.merge(new TagCompound(new TagInt("CustomModelData", customModelData)));
         setUseModelData(true);
     }
 
@@ -80,8 +75,9 @@ public class CustomItem {
         fullyDeclared = true;
     }
 
-
-
+    public Item constructItem(NBTMode mode) {
+        return mode == SETTING ? new Item(defaultType, getDefaultNBT()) : new Item(defaultType, new TagCompound(new TagInt("TridentCustomItem", getItemIdHash())));
+    }
 
     public static void defineItem(TokenPattern<?> pattern, TridentFile file) {
         String entityName = pattern.find("ITEM_NAME").flatten(false);
@@ -111,7 +107,7 @@ public class CustomItem {
                             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default items", entry));
                             break;
                         }
-                        itemDecl.setDefaultNBT(NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler()));
+                        itemDecl.defaultNBT = itemDecl.defaultNBT.merge(NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler()));
                         break;
                     }
                     case "ITEM_INNER_FUNCTION": {
@@ -131,7 +127,10 @@ public class CustomItem {
                                             break;
                                         }
 
-                                        String criteriaKey = onWhat.find("ITEM_CRITERIA_KEY").flatten(false);
+                                        file.getCompiler().getSpecialFileManager().itemEvents.addCustomItem(ItemEventCollection.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()), defaultType, itemDecl, new FunctionReference(innerFile.getFunction()));
+
+
+                                        /*String criteriaKey = ;
 
                                         String criteria = "minecraft." + criteriaKey + ":" + defaultType.toString().replace(':','.');
 
@@ -141,7 +140,7 @@ public class CustomItem {
                                         scores.put(objective, new NumberRange<>(1, null));
 
                                         file.getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteAsEntity(new GenericEntity(new Selector(Selector.BaseSelector.ALL_PLAYERS, scores))), new ExecuteAtEntity(new GenericEntity(new Selector(Selector.BaseSelector.SENDER)))));
-                                        file.getTickFunction().append(new ScoreAdd(new LocalScore(new GenericEntity(new Selector(Selector.BaseSelector.ALL_PLAYERS, scores)), objective), -1));
+                                        file.getTickFunction().append(new ScoreReset(new GenericEntity(new Selector(Selector.BaseSelector.ALL_PLAYERS, scores)), objective));*/
                                     }
                                 }
                             }
@@ -156,5 +155,9 @@ public class CustomItem {
         }
 
         if(itemDecl != null) itemDecl.endDeclaration();
+    }
+
+    public int getItemIdHash() {
+        return id.hashCode();
     }
 }

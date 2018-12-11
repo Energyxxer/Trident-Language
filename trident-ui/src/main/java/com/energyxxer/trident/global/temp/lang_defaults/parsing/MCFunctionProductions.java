@@ -1862,14 +1862,14 @@ public class MCFunctionProductions {
                 {
                     TokenGroupMatch g = new TokenGroupMatch();
                     g.append(new TokenItemMatch(null, "remove").setName("COMMAND_NODE"));
-                    g.append(OBJECTIVE); //objective
+                    g.append(OBJECTIVE); //itemCriteriaObjective
                     branch.add(g);
                 }
                 {
                     TokenGroupMatch g = new TokenGroupMatch();
                     g.append(new TokenItemMatch(null, "setdisplay").setName("COMMAND_NODE"));
                     g.append(LIMITED_STRING); //slot
-                    g.append(new TokenGroupMatch(true).append(OBJECTIVE)); //objective
+                    g.append(new TokenGroupMatch(true).append(OBJECTIVE)); //itemCriteriaObjective
                     branch.add(g);
                 }
                 cmd.append(branch);

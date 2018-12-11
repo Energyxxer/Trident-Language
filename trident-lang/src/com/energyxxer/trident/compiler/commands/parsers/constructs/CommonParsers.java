@@ -30,9 +30,13 @@ import com.energyxxer.trident.compiler.commands.parsers.variable_functions.Varia
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
+import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
+import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
 public class CommonParsers {
     public static Type parseEntityType(TokenPattern<?> id, TridentCompiler compiler) {
@@ -134,11 +138,21 @@ public class CommonParsers {
         return returned;
     }
 
-    public static Item parseItem(TokenPattern<?> pattern, TridentCompiler compiler) {
-        if(pattern.getName().equals("ITEM_TAGGED") || pattern.getName().equals("ITEM")) return parseItem(((TokenStructure) pattern).getContents(), compiler);
+    public static Item parseItem(TokenPattern<?> pattern, TridentCompiler compiler, NBTMode mode) {
+        if(pattern.getName().equals("ITEM_TAGGED") || pattern.getName().equals("ITEM")) return parseItem(((TokenStructure) pattern).getContents(), compiler, mode);
 
         if(pattern.getName().equals("ITEM_VARIABLE")) {
-            Item item = retrieveSymbol(pattern.find("VARIABLE_MARKER"), compiler, Item.class);
+            Object reference = retrieveSymbol(pattern.find("VARIABLE_MARKER"), compiler, Item.class, CustomItem.class);
+            Item item;
+            if(reference instanceof Item) {
+                item = (Item) reference;
+            } else if(reference instanceof CustomItem) {
+                item = ((CustomItem) reference).constructItem(mode);
+            } else {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown item reference return type: " + reference.getClass().getSimpleName(), pattern));
+                throw new EntryParsingException();
+            }
+
             var appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
             if(appendedNBT != null) {
                 TagCompound nbt = item.getNBT();
@@ -307,7 +321,7 @@ public class CommonParsers {
                 return parseBlock(pattern, compiler);
             case "ITEM_TAGGED":
             case "ITEM":
-                return parseItem(pattern, compiler);
+                return parseItem(pattern, compiler, SETTING);
             case "COORDINATE_SET":
                 return CoordinateParser.parse(pattern, compiler);
             case "NBT_COMPOUND":

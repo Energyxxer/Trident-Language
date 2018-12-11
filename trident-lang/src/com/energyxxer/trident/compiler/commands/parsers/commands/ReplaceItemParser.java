@@ -14,13 +14,14 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinatePar
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
 @ParserMember(key = "replaceitem")
 public class ReplaceItemParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         Type slot = file.getCompiler().getModule().minecraft.types.slot.get(pattern.find("SLOT_ID").flatten(false));
-        Item item = CommonParsers.parseItem(pattern.find("ITEM"), file.getCompiler());
+        Item item = CommonParsers.parseItem(pattern.find("ITEM"), file.getCompiler(), NBTMode.SETTING);
 
         if(!item.getItemType().isStandalone()) {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Item tags aren't allowed in this context", pattern.find("ITEM")));

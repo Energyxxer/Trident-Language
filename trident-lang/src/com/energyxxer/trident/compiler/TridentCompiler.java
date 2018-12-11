@@ -21,6 +21,7 @@ import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
 import com.energyxxer.trident.compiler.semantics.SymbolStack;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.*;
 
@@ -38,8 +39,8 @@ public class TridentCompiler {
 
     public static final String PROJECT_FILE_NAME = ".tdnproj";
 
-    protected final File rootDir;
-    protected final CommandModule module;
+    private final File rootDir;
+    private final CommandModule module;
 
     private JsonObject properties = null;
 
@@ -55,15 +56,17 @@ public class TridentCompiler {
     private Gson gson;
 
     private SymbolStack stack = new SymbolStack();
-
+    private SpecialFileManager specialFileManager;
     private int languageLevel = 1;
+    private String defaultNamespace = null;
 
     public TridentCompiler(File rootDir) {
         this.rootDir = rootDir;
         module = new CommandModule(rootDir.getName(), "Command Module created with Trident", null);
-        module.getOptionManager().UNUSED_COMMAND_POLICY.setValue(UnusedCommandPolicy.COMMENT_OUT);
+        module.getOptionManager().UNUSED_COMMAND_POLICY.setValue(UnusedCommandPolicy.KEEP);
         module.getOptionManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
 
+        specialFileManager = new SpecialFileManager(this);
 
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.setPrettyPrinting();
@@ -98,6 +101,9 @@ public class TridentCompiler {
             }
         }
 
+        if(properties.has("default-namespace") && properties.get("default-namespace").isJsonPrimitive() && properties.get("default-namespace").getAsJsonPrimitive().isString() && !properties.get("default-namespace").getAsString().isBlank()) {
+            defaultNamespace = properties.get("default-namespace").getAsString().trim();
+        }
 
         this.setProgress("Importing vanilla definitions");
         try {
@@ -149,6 +155,13 @@ public class TridentCompiler {
         for(TridentFile file : sortedFiles) {
             file.resolveEntries();
         }
+
+        if(report.hasErrors()) {
+            finalizeCompilation();
+            return;
+        }
+
+        specialFileManager.compile();
 
         if(report.hasErrors()) {
             finalizeCompilation();
@@ -337,5 +350,20 @@ public class TridentCompiler {
 
     public int getLanguageLevel() {
         return languageLevel;
+    }
+
+    private boolean givenDefaultNamespaceNotice = false;
+
+    public String getDefaultNamespace() {
+        if(defaultNamespace == null && !givenDefaultNamespaceNotice) {
+            report.addNotice(new Notice(NoticeType.WARNING, "Some language features used require a default namespace. Please specify a default namespace in the project settings"));
+            defaultNamespace = "trident_temp_please_specify_default_namespace";
+            givenDefaultNamespaceNotice = true;
+        }
+        return defaultNamespace;
+    }
+
+    public SpecialFileManager getSpecialFileManager() {
+        return specialFileManager;
     }
 }

@@ -15,6 +15,7 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinatePar
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
 @ParserMember(key = "loot")
 public class LootParser implements CommandParser {
@@ -85,7 +86,7 @@ public class LootParser implements CommandParser {
         switch(pattern.getName()) {
             case "LITERAL_MAINHAND": return ToolOrHand.MAINHAND;
             case "LITERAL_OFFHAND": return ToolOrHand.OFFHAND;
-            default: return new ToolOrHand(CommonParsers.parseItem(pattern, compiler));
+            default: return new ToolOrHand(CommonParsers.parseItem(pattern, compiler, NBTMode.TESTING));
         }
     }
 }
