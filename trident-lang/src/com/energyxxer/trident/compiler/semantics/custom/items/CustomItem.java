@@ -15,7 +15,7 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventCollection;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
 
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
@@ -121,13 +121,22 @@ public class CustomItem {
 
                                     var onWhat = ((TokenStructure)modifiers.find("FUNCTION_ON_INNER")).getContents();
 
+                                    boolean pure = false;
+                                    if(modifiers.find("LITERAL_PURE") != null) {
+                                        if(itemDecl != null) {
+                                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "The 'pure' modifier is only allowed for default items", modifiers.find("LITERAL_PURE")));
+                                        } else {
+                                            pure = true;
+                                        }
+                                    }
+
                                     if(onWhat.getName().equals("ITEM_CRITERIA")) {
                                         if(itemDecl != null && file.getLanguageLevel() < 2) {
                                             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Custom non-default item events are only supported in language level 2 and up", entry));
                                             break;
                                         }
 
-                                        file.getCompiler().getSpecialFileManager().itemEvents.addCustomItem(ItemEventCollection.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()), defaultType, itemDecl, new FunctionReference(innerFile.getFunction()));
+                                        file.getCompiler().getSpecialFileManager().itemEvents.addCustomItem(ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()), defaultType, itemDecl, new ItemEvent(new FunctionReference(innerFile.getFunction()), pure));
 
 
                                         /*String criteriaKey = ;

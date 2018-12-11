@@ -1642,7 +1642,7 @@ public class TridentProductions {
                             choice(
                                     group(literal("on"), choice(
                                             group(choice("used", "broken", "crafted", "dropped", "picked_up").setName("ITEM_CRITERIA_KEY")).setName("ITEM_CRITERIA")
-                                    ).setName("FUNCTION_ON_INNER")).setName("FUNCTION_ON")
+                                    ).setName("FUNCTION_ON_INNER"), literal("pure").setOptional()).setName("FUNCTION_ON")
                             ).setOptional().setName("INNER_FUNCTION_MODIFIERS"),
                             literal("function"),
                             INNER_FUNCTION).setName("ITEM_INNER_FUNCTION")

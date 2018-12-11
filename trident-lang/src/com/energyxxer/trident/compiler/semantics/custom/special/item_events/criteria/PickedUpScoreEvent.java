@@ -8,9 +8,9 @@ import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
 import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.ScoreArgument;
-import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
 
 import java.util.ArrayList;
 
@@ -35,8 +35,8 @@ public class PickedUpScoreEvent implements ScoreEventCriteriaHandler {
 
         }
 
-        for(FunctionReference reference : data.functionsToCall) {
-            data.function.append(new ExecuteCommand(new FunctionCommand(reference), modifiers));
+        for(ItemEvent event : data.events) {
+            data.function.append(new ExecuteCommand(new FunctionCommand(event.toCall), modifiers));
         }
     }
 

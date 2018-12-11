@@ -13,9 +13,9 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.NBTArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.ScoreArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TagArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
-import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
 
 import java.util.ArrayList;
 
@@ -40,8 +40,8 @@ public class DroppedScoreEvent implements ScoreEventCriteriaHandler {
             modifiers.add(new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, new GenericEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES, new TypeArgument(data.compiler.getModule().minecraft.types.entity.get("item")), new TagArgument("tdci_dropped"), new NBTArgument(new TagCompound(new TagCompound("Item", new TagCompound("tag", new TagInt("TridentCustomItem", data.customItem.getItemIdHash())))))))));
         }
 
-        for(FunctionReference reference : data.functionsToCall) {
-            data.function.append(new ExecuteCommand(new FunctionCommand(reference), modifiers));
+        for(ItemEvent event : data.events) {
+            data.function.append(new ExecuteCommand(new FunctionCommand(event.toCall), modifiers));
         }
     }
 

@@ -24,7 +24,6 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.ScoreArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.textcomponents.StringTextComponent;
 import com.energyxxer.commodore.types.Type;
-import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
@@ -41,7 +40,7 @@ import java.util.HashMap;
 public class ItemEventFile extends SpecialFile {
     private final TridentCompiler compiler;
     private final SpecialFileManager parent;
-    private final HashMap<ItemEventCollection.ItemScoreEventType, HashMap<Type, HashMap<CustomItem, ArrayList<FunctionReference>>>> definedItems = new HashMap<>();
+    private final HashMap<ItemEvent.ItemScoreEventType, HashMap<Type, HashMap<CustomItem, ArrayList<ItemEvent>>>> definedItems = new HashMap<>();
 
     private Function function;
 
@@ -50,14 +49,14 @@ public class ItemEventFile extends SpecialFile {
         this.parent = parent;
     }
 
-    public void addCustomItem(ItemEventCollection.ItemScoreEventType eventType, Type itemType, CustomItem customItem, FunctionReference function) {
+    public void addCustomItem(ItemEvent.ItemScoreEventType eventType, Type itemType, CustomItem customItem, ItemEvent event) {
         if(!definedItems.containsKey(eventType)) definedItems.put(eventType, new HashMap<>());
         if(!definedItems.get(eventType).containsKey(itemType)) {
             definedItems.get(eventType).put(itemType, new HashMap<>());
             definedItems.get(eventType).get(itemType).put(null, new ArrayList<>());
         }
         if(!definedItems.get(eventType).get(itemType).containsKey(customItem)) definedItems.get(eventType).get(itemType).put(customItem, new ArrayList<>());
-        definedItems.get(eventType).get(itemType).get(customItem).add(function);
+        definedItems.get(eventType).get(itemType).get(customItem).add(event);
     }
 
     public void compile() {
@@ -107,7 +106,7 @@ public class ItemEventFile extends SpecialFile {
         function.append(new FunctionCommand(prepareHeldItems));
 
         for(var eventEntry : definedItems.entrySet()) {
-            ItemEventCollection.ItemScoreEventType eventType = eventEntry.getKey();
+            ItemEvent.ItemScoreEventType eventType = eventEntry.getKey();
             for(var typeEntry : eventEntry.getValue().entrySet()) {
                 Type itemType = typeEntry.getKey();
 
