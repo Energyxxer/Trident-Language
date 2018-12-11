@@ -111,7 +111,7 @@ public class CustomItem {
                         break;
                     }
                     case "ITEM_INNER_FUNCTION": {
-                        TridentFile innerFile = TridentFile.createInnerFile(entry.find("INNER_FUNCTION"), file);
+                        TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), file);
 
                         var rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
                         if(rawFunctionModifiers != null) {

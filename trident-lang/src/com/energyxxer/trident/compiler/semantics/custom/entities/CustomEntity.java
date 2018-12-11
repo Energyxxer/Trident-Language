@@ -143,7 +143,7 @@ public class CustomEntity {
                     case "ENTITY_INNER_FUNCTION": {
                         boolean ticking = entry.find("LITERAL_TICKING") != null;
 
-                        TridentFile innerFile = TridentFile.createInnerFile(entry.find("INNER_FUNCTION"), file);
+                        TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), file);
 
                         if(ticking) {
                             Entity selector = entityDecl != null ?

@@ -16,6 +16,7 @@ public class TridentProductions {
     public static final LazyTokenStructureMatch FILE_INNER;
     public static final LazyTokenStructureMatch INNER_FUNCTION;
     public static final LazyTokenStructureMatch ANONYMOUS_INNER_FUNCTION;
+    public static final LazyTokenStructureMatch OPTIONAL_NAME_INNER_FUNCTION;
     public static final LazyTokenStructureMatch ENTRY;
 
     public static final LazyTokenItemMatch COMMENT_S;
@@ -87,6 +88,7 @@ public class TridentProductions {
         FILE_INNER = new LazyTokenStructureMatch("FILE_INNER");
         INNER_FUNCTION = new LazyTokenStructureMatch("INNER_FUNCTION");
         ANONYMOUS_INNER_FUNCTION = new LazyTokenStructureMatch("ANONYMOUS_INNER_FUNCTION");
+        OPTIONAL_NAME_INNER_FUNCTION = new LazyTokenStructureMatch("OPTIONAL_NAME_INNER_FUNCTION");
         ENTRY = new LazyTokenStructureMatch("ENTRY");
         COMMAND = new LazyTokenStructureMatch("COMMAND");
         INSTRUCTION = new LazyTokenStructureMatch("INSTRUCTION");
@@ -142,6 +144,7 @@ public class TridentProductions {
 
         INNER_FUNCTION.add(group(ofType(RESOURCE_LOCATION).setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")));
         ANONYMOUS_INNER_FUNCTION.add(group(brace("{"), FILE_INNER, brace("}")));
+        OPTIONAL_NAME_INNER_FUNCTION.add(group(ofType(RESOURCE_LOCATION).setOptional().setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")));
 
         //region Commands
         //region say
@@ -1626,7 +1629,7 @@ public class TridentProductions {
             var entityBodyEntry = choice(
                     group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT"),
                     group(literal("default"), literal("passengers"), brace("["), list(group(ENTITY_ID, optional(NBT_COMPOUND).setName("PASSENGER_NBT")).setName("PASSENGER"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
-                    group(literal("ticking").setOptional(), literal("function"), INNER_FUNCTION).setName("ENTITY_INNER_FUNCTION")
+                    group(literal("ticking").setOptional(), literal("function"), OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_INNER_FUNCTION")
             );
 
             var entityBody = group(
@@ -1645,7 +1648,7 @@ public class TridentProductions {
                                     ).setName("FUNCTION_ON_INNER"), literal("pure").setOptional()).setName("FUNCTION_ON")
                             ).setOptional().setName("INNER_FUNCTION_MODIFIERS"),
                             literal("function"),
-                            INNER_FUNCTION).setName("ITEM_INNER_FUNCTION")
+                            OPTIONAL_NAME_INNER_FUNCTION).setName("ITEM_INNER_FUNCTION")
             );
 
             var itemBody = group(

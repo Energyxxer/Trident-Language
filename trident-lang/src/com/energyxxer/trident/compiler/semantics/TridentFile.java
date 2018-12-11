@@ -89,7 +89,7 @@ public class TridentFile implements CompilerExtension {
                 functionName = functionName.substring(1);
             }
         } else {
-            functionName = "anonymous" + parent.anonymousChildren;
+            functionName = "_anonymous" + parent.anonymousChildren;
             parent.anonymousChildren++;
         }
 
