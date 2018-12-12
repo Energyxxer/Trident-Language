@@ -85,7 +85,7 @@ public class CustomItem {
         Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), file.getCompiler());
 
         CustomItem itemDecl = null;
-        var rawCustomModelData = pattern.find("CUSTOM_MODEL_DATA.INTEGER");
+        TokenPattern<?> rawCustomModelData = pattern.find("CUSTOM_MODEL_DATA.INTEGER");
 
         if(!entityName.equals("default")) {
             itemDecl = new CustomItem(entityName, defaultType);
@@ -97,11 +97,11 @@ public class CustomItem {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default items don't support custom model data specifiers", rawCustomModelData));
         }
 
-        var bodyEntries = (TokenList) pattern.find("ITEM_DECLARATION_BODY.ITEM_BODY_ENTRIES");
+        TokenList bodyEntries = (TokenList) pattern.find("ITEM_DECLARATION_BODY.ITEM_BODY_ENTRIES");
 
         if(bodyEntries != null) {
-            for(var rawEntry : bodyEntries.getContents()) {
-                var entry = ((TokenStructure) rawEntry).getContents();
+            for(TokenPattern<?> rawEntry : bodyEntries.getContents()) {
+                TokenPattern<?> entry = ((TokenStructure) rawEntry).getContents();
                 switch(entry.getName()) {
                     case "DEFAULT_NBT": {
                         if(itemDecl == null) {
@@ -114,13 +114,13 @@ public class CustomItem {
                     case "ITEM_INNER_FUNCTION": {
                         TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), file);
 
-                        var rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
+                        TokenPattern<?> rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
                         if(rawFunctionModifiers != null) {
-                            var modifiers = ((TokenStructure)rawFunctionModifiers).getContents();
+                            TokenPattern<?> modifiers = ((TokenStructure)rawFunctionModifiers).getContents();
                             switch(modifiers.getName()) {
                                 case "FUNCTION_ON": {
 
-                                    var onWhat = ((TokenStructure)modifiers.find("FUNCTION_ON_INNER")).getContents();
+                                    TokenPattern<?> onWhat = ((TokenStructure)modifiers.find("FUNCTION_ON_INNER")).getContents();
 
                                     boolean pure = false;
                                     if(modifiers.find("LITERAL_PURE") != null) {

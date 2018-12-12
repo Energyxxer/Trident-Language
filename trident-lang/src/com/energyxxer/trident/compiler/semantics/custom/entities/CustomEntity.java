@@ -90,11 +90,11 @@ public class CustomEntity {
             table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, entityDecl));
         }
 
-        var bodyEntries = (TokenList) pattern.find("ENTITY_DECLARATION_BODY.ENTITY_BODY_ENTRIES");
+        TokenList bodyEntries = (TokenList) pattern.find("ENTITY_DECLARATION_BODY.ENTITY_BODY_ENTRIES");
 
         if(bodyEntries != null) {
-            for(var rawEntry : bodyEntries.getContents()) {
-                var entry = ((TokenStructure) rawEntry).getContents();
+            for(TokenPattern<?> rawEntry : bodyEntries.getContents()) {
+                TokenPattern<?> entry = ((TokenStructure) rawEntry).getContents();
                 switch(entry.getName()) {
                     case "DEFAULT_NBT": {
                         if(entityDecl == null) {
@@ -115,7 +115,7 @@ public class CustomEntity {
 
                         TagList passengersTag = new TagList("Passengers");
 
-                        for(var rawPassenger : ((TokenList)entry.find("PASSENGER_LIST")).getContents()) {
+                        for(TokenPattern<?> rawPassenger : ((TokenList)entry.find("PASSENGER_LIST")).getContents()) {
                             if(rawPassenger.getName().equals("PASSENGER")) {
 
                                 TagCompound passengerCompound;
@@ -130,7 +130,7 @@ public class CustomEntity {
                                     file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID")));
                                     throw new EntryParsingException();
                                 }
-                                var auxNBT = rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND");
+                                TokenPattern<?> auxNBT = rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND");
                                 if(auxNBT != null) passengerCompound = passengerCompound.merge(NBTParser.parseCompound(auxNBT, file.getCompiler()));
 
                                 passengersTag.add(passengerCompound);

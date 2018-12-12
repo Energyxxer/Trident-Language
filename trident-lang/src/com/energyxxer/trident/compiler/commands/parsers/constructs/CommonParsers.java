@@ -153,7 +153,7 @@ public class CommonParsers {
                 throw new EntryParsingException();
             }
 
-            var appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
+            TokenPattern<?> appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
             if(appendedNBT != null) {
                 TagCompound nbt = item.getNBT();
                 if(nbt == null) nbt = new TagCompound();
@@ -184,13 +184,13 @@ public class CommonParsers {
         }
         if(pattern.getName().equals("BLOCK_VARIABLE")) {
             Block block = retrieveSymbol(pattern.find("VARIABLE_MARKER"), compiler, Block.class);
-            var appendedState = pattern.find("APPENDED_BLOCKSTATE.BLOCKSTATE");
+            TokenPattern<?> appendedState = pattern.find("APPENDED_BLOCKSTATE.BLOCKSTATE");
             if(appendedState != null) {
                 Blockstate state = block.getBlockstate();
                 if(state == null) state = new Blockstate();
                 block = new Block(block.getBlockType(), state.merge(parseBlockstate(appendedState)), block.getNBT()); //TODO for Commodore: add Blockstate#merge
             }
-            var appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
+            TokenPattern<?> appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
             if(appendedNBT != null) {
                 TagCompound nbt = block.getNBT();
                 if(nbt == null) nbt = new TagCompound();
@@ -360,7 +360,7 @@ public class CommonParsers {
 
     public static Object retrieveSymbol(TokenPattern<?> pattern, TridentCompiler compiler) {
         String name = pattern.find("VARIABLE_NAME").flatten(false);
-        var modPattern = pattern.find("VARIABLE_MODIFIER.VARIABLE_MODIFIER_FUNCTION");
+        TokenPattern<?> modPattern = pattern.find("VARIABLE_MODIFIER.VARIABLE_MODIFIER_FUNCTION");
         String mod = modPattern != null ? modPattern.flatten(false) : null;
 
         Symbol symbol = compiler.getStack().search(name);

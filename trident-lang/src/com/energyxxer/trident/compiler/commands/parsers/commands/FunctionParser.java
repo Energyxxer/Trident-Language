@@ -15,7 +15,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class FunctionParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        var choice = ((TokenStructure)pattern.find("CHOICE")).getContents();
+        TokenPattern<?> choice = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(choice.getName()) {
             case "RESOURCE_LOCATION_TAGGED": {
                 return new FunctionCommand(CommonParsers.parseFunctionTag(choice, file));

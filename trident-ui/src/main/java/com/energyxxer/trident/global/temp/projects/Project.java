@@ -8,8 +8,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -28,7 +28,7 @@ public class Project {
 	//endregion
 	
 	public Project(String name) {
-		Path rootPath = Path.of(ProjectManager.getWorkspaceDir()).resolve(name);
+		Path rootPath = Paths.get(ProjectManager.getWorkspaceDir()).resolve(name);
 		this.rootDirectory = rootPath.toFile();
 
 		datapackRoot = rootPath.resolve("datapack").toFile();
@@ -37,7 +37,7 @@ public class Project {
 		this.name = name;
 		//this.prefix = StringUtil.getInitials(name).toLowerCase();
 
-        Path outFolder = Path.of(System.getProperty("user.home"), "Trident", "out");
+        Path outFolder = Paths.get(System.getProperty("user.home"), "Trident", "out");
 
         config = new JsonObject();
         config.addProperty("default-namespace", StringUtil.getInitials(name).toLowerCase());
@@ -84,7 +84,7 @@ public class Project {
 		File config = new File(rootDirectory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
 		PrintWriter writer;
 		try {
-			writer = new PrintWriter(config, StandardCharsets.UTF_8);
+			writer = new PrintWriter(config, "UTF-8");
 			writer.print(new GsonBuilder().setPrettyPrinting().create().toJson(this.config));
 			writer.close();
 		} catch (IOException x) {
@@ -142,12 +142,12 @@ public class Project {
 		return name;
 	}
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
 	public String getPrefix() {
 		return "";
 	}
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
 	public String getWorld() {
 		return "";
 	}
@@ -161,12 +161,12 @@ public class Project {
 		this.name = name;
 	}
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
 	public void setPrefix(String prefix) {
 
 	}
 
-	@Deprecated(forRemoval = true)
+	@Deprecated
 	public void setWorld(String world) {
 
 	}

@@ -26,6 +26,7 @@ import com.energyxxer.trident.compiler.commands.parsers.modifiers.ModifierParser
 
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -81,7 +82,7 @@ public class TridentFile implements CompilerExtension {
     }
 
     public static TridentFile createInnerFile(TokenPattern<?> pattern, TridentFile parent) {
-        var namePattern = pattern.find("INNER_FUNCTION_NAME");
+        TokenPattern<?> namePattern = pattern.find("INNER_FUNCTION_NAME");
         String functionName;
         if(namePattern != null) {
             functionName = new TridentUtil.ResourceLocation(namePattern.flatten(false)).body;
@@ -93,11 +94,11 @@ public class TridentFile implements CompilerExtension {
             parent.anonymousChildren++;
         }
 
-        var innerFilePattern = pattern.find("FILE_INNER");
+        TokenPattern<?> innerFilePattern = pattern.find("FILE_INNER");
         String innerFilePathRaw = parent.getPath().toString();
         innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
 
-        TridentFile innerFile = new TridentFile(parent.getCompiler(), Path.of(innerFilePathRaw).resolve(functionName + ".tdn"), innerFilePattern);
+        TridentFile innerFile = new TridentFile(parent.getCompiler(), Paths.get(innerFilePathRaw).resolve(functionName + ".tdn"), innerFilePattern);
         innerFile.resolveEntries();
         return innerFile;
     }

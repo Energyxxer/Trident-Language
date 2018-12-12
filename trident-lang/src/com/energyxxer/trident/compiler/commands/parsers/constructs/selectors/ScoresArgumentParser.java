@@ -27,7 +27,7 @@ public class ScoresArgumentParser implements SimpleSelectorArgumentParser {
                     Objective objective = CommonParsers.parseObjective(rawArg.find("OBJECTIVE_NAME"), compiler);
                     NumberRange<Integer> range;
 
-                    var valueInner = ((TokenStructure) rawArg.find("SCORE_VALUE")).getContents();
+                    TokenPattern<?> valueInner = ((TokenStructure) rawArg.find("SCORE_VALUE")).getContents();
                     switch(valueInner.getName()) {
                         case "INTEGER_NUMBER_RANGE":
                             range = CommonParsers.parseIntRange(valueInner, compiler);

@@ -36,6 +36,7 @@ import com.energyxxer.trident.compiler.semantics.custom.special.item_events.crit
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ItemEventFile extends SpecialFile {
     private final TridentCompiler compiler;
@@ -105,9 +106,9 @@ public class ItemEventFile extends SpecialFile {
 
         function.append(new FunctionCommand(prepareHeldItems));
 
-        for(var eventEntry : definedItems.entrySet()) {
+        for(Map.Entry<ItemEvent.ItemScoreEventType, HashMap<Type, HashMap<CustomItem, ArrayList<ItemEvent>>>> eventEntry : definedItems.entrySet()) {
             ItemEvent.ItemScoreEventType eventType = eventEntry.getKey();
-            for(var typeEntry : eventEntry.getValue().entrySet()) {
+            for(Map.Entry<Type, HashMap<CustomItem, ArrayList<ItemEvent>>> typeEntry : eventEntry.getValue().entrySet()) {
                 Type itemType = typeEntry.getKey();
 
                 String criteria = "minecraft." + eventType.name().toLowerCase() + ":" + itemType.toString().replace(':','.');
@@ -116,7 +117,7 @@ public class ItemEventFile extends SpecialFile {
                 ScoreArgument scores = new ScoreArgument();
                 scores.put(objective, new NumberRange<>(1, null));
 
-                for(var itemEntry : typeEntry.getValue().entrySet()) {
+                for(Map.Entry<CustomItem, ArrayList<ItemEvent>> itemEntry : typeEntry.getValue().entrySet()) {
                     ScoreEventCriteriaData data = new ScoreEventCriteriaData(compiler, itemType, objective, function, itemEntry.getKey(), itemEntry.getValue(), mainhand, offhand, held, oldMainhand, oldOffhand, oldHeld);
                     ParserManager.getParser(ScoreEventCriteriaHandler.class, eventType.name().toLowerCase()).mid(data);
                 }
