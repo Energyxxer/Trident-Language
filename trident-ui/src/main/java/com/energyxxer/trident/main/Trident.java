@@ -32,7 +32,7 @@ public class Trident {
         } catch(FileNotFoundException x) {
 		    Debug.log("Unable to open log file '" + Preferences.LOG_FILE_PATH + "', will not log to it until restarted");
         }
-		Debug.log("hi", Debug.MessageType.INFO);
+		Debug.log("Running on Java " + System.getProperty("java.version"));
 
 		JFrame splash = new JFrame();
 		splash.setSize(new Dimension(700, 410));
