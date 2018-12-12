@@ -46,6 +46,7 @@ public class SummonParser implements CommandParser {
             throw new EntryParsingException();
         }
 
+        if(pos == null && nbt != null) pos = new CoordinateSet();
 
         return new SummonCommand(type, pos, nbt);
     }
