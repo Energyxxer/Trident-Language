@@ -252,7 +252,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "effect"),
                     choice(
                             group(literal("clear"), ENTITY, optional(EFFECT_ID)).setName("CLEAR"),
-                            group(literal("give"), ENTITY, EFFECT_ID, optional(integer().setName("DURATION"), optional(integer().setName("AMPLIFIER"), ofType(TridentTokens.BOOLEAN).setName("HIDE_PARTICLES")))).setName("GIVE")
+                            group(literal("give"), ENTITY, EFFECT_ID, optional(integer().setName("DURATION"), optional(integer().setName("AMPLIFIER"), ofType(TridentTokens.BOOLEAN).setOptional().setName("HIDE_PARTICLES")))).setName("GIVE")
                     )
             ));
         }
@@ -1648,7 +1648,9 @@ public class TridentProductions {
                                     ).setName("FUNCTION_ON_INNER"), literal("pure").setOptional()).setName("FUNCTION_ON")
                             ).setOptional().setName("INNER_FUNCTION_MODIFIERS"),
                             literal("function"),
-                            OPTIONAL_NAME_INNER_FUNCTION).setName("ITEM_INNER_FUNCTION")
+                            OPTIONAL_NAME_INNER_FUNCTION).setName("ITEM_INNER_FUNCTION"),
+                    group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
+                    group(literal("default"), literal("lore"), brace("["), list(TEXT_COMPONENT, comma()).setOptional().setName("LORE_LIST"), brace("]")).setName("DEFAULT_LORE")
             );
 
             var itemBody = group(

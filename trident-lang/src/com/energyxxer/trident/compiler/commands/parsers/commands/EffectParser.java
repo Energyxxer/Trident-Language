@@ -18,7 +18,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import static com.energyxxer.trident.compiler.util.Using.using;
 
 @ParserMember(key = "effect")
-public class EffectCommand implements CommandParser {
+public class EffectParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();

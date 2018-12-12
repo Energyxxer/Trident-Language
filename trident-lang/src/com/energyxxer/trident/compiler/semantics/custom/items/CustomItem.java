@@ -1,7 +1,7 @@
 package com.energyxxer.trident.compiler.semantics.custom.items;
 
-import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
-import com.energyxxer.commodore.functionlogic.nbt.TagInt;
+import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
@@ -12,6 +12,7 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.TextParser;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -155,6 +156,36 @@ public class CustomItem {
                             }
                         }
 
+                        break;
+                    }
+                    case "DEFAULT_NAME": {
+                        if(itemDecl == null) {
+                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default items", entry));
+                            break;
+                        }
+
+                        NBTCompoundBuilder builder = new NBTCompoundBuilder();
+                        builder.put(new NBTPath("display",new NBTPath("Name")), new TagString("Name", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), file.getCompiler()).toString()));
+
+                        itemDecl.defaultNBT = itemDecl.defaultNBT.merge(builder.getCompound());
+                        break;
+                    }
+                    case "DEFAULT_LORE": {
+                        if(itemDecl == null) {
+                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default items", entry));
+                            break;
+                        }
+                        TagList loreList = new TagList("Lore");
+                        TagCompound newNBT = new TagCompound("", new TagCompound("display", loreList));
+
+                        TokenList rawLoreList = (TokenList)(entry.find("LORE_LIST"));
+                        if(rawLoreList != null) {
+                            for(TokenPattern<?> rawLine : rawLoreList.getContents()) {
+                                if(rawLine.getName().equals("TEXT_COMPONENT")) loreList.add(new TagString(TextParser.parseTextComponent(rawLine, file.getCompiler()).toString()));
+                            }
+                        }
+
+                        itemDecl.defaultNBT = itemDecl.defaultNBT.merge(newNBT);
                         break;
                     }
                     default:
