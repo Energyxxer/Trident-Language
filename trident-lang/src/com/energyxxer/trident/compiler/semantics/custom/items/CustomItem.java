@@ -81,6 +81,9 @@ public class CustomItem {
     }
 
     public static void defineItem(TokenPattern<?> pattern, TridentFile file) {
+
+        boolean global = pattern.find("LITERAL_LOCAL") == null;
+
         String entityName = pattern.find("ITEM_NAME").flatten(false);
         Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), file.getCompiler());
 
@@ -91,7 +94,7 @@ public class CustomItem {
             itemDecl = new CustomItem(entityName, defaultType);
             if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, file.getCompiler()));
 
-            SymbolTable table = file.getCompiler().getStack().getGlobal();
+            SymbolTable table = global ? file.getCompiler().getStack().getGlobal() : file.getCompiler().getStack().peek();
             table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, itemDecl));
         } else if(rawCustomModelData != null) {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default items don't support custom model data specifiers", rawCustomModelData));

@@ -80,13 +80,16 @@ public class CustomEntity {
 
 
     public static void defineEntity(TokenPattern<?> pattern, TridentFile file) {
+
+        boolean global = pattern.find("LITERAL_LOCAL") == null;
+
         String entityName = pattern.find("ENTITY_NAME").flatten(false);
         Type defaultType = CommonParsers.parseEntityType(pattern.find("ENTITY_ID"), file.getCompiler());
 
         CustomEntity entityDecl = null;
         if(!entityName.equals("default")) {
             entityDecl = new CustomEntity(entityName, defaultType);
-            SymbolTable table = file.getCompiler().getStack().getGlobal();
+            SymbolTable table = global ? file.getCompiler().getStack().getGlobal() : file.getCompiler().getStack().peek();
             table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, entityDecl));
         }
 

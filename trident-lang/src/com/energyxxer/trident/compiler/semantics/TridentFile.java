@@ -27,10 +27,7 @@ import com.energyxxer.trident.compiler.commands.parsers.modifiers.ModifierParser
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 
 public class TridentFile implements CompilerExtension {
@@ -39,6 +36,7 @@ public class TridentFile implements CompilerExtension {
     private final Namespace namespace;
     private TokenPattern<?> pattern;
     private final HashMap<TokenPattern<?>, TridentUtil.ResourceLocation> requires = new HashMap<>();
+    private ArrayList<TridentUtil.ResourceLocation> cascadingRequires = null;
     private final ArrayList<TridentUtil.ResourceLocation> tags = new ArrayList<>();
     private final Path relSourcePath;
 
@@ -158,6 +156,11 @@ public class TridentFile implements CompilerExtension {
         }
     }
 
+    public void addCascadingRequires(Collection<TridentUtil.ResourceLocation> locations) {
+        if(cascadingRequires == null) cascadingRequires = new ArrayList<>(requires.values());
+        cascadingRequires.addAll(locations);
+    }
+
     private boolean reportedNoCommands = false;
 
     public void resolveEntries() {
@@ -178,6 +181,10 @@ public class TridentFile implements CompilerExtension {
 
     public Collection<TridentUtil.ResourceLocation> getRequires() {
         return requires.values();
+    }
+
+    public Collection<TridentUtil.ResourceLocation> getCascadingRequires() {
+        return cascadingRequires;
     }
 
     public void checkCircularRequires() {

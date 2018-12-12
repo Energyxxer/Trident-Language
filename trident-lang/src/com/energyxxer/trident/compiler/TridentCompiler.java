@@ -31,9 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class TridentCompiler {
 
@@ -142,17 +140,20 @@ public class TridentCompiler {
 
         ArrayList<TridentFile> sortedFiles = new ArrayList<>(files.values());
 
+        files.values().forEach(this::getAllRequires);
+
         sortedFiles.sort((a,b) ->
                 (a.isCompileOnly() != b.isCompileOnly()) ?
                         a.isCompileOnly() ? -1 : 1 :
-                (a.getRequires().contains(b.getResourceLocation())) ?
+                (a.getCascadingRequires().contains(b.getResourceLocation())) ?
                         1 :
-                        (b.getRequires().contains(a.getResourceLocation())) ?
+                        (b.getCascadingRequires().contains(a.getResourceLocation())) ?
                             -1 :
                             0
         );
 
         for(TridentFile file : sortedFiles) {
+            Debug.log("Analyzing " + file);
             file.resolveEntries();
         }
 
@@ -189,6 +190,21 @@ public class TridentCompiler {
         finalizeCompilation();
     }
 
+    private TridentFile getFileForLocation(TridentUtil.ResourceLocation loc) {
+        for(TridentFile file : files.values()) {
+            if(file.getResourceLocation().equals(loc)) return file;
+        }
+        return null;
+    }
+
+    private Collection<TridentUtil.ResourceLocation> getAllRequires(TridentFile file) {
+        if(file.getCascadingRequires() == null) {
+            file.addCascadingRequires(Collections.emptyList());
+            file.getRequires().forEach(fl -> file.addCascadingRequires(getAllRequires(getFileForLocation(fl))));
+        }
+        return file.getCascadingRequires();
+    }
+
     private void recursivelyParse(LazyLexer lex, File dir) {
         File[] files = dir.listFiles();
         if(files == null) return;
@@ -201,8 +217,6 @@ public class TridentCompiler {
                 }
             } else {
                 if(name.endsWith(".tdn")) {
-                    Debug.log("Parsing " + name);
-
                     try {
                         String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
                         lex.tokenizeParse(file, str, new TridentLexerProfile());

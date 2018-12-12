@@ -1667,9 +1667,9 @@ public class TridentProductions {
                     group(keyword("define").setName("INSTRUCTION_KEYWORD"),
                             choice(
                                     group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE"),
-                                    group(literal("databank"), identifierA().setName("DATABANK_NAME"), nbtPointer).setName("DEFINE_DATABANK"),
-                                    group(literal("entity"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ENTITY_NAME"), ENTITY_ID, entityBody).setName("DEFINE_ENTITY"),
-                                    group(literal("item"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM"),
+                                    group(literal("local").setOptional(), literal("databank"), identifierA().setName("DATABANK_NAME"), nbtPointer).setName("DEFINE_DATABANK"),
+                                    group(literal("local").setOptional(), literal("entity"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ENTITY_NAME"), ENTITY_ID, entityBody).setName("DEFINE_ENTITY"),
+                                    group(literal("local").setOptional(), literal("item"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM"),
                                     group(literal("function"), INNER_FUNCTION).setName("DEFINE_FUNCTION")
                             )
                     )
