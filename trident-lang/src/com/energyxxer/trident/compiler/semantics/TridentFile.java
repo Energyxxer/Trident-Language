@@ -23,11 +23,15 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.instructions.Instruction;
 import com.energyxxer.trident.compiler.commands.parsers.modifiers.ModifierParser;
+import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 public class TridentFile implements CompilerExtension {
@@ -196,6 +200,7 @@ public class TridentFile implements CompilerExtension {
         for(Map.Entry<TokenPattern<?>, TridentUtil.ResourceLocation> entry : requires.entrySet()) {
             if(previous.contains(entry.getValue())) {
                 getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Circular requirement with function '" + entry.getValue() + "'", entry.getKey()));
+                Debug.log("Previous (for file '" + this.getResourceLocation() + "'): " + previous);
             } else {
                 TridentFile next = getCompiler().getFile(entry.getValue());
                 if(next != null) {
@@ -205,6 +210,7 @@ public class TridentFile implements CompilerExtension {
                 }
             }
         }
+        previous.remove(this.location);
     }
 
     public TridentUtil.ResourceLocation getResourceLocation() {

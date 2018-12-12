@@ -658,8 +658,8 @@ public class TridentProductions {
                             )).setName("OBJECTIVES"),
                             group(literal("players"), choice(
                                     group(choice("add", "remove", "set"), ENTITY, identifierA().setName("OBJECTIVE"), integer()).setName("CHANGE"),
-                                    group(literal("enable"), ENTITY, identifierA()).setName("ENABLE"),
-                                    group(literal("get"), ENTITY, identifierA()).setName("GET"),
+                                    group(literal("enable"), ENTITY, identifierA().setName("OBJECTIVE")).setName("ENABLE"),
+                                    group(literal("get"), ENTITY, identifierA().setName("OBJECTIVE")).setName("GET"),
                                     group(literal("list"), optional(sameLine(), ENTITY)).setName("LIST"),
                                     group(literal("operation"), group(ENTITY).setName("TARGET"), identifierA().setName("TARGET_OBJECTIVE"), ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), group(ENTITY).setName("SOURCE"), identifierA().setName("SOURCE_OBJECTIVE")).setName("OPERATION"),
                                     group(literal("reset"), choice(ENTITY, symbol("*")).setName("TARGET"), optional(sameLine(), identifierA().setName("OBJECTIVE")).setName("OBJECTIVE_CLAUSE")).setName("RESET")

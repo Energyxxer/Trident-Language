@@ -190,17 +190,10 @@ public class TridentCompiler {
         finalizeCompilation();
     }
 
-    private TridentFile getFileForLocation(TridentUtil.ResourceLocation loc) {
-        for(TridentFile file : files.values()) {
-            if(file.getResourceLocation().equals(loc)) return file;
-        }
-        return null;
-    }
-
     private Collection<TridentUtil.ResourceLocation> getAllRequires(TridentFile file) {
         if(file.getCascadingRequires() == null) {
             file.addCascadingRequires(Collections.emptyList());
-            file.getRequires().forEach(fl -> file.addCascadingRequires(getAllRequires(getFileForLocation(fl))));
+            file.getRequires().forEach(fl -> file.addCascadingRequires(getAllRequires(getFile(fl))));
         }
         return file.getCascadingRequires();
     }
