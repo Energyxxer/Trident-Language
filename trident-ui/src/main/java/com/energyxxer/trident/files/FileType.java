@@ -10,18 +10,13 @@ import java.io.File;
  */
 public enum FileType {
     PROJECT(0, "Project", "project", ProjectDialog::create, (pr, pth) -> true),
-    ENTITY(1, "Entity", "entity", UnitDialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "src" + File.separator)),
-    ITEM(1, "Item", "item", UnitDialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "src" + File.separator)),
-    CLASS(1, "Class", "class", UnitDialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "src" + File.separator)),
-    ENUM(1, "Enum", "enum", UnitDialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "src" + File.separator)),
-    FEATURE(1, "Feature", "feature", UnitDialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "src" + File.separator)),
+    TDN(1, "Trident Function", "trident_file", UnitDialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "datapack" + File.separator)),
     MODEL(1, "Model", "model", ModelDialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "resources" + File.separator)),
     LANG(1, "Language File", "lang", ResourceDialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "resources" + File.separator)),
-    FUNCTION(1, "Function", "function", MCMETADialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "data" + File.separator)),
+    FUNCTION(1, "Function", "function", MCMETADialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "datapack" + File.separator)),
     META(2, "Meta File", "meta", MCMETADialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "resources" + File.separator)),
-    JSON(2, "JSON File", "json", MCMETADialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "data" + File.separator)),
-    WORLD(3, "World", "world", UnitDialog::create, (pr, pth) -> pr != null && pth.startsWith(pr + "src" + File.separator)),
-    PACKAGE(4, "Package", "package", PackageDialog::create, (pr, pth) -> true);
+    JSON(2, "JSON File", "json", MCMETADialog::create, (pr, pth) -> true),
+    PACKAGE(3, "Folder", "folder", PackageDialog::create, (pr, pth) -> true);
 
     public final int group;
     public final String name;

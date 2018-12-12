@@ -32,7 +32,7 @@ public class ProjectManager {
 	
 	public static Project getAssociatedProject(File file) {
 		for(Project project : loadedProjects) {
-			if((file.getPath() + File.separator).startsWith((project.getDirectory().getPath() + File.separator))) {
+			if((file.getPath() + File.separator).startsWith((project.getRootDirectory().getPath() + File.separator))) {
 				return project;
 			}
 		}
@@ -86,7 +86,7 @@ blockstates/*.json = blockstate
 		} else {
 			//Check for file roots
 			if(project != null) {
-				if(file.getParentFile().equals(project.getDirectory())) {
+				if(file.getParentFile().equals(project.getRootDirectory())) {
 					switch(filename) {
 						case "src":
 						case "resources":

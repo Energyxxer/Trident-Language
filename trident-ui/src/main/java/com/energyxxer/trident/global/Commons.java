@@ -84,7 +84,7 @@ public class Commons {
 
     public static void compileActive() {
         if(Commons.getActiveProject() == null) return;
-        TridentCompiler c = new TridentCompiler(Commons.getActiveProject().getDirectory());
+        TridentCompiler c = new TridentCompiler(Commons.getActiveProject().getRootDirectory());
         //c.setLibrary(Resources.nativeLib);
         c.addProgressListener(TridentWindow::setStatus);
         c.addCompletionListener(() -> {

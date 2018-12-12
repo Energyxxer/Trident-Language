@@ -1,34 +1,25 @@
 package com.energyxxer.trident.ui.dialogs.file_dialogs;
 
-import com.energyxxer.trident.files.FileDefaults;
 import com.energyxxer.trident.files.FileType;
-import com.energyxxer.trident.global.Commons;
-import com.energyxxer.trident.global.Preferences;
 import com.energyxxer.trident.global.TabManager;
-import com.energyxxer.trident.global.temp.projects.ProjectManager;
 import com.energyxxer.trident.main.window.TridentWindow;
 import com.energyxxer.trident.ui.modules.FileModuleToken;
 import com.energyxxer.trident.ui.styledcomponents.StyledButton;
-import com.energyxxer.trident.ui.styledcomponents.StyledDropdownMenu;
+import com.energyxxer.trident.ui.styledcomponents.StyledIcon;
 import com.energyxxer.trident.ui.styledcomponents.StyledLabel;
 import com.energyxxer.trident.ui.styledcomponents.StyledTextField;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
-import com.energyxxer.trident.util.ProjectUtil;
 import com.energyxxer.util.FileUtil;
 import com.energyxxer.util.logger.Debug;
 import com.energyxxer.xswing.Padding;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
 
 /**
  * Created by User on 2/10/2017.
@@ -42,7 +33,6 @@ public class UnitDialog {
     private static JDialog dialog = new JDialog(TridentWindow.jframe);
     private static JPanel pane;
 
-    private static StyledDropdownMenu<FileType> typeDropdown;
     private static StyledTextField nameField;
 
     private static JPanel errorPanel;
@@ -63,9 +53,18 @@ public class UnitDialog {
             pane.setBackground(t.getColor(new Color(235, 235, 235), "NewUnitDialog.background"))
         );
 
+        //<editor-fold desc="Icon">
+        JPanel iconPanel = new JPanel(new BorderLayout());
+        iconPanel.setOpaque(false);
+        iconPanel.setPreferredSize(new Dimension(73, 48));
+        iconPanel.add(new Padding(25), BorderLayout.WEST);
+        iconPanel.setBorder(new EmptyBorder(0, 0, 0, 2));
+        iconPanel.add(new StyledIcon("trident_file", 48, 48, Image.SCALE_SMOOTH));
+        pane.add(iconPanel, BorderLayout.WEST);
+        //</editor-fold>
+
         //<editor-fold desc="Inner Margin">
         pane.add(new Padding(10), BorderLayout.NORTH);
-        pane.add(new Padding(25), BorderLayout.WEST);
         pane.add(new Padding(25), BorderLayout.EAST);
         //</editor-fold>
 
@@ -75,56 +74,32 @@ public class UnitDialog {
 
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
-        StyledLabel kindLabel, nameLabel;
         {
 
             JPanel entry = new JPanel(new BorderLayout());
             entry.setOpaque(false);
             entry.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
 
-            nameLabel = new StyledLabel("Name: ", "NewUnitDialog");
-            nameLabel.setStyle(Font.BOLD);
-            entry.add(nameLabel, BorderLayout.WEST);
+            StyledLabel nameLabel = new StyledLabel("Enter new Trident Function name:", "NewUnitDialog");
+            nameLabel.setStyle(Font.PLAIN);
+            nameLabel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+            nameLabel.setHorizontalTextPosition(JLabel.LEFT);
+            entry.add(nameLabel, BorderLayout.CENTER);
+
+            content.add(entry);
+        }
+        {
+            JPanel entry = new JPanel(new BorderLayout());
+            entry.setOpaque(false);
+            entry.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
 
             nameField = new StyledTextField("", "NewUnitDialog");
             nameField.getDocument().addUndoableEditListener(e -> validateInput());
 
-            entry.add(nameField,  BorderLayout.CENTER);
+            entry.add(nameField, BorderLayout.CENTER);
+
             content.add(entry);
         }
-        content.add(new Padding(5));
-        {
-
-            JPanel entry = new JPanel(new BorderLayout());
-            entry.setOpaque(false);
-            entry.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
-
-            kindLabel = new StyledLabel("Kind: ", "NewUnitDialog");
-            kindLabel.setStyle(Font.BOLD);
-            entry.add(kindLabel, BorderLayout.WEST);
-
-            typeDropdown = new StyledDropdownMenu<>(new FileType[] {FileType.ENTITY, FileType.ITEM, FileType.CLASS, FileType.ENUM, FileType.FEATURE, FileType.WORLD}, "NewUnitDialog");
-
-            tlm.addThemeChangeListener(t -> {
-                typeDropdown.setIcon(FileType.ENTITY, Commons.getIcon("entity"));
-                typeDropdown.setIcon(FileType.ITEM, Commons.getIcon("item"));
-                typeDropdown.setIcon(FileType.CLASS, Commons.getIcon("class"));
-                typeDropdown.setIcon(FileType.ENUM, Commons.getIcon("enum"));
-                typeDropdown.setIcon(FileType.FEATURE, Commons.getIcon("feature"));
-                typeDropdown.setIcon(FileType.WORLD, Commons.getIcon("world"));
-            });
-
-            typeDropdown.addChoiceListener(type -> validateInput());
-
-            entry.add(typeDropdown,  BorderLayout.CENTER);
-            content.add(entry);
-        }
-
-        int maxLabelWidth = Math.max(kindLabel.getPreferredSize().width, nameLabel.getPreferredSize().width) + 5;
-        kindLabel.setPreferredSize(new Dimension(maxLabelWidth, kindLabel.getPreferredSize().height));
-        nameLabel.setPreferredSize(new Dimension(maxLabelWidth, nameLabel.getPreferredSize().height));
-
-        content.add(new Padding(5));
 
         {
             errorPanel = new JPanel();
@@ -138,6 +113,8 @@ public class UnitDialog {
 
             content.add(errorPanel);
         }
+
+        content.add(new Padding(5));
 
         {
             JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -155,28 +132,6 @@ public class UnitDialog {
         }
 
         pane.add(content, BorderLayout.CENTER);
-        //</editor-fold>
-
-        //<editor-fold desc="Up/Down events">
-        pane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "up");
-        pane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "down");
-
-        pane.getActionMap().put("up", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int newIndex = typeDropdown.getValueIndex() - 1;
-                if(newIndex < 0) newIndex = typeDropdown.getOptions().size()-1;
-                typeDropdown.setValueIndex(newIndex);
-            }
-        });
-        pane.getActionMap().put("down", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int newIndex = typeDropdown.getValueIndex() + 1;
-                if(newIndex >= typeDropdown.getOptions().size()) newIndex = 0;
-                typeDropdown.setValueIndex(newIndex);
-            }
-        });
         //</editor-fold>
 
         //<editor-fold desc="Enter key event">
@@ -200,11 +155,10 @@ public class UnitDialog {
 
     private static void submit() {
         if(!valid) return;
-        FileType type = typeDropdown.getValue();
         String filename;
         filename = nameField.getText().trim();
-
-        String path = destination + File.separator + filename + ".trident";
+        String path = destination + File.separator + filename;
+        if(!path.endsWith(".tdn")) path += ".tdn";
 
         File newFile = new File(path);
         try {
@@ -212,12 +166,11 @@ public class UnitDialog {
             int pos;
 
             if(successful) {
-                PrintWriter writer = new PrintWriter(newFile);
-                ProjectManager.setIconFor(newFile, type.toString().toLowerCase());
+                /*PrintWriter writer = new PrintWriter(newFile);
 
                 //<editor-fold desc="File Template Variables">
                 HashMap<String, String> variables = new HashMap<>();
-                variables.put("package", ProjectUtil.getPackage(newFile));
+                variables.put("path", ProjectUtil.getPackage(newFile));
                 variables.put("name", filename);
                 variables.put("user", Preferences.get("username", "User"));
                 variables.put("indent", "    ");
@@ -236,13 +189,13 @@ public class UnitDialog {
                 text = text.replace("\$END$", "");
 
                 writer.print(text);
-                writer.close();
+                writer.close();*/
             } else {
                 Debug.log("File creation unsuccessful", Debug.MessageType.WARN);
                 return;
             }
 
-            if(newFile.exists()) TabManager.openTab(new FileModuleToken(newFile),pos);
+            if(newFile.exists()) TabManager.openTab(new FileModuleToken(newFile), 0);
             TridentWindow.projectExplorer.refresh();
         } catch (IOException x) {
             x.printStackTrace();
@@ -253,7 +206,6 @@ public class UnitDialog {
     public static void create(FileType type, String destination) {
         UnitDialog.destination = destination;
         nameField.setText("");
-        typeDropdown.setValue(type);
 
         Point center = GraphicsEnvironment.getLocalGraphicsEnvironment().getCenterPoint();
         center.x -= dialog.getWidth()/2;
@@ -280,7 +232,7 @@ public class UnitDialog {
 
         //Check if filename is a valid identifier
         if(valid) {
-            valid = typeDropdown.getValue() == FileType.WORLD/* || CraftrLang.isValidIdentifier(str)*/;
+            valid = true; //TODO: check valid function name
             if(!valid) {
                 displayError("Error: Not a valid identifier");
             }

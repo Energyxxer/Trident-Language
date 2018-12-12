@@ -2,7 +2,7 @@ package com.energyxxer.trident.ui.dialogs.file_dialogs;
 
 import com.energyxxer.trident.files.FileType;
 import com.energyxxer.trident.global.Preferences;
-import com.energyxxer.trident.global.temp.projects.Project;
+import com.energyxxer.trident.global.temp.projects.ProjectManager;
 import com.energyxxer.trident.main.window.TridentWindow;
 import com.energyxxer.trident.ui.styledcomponents.StyledButton;
 import com.energyxxer.trident.ui.styledcomponents.StyledIcon;
@@ -153,8 +153,7 @@ public class ProjectDialog {
         if(!valid) return;
         String name = nameField.getText().trim();
 
-        Project newProject = new Project(name);
-        newProject.createNew();
+        ProjectManager.create(name);
 
         TridentWindow.projectExplorer.refresh();
 

@@ -10,24 +10,9 @@ import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
 import com.energyxxer.util.FileUtil;
 import com.energyxxer.xswing.Padding;
 
-import javax.swing.AbstractAction;
-import javax.swing.BoxLayout;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.ComponentOrientation;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GraphicsEnvironment;
-import java.awt.Image;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -70,7 +55,7 @@ public class PackageDialog {
         iconPanel.setPreferredSize(new Dimension(73, 48));
         iconPanel.add(new Padding(25), BorderLayout.WEST);
         iconPanel.setBorder(new EmptyBorder(0, 0, 0, 2));
-        iconPanel.add(new StyledIcon("package", 48, 48, Image.SCALE_SMOOTH));
+        iconPanel.add(new StyledIcon("folder", 48, 48, Image.SCALE_SMOOTH));
         pane.add(iconPanel, BorderLayout.WEST);
         //</editor-fold>
 

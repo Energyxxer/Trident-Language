@@ -7,7 +7,7 @@ import com.energyxxer.trident.ui.styledcomponents.StyledMenu;
 import com.energyxxer.trident.ui.styledcomponents.StyledMenuItem;
 import com.energyxxer.util.ImageManager;
 
-import javax.swing.ImageIcon;
+import javax.swing.*;
 
 /**
  * Provides managers that create menu components for file and project management.
@@ -31,7 +31,7 @@ public class MenuItems {
 
 		// --------------------------------------------------
 		
-		StyledMenuItem packageItem = new StyledMenuItem("Package", "package");
+		StyledMenuItem packageItem = new StyledMenuItem("Package", "folder");
 		packageItem.addActionListener(e -> FileType.PACKAGE.create(Preferences.get("workspace_dir")));
 
 		newMenu.add(packageItem);
@@ -103,10 +103,10 @@ public class MenuItems {
 					if(file.isFile() && fileType == null) {
 						fileType = "file";
 					} else if(file.isDirectory() && fileType == null) {
-						fileType = "package";
+						fileType = "folder";
 					} else if(file.isDirectory() && "file".equals(fileType)) {
 						fileType = "item";
-					} else if(file.isFile() && "package".equals(fileType)) {
+					} else if(file.isFile() && "folder".equals(fileType)) {
 						fileType = "item";
 					}
 					files.add(file);

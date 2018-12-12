@@ -2,43 +2,66 @@ package com.energyxxer.trident.global.temp.projects;
 
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.util.StringUtil;
+import com.energyxxer.util.logger.Debug;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 
 public class Project {
 
-	private File directory;
-	private File source;
-	private String name = null;
+	private File rootDirectory;
 
-	private String prefix = null;
-	private String world = null;
+	private File datapackRoot;
+	private File resourceRoot;
+	private String name;
 	
 	public HashMap<String, String> icons = new HashMap<>();
+
+	//region a
+    private JsonObject config;
+	//endregion
 	
 	public Project(String name) {
-		this.directory = new File(ProjectManager.getWorkspaceDir() + File.separator + name);
-		this.source = new File(ProjectManager.getWorkspaceDir() + File.separator + name + File.separator + "src");
+		Path rootPath = Path.of(ProjectManager.getWorkspaceDir()).resolve(name);
+		this.rootDirectory = rootPath.toFile();
+
+		datapackRoot = rootPath.resolve("datapack").toFile();
+		resourceRoot = rootPath.resolve("resources").toFile();
+
 		this.name = name;
-		this.prefix = StringUtil.getInitials(name).toLowerCase();
-		this.icons.put("src","src");
+		//this.prefix = StringUtil.getInitials(name).toLowerCase();
+
+        Path outFolder = Path.of(System.getProperty("user.home"), "Trident", "out");
+
+        config = new JsonObject();
+        config.addProperty("default-namespace", StringUtil.getInitials(name).toLowerCase());
+        config.addProperty("language-level", 1);
+        config.addProperty("datapack-output", outFolder.resolve(name).toString());
+        config.addProperty("resources-output", outFolder.resolve(name + "-resources.zip").toString());
+        config.addProperty("export-comments", true);
+        config.addProperty("strict-text-components", false);
 	}
 	
-	public Project(File directory) {
-		this.directory = directory;
-		this.source = new File(directory.getAbsolutePath() + File.separator + "src");
-		File config = new File(directory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
-		this.name = directory.getName();
+	public Project(File rootDirectory) {
+		this.rootDirectory = rootDirectory;
+		File config = new File(rootDirectory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
+		this.name = rootDirectory.getName();
 		if(config.exists() && config.isFile() && config.getName().equals(TridentCompiler.PROJECT_FILE_NAME)) {
-
-			return;
+            try {
+                this.config = new Gson().fromJson(new FileReader(config), JsonObject.class);
+                return;
+            } catch (FileNotFoundException x) {
+                //I literally *just* checked if the file exists beforehand. Damn Java and its trust issues
+                x.printStackTrace();
+            }
 		}
-		this.directory = null;
-		this.source = null;
+		this.rootDirectory = null;
 		throw new RuntimeException("Invalid configuration file.");
 	}
 	
@@ -53,32 +76,30 @@ public class Project {
 
 	public boolean canFlatten(File file) {
 		if(getRelativePath(file) == null) return true;
-		if(!file.getParentFile().equals(this.getDirectory())) return true;
+		if(!file.getParentFile().equals(this.getRootDirectory())) return true;
 		return !Arrays.asList("src","resources","data").contains(file.getName());
 	}
 	
 	public void updateConfig() {
-		File config = new File(directory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
+		File config = new File(rootDirectory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
 		PrintWriter writer;
 		try {
-			writer = new PrintWriter(config, "UTF-8");
-			
-			writer.print(getRawConfig());
-			
+			writer = new PrintWriter(config, StandardCharsets.UTF_8);
+			writer.print(new GsonBuilder().setPrettyPrinting().create().toJson(this.config));
 			writer.close();
-		} catch (FileNotFoundException | UnsupportedEncodingException e) {
-			e.printStackTrace();
+		} catch (IOException x) {
+		    Debug.log(x.getMessage());
 		}
 	}
 	
 	private boolean exists() {
-		return directory != null && directory.exists();
+		return rootDirectory != null && rootDirectory.exists();
 	}
 	
 	public void createNew() {
 		if(!exists()) {
-			this.source.mkdirs();
-			File config = new File(directory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
+			this.datapackRoot.mkdirs();
+			File config = new File(rootDirectory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
 			try {
 				config.createNewFile();
 				updateConfig();
@@ -87,52 +108,10 @@ public class Project {
 			}
 		}
 	}
-	
-	private void createFromName(String name) {
-		this.name = name;
-		this.prefix = StringUtil.getInitials(name).toLowerCase();
-	}
-	
-	private void fixIfCorrupted() {
-		if((this.name == null || this.prefix == null) && this.directory != null) {
-			createFromName(directory.getName());
-			updateConfig();
-		}
-	}
-	
-	/*public void promptOutput() {
-		String path = FileSelector.create("Select world", "<html>Specify the world directory to output to.<br>Structures will be saved in the structures folder.<br>The resource pack (if present) will be saved to this location, too.</html>", MinecraftConstants.getMinecraftDir() + File.separator + "saves" + File.separator, FileSelector.OPEN_DIRECTORY);
-		if(path != null) {
-			world = path;
-			updateConfig();
-		}
-	}*/
-	
-	private String getRawConfig() {
-		String s = "";
-		s += "name=" + name + "\n";
-		s += "prefix=" + prefix + "\n";
-		if(world != null) 
-			s += "out=" + world + "\n";
-		{
-			purgeIcons();
-			String entry = "";
-			Iterator<String> it = icons.keySet().iterator();
-			while(it.hasNext()) {
-				String key = it.next();
-				String value = icons.get(key);
-				String file = key + "?" + value;
-				entry += file;
-				if(it.hasNext()) entry += "|";
-			}
-			s += "icons=" + entry;
-		}
-		return s;
-	}
-	
-	public String getRelativePath(File file) {
-		if(!file.getAbsolutePath().startsWith((directory.getAbsolutePath()+File.separator))) return null;
-		return file.getAbsolutePath().substring((directory.getAbsolutePath()+File.separator).length());
+
+    public String getRelativePath(File file) {
+		if(!file.getAbsolutePath().startsWith((rootDirectory.getAbsolutePath()+File.separator))) return null;
+		return file.getAbsolutePath().substring((rootDirectory.getAbsolutePath()+File.separator).length());
 	}
 	
 	public void setIconFor(File file, String value) {
@@ -151,54 +130,44 @@ public class Project {
 		return null;
 	}
 
-	public void purgeIcons() {
-		ArrayList<String> pathsToRemove = new ArrayList<>();
-		for(String path : icons.keySet()) {
-			String absPath = directory.getPath() + File.separator + path;
-			if(!new File(absPath).exists()) {
-				pathsToRemove.add(path);
-			}
-		}
-
-		for(String path : pathsToRemove) {
-			icons.remove(path);
-		}
+    public File getRootDirectory() {
+		return rootDirectory;
 	}
 
-	public File getDirectory() {
-		return directory;
-	}
+    public File getDataPackRoot() {
+        return datapackRoot;
+    }
 
-	public File getSource() {
-		return source;
-	}
-	
 	public String getName() {
 		return name;
 	}
 
+    @Deprecated(forRemoval = true)
 	public String getPrefix() {
-		return prefix;
+		return "";
 	}
 
+    @Deprecated(forRemoval = true)
 	public String getWorld() {
-		return world;
+		return "";
 	}
-	
+
 	@Override
 	public String toString() {
-		return String.format("Project [name=%s, prefix=%s, world=%s]", name, prefix, world);
+		return "Project [" + name + "]";
 	}
 
 	public void setName(String name) {
 		this.name = name;
 	}
 
+    @Deprecated(forRemoval = true)
 	public void setPrefix(String prefix) {
-		this.prefix = prefix;
+
 	}
 
+	@Deprecated(forRemoval = true)
 	public void setWorld(String world) {
-		this.world = world;
+
 	}
 }

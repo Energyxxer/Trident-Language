@@ -2,8 +2,8 @@ package com.energyxxer.trident.global;
 
 import com.energyxxer.trident.main.window.TridentWindow;
 import com.energyxxer.trident.ui.dialogs.ConfirmDialog;
-import com.energyxxer.util.FileUtil;
 import com.energyxxer.trident.util.ProjectUtil;
+import com.energyxxer.util.FileUtil;
 import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
@@ -23,7 +23,7 @@ public class FileManager {
 
             HashMap<String, Integer> contents = new HashMap<>();
             contents.put("unit", 0);
-            contents.put("package", 0);
+            contents.put("path", 0);
             contents.put("model", 0);
             contents.put("sound index file", 0);
             contents.put("meta file", 0);
@@ -33,7 +33,7 @@ public class FileManager {
             contents.put("file", 0);
 
             for (String path : files) {
-                if (path.endsWith(".trident")) {
+                if (path.endsWith(".tdn")) {
                     contents.put("unit", contents.get("unit") + 1);
                 } else if (path.endsWith(".json")) {
                     if (path.endsWith(File.separator + "sounds.json")) {
@@ -50,7 +50,7 @@ public class FileManager {
                 } else if (path.endsWith(".ogg")) {
                     contents.put("sound", contents.get("sound") + 1);
                 } else if (new File(path).isDirectory()) {
-                    contents.put("package", contents.get("package") + 1);
+                    contents.put("folder", contents.get("folder") + 1);
                 } else {
                     contents.put("file", contents.get("file") + 1);
                 }

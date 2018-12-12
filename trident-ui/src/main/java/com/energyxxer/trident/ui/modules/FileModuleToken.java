@@ -54,7 +54,7 @@ public class FileModuleToken implements ModuleToken {
             if(isProjectRoot) {
                 return Commons.getIcon("project");
             }
-            return Commons.getIcon("package");
+            return Commons.getIcon("folder");
         } else {
             String extension = file.getName().substring(file.getName().lastIndexOf("."));
             if(extension.equals(".png")) {
@@ -172,7 +172,7 @@ public class FileModuleToken implements ModuleToken {
 
             Project project = ProjectManager.getAssociatedProject(file);
 
-            String projectDir = (project != null) ? project.getDirectory().getPath() + File.separator : null;
+            String projectDir = (project != null) ? project.getRootDirectory().getPath() + File.separator : null;
 
             int lastGroup = 0;
 
@@ -266,7 +266,7 @@ public class FileModuleToken implements ModuleToken {
 
             // --------------------------------------------------
 
-            StyledMenuItem packageItem = new StyledMenuItem("Package", "package");
+            StyledMenuItem packageItem = new StyledMenuItem("Package", "folder");
             packageItem.addActionListener(e -> FileType.PACKAGE.create(newPath));
 
             newMenu.add(packageItem);*/
