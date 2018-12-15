@@ -13,6 +13,7 @@ import com.energyxxer.commodore.tags.TagGroup;
 import com.energyxxer.commodore.tags.TagManager;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeDictionary;
+import com.energyxxer.commodore.types.defaults.EntityType;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.commodore.types.defaults.TypeManager;
 import com.energyxxer.commodore.util.NumberRange;
@@ -40,9 +41,13 @@ import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SET
 
 public class CommonParsers {
     public static Type parseEntityType(TokenPattern<?> id, TridentCompiler compiler) {
+        if(id.getName().equals("ENTITY_ID_TAGGED")) return parseEntityType((TokenPattern<?>) (id.getContents()), compiler);
+        if(id.getName().equals("ABSTRACT_RESOURCE")) return parseTag(id, compiler, EntityType.CATEGORY, g -> g.entity, g -> g.entityTypeTags);
         return parseType(id, compiler, m -> m.entity);
     }
     public static Object parseEntityReference(TokenPattern<?> id, TridentCompiler compiler) {
+        if(id.getName().equals("ENTITY_ID_TAGGED")) return parseEntityReference((TokenPattern<?>) (id.getContents()), compiler);
+        if(id.getName().equals("ABSTRACT_RESOURCE")) return parseTag(id, compiler, EntityType.CATEGORY, g -> g.entity, g -> g.entityTypeTags);
         if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("VARIABLE_MARKER")) {
             return retrieveSymbol(((TokenStructure) id).getContents(), compiler, Type.class, CustomEntity.class);
         } else return parseType(id, compiler, m -> m.entity);

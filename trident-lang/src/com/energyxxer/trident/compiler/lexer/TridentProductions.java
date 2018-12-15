@@ -67,6 +67,7 @@ public class TridentProductions {
     public static final LazyTokenStructureMatch BLOCK_ID = new LazyTokenStructureMatch("BLOCK_ID");
     public static final LazyTokenStructureMatch ITEM_ID = new LazyTokenStructureMatch("ITEM_ID");
     public static final LazyTokenStructureMatch ENTITY_ID = new LazyTokenStructureMatch("ENTITY_ID");
+    public static final LazyTokenStructureMatch ENTITY_ID_TAGGED = new LazyTokenStructureMatch("ENTITY_ID_TAGGED");
     public static final LazyTokenStructureMatch EFFECT_ID = new LazyTokenStructureMatch("EFFECT_ID");
     public static final LazyTokenStructureMatch PARTICLE_ID = new LazyTokenStructureMatch("PARTICLE_ID");
     public static final LazyTokenStructureMatch ENCHANTMENT_ID = new LazyTokenStructureMatch("ENCHANTMENT_ID");
@@ -1180,7 +1181,7 @@ public class TridentProductions {
             SELECTOR_ARGUMENT.add(group(
                     choice("type").setName("SELECTOR_ARGUMENT_KEY"),
                     equals(),
-                    choice(group(not().setOptional(), ENTITY_ID)).setName("SELECTOR_ARGUMENT_VALUE")
+                    choice(group(not().setOptional(), ENTITY_ID_TAGGED)).setName("SELECTOR_ARGUMENT_VALUE")
             ));
         }
 
@@ -1421,6 +1422,11 @@ public class TridentProductions {
                     namespaceGroups.put(def.getNamespace(), s);
 
                     ENTITY_ID.add(g);
+                    ENTITY_ID_TAGGED.add(ENTITY_ID);
+                    LazyTokenGroupMatch g2 = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
+                    g2.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RESOURCE_NAME"));
+                    g2.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
+                    ENTITY_ID_TAGGED.add(g2);
                 }
 
                 s.add(literal(def.getName()));
@@ -1668,7 +1674,7 @@ public class TridentProductions {
                             choice(
                                     group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE"),
                                     group(literal("local").setOptional(), literal("databank"), identifierA().setName("DATABANK_NAME"), nbtPointer).setName("DEFINE_DATABANK"),
-                                    group(literal("local").setOptional(), literal("entity"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ENTITY_NAME"), ENTITY_ID, entityBody).setName("DEFINE_ENTITY"),
+                                    group(literal("local").setOptional(), literal("entity"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ENTITY_NAME"), choice(symbol("*"), ENTITY_ID_TAGGED).setName("ENTITY_BASE"), entityBody).setName("DEFINE_ENTITY"),
                                     group(literal("local").setOptional(), literal("item"), choice(ofType(CASE_INSENSITIVE_RESOURCE_LOCATION), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM"),
                                     group(literal("function"), INNER_FUNCTION).setName("DEFINE_FUNCTION")
                             )
@@ -1701,7 +1707,7 @@ public class TridentProductions {
             INSTRUCTION.add(
                     group(literal("within").setName("INSTRUCTION_KEYWORD"),
                             ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"),
-                            group(COORDINATE_SET).setName("FROM"), group(COORDINATE_SET).setName("TO"), ANONYMOUS_INNER_FUNCTION
+                            group(COORDINATE_SET).setName("FROM"), group(COORDINATE_SET).setName("TO"), optional(literal("step"), real()).setName("STEP"), ANONYMOUS_INNER_FUNCTION
                             )
             );
         }

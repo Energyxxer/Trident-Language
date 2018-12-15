@@ -84,10 +84,17 @@ public class CustomEntity {
         boolean global = pattern.find("LITERAL_LOCAL") == null;
 
         String entityName = pattern.find("ENTITY_NAME").flatten(false);
-        Type defaultType = CommonParsers.parseEntityType(pattern.find("ENTITY_ID"), file.getCompiler());
+        Type defaultType = null;
+        if(pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED") != null) {
+            defaultType = CommonParsers.parseEntityType(pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED"), file.getCompiler());
+        }
 
         CustomEntity entityDecl = null;
         if(!entityName.equals("default")) {
+            if(defaultType == null || !defaultType.isStandalone()) {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot create a non-default entity with this type", pattern.find("ENTITY_BASE")));
+                throw new EntryParsingException();
+            }
             entityDecl = new CustomEntity(entityName, defaultType);
             SymbolTable table = global ? file.getCompiler().getStack().getGlobal() : file.getCompiler().getStack().peek();
             table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, entityDecl));
@@ -151,7 +158,9 @@ public class CustomEntity {
                         if(ticking) {
                             Entity selector = entityDecl != null ?
                                     TypeArgumentParser.getSelectorForCustomEntity(entityDecl) :
-                                    new GenericEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES, new TypeArgument(defaultType)));
+                                    defaultType != null ?
+                                            new GenericEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES, new TypeArgument(defaultType))) :
+                                            new GenericEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES));
                             file.getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteAsEntity(selector), new ExecuteAtEntity(new GenericEntity(new Selector(Selector.BaseSelector.SENDER)))));
                         }
                         break;

@@ -84,7 +84,9 @@ public class NBTParser {
                 String numberPart = matcher.group(1);
                 switch(matcher.group(3).toLowerCase()) {
                     case "": {
-                        return new TagInt(Integer.parseInt(numberPart));
+                        return (numberPart.contains('.')) ?
+                                new TagDouble(Double.parseDouble(numberPart)) :
+                                new TagInt(Integer.parseInt(numberPart));
                     }
                     case "b": {
                         return new TagByte(Byte.parseByte(numberPart));

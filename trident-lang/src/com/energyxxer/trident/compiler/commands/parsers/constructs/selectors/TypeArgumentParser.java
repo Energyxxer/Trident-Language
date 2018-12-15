@@ -26,7 +26,7 @@ public class TypeArgumentParser implements SelectorArgumentParser {
         boolean negated = pattern.find("NEGATED") != null;
         ArrayList<SelectorArgument> args = new ArrayList<>();
 
-        Object reference = CommonParsers.parseEntityReference(pattern.find("ENTITY_ID"), compiler);
+        Object reference = CommonParsers.parseEntityReference(pattern.find("ENTITY_ID_TAGGED"), compiler);
 
         if(reference instanceof Type) {
             args.add(new TypeArgument((Type) reference, negated));

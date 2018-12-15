@@ -138,6 +138,11 @@ public class TridentCompiler {
 
         files.values().forEach(TridentFile::checkCircularRequires);
 
+        if(report.hasErrors()) {
+            finalizeCompilation();
+            return;
+        }
+
         ArrayList<TridentFile> sortedFiles = new ArrayList<>(files.values());
 
         files.values().forEach(this::getAllRequires);

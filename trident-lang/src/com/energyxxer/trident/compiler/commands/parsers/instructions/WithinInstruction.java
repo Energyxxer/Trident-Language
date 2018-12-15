@@ -6,6 +6,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -26,6 +27,15 @@ public class WithinInstruction implements Instruction {
         CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file.getCompiler());
         CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file.getCompiler());
 
+        double step = 1;
+        if(pattern.find("STEP") != null) {
+            step = CommonParsers.parseDouble(pattern.find("STEP.REAL"), file.getCompiler());
+            if(step <= 0) {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Within step must be positive", pattern.find("STEP")));
+                throw new EntryParsingException();
+            }
+        }
+
         if(
                 from.getX().getType() != to.getX().getType() ||
                         from.getY().getType() != to.getY().getType() ||
@@ -43,9 +53,9 @@ public class WithinInstruction implements Instruction {
         double toY = Math.max(from.getY().getCoord(), to.getY().getCoord());
         double toZ = Math.max(from.getZ().getCoord(), to.getZ().getCoord());
 
-        for(double x = fromX; x <= toX; x++) {
-            for(double y = fromY; y <= toY; y++) {
-                for(double z = fromZ; z <= toZ; z++) {
+        for(double x = fromX; x <= toX; x += step) {
+            for(double y = fromY; y <= toY; y += step) {
+                for(double z = fromZ; z <= toZ; z += step) {
                     symbol.setValue(new CoordinateSet(new Coordinate(from.getX().getType(), x), new Coordinate(from.getY().getType(), y), new Coordinate(from.getZ().getType(), z)));
                     try {
                         TridentFile.resolveInnerFileIntoSection(pattern.find("ANONYMOUS_INNER_FUNCTION"), file, file.getFunction());

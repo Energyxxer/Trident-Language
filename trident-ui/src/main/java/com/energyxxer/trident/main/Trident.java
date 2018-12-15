@@ -17,7 +17,7 @@ import java.io.FileOutputStream;
 
 public class Trident {
 	public static Trident trident;
-	public static final Version VERSION = new Version(0,0,0);
+	public static final Version VERSION = new Version(0,1,1);
 
 	public static TridentWindow window;
 

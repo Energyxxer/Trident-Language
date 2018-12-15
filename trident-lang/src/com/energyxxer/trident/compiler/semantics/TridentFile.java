@@ -28,10 +28,7 @@ import com.energyxxer.util.logger.Debug;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 
 public class TridentFile implements CompilerExtension {
@@ -53,6 +50,8 @@ public class TridentFile implements CompilerExtension {
     private int languageLevel;
 
     private int anonymousChildren = 0;
+
+    private SymbolTable fileSymbols;
 
     public TridentFile(TridentFile parent, Path relSourcePath, TokenPattern<?> filePattern) {
         this(parent.getCompiler(), relSourcePath, filePattern, parent.languageLevel);
@@ -169,6 +168,7 @@ public class TridentFile implements CompilerExtension {
 
     public void resolveEntries() {
         if(!valid) return;
+        if(fileSymbols != null) return;
 
         if(function != null) tags.forEach(l -> module.createNamespace(l.namespace).tags.functionTags.create(l.body).addValue(new FunctionReference(this.function)));
 
@@ -249,11 +249,23 @@ public class TridentFile implements CompilerExtension {
         return "TDN: " + location;
     }
 
-
     public static void resolveEntries(TokenList entryList, TridentFile parent, FunctionSection appendTo, boolean compileOnly) {
-        SymbolTable table = new SymbolTable(parent);
+
+        int popTimes = 0;
+        parent.addCascadingRequires(Collections.emptyList());
+        for(TridentUtil.ResourceLocation loc : parent.cascadingRequires.reversed().distinctList()) {
+            TridentFile file = parent.compiler.getFile(loc);
+            if(file.fileSymbols == null) {
+                file.resolveEntries();
+            }
+            parent.compiler.getStack().push(file.fileSymbols);
+            popTimes++;
+        }
+
         TridentCompiler compiler = parent.getCompiler();
-        compiler.getStack().push(table);
+        parent.fileSymbols = new SymbolTable(parent);
+        compiler.getStack().push(parent.fileSymbols);
+        popTimes++;
 
         boolean reportedNoCommands = false;
 
@@ -326,6 +338,8 @@ public class TridentFile implements CompilerExtension {
             }
         }
 
-        compiler.getStack().pop();
+        for(int i = 0; i < popTimes; i++) {
+            compiler.getStack().pop();
+        }
     }
 }

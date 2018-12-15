@@ -1,5 +1,7 @@
 package com.energyxxer.trident.compiler.semantics;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Stack;
 
 public class SymbolStack {
@@ -11,7 +13,7 @@ public class SymbolStack {
         global = new SymbolTable(null);
     }
 
-    public SymbolTable push(SymbolTable item) {
+    public SymbolTable push(@NotNull SymbolTable item) {
         return stack.push(item);
     }
 
@@ -27,7 +29,7 @@ public class SymbolStack {
         return stack.empty();
     }
 
-    public Symbol search(String name) {
+    public Symbol search(@NotNull String name) {
         for(SymbolTable table : stack) {
             if(table.containsKey(name)) return table.get(name);
         }

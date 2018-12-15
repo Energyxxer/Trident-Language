@@ -56,7 +56,10 @@ public class FileModuleToken implements ModuleToken {
             }
             return Commons.getIcon("folder");
         } else {
-            String extension = file.getName().substring(file.getName().lastIndexOf("."));
+            String extension = "";
+            if(file.getName().lastIndexOf(".") >= 0) {
+                extension = file.getName().substring(file.getName().lastIndexOf("."));
+            }
             if(extension.equals(".png")) {
                 try {
                     return ImageIO.read(file);
