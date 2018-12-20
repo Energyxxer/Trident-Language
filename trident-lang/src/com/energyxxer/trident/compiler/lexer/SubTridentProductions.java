@@ -6,8 +6,7 @@ import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenPatternMatc
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenStructureMatch;
 
 import static com.energyxxer.trident.compiler.lexer.TridentProductions.*;
-import static com.energyxxer.trident.compiler.lexer.TridentTokens.BOOLEAN;
-import static com.energyxxer.trident.compiler.lexer.TridentTokens.IDENTIFIER_TYPE_X;
+import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
 public class SubTridentProductions {
     public static final LazyTokenPatternMatch COMPILE_BLOCK_INNER;
@@ -52,10 +51,15 @@ public class SubTridentProductions {
 
         EXPRESSION = choice(
                 group(VALUE, keyword("as"), DATA_TYPE).setName("CAST"),
-                group(choice(identifierX(),VARIABLE_MARKER).setName("VARIABLE_CHOICE"), symbol("="), VALUE).setName("ASSIGNMENT")
+                group(choice(identifierX(),VARIABLE_MARKER).setName("VARIABLE_CHOICE"), ofType(COMPILER_ASSIGNMENT_OPERATOR), VALUE).setName("ASSIGNMENT")
         );
 
         VALUE.add(EXPRESSION);
+        EXPRESSION.add(group(VALUE));
+        EXPRESSION.add(group(VALUE, ofType(COMPILER_POSTFIX_OPERATOR).setName("POSTFIX_OPERATOR")));
+        EXPRESSION.add(group(ofType(COMPILER_PREFIX_OPERATOR).setName("PREFIX_OPERATOR"), VALUE));
+        EXPRESSION.add(group(brace("("), VALUE, brace(")")));
+        EXPRESSION.add(list(VALUE, ofType(COMPILER_OPERATOR).setName("OPERATOR")));
 
         STATEMENT.add(group(keyword("var"), identifierX(), optional(symbol("="), VALUE).setName("INITIALIZATION")).setName("VARIABLE_DECLARATION"));
         STATEMENT.add(group(keyword("append"), COMMAND).setName("COMMAND_APPEND"));

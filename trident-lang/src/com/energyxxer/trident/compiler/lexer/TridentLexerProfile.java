@@ -419,6 +419,11 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new StringMatchLexerContext(SYMBOL, "*", "<=", ">=", "<", ">", "!=", "=", "$"));
         contexts.add(new StringMatchLexerContext(ARROW, "->"));
 
+        contexts.add(new StringMatchLexerContext(COMPILER_OPERATOR, "+", "-", "*", "/", "%", "<=", ">=", "<", ">", "==", "!=", "="));
+        contexts.add(new StringMatchLexerContext(COMPILER_ASSIGNMENT_OPERATOR, "+=", "-=", "*=", "/=", "%=", "="));
+        contexts.add(new StringMatchLexerContext(COMPILER_POSTFIX_OPERATOR, "++", "--"));
+        contexts.add(new StringMatchLexerContext(COMPILER_PREFIX_OPERATOR, "++", "--", "!"));
+
         contexts.add(new StringMatchLexerContext(SORTING, "nearest", "farthest", "arbitrary", "random"));
         contexts.add(new StringMatchLexerContext(NUMERIC_DATA_TYPE, "byte", "double", "float", "int", "long", "short"));
         contexts.add(new StringMatchLexerContext(SOUND_CHANNEL, "ambient", "block", "hostile", "master", "music", "neutral", "player", "record", "voice", "weather"));

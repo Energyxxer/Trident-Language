@@ -1,29 +1,25 @@
 package com.energyxxer.util;
 
-import java.util.ArrayList;
-
 public class Stack {
 
-	private ArrayList<MethodInvocation> stack = new ArrayList<MethodInvocation>();
+	private java.util.Stack<MethodInvocation> stack = new java.util.Stack<>();
 	
 	public Stack() {}
 	
 	public void push(MethodInvocation mi) {
-		stack.add(mi);
+		stack.push(mi);
 	}
 	
 	public MethodInvocation pop() {
-		if(stack.size() > 0) {
-			MethodInvocation rv = stack.get(stack.size()-1);
-			stack.remove(stack.size()-1);
-			return rv;
+		if(!stack.isEmpty()) {
+		    return stack.pop();
 		} else {
 			return null;
 		}
 	}
 	
 	public boolean find(MethodInvocation mi) {
-		for(int i = 0; i < stack.size(); i++) {
+		for(int i = stack.size()-1; i >= 0; i--) {
 			if(stack.get(i).equals(mi)) {
 				return true;
 			}

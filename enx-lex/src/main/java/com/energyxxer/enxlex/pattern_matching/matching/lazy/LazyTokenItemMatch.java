@@ -53,7 +53,10 @@ public class LazyTokenItemMatch extends LazyTokenPatternMatch {
         Token faultyToken = null;
 
         Token retrieved = lexer.retrieveTokenOfType(this.type);
-        if(retrieved == null) return new TokenMatchResponse(false, lexer.retrieveAnyToken(), 0, this, null);
+        if(retrieved == null) {
+            st.pop();
+            return new TokenMatchResponse(false, lexer.retrieveAnyToken(), 0, this, null);
+        }
 
         matched = stringMatch == null || retrieved.value.equals(stringMatch);
 
