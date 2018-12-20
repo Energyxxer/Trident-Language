@@ -19,7 +19,7 @@ public class SubTridentProductions {
 
     static {
         STATEMENT = struct("STATEMENT");
-        COMPILE_BLOCK_INNER = list(group(STATEMENT, list(ofType(TokenType.NEWLINE)).setOptional())).setOptional().setName("COMPILE_BLOCK_INNER");
+        COMPILE_BLOCK_INNER = list(optional(STATEMENT, list(ofType(TokenType.NEWLINE)).setOptional())).setOptional().setName("COMPILE_BLOCK_INNER");
 
         DATA_TYPE = choice(
                 "integer",
@@ -42,9 +42,9 @@ public class SubTridentProductions {
                 ofType(BOOLEAN).setName("BOOLEAN"),
                 string(),
                 identifierX(),
-                ENTITY,
-                BLOCK,
-                ITEM,
+                group(literal("entity"), brace("<"), ENTITY, brace(">")),
+                group(literal("block"), brace("<"), ITEM, brace(">")),
+                group(literal("item"), brace("<"), BLOCK, brace(">")),
                 TEXT_COMPONENT,
                 NBT_COMPOUND,
                 COORDINATE_SET
@@ -59,6 +59,7 @@ public class SubTridentProductions {
 
         STATEMENT.add(group(keyword("var"), identifierX(), optional(symbol("="), VALUE).setName("INITIALIZATION")).setName("VARIABLE_DECLARATION"));
         STATEMENT.add(group(keyword("append"), COMMAND).setName("COMMAND_APPEND"));
+        STATEMENT.add(EXPRESSION);
     }
 
 

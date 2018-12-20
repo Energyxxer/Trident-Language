@@ -377,7 +377,37 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_C, "\\S*"));
         contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_D, "[a-zA-Z0-9_\\-+]"));
 
-        contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_X, "[a-zA-Z0-9._]", "[a-zA-Z._]"));
+        //contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_X, "[a-zA-Z0-9._]", "[a-zA-Z._]"));
+
+        contexts.add(new LexerContext() {
+
+            private List<String> reservedWords = Arrays.asList("var", "do", "while", "for", "as", "append", "entity", "block", "item");
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                int i = 0;
+                while(i < str.length() && (
+                        (i == 0 && str.substring(i,i+1).matches("[a-zA-Z._]")
+                                ||
+                                (i > 0 && str.substring(i,i+1).matches("[a-zA-Z0-9._]"))
+                        ))) {
+                    i++;
+                }
+                str = str.substring(0, i);
+                if(i > 0 && !reservedWords.contains(str)) return new ScannerContextResponse(true, str, type);
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(IDENTIFIER_TYPE_X);
+            }
+        });
 
         contexts.add(new StringMatchLexerContext(DIRECTIVE_ON_KEYWORD, "compile"));
         contexts.add(new StringMatchLexerContext(KEYWORD, "var", "define", "mark", "do", "while", "within", "using", "as", "append"));

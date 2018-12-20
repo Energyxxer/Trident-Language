@@ -28,7 +28,13 @@ public class IdentifierLexerContext implements LexerContext {
     @Override
     public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
         int i = 0;
-        while(i < str.length() && (((i > 0 || firstRegex == null) && Character.toString(str.charAt(i)).matches(regex)) || (i == 0 && firstRegex != null && Character.toString(str.charAt(i)).matches(firstRegex)))) {
+        while(i < str.length() &&
+                (
+                        (
+                                (i > 0 || firstRegex == null) && Character.toString(str.charAt(i)).matches(regex)
+                        )
+                                ||
+                        (i == 0 && firstRegex != null && Character.toString(str.charAt(i)).matches(firstRegex)))) {
             i++;
         }
         if(i > 0) return new ScannerContextResponse(true, str.substring(0, i), type);
