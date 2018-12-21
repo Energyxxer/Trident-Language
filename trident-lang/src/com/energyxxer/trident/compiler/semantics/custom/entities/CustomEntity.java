@@ -6,12 +6,11 @@ import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
-import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
-import com.energyxxer.commodore.functionlogic.nbt.TagList;
-import com.energyxxer.commodore.functionlogic.nbt.TagString;
+import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.util.attributes.Attribute;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -24,10 +23,12 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.selectors.Typ
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import org.jetbrains.annotations.NotNull;
 
 public class CustomEntity {
     private final String id;
     private final Type defaultType;
+    @NotNull
     private TagCompound defaultNBT;
     private String idTag;
     private boolean fullyDeclared = false;
@@ -47,12 +48,17 @@ public class CustomEntity {
         return defaultType;
     }
 
+    @NotNull
     public TagCompound getDefaultNBT() {
         return defaultNBT;
     }
 
-    public void setDefaultNBT(TagCompound defaultNBT) {
-        this.defaultNBT = defaultNBT.merge(getBaseNBT());
+    public void mergeNBT(TagCompound newNBT) {
+        this.defaultNBT = this.defaultNBT.merge(newNBT);
+    }
+
+    public void overrideNBT(TagCompound newNBT) {
+        this.defaultNBT = getBaseNBT().merge(newNBT);
     }
 
     public String getIdTag() {
@@ -70,8 +76,6 @@ public class CustomEntity {
     public void endDeclaration() {
         fullyDeclared = true;
     }
-
-
 
 
 
@@ -111,7 +115,8 @@ public class CustomEntity {
                             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default entities", entry));
                             break;
                         }
-                        entityDecl.setDefaultNBT(NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler()));
+
+                        entityDecl.mergeNBT(NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler()));
                         break;
                     }
                     case "DEFAULT_PASSENGERS": {
@@ -119,9 +124,6 @@ public class CustomEntity {
                             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default passengers aren't allowed for default entities", entry));
                             break;
                         }
-                        TagCompound oldNBT = entityDecl.getDefaultNBT();
-
-                        if(oldNBT == null) oldNBT = new TagCompound();
 
                         TagList passengersTag = new TagList("Passengers");
 
@@ -147,7 +149,26 @@ public class CustomEntity {
                             }
                         }
 
-                        entityDecl.setDefaultNBT(oldNBT.merge(new TagCompound(passengersTag)));
+                        entityDecl.mergeNBT(new TagCompound(passengersTag));
+                        break;
+                    }
+                    case "DEFAULT_HEALTH": {
+                        if(entityDecl == null) {
+                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default health isn't allowed for default entities", entry));
+                            break;
+                        }
+
+                        double health = CommonParsers.parseDouble(entry.find("HEALTH"), file.getCompiler());
+                        if(health < 0) {
+                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Health must be non-negative"));
+                            break;
+                        }
+
+                        TagCompound healthNBT = new TagCompound();
+                        healthNBT.add(new TagFloat("Health", (float)health));
+                        healthNBT.add(new TagList("Attributes", new TagCompound(new TagString("Name", Attribute.MAX_HEALTH), new TagDouble("Base", health))));
+
+                        entityDecl.mergeNBT(healthNBT);
                         break;
                     }
                     case "ENTITY_INNER_FUNCTION": {

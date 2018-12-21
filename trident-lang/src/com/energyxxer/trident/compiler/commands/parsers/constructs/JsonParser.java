@@ -22,6 +22,7 @@ public class JsonParser {
     public static JsonElement parseJson(TokenPattern<?> pattern, TridentCompiler compiler) {
         TokenList entries;
         switch(pattern.getName()) {
+            case "JSON_ROOT":
             case "JSON_ELEMENT":
                 return parseJson(((TokenStructure) pattern).getContents(), compiler);
             case "JSON_OBJECT":
