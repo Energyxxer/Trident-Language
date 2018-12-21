@@ -1683,7 +1683,7 @@ public class TridentProductions {
         }
         {
             INSTRUCTION.add(
-                    group(literal("var").setName("INSTRUCTION_KEYWORD"),
+                    group(keyword("var").setName("INSTRUCTION_KEYWORD"),
                             ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"),
                             choice(
                                     group(optional(brace("<"), literal("integer"), brace(">")), equals(), choice(integer()).setName("VARIABLE_VALUE")),
@@ -1711,6 +1711,12 @@ public class TridentProductions {
                             )
             );
         }
+
+        {
+            INSTRUCTION.add(
+                    group(literal("compile").setName("INSTRUCTION_KEYWORD"), brace("{"), SubTridentProductions.COMPILE_BLOCK_INNER, brace("}"))
+            );
+        }
         //endregion
 
 
@@ -1718,99 +1724,99 @@ public class TridentProductions {
 
     }
 
-    private static LazyTokenItemMatch literal(String text) {
+    static LazyTokenItemMatch literal(String text) {
         return new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase());
     }
 
-    private static LazyTokenItemMatch symbol(String text) {
+    static LazyTokenItemMatch symbol(String text) {
         return new LazyTokenItemMatch(SYMBOL, text);
     }
 
-    private static LazyTokenItemMatch keyword(String text) {
+    static LazyTokenItemMatch keyword(String text) {
         return matchItem(KEYWORD, text).setName("KEYWORD_" + text.toUpperCase());
     }
 
-    private static LazyTokenItemMatch matchItem(TokenType type, String text) {
+    static LazyTokenItemMatch matchItem(TokenType type, String text) {
         return new LazyTokenItemMatch(type, text).setName("ITEM_MATCH");
     }
 
-    private static LazyTokenItemMatch brace(String brace) {
+    static LazyTokenItemMatch brace(String brace) {
         return matchItem(BRACE, brace);
     }
 
-    private static LazyTokenItemMatch colon() {
+    static LazyTokenItemMatch colon() {
         return ofType(COLON);
     }
 
-    private static LazyTokenItemMatch comma() {
+    static LazyTokenItemMatch comma() {
         return ofType(COMMA).setName("COMMA");
     }
 
-    private static LazyTokenItemMatch dot() {
+    static LazyTokenItemMatch dot() {
         return ofType(DOT);
     }
 
-    private static LazyTokenItemMatch equals() {
+    static LazyTokenItemMatch equals() {
         return ofType(EQUALS);
     }
 
-    private static LazyTokenItemMatch caret() {
+    static LazyTokenItemMatch caret() {
         return ofType(CARET);
     }
 
-    private static LazyTokenItemMatch tilde() {
+    static LazyTokenItemMatch tilde() {
         return ofType(TILDE);
     }
 
-    private static LazyTokenItemMatch not() {
+    static LazyTokenItemMatch not() {
         return ofType(NOT).setName("NEGATED");
     }
 
-    private static LazyTokenItemMatch hash() {
+    static LazyTokenItemMatch hash() {
         return ofType(HASH).setName("HASH");
     }
 
-    private static LazyTokenItemMatch string() {
+    static LazyTokenItemMatch string() {
         return ofType(STRING_LITERAL).setName("STRING_LITERAL");
     }
 
-    private static LazyTokenStructureMatch integer() {
+    static LazyTokenStructureMatch integer() {
         return choice(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"), VARIABLE_MARKER).setName("INTEGER");
     }
 
-    private static LazyTokenStructureMatch real() {
+    static LazyTokenStructureMatch real() {
         return choice(ofType(REAL_NUMBER).setName("RAW_REAL"), VARIABLE_MARKER).setName("REAL");
     }
 
-    private static LazyTokenItemMatch glue() {
+    static LazyTokenItemMatch glue() {
         return ofType(GLUE).setName("GLUE");
     }
 
-    private static LazyTokenItemMatch sameLine() {
+    static LazyTokenItemMatch sameLine() {
         return ofType(LINE_GLUE).setName("LINE_GLUE");
     }
 
-    private static LazyTokenItemMatch identifierA() {
+    static LazyTokenItemMatch identifierA() {
         return ofType(IDENTIFIER_TYPE_A).setName("IDENTIFIER_A");
     }
 
-    private static LazyTokenPatternMatch identifierB() {
+    static LazyTokenPatternMatch identifierB() {
         return ofType(IDENTIFIER_TYPE_B).setName("IDENTIFIER_B");
     }
 
-    private static LazyTokenPatternMatch identifierC() {
+    static LazyTokenPatternMatch identifierC() {
         return ofType(IDENTIFIER_TYPE_C).setName("IDENTIFIER_C");
     }
 
-    private static LazyTokenItemMatch ofType(TokenType type) {
+    static LazyTokenItemMatch ofType(TokenType type) {
         return new LazyTokenItemMatch(type);
     }
 
-    private static LazyTokenStructureMatch struct(String name) {
+    static LazyTokenStructureMatch struct(String name) {
         return new LazyTokenStructureMatch(name);
     }
 
-    private static LazyTokenStructureMatch choice(LazyTokenPatternMatch... options) {
+    static LazyTokenStructureMatch choice(LazyTokenPatternMatch... options) {
         if(options.length == 0) throw new IllegalArgumentException("Need one or more options for choice");
         LazyTokenStructureMatch s = struct("CHOICE");
         for(LazyTokenPatternMatch option : options) {
@@ -1819,7 +1825,7 @@ public class TridentProductions {
         return s;
     }
 
-    private static LazyTokenStructureMatch choice(String... options) {
+    static LazyTokenStructureMatch choice(String... options) {
         if(options.length == 0) throw new IllegalArgumentException("Need one or more options for choice");
         LazyTokenStructureMatch s = struct("CHOICE");
         for(String option : options) {
@@ -1828,11 +1834,11 @@ public class TridentProductions {
         return s;
     }
 
-    private static LazyTokenGroupMatch optional() {
+    static LazyTokenGroupMatch optional() {
         return new LazyTokenGroupMatch(true);
     }
 
-    private static LazyTokenGroupMatch group(LazyTokenPatternMatch... items) {
+    static LazyTokenGroupMatch group(LazyTokenPatternMatch... items) {
         LazyTokenGroupMatch g = new LazyTokenGroupMatch();
         for(LazyTokenPatternMatch item : items) {
             g.append(item);
@@ -1840,15 +1846,15 @@ public class TridentProductions {
         return g;
     }
 
-    private static LazyTokenListMatch list(LazyTokenPatternMatch pattern) {
+    static LazyTokenListMatch list(LazyTokenPatternMatch pattern) {
         return list(pattern, null);
     }
 
-    private static LazyTokenListMatch list(LazyTokenPatternMatch pattern, LazyTokenPatternMatch separator) {
+    static LazyTokenListMatch list(LazyTokenPatternMatch pattern, LazyTokenPatternMatch separator) {
         return new LazyTokenListMatch(pattern, separator);
     }
 
-    private static LazyTokenGroupMatch optional(LazyTokenPatternMatch... items) {
+    static LazyTokenGroupMatch optional(LazyTokenPatternMatch... items) {
         LazyTokenGroupMatch g = group(items);
         g.setOptional();
         return g;
