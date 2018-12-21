@@ -147,15 +147,7 @@ public class TridentCompiler {
 
         files.values().forEach(this::getAllRequires);
 
-        sortedFiles.sort((a,b) ->
-                (a.isCompileOnly() != b.isCompileOnly()) ?
-                        a.isCompileOnly() ? -1 : 1 :
-                (a.getCascadingRequires().contains(b.getResourceLocation())) ?
-                        1 :
-                        (b.getCascadingRequires().contains(a.getResourceLocation())) ?
-                            -1 :
-                            0
-        );
+        sortedFiles.sort((a,b) -> (a.isCompileOnly() != b.isCompileOnly()) ? a.isCompileOnly() ? -1 : 1 : 0);
 
         for(TridentFile file : sortedFiles) {
             Debug.log("Analyzing " + file);
