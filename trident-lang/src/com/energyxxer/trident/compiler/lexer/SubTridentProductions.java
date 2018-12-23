@@ -63,6 +63,7 @@ public class SubTridentProductions {
 
         STATEMENT.add(group(keyword("var"), identifierX(), optional(symbol("="), VALUE).setName("INITIALIZATION")).setName("VARIABLE_DECLARATION"));
         STATEMENT.add(group(keyword("append"), COMMAND).setName("COMMAND_APPEND"));
+        STATEMENT.add(group(keyword("for"), brace("("), optional(EXPRESSION), symbol(";"), optional(EXPRESSION), symbol(";"), optional(EXPRESSION), brace(")"), optional(brace("{"), COMPILE_BLOCK_INNER, brace("}"))));
         STATEMENT.add(EXPRESSION);
     }
 
