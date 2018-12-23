@@ -60,7 +60,8 @@ public class StoreParser implements ModifierParser {
         }
     }
 
-    private static NumericNBTType parseNumericType(TokenPattern<?> pattern) {
+    public static NumericNBTType parseNumericType(TokenPattern<?> pattern) {
+        if(pattern == null) return null;
         return NumericNBTType.valueOf(pattern.flatten(false).toUpperCase());
     }
 }

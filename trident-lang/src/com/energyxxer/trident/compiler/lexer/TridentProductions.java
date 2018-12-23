@@ -1617,25 +1617,24 @@ public class TridentProductions {
         //region Instructions
 
 
-        LazyTokenPatternMatch scale = group(symbol("*"), real()).setOptional();
-        LazyTokenPatternMatch typeCast = group(brace("("), ofType(NUMERIC_DATA_TYPE), brace(")")).setOptional();
+        LazyTokenPatternMatch scale = group(symbol("*"), real()).setOptional().setName("SCALE");
+        LazyTokenPatternMatch typeCast = group(brace("("), ofType(NUMERIC_DATA_TYPE).setName("NUMERIC_DATA_TYPE"), brace(")")).setOptional().setName("TYPE_CAST");
 
-        LazyTokenGroupMatch scoreHead = group(ofType(ARROW), identifierA(), scale);
-        LazyTokenGroupMatch nbtHead = group(dot(), NBT_PATH, scale, typeCast);
+        LazyTokenGroupMatch scoreHead = group(ofType(ARROW), identifierA().setName("OBJECTIVE"), scale).setName("SCORE_POINTER_HEAD");
+        LazyTokenGroupMatch nbtHead = group(dot(), NBT_PATH, scale, typeCast).setName("NBT_POINTER_HEAD");
 
-        LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead);
+        LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead).setName("POINTER_HEAD");
 
-        LazyTokenGroupMatch varPointer = group(VARIABLE_MARKER, anyHead);
-        LazyTokenGroupMatch entityPointer = group(ENTITY, anyHead);
-        LazyTokenGroupMatch blockPointer = group(brace("("), COORDINATE_SET, brace(")"), nbtHead);
+        LazyTokenGroupMatch varPointer = group(VARIABLE_MARKER, anyHead).setName("VARIABLE_POINTER");
+        LazyTokenGroupMatch entityPointer = group(ENTITY, anyHead).setName("ENTITY_POINTER");
+        LazyTokenGroupMatch blockPointer = group(brace("("), COORDINATE_SET, brace(")"), nbtHead).setName("BLOCK_POINTER");
 
         LazyTokenGroupMatch nbtPointer = group(choice(ENTITY, group(brace("("), COORDINATE_SET, brace(")"))), nbtHead);
 
-        POINTER = choice(varPointer, entityPointer, blockPointer);
+        POINTER = choice(varPointer, entityPointer, blockPointer).setName("POINTER");
 
-        INSTRUCTION.add(
-                group(literal("expr").setName("INSTRUCTION_KEYWORD"),
-                        POINTER, equals(), POINTER)
+        COMMAND.add(
+                group(matchItem(COMMAND_HEADER, "set"), POINTER, equals(), choice(POINTER, NBT_VALUE).setName("VALUE"))
         );
 
         {
@@ -1702,7 +1701,7 @@ public class TridentProductions {
                                     group(optional(brace("<"), literal("nbt_compound"), brace(">")), equals(), choice(NBT_COMPOUND).setName("VARIABLE_VALUE")),
                                     group(optional(brace("<"), literal("nbt_path"), brace(">")), equals(), choice(NBT_PATH).setName("VARIABLE_VALUE")),
                                     group(optional(brace("<"), literal("text_component"), brace(">")), equals(), choice(TEXT_COMPONENT).setName("VARIABLE_VALUE")),
-                                    group(equals(), choice(NBT_PATH, ENTITY, string(), TEXT_COMPONENT, BLOCK_TAGGED, ITEM_TAGGED, integer(), real(), ofType(BOOLEAN).setName("BOOLEAN"), COORDINATE_SET, NBT_COMPOUND).setName("VARIABLE_VALUE"))
+                                    group(equals(), choice(ENTITY, NBT_PATH, string(), TEXT_COMPONENT, BLOCK_TAGGED, ITEM_TAGGED, integer(), real(), ofType(BOOLEAN).setName("BOOLEAN"), COORDINATE_SET, NBT_COMPOUND).setName("VARIABLE_VALUE"))
                             ).setName("VARIABLE_INITIALIZATION")
                     )
             );
