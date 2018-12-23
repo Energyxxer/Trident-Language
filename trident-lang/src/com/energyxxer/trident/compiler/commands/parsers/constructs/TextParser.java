@@ -31,6 +31,7 @@ public class TextParser {
             case "VARIABLE_MARKER": {
                 return CommonParsers.retrieveSymbol(pattern, compiler, TextComponent.class);
             }
+            case "JSON_ROOT":
             case "JSON_ELEMENT": {
                 return parseTextComponent(JsonParser.parseJson(pattern, compiler), compiler, pattern, TextComponentContext.CHAT);
             }
