@@ -1,19 +1,14 @@
 package com.energyxxer.trident.compiler.commands.parsers.commands;
 
 import com.energyxxer.commodore.functionlogic.commands.Command;
-import com.energyxxer.commodore.functionlogic.commands.data.DataGetCommand;
-import com.energyxxer.commodore.functionlogic.commands.data.DataModifyCommand;
-import com.energyxxer.commodore.functionlogic.commands.data.ModifySourceFromBlock;
-import com.energyxxer.commodore.functionlogic.commands.data.ModifySourceValue;
+import com.energyxxer.commodore.functionlogic.commands.data.*;
 import com.energyxxer.commodore.functionlogic.commands.execute.*;
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreGet;
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScorePlayersOperation;
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreSet;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
-import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
-import com.energyxxer.commodore.functionlogic.nbt.TagInt;
+import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
@@ -194,7 +189,7 @@ public class SetParser implements CommandParser {
 
         Command setToEntityFrom(Entity target, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler);
 
-        Command setToBlockFrom(CoordinateSet pos, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler);
+        Command setToBlockFrom(CoordinateSet target, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler);
 
         class ScorePointerHead implements PointerHead {
             Objective objective;
@@ -255,14 +250,17 @@ public class SetParser implements CommandParser {
                     NBTTag value = ((PointerDecorator.ValuePointer) source).value;
 
                     if(value instanceof TagInt) {
-                        return new ScoreSet(new LocalScore(target, this.objective), Integer.parseInt(value.toHeadlessString())); //TODO: add getters to tag values
+                        return new ScoreSet(new LocalScore(target, this.objective), ((TagInt) value).getValue());
+                    } else {
+                        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot put non-integer values into scores", pattern));
+                        throw new EntryParsingException();
                     }
                 }
                 return null;
             }
 
             @Override
-            public Command setToBlockFrom(CoordinateSet pos, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
+            public Command setToBlockFrom(CoordinateSet target, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
                 //mojang hasn't given us block scores yet and probably will never do so.
                 return null;
             }
@@ -312,6 +310,10 @@ public class SetParser implements CommandParser {
                         Command mainCommand = new ScoreGet(new LocalScore(((PointerDecorator.EntityPointer) source).target, objective));
                         return new ExecuteCommand(mainCommand, modifiers);
                     } else if(sourceHead instanceof NBTPointerHead) {
+                        if(this.scale * ((NBTPointerHead) sourceHead).scale == 1) {
+                            return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromEntity(((PointerDecorator.EntityPointer) source).target, ((NBTPointerHead) sourceHead).path));
+                        }
+
                         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
                         if(((PointerDecorator.EntityPointer) source).target.getLimit() != 1) {
                             compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Expected a single entity, but this selector allows for more than one entity", pattern));
@@ -333,20 +335,23 @@ public class SetParser implements CommandParser {
                     Command mainCommand = new DataGetCommand(((PointerDecorator.BlockPointer) source).pos, sourceHead.path, sourceHead.scale);
                     return new ExecuteCommand(mainCommand, modifiers);
                 } else if(source instanceof PointerDecorator.ValuePointer) {
-                    if(this.scale == 1) return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceValue(((PointerDecorator.ValuePointer) source).value));
-                    else {
-                        //NBTTag tag = ((PointerDecorator.ValuePointer) source).value;
-                        //ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
-                        //modifiers.add(new ExecuteStoreEntity(target, this.path, this.type, this.scale));
-                        //TODO: expose numeric nbt tag values and multiply the tag value by the scale if it is numerical
-                        return null;
+                    NBTTag value = ((PointerDecorator.ValuePointer) source).value;
+                    if(this.scale != 1) {
+                        if(value instanceof NumericNBTTag) {
+                            return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceValue(((NumericNBTTag) value).scale(scale)));
+                        } else {
+                            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot scale a non-numerical value, found " + value.getType(), pattern));
+                            throw new EntryParsingException();
+                        }
                     }
+
+                    return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceValue(value));
                 }
                 return null;
             }
 
             @Override
-            public Command setToBlockFrom(CoordinateSet pos, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
+            public Command setToBlockFrom(CoordinateSet target, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
                 if(source instanceof PointerDecorator.EntityPointer) {
                     PointerHead sourceHead = ((PointerDecorator.EntityPointer) source).head;
                     if(sourceHead instanceof ScorePointerHead) {
@@ -359,35 +364,41 @@ public class SetParser implements CommandParser {
                             throw new EntryParsingException();
                         }
 
-                        modifiers.add(new ExecuteStoreBlock(pos, this.path, this.type, this.scale * ((ScorePointerHead) sourceHead).scale));
+                        modifiers.add(new ExecuteStoreBlock(target, this.path, this.type, this.scale * ((ScorePointerHead) sourceHead).scale));
                         Command mainCommand = new ScoreGet(new LocalScore(((PointerDecorator.EntityPointer) source).target, objective));
                         return new ExecuteCommand(mainCommand, modifiers);
                     } else if(sourceHead instanceof NBTPointerHead) {
                         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
+                        if(this.scale * ((NBTPointerHead) sourceHead).scale == 1) {
+                            return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromEntity(((PointerDecorator.EntityPointer) source).target, ((NBTPointerHead) sourceHead).path));
+                        }
 
-                        modifiers.add(new ExecuteStoreBlock(pos, this.path, this.type, this.scale));
+                        modifiers.add(new ExecuteStoreBlock(target, this.path, this.type, this.scale));
                         Command mainCommand = new DataGetCommand(((PointerDecorator.EntityPointer) source).target, ((NBTPointerHead) sourceHead).path, ((NBTPointerHead) sourceHead).scale);
                         return new ExecuteCommand(mainCommand, modifiers);
                     }
                 } else if(source instanceof PointerDecorator.BlockPointer) {
                     NBTPointerHead sourceHead = (NBTPointerHead) ((PointerDecorator.BlockPointer) source).head;
                     if(this.scale * sourceHead.scale == 1) {
-                        return new DataModifyCommand(pos, this.path, DataModifyCommand.SET(), new ModifySourceFromBlock(((PointerDecorator.BlockPointer) source).pos, sourceHead.path));
+                        return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromBlock(((PointerDecorator.BlockPointer) source).pos, sourceHead.path));
                     }
                     ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
 
-                    modifiers.add(new ExecuteStoreBlock(pos, this.path, this.type, this.scale));
+                    modifiers.add(new ExecuteStoreBlock(target, this.path, this.type, this.scale));
                     Command mainCommand = new DataGetCommand(((PointerDecorator.BlockPointer) source).pos, sourceHead.path, sourceHead.scale);
                     return new ExecuteCommand(mainCommand, modifiers);
                 } else if(source instanceof PointerDecorator.ValuePointer) {
-                    if(this.scale == 1) return new DataModifyCommand(pos, this.path, DataModifyCommand.SET(), new ModifySourceValue(((PointerDecorator.ValuePointer) source).value));
-                    else {
-                        //NBTTag tag = ((PointerDecorator.ValuePointer) source).value;
-                        //ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
-                        //modifiers.add(new ExecuteStoreEntity(target, this.path, this.type, this.scale));
-                        //TODO: expose numeric nbt tag values and multiply the tag value by the scale if it is numerical
-                        return null;
+                    NBTTag value = ((PointerDecorator.ValuePointer) source).value;
+                    if(this.scale != 1) {
+                        if(value instanceof NumericNBTTag) {
+                            return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceValue(((NumericNBTTag) value).scale(scale)));
+                        } else {
+                            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot scale a non-numerical value, found " + value.getType(), pattern));
+                            throw new EntryParsingException();
+                        }
                     }
+
+                    return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceValue(value));
                 }
                 return null;
             }
