@@ -22,7 +22,14 @@ public class ReferenceType extends DataType implements DeepDataType {
 
     @Override
     public void collectDataTypeFor(PathContext context, NBTPath path, DataTypeQueryResponse response) {
-        this.parent.collectDataTypeFor(name, context, path, response);
+        if(this.flags != null && this.flags.hasFlag("protocol")) {
+            PathProtocol protocol = PathProtocol.NONE;
+            if(name.equals("ENTITY")) protocol = PathProtocol.ENTITY;
+            if(name.equals("BLOCK_ENTITY")) protocol = PathProtocol.BLOCK_ENTITY;
+            this.parent.collectDataTypeForProtocol(protocol, null, context, path, response);
+        } else {
+            this.parent.collectDataTypeFor(name, context, path, response);
+        }
     }
 
     @Override

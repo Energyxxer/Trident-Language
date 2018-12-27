@@ -45,13 +45,13 @@ $ITEM_TAG: {
     Unbreakable: Byte (boolean),
     CanDestroy: [String (resource_location)],
     CanPlaceOn: [String (resource_location)],
-    BlockEntityTag: $BLOCK_ENTITY (expand),
+    BlockEntityTag: $BLOCK_ENTITY (protocol),
     Enchantments: [$ENCHANTMENT],
     StoredEnchantments: [$ENCHANTMENT],
     RepairCost: Int,
     AttributeModifiers: [$ATTRIBUTE_MODIFIER],
     CustomPotionEffects: [$EFFECT],
-    Potion: String (todo_type_potion),
+    Potion: String (type(potion)),
     CustomPotionColor: Int,
     display: {
         Name: String (text_component),
@@ -72,7 +72,7 @@ $ITEM_TAG: {
         Explosions: [$EXPLOSION]
     },
     CustomModelData: Int,
-    EntityTag: $ENTITY (expand),
+    EntityTag: $ENTITY (protocol),
     BucketVariantTag: Int,
     map: Int,
     map_scale_direction: Int,
@@ -121,11 +121,11 @@ $EFFECT: {
 $SPAWNER: {
     SpawnPotentials: [
         {
-            Entity: $ENTITY (expand),
+            Entity: $ENTITY (protocol),
             Weight: Int
         }
     ],
-    SpawnData: $ENTITY (expand),
+    SpawnData: $ENTITY (protocol),
     SpawnCount: Short,
     SpawnRange: Short,
     Delay: Short,

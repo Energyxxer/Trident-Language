@@ -16,7 +16,7 @@ public class DebugInstruction implements Instruction {
     public void run(TokenPattern<?> pattern, TridentFile file) {
         NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"), file.getCompiler());
 
-        PathContext context = new PathContext().setIsSetting(true).setProtocol(PathProtocol.ENTITY);
+        PathContext context = new PathContext().setIsSetting(true).setProtocol(PathProtocol.ENTITY, file.getCompiler().getModule().minecraft.types.entity.get("player"));
 
         DataTypeQueryResponse response = file.getCompiler().getTypeMap().collectTypeInformation(path, context);
         Debug.log(response.getPossibleTypes());

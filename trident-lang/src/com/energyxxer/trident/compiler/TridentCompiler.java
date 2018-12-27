@@ -27,9 +27,7 @@ import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManag
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.*;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -119,6 +117,10 @@ public class TridentCompiler {
         }
 
         typeMap = new NBTTypeMap(module);
+
+        typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("common.nbttm"));
+        typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("entities.nbttm"));
+        typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("block_entities.nbttm"));
 
         this.setProgress("Scanning files");
         TokenStream ts = new TokenStream();
@@ -386,5 +388,33 @@ public class TridentCompiler {
 
     public NBTTypeMap getTypeMap() {
         return typeMap;
+    }
+
+    private static class Resources {
+        public static final HashMap<String, String> defaults = new HashMap<>();
+
+        static {
+            defaults.put("common.nbttm", read("/typemaps/common.nbttm"));
+            defaults.put("entities.nbttm", read("/typemaps/entities.nbttm"));
+            defaults.put("block_entities.nbttm", read("/typemaps/block_entities.nbttm"));
+        }
+
+        private static String read(String file) {
+            try(BufferedReader br = new BufferedReader(new InputStreamReader(NBTTypeMap.class.getResourceAsStream(file)))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                for (; (line = br.readLine()) != null; ) {
+                    sb.append(line);
+                    sb.append("\n");
+                }
+                return sb.toString();
+            } catch(NullPointerException x) {
+                x.printStackTrace();
+                Debug.log("File not found: " + file, Debug.MessageType.ERROR);
+            } catch(IOException x) {
+                Debug.log("Unable to access file: " + file, Debug.MessageType.ERROR);
+            }
+            return "";
+        }
     }
 }

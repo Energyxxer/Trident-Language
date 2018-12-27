@@ -4,6 +4,7 @@ import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.defaults.BlockEntityType;
 import com.energyxxer.commodore.types.defaults.EntityType;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
@@ -52,16 +53,27 @@ public class NBTTypeMap {
     private static final String ENTITY_TAMABLE_ROOT = "ENTITY_TAMABLE";
     private static final String ENTITY_MOB_ROOT = "ENTITY_MOB";
 
+    private static final String BLOCK_ENTITY_ROOT = "BLOCK_ENTITY";
+
     private String getRootForEntity(Type type) {
         return "ENTITY_" + type.toString().toUpperCase().replace(':','_');
     }
 
+    private String getRootForBlockEntity(Type type) {
+        return "BLOCK_ENTITY_" + type.toString().toUpperCase().replace(':','_');
+    }
+
     public DataTypeQueryResponse collectTypeInformation(NBTPath path, PathContext context) {
         DataTypeQueryResponse response = new DataTypeQueryResponse();
+        collectDataTypeForProtocol(context.getProtocol(), context.getProtocolMetadata(), context, path, response);
+        return response;
+    }
+
+    public void collectDataTypeForProtocol(PathProtocol protocol, Object metadata, PathContext context, NBTPath path, DataTypeQueryResponse response) {
         ArrayList<String> rootsToCheck = new ArrayList<>();
-        if(context.getProtocol() == PathProtocol.ENTITY) {
+        if(protocol == PathProtocol.ENTITY) {
             rootsToCheck.add(ENTITY_ROOT);
-            Type suspectedType = (Type) context.getProtocolMetadata();
+            Type suspectedType = (Type) metadata;
             if(suspectedType != null) {
                 if(suspectedType.getCategory().equals(EntityType.CATEGORY)) {
                     if("true".equals(suspectedType.getProperty("living"))) rootsToCheck.add(0, ENTITY_MOB_ROOT);
@@ -75,11 +87,20 @@ public class NBTTypeMap {
                 rootsToCheck.add(0, ENTITY_TAMABLE_ROOT);
                 module.getAllNamespaces().forEach(n -> n.types.entity.list().forEach(e -> rootsToCheck.add(0, getRootForEntity(e))));
             }
+        } else if(protocol == PathProtocol.BLOCK_ENTITY) {
+            rootsToCheck.add(BLOCK_ENTITY_ROOT);
+            Type suspectedType = (Type) metadata;
+            if(suspectedType != null) {
+                if(suspectedType.getCategory().equals(BlockEntityType.CATEGORY)) {
+                    rootsToCheck.add(0, getRootForBlockEntity(suspectedType));
+                }
+            } else {
+                module.getAllNamespaces().forEach(n -> n.types.entity.list().forEach(e -> rootsToCheck.add(0, getRootForBlockEntity(e))));
+            }
         }
         for(String rootName : rootsToCheck) {
             collectDataTypeFor(rootName, context, path, response);
         }
-        return response;
     }
 
     public class Parsing {

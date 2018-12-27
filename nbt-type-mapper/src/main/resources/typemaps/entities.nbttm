@@ -22,7 +22,7 @@ $ENTITY: {
     
     Silent: Byte (boolean),
     
-    Passengers: [$ENTITY (expand)],
+    Passengers: [$ENTITY (protocol)],
     Glowing: Byte (boolean),
     
     Tags: [String]
@@ -406,7 +406,7 @@ $ENTITY_MINECRAFT_ARROW: {
     SoundEvent: String,
     
     CustomPotionEffects: [$EFFECT],
-    Potion: String (todo_type_potion),
+    Potion: String (type(potion)),
     CustomPotionColor: Int
 }
 
@@ -617,7 +617,7 @@ $ENTITY_MINECRAFT_SPAWNER_MINECART: $SPAWNER
 #falling tiles
 #falling_block
 $ENTITY_MINECRAFT_FALLING_BLOCK: {
-    TileEntityData: $BLOCK_ENTITY (expand),
+    TileEntityData: $BLOCK_ENTITY (protocol),
     BlockState: $BLOCK,
     Time: Int,
     DropItem: Byte (boolean),
@@ -645,7 +645,7 @@ $ENTITY_MINECRAFT_AREA_EFFECT_CLOUD: {
     RadiusOnUse: Float,
     RadiusPerTick: Float,
     Particle: String (full_particle),
-    Potion: String (todo_type_potion),
+    Potion: String (type(potion)),
     Effects: [$EFFECT]
 }
 
@@ -719,7 +719,7 @@ $ENTITY_MINECRAFT_PAINTING: {
     TileY: Int,
     TileZ: Int,
     Facing: Byte,
-    Motive: String (todo_motive_type)
+    Motive: String (type(motive))
 }
 
 #fishing_bobber
@@ -779,10 +779,10 @@ $ENTITY_MINECRAFT_PLAYER: {
     RootVehicle: {
         AttachLeast: Long,
         AttachMost: Long,
-        Entity: $ENTITY (expand)
+        Entity: $ENTITY (protocol)
     },
-    ShoulderEntityLeft: $ENTITY (expand),
-    ShoulderEntityRight: $ENTITY (expand),
+    ShoulderEntityLeft: $ENTITY (protocol),
+    ShoulderEntityRight: $ENTITY (protocol),
     seenCredits: Byte (boolean),
     recipeBook: {
         recipes: [String (resource_location)],
