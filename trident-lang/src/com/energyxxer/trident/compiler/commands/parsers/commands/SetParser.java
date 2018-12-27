@@ -8,7 +8,10 @@ import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScorePlayersOp
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreSet;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
+import com.energyxxer.commodore.functionlogic.nbt.NumericNBTTag;
+import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
+import com.energyxxer.commodore.functionlogic.nbt.TagInt;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
@@ -55,15 +58,15 @@ public class SetParser implements CommandParser {
                 return parsePointer(((TokenStructure) pattern).getContents(), compiler);
             case "BLOCK_POINTER":
                 CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"), compiler);
-                head = parsePointerHead(pattern.find("NBT_POINTER_HEAD"), compiler);
+                head = parsePointerHead(pos, pattern.find("NBT_POINTER_HEAD"), compiler);
                 return new PointerDecorator.BlockPointer(pos, head);
             case "ENTITY_POINTER":
                 Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), compiler);
-                head = parsePointerHead(pattern.find("POINTER_HEAD"), compiler);
+                head = parsePointerHead(entity, pattern.find("POINTER_HEAD"), compiler);
                 return new PointerDecorator.EntityPointer(entity, head);
             case "VARIABLE_POINTER":
                 Object symbol = CommonParsers.retrieveSymbol(pattern.find("VARIABLE_MARKER"), compiler, Entity.class, CoordinateSet.class);
-                head = parsePointerHead(pattern.find("POINTER_HEAD"), compiler);
+                head = parsePointerHead(symbol, pattern.find("POINTER_HEAD"), compiler);
                 if(symbol instanceof Entity) {
                     return new PointerDecorator.EntityPointer((Entity) symbol, head);
                 } else if(symbol instanceof CoordinateSet) {
@@ -84,11 +87,11 @@ public class SetParser implements CommandParser {
         }
     }
 
-    private PointerHead parsePointerHead(TokenPattern<?> pattern, TridentCompiler compiler) {
+    private PointerHead parsePointerHead(Object body, TokenPattern<?> pattern, TridentCompiler compiler) {
         double scale = 1;
         switch(pattern.getName()) {
             case "POINTER_HEAD":
-                return parsePointerHead(((TokenStructure) pattern).getContents(), compiler);
+                return parsePointerHead(body, ((TokenStructure) pattern).getContents(), compiler);
             case "SCORE_POINTER_HEAD":
                 if(pattern.find("SCALE") != null) {
                     scale = CommonParsers.parseDouble(pattern.find("SCALE.REAL"), compiler);
@@ -98,9 +101,11 @@ public class SetParser implements CommandParser {
                 if(pattern.find("SCALE") != null) {
                     scale = CommonParsers.parseDouble(pattern.find("SCALE.REAL"), compiler);
                 }
-                NumericNBTType type = StoreParser.parseNumericType(pattern.find("TYPE_CAST.NUMERIC_DATA_TYPE"));
-                if(type == null) type = NumericNBTType.DOUBLE;
-                return new PointerHead.NBTPointerHead(NBTParser.parsePath(pattern.find("NBT_PATH"), compiler), scale, type);
+
+                NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"), compiler);
+
+                NumericNBTType type = StoreParser.parseNumericType(pattern.find("TYPE_CAST.NUMERIC_DATA_TYPE"), body, path, compiler, pattern);
+                return new PointerHead.NBTPointerHead(path, scale, type);
             default:
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
                 throw new EntryParsingException();

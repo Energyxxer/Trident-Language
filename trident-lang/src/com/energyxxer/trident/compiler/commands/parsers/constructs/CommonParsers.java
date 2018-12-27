@@ -3,8 +3,18 @@ package com.energyxxer.trident.compiler.commands.parsers.constructs;
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
+import com.energyxxer.commodore.functionlogic.entity.Entity;
+import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
+import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
+import com.energyxxer.commodore.functionlogic.nbt.NumericNBTTag;
+import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.Objective;
+import com.energyxxer.commodore.functionlogic.score.PlayerName;
+import com.energyxxer.commodore.functionlogic.selector.Selector;
+import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgument;
+import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.tags.BlockTag;
@@ -23,6 +33,10 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.nbtmapper.tags.DataType;
+import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
+import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
@@ -33,6 +47,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
+import com.energyxxer.util.logger.Debug;
 
 import java.util.Arrays;
 import java.util.List;
@@ -403,6 +418,47 @@ public class CommonParsers {
             case "VARIABLE_MARKER": return retrieveSymbol(pattern, compiler, Double.class);
             default: {
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
+                throw new EntryParsingException();
+            }
+        }
+    }
+
+    public static Type guessEntityType(Entity entity, TridentCompiler compiler) {
+        TypeDictionary<EntityType> dict = compiler.getModule().minecraft.types.entity;
+        if(entity instanceof PlayerName) return dict.get("player");
+        if(entity instanceof GenericEntity) {
+            Selector selector = ((GenericEntity) entity).getSelector();
+            List<SelectorArgument> typeArg = selector.getArgumentsByKey("type").toList();
+            if(typeArg.isEmpty() || ((TypeArgument) typeArg.get(0)).isNegated()) return null;
+            return ((TypeArgument) typeArg.get(0)).getType();
+        } else throw new IllegalArgumentException("entity");
+    }
+
+    public static NumericNBTType getNumericType(Object body, NBTPath path, TridentCompiler compiler, TokenPattern<?> pattern) {
+
+        PathContext context = new PathContext().setIsSetting(true).setProtocol(body instanceof Entity ? PathProtocol.ENTITY : PathProtocol.BLOCK_ENTITY, body instanceof Entity ? guessEntityType((Entity) body, compiler) : null);
+
+        DataTypeQueryResponse response = compiler.getTypeMap().collectTypeInformation(path, context);
+        Debug.log(response.getPossibleTypes());
+
+        if(response.isEmpty()) {
+            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Don't know the correct NBT data type for the path '" + path + "'", pattern));
+            throw new EntryParsingException();
+        } else {
+            if(response.getPossibleTypes().size() > 1) {
+                compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Ambiguous NBT data type for the path '" + path + "': possible types include " + response.getPossibleTypes().map(DataType::getShortTypeName).toSet().join(", ") + ". Assuming " + response.getPossibleTypes().toList().get(0).getShortTypeName(), pattern));
+            }
+            DataType dataType = response.getPossibleTypes().toList().get(0);
+            if(NumericNBTTag.class.isAssignableFrom(dataType.getCorrespondingTagType())) {
+                try {
+                    NBTTag sample = dataType.getCorrespondingTagType().newInstance();
+                    return ((NumericNBTTag) sample).getNumericType();
+                } catch (InstantiationException | IllegalAccessException x) {
+                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Exception while instantiating default " + dataType.getCorrespondingTagType().getSimpleName() + ": " + x, pattern));
+                    throw new EntryParsingException();
+                }
+            } else {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Expected numeric NBT data type, instead got " + dataType.getShortTypeName(), pattern));
                 throw new EntryParsingException();
             }
         }

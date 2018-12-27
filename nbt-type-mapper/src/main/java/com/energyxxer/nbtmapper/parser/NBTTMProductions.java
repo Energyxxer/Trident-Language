@@ -41,10 +41,11 @@ public class NBTTMProductions {
         TYPE.add(group(ofType(PRIMITIVE_TYPE).setName("PRIMITIVE_NAME"), FLAGS).setName("PRIMITIVE"));
         TYPE.add(COMPOUND);
         TYPE.add(LIST);
-        TYPE.add(group(ofType(REFERENCE).setName("REFERENCE_NAME"), FLAGS).setName("REFERENCE"));
+        LazyTokenGroupMatch REFERENCE_S = group(ofType(REFERENCE).setName("REFERENCE_NAME"), FLAGS).setName("REFERENCE");
+        TYPE.add(REFERENCE_S);
 
         ENTRY = choice(
-                group(ofType(REFERENCE).setName("TYPE_NAME"), colon(), TYPE).setName("ROOT_TYPE"),
+                group(ofType(REFERENCE).setName("TYPE_NAME"), colon(), choice(COMPOUND, REFERENCE_S).setName("TYPE")).setName("ROOT_TYPE"),
                 ofType(COMMENT).setName("COMMENT")
         ).setName("ENTRY");
 

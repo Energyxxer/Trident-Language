@@ -31,7 +31,7 @@ public class StoreParser implements ModifierParser {
             case "STORE_BLOCK": {
                 CoordinateSet pos = CoordinateParser.parse(inner.find("COORDINATE_SET"), compiler);
                 NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"), compiler);
-                NumericNBTType type = parseNumericType(inner.find("NUMERIC_TYPE"));
+                NumericNBTType type = parseNumericType(inner.find("NUMERIC_TYPE"), pos, path, compiler, inner);
                 double scale = CommonParsers.parseDouble(inner.find("SCALE"), compiler);
                 return new ExecuteStoreBlock(storeValue, pos, path, type, scale);
             }
@@ -44,7 +44,7 @@ public class StoreParser implements ModifierParser {
             case "STORE_ENTITY": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), compiler);
                 NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"), compiler);
-                NumericNBTType type = parseNumericType(inner.find("NUMERIC_TYPE"));
+                NumericNBTType type = parseNumericType(inner.find("NUMERIC_TYPE"), entity, path, compiler, inner);
                 double scale = CommonParsers.parseDouble(inner.find("SCALE"), compiler);
                 return new ExecuteStoreEntity(storeValue, entity, path, type, scale);
             }
@@ -60,8 +60,10 @@ public class StoreParser implements ModifierParser {
         }
     }
 
-    public static NumericNBTType parseNumericType(TokenPattern<?> pattern) {
-        if(pattern == null) return null;
+    public static NumericNBTType parseNumericType(TokenPattern<?> pattern, Object body, NBTPath path, TridentCompiler compiler, TokenPattern<?> outer) {
+        if(pattern == null) {
+            return CommonParsers.getNumericType(body, path, compiler, outer);
+        }
         return NumericNBTType.valueOf(pattern.flatten(false).toUpperCase());
     }
 }

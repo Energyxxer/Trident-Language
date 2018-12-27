@@ -20,6 +20,7 @@ import com.energyxxer.nbtmapper.tags.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 public class NBTTypeMap {
@@ -95,12 +96,16 @@ public class NBTTypeMap {
                     rootsToCheck.add(0, getRootForBlockEntity(suspectedType));
                 }
             } else {
-                module.getAllNamespaces().forEach(n -> n.types.entity.list().forEach(e -> rootsToCheck.add(0, getRootForBlockEntity(e))));
+                module.getAllNamespaces().forEach(n -> n.types.blockEntity.list().forEach(e -> rootsToCheck.add(0, getRootForBlockEntity(e))));
             }
         }
         for(String rootName : rootsToCheck) {
             collectDataTypeFor(rootName, context, path, response);
         }
+    }
+
+    public Collection<Notice> getNotices() {
+        return notices;
     }
 
     public class Parsing {
@@ -131,16 +136,18 @@ public class NBTTypeMap {
         }
 
         private DataType parseType(TokenPattern<?> pattern) {
-            TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
-            switch(inner.getName()) {
+            switch(pattern.getName()) {
+                case "TYPE": {
+                    return parseType(((TokenStructure) pattern).getContents());
+                }
                 case "PRIMITIVE": {
-                    DataType type = new FlatType(NBTTypeMap.this, inner.find("PRIMITIVE_NAME").flatten(false));
-                    type.setFlags(parseFlags(inner.find("FLAGS")));
+                    DataType type = new FlatType(NBTTypeMap.this, pattern.find("PRIMITIVE_NAME").flatten(false));
+                    type.setFlags(parseFlags(pattern.find("FLAGS")));
                     return type;
                 }
                 case "COMPOUND": {
                     CompoundType compound = new CompoundType(NBTTypeMap.this);
-                    TokenList innerList = (TokenList) inner.find("COMPOUND_INNER_LIST");
+                    TokenList innerList = (TokenList) pattern.find("COMPOUND_INNER_LIST");
                     if(innerList != null) {
                         for(TokenPattern<?> entry : innerList.getContents()) {
                             if(entry.getName().equals("COMPOUND_INNER")) {
@@ -159,13 +166,13 @@ public class NBTTypeMap {
                     return compound;
                 }
                 case "LIST": {
-                    return new ListType(NBTTypeMap.this, parseType(inner.find("TYPE")));
+                    return new ListType(NBTTypeMap.this, parseType(pattern.find("TYPE")));
                 }
                 case "REFERENCE": {
-                    return new ReferenceType(NBTTypeMap.this, inner.find("REFERENCE_NAME").flatten(false).substring(1), parseFlags(inner.find("FLAGS")));
+                    return new ReferenceType(NBTTypeMap.this, pattern.find("REFERENCE_NAME").flatten(false).substring(1), parseFlags(pattern.find("FLAGS")));
                 }
                 default: {
-                    notices.add(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
+                    notices.add(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
                     throw new RuntimeException("Unknown grammar branch; details in notices");
                 }
             }

@@ -6,13 +6,12 @@ import com.energyxxer.commodore.functionlogic.nbt.path.NBTObjectMatch;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathKey;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathNode;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.nbtmapper.PathContext;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public class CompoundType extends DataType implements DeepDataType {
     private DataType defaultType;
@@ -38,6 +37,8 @@ public class CompoundType extends DataType implements DeepDataType {
                 if(path.hasNext()) {
                     if(type instanceof DeepDataType) {
                         ((DeepDataType) type).collectDataTypeFor(context, path.getNext(), response);
+                    } else {
+                        response.addNotice(new Notice(NoticeType.ERROR, "'" + key + "' cannot contain children"));
                     }
                 } else { //end of path
                     response.addLikelyType(type);
@@ -47,6 +48,8 @@ public class CompoundType extends DataType implements DeepDataType {
                 if(path.hasNext()) {
                     if(type instanceof DeepDataType) {
                         ((DeepDataType) type).collectDataTypeFor(context, path.getNext(), response);
+                    } else {
+                        response.addNotice(new Notice(NoticeType.ERROR, "'" + key + "' cannot contain children"));
                     }
                 } else {
                     response.addLikelyType(volatileTypes.get(key));
@@ -73,6 +76,11 @@ public class CompoundType extends DataType implements DeepDataType {
 
     public void setDefaultType(DataType type) {
         this.defaultType = type;
+    }
+
+    @Override
+    public String getShortTypeName() {
+        return "Compound";
     }
 
     @Override
@@ -111,5 +119,20 @@ public class CompoundType extends DataType implements DeepDataType {
 
         sb.append("}");
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        CompoundType that = (CompoundType) o;
+        return Objects.equals(defaultType, that.defaultType) &&
+                Objects.equals(types, that.types);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), defaultType, types);
     }
 }

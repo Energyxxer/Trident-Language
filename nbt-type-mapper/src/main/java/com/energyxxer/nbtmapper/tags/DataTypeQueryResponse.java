@@ -1,10 +1,13 @@
 package com.energyxxer.nbtmapper.tags;
 
+import com.energyxxer.enxlex.report.Notice;
+
 import java.util.ArrayList;
 import java.util.Collection;
 
 public class DataTypeQueryResponse {
     private ArrayList<DataType> possibleTypes = new ArrayList<>();
+    private ArrayList<Notice> notices = new ArrayList<>();
 
     void addLikelyType(DataType type) {
         possibleTypes.remove(type);
@@ -23,5 +26,13 @@ public class DataTypeQueryResponse {
 
     public boolean isEmpty() {
         return possibleTypes.isEmpty();
+    }
+
+    public void addNotice(Notice notice) {
+        notices.add(notice);
+    }
+
+    public ArrayList<Notice> getAllNotices() {
+        return notices;
     }
 }

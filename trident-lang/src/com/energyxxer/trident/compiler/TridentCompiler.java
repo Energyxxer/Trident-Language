@@ -128,6 +128,7 @@ public class TridentCompiler {
         recursivelyParse(lex, rootDir);
 
         report.addNotices(lex.getNotices());
+        report.addNotices(typeMap.getNotices());
         if(report.getTotal() > 0) {
             finalizeCompilation();
             return;

@@ -38,6 +38,11 @@ public class ReferenceType extends DataType implements DeepDataType {
     }
 
     @Override
+    public String getShortTypeName() {
+        return "Compound";
+    }
+
+    @Override
     public String toString() {
         return "$" + name + (flags != null ? " " + flags : "");
     }

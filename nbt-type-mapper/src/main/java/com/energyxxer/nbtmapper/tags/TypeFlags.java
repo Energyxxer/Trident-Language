@@ -5,6 +5,7 @@ import com.energyxxer.commodore.CommandUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 
 public class TypeFlags {
     private ArrayList<String> flags = new ArrayList<>();
@@ -65,5 +66,20 @@ public class TypeFlags {
 
         sb.append(")");
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TypeFlags typeFlags = (TypeFlags) o;
+        return Objects.equals(flags, typeFlags.flags) &&
+                Objects.equals(typeCategories, typeFlags.typeCategories) &&
+                Objects.equals(stringOptions, typeFlags.stringOptions);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(flags, typeCategories, stringOptions);
     }
 }
