@@ -5,6 +5,7 @@ import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.global.temp.Lang;
@@ -13,7 +14,6 @@ import com.energyxxer.trident.main.window.sections.EditArea;
 import com.energyxxer.trident.ui.editor.behavior.AdvancedEditor;
 import com.energyxxer.trident.ui.editor.behavior.editmanager.CharacterDriftHandler;
 import com.energyxxer.trident.ui.editor.inspector.Inspector;
-import com.energyxxer.util.logger.Debug;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -87,8 +87,12 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
 
         TokenMatchResponse match = null;
 
-        if(doParsing && lex instanceof LazyLexer) {
-            match = ((LazyLexer) lex).getMatchResponse();
+        if(doParsing) {
+            if(lex instanceof LazyLexer) {
+                match = ((LazyLexer) lex).getMatchResponse();
+            } else {
+                match = ((TokenPatternMatch) lang.getParserProduction()).match(tokens);
+            }
         }
 
         for(Token token : tokens) {
@@ -134,7 +138,7 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
         if(match != null && !match.matched) {
             TridentWindow.setStatus(match.getErrorMessage());
             newNotices.add(new Notice(NoticeType.ERROR, match.getErrorMessage(), match.faultyToken));
-            sd.setCharacterAttributes(match.faultyToken.loc.index, match.faultyToken.value.length(), TridentEditorComponent.this.getStyle("error"), true);
+            if(match.faultyToken != null && match.faultyToken.value != null && match.faultyToken.loc != null) sd.setCharacterAttributes(match.faultyToken.loc.index, match.faultyToken.value.length(), TridentEditorComponent.this.getStyle("error"), true);
         }
 
         if(this.inspector != null) {

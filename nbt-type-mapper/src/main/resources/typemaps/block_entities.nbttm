@@ -1,0 +1,179 @@
+$BLOCK_ENTITY: {
+    id: String,
+    x: Int,
+    y: Int,
+    z: Int
+}
+
+$BLOCK_ENTITY_MINECRAFT_BANNER: {
+    CustomName: String (text_component),
+    Patterns: [
+        {
+            Color: Int,
+            Pattern: String
+        }
+    ]
+}
+
+$BLOCK_ENTITY_MINECRAFT_BEACON: {
+    Lock: String,
+    Levels: Int,
+    Primary: Int,
+    Secondary: Int
+}
+
+$BLOCK_ENTITY_MINECRAFT_CAULDRON: {
+    CustomColor: Int,
+    Items: [$ITEM],
+    PotionId: String,
+    SplashPotion: Byte (boolean),
+    isMovable: Byte (boolean)
+}
+
+$BLOCK_ENTITY_MINECRAFT_BREWING_STAND: {
+    CustomName: String (text_component),
+    Lock: String,
+    Items: [$ITEM],
+    BrewTime: Int,
+    Fuel: Byte
+}
+
+$BLOCK_ENTITY_MINECRAFT_CHEST: {
+    CustomName: String (text_component),
+    Lock: String,
+    Items: [$ITEM],
+    LootTable: String,
+    LootTableSeed: Long
+}
+
+$BLOCK_ENTITY_MINECRAFT_COMPARATOR: {
+    OutputSignal: Int
+}
+
+$BLOCK_ENTITY_MINECRAFT_COMMAND_BLOCK: {
+    CustomName: String (text_component),
+    Command: String,
+    SuccessCount: Int,
+    LastOutput: String (text_component),
+    TrackOutput: Byte (boolean),
+    powered: Byte (boolean),
+    auto: Byte (boolean),
+    conditionMet: Byte (boolean),
+    UpdateLastExecution: Byte (boolean),
+    LastExecution: Long
+}
+
+$BLOCK_ENTITY_MINECRAFT_DISPENSER: {
+    CustomName: String (text_component),
+    Lock: String,
+    Items: [$ITEM],
+    LootTable: String,
+    LootTableSeed: Long
+}
+
+$BLOCK_ENTITY_MINECRAFT_DROPPER: {
+    CustomName: String (text_component),
+    Lock: String,
+    Items: [$ITEM],
+    LootTable: String,
+    LootTableSeed: Long
+}
+
+$BLOCK_ENTITY_MINECRAFT_ENCHANTING_TABLE: {
+    CustomName: String (text_component)
+}
+
+$BLOCK_ENTITY_MINECRAFT_END_GATEWAY: {
+    Age: Long,
+    ExactTeleport: Byte (boolean),
+    ExitPortal: {
+        X: Int,
+        Y: Int,
+        Z: Int
+    }
+}
+
+$BLOCK_ENTITY_MINECRAFT_FURNACE: {
+    CustomName: String (text_component),
+    Lock: String,
+    Items: [$ITEM],
+    BurnTime: Short,
+    CookTime: Short,
+    CookTimeTotal: Short,
+    RecipeLocation0: String (resource_location),
+    RecipeAmount0: Int,
+    RecipeLocation1: String (resource_location),
+    RecipeAmount1: Int,
+    RecipeLocation2: String (resource_location),
+    RecipeAmount2: Int,
+    RecipeLocation3: String (resource_location),
+    RecipeAmount3: Int,
+    RecipeLocation4: String (resource_location),
+    RecipeAmount4: Int,
+    RecipeLocation5: String (resource_location),
+    RecipeAmount5: Int,
+    RecipeLocation6: String (resource_location),
+    RecipeAmount6: Int,
+    RecipeLocation7: String (resource_location),
+    RecipeAmount7: Int,
+    RecipeUsedSize: Short
+}
+
+$BLOCK_ENTITY_MINECRAFT_HOPPER: {
+    CustomName: String (text_component),
+    Lock: String,
+    Items: [$ITEM],
+    TransferCooldown: Int,
+    LootTable: String,
+    LootTableSeed: Long
+}
+
+$BLOCK_ENTITY_MINECRAFT_JUKEBOX: {
+    RecordItem: $ITEM
+}
+
+$BLOCK_ENTITY_MINECRAFT_SPAWNER: $SPAWNER
+
+$BLOCK_ENTITY_MINECRAFT_PISTON: {
+    blockState: $BLOCK,
+    facing: Int,
+    progress: Float,
+    extending: Byte (boolean),
+    source: Byte (boolean)
+}
+
+$BLOCK_ENTITY_MINECRAFT_SHULKER_BOX: {
+    CustomName: String (text_component),
+    Lock: String,
+    Items: [$ITEM],
+    LootTable: String,
+    LootTableSeed: Long
+}
+
+$BLOCK_ENTITY_MINECRAFT_SIGN: {
+    Color: String (one_of("white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black")),
+    Text1: String (text_component),
+    Text2: String (text_component),
+    Text3: String (text_component),
+    Text4: String (text_component)
+}
+
+$BLOCK_ENTITY_MINECRAFT_SKULL: {
+    Owner: $SKULL_OWNER
+}
+
+$BLOCK_ENTITY_MINECRAFT_STRUCTURE_BLOCK: {
+    name: String,
+    author: String,
+    metadata: String,
+    posX: Int,
+    posY: Int,
+    posZ: Int,
+    sizeX: Int,
+    sizeY: Int,
+    sizeZ: Int,
+    rotation: String (one_of("NONE", "CLOCKWISE_90", "CLOCKWISE_180", "COUNTERCLOCKWISE_90")),
+    mirror: String (one_of("NONE", "LEFT_RIGHT", "FRONT_BACK")),
+    mode: String (one_of("SAVE", "LOAD", "CORNER", "DATA")),
+    ignoreEntities: Byte (boolean)
+}

@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler;
 
+import com.energyxxer.commodore.defpacks.DefinitionPack;
 import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
@@ -15,6 +16,7 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
@@ -37,6 +39,8 @@ public class TridentCompiler {
 
     public static final String PROJECT_FILE_NAME = ".tdnproj";
 
+    private final DefinitionPack definitionPack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
+
     private final File rootDir;
     private final CommandModule module;
 
@@ -57,6 +61,8 @@ public class TridentCompiler {
     private SpecialFileManager specialFileManager;
     private int languageLevel = 1;
     private String defaultNamespace = null;
+
+    private NBTTypeMap typeMap;
 
     public TridentCompiler(File rootDir) {
         this.rootDir = rootDir;
@@ -105,13 +111,14 @@ public class TridentCompiler {
 
         this.setProgress("Importing vanilla definitions");
         try {
-            module.importDefinitions(StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT);
+            module.importDefinitions(definitionPack);
             Debug.log(module.minecraft.tags.itemTags.getAll());
         } catch(IOException x) {
             logException(x);
             return;
         }
 
+        typeMap = new NBTTypeMap(module);
 
         this.setProgress("Scanning files");
         TokenStream ts = new TokenStream();
@@ -201,7 +208,7 @@ public class TridentCompiler {
         for (File file : files) {
             String name = file.getName();
             if (file.isDirectory()) {
-                if(!file.getParentFile().equals(rootDir) || file.getName().equals("datapack")) {
+                if(!file.getParentFile().equals(rootDir) || file.getName().equals("datapack") || file.getName().equals("internal")) {
                     //This is not the resource pack directory.
                     recursivelyParse(lex, file);
                 }
@@ -217,20 +224,26 @@ public class TridentCompiler {
                     } catch (IOException x) {
                         report.addNotice(new Notice(NoticeType.ERROR, "IOException: " + x.getMessage()));
                     }
-                } else {
-                    if(file.toPath().startsWith(rootDir.toPath().resolve("datapack"))) {
-                        Path dataPath = rootDir.toPath().resolve("datapack").resolve("data");
-                        try {
-                            if (name.endsWith(".json") && file.toPath().startsWith(dataPath) && dataPath.relativize(file.toPath()).getName(1).startsWith("tags")) {
-                                loadTag(file);
-                            } else {
-                                Path relPath = rootDir.toPath().resolve("datapack").relativize(file.toPath());
-                                String fileContent = new String(Files.readAllBytes(file.toPath()));
-                                module.exportables.add(new RawExportable(relPath.toString().replace(File.separator, "/"), fileContent));
-                            }
-                        } catch (IOException x) {
-                            report.addNotice(new Notice(NoticeType.ERROR, "IOException: " + x.getMessage()));
+                } else if(name.endsWith(".nbttm")) {
+                    try {
+                        String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
+                        typeMap.parsing.parseNBTTMFile(file, str);
+
+                    } catch(IOException x) {
+                        report.addNotice(new Notice(NoticeType.ERROR, "IOException: " + x.getMessage()));
+                    }
+                } else if(file.toPath().startsWith(rootDir.toPath().resolve("datapack"))) {
+                    Path dataPath = rootDir.toPath().resolve("datapack").resolve("data");
+                    try {
+                        if (name.endsWith(".json") && file.toPath().startsWith(dataPath) && dataPath.relativize(file.toPath()).getName(1).startsWith("tags")) {
+                            loadTag(file);
+                        } else {
+                            Path relPath = rootDir.toPath().resolve("datapack").relativize(file.toPath());
+                            String fileContent = new String(Files.readAllBytes(file.toPath()));
+                            module.exportables.add(new RawExportable(relPath.toString().replace(File.separator, "/"), fileContent));
                         }
+                    } catch (IOException x) {
+                        report.addNotice(new Notice(NoticeType.ERROR, "IOException: " + x.getMessage()));
                     }
                 }
             }
@@ -369,5 +382,9 @@ public class TridentCompiler {
 
     public SpecialFileManager getSpecialFileManager() {
         return specialFileManager;
+    }
+
+    public NBTTypeMap getTypeMap() {
+        return typeMap;
     }
 }

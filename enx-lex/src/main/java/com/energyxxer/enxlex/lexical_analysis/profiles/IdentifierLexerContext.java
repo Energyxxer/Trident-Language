@@ -9,6 +9,7 @@ public class IdentifierLexerContext implements LexerContext {
     private final TokenType type;
     private final String regex;
     private final String firstRegex;
+    private boolean onlyWhenExpected = true;
 
     public IdentifierLexerContext(TokenType type, String regex) {
         this(type, regex, null);
@@ -22,7 +23,7 @@ public class IdentifierLexerContext implements LexerContext {
 
     @Override
     public ScannerContextResponse analyze(String str, LexerProfile profile) {
-        return new ScannerContextResponse(false);
+        return !onlyWhenExpected ? analyzeExpectingType(str, type, profile) : new ScannerContextResponse(false);
     }
 
     @Override
@@ -44,5 +45,10 @@ public class IdentifierLexerContext implements LexerContext {
     @Override
     public Collection<TokenType> getHandledTypes() {
         return Collections.singletonList(type);
+    }
+
+    public IdentifierLexerContext setOnlyWhenExpected(boolean onlyWhenExpected) {
+        this.onlyWhenExpected = onlyWhenExpected;
+        return this;
     }
 }
