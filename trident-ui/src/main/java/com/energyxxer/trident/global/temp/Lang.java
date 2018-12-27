@@ -1,5 +1,6 @@
 package com.energyxxer.trident.global.temp;
 
+import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.enxlex.lexical_analysis.EagerLexer;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
@@ -7,6 +8,8 @@ import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.matching.GeneralTokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenPatternMatch;
+import com.energyxxer.nbtmapper.parser.NBTTMLexerProfile;
+import com.energyxxer.nbtmapper.parser.NBTTMProductions;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -27,7 +30,8 @@ public enum Lang {
     JSON(JSONLexerProfile::new, "json", "mcmeta", TridentCompiler.PROJECT_FILE_NAME.substring(1)),
     PROPERTIES(PropertiesLexerProfile::new, "properties", "lang"),
     MCFUNCTION(MCFunctionLexerProfile::new, MCFunctionProductions.FILE, "mcfunction"),
-    TRIDENT(TridentLexerProfile::new, TridentProductions.FILE, "tdn");
+    TRIDENT(TridentLexerProfile::new, TridentProductions.FILE, "tdn"),
+    NBTTM(() -> new NBTTMLexerProfile(StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT), NBTTMProductions.FILE, "nbttm");
 
     Factory<LexerProfile> factory;
     GeneralTokenPatternMatch parserProduction;

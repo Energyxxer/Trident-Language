@@ -1684,6 +1684,11 @@ public class TridentProductions {
                             )
                     )
             );
+
+            INSTRUCTION.add(
+                    group(keyword("tdndebug").setName("INSTRUCTION_KEYWORD"),
+                            NBT_PATH)
+            );
         }
         {
             INSTRUCTION.add(
