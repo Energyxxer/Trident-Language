@@ -1,0 +1,171 @@
+$BLOCK: {
+    Name: String (type(block)),
+    Properties: {
+        *: String
+    }
+}
+
+$ITEM: {
+    id: String (type(item)),
+    Count: Byte,
+    Slot: Byte,
+    tag: $ITEM_TAG
+}
+
+$SKULL_TEXTURE: {
+    timestamp: Long,
+    profileId: String,
+    profileName: String,
+    isPublic: Boolean,
+    textures: {
+        SKIN: {
+            url: String
+        },
+        Cape: {
+            url: String
+        }
+    }
+}
+
+$SKULL_OWNER: {
+    Id: String,
+    Name: String,
+    Properties: {
+        textures: [
+            {
+                Signature: String,
+                Value: String (json_encoded_SKULL_TEXTURE)
+            }
+        ]
+    }
+}
+
+$ITEM_TAG: {
+    Damage: Byte,
+    Unbreakable: Byte (boolean),
+    CanDestroy: [String (resource_location)],
+    CanPlaceOn: [String (resource_location)],
+    BlockEntityTag: $BLOCK_ENTITY (expand),
+    Enchantments: [$ENCHANTMENT],
+    StoredEnchantments: [$ENCHANTMENT],
+    RepairCost: Int,
+    AttributeModifiers: [$ATTRIBUTE_MODIFIER],
+    CustomPotionEffects: [$EFFECT],
+    Potion: String (todo_type_potion),
+    CustomPotionColor: Int,
+    display: {
+        Name: String (text_component),
+        Lore: [String (text_component)],
+        MapColor: Int
+    },
+    HideFlags: Int,
+    resolved: Byte (boolean),
+    generation: Int,
+    author: String,
+    title: String,
+    pages: [String],
+    SkullOwner: String (volatile),
+    SkullOwner: $SKULL_OWNER,
+    Explosion: $EXPLOSION,
+    Fireworks: {
+        Flight: Byte,
+        Explosions: [$EXPLOSION]
+    },
+    CustomModelData: Int,
+    EntityTag: $ENTITY (expand),
+    BucketVariantTag: Int,
+    map: Int,
+    map_scale_direction: Int,
+    Decorations: [
+        {
+            id: String,
+            type: Byte,
+            x: Double,
+            z: Double,
+            rot: Double
+        }
+    ],
+    Effects: [
+        {
+            EffectId: Byte,
+            EffectDuration: Int
+        }
+    ],
+    DebugProperty: {
+        *: String
+    }
+}
+
+$EXPLOSION: {
+    Flicker: Byte (boolean),
+    Trail: Byte (boolean),
+    Type: Byte (boolean),
+    Colors: [Int (todo_int_arrays)],
+    FadeColors: [Int (todo_int_arrays)]
+}
+
+$ENCHANTMENT: {
+    id: String (type(enchantment)),
+    lvl: Int
+}
+
+$EFFECT: {
+    Id: String (type(effect)),
+    Amplifier: Byte,
+    Duration: Int,
+    Ambient: Byte (boolean),
+    ShowParticles: Byte (boolean),
+    ShowIcon: Byte (boolean)
+}
+
+$SPAWNER: {
+    SpawnPotentials: [
+        {
+            Entity: $ENTITY (expand),
+            Weight: Int
+        }
+    ],
+    SpawnData: $ENTITY (expand),
+    SpawnCount: Short,
+    SpawnRange: Short,
+    Delay: Short,
+    MinSpawnDelay: Short,
+    MaxSpawnDelay: Short,
+    MaxNearbyEntities: Short,
+    RequiredPlayerRange: Short
+}
+
+$ATTRIBUTE: {
+    Name: String,
+    Base: Double,
+    Modifiers: [$ATTRIBUTE_MODIFIER]
+}
+
+$ATTRIBUTE_MODIFIER: {
+    AttributeName: String,
+    Name: String,
+    Slot: String,
+    Operation: Int,
+    Amount: Double,
+    UUIDMost: Long,
+    UUIDLeast: Long
+}
+
+$VILLAGER_DATA: {
+    level: Int,
+    profession: String (type(villager_profession)),
+    type: String (type(villager_type))
+}
+
+$VILLAGER_OFFERS: {
+    Recipes: [
+        {
+            rewardExp: Byte (boolean),
+            maxUses: Int,
+            uses: Int,
+            buy: $ITEM,
+            buyB: $ITEM,
+            sell: $ITEM
+        }
+    ]
+}
