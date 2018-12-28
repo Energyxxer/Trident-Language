@@ -28,6 +28,7 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.commands.parsers.modifiers.StoreParser;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.util.Lazy;
 
 import java.util.ArrayList;
 
@@ -104,8 +105,7 @@ public class SetParser implements CommandParser {
 
                 NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"), compiler);
 
-                NumericNBTType type = StoreParser.parseNumericType(pattern.find("TYPE_CAST.NUMERIC_DATA_TYPE"), body, path, compiler, pattern);
-                return new PointerHead.NBTPointerHead(path, scale, type);
+                return new PointerHead.NBTPointerHead(path, scale, new Lazy<>(() -> StoreParser.parseNumericType(pattern.find("TYPE_CAST.NUMERIC_DATA_TYPE"), body, path, compiler, pattern, true)));
             default:
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
                 throw new EntryParsingException();
@@ -289,13 +289,15 @@ public class SetParser implements CommandParser {
         class NBTPointerHead implements PointerHead {
             NBTPath path;
             double scale;
-            NumericNBTType type;
+            Lazy<NumericNBTType> type;
 
-            public NBTPointerHead(NBTPath path, double scale, NumericNBTType type) {
+            public NBTPointerHead(NBTPath path, double scale, Lazy<NumericNBTType> type) {
                 this.path = path;
                 this.scale = scale;
                 this.type = type;
             }
+
+
 
             @Override
             public Command setToEntityFrom(Entity target, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
@@ -311,7 +313,7 @@ public class SetParser implements CommandParser {
                             throw new EntryParsingException();
                         }
 
-                        modifiers.add(new ExecuteStoreEntity(target, this.path, this.type, this.scale * ((ScorePointerHead) sourceHead).scale));
+                        modifiers.add(new ExecuteStoreEntity(target, this.path, this.type.getValue(), this.scale * ((ScorePointerHead) sourceHead).scale));
                         Command mainCommand = new ScoreGet(new LocalScore(((PointerDecorator.EntityPointer) source).target, objective));
                         return new ExecuteCommand(mainCommand, modifiers);
                     } else if(sourceHead instanceof NBTPointerHead) {
@@ -325,7 +327,7 @@ public class SetParser implements CommandParser {
                             throw new EntryParsingException();
                         }
 
-                        modifiers.add(new ExecuteStoreEntity(target, this.path, this.type, this.scale));
+                        modifiers.add(new ExecuteStoreEntity(target, this.path, this.type.getValue(), this.scale));
                         Command mainCommand = new DataGetCommand(((PointerDecorator.EntityPointer) source).target, ((NBTPointerHead) sourceHead).path, ((NBTPointerHead) sourceHead).scale);
                         return new ExecuteCommand(mainCommand, modifiers);
                     }
@@ -336,7 +338,7 @@ public class SetParser implements CommandParser {
                     }
                     ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
 
-                    modifiers.add(new ExecuteStoreEntity(target, this.path, this.type, this.scale));
+                    modifiers.add(new ExecuteStoreEntity(target, this.path, this.type.getValue(), this.scale));
                     Command mainCommand = new DataGetCommand(((PointerDecorator.BlockPointer) source).pos, sourceHead.path, sourceHead.scale);
                     return new ExecuteCommand(mainCommand, modifiers);
                 } else if(source instanceof PointerDecorator.ValuePointer) {
@@ -369,7 +371,7 @@ public class SetParser implements CommandParser {
                             throw new EntryParsingException();
                         }
 
-                        modifiers.add(new ExecuteStoreBlock(target, this.path, this.type, this.scale * ((ScorePointerHead) sourceHead).scale));
+                        modifiers.add(new ExecuteStoreBlock(target, this.path, this.type.getValue(), this.scale * ((ScorePointerHead) sourceHead).scale));
                         Command mainCommand = new ScoreGet(new LocalScore(((PointerDecorator.EntityPointer) source).target, objective));
                         return new ExecuteCommand(mainCommand, modifiers);
                     } else if(sourceHead instanceof NBTPointerHead) {
@@ -378,7 +380,7 @@ public class SetParser implements CommandParser {
                             return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromEntity(((PointerDecorator.EntityPointer) source).target, ((NBTPointerHead) sourceHead).path));
                         }
 
-                        modifiers.add(new ExecuteStoreBlock(target, this.path, this.type, this.scale));
+                        modifiers.add(new ExecuteStoreBlock(target, this.path, this.type.getValue(), this.scale));
                         Command mainCommand = new DataGetCommand(((PointerDecorator.EntityPointer) source).target, ((NBTPointerHead) sourceHead).path, ((NBTPointerHead) sourceHead).scale);
                         return new ExecuteCommand(mainCommand, modifiers);
                     }
@@ -389,7 +391,7 @@ public class SetParser implements CommandParser {
                     }
                     ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
 
-                    modifiers.add(new ExecuteStoreBlock(target, this.path, this.type, this.scale));
+                    modifiers.add(new ExecuteStoreBlock(target, this.path, this.type.getValue(), this.scale));
                     Command mainCommand = new DataGetCommand(((PointerDecorator.BlockPointer) source).pos, sourceHead.path, sourceHead.scale);
                     return new ExecuteCommand(mainCommand, modifiers);
                 } else if(source instanceof PointerDecorator.ValuePointer) {

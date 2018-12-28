@@ -434,7 +434,7 @@ public class CommonParsers {
         } else throw new IllegalArgumentException("entity");
     }
 
-    public static NumericNBTType getNumericType(Object body, NBTPath path, TridentCompiler compiler, TokenPattern<?> pattern) {
+    public static NumericNBTType getNumericType(Object body, NBTPath path, TridentCompiler compiler, TokenPattern<?> pattern, boolean strict) {
 
         PathContext context = new PathContext().setIsSetting(true).setProtocol(body instanceof Entity ? PathProtocol.ENTITY : PathProtocol.BLOCK_ENTITY, body instanceof Entity ? guessEntityType((Entity) body, compiler) : null);
 
@@ -442,10 +442,12 @@ public class CommonParsers {
         Debug.log(response.getPossibleTypes());
 
         if(response.isEmpty()) {
-            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Don't know the correct NBT data type for the path '" + path + "'", pattern));
-            throw new EntryParsingException();
+            if(strict) {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Don't know the correct NBT data type for the path '" + path + "'", pattern));
+                throw new EntryParsingException();
+            } else return null;
         } else {
-            if(response.getPossibleTypes().size() > 1) {
+            if(response.getPossibleTypes().size() > 1 && strict) {
                 compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Ambiguous NBT data type for the path '" + path + "': possible types include " + response.getPossibleTypes().map(DataType::getShortTypeName).toSet().join(", ") + ". Assuming " + response.getPossibleTypes().toList().get(0).getShortTypeName(), pattern));
             }
             DataType dataType = response.getPossibleTypes().toList().get(0);
@@ -457,10 +459,11 @@ public class CommonParsers {
                     compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Exception while instantiating default " + dataType.getCorrespondingTagType().getSimpleName() + ": " + x, pattern));
                     throw new EntryParsingException();
                 }
-            } else {
+            } else if (strict) {
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Expected numeric NBT data type, instead got " + dataType.getShortTypeName(), pattern));
                 throw new EntryParsingException();
             }
+            return null;
         }
     }
 

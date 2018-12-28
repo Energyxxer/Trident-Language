@@ -144,7 +144,7 @@ public class TridentProductions {
 
         ENTITY.add(PLAYER_NAME);
         ENTITY.add(SELECTOR);
-        ENTITY.add(VARIABLE_MARKER);
+        ENTITY.add(group(VARIABLE_MARKER, optional(glue(), brace("["), list(SELECTOR_ARGUMENT, comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST"), brace("]")).setName("APPENDED_ARGUMENTS")).setName("ENTITY_VARIABLE"));
 
         INNER_FUNCTION.add(group(ofType(RESOURCE_LOCATION).setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")));
         ANONYMOUS_INNER_FUNCTION.add(group(brace("{"), FILE_INNER, brace("}")));
