@@ -12,15 +12,18 @@ import com.energyxxer.commodore.tags.TagGroup;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
+import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
+import com.energyxxer.trident.compiler.commands.parsers.instructions.AliasInstruction;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
+import com.energyxxer.trident.compiler.lexer.TridentTokens;
 import com.energyxxer.trident.compiler.semantics.SymbolStack;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
@@ -40,7 +43,7 @@ public class TridentCompiler {
     private final DefinitionPack definitionPack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
 
     private final File rootDir;
-    private final CommandModule module;
+    private CommandModule module;
 
     private JsonObject properties = null;
 
@@ -64,9 +67,6 @@ public class TridentCompiler {
 
     public TridentCompiler(File rootDir) {
         this.rootDir = rootDir;
-        module = new CommandModule(rootDir.getName(), "Command Module created with Trident", null);
-        module.getOptionManager().UNUSED_COMMAND_POLICY.setValue(UnusedCommandPolicy.KEEP);
-        module.getOptionManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
 
         specialFileManager = new SpecialFileManager(this);
 
@@ -79,6 +79,47 @@ public class TridentCompiler {
         this.thread = new Thread(this::runCompilation,"Trident-Compiler[" + rootDir.getName() + "]");
         report = new CompilerReport();
         thread.start();
+    }
+
+    public static CommandModule createModuleForProject(String name, File rootDir, DefinitionPack definitionPack) throws IOException {
+        JsonObject properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
+        return createModuleForProject(name, properties, definitionPack);
+    }
+
+    public static CommandModule createModuleForProject(String name, JsonObject properties, DefinitionPack definitionPack) throws IOException {
+        CommandModule module = new CommandModule(name, "Command Module created with Trident", null);
+        module.getOptionManager().UNUSED_COMMAND_POLICY.setValue(UnusedCommandPolicy.KEEP);
+        module.getOptionManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
+        module.importDefinitions(definitionPack);
+
+        if(properties.has("aliases") && properties.get("aliases").isJsonObject()) {
+            for(Map.Entry<String, JsonElement> categoryEntry : properties.getAsJsonObject("aliases").entrySet()) {
+                String category = categoryEntry.getKey();
+
+                if(categoryEntry.getValue().isJsonObject()) {
+                    for(Map.Entry<String, JsonElement> entry : categoryEntry.getValue().getAsJsonObject().entrySet()) {
+                        ScannerContextResponse keyResult = TridentLexerProfile.usefulContexts.get(TridentTokens.RESOURCE_LOCATION).analyzeExpectingType(entry.getKey(), null, null);
+                        TridentUtil.ResourceLocation alias = null;
+                        TridentUtil.ResourceLocation real = null;
+                        if(keyResult.success && keyResult.endLocation.index == entry.getKey().length()) { //full success
+                            alias = new TridentUtil.ResourceLocation(entry.getKey());
+                        } else continue;
+                        if(entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isString()) {
+                            String value = entry.getValue().getAsString();
+                            ScannerContextResponse valueResult = TridentLexerProfile.usefulContexts.get(TridentTokens.RESOURCE_LOCATION).analyzeExpectingType(value, null, null);
+                            if(valueResult.success && valueResult.endLocation.index == value.length()) {
+                                real = new TridentUtil.ResourceLocation(value);
+                            } else continue;
+                        } else continue;
+
+                        TridentUtil.ResourceLocation finalReal = real;
+                        module.createNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasInstruction.AliasType(c, ns, n, module.createNamespace(finalReal.namespace), finalReal.body), alias.body);
+                        Debug.log("Created alias '" + alias + "' for '" + real + "'");
+                    }
+                }
+            }
+        }
+        return module;
     }
 
     private void runCompilation() {
@@ -109,8 +150,7 @@ public class TridentCompiler {
 
         this.setProgress("Importing vanilla definitions");
         try {
-            module.importDefinitions(definitionPack);
-            Debug.log(module.minecraft.tags.itemTags.getAll());
+            module = createModuleForProject(rootDir.getName(), properties, definitionPack);
         } catch(IOException x) {
             logException(x);
             return;
@@ -124,7 +164,7 @@ public class TridentCompiler {
 
         this.setProgress("Scanning files");
         TokenStream ts = new TokenStream();
-        LazyLexer lex = new LazyLexer(ts, TridentProductions.FILE);
+        LazyLexer lex = new LazyLexer(ts, new TridentProductions(module).FILE);
         recursivelyParse(lex, rootDir);
 
         report.addNotices(lex.getNotices());
@@ -219,7 +259,7 @@ public class TridentCompiler {
                 if(name.endsWith(".tdn")) {
                     try {
                         String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
-                        lex.tokenizeParse(file, str, new TridentLexerProfile());
+                        lex.tokenizeParse(file, str, new TridentLexerProfile(module));
 
                         if(lex.getMatchResponse().matched) {
                             filePatterns.put(file, lex.getMatchResponse().pattern);

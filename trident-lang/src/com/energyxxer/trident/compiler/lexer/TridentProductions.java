@@ -1,93 +1,98 @@
 package com.energyxxer.trident.compiler.lexer;
 
-import com.energyxxer.commodore.defpacks.DefinitionBlueprint;
-import com.energyxxer.commodore.defpacks.DefinitionPack;
-import com.energyxxer.commodore.standard.StandardDefinitionPacks;
+import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.module.Namespace;
+import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.TypeDictionary;
+import com.energyxxer.commodore.types.defaults.*;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
+import com.energyxxer.trident.compiler.commands.parsers.instructions.AliasInstruction;
 import com.energyxxer.util.logger.Debug;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.HashMap;
 
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
 public class TridentProductions {
 
-    public static final LazyTokenStructureMatch FILE;
-    public static final LazyTokenStructureMatch FILE_INNER;
-    public static final LazyTokenStructureMatch INNER_FUNCTION;
-    public static final LazyTokenStructureMatch ANONYMOUS_INNER_FUNCTION;
-    public static final LazyTokenStructureMatch OPTIONAL_NAME_INNER_FUNCTION;
-    public static final LazyTokenStructureMatch ENTRY;
+    private static TridentProductions INSTANCE;
 
-    public static final LazyTokenItemMatch COMMENT_S;
-    public static final LazyTokenItemMatch VERBATIM_COMMAND_S;
-    public static final LazyTokenGroupMatch DIRECTIVE;
-    public static final LazyTokenStructureMatch INSTRUCTION;
-    public static final LazyTokenStructureMatch COMMAND;
-    public static final LazyTokenStructureMatch MODIFIER;
 
-    public static final LazyTokenGroupMatch RESOURCE_LOCATION_TAGGED;
 
-    public static final LazyTokenStructureMatch SELECTOR;
-    public static final LazyTokenStructureMatch SELECTOR_ARGUMENT;
-    public static final LazyTokenStructureMatch TEXT_COMPONENT;
+    public final LazyTokenStructureMatch FILE;
+    public final LazyTokenStructureMatch FILE_INNER;
+    public final LazyTokenStructureMatch INNER_FUNCTION;
+    public final LazyTokenStructureMatch ANONYMOUS_INNER_FUNCTION;
+    public final LazyTokenStructureMatch OPTIONAL_NAME_INNER_FUNCTION;
+    public final LazyTokenStructureMatch ENTRY;
 
-    public static final LazyTokenStructureMatch PLAYER_NAME;
+    public final LazyTokenItemMatch COMMENT_S;
+    public final LazyTokenItemMatch VERBATIM_COMMAND_S;
+    public final LazyTokenGroupMatch DIRECTIVE;
+    public final LazyTokenStructureMatch INSTRUCTION;
+    public final LazyTokenStructureMatch COMMAND;
+    public final LazyTokenStructureMatch MODIFIER;
 
-    public static final LazyTokenStructureMatch TEXT_COLOR;
+    public final LazyTokenGroupMatch RESOURCE_LOCATION_TAGGED;
 
-    public static final LazyTokenStructureMatch INTEGER_NUMBER_RANGE = new LazyTokenStructureMatch("INTEGER_NUMBER_RANGE");
-    public static final LazyTokenStructureMatch REAL_NUMBER_RANGE = new LazyTokenStructureMatch("REAL_NUMBER_RANGE");
+    public final LazyTokenStructureMatch SELECTOR;
+    public final LazyTokenStructureMatch SELECTOR_ARGUMENT;
+    public final LazyTokenStructureMatch TEXT_COMPONENT;
 
-    public static final LazyTokenStructureMatch NBT_COMPOUND = new LazyTokenStructureMatch("NBT_COMPOUND");
-    public static final LazyTokenStructureMatch NBT_LIST = new LazyTokenStructureMatch("NBT_LIST");
-    public static final LazyTokenStructureMatch NBT_VALUE = new LazyTokenStructureMatch("NBT_VALUE");
+    public final LazyTokenStructureMatch PLAYER_NAME;
 
-    public static final LazyTokenStructureMatch NBT_PATH = new LazyTokenStructureMatch("NBT_PATH");
+    public final LazyTokenStructureMatch TEXT_COLOR;
+
+    public final LazyTokenStructureMatch INTEGER_NUMBER_RANGE = new LazyTokenStructureMatch("INTEGER_NUMBER_RANGE");
+    public final LazyTokenStructureMatch REAL_NUMBER_RANGE = new LazyTokenStructureMatch("REAL_NUMBER_RANGE");
+
+    public final LazyTokenStructureMatch NBT_COMPOUND = new LazyTokenStructureMatch("NBT_COMPOUND");
+    public final LazyTokenStructureMatch NBT_LIST = new LazyTokenStructureMatch("NBT_LIST");
+    public final LazyTokenStructureMatch NBT_VALUE = new LazyTokenStructureMatch("NBT_VALUE");
+
+    public final LazyTokenStructureMatch NBT_PATH = new LazyTokenStructureMatch("NBT_PATH");
     
-    public static final LazyTokenStructureMatch SINGLE_COORDINATE = new LazyTokenStructureMatch("SINGLE_COORDINATE");
-    public static final LazyTokenStructureMatch ABSOLUTE_COORDINATE = new LazyTokenStructureMatch("ABSOLUTE_COORDINATE");
-    public static final LazyTokenStructureMatch RELATIVE_COORDINATE = new LazyTokenStructureMatch("RELATIVE_COORDINATE");
-    public static final LazyTokenStructureMatch LOCAL_COORDINATE = new LazyTokenStructureMatch("LOCAL_COORDINATE");
-    public static final LazyTokenStructureMatch MIXABLE_COORDINATE = new LazyTokenStructureMatch("MIXABLE_COORDINATE");
-    public static final LazyTokenStructureMatch COORDINATE_SET = new LazyTokenStructureMatch("COORDINATE_SET");
-    public static final LazyTokenStructureMatch TWO_COORDINATE_SET = new LazyTokenStructureMatch("TWO_COORDINATE_SET");
+    public final LazyTokenStructureMatch SINGLE_COORDINATE = new LazyTokenStructureMatch("SINGLE_COORDINATE");
+    public final LazyTokenStructureMatch ABSOLUTE_COORDINATE = new LazyTokenStructureMatch("ABSOLUTE_COORDINATE");
+    public final LazyTokenStructureMatch RELATIVE_COORDINATE = new LazyTokenStructureMatch("RELATIVE_COORDINATE");
+    public final LazyTokenStructureMatch LOCAL_COORDINATE = new LazyTokenStructureMatch("LOCAL_COORDINATE");
+    public final LazyTokenStructureMatch MIXABLE_COORDINATE = new LazyTokenStructureMatch("MIXABLE_COORDINATE");
+    public final LazyTokenStructureMatch COORDINATE_SET = new LazyTokenStructureMatch("COORDINATE_SET");
+    public final LazyTokenStructureMatch TWO_COORDINATE_SET = new LazyTokenStructureMatch("TWO_COORDINATE_SET");
 
-    public static final LazyTokenStructureMatch BLOCKSTATE = new LazyTokenStructureMatch("BLOCKSTATE");
-    public static final LazyTokenStructureMatch BLOCK = new LazyTokenStructureMatch("BLOCK");
-    public static final LazyTokenStructureMatch BLOCK_TAGGED = new LazyTokenStructureMatch("BLOCK_TAGGED");
-    public static final LazyTokenStructureMatch ITEM = new LazyTokenStructureMatch("ITEM");
-    public static final LazyTokenStructureMatch ITEM_TAGGED = new LazyTokenStructureMatch("ITEM_TAGGED");
+    public final LazyTokenStructureMatch BLOCKSTATE = new LazyTokenStructureMatch("BLOCKSTATE");
+    public final LazyTokenStructureMatch BLOCK = new LazyTokenStructureMatch("BLOCK");
+    public final LazyTokenStructureMatch BLOCK_TAGGED = new LazyTokenStructureMatch("BLOCK_TAGGED");
+    public final LazyTokenStructureMatch ITEM = new LazyTokenStructureMatch("ITEM");
+    public final LazyTokenStructureMatch ITEM_TAGGED = new LazyTokenStructureMatch("ITEM_TAGGED");
 
-    public static final LazyTokenStructureMatch PARTICLE = new LazyTokenStructureMatch("PARTICLE");
+    public final LazyTokenStructureMatch PARTICLE = new LazyTokenStructureMatch("PARTICLE");
 
-    public static final LazyTokenStructureMatch BLOCK_ID = new LazyTokenStructureMatch("BLOCK_ID");
-    public static final LazyTokenStructureMatch ITEM_ID = new LazyTokenStructureMatch("ITEM_ID");
-    public static final LazyTokenStructureMatch ENTITY_ID = new LazyTokenStructureMatch("ENTITY_ID");
-    public static final LazyTokenStructureMatch ENTITY_ID_TAGGED = new LazyTokenStructureMatch("ENTITY_ID_TAGGED");
-    public static final LazyTokenStructureMatch EFFECT_ID = new LazyTokenStructureMatch("EFFECT_ID");
-    public static final LazyTokenStructureMatch PARTICLE_ID = new LazyTokenStructureMatch("PARTICLE_ID");
-    public static final LazyTokenStructureMatch ENCHANTMENT_ID = new LazyTokenStructureMatch("ENCHANTMENT_ID");
-    public static final LazyTokenStructureMatch DIMENSION_ID = new LazyTokenStructureMatch("DIMENSION_ID");
-    public static final LazyTokenStructureMatch SLOT_ID = new LazyTokenStructureMatch("SLOT_ID");
+    public final LazyTokenStructureMatch BLOCK_ID = new LazyTokenStructureMatch("BLOCK_ID");
+    public final LazyTokenStructureMatch ITEM_ID = new LazyTokenStructureMatch("ITEM_ID");
+    public final LazyTokenStructureMatch ENTITY_ID = new LazyTokenStructureMatch("ENTITY_ID");
+    public final LazyTokenStructureMatch ENTITY_ID_TAGGED = new LazyTokenStructureMatch("ENTITY_ID_TAGGED");
+    public final LazyTokenStructureMatch EFFECT_ID = new LazyTokenStructureMatch("EFFECT_ID");
+    public final LazyTokenStructureMatch PARTICLE_ID = new LazyTokenStructureMatch("PARTICLE_ID");
+    public final LazyTokenStructureMatch ENCHANTMENT_ID = new LazyTokenStructureMatch("ENCHANTMENT_ID");
+    public final LazyTokenStructureMatch DIMENSION_ID = new LazyTokenStructureMatch("DIMENSION_ID");
+    public final LazyTokenStructureMatch SLOT_ID = new LazyTokenStructureMatch("SLOT_ID");
 
-    public static final LazyTokenStructureMatch GAMEMODE = new LazyTokenStructureMatch("GAMEMODE");
-    public static final LazyTokenStructureMatch GAMERULE = new LazyTokenStructureMatch("GAMERULE");
-    public static final LazyTokenStructureMatch GAMERULE_SETTER = new LazyTokenStructureMatch("GAMERULE_SETTER");
-    public static final LazyTokenStructureMatch STRUCTURE = new LazyTokenStructureMatch("STRUCTURE");
-    public static final LazyTokenStructureMatch DIFFICULTY = new LazyTokenStructureMatch("DIFFICULTY");
+    public final LazyTokenStructureMatch GAMEMODE = new LazyTokenStructureMatch("GAMEMODE");
+    public final LazyTokenStructureMatch GAMERULE = new LazyTokenStructureMatch("GAMERULE");
+    public final LazyTokenStructureMatch GAMERULE_SETTER = new LazyTokenStructureMatch("GAMERULE_SETTER");
+    public final LazyTokenStructureMatch STRUCTURE = new LazyTokenStructureMatch("STRUCTURE");
+    public final LazyTokenStructureMatch DIFFICULTY = new LazyTokenStructureMatch("DIFFICULTY");
 
-    public static final LazyTokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_A = new LazyTokenStructureMatch("STRING_LITERAL_OR_IDENTIFIER_A");
+    public final LazyTokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_A = new LazyTokenStructureMatch("STRING_LITERAL_OR_IDENTIFIER_A");
 
     //grouped arguments
-    public static final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
-    public static final LazyTokenStructureMatch VARIABLE_MARKER;
-    public static final LazyTokenStructureMatch POINTER;
+    public final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
+    public final LazyTokenStructureMatch VARIABLE_MARKER;
+    public final LazyTokenStructureMatch POINTER;
 
-    static {
+    public TridentProductions(CommandModule module) {
         FILE = new LazyTokenStructureMatch("FILE");
         FILE_INNER = new LazyTokenStructureMatch("FILE_INNER");
         INNER_FUNCTION = new LazyTokenStructureMatch("INNER_FUNCTION");
@@ -1299,12 +1304,10 @@ public class TridentProductions {
 
         //region Definition Pack grammar
         try {
-            @NotNull DefinitionPack defpack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
-            defpack.load();
+            //@NotNull DefinitionPack defpack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
+            //defpack.load();
 
-            HashMap<String, LazyTokenStructureMatch> namespaceGroups = new HashMap<>();
-
-            for (DefinitionBlueprint def : defpack.getBlueprints("structure")) {
+            /*for (DefinitionBlueprint def : defpack.getBlueprints("structure")) {
                 STRUCTURE.add(literal(def.getName()));
             }
 
@@ -1314,48 +1317,183 @@ public class TridentProductions {
 
             for (DefinitionBlueprint def : defpack.getBlueprints("gamemode")) {
                 GAMEMODE.add(literal(def.getName()));
+            }*/
+
+            HashMap<String, LazyTokenPatternMatch> namespaces = new HashMap<>();
+
+            for(Namespace namespace : module.getAllNamespaces()) {
+                LazyTokenPatternMatch g = group(literal(namespace.getName()), colon()).setOptional(namespace.getName().equals("minecraft")).setName("NAMESPACE");
+                namespaces.put(namespace.getName(), g);
             }
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("dimension")) {
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
-
-                if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("DIMENSION_ID");
-
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
-                    ns.append(literal(def.getNamespace()));
-                    ns.append(colon());
-
-                    g.append(ns);
-
-                    s = new LazyTokenStructureMatch("TYPE_NAME");
-                    g.append(s);
-
-                    namespaceGroups.put(def.getNamespace(), s);
-
-                    DIMENSION_ID.add(g);
+            HashMap<String, LazyTokenStructureMatch> categoryMap = new HashMap<>();
+            for(Namespace namespace : module.getAllNamespaces()) {
+                LazyTokenPatternMatch namespaceGroup = namespaces.get(namespace.getName());
+                Boolean usesNamespace = null;
+                for(TypeDictionary dict : namespace.types.getAllDictionaries()) {
+                    LazyTokenStructureMatch typeName = struct("TYPE_NAME");
+                    String category = dict.getCategory();
+                    if(!categoryMap.containsKey(category)) {
+                        categoryMap.put(category, struct(category.toUpperCase() + "_ID"));
+                    }
+                    for(Type type : dict.list()) {
+                        String name = type.getName();
+                        if(type instanceof AliasInstruction.AliasType) {
+                            name = ((AliasInstruction.AliasType)type).getAliasName();
+                        }
+                        typeName.add(literal(name));
+                        usesNamespace = type.useNamespace();
+                    }
+                    if(usesNamespace != null) {
+                        categoryMap.get(category).add((usesNamespace ? group(namespaceGroup, typeName) : group(typeName)).setName(category.toUpperCase() + "_ID_DEFAULT"));
+                    }
                 }
-
-                s.add(literal(def.getName()));
             }
 
-            namespaceGroups.clear();
+            STRUCTURE.add(categoryMap.get(StructureType.CATEGORY));
+            DIFFICULTY.add(categoryMap.get(DifficultyType.CATEGORY));
+            GAMEMODE.add(categoryMap.get(GamemodeType.CATEGORY));
+            DIMENSION_ID.add(categoryMap.get(DimensionType.CATEGORY));
+            BLOCK_ID.add(categoryMap.get(BlockType.CATEGORY));
+            ITEM_ID.add(categoryMap.get(ItemType.CATEGORY));
+            ENTITY_ID.add(categoryMap.get(EntityType.CATEGORY));
+            EFFECT_ID.add(categoryMap.get(EffectType.CATEGORY));
+            ENCHANTMENT_ID.add(categoryMap.get(EnchantmentType.CATEGORY));
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("slot")) {
-                String[] parts = def.getName().split("\\.");
 
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+            LazyTokenGroupMatch COLOR = new LazyTokenGroupMatch().setName("COLOR")
+                    .append(real().setName("RED_COMPONENT"))
+                    .append(real().setName("GREEN_COMPONENT"))
+                    .append(real().setName("BLUE_COMPONENT"));
 
-                for (int i = 0; i < parts.length; i++) {
-                    g.append(literal(parts[i]));
-                    if (i < parts.length - 1) g.append(dot());
+
+            //particles have to be different
+
+            {
+                for(Namespace namespace : module.getAllNamespaces()) {
+                    LazyTokenPatternMatch namespaceGroup = namespaces.get(namespace.getName());
+                    for(Type type : namespace.types.particle.list()) {
+                        LazyTokenGroupMatch g = group(namespaceGroup, literal(type.getName()).setName("TYPE_NAME")).setName("PARTICLE_ID");
+
+                        PARTICLE_ID.add(g);
+
+                        LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
+
+                        g2.append(g);
+
+                        LazyTokenGroupMatch argsGroup = new LazyTokenGroupMatch().setName("PARTICLE_ARGUMENTS");
+
+                        String allArgs = type.getProperty("argument");
+                        if (!allArgs.equals("none")) {
+                            String[] args = allArgs.split("-");
+                            for (String arg : args) {
+                                switch (arg) {
+                                    case "int": {
+                                        argsGroup.append(integer());
+                                        break;
+                                    }
+                                    case "double": {
+                                        argsGroup.append(real());
+                                        break;
+                                    }
+                                    case "color": {
+                                        argsGroup.append(COLOR);
+                                        break;
+                                    }
+                                    case "block": {
+                                        argsGroup.append(BLOCK);
+                                        break;
+                                    }
+                                    case "item": {
+                                        argsGroup.append(ITEM);
+                                        break;
+                                    }
+                                    default: {
+                                        Debug.log("Invalid particle argument type '" + arg + "', could not be added to .tdn particle production", Debug.MessageType.ERROR);
+                                    }
+                                }
+                            }
+                        }
+
+                        g2.append(argsGroup);
+
+                        PARTICLE.add(g2);
+                    }
                 }
-
-                SLOT_ID.add(g);
             }
 
+            {
+                for(Namespace namespace : module.getAllNamespaces()) {
+                    LazyTokenPatternMatch namespaceGroup = namespaces.get(namespace.getName());
+                    for(Type type : namespace.types.gamerule.list()) {
+                        LazyTokenGroupMatch g = group(namespaceGroup, literal(type.getName()).setName("TYPE_NAME")).setName("GAMERULE_ID");
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("block")) {
+                        GAMERULE.add(g);
+
+                        LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
+
+                        g2.append(g);
+
+                        LazyTokenGroupMatch argsGroup = new LazyTokenGroupMatch().setName("GAMERULE_ARGUMENT");
+
+                        String arg = type.getProperty("argument");
+
+                        switch (arg) {
+                            case "boolean": {
+                                argsGroup.append(ofType(BOOLEAN).setName("BOOLEAN"));
+                                break;
+                            }
+                            case "int": {
+                                argsGroup.append(integer());
+                                break;
+                            }
+                            case "double": {
+                                argsGroup.append(real());
+                                break;
+                            }
+                            case "color": {
+                                argsGroup.append(COLOR);
+                                break;
+                            }
+                            case "block": {
+                                argsGroup.append(BLOCK);
+                                break;
+                            }
+                            case "item": {
+                                argsGroup.append(ITEM);
+                                break;
+                            }
+                            default: {
+                                Debug.log("Invalid gamerule argument type '" + arg + "', could not be added to .mcfunction gamerule setter production", Debug.MessageType.ERROR);
+                            }
+                        }
+
+                        g2.append(sameLine());
+                        g2.append(argsGroup);
+
+                        GAMERULE_SETTER.add(g2);
+                    }
+                }
+            }
+
+            // DIMENSION_ID:{_ID_DEFAULT:( NAMESPACE:(<LITERAL_NAMESPACE: "<namespace>">,<SYMBOL:":">) TYPE_NAME:{<overworld>|<the_nether>|<the_end>} )}
+
+            for(Namespace namespace : module.getAllNamespaces()) {
+                for(Type type : namespace.types.slot.list()) {
+                    String[] parts = type.getName().split("\\.");
+
+                    LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+
+                    for (int i = 0; i < parts.length; i++) {
+                        g.append(literal(parts[i]));
+                        if (i < parts.length - 1) g.append(dot());
+                    }
+
+                    SLOT_ID.add(g);
+                }
+            }
+
+            /*for (DefinitionBlueprint def : defpack.getBlueprints("block")) {
 
                 LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
 
@@ -1405,9 +1543,9 @@ public class TridentProductions {
                 s.add(literal(def.getName()));
             }
 
-            namespaceGroups.clear();
+            namespaceGroups.clear();*/
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("entity")) {
+            /*for (DefinitionBlueprint def : defpack.getBlueprints("entity")) {
 
                 LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
 
@@ -1426,21 +1564,23 @@ public class TridentProductions {
                     namespaceGroups.put(def.getNamespace(), s);
 
                     ENTITY_ID.add(g);
-                    ENTITY_ID_TAGGED.add(ENTITY_ID);
-                    LazyTokenGroupMatch g2 = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
-                    g2.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RESOURCE_NAME"));
-                    g2.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
-                    ENTITY_ID_TAGGED.add(g2);
                 }
 
                 s.add(literal(def.getName()));
+            }*/
+            {
+                ENTITY_ID_TAGGED.add(ENTITY_ID);
+                LazyTokenGroupMatch g2 = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
+                g2.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RESOURCE_NAME"));
+                g2.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
+                ENTITY_ID_TAGGED.add(g2);
+
+                ENTITY_ID.add(VARIABLE_MARKER);
             }
 
-            ENTITY_ID.add(VARIABLE_MARKER);
+            //namespaceGroups.clear();
 
-            namespaceGroups.clear();
-
-            for (DefinitionBlueprint def : defpack.getBlueprints("effect")) {
+            /*for (DefinitionBlueprint def : defpack.getBlueprints("effect")) {
 
                 LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
 
@@ -1488,17 +1628,13 @@ public class TridentProductions {
                 }
 
                 s.add(literal(def.getName()));
-            }
+            }*/
 
-            namespaceGroups.clear();
-
-            LazyTokenGroupMatch COLOR = new LazyTokenGroupMatch().setName("COLOR")
-                    .append(real().setName("RED_COMPONENT"))
-                    .append(real().setName("GREEN_COMPONENT"))
-                    .append(real().setName("BLUE_COMPONENT"));
+            //namespaceGroups.clear();
 
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("particle")) {
+
+            /*for (DefinitionBlueprint def : defpack.getBlueprints("particle")) {
                 LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("PARTICLE_ID");
 
                 LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
@@ -1554,9 +1690,9 @@ public class TridentProductions {
                 PARTICLE.add(g2);
             }
 
-            namespaceGroups.clear();
+            namespaceGroups.clear();*/
 
-            for (DefinitionBlueprint def : defpack.getBlueprints("gamerule")) {
+            /*for (DefinitionBlueprint def : defpack.getBlueprints("gamerule")) {
                 LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("GAMERULE_ID");
 
                 g.append(literal(def.getName()).setName("GAMERULE"));
@@ -1607,9 +1743,9 @@ public class TridentProductions {
                 GAMERULE_SETTER.add(g2);
             }
 
-            namespaceGroups.clear();
+            namespaceGroups.clear();*/
 
-        } catch (IOException x) {
+        } catch (Exception x) {
             Debug.log("Error in loading standard definition pack for Minecraft Java Edition 1.13: " + x.getMessage(), Debug.MessageType.ERROR);
         }
         //endregion
@@ -1723,7 +1859,22 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(literal("compile").setName("INSTRUCTION_KEYWORD"), brace("{"), SubTridentProductions.COMPILE_BLOCK_INNER, brace("}"))
+                    group(literal("alias").setName("INSTRUCTION_KEYWORD"),
+                            ofType(RESOURCE_LOCATION).setName("ALIAS_NAME"),
+                            brace("<"),
+                            list(ofType(DEFINITION_CATEGORY).setName("CATEGORY"), comma()).setName("CATEGORY_LIST"),
+                            brace(">"),
+                            symbol("="),
+                            ofType(RESOURCE_LOCATION).setName("REAL_NAME")
+                    )
+            );
+        }
+
+        SubTridentProductions sub = new SubTridentProductions();
+
+        {
+            INSTRUCTION.add(
+                    group(literal("compile").setName("INSTRUCTION_KEYWORD"), brace("{"), sub.COMPILE_BLOCK_INNER, brace("}"))
             );
         }
         //endregion
@@ -1789,11 +1940,11 @@ public class TridentProductions {
         return ofType(STRING_LITERAL).setName("STRING_LITERAL");
     }
 
-    static LazyTokenStructureMatch integer() {
+    LazyTokenStructureMatch integer() {
         return choice(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"), VARIABLE_MARKER).setName("INTEGER");
     }
 
-    static LazyTokenStructureMatch real() {
+    LazyTokenStructureMatch real() {
         return choice(ofType(REAL_NUMBER).setName("RAW_REAL"), VARIABLE_MARKER).setName("REAL");
     }
 
@@ -1867,5 +2018,70 @@ public class TridentProductions {
         LazyTokenGroupMatch g = group(items);
         g.setOptional();
         return g;
+    }
+
+    public class SubTridentProductions {
+        public final LazyTokenPatternMatch COMPILE_BLOCK_INNER;
+
+        private final LazyTokenStructureMatch STATEMENT;
+        private final LazyTokenStructureMatch VALUE;
+        private final LazyTokenStructureMatch EXPRESSION;
+        private final LazyTokenStructureMatch DATA_TYPE;
+
+        {
+            STATEMENT = struct("STATEMENT");
+            COMPILE_BLOCK_INNER = list(optional(STATEMENT, list(ofType(TokenType.NEWLINE)).setOptional())).setOptional().setName("COMPILE_BLOCK_INNER");
+
+            DATA_TYPE = choice(
+                    "integer",
+                    "real",
+                    "string",
+                    "bool",
+                    "entity",
+                    "block",
+                    "item",
+                    "coordinates",
+                    "nbt_compound",
+                    "nbt_path",
+                    "text_component"
+            );
+
+            VALUE = choice(
+                    VARIABLE_MARKER,
+                    integer(),
+                    real(),
+                    ofType(BOOLEAN).setName("BOOLEAN"),
+                    string(),
+                    identifierX(),
+                    group(literal("entity"), brace("<"), ENTITY, brace(">")),
+                    group(literal("block"), brace("<"), ITEM, brace(">")),
+                    group(literal("item"), brace("<"), BLOCK, brace(">")),
+                    TEXT_COMPONENT,
+                    NBT_COMPOUND,
+                    COORDINATE_SET
+            ).setName("VALUE");
+
+            EXPRESSION = choice(
+                    group(VALUE, keyword("as"), DATA_TYPE).setName("CAST"),
+                    group(choice(identifierX(),VARIABLE_MARKER).setName("VARIABLE_CHOICE"), ofType(COMPILER_ASSIGNMENT_OPERATOR), VALUE).setName("ASSIGNMENT")
+            );
+
+            VALUE.add(EXPRESSION);
+            EXPRESSION.add(group(VALUE));
+            EXPRESSION.add(group(VALUE, ofType(COMPILER_POSTFIX_OPERATOR).setName("POSTFIX_OPERATOR")));
+            EXPRESSION.add(group(ofType(COMPILER_PREFIX_OPERATOR).setName("PREFIX_OPERATOR"), VALUE));
+            EXPRESSION.add(group(brace("("), VALUE, brace(")")));
+            EXPRESSION.add(list(VALUE, ofType(COMPILER_OPERATOR).setName("OPERATOR")));
+
+            STATEMENT.add(group(keyword("var"), identifierX(), optional(symbol("="), VALUE).setName("INITIALIZATION")).setName("VARIABLE_DECLARATION"));
+            STATEMENT.add(group(keyword("append"), COMMAND).setName("COMMAND_APPEND"));
+            STATEMENT.add(group(keyword("for"), brace("("), optional(STATEMENT), symbol(";"), optional(EXPRESSION), symbol(";"), optional(EXPRESSION), brace(")"), optional(brace("{"), COMPILE_BLOCK_INNER, brace("}"))));
+            STATEMENT.add(EXPRESSION);
+        }
+
+
+        LazyTokenItemMatch identifierX() {
+            return ofType(IDENTIFIER_TYPE_X).setName("IDENTIFIER");
+        }
     }
 }

@@ -1,13 +1,7 @@
 package com.energyxxer.trident.ui.editor;
 
-import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
-import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
-import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
-import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.global.temp.Lang;
 import com.energyxxer.trident.main.window.TridentWindow;
 import com.energyxxer.trident.main.window.sections.EditArea;
@@ -22,7 +16,6 @@ import javax.swing.text.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyListener;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 
@@ -75,27 +68,10 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
 
         Lang lang = Lang.getLangForFile(parent.file.getPath());
 
-        Lexer lex = lang != null ? lang.createLexer(parent.file, text) : null;
-        if(lex == null) return;
+        Lang.LangAnalysisResponse analysis = lang != null ? lang.analyze(parent.file, text) : null;
+        if(analysis == null) return;
 
-        ArrayList<Notice> newNotices = new ArrayList<>(lex.getNotices());
-
-        boolean doParsing = lang.getParserProduction() != null;
-
-        ArrayList<Token> tokens = new ArrayList<>(lex.getStream().tokens);
-        tokens.remove(0);
-
-        TokenMatchResponse match = null;
-
-        if(doParsing) {
-            if(lex instanceof LazyLexer) {
-                match = ((LazyLexer) lex).getMatchResponse();
-            } else {
-                match = ((TokenPatternMatch) lang.getParserProduction()).match(tokens);
-            }
-        }
-
-        for(Token token : tokens) {
+        for(Token token : analysis.lexer.getStream().tokens) {
             Style style = TridentEditorComponent.this.getStyle(token.type.toString().toLowerCase());
             if(style != null)
                 sd.setCharacterAttributes(token.loc.index, token.value.length(), style, false);
@@ -120,7 +96,7 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
                 sd.setCharacterAttributes(token.loc.index, token.value.length(), attrStyle, false);
             }
 
-            if(doParsing) {
+            if(analysis.response != null) {
                 ps: for(Map.Entry<String, String[]> entry : parent.parserStyles.entrySet()) {
                     String[] tagList = entry.getValue();
                     int startIndex = token.tags.indexOf(tagList[0]);
@@ -135,15 +111,14 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
             }
         }
 
-        if(match != null && !match.matched) {
-            TridentWindow.setStatus(match.getErrorMessage());
-            newNotices.add(new Notice(NoticeType.ERROR, match.getErrorMessage(), match.faultyToken));
-            if(match.faultyToken != null && match.faultyToken.value != null && match.faultyToken.loc != null) sd.setCharacterAttributes(match.faultyToken.loc.index, match.faultyToken.value.length(), TridentEditorComponent.this.getStyle("error"), true);
+        if(analysis.response != null && !analysis.response.matched) {
+            TridentWindow.setStatus(analysis.response.getErrorMessage());
+            if(analysis.response.faultyToken != null && analysis.response.faultyToken.value != null && analysis.response.faultyToken.loc != null) sd.setCharacterAttributes(analysis.response.faultyToken.loc.index, analysis.response.faultyToken.value.length(), TridentEditorComponent.this.getStyle("error"), true);
         }
 
         if(this.inspector != null) {
-            this.inspector.inspect(lex.getStream());
-            this.inspector.insertNotices(newNotices);
+            this.inspector.inspect(analysis.lexer.getStream());
+            this.inspector.insertNotices(analysis.notices);
         }
     }
 

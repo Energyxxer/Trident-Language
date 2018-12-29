@@ -1,11 +1,18 @@
 package com.energyxxer.trident.compiler.lexer;
 
+import com.energyxxer.commodore.defpacks.CategoryDeclaration;
+import com.energyxxer.commodore.defpacks.DefinitionPack;
+import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.enxlex.lexical_analysis.profiles.*;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
+import com.energyxxer.util.Lazy;
 import com.energyxxer.util.StringLocation;
+import com.energyxxer.util.logger.Debug;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,7 +21,43 @@ import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
 public class TridentLexerProfile extends LexerProfile {
 
-    public TridentLexerProfile() {
+    public static final Lazy<TridentLexerProfile> INSTANCE = new Lazy<>(() -> new TridentLexerProfile(StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT));
+
+    public static final HashMap<TokenType, LexerContext> usefulContexts = new HashMap<>();
+
+    static {
+        usefulContexts.put(RESOURCE_LOCATION, new ResourceLocationContext("[a-z0-9_\\.-]","[a-z0-9_/\\.-]", RESOURCE_LOCATION));
+        usefulContexts.put(CASE_INSENSITIVE_RESOURCE_LOCATION, new ResourceLocationContext("[a-zA-Z0-9_\\.-]","[a-zA-Z0-9_/\\.-]", CASE_INSENSITIVE_RESOURCE_LOCATION));
+    }
+
+    public TridentLexerProfile(DefinitionPack defPack) {
+        ArrayList<String> defcategories = new ArrayList<>();
+        try {
+            defPack.load();
+            Debug.log("Start adding categories");
+            for(CategoryDeclaration decl : defPack.getDefinedCategories()) {
+                Debug.log("Added category '" + decl.getCategory() + "'");
+                defcategories.add(decl.getCategory().toLowerCase());
+            }
+            Debug.log("Stop adding categories");
+        } catch (IOException e) {
+            defcategories.addAll(Arrays.asList("entity, block, item, particle, enchantment, dimension, effect, difficulty, gamemode, gamerule, slot".split(", ")));
+            e.printStackTrace();
+        }
+
+        this.initialize(defcategories);
+    }
+
+    public TridentLexerProfile(CommandModule module) {
+        ArrayList<String> defcategories = new ArrayList<>();
+        module.getAllNamespaces().forEach(n -> n.getTypeManager().getAllDictionaries().forEach(d -> {
+            if(!defcategories.contains(d.getCategory())) defcategories.add(d.getCategory());
+        }));
+
+        this.initialize(defcategories);
+    }
+
+    private void initialize(Collection<String> defcategories) {
 
         //Numbers
         contexts.add(new LexerContext() {
@@ -294,8 +337,8 @@ public class TridentLexerProfile extends LexerProfile {
         });
 
         //Resource Locations
-        contexts.add(new ResourceLocationContext("[a-z0-9_\\.-]","[a-z0-9_/\\.-]", RESOURCE_LOCATION));
-        contexts.add(new ResourceLocationContext("[a-zA-Z0-9_\\.-]","[a-zA-Z0-9_/\\.-]", CASE_INSENSITIVE_RESOURCE_LOCATION));
+        contexts.add(usefulContexts.get(RESOURCE_LOCATION));
+        contexts.add(usefulContexts.get(CASE_INSENSITIVE_RESOURCE_LOCATION));
 
         //Comments and directive headers
         contexts.add(new LexerContext() {
@@ -428,6 +471,8 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new StringMatchLexerContext(NUMERIC_DATA_TYPE, "byte", "double", "float", "int", "long", "short"));
         contexts.add(new StringMatchLexerContext(SOUND_CHANNEL, "ambient", "block", "hostile", "master", "music", "neutral", "player", "record", "voice", "weather"));
         contexts.add(new StringMatchLexerContext(ANCHOR, "feet", "eyes"));
+
+        contexts.add(new StringMatchLexerContext(DEFINITION_CATEGORY, defcategories.toArray(new String[0])));
 
     }
 

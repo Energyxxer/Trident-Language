@@ -424,7 +424,7 @@ public class CommonParsers {
     }
 
     public static Type guessEntityType(Entity entity, TridentCompiler compiler) {
-        TypeDictionary<EntityType> dict = compiler.getModule().minecraft.types.entity;
+        TypeDictionary dict = compiler.getModule().minecraft.types.entity;
         if(entity instanceof PlayerName) return dict.get("player");
         if(entity instanceof GenericEntity) {
             Selector selector = ((GenericEntity) entity).getSelector();
@@ -468,7 +468,7 @@ public class CommonParsers {
     }
 
     public interface TypeGroupPicker {
-        TypeDictionary<?> pick(TypeManager m);
+        TypeDictionary pick(TypeManager m);
     }
 
     public interface TagGroupPicker {

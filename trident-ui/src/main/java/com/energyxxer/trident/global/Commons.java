@@ -1,5 +1,8 @@
 package com.energyxxer.trident.global;
 
+import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.standard.StandardDefinitionPacks;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenPatternMatch;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.global.temp.projects.Project;
 import com.energyxxer.trident.global.temp.projects.ProjectManager;
@@ -9,6 +12,7 @@ import com.energyxxer.trident.ui.modules.FileModuleToken;
 import com.energyxxer.trident.ui.modules.ModuleToken;
 import com.energyxxer.trident.ui.theme.change.ThemeChangeListener;
 import com.energyxxer.util.ImageManager;
+import com.energyxxer.util.Lazy;
 import com.energyxxer.util.logger.Debug;
 import com.energyxxer.util.out.Console;
 
@@ -24,6 +28,17 @@ public class Commons {
     public static String DEFAULT_CARET_DISPLAY_TEXT = "-:-";
 
     public static String themeAssetsPath = "light_theme/";
+
+    private static Lazy<CommandModule> defaultModule = new Lazy<> (() -> {
+        CommandModule defaultModule = new CommandModule("Default Module");
+        try {
+            StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT.load();
+            defaultModule.importDefinitions(StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT);
+        } catch(IOException x) {
+            Debug.log(x.toString(), Debug.MessageType.ERROR);
+        }
+        return defaultModule;
+    });
 
     static {
         ThemeChangeListener.addThemeChangeListener(t -> {
@@ -85,7 +100,6 @@ public class Commons {
     public static void compileActive() {
         if(Commons.getActiveProject() == null) return;
         TridentCompiler c = new TridentCompiler(Commons.getActiveProject().getRootDirectory());
-        //c.setLibrary(Resources.nativeLib);
         c.addProgressListener(TridentWindow::setStatus);
         c.addCompletionListener(() -> {
             TridentWindow.noticeExplorer.setNotices(c.getReport().groupByLabel());
@@ -94,5 +108,15 @@ public class Commons {
             c.getReport().getErrors().forEach(Console.err::println);
         });
         c.compile();
+    }
+
+    public static CommandModule getDefaultModule() {
+        return defaultModule.getValue();
+    }
+
+    public static LazyTokenPatternMatch getActiveTridentProductions() {
+        Project activeProject = getActiveProject();
+        if(activeProject != null) return activeProject.productions.getValue();
+        return null;
     }
 }

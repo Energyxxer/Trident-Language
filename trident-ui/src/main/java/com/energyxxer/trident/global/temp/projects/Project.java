@@ -1,6 +1,12 @@
 package com.energyxxer.trident.global.temp.projects;
 
+import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.standard.StandardDefinitionPacks;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenPatternMatch;
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.lexer.TridentProductions;
+import com.energyxxer.trident.global.Commons;
+import com.energyxxer.util.Lazy;
 import com.energyxxer.util.StringUtil;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.Gson;
@@ -22,6 +28,17 @@ public class Project {
 	private String name;
 	
 	public HashMap<String, String> icons = new HashMap<>();
+
+	public final Lazy<CommandModule> module = new Lazy<>(() -> {
+		try {
+			return TridentCompiler.createModuleForProject(getName(), rootDirectory, StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT);
+		} catch(IOException x) {
+			Debug.log("Exception while creating module: " + x.toString(), Debug.MessageType.ERROR);
+		}
+		return Commons.getDefaultModule();
+	});
+
+	public final Lazy<LazyTokenPatternMatch> productions = new Lazy<>(() -> new TridentProductions(module.getValue()).FILE);
 
 	//region a
     private JsonObject config;
