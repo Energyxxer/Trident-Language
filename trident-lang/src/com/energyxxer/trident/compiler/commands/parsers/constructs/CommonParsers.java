@@ -5,10 +5,7 @@ import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
-import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
-import com.energyxxer.commodore.functionlogic.nbt.NumericNBTTag;
-import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
-import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
+import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
@@ -52,6 +49,8 @@ import com.energyxxer.util.logger.Debug;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.energyxxer.nbtmapper.tags.PathProtocol.BLOCK_ENTITY;
+import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
 public class CommonParsers {
@@ -177,7 +176,13 @@ public class CommonParsers {
             if(appendedNBT != null) {
                 TagCompound nbt = item.getNBT();
                 if(nbt == null) nbt = new TagCompound();
-                item = new Item(item.getItemType(), nbt.merge(NBTParser.parseCompound(appendedNBT, compiler)));
+
+                TagCompound mergedNBT = nbt.merge(NBTParser.parseCompound(appendedNBT, compiler));
+
+                PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
+                NBTParser.analyzeTag(nbt, context, appendedNBT, compiler);
+
+                item = new Item(item.getItemType(), mergedNBT);
             }
             return item;
         }
@@ -193,6 +198,10 @@ public class CommonParsers {
         }
 
         TagCompound tag = NBTParser.parseCompound(pattern.find(".NBT_COMPOUND"), compiler);
+        if(tag != null) {
+            PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
+            NBTParser.analyzeTag(tag, context, pattern.find(".NBT_COMPOUND"), compiler);
+        }
         return new Item(type, tag);
     }
 
@@ -214,7 +223,10 @@ public class CommonParsers {
             if(appendedNBT != null) {
                 TagCompound nbt = block.getNBT();
                 if(nbt == null) nbt = new TagCompound();
-                block = new Block(block.getBlockType(), block.getBlockstate(), nbt.merge(NBTParser.parseCompound(appendedNBT, compiler)));
+                TagCompound mergedNBT = nbt.merge(NBTParser.parseCompound(appendedNBT, compiler));
+                PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
+                NBTParser.analyzeTag(mergedNBT, context, appendedNBT, compiler);
+                block = new Block(block.getBlockType(), block.getBlockstate(), mergedNBT);
             }
             return block;
         }
@@ -232,6 +244,10 @@ public class CommonParsers {
 
         Blockstate state = parseBlockstate(pattern.find("BLOCKSTATE_CLAUSE.BLOCKSTATE"));
         TagCompound tag = NBTParser.parseCompound(pattern.find("NBT_CLAUSE.NBT_COMPOUND"), compiler);
+        if(tag != null) {
+            PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
+            NBTParser.analyzeTag(tag, context, pattern.find("NBT_CLAUSE.NBT_COMPOUND"), compiler);
+        }
         return new Block(type, state, tag);
     }
 

@@ -1,5 +1,5 @@
 package com.energyxxer.nbtmapper.tags;
 
 public enum PathProtocol {
-    NONE, ENTITY, BLOCK_ENTITY
+    DEFAULT, ENTITY, BLOCK_ENTITY
 }

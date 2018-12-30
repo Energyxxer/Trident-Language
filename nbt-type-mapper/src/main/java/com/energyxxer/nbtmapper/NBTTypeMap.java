@@ -98,6 +98,10 @@ public class NBTTypeMap {
             } else {
                 module.getAllNamespaces().forEach(n -> n.types.blockEntity.list().forEach(e -> rootsToCheck.add(0, getRootForBlockEntity(e))));
             }
+        } else { //DEFAULT
+            if(metadata instanceof String) {
+                rootsToCheck.add((String)metadata);
+            }
         }
         for(String rootName : rootsToCheck) {
             collectDataTypeFor(rootName, context, path, response);

@@ -10,6 +10,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.TextParser;
@@ -18,6 +19,7 @@ import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
 
+import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
 public class CustomItem {
@@ -111,7 +113,10 @@ public class CustomItem {
                             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default items", entry));
                             break;
                         }
-                        itemDecl.defaultNBT = itemDecl.defaultNBT.merge(NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler()));
+                        TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler());
+                        PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
+                        NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), file.getCompiler());
+                        itemDecl.defaultNBT = itemDecl.defaultNBT.merge(newNBT);
                         break;
                     }
                     case "ITEM_INNER_FUNCTION": {

@@ -172,6 +172,7 @@ $BLOCK_ENTITY_MINECRAFT_STRUCTURE_BLOCK: {
     sizeX: Int,
     sizeY: Int,
     sizeZ: Int,
+    integrity: Float,
     rotation: String (one_of("NONE", "CLOCKWISE_90", "CLOCKWISE_180", "COUNTERCLOCKWISE_90")),
     mirror: String (one_of("NONE", "LEFT_RIGHT", "FRONT_BACK")),
     mode: String (one_of("SAVE", "LOAD", "CORNER", "DATA")),

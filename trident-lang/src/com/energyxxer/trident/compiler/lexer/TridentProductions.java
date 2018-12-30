@@ -1808,7 +1808,6 @@ public class TridentProductions {
                     brace("}")
             ).setOptional().setName("ITEM_DECLARATION_BODY");
 
-
             INSTRUCTION.add(
                     group(keyword("define").setName("INSTRUCTION_KEYWORD"),
                             choice(
@@ -1823,7 +1822,7 @@ public class TridentProductions {
 
             INSTRUCTION.add(
                     group(keyword("tdndebug").setName("INSTRUCTION_KEYWORD"),
-                            NBT_PATH)
+                            NBT_COMPOUND)
             );
         }
         {

@@ -10,9 +10,9 @@ import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.tags.TagGroup;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.TypeNotFoundException;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
@@ -23,7 +23,6 @@ import com.energyxxer.trident.compiler.commands.parsers.instructions.AliasInstru
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
-import com.energyxxer.trident.compiler.lexer.TridentTokens;
 import com.energyxxer.trident.compiler.semantics.SymbolStack;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
@@ -98,22 +97,12 @@ public class TridentCompiler {
 
                 if(categoryEntry.getValue().isJsonObject()) {
                     for(Map.Entry<String, JsonElement> entry : categoryEntry.getValue().getAsJsonObject().entrySet()) {
-                        ScannerContextResponse keyResult = TridentLexerProfile.usefulContexts.get(TridentTokens.RESOURCE_LOCATION).analyzeExpectingType(entry.getKey(), null, null);
-                        TridentUtil.ResourceLocation alias = null;
-                        TridentUtil.ResourceLocation real = null;
-                        if(keyResult.success && keyResult.endLocation.index == entry.getKey().length()) { //full success
-                            alias = new TridentUtil.ResourceLocation(entry.getKey());
-                        } else continue;
-                        if(entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isString()) {
-                            String value = entry.getValue().getAsString();
-                            ScannerContextResponse valueResult = TridentLexerProfile.usefulContexts.get(TridentTokens.RESOURCE_LOCATION).analyzeExpectingType(value, null, null);
-                            if(valueResult.success && valueResult.endLocation.index == value.length()) {
-                                real = new TridentUtil.ResourceLocation(value);
-                            } else continue;
-                        } else continue;
+                        TridentUtil.ResourceLocation alias = TridentUtil.ResourceLocation.createStrict(entry.getKey());
+                        TridentUtil.ResourceLocation real = TridentUtil.ResourceLocation.createStrict(entry.getValue().getAsString());
+                        if(alias == null) continue;
+                        if(real == null) continue;
 
-                        TridentUtil.ResourceLocation finalReal = real;
-                        module.createNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasInstruction.AliasType(c, ns, n, module.createNamespace(finalReal.namespace), finalReal.body), alias.body);
+                        module.createNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasInstruction.AliasType(c, ns, n, module.createNamespace(real.namespace), real.body), alias.body);
                         Debug.log("Created alias '" + alias + "' for '" + real + "'");
                     }
                 }
@@ -429,6 +418,15 @@ public class TridentCompiler {
 
     public NBTTypeMap getTypeMap() {
         return typeMap;
+    }
+
+    public Type fetchType(TridentUtil.ResourceLocation location, String category) {
+        try {
+            return module.getNamespace(location.namespace).types.getDictionary(category).get(location.body);
+        }
+        catch(NullPointerException | TypeNotFoundException x) {
+            return null;
+        }
     }
 
     private static class Resources {

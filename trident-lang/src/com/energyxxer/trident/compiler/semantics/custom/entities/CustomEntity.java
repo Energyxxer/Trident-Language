@@ -16,6 +16,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
@@ -24,6 +25,8 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
+
+import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 
 public class CustomEntity {
     private final String id;
@@ -116,7 +119,13 @@ public class CustomEntity {
                             break;
                         }
 
-                        entityDecl.mergeNBT(NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler()));
+                        TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler());
+                        if(newNBT != null) {
+                            PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
+                            NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), file.getCompiler());
+                        }
+
+                        entityDecl.mergeNBT(newNBT);
                         break;
                     }
                     case "DEFAULT_PASSENGERS": {
@@ -143,7 +152,12 @@ public class CustomEntity {
                                     throw new EntryParsingException();
                                 }
                                 TokenPattern<?> auxNBT = rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND");
-                                if(auxNBT != null) passengerCompound = passengerCompound.merge(NBTParser.parseCompound(auxNBT, file.getCompiler()));
+                                if(auxNBT != null) {
+                                    TagCompound tag = NBTParser.parseCompound(auxNBT, file.getCompiler());
+                                    PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
+                                    NBTParser.analyzeTag(tag, context, auxNBT, file.getCompiler());
+                                    passengerCompound = passengerCompound.merge(tag);
+                                }
 
                                 passengersTag.add(passengerCompound);
                             }

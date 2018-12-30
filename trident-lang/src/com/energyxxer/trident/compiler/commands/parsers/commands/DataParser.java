@@ -10,6 +10,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
@@ -17,6 +18,9 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+
+import static com.energyxxer.nbtmapper.tags.PathProtocol.BLOCK_ENTITY;
+import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 
 @ParserMember(key = "data")
 public class DataParser implements CommandParser {
@@ -95,8 +99,12 @@ public class DataParser implements CommandParser {
         TagCompound nbt = NBTParser.parseCompound(inner.find("NBT_COMPOUND"), compiler);
 
         if(target instanceof CoordinateSet) {
+            PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
+            NBTParser.analyzeTag(nbt, context, inner.find("NBT_COMPOUND"), compiler);
             return new DataMergeCommand((CoordinateSet) target, nbt);
         } else {
+            PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
+            NBTParser.analyzeTag(nbt, context, inner.find("NBT_COMPOUND"), compiler);
             return new DataMergeCommand((Entity) target, nbt);
         }
     }

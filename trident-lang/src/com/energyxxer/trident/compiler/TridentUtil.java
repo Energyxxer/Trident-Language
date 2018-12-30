@@ -1,7 +1,10 @@
 package com.energyxxer.trident.compiler;
 
+import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
+import com.energyxxer.trident.compiler.lexer.TridentTokens;
 
 import java.util.Objects;
 
@@ -34,6 +37,13 @@ public class TridentUtil {
                 namespace = "minecraft";
                 body = str;
             }
+        }
+
+        public static ResourceLocation createStrict(String str) {
+            ScannerContextResponse valueResult = TridentLexerProfile.usefulContexts.get(TridentTokens.RESOURCE_LOCATION).analyzeExpectingType(str, null, null);
+            if(valueResult.success && valueResult.endLocation.index == str.length()) {
+                return new TridentUtil.ResourceLocation(str);
+            } else return null;
         }
 
         @Override

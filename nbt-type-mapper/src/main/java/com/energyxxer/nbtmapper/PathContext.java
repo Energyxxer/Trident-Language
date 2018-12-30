@@ -4,7 +4,7 @@ import com.energyxxer.nbtmapper.tags.PathProtocol;
 
 public class PathContext {
     private boolean setting = false;
-    private PathProtocol protocol = PathProtocol.NONE;
+    private PathProtocol protocol = PathProtocol.DEFAULT;
     private Object protocolMetadata = null;
 
 

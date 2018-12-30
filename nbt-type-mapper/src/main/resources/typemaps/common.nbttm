@@ -110,7 +110,7 @@ $ENCHANTMENT: {
 }
 
 $EFFECT: {
-    Id: String (type(effect)),
+    Id: Byte (effect_id),
     Amplifier: Byte,
     Duration: Int,
     Ambient: Byte (boolean),

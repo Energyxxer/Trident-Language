@@ -8,6 +8,8 @@ import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
@@ -24,6 +26,10 @@ public class SummonParser implements CommandParser {
         Type type = null;
         CoordinateSet pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"), file.getCompiler());
         TagCompound nbt = NBTParser.parseCompound(pattern.find("..NBT_COMPOUND"), file.getCompiler());
+        if(nbt != null) {
+            PathContext context = new PathContext().setIsSetting(true).setProtocol(PathProtocol.ENTITY, type);
+            NBTParser.analyzeTag(nbt, context, pattern.find("..NBT_COMPOUND"), file.getCompiler());
+        }
 
         Object reference = CommonParsers.parseEntityReference(id, file.getCompiler());
 
@@ -33,13 +39,11 @@ public class SummonParser implements CommandParser {
             CustomEntity ce = (CustomEntity) reference;
             type = ce.getDefaultType();
 
-            if(ce.getDefaultNBT() != null) {
-                if(nbt == null) nbt = new TagCompound();
-                try {
-                    nbt = ce.getDefaultNBT().merge(nbt);
-                } catch(IllegalArgumentException x) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Error while merging given NBT with custom entity's NBT: " + x.getMessage(), pattern));
-                }
+            if(nbt == null) nbt = new TagCompound();
+            try {
+                nbt = ce.getDefaultNBT().merge(nbt);
+            } catch(IllegalArgumentException x) {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Error while merging given NBT with custom entity's NBT: " + x.getMessage(), pattern));
             }
         } else {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), id));

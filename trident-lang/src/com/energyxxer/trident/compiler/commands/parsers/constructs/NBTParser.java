@@ -3,13 +3,20 @@ package com.energyxxer.trident.compiler.commands.parsers.constructs;
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.*;
+import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.nbtmapper.tags.DataType;
+import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
+import com.energyxxer.nbtmapper.tags.FlatType;
+import com.energyxxer.nbtmapper.tags.TypeFlags;
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 
 import java.util.ArrayList;
@@ -89,7 +96,7 @@ public class NBTParser {
                                 new TagInt(Integer.parseInt(numberPart));
                     }
                     case "b": {
-                        return new TagByte(Byte.parseByte(numberPart));
+                        return new TagByte(Integer.parseInt(numberPart));
                     }
                     case "d": {
                         return new TagDouble(Double.parseDouble(numberPart));
@@ -164,6 +171,82 @@ public class NBTParser {
             }
             default: {
                 throw new IllegalArgumentException("Unknown NBT path grammar pattern name '" + pattern.getName() + "'");
+            }
+        }
+    }
+
+    public static void analyzeTag(TagCompound compound, PathContext context, TokenPattern<?> pattern, TridentCompiler compiler) {
+        if(pattern == null) throw new RuntimeException();
+        NoticeType noticeType = compiler.getProperties().has("strict-nbt") &&
+                compiler.getProperties().get("strict-nbt").isJsonPrimitive() &&
+                compiler.getProperties().get("strict-nbt").getAsJsonPrimitive().isBoolean() &&
+                compiler.getProperties().get("strict-nbt").getAsBoolean() ?
+                NoticeType.ERROR : NoticeType.WARNING;
+
+        String auxiliaryVerb = noticeType == NoticeType.ERROR ? "must" : "should";
+
+        TagCompoundTraverser traverser = new TagCompoundTraverser(compound);
+
+        TagCompoundTraverser.PathContents next = null;
+        while((next = (traverser.next())) != null) {
+            NBTPath path = next.getPath();
+            NBTTag value = next.getValue();
+
+            DataTypeQueryResponse response = compiler.getTypeMap().collectTypeInformation(next.getPath(), context);
+
+            if(!response.isEmpty()) {
+                boolean isAGoodBoy = false;
+                for(DataType type : response.getPossibleTypes()) {
+                    if(type.getCorrespondingTagType() == value.getClass()) {
+                        isAGoodBoy = true;
+
+                        TypeFlags flags;
+                        if(type instanceof FlatType && (flags = type.getFlags()) != null) {
+
+                            //region (boolean) flag
+                            if(flags.hasFlag("boolean") && value instanceof TagByte) {
+                                byte byteValue = ((TagByte) value).getValue();
+                                if(byteValue != 0 && byteValue != 1) {
+                                    compiler.getReport().addNotice(new Notice(noticeType, "Byte at path '" + path + "' is boolean-like; " + auxiliaryVerb + " be either 0b or 1b", pattern));
+                                }
+                            }
+                            //endregion
+
+                            //region type() flags
+                            if(!flags.getTypeCategories().isEmpty() && value instanceof TagString) {
+                                boolean matched = false;
+                                TridentUtil.ResourceLocation location = TridentUtil.ResourceLocation.createStrict(((TagString)value).getValue());
+                                if(location == null) {
+                                    compiler.getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' is a type; but it doesn't look like a resource location", pattern));
+                                    continue;
+                                }
+                                for(String category : flags.getTypeCategories()) {
+                                    Type referencedType = compiler.fetchType(location, category);
+                                    if(referencedType != null) {
+                                        matched = true;
+                                        ((TagString) value).setValue(referencedType.toString());
+                                    }
+                                }
+
+                                if(!matched) {
+                                    if(flags.getTypeCategories().size() > 1) {
+                                        compiler.getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following types: " + flags.getTypeCategories().join(",") + "; but '" + ((TagString) value).getValue() + "' is not a type of any of the previous categories", pattern));
+                                    } else {
+                                        compiler.getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be of type '" + flags.getTypeCategories().first() + "'. Instead got '" + ((TagString) value).getValue() + "'.", pattern));
+                                    }
+                                }
+                            }
+                            //endregion
+                        }
+
+                        break;
+                    }
+                }
+                if(!isAGoodBoy) {
+                    compiler.getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + response.getPossibleTypes().map(DataType::getShortTypeName).toList().join(", "), pattern));
+                }
+            } else {
+                compiler.getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown data type for path '" + next.getPath() + "'. Consider adding it to the type map", pattern));
             }
         }
     }
