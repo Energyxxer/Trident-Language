@@ -87,6 +87,7 @@ public class TridentProductions {
 
     public final LazyTokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_A = new LazyTokenStructureMatch("STRING_LITERAL_OR_IDENTIFIER_A");
 
+
     //grouped arguments
     public final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
     public final LazyTokenStructureMatch VARIABLE_MARKER;
