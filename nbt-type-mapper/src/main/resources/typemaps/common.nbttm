@@ -41,7 +41,7 @@ $SKULL_OWNER: {
 }
 
 $ITEM_TAG: {
-    Damage: Byte,
+    Damage: Int,
     Unbreakable: Byte (boolean),
     CanDestroy: [String (resource_location)],
     CanPlaceOn: [String (resource_location)],

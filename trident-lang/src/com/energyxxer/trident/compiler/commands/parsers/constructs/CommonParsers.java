@@ -5,7 +5,10 @@ import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
-import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
+import com.energyxxer.commodore.functionlogic.nbt.NumericNBTTag;
+import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
+import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
@@ -44,7 +47,6 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
-import com.energyxxer.util.logger.Debug;
 
 import java.util.Arrays;
 import java.util.List;
@@ -455,7 +457,7 @@ public class CommonParsers {
         PathContext context = new PathContext().setIsSetting(true).setProtocol(body instanceof Entity ? PathProtocol.ENTITY : PathProtocol.BLOCK_ENTITY, body instanceof Entity ? guessEntityType((Entity) body, compiler) : null);
 
         DataTypeQueryResponse response = compiler.getTypeMap().collectTypeInformation(path, context);
-        Debug.log(response.getPossibleTypes());
+        //Debug.log(response.getPossibleTypes());
 
         if(response.isEmpty()) {
             if(strict) {

@@ -237,13 +237,33 @@ public class NBTParser {
                                 }
                             }
                             //endregion
+
+                            //region one_of flags
+                            if(!flags.getStringOptions().isEmpty() && value instanceof TagString) {
+                                boolean matched = false;
+
+                                for(String option : flags.getStringOptions()) {
+                                    if(option.equals(((TagString) value).getValue())) {
+                                        matched = true;
+                                        break;
+                                    }
+                                }
+                                if(!matched) {
+                                    compiler.getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + flags.getStringOptions().join(",") + "; instead got '" + ((TagString) value).getValue() + "'", pattern));
+                                }
+                            }
+                            //endregion
                         }
 
                         break;
                     }
                 }
                 if(!isAGoodBoy) {
-                    compiler.getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + response.getPossibleTypes().map(DataType::getShortTypeName).toList().join(", "), pattern));
+                    if(response.getPossibleTypes().size() > 1) {
+                        compiler.getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + response.getPossibleTypes().map(DataType::getShortTypeName).toList().join(", "), pattern));
+                    } else {
+                        compiler.getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be of type " + response.getPossibleTypes().toList().get(0).getShortTypeName(), pattern));
+                    }
                 }
             } else {
                 compiler.getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown data type for path '" + next.getPath() + "'. Consider adding it to the type map", pattern));

@@ -103,7 +103,7 @@ public class TridentCompiler {
                         if(real == null) continue;
 
                         module.createNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasInstruction.AliasType(c, ns, n, module.createNamespace(real.namespace), real.body), alias.body);
-                        Debug.log("Created alias '" + alias + "' for '" + real + "'");
+                        //Debug.log("Created alias '" + alias + "' for '" + real + "'");
                     }
                 }
             }

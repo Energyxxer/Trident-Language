@@ -10,7 +10,7 @@ $BLOCK_ENTITY_MINECRAFT_BANNER: {
     Patterns: [
         {
             Color: Int,
-            Pattern: String
+            Pattern: String (one_of("bs", "ts", "ls", "rs", "cs", "ms", "drs", "dls", "ss", "cs", "sc", "ld", "rud", "lud", "rd", "vh", "vhr", "hh", "hhb", "bl", "br", "tl", "tr", "bt", "tt", "bts", "tts", "mc", "mr", "bo", "cbo", "bri", "gra", "gru", "cre", "sku", "flo", "moj"))
         }
     ]
 }

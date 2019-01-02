@@ -32,6 +32,10 @@ public class TypeFlags {
         return typeCategories;
     }
 
+    public ArrayList<String> getStringOptions() {
+        return stringOptions;
+    }
+
     public void putStringOption(String option) {
         stringOptions.add(option);
     }

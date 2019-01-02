@@ -40,7 +40,7 @@ public class ParserManager {
                         String key = cls.getAnnotation(ParserMember.class).key();
                         Object parser = cls.getConstructor().newInstance();
                         toPut.put(key, parser);
-                        Debug.log("Defined '" + interf.getSimpleName() + "' member '" + cls.getSimpleName() + "'");
+                        //Debug.log("Defined '" + interf.getSimpleName() + "' member '" + cls.getSimpleName() + "'");
                     }
                 }
                 if(!hasGroup) {

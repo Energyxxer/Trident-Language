@@ -203,7 +203,7 @@ public class NBTTypeMap {
                                 if(optionList != null) {
                                     for(TokenPattern<?> option : optionList.getContents()) {
                                         if(option.getName().equals("OPTION")) {
-                                            flags.putStringOption(option.flatten(false));
+                                            flags.putStringOption(CommandUtils.parseQuotedString(option.flatten(false)));
                                         }
                                     }
                                 }
