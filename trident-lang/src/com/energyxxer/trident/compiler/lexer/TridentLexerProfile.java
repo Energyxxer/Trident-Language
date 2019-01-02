@@ -10,7 +10,6 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.util.Lazy;
 import com.energyxxer.util.StringLocation;
-import com.energyxxer.util.logger.Debug;
 
 import java.io.IOException;
 import java.util.*;
@@ -34,12 +33,10 @@ public class TridentLexerProfile extends LexerProfile {
         ArrayList<String> defcategories = new ArrayList<>();
         try {
             defPack.load();
-            Debug.log("Start adding categories");
             for(CategoryDeclaration decl : defPack.getDefinedCategories()) {
-                Debug.log("Added category '" + decl.getCategory() + "'");
+                //Debug.log("Added category '" + decl.getCategory() + "'");
                 defcategories.add(decl.getCategory().toLowerCase());
             }
-            Debug.log("Stop adding categories");
         } catch (IOException e) {
             defcategories.addAll(Arrays.asList("entity, block, item, particle, enchantment, dimension, effect, difficulty, gamemode, gamerule, slot".split(", ")));
             e.printStackTrace();
