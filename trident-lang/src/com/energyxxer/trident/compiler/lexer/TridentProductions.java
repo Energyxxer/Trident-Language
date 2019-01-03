@@ -16,9 +16,6 @@ import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
 public class TridentProductions {
 
-    private static TridentProductions INSTANCE;
-
-
 
     public final LazyTokenStructureMatch FILE;
     public final LazyTokenStructureMatch FILE_INNER;
@@ -88,9 +85,15 @@ public class TridentProductions {
     public final LazyTokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_A = new LazyTokenStructureMatch("STRING_LITERAL_OR_IDENTIFIER_A");
 
 
+
+    public final LazyTokenStructureMatch DICTIONARY = new LazyTokenStructureMatch("DICTIONARY");
+    public final LazyTokenStructureMatch LIST = new LazyTokenStructureMatch("LIST");
+
+
     //grouped arguments
     public final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
-    public final LazyTokenStructureMatch VARIABLE_MARKER;
+    public final LazyTokenStructureMatch INTERPOLATION_BLOCK;
+    public final LazyTokenStructureMatch INTERPOLATION_VALUE;
     public final LazyTokenStructureMatch POINTER;
 
     public TridentProductions(CommandModule module) {
@@ -122,11 +125,73 @@ public class TridentProductions {
         STRING_LITERAL_OR_IDENTIFIER_A.add(identifierA());
 
         {
-            LazyTokenPatternMatch variableModifierHeader = group(choice("nbt").setName("VARIABLE_MODIFIER_FUNCTION"), colon()).setOptional().setName("VARIABLE_MODIFIER");
-            VARIABLE_MARKER = choice(
-                    group(symbol("$"), glue(), brace("{"), variableModifierHeader, ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"), brace("}")),
-                    group(symbol("$"), glue(), variableModifierHeader, ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"))
-            ).setName("VARIABLE_MARKER");
+            INTERPOLATION_BLOCK = choice(
+                    group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
+            ).setName("INTERPOLATION_BLOCK");
+
+            INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
+
+            LazyTokenStructureMatch CLOSED_INTERPOLATION_VALUE = new LazyTokenStructureMatch("CLOSED_INTERPOLATION_VALUE");
+            CLOSED_INTERPOLATION_VALUE.add(identifierX().setName("VARIABLE_NAME"));
+            CLOSED_INTERPOLATION_VALUE.add(ofType(REAL_NUMBER).setName("RAW_REAL"));
+            CLOSED_INTERPOLATION_VALUE.add(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"));
+            CLOSED_INTERPOLATION_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
+            CLOSED_INTERPOLATION_VALUE.add(ofType(STRING_LITERAL).setName("STRING_LITERAL"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("entity"), brace("<"), ENTITY, brace(">")).setName("WRAPPED_ENTITY"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("block"), brace("<"), BLOCK_TAGGED, brace(">")).setName("WRAPPED_BLOCK"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("item"), brace("<"), ITEM_TAGGED, brace(">")).setName("WRAPPED_ITEM"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("text_component"), brace("<"), TEXT_COMPONENT, brace(">")).setName("WRAPPED_TEXT_COMPONENT"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("nbt"), brace("<"), NBT_COMPOUND, brace(">")).setName("WRAPPED_NBT"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("nbt_value"), brace("<"), NBT_VALUE, brace(">")).setName("WRAPPED_NBT_VALUE"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("nbt_path"), brace("<"), NBT_PATH, brace(">")).setName("WRAPPED_NBT_PATH"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("coordinates"), brace("<"), COORDINATE_SET, brace(">")).setName("WRAPPED_COORDINATE"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("integer_range"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("real_range"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("dict"), DICTIONARY).setName("WRAPPED_DICTIONARY"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("list"), LIST).setName("WRAPPED_LIST"));
+            CLOSED_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
+            CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER"));
+            CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("["), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("INDEXED_MEMBER"));
+            INTERPOLATION_VALUE.add(CLOSED_INTERPOLATION_VALUE);
+
+            INTERPOLATION_VALUE.add(group(brace("("), choice("integer", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinates", "integer_range", "real_range", "dict", "list").setName("TARGET_TYPE"), brace(")"), CLOSED_INTERPOLATION_VALUE).setName("CAST"));
+
+            INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL"));
+            INTERPOLATION_VALUE.addNested(list(INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR)).setName("EXPRESSION"));
+
+            INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), brace("{").setName("INTERPOLATION_BRACE"), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE")).setName("INTERPOLATION_WRAPPER"));
+
+            /*
+            *
+            *
+
+            LazyTokenStructureMatch VAR_SUB = new LazyTokenStructureMatch("INTERPOLATION_SUB");
+            VAR_SUB.add(group(brace("("), list(VAR_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL_PARENTHESES"));
+            VAR_SUB.add(group(dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER"));
+
+            VAR_VALUE.add(group(VAR_VALUE, list(VAR_SUB)).setName("NESTED_VALUE"));
+
+            *
+            * */
+
+            /*
+            * INTERPOLATION_BLOCK,
+                    integer(),
+                    real(),
+                    ofType(BOOLEAN).setName("BOOLEAN"),
+                    string(),
+                    identifierX(),
+                    group(literal("entity"), brace("<"), ENTITY, brace(">")),
+                    group(literal("block"), brace("<"), ITEM, brace(">")),
+                    group(literal("item"), brace("<"), BLOCK, brace(">")),
+                    TEXT_COMPONENT,
+                    NBT_COMPOUND,
+                    COORDINATE_SET
+            * */
+
+            DICTIONARY.add(group(brace("{"), list(group(identifierX().setName("DICTIONARY_KEY"), colon(), INTERPOLATION_VALUE).setName("DICTIONARY_ENTRY"), comma()).setOptional().setName("DICTIONARY_ENTRY_LIST"), brace("}")));
+            LIST.add(group(brace("["), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")));
+
         }
 
         {
@@ -150,7 +215,7 @@ public class TridentProductions {
 
         ENTITY.add(PLAYER_NAME);
         ENTITY.add(SELECTOR);
-        ENTITY.add(group(VARIABLE_MARKER, optional(glue(), brace("["), list(SELECTOR_ARGUMENT, comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST"), brace("]")).setName("APPENDED_ARGUMENTS")).setName("ENTITY_VARIABLE"));
+        ENTITY.add(group(INTERPOLATION_BLOCK, optional(glue(), brace("["), list(SELECTOR_ARGUMENT, comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST"), brace("]")).setName("APPENDED_ARGUMENTS")).setName("ENTITY_VARIABLE"));
 
         INNER_FUNCTION.add(group(ofType(RESOURCE_LOCATION).setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")));
         ANONYMOUS_INNER_FUNCTION.add(group(brace("{"), FILE_INNER, brace("}")));
@@ -935,7 +1000,7 @@ public class TridentProductions {
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE).setName("BLOCKSTATE_CLAUSE"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND).setName("NBT_CLAUSE"));
             BLOCK.add(g);
-            BLOCK.add(group(VARIABLE_MARKER, optional(glue(), BLOCKSTATE).setName("APPENDED_BLOCKSTATE"), optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("BLOCK_VARIABLE"));
+            BLOCK.add(group(INTERPOLATION_BLOCK, optional(glue(), BLOCKSTATE).setName("APPENDED_BLOCKSTATE"), optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("BLOCK_VARIABLE"));
             BLOCK_TAGGED.add(BLOCK);
         }
 
@@ -953,7 +1018,7 @@ public class TridentProductions {
             g.append(new LazyTokenGroupMatch().append(ITEM_ID).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM.add(g);
-            ITEM.add(group(VARIABLE_MARKER, optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("ITEM_VARIABLE"));
+            ITEM.add(group(INTERPOLATION_BLOCK, optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("ITEM_VARIABLE"));
             ITEM_TAGGED.add(ITEM);
         }
 
@@ -997,7 +1062,7 @@ public class TridentProductions {
             JSON_ELEMENT.add(real().setName("NUMBER"));
             JSON_ELEMENT.add(ofType(BOOLEAN).setName("BOOLEAN"));
 
-            TEXT_COMPONENT.add(VARIABLE_MARKER);
+            TEXT_COMPONENT.add(INTERPOLATION_BLOCK);
             TEXT_COMPONENT.add(JSON_ROOT);
         }
         //endregion
@@ -1015,7 +1080,7 @@ public class TridentProductions {
                 }
                 g.append(brace("}"));
                 NBT_COMPOUND.add(g);
-                NBT_COMPOUND.add(VARIABLE_MARKER);
+                NBT_COMPOUND.add(INTERPOLATION_BLOCK);
                 NBT_VALUE.add(NBT_COMPOUND);
             }
             {
@@ -1048,11 +1113,11 @@ public class TridentProductions {
 
             NBT_PATH_NODE.add(group(brace("["), NBT_COMPOUND, brace("]")).setName("NBT_PATH_LIST_MATCH"));
 
-            NBT_PATH_NODE.add(group(brace("["), VARIABLE_MARKER, brace("]")).setName("NBT_PATH_LIST_UNKNOWN"));
+            NBT_PATH_NODE.add(group(brace("["), INTERPOLATION_BLOCK, brace("]")).setName("NBT_PATH_LIST_UNKNOWN"));
 
             NBT_PATH_NODE.add(group(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH"));
 
-            NBT_PATH.add(VARIABLE_MARKER);
+            NBT_PATH.add(INTERPOLATION_BLOCK);
             NBT_PATH.add(group(
                     choice(group(group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL")).setName("NBT_PATH_KEY")).setName("NBT_PATH_NODE"),
                     list(group(glue(), NBT_PATH_NODE)).setOptional().setName("OTHER_NODES")).setName("RAW_NBT_PATH"));
@@ -1297,28 +1362,14 @@ public class TridentProductions {
                 TWO_COORDINATE_SET.add(g);
             }
 
-            COORDINATE_SET.add(VARIABLE_MARKER);
-            TWO_COORDINATE_SET.add(VARIABLE_MARKER);
+            COORDINATE_SET.add(INTERPOLATION_BLOCK);
+            TWO_COORDINATE_SET.add(INTERPOLATION_BLOCK);
         }
         //endregion
         //endregion
 
         //region Definition Pack grammar
         try {
-            //@NotNull DefinitionPack defpack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
-            //defpack.load();
-
-            /*for (DefinitionBlueprint def : defpack.getBlueprints("structure")) {
-                STRUCTURE.add(literal(def.getName()));
-            }
-
-            for (DefinitionBlueprint def : defpack.getBlueprints("difficulty")) {
-                DIFFICULTY.add(literal(def.getName()));
-            }
-
-            for (DefinitionBlueprint def : defpack.getBlueprints("gamemode")) {
-                GAMEMODE.add(literal(def.getName()));
-            }*/
 
             HashMap<String, LazyTokenPatternMatch> namespaces = new HashMap<>();
 
@@ -1493,82 +1544,6 @@ public class TridentProductions {
                     SLOT_ID.add(g);
                 }
             }
-
-            /*for (DefinitionBlueprint def : defpack.getBlueprints("block")) {
-
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
-
-                if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("BLOCK_ID");
-
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
-                    ns.append(literal(def.getNamespace()));
-                    ns.append(colon());
-
-                    g.append(ns);
-
-                    s = new LazyTokenStructureMatch("TYPE_NAME");
-                    g.append(s);
-
-                    namespaceGroups.put(def.getNamespace(), s);
-
-                    BLOCK_ID.add(g);
-                }
-
-                s.add(literal(def.getName()));
-            }
-
-            namespaceGroups.clear();
-
-            for (DefinitionBlueprint def : defpack.getBlueprints("item")) {
-
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
-
-                if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ITEM_ID");
-
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
-                    ns.append(literal(def.getNamespace()));
-                    ns.append(colon());
-
-                    g.append(ns);
-
-                    s = new LazyTokenStructureMatch("TYPE_NAME");
-                    g.append(s);
-
-                    namespaceGroups.put(def.getNamespace(), s);
-
-                    ITEM_ID.add(g);
-                }
-
-                s.add(literal(def.getName()));
-            }
-
-            namespaceGroups.clear();*/
-
-            /*for (DefinitionBlueprint def : defpack.getBlueprints("entity")) {
-
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
-
-                if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ENTITY_ID_DEFAULT");
-
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
-                    ns.append(literal(def.getNamespace()));
-                    ns.append(colon());
-
-                    g.append(ns);
-
-                    s = new LazyTokenStructureMatch("TYPE_NAME");
-                    g.append(s);
-
-                    namespaceGroups.put(def.getNamespace(), s);
-
-                    ENTITY_ID.add(g);
-                }
-
-                s.add(literal(def.getName()));
-            }*/
             {
                 ENTITY_ID_TAGGED.add(ENTITY_ID);
                 LazyTokenGroupMatch g2 = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
@@ -1576,175 +1551,8 @@ public class TridentProductions {
                 g2.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
                 ENTITY_ID_TAGGED.add(g2);
 
-                ENTITY_ID.add(VARIABLE_MARKER);
+                ENTITY_ID.add(INTERPOLATION_BLOCK);
             }
-
-            //namespaceGroups.clear();
-
-            /*for (DefinitionBlueprint def : defpack.getBlueprints("effect")) {
-
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
-
-                if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("EFFECT_ID");
-
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
-                    ns.append(literal(def.getNamespace()));
-                    ns.append(colon());
-
-                    g.append(ns);
-
-                    s = new LazyTokenStructureMatch("TYPE_NAME");
-                    g.append(s);
-
-                    namespaceGroups.put(def.getNamespace(), s);
-
-                    EFFECT_ID.add(g);
-                }
-
-                s.add(literal(def.getName()));
-            }
-
-            namespaceGroups.clear();
-
-            for (DefinitionBlueprint def : defpack.getBlueprints("enchantment")) {
-
-                LazyTokenStructureMatch s = namespaceGroups.get(def.getNamespace());
-
-                if (s == null) {
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ENCHANTMENT_ID");
-
-                    LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
-                    ns.append(literal(def.getNamespace()));
-                    ns.append(colon());
-
-                    g.append(ns);
-
-                    s = new LazyTokenStructureMatch("TYPE_NAME");
-                    g.append(s);
-
-                    namespaceGroups.put(def.getNamespace(), s);
-
-                    ENCHANTMENT_ID.add(g);
-                }
-
-                s.add(literal(def.getName()));
-            }*/
-
-            //namespaceGroups.clear();
-
-
-
-            /*for (DefinitionBlueprint def : defpack.getBlueprints("particle")) {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("PARTICLE_ID");
-
-                LazyTokenGroupMatch ns = new LazyTokenGroupMatch(def.getNamespace().equals("minecraft")).setName("NAMESPACE");
-                ns.append(literal(def.getNamespace()));
-                ns.append(colon());
-
-                g.append(ns);
-
-                g.append(literal(def.getName()).setName("TYPE_NAME"));
-
-                PARTICLE_ID.add(g);
-
-                LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
-
-                g2.append(g);
-
-                LazyTokenGroupMatch argsGroup = new LazyTokenGroupMatch().setName("PARTICLE_ARGUMENTS");
-
-                String allArgs = def.getProperties().get("argument");
-                if (!allArgs.equals("none")) {
-                    String[] args = allArgs.split("-");
-                    for (String arg : args) {
-                        switch (arg) {
-                            case "int": {
-                                argsGroup.append(integer());
-                                break;
-                            }
-                            case "double": {
-                                argsGroup.append(real());
-                                break;
-                            }
-                            case "color": {
-                                argsGroup.append(COLOR);
-                                break;
-                            }
-                            case "block": {
-                                argsGroup.append(BLOCK);
-                                break;
-                            }
-                            case "item": {
-                                argsGroup.append(ITEM);
-                                break;
-                            }
-                            default: {
-                                Debug.log("Invalid particle argument type '" + arg + "', could not be added to .mcfunction particle production", Debug.MessageType.ERROR);
-                            }
-                        }
-                    }
-                }
-
-                g2.append(argsGroup);
-
-                PARTICLE.add(g2);
-            }
-
-            namespaceGroups.clear();*/
-
-            /*for (DefinitionBlueprint def : defpack.getBlueprints("gamerule")) {
-                LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("GAMERULE_ID");
-
-                g.append(literal(def.getName()).setName("GAMERULE"));
-
-                GAMERULE.add(g);
-
-                LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
-
-                g2.append(g);
-
-                LazyTokenGroupMatch argsGroup = new LazyTokenGroupMatch().setName("GAMERULE_ARGUMENT");
-
-                String arg = def.getProperties().get("argument");
-
-                switch (arg) {
-                    case "boolean": {
-                        argsGroup.append(ofType(BOOLEAN).setName("BOOLEAN"));
-                        break;
-                    }
-                    case "int": {
-                        argsGroup.append(integer());
-                        break;
-                    }
-                    case "double": {
-                        argsGroup.append(real());
-                        break;
-                    }
-                    case "color": {
-                        argsGroup.append(COLOR);
-                        break;
-                    }
-                    case "block": {
-                        argsGroup.append(BLOCK);
-                        break;
-                    }
-                    case "item": {
-                        argsGroup.append(ITEM);
-                        break;
-                    }
-                    default: {
-                        Debug.log("Invalid gamerule argument type '" + arg + "', could not be added to .mcfunction gamerule setter production", Debug.MessageType.ERROR);
-                    }
-                }
-
-                g2.append(sameLine());
-                g2.append(argsGroup);
-
-                GAMERULE_SETTER.add(g2);
-            }
-
-            namespaceGroups.clear();*/
 
         } catch (Exception x) {
             Debug.log("Error in loading standard definition pack for Minecraft Java Edition 1.13: " + x.getMessage(), Debug.MessageType.ERROR);
@@ -1762,7 +1570,7 @@ public class TridentProductions {
 
         LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead).setName("POINTER_HEAD");
 
-        LazyTokenGroupMatch varPointer = group(VARIABLE_MARKER, anyHead).setName("VARIABLE_POINTER");
+        LazyTokenGroupMatch varPointer = group(INTERPOLATION_BLOCK, anyHead).setName("VARIABLE_POINTER");
         LazyTokenGroupMatch entityPointer = group(ENTITY, anyHead).setName("ENTITY_POINTER");
         LazyTokenGroupMatch blockPointer = group(brace("("), COORDINATE_SET, brace(")"), nbtHead).setName("BLOCK_POINTER");
 
@@ -1823,7 +1631,7 @@ public class TridentProductions {
 
             INSTRUCTION.add(
                     group(keyword("tdndebug").setName("INSTRUCTION_KEYWORD"),
-                            NBT_COMPOUND)
+                            INTERPOLATION_BLOCK)
             );
         }
         {
@@ -1842,7 +1650,7 @@ public class TridentProductions {
                                     group(optional(brace("<"), literal("nbt_compound"), brace(">")), equals(), choice(NBT_COMPOUND).setName("VARIABLE_VALUE")),
                                     group(optional(brace("<"), literal("nbt_path"), brace(">")), equals(), choice(NBT_PATH).setName("VARIABLE_VALUE")),
                                     group(optional(brace("<"), literal("text_component"), brace(">")), equals(), choice(TEXT_COMPONENT).setName("VARIABLE_VALUE")),
-                                    group(equals(), choice(ENTITY, NBT_PATH, string(), TEXT_COMPONENT, BLOCK_TAGGED, ITEM_TAGGED, integer(), real(), ofType(BOOLEAN).setName("BOOLEAN"), COORDINATE_SET, NBT_COMPOUND).setName("VARIABLE_VALUE"))
+                                    group(equals(), choice(ENTITY, NBT_PATH, TEXT_COMPONENT, string(), BLOCK_TAGGED, ITEM_TAGGED, real(), integer(), ofType(BOOLEAN).setName("BOOLEAN"), COORDINATE_SET, NBT_COMPOUND, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))
                             ).setName("VARIABLE_INITIALIZATION")
                     )
             );
@@ -1870,11 +1678,20 @@ public class TridentProductions {
             );
         }
 
-        SubTridentProductions sub = new SubTridentProductions();
-
         {
             INSTRUCTION.add(
-                    group(literal("compile").setName("INSTRUCTION_KEYWORD"), brace("{"), sub.COMPILE_BLOCK_INNER, brace("}"))
+                    group(literal("eval").setName("INSTRUCTION_KEYWORD"), INTERPOLATION_VALUE)
+            );
+        }
+
+        {
+            LazyTokenPatternMatch FOR_HEADER = choice(
+                    group(INTERPOLATION_VALUE, symbol(";"), INTERPOLATION_VALUE, symbol(";"), INTERPOLATION_VALUE).setName("CLASSICAL_FOR"),
+                    group(identifierX().setName("VARIABLE_NAME"), literal("in"), INTERPOLATION_VALUE).setName("ITERATOR_FOR")
+            ).setName("FOR_HEADER");
+
+            INSTRUCTION.add(
+                    group(literal("for").setName("INSTRUCTION_KEYWORD"), brace("("), FOR_HEADER, brace(")"), ANONYMOUS_INNER_FUNCTION)
             );
         }
         //endregion
@@ -1941,11 +1758,11 @@ public class TridentProductions {
     }
 
     LazyTokenStructureMatch integer() {
-        return choice(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"), VARIABLE_MARKER).setName("INTEGER");
+        return choice(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"), INTERPOLATION_BLOCK).setName("INTEGER");
     }
 
     LazyTokenStructureMatch real() {
-        return choice(ofType(REAL_NUMBER).setName("RAW_REAL"), VARIABLE_MARKER).setName("REAL");
+        return choice(ofType(REAL_NUMBER).setName("RAW_REAL"), INTERPOLATION_BLOCK).setName("REAL");
     }
 
     static LazyTokenItemMatch glue() {
@@ -2020,6 +1837,11 @@ public class TridentProductions {
         return g;
     }
 
+
+    LazyTokenItemMatch identifierX() {
+        return ofType(IDENTIFIER_TYPE_X).setName("IDENTIFIER");
+    }
+
     public class SubTridentProductions {
         public final LazyTokenPatternMatch COMPILE_BLOCK_INNER;
 
@@ -2047,7 +1869,7 @@ public class TridentProductions {
             );
 
             VALUE = choice(
-                    VARIABLE_MARKER,
+                    INTERPOLATION_BLOCK,
                     integer(),
                     real(),
                     ofType(BOOLEAN).setName("BOOLEAN"),
@@ -2063,7 +1885,7 @@ public class TridentProductions {
 
             EXPRESSION = choice(
                     group(VALUE, keyword("as"), DATA_TYPE).setName("CAST"),
-                    group(choice(identifierX(),VARIABLE_MARKER).setName("VARIABLE_CHOICE"), ofType(COMPILER_ASSIGNMENT_OPERATOR), VALUE).setName("ASSIGNMENT")
+                    group(choice(identifierX(), INTERPOLATION_BLOCK).setName("VARIABLE_CHOICE"), ofType(COMPILER_ASSIGNMENT_OPERATOR), VALUE).setName("ASSIGNMENT")
             );
 
             VALUE.add(EXPRESSION);
@@ -2077,11 +1899,6 @@ public class TridentProductions {
             STATEMENT.add(group(keyword("append"), COMMAND).setName("COMMAND_APPEND"));
             STATEMENT.add(group(keyword("for"), brace("("), optional(STATEMENT), symbol(";"), optional(EXPRESSION), symbol(";"), optional(EXPRESSION), brace(")"), optional(brace("{"), COMPILE_BLOCK_INNER, brace("}"))));
             STATEMENT.add(EXPRESSION);
-        }
-
-
-        LazyTokenItemMatch identifierX() {
-            return ofType(IDENTIFIER_TYPE_X).setName("IDENTIFIER");
         }
     }
 }

@@ -45,7 +45,7 @@ public class LazyTokenGroupMatch extends LazyTokenPatternMatch {
         MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[] {"int"}, new Object[] {index});
 
         if(st.find(thisInvoc)) {
-            return new TokenMatchResponse(false, null, 0, this, null);
+            //return new TokenMatchResponse(false, null, 0, this, null);
         }
 
         st.push(thisInvoc);

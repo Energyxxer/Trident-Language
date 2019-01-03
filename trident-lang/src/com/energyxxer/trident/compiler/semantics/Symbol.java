@@ -2,14 +2,15 @@ package com.energyxxer.trident.compiler.semantics;
 
 public class Symbol {
 
-    public enum SymbolAccess {
-        GLOBAL, LOCAL, PROTECTED
-    }
 
-    private final String name;
+
+    public enum SymbolAccess {
+        GLOBAL, LOCAL, PROTECTED;
+    }
+    private String name;
+
     private final SymbolAccess access;
     private Object value;
-
     public Symbol(String name) {
         this(name, SymbolAccess.PROTECTED);
     }
@@ -26,6 +27,10 @@ public class Symbol {
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public SymbolAccess getAccess() {

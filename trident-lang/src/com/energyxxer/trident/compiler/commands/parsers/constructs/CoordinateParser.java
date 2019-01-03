@@ -26,8 +26,8 @@ public class CoordinateParser {
             case "COORDINATE_SET": {
                 return parse(((TokenStructure) pattern).getContents(), compiler);
             }
-            case "VARIABLE_MARKER": {
-                return CommonParsers.retrieveSymbol(pattern, compiler, CoordinateSet.class);
+            case "INTERPOLATION_BLOCK": {
+                return InterpolationManager.parse(pattern, compiler, CoordinateSet.class);
             }
             case "MIXED_COORDINATE_SET":
             case "LOCAL_COORDINATE_SET":

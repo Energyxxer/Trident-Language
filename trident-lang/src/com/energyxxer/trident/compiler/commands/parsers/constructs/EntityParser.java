@@ -64,7 +64,7 @@ public class EntityParser {
             case "SELECTOR": return new GenericEntity(parseSelector(inner, compiler));
             case "PLAYER_NAME": return new PlayerName(inner.flatten(false));
             case "ENTITY_VARIABLE": {
-                Entity symbol = CommonParsers.retrieveSymbol(inner.find("VARIABLE_MARKER"), compiler, Entity.class);
+                Entity symbol = InterpolationManager.parse(inner.find("INTERPOLATION_BLOCK"), compiler, Entity.class);
                 if(inner.find("APPENDED_ARGUMENTS") != null) {
                     if(!(symbol instanceof GenericEntity)) {
                         compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "The entity contained in this variable does not support selector arguments", inner));

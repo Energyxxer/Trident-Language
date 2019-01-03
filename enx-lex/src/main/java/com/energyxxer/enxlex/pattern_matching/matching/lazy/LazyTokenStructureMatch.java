@@ -10,6 +10,9 @@ import java.util.ArrayList;
 
 public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
     private ArrayList<LazyTokenPatternMatch> entries = new ArrayList<>();
+    private ArrayList<LazyTokenPatternMatch> nestedEntries = new ArrayList<>();
+
+    private java.util.Stack<NestedEntry> nestedStack = new java.util.Stack<>();
 
     public LazyTokenStructureMatch(String name) {
         this.name = name;
@@ -32,8 +35,17 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
         return this;
     }
 
+    public LazyTokenStructureMatch addNested(LazyTokenPatternMatch g) {
+        nestedEntries.add(g);
+        return this;
+    }
+
     @Override
     public TokenMatchResponse match(int index, LazyLexer lexer, Stack st) {
+        if(!nestedStack.isEmpty() && nestedStack.peek().index == index) {
+            return nestedStack.peek().response;
+        }
+
         lexer.setCurrentIndex(index);
         MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[]{"int"}, new Object[]{index});
         st.push(thisInvoc);
@@ -45,7 +57,7 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
             lexer.setCurrentIndex(index);
 
             MethodInvocation newInvoc = new MethodInvocation(entry, "match", new String[]{"int"}, new Object[]{index});
-            if(st.find(newInvoc)) continue;
+            //if(st.find(newInvoc)) continue;
             TokenMatchResponse itemMatch = entry.match(index, lexer, st);
 
             if (longestMatch == null) {
@@ -55,6 +67,30 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
                     longestMatch = itemMatch;
                 }
             }
+        }
+
+        if(longestMatch != null && longestMatch.matched && !nestedEntries.isEmpty()) {
+            nestedStack.push(new NestedEntry(index, new TokenMatchResponse(true, null, longestMatch.length, new TokenStructure(this.name, longestMatch.pattern).addTags(this.tags))));
+            boolean changed = true;
+            while(changed) {
+                changed = false;
+                for(LazyTokenPatternMatch nested : nestedEntries) {
+                    lexer.setCurrentIndex(index);
+
+                    MethodInvocation newInvoc = new MethodInvocation(nested, "match", new String[]{"int"}, new Object[]{index});
+                    //if(st.find(newInvoc)) continue;
+                    TokenMatchResponse itemMatch = nested.match(index, lexer, st);
+
+                    if(itemMatch.length > longestMatch.length) {
+                        if (!longestMatch.matched || itemMatch.matched) {
+                            changed = true;
+                            longestMatch = itemMatch;
+                            nestedStack.peek().response = new TokenMatchResponse(true, null, longestMatch.length, new TokenStructure(this.name, longestMatch.pattern).addTags(this.tags));
+                        }
+                    }
+                }
+            }
+            nestedStack.pop();
         }
 
         st.pop();
@@ -102,5 +138,15 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
             }
         }
         return newStruct;
+    }
+
+    private class NestedEntry {
+        int index;
+        TokenMatchResponse response;
+
+        public NestedEntry(int index, TokenMatchResponse response) {
+            this.index = index;
+            this.response = response;
+        }
     }
 }

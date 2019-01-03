@@ -13,10 +13,14 @@ public class VariableInstruction implements Instruction {
     public void run(TokenPattern<?> pattern, TridentFile file) {
         SymbolTable table = file.getCompiler().getStack().peek();
         Symbol symbol = new Symbol(pattern.find("VARIABLE_NAME").flatten(false));
-        table.put(symbol);
 
         Object value = CommonParsers.parseAnything((TokenPattern<?>) ((pattern.find("VARIABLE_INITIALIZATION.VARIABLE_VALUE")).getContents()), file.getCompiler());
 
-        symbol.setValue(value);
+        if(value != null) {
+            table.put(symbol);
+            symbol.setValue(value);
+        } else {
+            throw new NullPointerException();
+        }
     }
 }

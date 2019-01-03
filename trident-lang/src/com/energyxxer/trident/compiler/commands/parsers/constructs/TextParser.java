@@ -28,8 +28,8 @@ public class TextParser {
             case "TEXT_COMPONENT": {
                 return parseTextComponent(((TokenStructure)pattern).getContents(), compiler);
             }
-            case "VARIABLE_MARKER": {
-                return CommonParsers.retrieveSymbol(pattern, compiler, TextComponent.class);
+            case "INTERPOLATION_BLOCK": {
+                return InterpolationManager.parse(pattern, compiler, TextComponent.class);
             }
             case "JSON_ROOT":
             case "JSON_ELEMENT": {

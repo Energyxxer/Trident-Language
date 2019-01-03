@@ -37,8 +37,8 @@ public class NBTParser {
             case "NBT_COMPOUND": {
                 return parseValue(((TokenStructure)pattern).getContents(), compiler);
             }
-            case "VARIABLE_MARKER": {
-                return CommonParsers.retrieveSymbol(pattern, compiler, TagCompound.class);
+            case "INTERPOLATION_BLOCK": {
+                return InterpolationManager.parse(pattern, compiler, TagCompound.class);
             }
             case "NBT_COMPOUND_GROUP": {
                 TagCompound compound = new TagCompound();
@@ -124,8 +124,8 @@ public class NBTParser {
 
     public static NBTPath parsePath(TokenPattern<?> pattern, TridentCompiler compiler) {
         if(pattern == null) return null;
-        if((((TokenStructure)pattern).getContents()).getName().equals("VARIABLE_MARKER")) {
-            return CommonParsers.retrieveSymbol(((TokenStructure) pattern).getContents(), compiler, NBTPath.class);
+        if((((TokenStructure)pattern).getContents()).getName().equals("INTERPOLATION_BLOCK")) {
+            return InterpolationManager.parse(((TokenStructure) pattern).getContents(), compiler, NBTPath.class);
         }
         NBTPathNode start = parsePathNode(pattern.find("NBT_PATH_NODE"), compiler);
         ArrayList<NBTPathNode> nodes = new ArrayList<>();
@@ -156,7 +156,7 @@ public class NBTParser {
                 return new NBTListMatch(parseCompound(pattern.find("NBT_COMPOUND"), compiler));
             }
             case "NBT_PATH_LIST_UNKNOWN": {
-                Object val = CommonParsers.retrieveSymbol(pattern.find("VARIABLE_MARKER"), compiler, Integer.class, TagCompound.class);
+                Object val = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), compiler, Integer.class, TagCompound.class);
                 if(val instanceof Integer) {
                     return new NBTPathIndex((int) val);
                 } else if(val instanceof TagCompound){

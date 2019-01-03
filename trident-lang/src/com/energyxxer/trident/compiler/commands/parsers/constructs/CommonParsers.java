@@ -40,15 +40,11 @@ import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
-import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
-import com.energyxxer.trident.compiler.commands.parsers.variable_functions.VariableFunction;
-import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.BLOCK_ENTITY;
@@ -64,8 +60,8 @@ public class CommonParsers {
     public static Object parseEntityReference(TokenPattern<?> id, TridentCompiler compiler) {
         if(id.getName().equals("ENTITY_ID_TAGGED")) return parseEntityReference((TokenPattern<?>) (id.getContents()), compiler);
         if(id.getName().equals("ABSTRACT_RESOURCE")) return parseTag(id, compiler, EntityType.CATEGORY, g -> g.entity, g -> g.entityTypeTags);
-        if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("VARIABLE_MARKER")) {
-            return retrieveSymbol(((TokenStructure) id).getContents(), compiler, Type.class, CustomEntity.class);
+        if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("INTERPOLATION_BLOCK")) {
+            return InterpolationManager.parse(((TokenStructure) id).getContents(), compiler, Type.class, CustomEntity.class);
         } else return parseType(id, compiler, m -> m.entity);
     }
     public static Type parseItemType(TokenPattern<?> id, TridentCompiler compiler) {
@@ -76,8 +72,8 @@ public class CommonParsers {
     }
     public static Type parseType(TokenPattern<?> id, TridentCompiler compiler, TypeGroupPicker picker) {
         if(id == null) return null;
-        if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("VARIABLE_MARKER")) {
-            return retrieveSymbol(((TokenStructure) id).getContents(), compiler, Type.class);
+        if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("INTERPOLATION_BLOCK")) {
+            return InterpolationManager.parse(((TokenStructure) id).getContents(), compiler, Type.class);
         }
         TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id);
         return picker.pick(compiler.getModule().getNamespace(typeLoc.namespace).types).get(typeLoc.body);
@@ -163,7 +159,7 @@ public class CommonParsers {
         if(pattern.getName().equals("ITEM_TAGGED") || pattern.getName().equals("ITEM")) return parseItem(((TokenStructure) pattern).getContents(), compiler, mode);
 
         if(pattern.getName().equals("ITEM_VARIABLE")) {
-            Object reference = retrieveSymbol(pattern.find("VARIABLE_MARKER"), compiler, Item.class, CustomItem.class);
+            Object reference = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), compiler, Item.class, CustomItem.class);
             Item item;
             if(reference instanceof Item) {
                 item = (Item) reference;
@@ -210,11 +206,11 @@ public class CommonParsers {
     public static Block parseBlock(TokenPattern<?> pattern, TridentCompiler compiler) {
         if(pattern.getName().equals("BLOCK_TAGGED") || pattern.getName().equals("BLOCK")) return parseBlock(((TokenStructure) pattern).getContents(), compiler);
 
-        if(pattern.getName().equals("VARIABLE_MARKER")) {
-            return retrieveSymbol(pattern, compiler, Block.class);
+        if(pattern.getName().equals("INTERPOLATION_BLOCK")) {
+            return InterpolationManager.parse(pattern, compiler, Block.class);
         }
         if(pattern.getName().equals("BLOCK_VARIABLE")) {
-            Block block = retrieveSymbol(pattern.find("VARIABLE_MARKER"), compiler, Block.class);
+            Block block = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), compiler, Block.class);
             TokenPattern<?> appendedState = pattern.find("APPENDED_BLOCKSTATE.BLOCKSTATE");
             if(appendedState != null) {
                 Blockstate state = block.getBlockstate();
@@ -349,6 +345,7 @@ public class CommonParsers {
 
     public static Object parseAnything(TokenPattern<?> pattern, TridentCompiler compiler) {
         switch(pattern.getName()) {
+            case "INTERPOLATION_BLOCK": return InterpolationManager.parse(pattern, compiler);
             case "INTEGER": return parseInt(pattern, compiler);
             case "REAL": return parseDouble(pattern, compiler);
             case "STRING_LITERAL": return CommandUtils.parseQuotedString(pattern.flatten(false));
@@ -375,53 +372,11 @@ public class CommonParsers {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> T retrieveSymbol(TokenPattern<?> pattern, TridentCompiler compiler, Class<T> expected) {
-        Object obj = retrieveSymbol(pattern, compiler);
-        if(expected.isInstance(obj)) {
-            return (T) obj;
-        } else {
-            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.find("VARIABLE_NAME").flatten(false) + "' does not contain a value of type " + expected.getSimpleName(), pattern));
-            throw new EntryParsingException();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public static Object retrieveSymbol(TokenPattern<?> pattern, TridentCompiler compiler, Class... expected) {
-        Object obj = retrieveSymbol(pattern, compiler);
-        for(Class cls : expected) {
-            if(cls.isInstance(obj)) return obj;
-        }
-        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.find("VARIABLE_NAME").flatten(false) + "' does not contain a value of type " + Arrays.asList(expected).map((Class c) -> c.getSimpleName()).toSet().join(", "), pattern));
-        throw new EntryParsingException();
-    }
-
-    public static Object retrieveSymbol(TokenPattern<?> pattern, TridentCompiler compiler) {
-        String name = pattern.find("VARIABLE_NAME").flatten(false);
-        TokenPattern<?> modPattern = pattern.find("VARIABLE_MODIFIER.VARIABLE_MODIFIER_FUNCTION");
-        String mod = modPattern != null ? modPattern.flatten(false) : null;
-
-        Symbol symbol = compiler.getStack().search(name);
-
-        if(symbol != null) {
-
-            if(mod != null) {
-                VariableFunction varFunction = ParserManager.getParser(VariableFunction.class, mod);
-                if (varFunction != null) return varFunction.process(symbol.getValue(), pattern, compiler);
-            }
-
-            return symbol.getValue();
-        } else {
-            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + name + "' is not defined", pattern));
-            throw new EntryParsingException();
-        }
-    }
-
     public static int parseInt(TokenPattern<?> pattern, TridentCompiler compiler) {
         TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
         switch(inner.getName()) {
             case "RAW_INTEGER": return Integer.parseInt(inner.flatten(false));
-            case "VARIABLE_MARKER": return retrieveSymbol(pattern, compiler, Integer.class);
+            case "INTERPOLATION_BLOCK": return InterpolationManager.parse(inner, compiler, Integer.class);
             default: {
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
                 throw new EntryParsingException();
@@ -433,7 +388,7 @@ public class CommonParsers {
         TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
         switch(inner.getName()) {
             case "RAW_REAL": return Double.parseDouble(inner.flatten(false));
-            case "VARIABLE_MARKER": return retrieveSymbol(pattern, compiler, Double.class);
+            case "INTERPOLATION_BLOCK": return InterpolationManager.parse(inner, compiler, Double.class);
             default: {
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
                 throw new EntryParsingException();

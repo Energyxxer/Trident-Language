@@ -21,10 +21,7 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
-import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
-import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
-import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
-import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.*;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.commands.parsers.modifiers.StoreParser;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -66,7 +63,7 @@ public class SetParser implements CommandParser {
                 head = parsePointerHead(entity, pattern.find("POINTER_HEAD"), compiler);
                 return new PointerDecorator.EntityPointer(entity, head);
             case "VARIABLE_POINTER":
-                Object symbol = CommonParsers.retrieveSymbol(pattern.find("VARIABLE_MARKER"), compiler, Entity.class, CoordinateSet.class);
+                Object symbol = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), compiler, Entity.class, CoordinateSet.class);
                 head = parsePointerHead(symbol, pattern.find("POINTER_HEAD"), compiler);
                 if(symbol instanceof Entity) {
                     return new PointerDecorator.EntityPointer((Entity) symbol, head);
