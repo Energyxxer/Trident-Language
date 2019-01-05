@@ -117,30 +117,45 @@ public class CommonParsers {
         return flat;
     }
 
-    public static Type parseFunctionTag(TokenPattern<?> id, TridentFile file) {
-        if(id == null) return null;
-        boolean isTag = id.find("") != null;
-        String flat = parseFunctionPath(id, file);
-        TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(flat);
+    public static Type parseFunctionTag(TokenStructure pattern, TridentFile file) {
+        if(pattern == null) return null;
+
+        TokenPattern<?> inner = pattern.getContents();
+
+        TridentUtil.ResourceLocation typeLoc;
+
+        switch(inner.getName()) {
+            case "RAW_RESOURCE_LOCATION_TAGGED": {
+                String flat = parseFunctionPath(inner, file);
+                typeLoc = new TridentUtil.ResourceLocation(flat);
+                typeLoc.isTag = inner.find("") != null;
+                break;
+            }
+            case "INTERPOLATION_BLOCK": {
+                typeLoc = InterpolationManager.parse(inner, file.getCompiler(), TridentUtil.ResourceLocation.class);
+                break;
+            }
+            default: {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
+                throw new EntryParsingException();
+            }
+        }
         Namespace ns = file.getCompiler().getModule().getNamespace(typeLoc.namespace);
-
         Type type = null;
-
-        if(isTag) {
+        if(typeLoc.isTag) {
             type = ns.tags.functionTags.get(typeLoc.body);
         } else if(ns.functions.contains(typeLoc.body)) {
             type = new FunctionReference(ns.functions.get(typeLoc.body));
         }
 
         if(type == null) {
-            if(isTag) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such function tag exists: #" + typeLoc, id));
+            if(typeLoc.isTag) {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such function tag exists: #" + typeLoc, inner));
             } else {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such function exists: " + typeLoc, id));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such function exists: " + typeLoc, inner));
             }
             throw new EntryParsingException();
         }
-
         return type;
     }
 
@@ -447,6 +462,31 @@ public class CommonParsers {
             }
             return null;
         }
+    }
+
+    public static TridentUtil.ResourceLocation parseResourceLocation(TokenPattern<?> pattern, TridentCompiler compiler) {
+        if(pattern == null) return null;
+
+        TokenPattern<?> inner = (TokenStructure) pattern.getContents();
+
+        TridentUtil.ResourceLocation typeLoc;
+
+        switch(inner.getName()) {
+            case "RAW_RESOURCE_LOCATION_TAGGED": {
+                typeLoc = new TridentUtil.ResourceLocation(inner);
+                break;
+            }
+            case "INTERPOLATION_BLOCK": {
+                typeLoc = InterpolationManager.parse(inner, compiler, TridentUtil.ResourceLocation.class);
+                break;
+            }
+            default: {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
+                throw new EntryParsingException();
+            }
+        }
+
+        return typeLoc;
     }
 
     public interface TypeGroupPicker {

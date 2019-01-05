@@ -121,6 +121,9 @@ public class InterpolationManager {
             case "WRAPPED_REAL_RANGE": {
                 return CommonParsers.parseRealRange(pattern.find("REAL_NUMBER_RANGE"), compiler);
             }
+            case "WRAPPED_RESOURCE": {
+                return CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION_TAGGED"), compiler);
+            }
             case "WRAPPED_DICTIONARY": {
                 return parse(pattern.find("DICTIONARY"), compiler, keepSymbol);
             }

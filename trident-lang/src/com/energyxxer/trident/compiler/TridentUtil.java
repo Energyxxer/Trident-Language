@@ -16,10 +16,12 @@ public class TridentUtil {
     }
 
     public static class ResourceLocation {
+        public boolean isTag;
         public String namespace;
         public String body;
 
         public ResourceLocation(TokenPattern<?> typeGroup) {
+            if(typeGroup.find("") != null) isTag = true;
             TokenPattern<?> namespacePattern = typeGroup.find("NAMESPACE");
             namespace = namespacePattern != null ? namespacePattern.flattenTokens().get(0).value : "minecraft";
             body = typeGroup.find("TYPE_NAME").flatten(true);
@@ -30,6 +32,10 @@ public class TridentUtil {
         }
 
         public ResourceLocation(String str) {
+            if(str.startsWith('#')) {
+                isTag = true;
+                str = str.substring(1);
+            }
             if(str.contains(":")) {
                 namespace = str.substring(0, str.indexOf(":"));
                 body = str.substring(str.indexOf(":")+1);
