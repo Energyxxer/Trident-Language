@@ -31,7 +31,7 @@ public class TridentProductions {
     public final LazyTokenStructureMatch COMMAND;
     public final LazyTokenStructureMatch MODIFIER;
 
-    public final LazyTokenGroupMatch RESOURCE_LOCATION_TAGGED;
+    public final LazyTokenStructureMatch RESOURCE_LOCATION_TAGGED;
 
     public final LazyTokenStructureMatch SELECTOR;
     public final LazyTokenStructureMatch SELECTOR_ARGUMENT;
@@ -111,10 +111,10 @@ public class TridentProductions {
         SELECTOR_ARGUMENT = new LazyTokenStructureMatch("SELECTOR_ARGUMENT");
         PLAYER_NAME = choice(identifierB()).setName("PLAYER_NAME");
 
+        RESOURCE_LOCATION_TAGGED = struct("RESOURCE_LOCATION_TAGGED");
+
         COMMENT_S = new LazyTokenItemMatch(COMMENT).setName("COMMENT");
         VERBATIM_COMMAND_S = new LazyTokenItemMatch(VERBATIM_COMMAND).setName("VERBATIM_COMMAND");
-
-        RESOURCE_LOCATION_TAGGED = group(optional(hash(), ofType(GLUE)), ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RESOURCE_LOCATION_TAGGED");
 
         ENTRY.add(COMMENT_S);
         ENTRY.add(group(list(MODIFIER).setOptional().setName("MODIFIERS"), literal("run").setOptional(), COMMAND).setName("COMMAND_WRAPPER"));
@@ -147,11 +147,13 @@ public class TridentProductions {
             CLOSED_INTERPOLATION_VALUE.add(group(literal("coordinates"), brace("<"), COORDINATE_SET, brace(">")).setName("WRAPPED_COORDINATE"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("integer_range"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("real_range"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("resource"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("dict"), DICTIONARY).setName("WRAPPED_DICTIONARY"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("list"), LIST).setName("WRAPPED_LIST"));
             CLOSED_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
             CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER"));
             CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("["), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("INDEXED_MEMBER"));
+            CLOSED_INTERPOLATION_VALUE.addNested(group(literal("new"), literal("function"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
             INTERPOLATION_VALUE.add(CLOSED_INTERPOLATION_VALUE);
 
             INTERPOLATION_VALUE.add(group(brace("("), choice("integer", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinates", "integer_range", "real_range", "dict", "list").setName("TARGET_TYPE"), brace(")"), CLOSED_INTERPOLATION_VALUE).setName("CAST"));
@@ -161,38 +163,12 @@ public class TridentProductions {
 
             INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), brace("{").setName("INTERPOLATION_BRACE"), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE")).setName("INTERPOLATION_WRAPPER"));
 
-            /*
-            *
-            *
-
-            LazyTokenStructureMatch VAR_SUB = new LazyTokenStructureMatch("INTERPOLATION_SUB");
-            VAR_SUB.add(group(brace("("), list(VAR_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL_PARENTHESES"));
-            VAR_SUB.add(group(dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER"));
-
-            VAR_VALUE.add(group(VAR_VALUE, list(VAR_SUB)).setName("NESTED_VALUE"));
-
-            *
-            * */
-
-            /*
-            * INTERPOLATION_BLOCK,
-                    integer(),
-                    real(),
-                    ofType(BOOLEAN).setName("BOOLEAN"),
-                    string(),
-                    identifierX(),
-                    group(literal("entity"), brace("<"), ENTITY, brace(">")),
-                    group(literal("block"), brace("<"), ITEM, brace(">")),
-                    group(literal("item"), brace("<"), BLOCK, brace(">")),
-                    TEXT_COMPONENT,
-                    NBT_COMPOUND,
-                    COORDINATE_SET
-            * */
-
             DICTIONARY.add(group(brace("{"), list(group(identifierX().setName("DICTIONARY_KEY"), colon(), INTERPOLATION_VALUE).setName("DICTIONARY_ENTRY"), comma()).setOptional().setName("DICTIONARY_ENTRY_LIST"), brace("}")));
             LIST.add(group(brace("["), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")));
-
         }
+
+        RESOURCE_LOCATION_TAGGED.add(group(optional(hash(), ofType(GLUE)), ofType(RESOURCE_LOCATION).setName("RESOURCE_LOCATION")).setName("RAW_RESOURCE_LOCATION_TAGGED"));
+        RESOURCE_LOCATION_TAGGED.add(INTERPOLATION_BLOCK);
 
         {
             LazyTokenStructureMatch directiveBody = new LazyTokenStructureMatch("DIRECTIVE_BODY");

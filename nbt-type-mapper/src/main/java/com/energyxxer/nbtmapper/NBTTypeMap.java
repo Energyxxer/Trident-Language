@@ -222,7 +222,7 @@ public class NBTTypeMap {
         private String parseKey(TokenPattern<?> pattern) {
             String raw = pattern.flatten(false);
             if(raw.equals("*")) return null;
-            if(raw.startsWith('"')) {
+            if(raw.startsWith("" + '"')) {
                 return CommandUtils.parseQuotedString(raw);
             }
             return raw;
