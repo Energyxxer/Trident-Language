@@ -105,13 +105,22 @@ public class CommonParsers {
         return type;
     }
 
-    public static Type parseFunctionTag(TokenPattern<?> id, TridentFile file) {
+    public static String parseFunctionPath(TokenPattern<?> id, TridentFile file) {
         if(id == null) return null;
-        boolean isTag = id.find("") != null;
         String flat = id.find("RESOURCE_LOCATION").flatten(false);
         if(flat.startsWith('/')) {
             flat = file.getFunction().getFullName() + flat;
         }
+        if(flat.isEmpty()) {
+            return file.getFunction().getPath();
+        }
+        return flat;
+    }
+
+    public static Type parseFunctionTag(TokenPattern<?> id, TridentFile file) {
+        if(id == null) return null;
+        boolean isTag = id.find("") != null;
+        String flat = parseFunctionPath(id, file);
         TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(flat);
         Namespace ns = file.getCompiler().getModule().getNamespace(typeLoc.namespace);
 
