@@ -7,7 +7,6 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.DictionaryObject;
@@ -19,6 +18,7 @@ import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.Operator;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.OperatorHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,54 +27,55 @@ import java.util.Arrays;
 public class InterpolationManager {
 
     @SuppressWarnings("unchecked")
-    public static <T> T parse(TokenPattern<?> pattern, TridentCompiler compiler, Class<T> expected) {
-        Object obj = parse(pattern, compiler, false);
+    public static <T> T parse(TokenPattern<?> pattern, TridentFile file, Class<T> expected) {
+        Object obj = parse(pattern, file, false);
         if(expected.isInstance(obj)) {
             return (T) obj;
         } else {
-            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + expected.getSimpleName(), pattern));
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + expected.getSimpleName(), pattern));
             throw new EntryParsingException();
         }
     }
 
-    public static Object parse(TokenPattern<?> pattern, TridentCompiler compiler, Class... expected) {
-        Object obj = parse(pattern, compiler, false);
+    public static Object parse(TokenPattern<?> pattern, TridentFile file, Class... expected) {
+        Object obj = parse(pattern, file, false);
         for(Class cls : expected) {
             if(cls.isInstance(obj)) return obj;
         }
-        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + Arrays.asList(expected).map((Class c) -> c.getSimpleName()).toSet().join(", "), pattern));
+        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + Arrays.asList(expected).map((Class c) -> c.getSimpleName()).toSet().join(", "), pattern));
         throw new EntryParsingException();
     }
 
     @SuppressWarnings("unchecked")
     @NotNull
-    public static Object parse(TokenPattern<?> pattern, TridentCompiler compiler) {
-        return parse(pattern, compiler, false);
+    public static Object parse(TokenPattern<?> pattern, TridentFile file) {
+        return parse(pattern, file, false);
     }
 
     @SuppressWarnings("unchecked")
     @NotNull
-    public static Object parse(TokenPattern<?> pattern, TridentCompiler compiler, boolean keepSymbol) {
+    public static Object parse(TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+        //TridentCompiler compiler = file.getCompiler();
         switch(pattern.getName()) {
             case "INTERPOLATION_BLOCK": {
-                return parse(((TokenStructure) pattern).getContents(), compiler, keepSymbol);
+                return parse(((TokenStructure) pattern).getContents(), file, keepSymbol);
             }
             case "VARIABLE": {
-                return parse(pattern.find("VARIABLE_NAME"), compiler, keepSymbol);
+                return parse(pattern.find("VARIABLE_NAME"), file, keepSymbol);
             }
             case "INTERPOLATION_WRAPPER": {
-                return parse(pattern.find("INTERPOLATION_VALUE"), compiler, keepSymbol);
+                return parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
             }
             case "CLOSED_INTERPOLATION_VALUE": {
-                return parse(((TokenStructure) pattern).getContents(), compiler, keepSymbol);
+                return parse(((TokenStructure) pattern).getContents(), file, keepSymbol);
             }
             case "INTERPOLATION_VALUE": {
-                return parse(((TokenStructure) pattern).getContents(), compiler, keepSymbol);
+                return parse(((TokenStructure) pattern).getContents(), file, keepSymbol);
             }
             case "VARIABLE_NAME": {
-                Symbol symbol = compiler.getStack().search(pattern.flatten(false));
+                Symbol symbol = file.getCompiler().getStack().search(pattern.flatten(false));
                 if(symbol == null) {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' is not defined", pattern));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' is not defined", pattern));
                     throw new EntryParsingException();
                 }
                 return keepSymbol ? symbol : symbol.getValue();
@@ -92,40 +93,40 @@ public class InterpolationManager {
                 return CommandUtils.parseQuotedString(pattern.flatten(false));
             }
             case "WRAPPED_ENTITY": {
-                return EntityParser.parseEntity(pattern.find("ENTITY"), compiler);
+                return EntityParser.parseEntity(pattern.find("ENTITY"), file);
             }
             case "WRAPPED_BLOCK": {
-                return CommonParsers.parseBlock(pattern.find("BLOCK_TAGGED"), compiler);
+                return CommonParsers.parseBlock(pattern.find("BLOCK_TAGGED"), file);
             }
             case "WRAPPED_ITEM": {
-                return CommonParsers.parseBlock(pattern.find("ITEM_TAGGED"), compiler);
+                return CommonParsers.parseBlock(pattern.find("ITEM_TAGGED"), file);
             }
             case "WRAPPED_TEXT_COMPONENT": {
-                return TextParser.parseTextComponent(pattern.find("TEXT_COMPONENT"), compiler);
+                return TextParser.parseTextComponent(pattern.find("TEXT_COMPONENT"), file);
             }
             case "WRAPPED_NBT": {
-                return NBTParser.parseCompound(pattern.find("NBT_COMPOUND"), compiler);
+                return NBTParser.parseCompound(pattern.find("NBT_COMPOUND"), file);
             }
             case "WRAPPED_NBT_VALUE": {
-                return NBTParser.parseValue(pattern.find("NBT_VALUE"), compiler);
+                return NBTParser.parseValue(pattern.find("NBT_VALUE"), file);
             }
             case "WRAPPED_NBT_PATH": {
-                return NBTParser.parsePath(pattern.find("NBT_PATH"), compiler);
+                return NBTParser.parsePath(pattern.find("NBT_PATH"), file);
             }
             case "WRAPPED_COORDINATE": {
-                return CoordinateParser.parse(pattern.find("COORDINATE_SET"), compiler);
+                return CoordinateParser.parse(pattern.find("COORDINATE_SET"), file);
             }
             case "WRAPPED_INT_RANGE": {
-                return CommonParsers.parseIntRange(pattern.find("INTEGER_NUMBER_RANGE"), compiler);
+                return CommonParsers.parseIntRange(pattern.find("INTEGER_NUMBER_RANGE"), file);
             }
             case "WRAPPED_REAL_RANGE": {
-                return CommonParsers.parseRealRange(pattern.find("REAL_NUMBER_RANGE"), compiler);
+                return CommonParsers.parseRealRange(pattern.find("REAL_NUMBER_RANGE"), file);
             }
             case "WRAPPED_RESOURCE": {
-                return CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION_TAGGED"), compiler);
+                return CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION_TAGGED"), file);
             }
             case "WRAPPED_DICTIONARY": {
-                return parse(pattern.find("DICTIONARY"), compiler, keepSymbol);
+                return parse(pattern.find("DICTIONARY"), file, keepSymbol);
             }
             case "DICTIONARY": {
                 DictionaryObject dict = new DictionaryObject();
@@ -135,7 +136,7 @@ public class InterpolationManager {
                 if(entryList != null) {
                     for(TokenPattern<?> entry : entryList.searchByName("DICTIONARY_ENTRY")) {
                         String key = entry.find("DICTIONARY_KEY").flatten(false);
-                        Object value = parse(entry.find("INTERPOLATION_VALUE"), compiler, keepSymbol);
+                        Object value = parse(entry.find("INTERPOLATION_VALUE"), file, keepSymbol);
                         dict.put(key, value);
                     }
                 }
@@ -143,7 +144,7 @@ public class InterpolationManager {
                 return dict;
             }
             case "WRAPPED_LIST": {
-                return parse(pattern.find("LIST"), compiler, keepSymbol);
+                return parse(pattern.find("LIST"), file, keepSymbol);
             }
             case "LIST": {
                 ListType list = new ListType();
@@ -152,44 +153,48 @@ public class InterpolationManager {
 
                 if (entryList != null) {
                     for (TokenPattern<?> entry : entryList.searchByName("INTERPOLATION_VALUE")) {
-                        list.add(parse(entry, compiler));
+                        list.add(parse(entry, file));
                     }
 
                     return list;
                 }
             }
+            case "NEW_FUNCTION": {
+                TridentFile innerFile = TridentFile.createInnerFile(pattern.find("ANONYMOUS_INNER_FUNCTION"), file);
+                return innerFile.getResourceLocation();
+            }
             case "MEMBER": {
-                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), compiler, keepSymbol);
+                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
                 VariableTypeHandler handler = parent instanceof VariableTypeHandler ? (VariableTypeHandler) parent : ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(parent.getClass()));
                 if(handler == null) {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + parent.getClass().getName(), pattern));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + parent.getClass().getName(), pattern));
                     throw new EntryParsingException();
                 }
                 String memberName = pattern.find("MEMBER_NAME").flatten(false);
-                Object member = handler.getMember(parent, memberName, pattern, compiler, keepSymbol);
+                Object member = handler.getMember(parent, memberName, pattern, file, keepSymbol);
                 if(member == null) {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member '" + memberName + "' of '" + parent.getClass().getSimpleName() + "'", pattern));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member '" + memberName + "' of '" + parent.getClass().getSimpleName() + "'", pattern));
                     throw new EntryParsingException();
                 }
                 return member;
             }
             case "INDEXED_MEMBER": {
-                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), compiler, keepSymbol);
+                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
                 VariableTypeHandler handler = parent instanceof VariableTypeHandler ? (VariableTypeHandler) parent : ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(parent.getClass()));
                 if(handler == null) {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + parent.getClass().getName(), pattern));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + parent.getClass().getName(), pattern));
                     throw new EntryParsingException();
                 }
-                Object index = parse(pattern.find("INDEX.INTERPOLATION_VALUE"), compiler);
-                Object member = handler.getIndexer(parent, index, pattern, compiler, keepSymbol);
+                Object index = parse(pattern.find("INDEX.INTERPOLATION_VALUE"), file);
+                Object member = handler.getIndexer(parent, index, pattern, file, keepSymbol);
                 if(member == null) {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member for index '" + index + "' of '" + parent.getClass().getSimpleName() + "'", pattern));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member for index '" + index + "' of '" + parent.getClass().getSimpleName() + "'", pattern));
                     throw new EntryParsingException();
                 }
                 return member;
             }
             case "METHOD_CALL": {
-                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), compiler, keepSymbol);
+                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
                 if(parent instanceof VariableMethod) {
 
                     ArrayList<Object> params = new ArrayList<>();
@@ -200,32 +205,32 @@ public class InterpolationManager {
                     if(paramList != null) {
                         for(TokenPattern<?> rawParam : paramList.getContents()) {
                             if(rawParam.getName().equals("INTERPOLATION_VALUE")) {
-                                params.add(parse(rawParam, compiler, keepSymbol));
+                                params.add(parse(rawParam, file, keepSymbol));
                                 patterns.add(rawParam);
                             }
                         }
                     }
 
-                    return ((VariableMethod) parent).call(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), pattern, compiler);
+                    return ((VariableMethod) parent).call(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), pattern, file);
                 } else {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "This is not a method", pattern.find("INTERPOLATION_VALUE")));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "This is not a method", pattern.find("INTERPOLATION_VALUE")));
                     throw new EntryParsingException();
                 }
             }
             case "PARENTHESIZED_VALUE": {
-                return parse(pattern.find("INTERPOLATION_VALUE"), compiler, keepSymbol);
+                return parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
             }
             case "CAST": {
-                Object parent = parse(pattern.find("CLOSED_INTERPOLATION_VALUE"), compiler, keepSymbol);
+                Object parent = parse(pattern.find("CLOSED_INTERPOLATION_VALUE"), file, keepSymbol);
                 VariableTypeHandler handler = parent instanceof VariableTypeHandler ? (VariableTypeHandler) parent : ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(parent.getClass()));
                 if(handler == null) {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + parent.getClass().getName(), pattern));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + parent.getClass().getName(), pattern));
                     throw new EntryParsingException();
                 }
                 Class newType = VariableTypeHandler.Static.getClassForShorthand(pattern.find("TARGET_TYPE").flatten(false));
-                Object converted = handler.cast(parent, newType, pattern, compiler);
+                Object converted = handler.cast(parent, newType, pattern, file);
                 if(converted == null) {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unable to cast " + parent.getClass().getSimpleName() + " to type " + newType.getName(), pattern));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unable to cast " + parent.getClass().getSimpleName() + " to type " + newType.getName(), pattern));
                     throw new EntryParsingException();
                 }
                 return converted;
@@ -235,7 +240,7 @@ public class InterpolationManager {
                 TokenList list = (TokenList) pattern;
 
                 if(list.size() == 1) {
-                    return parse(list.getContents()[0], compiler, keepSymbol);
+                    return parse(list.getContents()[0], file, keepSymbol);
                 } else {
 
                     ArrayList<TokenPattern<?>> contents = new ArrayList<>(Arrays.asList(list.getContents()));
@@ -246,7 +251,7 @@ public class InterpolationManager {
                     for(int i = 0; i < contents.size(); i++) {
                         if((i & 1) == 0) {
                             //Operand
-                            Object value = parse(contents.get(i), compiler, keepSymbol);
+                            Object value = parse(contents.get(i), file, keepSymbol);
                             flatValues.add(value);
                         } else {
                             //Operator
@@ -254,11 +259,11 @@ public class InterpolationManager {
                             if(operator.getLeftOperandType() == OperandType.VARIABLE) {
                                 flatValues.remove(flatValues.size()-1);
 
-                                Object symbol = parse(contents.get(i-1), compiler, true);
+                                Object symbol = parse(contents.get(i-1), file, true);
                                 if(symbol instanceof Symbol) {
                                     flatValues.add(symbol);
                                 } else {
-                                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Expected symbol in the left hand side of the expression", pattern));
+                                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected symbol in the left hand side of the expression", pattern));
                                     throw new EntryParsingException();
                                 }
                             }
@@ -290,7 +295,7 @@ public class InterpolationManager {
                         flatValues.remove(index);
                         flatValues.remove(index);
 
-                        Object result = OperatorHandler.Static.perform(a, topOperator, b, pattern, compiler);
+                        Object result = OperatorHandler.Static.perform(a, topOperator, b, pattern, file);
 
                         flatValues.add(index, result);
                         flatOperators.remove(index);
@@ -301,7 +306,7 @@ public class InterpolationManager {
                 //endregion
             }
             default: {
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
                 throw new EntryParsingException();
             }
         }

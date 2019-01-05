@@ -11,23 +11,23 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.util.logger.Debug;
 
 import java.util.List;
 
 public class CoordinateParser {
-    public static CoordinateSet parse(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public static CoordinateSet parse(TokenPattern<?> pattern, TridentFile file) {
         if(pattern == null) return null;
         Coordinate x, y, z;
         switch (pattern.getName()) {
             case "TWO_COORDINATE_SET":
             case "COORDINATE_SET": {
-                return parse(((TokenStructure) pattern).getContents(), compiler);
+                return parse(((TokenStructure) pattern).getContents(), file);
             }
             case "INTERPOLATION_BLOCK": {
-                return InterpolationManager.parse(pattern, compiler, CoordinateSet.class);
+                return InterpolationManager.parse(pattern, file, CoordinateSet.class);
             }
             case "MIXED_COORDINATE_SET":
             case "LOCAL_COORDINATE_SET":
@@ -43,7 +43,7 @@ public class CoordinateParser {
                 z = parseCoordinate(tuple[1], Axis.Z);
                 break;
             default:
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
                 throw new EntryParsingException();
         }
         return x != null && y != null && z != null ? new CoordinateSet(x, y, z) : null;

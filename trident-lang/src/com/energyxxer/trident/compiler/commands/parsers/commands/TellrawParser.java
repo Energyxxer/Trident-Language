@@ -14,8 +14,8 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class TellrawParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        TextComponent text = TextParser.parseTextComponent(pattern.find("TEXT_COMPONENT"), file.getCompiler());
-        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file.getCompiler());
+        TextComponent text = TextParser.parseTextComponent(pattern.find("TEXT_COMPONENT"), file);
+        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
         return new TellrawCommand(entity, text);
     }
 }

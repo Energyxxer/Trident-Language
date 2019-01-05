@@ -13,7 +13,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class MsgParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file.getCompiler());
+        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
         String message = pattern.search(TridentTokens.TRAILING_STRING).get(0).value;
 
         return executionContext -> new CommandResolution(executionContext, "msg \be0 " + message, entity);

@@ -16,12 +16,12 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class EnchantParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file.getCompiler());
-        Type enchantment = CommonParsers.parseType(pattern.find("ENCHANTMENT_ID"), file.getCompiler(), d -> d.enchantment);
+        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
+        Type enchantment = CommonParsers.parseType(pattern.find("ENCHANTMENT_ID"), file, d -> d.enchantment);
         int level = 1;
         TokenPattern<?> rawLevel = pattern.find("LEVEL");
         if(rawLevel != null) {
-            level = CommonParsers.parseInt(rawLevel, file.getCompiler());
+            level = CommonParsers.parseInt(rawLevel, file);
         }
         try {
             return new EnchantCommand(entity, enchantment, level);

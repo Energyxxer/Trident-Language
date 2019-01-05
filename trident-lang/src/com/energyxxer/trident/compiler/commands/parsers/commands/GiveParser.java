@@ -17,15 +17,15 @@ import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 public class GiveParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Item item = CommonParsers.parseItem(pattern.find("ITEM"), file.getCompiler(), NBTMode.SETTING);
+        Item item = CommonParsers.parseItem(pattern.find("ITEM"), file, NBTMode.SETTING);
         TokenPattern<?> amountPattern = pattern.find("AMOUNT");
-        int amount = amountPattern != null ? CommonParsers.parseInt(amountPattern, file.getCompiler()) : 1;
+        int amount = amountPattern != null ? CommonParsers.parseInt(amountPattern, file) : 1;
 
         if(!item.getItemType().isStandalone()) {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Item tags aren't allowed in this context", pattern.find("ITEM")));
             throw new EntryParsingException();
         }
 
-        return new GiveCommand(EntityParser.parseEntity(pattern.find("ENTITY"), file.getCompiler()), item, amount);
+        return new GiveCommand(EntityParser.parseEntity(pattern.find("ENTITY"), file), item, amount);
     }
 }

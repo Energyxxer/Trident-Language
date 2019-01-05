@@ -18,9 +18,9 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class FillParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file.getCompiler());
-        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file.getCompiler());
-        Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), file.getCompiler());
+        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file);
+        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file);
+        Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), file);
         if(!block.getBlockType().isStandalone()) {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Block tags aren't allowed in this context", pattern.find("BLOCK")));
             throw new EntryParsingException();
@@ -48,7 +48,7 @@ public class FillParser implements CommandParser {
                     break;
                 }
                 case "REPLACE": {
-                    Block replaceBlock = CommonParsers.parseBlock(inner.find(".BLOCK_TAGGED"), file.getCompiler());
+                    Block replaceBlock = CommonParsers.parseBlock(inner.find(".BLOCK_TAGGED"), file);
                     if(replaceBlock != null) mode = new FillReplaceMode(replaceBlock);
                     break;
                 }

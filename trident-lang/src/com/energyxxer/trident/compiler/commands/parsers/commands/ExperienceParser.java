@@ -25,19 +25,19 @@ public class ExperienceParser implements CommandParser {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("SUBCOMMAND")).getContents();
         switch(inner.getName()) {
             case "ADD": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file.getCompiler());
-                int amount = CommonParsers.parseInt(inner.find("INTEGER"), file.getCompiler());
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
+                int amount = CommonParsers.parseInt(inner.find("INTEGER"), file);
                 ExperienceCommand.Unit unit = parseUnit(inner.find("UNIT"));
                 return new ExperienceAddCommand(entity, amount, unit);
             }
             case "SET": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file.getCompiler());
-                int amount = CommonParsers.parseInt(inner.find("INTEGER"), file.getCompiler());
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
+                int amount = CommonParsers.parseInt(inner.find("INTEGER"), file);
                 ExperienceCommand.Unit unit = parseUnit(inner.find("UNIT"));
                 return new ExperienceSetCommand(entity, amount, unit);
             }
             case "QUERY": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file.getCompiler());
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
                 ExperienceCommand.Unit unit = parseUnit(inner.find("UNIT"));
                 return new ExperienceQueryCommand(entity, unit);
             }

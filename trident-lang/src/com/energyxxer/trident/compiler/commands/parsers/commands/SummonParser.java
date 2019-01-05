@@ -24,14 +24,14 @@ public class SummonParser implements CommandParser {
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         TokenPattern<?> id = pattern.find("ENTITY_ID");
         Type type = null;
-        CoordinateSet pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"), file.getCompiler());
-        TagCompound nbt = NBTParser.parseCompound(pattern.find("..NBT_COMPOUND"), file.getCompiler());
+        CoordinateSet pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"), file);
+        TagCompound nbt = NBTParser.parseCompound(pattern.find("..NBT_COMPOUND"), file);
         if(nbt != null) {
             PathContext context = new PathContext().setIsSetting(true).setProtocol(PathProtocol.ENTITY, type);
-            NBTParser.analyzeTag(nbt, context, pattern.find("..NBT_COMPOUND"), file.getCompiler());
+            NBTParser.analyzeTag(nbt, context, pattern.find("..NBT_COMPOUND"), file);
         }
 
-        Object reference = CommonParsers.parseEntityReference(id, file.getCompiler());
+        Object reference = CommonParsers.parseEntityReference(id, file);
 
         if(reference instanceof Type) {
             type = (Type) reference;

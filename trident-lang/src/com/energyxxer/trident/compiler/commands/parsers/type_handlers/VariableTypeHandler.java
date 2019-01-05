@@ -10,18 +10,18 @@ import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserGroup;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.HashMap;
 
 @ParserGroup
 public interface VariableTypeHandler<T> {
-    Object getMember(T object, String member, TokenPattern<?> pattern, TridentCompiler compiler, boolean keepSymbol);
+    Object getMember(T object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol);
 
-    Object getIndexer(T object, Object index, TokenPattern<?> pattern, TridentCompiler compiler, boolean keepSymbol);
+    Object getIndexer(T object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol);
 
-    Object cast(T object, Class targetType, TokenPattern<?> pattern, TridentCompiler compiler);
+    Object cast(T object, Class targetType, TokenPattern<?> pattern, TridentFile file);
 
     class Static {
 

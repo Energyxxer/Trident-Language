@@ -14,7 +14,7 @@ public class GamemodeParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         Type gamemode = file.getCompiler().getModule().minecraft.types.gamemode.get(pattern.find("GAMEMODE").flatten(false));
-        Entity entity = EntityParser.parseEntity(pattern.find("PLAYER.ENTITY"), file.getCompiler());
+        Entity entity = EntityParser.parseEntity(pattern.find("PLAYER.ENTITY"), file);
 
         return new GamemodeCommand(gamemode, entity);
     }

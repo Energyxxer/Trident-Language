@@ -21,7 +21,7 @@ public class AdvancementParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         AdvancementCommand.Action action = pattern.find("ACTION").flatten(false).equals("revoke") ? AdvancementCommand.Action.REVOKE : AdvancementCommand.Action.GRANT;
-        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file.getCompiler());
+        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
         TokenPattern<?> inner = ((TokenStructure) pattern.find("INNER")).getContents();
         switch(inner.getName()) {
             case "EVERYTHING":

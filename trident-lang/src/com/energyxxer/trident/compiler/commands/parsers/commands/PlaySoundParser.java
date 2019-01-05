@@ -19,11 +19,11 @@ public class PlaySoundParser implements CommandParser {
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         TridentUtil.ResourceLocation soundEvent = new TridentUtil.ResourceLocation(pattern.find("RESOURCE_LOCATION").flatten(false));
         PlaySoundCommand.Source channel = PlaySoundCommand.Source.valueOf(pattern.find("CHANNEL").flatten(false).toUpperCase());
-        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file.getCompiler());
+        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
 
         TokenPattern<?> sub = pattern.find("");
         if(sub != null) {
-            CoordinateSet pos = CoordinateParser.parse(sub.find("COORDINATE_SET"), file.getCompiler());
+            CoordinateSet pos = CoordinateParser.parse(sub.find("COORDINATE_SET"), file);
 
             float maxVol = -1;
             float pitch = -1;

@@ -2,13 +2,13 @@ package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @ParserMember(key = "com.energyxxer.commodore.util.NumberRange<Integer>")
 public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
     @Override
-    public Object getMember(NumberRange<Integer> object, String member, TokenPattern<?> pattern, TridentCompiler compiler, boolean keepSymbol) {
+    public Object getMember(NumberRange<Integer> object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         if(member.equals("min")) {
             return getMin(object);
         }
@@ -22,7 +22,7 @@ public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
     }
 
     @Override
-    public Object getIndexer(NumberRange<Integer> object, Object index, TokenPattern<?> pattern, TridentCompiler compiler, boolean keepSymbol) {
+    public Object getIndexer(NumberRange<Integer> object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         return null;
     }
 
@@ -37,7 +37,7 @@ public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
     }
 
     @Override
-    public Object cast(NumberRange<Integer> range, Class targetType, TokenPattern<?> pattern, TridentCompiler compiler) {
+    public Object cast(NumberRange<Integer> range, Class targetType, TokenPattern<?> pattern, TridentFile file) {
         if(targetType == String.class) return range.toString();
         return null;
     }

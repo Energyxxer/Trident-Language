@@ -15,7 +15,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class TagParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file.getCompiler());
+        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
         switch(pattern.find("CHOICE").flattenTokens().get(0).value) {
             case "list": return new TagQueryCommand(entity);
             case "add":

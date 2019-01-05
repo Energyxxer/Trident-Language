@@ -145,7 +145,7 @@ public class TridentFile implements CompilerExtension {
                         break;
                     }
                     case "LANGUAGE_LEVEL_DIRECTIVE": {
-                        int level = CommonParsers.parseInt(directiveBody.find("INTEGER"), compiler);
+                        int level = CommonParsers.parseInt(directiveBody.find("INTEGER"), this);
                         if(level < 1 || level > 3) {
                             compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Invalid language level: " + level, directiveBody.find("INTEGER")));
                         } else this.languageLevel = level;
@@ -290,7 +290,7 @@ public class TridentFile implements CompilerExtension {
                                         for(TokenPattern<?> rawModifier : modifierList.getContents()) {
                                             ModifierParser parser = ParserManager.getParser(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
                                             if(parser != null) {
-                                                ExecuteModifier modifier = parser.parse(rawModifier, compiler);
+                                                ExecuteModifier modifier = parser.parse(rawModifier, parent);
                                                 if(modifier != null) modifiers.add(modifier);
                                             }
                                         }

@@ -45,7 +45,7 @@ public class DefineInstruction implements Instruction {
             criteria = sub.find("CRITERIA").flatten(false);
             TokenPattern<?> rawDisplayName = sub.find(".TEXT_COMPONENT");
             if(rawDisplayName != null) {
-                displayName = TextParser.parseTextComponent(rawDisplayName, file.getCompiler());
+                displayName = TextParser.parseTextComponent(rawDisplayName, file);
             }
         }
 

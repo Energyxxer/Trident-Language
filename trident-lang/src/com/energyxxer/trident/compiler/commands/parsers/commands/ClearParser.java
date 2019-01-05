@@ -14,9 +14,9 @@ import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 public class ClearParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Item item = CommonParsers.parseItem(pattern.find("..ITEM_TAGGED"), file.getCompiler(), NBTMode.TESTING);
+        Item item = CommonParsers.parseItem(pattern.find("..ITEM_TAGGED"), file, NBTMode.TESTING);
         TokenPattern<?> amountPattern = pattern.find("..AMOUNT");
-        int amount = amountPattern != null ? CommonParsers.parseInt(amountPattern, file.getCompiler()) : -1;
-        return new ClearCommand(EntityParser.parseEntity(pattern.find(".ENTITY"), file.getCompiler()), item, amount);
+        int amount = amountPattern != null ? CommonParsers.parseInt(amountPattern, file) : -1;
+        return new ClearCommand(EntityParser.parseEntity(pattern.find(".ENTITY"), file), item, amount);
     }
 }

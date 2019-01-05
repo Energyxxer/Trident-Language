@@ -12,7 +12,7 @@ import com.energyxxer.util.logger.Debug;
 public class DebugInstruction implements Instruction {
     @Override
     public void run(TokenPattern<?> pattern, TridentFile file) {
-        Object obj = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file.getCompiler());
+        Object obj = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file);
 
         file.getCompiler().getReport().addNotice(new Notice(NoticeType.DEBUG, "" + obj, pattern));
         Debug.log(obj);

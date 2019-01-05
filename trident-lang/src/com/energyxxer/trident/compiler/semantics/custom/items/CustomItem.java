@@ -87,14 +87,14 @@ public class CustomItem {
         boolean global = pattern.find("LITERAL_LOCAL") == null;
 
         String entityName = pattern.find("ITEM_NAME").flatten(false);
-        Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), file.getCompiler());
+        Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), file);
 
         CustomItem itemDecl = null;
         TokenPattern<?> rawCustomModelData = pattern.find("CUSTOM_MODEL_DATA.INTEGER");
 
         if(!entityName.equals("default")) {
             itemDecl = new CustomItem(entityName, defaultType);
-            if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, file.getCompiler()));
+            if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, file));
 
             SymbolTable table = global ? file.getCompiler().getStack().getGlobal() : file.getCompiler().getStack().peek();
             table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, itemDecl));
@@ -113,9 +113,9 @@ public class CustomItem {
                             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default items", entry));
                             break;
                         }
-                        TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler());
+                        TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file);
                         PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
-                        NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), file.getCompiler());
+                        NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), file);
                         itemDecl.defaultNBT = itemDecl.defaultNBT.merge(newNBT);
                         break;
                     }
@@ -173,7 +173,7 @@ public class CustomItem {
                         }
 
                         NBTCompoundBuilder builder = new NBTCompoundBuilder();
-                        builder.put(new NBTPath("display",new NBTPath("Name")), new TagString("Name", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), file.getCompiler()).toString()));
+                        builder.put(new NBTPath("display",new NBTPath("Name")), new TagString("Name", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), file).toString()));
 
                         itemDecl.defaultNBT = itemDecl.defaultNBT.merge(builder.getCompound());
                         break;
@@ -189,7 +189,7 @@ public class CustomItem {
                         TokenList rawLoreList = (TokenList)(entry.find("LORE_LIST"));
                         if(rawLoreList != null) {
                             for(TokenPattern<?> rawLine : rawLoreList.getContents()) {
-                                if(rawLine.getName().equals("TEXT_COMPONENT")) loreList.add(new TagString(TextParser.parseTextComponent(rawLine, file.getCompiler()).toString()));
+                                if(rawLine.getName().equals("TEXT_COMPONENT")) loreList.add(new TagString(TextParser.parseTextComponent(rawLine, file).toString()));
                             }
                         }
 

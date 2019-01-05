@@ -14,9 +14,9 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class SpawnpointParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Entity entity = EntityParser.parseEntity(pattern.find(".ENTITY"), file.getCompiler());
+        Entity entity = EntityParser.parseEntity(pattern.find(".ENTITY"), file);
         TokenPattern<?> rawCoords = pattern.find("..COORDINATE_SET");
-        CoordinateSet pos = rawCoords != null ? CoordinateParser.parse(rawCoords, file.getCompiler()) : null;
+        CoordinateSet pos = rawCoords != null ? CoordinateParser.parse(rawCoords, file) : null;
         return new SpawnpointCommand(entity, pos);
     }
 }

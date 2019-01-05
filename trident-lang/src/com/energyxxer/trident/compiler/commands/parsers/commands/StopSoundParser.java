@@ -17,7 +17,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class StopSoundParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file.getCompiler());
+        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
 
         TokenPattern<?> inner = pattern.find("CHOICE");
         if(inner != null) {

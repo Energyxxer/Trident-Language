@@ -29,17 +29,17 @@ public class TeleportParser implements CommandParser {
         TokenPattern<?> rawDestination = pattern.find("SUBCOMMAND.COORDINATE_SET");
         if(rawDestination != null) {
             victim = null;
-            destination = new BlockDestination(CoordinateParser.parse(rawDestination, file.getCompiler()));
+            destination = new BlockDestination(CoordinateParser.parse(rawDestination, file));
         } else {
-            Entity first = EntityParser.parseEntity(pattern.find("SUBCOMMAND..ENTITY"), file.getCompiler());
+            Entity first = EntityParser.parseEntity(pattern.find("SUBCOMMAND..ENTITY"), file);
             rawDestination = pattern.find("SUBCOMMAND..CHOICE");
             if(rawDestination != null) {
                 victim = first;
                 TokenPattern<?> rawDestinationEntity = rawDestination.find("ENTITY");
                 if(rawDestinationEntity != null) {
-                    destination = new EntityDestination(EntityParser.parseEntity(rawDestinationEntity, file.getCompiler()));
+                    destination = new EntityDestination(EntityParser.parseEntity(rawDestinationEntity, file));
                 } else {
-                    destination = new BlockDestination(CoordinateParser.parse(rawDestination.find(".COORDINATE_SET"), file.getCompiler()));
+                    destination = new BlockDestination(CoordinateParser.parse(rawDestination.find(".COORDINATE_SET"), file));
                     TokenPattern<?> rotationOption = rawDestination.find("ROTATION_OPTION");
                     if(rotationOption != null) rotationOption = ((TokenStructure)rotationOption).getContents();
 
@@ -48,9 +48,9 @@ public class TeleportParser implements CommandParser {
                             case "FACING_CLAUSE": {
                                 TokenPattern<?> facingBlock = rotationOption.find("CHOICE.COORDINATE_SET");
                                 if(facingBlock != null) {
-                                    facing = new BlockFacing(CoordinateParser.parse(facingBlock, file.getCompiler()));
+                                    facing = new BlockFacing(CoordinateParser.parse(facingBlock, file));
                                 } else {
-                                    Entity facingEntity = EntityParser.parseEntity(rotationOption.find("CHOICE..ENTITY"), file.getCompiler());
+                                    Entity facingEntity = EntityParser.parseEntity(rotationOption.find("CHOICE..ENTITY"), file);
                                     TokenPattern<?> rawAnchor = rotationOption.find("CHOICE..ANCHOR");
                                     if(rawAnchor != null) {
                                         facing = new EntityFacing(facingEntity, EntityAnchor.valueOf(rawAnchor.flatten(false).toUpperCase()));

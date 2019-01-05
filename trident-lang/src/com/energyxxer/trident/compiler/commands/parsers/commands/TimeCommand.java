@@ -22,7 +22,7 @@ public class TimeCommand implements CommandParser {
                 return new TimeQueryCommand(TimeQueryCommand.TimeCounter.valueOf(inner.find("CHOICE").flatten(false).toUpperCase()));
             }
             case "ADD": {
-                return new TimeAddCommand(CommonParsers.parseTime(inner.find("TIME"), file.getCompiler()));
+                return new TimeAddCommand(CommonParsers.parseTime(inner.find("TIME"), file));
             }
             case "SET": {
                 TokenPattern<?> sub = ((TokenStructure) inner.find("CHOICE")).getContents();
@@ -31,7 +31,7 @@ public class TimeCommand implements CommandParser {
                         return new TimeSetCommand(TimeSetCommand.TimeOfDay.valueOf(sub.flatten(false).toUpperCase()));
                     }
                     case "TIME": {
-                        return new TimeSetCommand(CommonParsers.parseTime(sub, file.getCompiler()));
+                        return new TimeSetCommand(CommonParsers.parseTime(sub, file));
                     }
                     default: {
                         file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + sub.getName() + "'", sub));

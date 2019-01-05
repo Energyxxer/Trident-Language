@@ -14,7 +14,7 @@ public class RecipeParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         RecipeCommand.Action action = pattern.find("ACTION").flatten(false).equals("take") ? RecipeCommand.Action.TAKE : RecipeCommand.Action.GIVE;
-        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file.getCompiler());
+        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
         String recipe = pattern.find("CHOICE").flatten(false);
         if(!recipe.equals("*")) recipe = new TridentUtil.ResourceLocation(recipe).toString();
         return new RecipeCommand(action, entity, recipe);

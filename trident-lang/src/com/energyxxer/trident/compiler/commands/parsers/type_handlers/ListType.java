@@ -3,9 +3,9 @@ package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,16 +32,16 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
     }
 
     @Override
-    public Object getMember(ListType object, String member, TokenPattern<?> pattern, TridentCompiler compiler, boolean keepSymbol) {
+    public Object getMember(ListType object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         if(member.equals("length")) return object.content.size();
         return null;
     }
 
     @Override
-    public Object getIndexer(ListType object, Object index, TokenPattern<?> pattern, TridentCompiler compiler, boolean keepSymbol) {
-        int realIndex = assertOfType(index, pattern, compiler, Integer.class);
+    public Object getIndexer(ListType object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+        int realIndex = assertOfType(index, pattern, file, Integer.class);
         if(realIndex < 0 || realIndex >= object.content.size()) {
-            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Index out of bounds: " + index, pattern));
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Index out of bounds: " + index, pattern));
             throw new EntryParsingException();
         }
 
@@ -50,7 +50,7 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
     }
 
     @Override
-    public Object cast(ListType object, Class targetType, TokenPattern<?> pattern, TridentCompiler compiler) {
+    public Object cast(ListType object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
         if(targetType == String.class) return content.toString();
         return null;
     }

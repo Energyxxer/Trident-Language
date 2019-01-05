@@ -15,7 +15,7 @@ public class ScheduleParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         try {
-            return new ScheduleCommand(CommonParsers.parseFunctionTag((TokenStructure) pattern.find("RESOURCE_LOCATION_TAGGED"), file), CommonParsers.parseTime(pattern.find("TIME"), file.getCompiler()));
+            return new ScheduleCommand(CommonParsers.parseFunctionTag((TokenStructure) pattern.find("RESOURCE_LOCATION_TAGGED"), file), CommonParsers.parseTime(pattern.find("TIME"), file));
         } catch(IllegalArgumentException x) {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, x.getMessage(), pattern));
             return null;

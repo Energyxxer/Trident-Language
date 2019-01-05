@@ -34,8 +34,8 @@ public class SetParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
 
-        PointerDecorator target = parsePointer(pattern.find("POINTER"), file.getCompiler());
-        PointerDecorator source = parsePointer(pattern.find("VALUE"), file.getCompiler());
+        PointerDecorator target = parsePointer(pattern.find("POINTER"), file);
+        PointerDecorator source = parsePointer(pattern.find("VALUE"), file);
 
         return target.setFrom(source, pattern, file.getCompiler());
 
@@ -48,63 +48,63 @@ public class SetParser implements CommandParser {
         //* NBT = VALUE > data modify ... set value ...
     }
 
-    private PointerDecorator parsePointer(TokenPattern<?> pattern, TridentCompiler compiler) {
+    private PointerDecorator parsePointer(TokenPattern<?> pattern, TridentFile file) {
         PointerHead head;
         switch(pattern.getName()) {
             case "VALUE":
             case "POINTER":
-                return parsePointer(((TokenStructure) pattern).getContents(), compiler);
+                return parsePointer(((TokenStructure) pattern).getContents(), file);
             case "BLOCK_POINTER":
-                CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"), compiler);
-                head = parsePointerHead(pos, pattern.find("NBT_POINTER_HEAD"), compiler);
+                CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"), file);
+                head = parsePointerHead(pos, pattern.find("NBT_POINTER_HEAD"), file);
                 return new PointerDecorator.BlockPointer(pos, head);
             case "ENTITY_POINTER":
-                Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), compiler);
-                head = parsePointerHead(entity, pattern.find("POINTER_HEAD"), compiler);
+                Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
+                head = parsePointerHead(entity, pattern.find("POINTER_HEAD"), file);
                 return new PointerDecorator.EntityPointer(entity, head);
             case "VARIABLE_POINTER":
-                Object symbol = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), compiler, Entity.class, CoordinateSet.class);
-                head = parsePointerHead(symbol, pattern.find("POINTER_HEAD"), compiler);
+                Object symbol = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file, Entity.class, CoordinateSet.class);
+                head = parsePointerHead(symbol, pattern.find("POINTER_HEAD"), file);
                 if(symbol instanceof Entity) {
                     return new PointerDecorator.EntityPointer((Entity) symbol, head);
                 } else if(symbol instanceof CoordinateSet) {
                     if(!head.isNBT()) {
-                        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "This pointer subject only accepts NBT pointer heads", pattern));
+                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "This pointer subject only accepts NBT pointer heads", pattern));
                         throw new EntryParsingException();
                     }
                     return new PointerDecorator.BlockPointer((CoordinateSet) symbol, head);
                 } else {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown CommonParsers#retrieveSymbol return type: " + symbol.getClass()));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown CommonParsers#retrieveSymbol return type: " + symbol.getClass()));
                     throw new EntryParsingException();
                 }
             case "NBT_VALUE":
-                return new PointerDecorator.ValuePointer(NBTParser.parseValue(pattern, compiler));
+                return new PointerDecorator.ValuePointer(NBTParser.parseValue(pattern, file));
             default:
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
                 throw new EntryParsingException();
         }
     }
 
-    private PointerHead parsePointerHead(Object body, TokenPattern<?> pattern, TridentCompiler compiler) {
+    private PointerHead parsePointerHead(Object body, TokenPattern<?> pattern, TridentFile file) {
         double scale = 1;
         switch(pattern.getName()) {
             case "POINTER_HEAD":
-                return parsePointerHead(body, ((TokenStructure) pattern).getContents(), compiler);
+                return parsePointerHead(body, ((TokenStructure) pattern).getContents(), file);
             case "SCORE_POINTER_HEAD":
                 if(pattern.find("SCALE") != null) {
-                    scale = CommonParsers.parseDouble(pattern.find("SCALE.REAL"), compiler);
+                    scale = CommonParsers.parseDouble(pattern.find("SCALE.REAL"), file);
                 }
-                return new PointerHead.ScorePointerHead(CommonParsers.parseObjective(pattern.find("OBJECTIVE"), compiler), scale);
+                return new PointerHead.ScorePointerHead(CommonParsers.parseObjective(pattern.find("OBJECTIVE"), file), scale);
             case "NBT_POINTER_HEAD":
                 if(pattern.find("SCALE") != null) {
-                    scale = CommonParsers.parseDouble(pattern.find("SCALE.REAL"), compiler);
+                    scale = CommonParsers.parseDouble(pattern.find("SCALE.REAL"), file);
                 }
 
-                NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"), compiler);
+                NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"), file);
 
-                return new PointerHead.NBTPointerHead(path, scale, new Lazy<>(() -> StoreParser.parseNumericType(pattern.find("TYPE_CAST.NUMERIC_DATA_TYPE"), body, path, compiler, pattern, true)));
+                return new PointerHead.NBTPointerHead(path, scale, new Lazy<>(() -> StoreParser.parseNumericType(pattern.find("TYPE_CAST.NUMERIC_DATA_TYPE"), body, path, file, pattern, true)));
             default:
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
                 throw new EntryParsingException();
         }
     }

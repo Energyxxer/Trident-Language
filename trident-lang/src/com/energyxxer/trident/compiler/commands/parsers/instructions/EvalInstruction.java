@@ -9,6 +9,6 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class EvalInstruction implements Instruction {
     @Override
     public void run(TokenPattern<?> pattern, TridentFile file) {
-        InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), file.getCompiler());
+        InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), file);
     }
 }

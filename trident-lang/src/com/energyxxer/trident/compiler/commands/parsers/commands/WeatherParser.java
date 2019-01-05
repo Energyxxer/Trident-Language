@@ -13,7 +13,7 @@ public class WeatherParser implements CommandParser {
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         WeatherCommand.Mode mode = WeatherCommand.Mode.valueOf(pattern.find("CHOICE").flatten(false).toUpperCase());
         TokenPattern<?> rawDuration = pattern.find("INTEGER");
-        return (rawDuration != null) ? new WeatherCommand(mode, CommonParsers.parseInt(rawDuration, file.getCompiler())) :
+        return (rawDuration != null) ? new WeatherCommand(mode, CommonParsers.parseInt(rawDuration, file)) :
                 new WeatherCommand(mode);
     }
 }

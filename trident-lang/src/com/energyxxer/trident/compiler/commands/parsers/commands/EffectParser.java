@@ -24,15 +24,15 @@ public class EffectParser implements CommandParser {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "CLEAR": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file.getCompiler());
-                Type effect = CommonParsers.parseType(inner.find(".EFFECT_ID"), file.getCompiler(), d->d.effect);
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
+                Type effect = CommonParsers.parseType(inner.find(".EFFECT_ID"), file, d->d.effect);
                 return new EffectClearCommand(entity, effect);
             }
             case "GIVE": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file.getCompiler());
-                StatusEffect effect = new StatusEffect(CommonParsers.parseType(inner.find("EFFECT_ID"), file.getCompiler(), d->d.effect));
-                using(inner.find(".DURATION")).notIfNull().run(p -> effect.setDuration(20 * CommonParsers.parseInt(p, file.getCompiler())));
-                using(inner.find("..AMPLIFIER")).notIfNull().run(p -> effect.setAmplifier(CommonParsers.parseInt(p, file.getCompiler())));
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
+                StatusEffect effect = new StatusEffect(CommonParsers.parseType(inner.find("EFFECT_ID"), file, d->d.effect));
+                using(inner.find(".DURATION")).notIfNull().run(p -> effect.setDuration(20 * CommonParsers.parseInt(p, file)));
+                using(inner.find("..AMPLIFIER")).notIfNull().run(p -> effect.setAmplifier(CommonParsers.parseInt(p, file)));
                 using(inner.find("..HIDE_PARTICLES")).notIfNull().run(p -> effect.setVisibility(p.flatten(false).equals("true") ? StatusEffect.ParticleVisibility.HIDDEN : StatusEffect.ParticleVisibility.VISIBLE));
                 return new EffectGiveCommand(entity, effect);
             }

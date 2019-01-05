@@ -9,14 +9,14 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @ParserMember(key = "scores")
 public class ScoresArgumentParser implements SimpleSelectorArgumentParser {
     @Override
-    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentFile file) {
         TokenList scoreList = (TokenList) pattern.find("SCORE_LIST");
 
         ScoreArgument scores = new ScoreArgument();
@@ -24,19 +24,19 @@ public class ScoresArgumentParser implements SimpleSelectorArgumentParser {
         if(scoreList != null) {
             for(TokenPattern<?> rawArg : scoreList.getContents()) {
                 if(rawArg.getName().equals("SCORE_ENTRY")) {
-                    Objective objective = CommonParsers.parseObjective(rawArg.find("OBJECTIVE_NAME"), compiler);
+                    Objective objective = CommonParsers.parseObjective(rawArg.find("OBJECTIVE_NAME"), file);
                     NumberRange<Integer> range;
 
                     TokenPattern<?> valueInner = ((TokenStructure) rawArg.find("SCORE_VALUE")).getContents();
                     switch(valueInner.getName()) {
                         case "INTEGER_NUMBER_RANGE":
-                            range = CommonParsers.parseIntRange(valueInner, compiler);
+                            range = CommonParsers.parseIntRange(valueInner, file);
                             break;
                         case "ISSET":
                             range = new NumberRange<>(Integer.MIN_VALUE, null);
                             break;
                         default: {
-                            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + valueInner.getName() + "'", valueInner));
+                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + valueInner.getName() + "'", valueInner));
                             continue;
                         }
                     }

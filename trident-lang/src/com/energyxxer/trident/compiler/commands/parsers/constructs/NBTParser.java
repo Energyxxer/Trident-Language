@@ -18,27 +18,28 @@ import com.energyxxer.nbtmapper.tags.TypeFlags;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NBTParser {
-    public static TagCompound parseCompound(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public static TagCompound parseCompound(TokenPattern<?> pattern, TridentFile file) {
         if(pattern == null) return null;
-        return (TagCompound)parseValue(pattern, compiler);
+        return (TagCompound)parseValue(pattern, file);
     }
 
-    public static NBTTag parseValue(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public static NBTTag parseValue(TokenPattern<?> pattern, TridentFile file) {
         switch(pattern.getName()) {
             case "NBT_VALUE": {
-                return parseValue(((TokenStructure)pattern).getContents(), compiler);
+                return parseValue(((TokenStructure)pattern).getContents(), file);
             }
             case "NBT_COMPOUND": {
-                return parseValue(((TokenStructure)pattern).getContents(), compiler);
+                return parseValue(((TokenStructure)pattern).getContents(), file);
             }
             case "INTERPOLATION_BLOCK": {
-                return InterpolationManager.parse(pattern, compiler, TagCompound.class);
+                return InterpolationManager.parse(pattern, file, TagCompound.class);
             }
             case "NBT_COMPOUND_GROUP": {
                 TagCompound compound = new TagCompound();
@@ -50,7 +51,7 @@ public class NBTParser {
                             if (key.startsWith("\"")) {
                                 key = CommandUtils.parseQuotedString(key);
                             }
-                            NBTTag value = parseValue(inner.find("NBT_VALUE"), compiler);
+                            NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
                             value.setName(key);
                             compound.add(value);
                         }
@@ -64,7 +65,7 @@ public class NBTParser {
                 if(entries != null) {
                     for (TokenPattern<?> inner : entries.getContents()) {
                         if (!inner.getName().equals("COMMA")) {
-                            NBTTag value = parseValue(inner.find("NBT_VALUE"), compiler);
+                            NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
                             list.add(value);
                         }
                     }
@@ -122,52 +123,52 @@ public class NBTParser {
     private NBTParser() {
     }
 
-    public static NBTPath parsePath(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public static NBTPath parsePath(TokenPattern<?> pattern, TridentFile file) {
         if(pattern == null) return null;
         if((((TokenStructure)pattern).getContents()).getName().equals("INTERPOLATION_BLOCK")) {
-            return InterpolationManager.parse(((TokenStructure) pattern).getContents(), compiler, NBTPath.class);
+            return InterpolationManager.parse(((TokenStructure) pattern).getContents(), file, NBTPath.class);
         }
-        NBTPathNode start = parsePathNode(pattern.find("NBT_PATH_NODE"), compiler);
+        NBTPathNode start = parsePathNode(pattern.find("NBT_PATH_NODE"), file);
         ArrayList<NBTPathNode> nodes = new ArrayList<>();
         nodes.add(start);
 
         TokenList otherNodes = (TokenList) pattern.find("OTHER_NODES");
         if(otherNodes != null) {
             for(TokenPattern<?> node : otherNodes.getContents()) {
-                nodes.add(parsePathNode(node.find("NBT_PATH_NODE"), compiler));
+                nodes.add(parsePathNode(node.find("NBT_PATH_NODE"), file));
             }
         }
 
         return new NBTPath(nodes.toArray(new NBTPathNode[0]));
     }
 
-    private static NBTPathNode parsePathNode(TokenPattern<?> pattern, TridentCompiler compiler) {
+    private static NBTPathNode parsePathNode(TokenPattern<?> pattern, TridentFile file) {
         switch(pattern.getName()) {
             case "NBT_PATH_NODE": {
-                return parsePathNode(((TokenStructure) pattern).getContents(), compiler);
+                return parsePathNode(((TokenStructure) pattern).getContents(), file);
             }
             case "NBT_PATH_KEY": {
                 return new NBTPathKey(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("NBT_PATH_KEY_LABEL")));
             }
             case "NBT_PATH_INDEX": {
-                return new NBTPathIndex(CommonParsers.parseInt(pattern.find("INTEGER"), compiler));
+                return new NBTPathIndex(CommonParsers.parseInt(pattern.find("INTEGER"), file));
             }
             case "NBT_PATH_LIST_MATCH": {
-                return new NBTListMatch(parseCompound(pattern.find("NBT_COMPOUND"), compiler));
+                return new NBTListMatch(parseCompound(pattern.find("NBT_COMPOUND"), file));
             }
             case "NBT_PATH_LIST_UNKNOWN": {
-                Object val = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), compiler, Integer.class, TagCompound.class);
+                Object val = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file, Integer.class, TagCompound.class);
                 if(val instanceof Integer) {
                     return new NBTPathIndex((int) val);
                 } else if(val instanceof TagCompound){
                     return new NBTListMatch((TagCompound) val);
                 } else {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown symbol return type: " + val.getClass().getSimpleName(), pattern));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown symbol return type: " + val.getClass().getSimpleName(), pattern));
                     throw new EntryParsingException();
                 }
             }
             case "NBT_PATH_COMPOUND_MATCH": {
-                return new NBTObjectMatch(parseCompound(pattern.find("NBT_COMPOUND"), compiler));
+                return new NBTObjectMatch(parseCompound(pattern.find("NBT_COMPOUND"), file));
             }
             default: {
                 throw new IllegalArgumentException("Unknown NBT path grammar pattern name '" + pattern.getName() + "'");
@@ -175,12 +176,12 @@ public class NBTParser {
         }
     }
 
-    public static void analyzeTag(TagCompound compound, PathContext context, TokenPattern<?> pattern, TridentCompiler compiler) {
+    public static void analyzeTag(TagCompound compound, PathContext context, TokenPattern<?> pattern, TridentFile file) {
         if(pattern == null) throw new RuntimeException();
-        NoticeType noticeType = compiler.getProperties().has("strict-nbt") &&
-                compiler.getProperties().get("strict-nbt").isJsonPrimitive() &&
-                compiler.getProperties().get("strict-nbt").getAsJsonPrimitive().isBoolean() &&
-                compiler.getProperties().get("strict-nbt").getAsBoolean() ?
+        NoticeType noticeType = file.getCompiler().getProperties().has("strict-nbt") &&
+                file.getCompiler().getProperties().get("strict-nbt").isJsonPrimitive() &&
+                file.getCompiler().getProperties().get("strict-nbt").getAsJsonPrimitive().isBoolean() &&
+                file.getCompiler().getProperties().get("strict-nbt").getAsBoolean() ?
                 NoticeType.ERROR : NoticeType.WARNING;
 
         String auxiliaryVerb = noticeType == NoticeType.ERROR ? "must" : "should";
@@ -192,7 +193,7 @@ public class NBTParser {
             NBTPath path = next.getPath();
             NBTTag value = next.getValue();
 
-            DataTypeQueryResponse response = compiler.getTypeMap().collectTypeInformation(next.getPath(), context);
+            DataTypeQueryResponse response = file.getCompiler().getTypeMap().collectTypeInformation(next.getPath(), context);
 
             if(!response.isEmpty()) {
                 boolean isAGoodBoy = false;
@@ -207,7 +208,7 @@ public class NBTParser {
                             if(flags.hasFlag("boolean") && value instanceof TagByte) {
                                 byte byteValue = ((TagByte) value).getValue();
                                 if(byteValue != 0 && byteValue != 1) {
-                                    compiler.getReport().addNotice(new Notice(noticeType, "Byte at path '" + path + "' is boolean-like; " + auxiliaryVerb + " be either 0b or 1b", pattern));
+                                    file.getCompiler().getReport().addNotice(new Notice(noticeType, "Byte at path '" + path + "' is boolean-like; " + auxiliaryVerb + " be either 0b or 1b", pattern));
                                 }
                             }
                             //endregion
@@ -217,11 +218,11 @@ public class NBTParser {
                                 boolean matched = false;
                                 TridentUtil.ResourceLocation location = TridentUtil.ResourceLocation.createStrict(((TagString)value).getValue());
                                 if(location == null) {
-                                    compiler.getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' is a type; but it doesn't look like a resource location", pattern));
+                                    file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' is a type; but it doesn't look like a resource location", pattern));
                                     continue;
                                 }
                                 for(String category : flags.getTypeCategories()) {
-                                    Type referencedType = compiler.fetchType(location, category);
+                                    Type referencedType = file.getCompiler().fetchType(location, category);
                                     if(referencedType != null) {
                                         matched = true;
                                         ((TagString) value).setValue(referencedType.toString());
@@ -230,9 +231,9 @@ public class NBTParser {
 
                                 if(!matched) {
                                     if(flags.getTypeCategories().size() > 1) {
-                                        compiler.getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following types: " + flags.getTypeCategories().join(",") + "; but '" + ((TagString) value).getValue() + "' is not a type of any of the previous categories", pattern));
+                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following types: " + flags.getTypeCategories().join(",") + "; but '" + ((TagString) value).getValue() + "' is not a type of any of the previous categories", pattern));
                                     } else {
-                                        compiler.getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be of type '" + flags.getTypeCategories().first() + "'. Instead got '" + ((TagString) value).getValue() + "'.", pattern));
+                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be of type '" + flags.getTypeCategories().first() + "'. Instead got '" + ((TagString) value).getValue() + "'.", pattern));
                                     }
                                 }
                             }
@@ -249,7 +250,7 @@ public class NBTParser {
                                     }
                                 }
                                 if(!matched) {
-                                    compiler.getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + flags.getStringOptions().join(",") + "; instead got '" + ((TagString) value).getValue() + "'", pattern));
+                                    file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + flags.getStringOptions().join(",") + "; instead got '" + ((TagString) value).getValue() + "'", pattern));
                                 }
                             }
                             //endregion
@@ -260,13 +261,13 @@ public class NBTParser {
                 }
                 if(!isAGoodBoy) {
                     if(response.getPossibleTypes().size() > 1) {
-                        compiler.getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + response.getPossibleTypes().map(DataType::getShortTypeName).toList().join(", "), pattern));
+                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + response.getPossibleTypes().map(DataType::getShortTypeName).toList().join(", "), pattern));
                     } else {
-                        compiler.getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be of type " + response.getPossibleTypes().toList().get(0).getShortTypeName(), pattern));
+                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be of type " + response.getPossibleTypes().toList().get(0).getShortTypeName(), pattern));
                     }
                 }
             } else {
-                compiler.getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown data type for path '" + next.getPath() + "'. Consider adding it to the type map", pattern));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown data type for path '" + next.getPath() + "'. Consider adding it to the type map", pattern));
             }
         }
     }

@@ -24,12 +24,12 @@ public class WithinInstruction implements Instruction {
         Symbol symbol = new Symbol(pattern.find("VARIABLE_NAME").flatten(false));
         table.put(symbol);
 
-        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file.getCompiler());
-        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file.getCompiler());
+        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file);
+        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file);
 
         double step = 1;
         if(pattern.find("STEP") != null) {
-            step = CommonParsers.parseDouble(pattern.find("STEP.REAL"), file.getCompiler());
+            step = CommonParsers.parseDouble(pattern.find("STEP.REAL"), file);
             if(step <= 0) {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Within step must be positive", pattern.find("STEP")));
                 throw new EntryParsingException();

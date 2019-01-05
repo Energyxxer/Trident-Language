@@ -14,7 +14,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class KillParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Entity entity = EntityParser.parseEntity(pattern.find(".ENTITY"), file.getCompiler());
+        Entity entity = EntityParser.parseEntity(pattern.find(".ENTITY"), file);
         if(entity == null) entity = new GenericEntity(new Selector(Selector.BaseSelector.SENDER));
         return new KillCommand(entity);
     }

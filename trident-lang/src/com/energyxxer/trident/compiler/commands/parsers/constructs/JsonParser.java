@@ -6,8 +6,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -19,12 +19,12 @@ public class JsonParser {
 
     private static HashMap<JsonElement, TokenPattern<?>> patternCache = new HashMap<>();
 
-    public static JsonElement parseJson(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public static JsonElement parseJson(TokenPattern<?> pattern, TridentFile file) {
         TokenList entries;
         switch(pattern.getName()) {
             case "JSON_ROOT":
             case "JSON_ELEMENT":
-                return parseJson(((TokenStructure) pattern).getContents(), compiler);
+                return parseJson(((TokenStructure) pattern).getContents(), file);
             case "JSON_OBJECT":
                 JsonObject object = new JsonObject();
 
@@ -33,7 +33,7 @@ public class JsonParser {
                     for (TokenPattern<?> entry : entries.getContents()) {
                         if (!entry.getName().equals("COMMA")) {
                             String key = CommandUtils.parseQuotedString(entry.find("JSON_OBJECT_KEY").flattenTokens().get(0).value);
-                            JsonElement value = parseJson(entry.find("JSON_ELEMENT"), compiler);
+                            JsonElement value = parseJson(entry.find("JSON_ELEMENT"), file);
                             object.add(key, value);
                         }
                     }
@@ -47,7 +47,7 @@ public class JsonParser {
                 if(entries != null) {
                     for (TokenPattern<?> entry : entries.getContents()) {
                         if (!entry.getName().equals("COMMA")) {
-                            arr.add(parseJson(entry, compiler));
+                            arr.add(parseJson(entry, file));
                         }
                     }
                 }
@@ -66,7 +66,7 @@ public class JsonParser {
                 patternCache.put(bool, pattern);
                 return bool;
             default:
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown json element production name: '" + pattern.getName() + "'", pattern));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown json element production name: '" + pattern.getName() + "'", pattern));
                 throw new EntryParsingException();
         }
     }

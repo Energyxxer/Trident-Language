@@ -19,16 +19,16 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class CloneParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file.getCompiler());
-        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file.getCompiler());
-        CoordinateSet destination = CoordinateParser.parse(pattern.find("DESTINATION.COORDINATE_SET"), file.getCompiler());
+        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file);
+        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file);
+        CoordinateSet destination = CoordinateParser.parse(pattern.find("DESTINATION.COORDINATE_SET"), file);
 
         TokenPattern<?> inner = pattern.find("CHOICE");
         if(inner != null) {
             inner = ((TokenStructure)inner).getContents();
             switch(inner.getName()) {
                 case "FILTERED": {
-                    Block block = CommonParsers.parseBlock(inner.find("BLOCK_TAGGED"), file.getCompiler());
+                    Block block = CommonParsers.parseBlock(inner.find("BLOCK_TAGGED"), file);
                     return new CloneFilteredCommand(from, to, destination, block, parseMode(inner.find("CLONE_MODE")));
                 }
                 case "MASKED": {

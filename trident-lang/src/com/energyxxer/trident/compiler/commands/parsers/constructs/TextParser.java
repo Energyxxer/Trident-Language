@@ -14,6 +14,7 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -22,21 +23,21 @@ import static com.energyxxer.trident.compiler.util.Using.using;
 
 public class TextParser {
 
-    public static TextComponent parseTextComponent(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public static TextComponent parseTextComponent(TokenPattern<?> pattern, TridentFile file) {
         if(pattern == null) return null;
         switch(pattern.getName()) {
             case "TEXT_COMPONENT": {
-                return parseTextComponent(((TokenStructure)pattern).getContents(), compiler);
+                return parseTextComponent(((TokenStructure)pattern).getContents(), file);
             }
             case "INTERPOLATION_BLOCK": {
-                return InterpolationManager.parse(pattern, compiler, TextComponent.class);
+                return InterpolationManager.parse(pattern, file, TextComponent.class);
             }
             case "JSON_ROOT":
             case "JSON_ELEMENT": {
-                return parseTextComponent(JsonParser.parseJson(pattern, compiler), compiler, pattern, TextComponentContext.CHAT);
+                return parseTextComponent(JsonParser.parseJson(pattern, file), file, pattern, TextComponentContext.CHAT);
             }
             default: {
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown text component production: '" + pattern.getName() + "'", pattern));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown text component production: '" + pattern.getName() + "'", pattern));
                 throw new EntryParsingException();
             }
         }
@@ -44,18 +45,18 @@ public class TextParser {
 
     private static TextComponent component;
 
-    private static TextComponent parseTextComponent(JsonElement elem, TridentCompiler compiler, TokenPattern<?> pattern, TextComponentContext context) {
+    private static TextComponent parseTextComponent(JsonElement elem, TridentFile file, TokenPattern<?> pattern, TextComponentContext context) {
 
-        boolean strict = compiler.getProperties().has("strict-text-components") && compiler.getProperties().get("strict-text-components").getAsBooleanOrNull();
+        boolean strict = file.getCompiler().getProperties().has("strict-text-components") && file.getCompiler().getProperties().get("strict-text-components").getAsBooleanOrNull();
 
-        ReportDelegate delegate = new ReportDelegate(compiler, strict, pattern);
+        ReportDelegate delegate = new ReportDelegate(file.getCompiler(), strict, pattern);
 
         if(elem.isJsonPrimitive() && ((JsonPrimitive)elem).isString()) {
             return new StringTextComponent(elem.getAsStringOrNull());
         } else if(elem.isJsonArray()) {
             ListTextComponent list = new ListTextComponent();
             for(JsonElement sub : elem.getAsJsonArray()) {
-                list.append(parseTextComponent(sub, compiler, pattern, context));
+                list.append(parseTextComponent(sub, file, pattern, context));
             }
             return list;
         } else if(elem.isJsonObject()) {
@@ -85,8 +86,8 @@ public class TextParser {
                     String objectiveName = s.get("objective").getAsStringOrNull();
                     if(objectiveName == null) delegate.report("Missing 'objective' string for 'score' text component", s);
                     Objective objective;
-                    if(compiler.getModule().getObjectiveManager().contains(objectiveName)) objective = compiler.getModule().getObjectiveManager().get(objectiveName);
-                    else objective = compiler.getModule().getObjectiveManager().create(objectiveName, true);
+                    if(file.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) objective = file.getCompiler().getModule().getObjectiveManager().get(objectiveName);
+                    else objective = file.getCompiler().getModule().getObjectiveManager().create(objectiveName, true);
                     component = new ScoreTextComponent(new LocalScore(objective, new PlayerName(name)));
                 }).otherwise(v -> delegate.report("Expected object in 'score'", obj.get("score")));
             } else if(obj.has("selector")) {
@@ -96,7 +97,7 @@ public class TextParser {
                         .otherwise(t -> delegate.report("Expected string in 'selector'", obj.get("selector")));
             }
             if(component == null) {
-                compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Don't know how to turn this into a text component", pattern));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Don't know how to turn this into a text component", pattern));
                 throw new EntryParsingException();
             }
 
@@ -172,7 +173,7 @@ public class TextParser {
                             if(v.isJsonPrimitive() && v.getAsJsonPrimitive().isString()) {
                                 value = v.getAsStringOrNull();
                             } else {
-                                value = (parseTextComponent(v, compiler, pattern, TextComponentContext.TOOLTIP)).toString();
+                                value = (parseTextComponent(v, file, pattern, TextComponentContext.TOOLTIP)).toString();
                             }
                             component.addEvent(new HoverEvent(action, value));
                         }).otherwise(v -> delegate.report("Missing hover event value", e));
@@ -198,7 +199,7 @@ public class TextParser {
 
             return component;
         } else {
-            compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Don't know how to turn this into a text component", pattern));
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Don't know how to turn this into a text component", pattern));
             throw new EntryParsingException();
         }
     }

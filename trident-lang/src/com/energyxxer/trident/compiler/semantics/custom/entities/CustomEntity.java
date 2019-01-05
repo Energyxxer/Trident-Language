@@ -93,7 +93,7 @@ public class CustomEntity {
         String entityName = pattern.find("ENTITY_NAME").flatten(false);
         Type defaultType = null;
         if(pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED") != null) {
-            defaultType = CommonParsers.parseEntityType(pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED"), file.getCompiler());
+            defaultType = CommonParsers.parseEntityType(pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED"), file);
         }
 
         CustomEntity entityDecl = null;
@@ -119,10 +119,10 @@ public class CustomEntity {
                             break;
                         }
 
-                        TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file.getCompiler());
+                        TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file);
                         if(newNBT != null) {
                             PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
-                            NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), file.getCompiler());
+                            NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), file);
                         }
 
                         entityDecl.mergeNBT(newNBT);
@@ -141,7 +141,7 @@ public class CustomEntity {
 
                                 TagCompound passengerCompound;
 
-                                Object reference = CommonParsers.parseEntityReference(rawPassenger.find("ENTITY_ID"), file.getCompiler());
+                                Object reference = CommonParsers.parseEntityReference(rawPassenger.find("ENTITY_ID"), file);
 
                                 if(reference instanceof Type) {
                                     passengerCompound = new TagCompound(new TagString("id", reference.toString()));
@@ -153,9 +153,9 @@ public class CustomEntity {
                                 }
                                 TokenPattern<?> auxNBT = rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND");
                                 if(auxNBT != null) {
-                                    TagCompound tag = NBTParser.parseCompound(auxNBT, file.getCompiler());
+                                    TagCompound tag = NBTParser.parseCompound(auxNBT, file);
                                     PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
-                                    NBTParser.analyzeTag(tag, context, auxNBT, file.getCompiler());
+                                    NBTParser.analyzeTag(tag, context, auxNBT, file);
                                     passengerCompound = passengerCompound.merge(tag);
                                 }
 
@@ -172,7 +172,7 @@ public class CustomEntity {
                             break;
                         }
 
-                        double health = CommonParsers.parseDouble(entry.find("HEALTH"), file.getCompiler());
+                        double health = CommonParsers.parseDouble(entry.find("HEALTH"), file);
                         if(health < 0) {
                             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Health must be non-negative"));
                             break;

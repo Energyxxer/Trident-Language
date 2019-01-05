@@ -21,25 +21,25 @@ public class WorldBorderParser implements CommandParser {
                 return new WorldBorderGetWidth();
             }
             case "CHANGE": {
-                double distance = CommonParsers.parseDouble(inner.find("DISTANCE"), file.getCompiler());
+                double distance = CommonParsers.parseDouble(inner.find("DISTANCE"), file);
                 int seconds = 0;
-                if(inner.find("TIME") != null) seconds = CommonParsers.parseInt(inner.find("TIME"), file.getCompiler());
+                if(inner.find("TIME") != null) seconds = CommonParsers.parseInt(inner.find("TIME"), file);
 
                 if(inner.find("CHOICE.LITERAL_ADD") != null) return new WorldBorderAddDistance(distance, seconds);
                 else return new WorldBorderSetDistance(distance, seconds);
             }
             case "DAMAGE": {
-                double damageOrDistance = CommonParsers.parseDouble(inner.find("DAMAGE_OR_DISTANCE"), file.getCompiler());
+                double damageOrDistance = CommonParsers.parseDouble(inner.find("DAMAGE_OR_DISTANCE"), file);
                 if(inner.find("CHOICE.LITERAL_AMOUNT") != null) return new WorldBorderSetDamageAmount(damageOrDistance);
                 else return new WorldBorderSetDamageBuffer(damageOrDistance);
             }
             case "WARNING": {
-                int distanceOrTime = CommonParsers.parseInt(inner.find("DISTANCE_OR_TIME"), file.getCompiler());
+                int distanceOrTime = CommonParsers.parseInt(inner.find("DISTANCE_OR_TIME"), file);
                 if(inner.find("CHOICE.LITERAL_DISTANCE") != null) return new WorldBorderSetWarningDistance(distanceOrTime);
                 else return new WorldBorderSetWarningTime(distanceOrTime);
             }
             case "CENTER": {
-                return new WorldBorderSetCenter(CoordinateParser.parse(inner.find("TWO_COORDINATE_SET"), file.getCompiler()));
+                return new WorldBorderSetCenter(CoordinateParser.parse(inner.find("TWO_COORDINATE_SET"), file));
             }
             default: {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));

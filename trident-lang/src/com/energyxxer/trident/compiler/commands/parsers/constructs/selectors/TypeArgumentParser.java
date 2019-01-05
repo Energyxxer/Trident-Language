@@ -10,10 +10,10 @@ import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 
 import java.util.ArrayList;
@@ -22,11 +22,11 @@ import java.util.Collection;
 @ParserMember(key = "type")
 public class TypeArgumentParser implements SelectorArgumentParser {
     @Override
-    public Collection<SelectorArgument> parse(TokenPattern<?> pattern, TridentCompiler compiler) {
+    public Collection<SelectorArgument> parse(TokenPattern<?> pattern, TridentFile file) {
         boolean negated = pattern.find("NEGATED") != null;
         ArrayList<SelectorArgument> args = new ArrayList<>();
 
-        Object reference = CommonParsers.parseEntityReference(pattern.find("ENTITY_ID_TAGGED"), compiler);
+        Object reference = CommonParsers.parseEntityReference(pattern.find("ENTITY_ID_TAGGED"), file);
 
         if(reference instanceof Type) {
             args.add(new TypeArgument((Type) reference, negated));
@@ -36,7 +36,7 @@ public class TypeArgumentParser implements SelectorArgumentParser {
 
             args.add(new TagArgument(ce.getIdTag(), negated));
         } else {
-            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID")));
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID")));
             throw new EntryParsingException();
         }
 

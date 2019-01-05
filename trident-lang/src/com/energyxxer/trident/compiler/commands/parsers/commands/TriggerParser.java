@@ -14,7 +14,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class TriggerParser implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Objective objective = CommonParsers.parseObjective(pattern.find("OBJECTIVE_NAME"), file.getCompiler());
+        Objective objective = CommonParsers.parseObjective(pattern.find("OBJECTIVE_NAME"), file);
         if(!objective.getType().equals("trigger")) {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unable to use objective '" + objective.getName() + "' with trigger; Expected objective of type 'trigger', instead got '" + objective.getType() + "'", pattern.find("OBJECTIVE_NAME")));
             return null;
@@ -24,7 +24,7 @@ public class TriggerParser implements CommandParser {
         TokenPattern<?> inner = pattern.find("INNER");
         if(inner != null) {
             action = inner.find("CHOICE").flatten(false).equals("set") ? TriggerCommand.Action.SET : TriggerCommand.Action.ADD;
-            amount = CommonParsers.parseInt(inner.find("INTEGER"), file.getCompiler());
+            amount = CommonParsers.parseInt(inner.find("INTEGER"), file);
         }
         return new TriggerCommand(objective, action, amount);
     }

@@ -21,11 +21,11 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class TitleCommand implements CommandParser {
     @Override
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file.getCompiler());
+        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "SHOW": {
-                TextComponent text = TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), file.getCompiler());
+                TextComponent text = TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), file);
                 TitleShowCommand.Display display = TitleShowCommand.Display.valueOf(inner.find("DISPLAY").flatten(false).toUpperCase());
 
                 return new TitleShowCommand(entity, display, text);
@@ -34,9 +34,9 @@ public class TitleCommand implements CommandParser {
                 return inner.find("LITERAL_CLEAR") != null ? new TitleClearCommand(entity) : new TitleResetCommand(entity);
             }
             case "TIMES": {
-                int fadeIn = CommonParsers.parseInt(inner.find("FADEIN"), file.getCompiler());
-                int stay = CommonParsers.parseInt(inner.find("STAY"), file.getCompiler());
-                int fadeOut = CommonParsers.parseInt(inner.find("FADEOUT"), file.getCompiler());
+                int fadeIn = CommonParsers.parseInt(inner.find("FADEIN"), file);
+                int stay = CommonParsers.parseInt(inner.find("STAY"), file);
+                int fadeOut = CommonParsers.parseInt(inner.find("FADEOUT"), file);
                 return new TitleTimesCommand(entity, fadeIn, stay, fadeOut);
             }
             default: {
