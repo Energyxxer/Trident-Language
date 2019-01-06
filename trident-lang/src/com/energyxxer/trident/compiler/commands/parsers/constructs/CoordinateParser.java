@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
+import Trident.extensions.java.lang.Object.EObject;
 import com.energyxxer.commodore.functionlogic.coordinates.Coordinate;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.rotation.Rotation;
@@ -27,7 +28,9 @@ public class CoordinateParser {
                 return parse(((TokenStructure) pattern).getContents(), file);
             }
             case "INTERPOLATION_BLOCK": {
-                return InterpolationManager.parse(pattern, file, CoordinateSet.class);
+                CoordinateSet result = InterpolationManager.parse(pattern, file, CoordinateSet.class);
+                EObject.assertNotNull(result, pattern, file);
+                return result;
             }
             case "MIXED_COORDINATE_SET":
             case "LOCAL_COORDINATE_SET":

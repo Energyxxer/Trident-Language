@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
+import Trident.extensions.java.lang.Object.EObject;
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.*;
@@ -15,7 +16,6 @@ import com.energyxxer.nbtmapper.tags.DataType;
 import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
 import com.energyxxer.nbtmapper.tags.FlatType;
 import com.energyxxer.nbtmapper.tags.TypeFlags;
-import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -39,7 +39,9 @@ public class NBTParser {
                 return parseValue(((TokenStructure)pattern).getContents(), file);
             }
             case "INTERPOLATION_BLOCK": {
-                return InterpolationManager.parse(pattern, file, TagCompound.class);
+                TagCompound result = InterpolationManager.parse(pattern, file, TagCompound.class);
+                EObject.assertNotNull(result, pattern, file);
+                return result;
             }
             case "NBT_COMPOUND_GROUP": {
                 TagCompound compound = new TagCompound();
@@ -126,7 +128,9 @@ public class NBTParser {
     public static NBTPath parsePath(TokenPattern<?> pattern, TridentFile file) {
         if(pattern == null) return null;
         if((((TokenStructure)pattern).getContents()).getName().equals("INTERPOLATION_BLOCK")) {
-            return InterpolationManager.parse(((TokenStructure) pattern).getContents(), file, NBTPath.class);
+            NBTPath result = InterpolationManager.parse(((TokenStructure) pattern).getContents(), file, NBTPath.class);
+            EObject.assertNotNull(result, pattern, file);
+            return result;
         }
         NBTPathNode start = parsePathNode(pattern.find("NBT_PATH_NODE"), file);
         ArrayList<NBTPathNode> nodes = new ArrayList<>();
@@ -158,7 +162,10 @@ public class NBTParser {
             }
             case "NBT_PATH_LIST_UNKNOWN": {
                 Object val = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file, Integer.class, TagCompound.class);
-                if(val instanceof Integer) {
+                if(val == null) {
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unexpected null at path", pattern));
+                    throw new EntryParsingException();
+                } else if(val instanceof Integer) {
                     return new NBTPathIndex((int) val);
                 } else if(val instanceof TagCompound){
                     return new NBTListMatch((TagCompound) val);

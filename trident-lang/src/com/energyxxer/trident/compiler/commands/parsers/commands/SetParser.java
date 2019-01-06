@@ -64,6 +64,10 @@ public class SetParser implements CommandParser {
                 return new PointerDecorator.EntityPointer(entity, head);
             case "VARIABLE_POINTER":
                 Object symbol = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file, Entity.class, CoordinateSet.class);
+                if(symbol == null) {
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unexpected null value at pointer", pattern.find("INTERPOLATION_BLOCK")));
+                    throw new EntryParsingException();
+                }
                 head = parsePointerHead(symbol, pattern.find("POINTER_HEAD"), file);
                 if(symbol instanceof Entity) {
                     return new PointerDecorator.EntityPointer((Entity) symbol, head);
@@ -74,13 +78,17 @@ public class SetParser implements CommandParser {
                     }
                     return new PointerDecorator.BlockPointer((CoordinateSet) symbol, head);
                 } else {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown CommonParsers#retrieveSymbol return type: " + symbol.getClass()));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown CommonParsers#retrieveSymbol return type: " + symbol.getClass(), pattern));
                     throw new EntryParsingException();
                 }
             case "NBT_VALUE":
                 return new PointerDecorator.ValuePointer(NBTParser.parseValue(pattern, file));
             case "INTERPOLATION_BLOCK":
                 Object value = InterpolationManager.parse(pattern, file, NBTTag.class, Integer.class);
+                if(value == null) {
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unexpected null value at pointer", pattern));
+                    throw new EntryParsingException();
+                }
                 if(value instanceof Integer) value = new TagInt((int) value);
                 return new PointerDecorator.ValuePointer((NBTTag) value);
             default:

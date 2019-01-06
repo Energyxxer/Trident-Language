@@ -1,5 +1,7 @@
 package com.energyxxer.trident.compiler.semantics;
 
+import org.jetbrains.annotations.Nullable;
+
 public class Symbol {
 
 
@@ -37,6 +39,7 @@ public class Symbol {
         return access;
     }
 
+    @Nullable
     public Object getValue() {
         return value;
     }

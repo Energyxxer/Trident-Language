@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
+import Trident.extensions.java.lang.Object.EObject;
 import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
@@ -30,7 +31,9 @@ public class TextParser {
                 return parseTextComponent(((TokenStructure)pattern).getContents(), file);
             }
             case "INTERPOLATION_BLOCK": {
-                return InterpolationManager.parse(pattern, file, TextComponent.class);
+                TextComponent result = InterpolationManager.parse(pattern, file, TextComponent.class);
+                EObject.assertNotNull(result, pattern, file);
+                return result;
             }
             case "JSON_ROOT":
             case "JSON_ELEMENT": {

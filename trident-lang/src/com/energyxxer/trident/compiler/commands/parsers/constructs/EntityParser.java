@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
+import Trident.extensions.java.lang.Object.EObject;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
@@ -65,6 +66,7 @@ public class EntityParser {
             case "PLAYER_NAME": return new PlayerName(inner.flatten(false));
             case "ENTITY_VARIABLE": {
                 Entity symbol = InterpolationManager.parse(inner.find("INTERPOLATION_BLOCK"), file, Entity.class);
+                EObject.assertNotNull(symbol, inner.find("INTERPOLATION_BLOCK"), file);
                 if(inner.find("APPENDED_ARGUMENTS") != null) {
                     if(!(symbol instanceof GenericEntity)) {
                         file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "The entity contained in this variable does not support selector arguments", inner));

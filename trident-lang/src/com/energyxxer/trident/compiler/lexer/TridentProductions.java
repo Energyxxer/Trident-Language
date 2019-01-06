@@ -153,7 +153,8 @@ public class TridentProductions {
             CLOSED_INTERPOLATION_VALUE.add(group(literal("dict"), DICTIONARY).setName("WRAPPED_DICTIONARY"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("list"), LIST).setName("WRAPPED_LIST"));
             CLOSED_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
-            CLOSED_INTERPOLATION_VALUE.addNested(group(literal("new"), literal("function"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
+            CLOSED_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("new"), literal("function"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
             INTERPOLATION_VALUE.add(CLOSED_INTERPOLATION_VALUE);
 
             INTERPOLATION_VALUE.add(group(brace("("), choice("integer", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinates", "integer_range", "real_range", "dict", "list", "resource").setName("TARGET_TYPE"), brace(")"), CLOSED_INTERPOLATION_VALUE).setName("CAST"));
@@ -1634,7 +1635,7 @@ public class TridentProductions {
                                     group(optional(brace("<"), literal("nbt_compound"), brace(">")), equals(), choice(NBT_COMPOUND).setName("VARIABLE_VALUE")),
                                     group(optional(brace("<"), literal("nbt_path"), brace(">")), equals(), choice(NBT_PATH).setName("VARIABLE_VALUE")),
                                     group(optional(brace("<"), literal("text_component"), brace(">")), equals(), choice(TEXT_COMPONENT).setName("VARIABLE_VALUE")),
-                                    group(equals(), choice(ENTITY, NBT_PATH, TEXT_COMPONENT, string(), BLOCK_TAGGED, ITEM_TAGGED, real(), integer(), ofType(BOOLEAN).setName("BOOLEAN"), COORDINATE_SET, NBT_COMPOUND, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))
+                                    group(equals(), choice(INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))
                             ).setName("VARIABLE_INITIALIZATION")
                     )
             );

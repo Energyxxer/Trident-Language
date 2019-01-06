@@ -16,11 +16,7 @@ public class VariableInstruction implements Instruction {
 
         Object value = CommonParsers.parseAnything((TokenPattern<?>) ((pattern.find("VARIABLE_INITIALIZATION.VARIABLE_VALUE")).getContents()), file);
 
-        if(value != null) {
-            table.put(symbol);
-            symbol.setValue(value);
-        } else {
-            throw new NullPointerException();
-        }
+        table.put(symbol);
+        symbol.setValue(value);
     }
 }

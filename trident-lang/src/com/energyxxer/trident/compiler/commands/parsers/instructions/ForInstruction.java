@@ -49,7 +49,7 @@ public class ForInstruction implements Instruction {
                     @Override
                     public boolean condition() {
                         Object returnValue = InterpolationManager.parse(condition, file);
-                        if(returnValue.getClass() == Boolean.class) return (boolean)returnValue;
+                        if(returnValue != null && returnValue.getClass() == Boolean.class) return (boolean)returnValue;
                         file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Required boolean in 'for' condition", condition));
                         throw new EntryParsingException();
                     }

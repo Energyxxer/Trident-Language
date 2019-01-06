@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
+import Trident.extensions.java.lang.Object.EObject;
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
@@ -76,7 +77,9 @@ public class CommonParsers {
     public static Type parseType(TokenPattern<?> id, TridentFile file, TypeGroupPicker picker) {
         if(id == null) return null;
         if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("INTERPOLATION_BLOCK")) {
-            return InterpolationManager.parse(((TokenStructure) id).getContents(), file, Type.class);
+            Type result = InterpolationManager.parse(((TokenStructure) id).getContents(), file, Type.class);
+            EObject.assertNotNull(result, id, file);
+            return result;
         }
         TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id);
         return picker.pick(file.getCompiler().getModule().getNamespace(typeLoc.namespace).types).get(typeLoc.body);
@@ -136,6 +139,7 @@ public class CommonParsers {
             }
             case "INTERPOLATION_BLOCK": {
                 typeLoc = InterpolationManager.parse(inner, file, TridentUtil.ResourceLocation.class);
+                EObject.assertNotNull(typeLoc, inner, file);
                 break;
             }
             default: {
@@ -188,7 +192,10 @@ public class CommonParsers {
         if(pattern.getName().equals("ITEM_VARIABLE")) {
             Object reference = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file, Item.class, CustomItem.class);
             Item item;
-            if(reference instanceof Item) {
+            if(reference == null) {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unexpected null value for item", pattern.find("INTERPOLATION_BLOCK")));
+                throw new EntryParsingException();
+            } else if(reference instanceof Item) {
                 item = (Item) reference;
             } else if(reference instanceof CustomItem) {
                 item = ((CustomItem) reference).constructItem(mode);
@@ -234,10 +241,13 @@ public class CommonParsers {
         if(pattern.getName().equals("BLOCK_TAGGED") || pattern.getName().equals("BLOCK")) return parseBlock(((TokenStructure) pattern).getContents(), file);
 
         if(pattern.getName().equals("INTERPOLATION_BLOCK")) {
-            return InterpolationManager.parse(pattern, file, Block.class);
+            Block result = InterpolationManager.parse(pattern, file, Block.class);
+            EObject.assertNotNull(result, pattern, file);
+            return result;
         }
         if(pattern.getName().equals("BLOCK_VARIABLE")) {
             Block block = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file, Block.class);
+            EObject.assertNotNull(block, pattern.find("INTERPOLATION_BLOCK"), file);
             TokenPattern<?> appendedState = pattern.find("APPENDED_BLOCKSTATE.BLOCKSTATE");
             if(appendedState != null) {
                 Blockstate state = block.getBlockstate();
@@ -387,6 +397,7 @@ public class CommonParsers {
     public static Object parseAnything(TokenPattern<?> pattern, TridentFile file) {
         switch(pattern.getName()) {
             case "INTERPOLATION_BLOCK": return InterpolationManager.parse(pattern, file);
+            case "INTERPOLATION_VALUE": return InterpolationManager.parse(pattern, file);
             case "INTEGER": return parseInt(pattern, file);
             case "REAL": return parseDouble(pattern, file);
             case "STRING_LITERAL": return CommandUtils.parseQuotedString(pattern.flatten(false));
@@ -408,7 +419,7 @@ public class CommonParsers {
                 return TextParser.parseTextComponent(pattern, file);
             default: {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown value grammar name: '" + pattern.getName() + "'"));
-                return null;
+                throw new EntryParsingException();
             }
         }
     }
@@ -417,7 +428,11 @@ public class CommonParsers {
         TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
         switch(inner.getName()) {
             case "RAW_INTEGER": return Integer.parseInt(inner.flatten(false));
-            case "INTERPOLATION_BLOCK": return InterpolationManager.parse(inner, file, Integer.class);
+            case "INTERPOLATION_BLOCK": {
+                Integer result = InterpolationManager.parse(inner, file, Integer.class);
+                EObject.assertNotNull(result, inner, file);
+                return result;
+            }
             default: {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
                 throw new EntryParsingException();
@@ -429,7 +444,11 @@ public class CommonParsers {
         TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
         switch(inner.getName()) {
             case "RAW_REAL": return Double.parseDouble(inner.flatten(false));
-            case "INTERPOLATION_BLOCK": return InterpolationManager.parse(inner, file, Double.class);
+            case "INTERPOLATION_BLOCK": {
+                Double result = InterpolationManager.parse(inner, file, Double.class);
+                EObject.assertNotNull(result, inner, file);
+                return result;
+            }
             default: {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
                 throw new EntryParsingException();
@@ -495,6 +514,7 @@ public class CommonParsers {
             }
             case "INTERPOLATION_BLOCK": {
                 typeLoc = InterpolationManager.parse(inner, file, TridentUtil.ResourceLocation.class);
+                EObject.assertNotNull(typeLoc, inner, file);
                 break;
             }
             default: {

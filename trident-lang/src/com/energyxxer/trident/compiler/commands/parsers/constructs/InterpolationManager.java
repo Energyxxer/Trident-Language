@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
+import Trident.extensions.java.lang.Object.EObject;
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
@@ -19,7 +20,7 @@ import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.OperatorHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,13 +48,13 @@ public class InterpolationManager {
     }
 
     @SuppressWarnings("unchecked")
-    @NotNull
+    @Nullable
     public static Object parse(TokenPattern<?> pattern, TridentFile file) {
         return parse(pattern, file, false);
     }
 
     @SuppressWarnings("unchecked")
-    @NotNull
+    @Nullable
     public static Object parse(TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         //TridentCompiler compiler = file.getCompiler();
         switch(pattern.getName()) {
@@ -163,8 +164,12 @@ public class InterpolationManager {
                 TridentFile innerFile = TridentFile.createInnerFile(pattern.find("ANONYMOUS_INNER_FUNCTION"), file);
                 return innerFile.getResourceLocation();
             }
+            case "NULL_VALUE": {
+                return null;
+            }
             case "MEMBER": {
                 Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
+                EObject.assertNotNull(parent, pattern.find("INTERPOLATION_VALUE"), file);
                 VariableTypeHandler handler = parent instanceof VariableTypeHandler ? (VariableTypeHandler) parent : ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(parent.getClass()));
                 if(handler == null) {
                     file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + parent.getClass().getName(), pattern));
@@ -180,6 +185,7 @@ public class InterpolationManager {
             }
             case "INDEXED_MEMBER": {
                 Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
+                EObject.assertNotNull(parent, pattern.find("INTERPOLATION_VALUE"), file);
                 VariableTypeHandler handler = parent instanceof VariableTypeHandler ? (VariableTypeHandler) parent : ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(parent.getClass()));
                 if(handler == null) {
                     file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + parent.getClass().getName(), pattern));
@@ -195,6 +201,7 @@ public class InterpolationManager {
             }
             case "METHOD_CALL": {
                 Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
+                EObject.assertNotNull(parent, pattern.find("INTERPOLATION_VALUE"), file);
                 if(parent instanceof VariableMethod) {
 
                     ArrayList<Object> params = new ArrayList<>();

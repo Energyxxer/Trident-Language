@@ -468,6 +468,8 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new StringMatchLexerContext(SOUND_CHANNEL, "ambient", "block", "hostile", "master", "music", "neutral", "player", "record", "voice", "weather"));
         contexts.add(new StringMatchLexerContext(ANCHOR, "feet", "eyes"));
 
+        contexts.add(new StringMatchLexerContext(NULL, "null"));
+
         contexts.add(new StringMatchLexerContext(DEFINITION_CATEGORY, defcategories.toArray(new String[0])));
 
     }
