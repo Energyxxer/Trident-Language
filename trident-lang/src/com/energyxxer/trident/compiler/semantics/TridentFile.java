@@ -83,23 +83,30 @@ public class TridentFile implements CompilerExtension {
     }
 
     public static TridentFile createInnerFile(TokenPattern<?> pattern, TridentFile parent) {
-        TokenPattern<?> namePattern = pattern.find("INNER_FUNCTION_NAME");
-        String functionName;
+        TokenPattern<?> namePattern = pattern.find("INNER_FUNCTION_NAME.RESOURCE_LOCATION");
+        String innerFilePathRaw = parent.getPath().toString();
+        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
+
         if(namePattern != null) {
-            functionName = new TridentUtil.ResourceLocation(namePattern.flatten(false)).body;
-            while(functionName.startsWith('/')) {
-                functionName = functionName.substring(1);
+            TridentUtil.ResourceLocation suggestedLoc = CommonParsers.parseResourceLocation(namePattern, parent);
+            suggestedLoc.assertStandalone(namePattern, parent);
+            if(!suggestedLoc.namespace.equals("minecraft")) {
+                innerFilePathRaw = suggestedLoc.namespace + File.separator + "functions" + File.separator + suggestedLoc.body + ".tdn";
+            } else {
+                String functionName = suggestedLoc.body;
+                while(functionName.startsWith('/')) {
+                    functionName = functionName.substring(1);
+                }
+                innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(functionName + ".tdn").toString();
             }
         } else {
-            functionName = "_anonymous" + parent.anonymousChildren;
+            innerFilePathRaw = Paths.get(innerFilePathRaw).resolve("_anonymous" + parent.anonymousChildren + ".tdn").toString();
             parent.anonymousChildren++;
         }
 
         TokenPattern<?> innerFilePattern = pattern.find("FILE_INNER");
-        String innerFilePathRaw = parent.getPath().toString();
-        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
 
-        TridentFile innerFile = new TridentFile(parent.getCompiler(), Paths.get(innerFilePathRaw).resolve(functionName + ".tdn"), innerFilePattern);
+        TridentFile innerFile = new TridentFile(parent.getCompiler(), Paths.get(innerFilePathRaw), innerFilePattern);
         innerFile.resolveEntries();
         return innerFile;
     }

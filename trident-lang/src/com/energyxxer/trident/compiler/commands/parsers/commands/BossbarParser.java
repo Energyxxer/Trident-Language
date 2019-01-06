@@ -50,7 +50,7 @@ public class BossbarParser implements CommandParser {
     }
 
     private Command parseGet(TokenPattern<?> inner, TridentFile file) {
-        TridentUtil.ResourceLocation id = new TridentUtil.ResourceLocation(inner.search(TridentTokens.RESOURCE_LOCATION).get(0).value);
+        TridentUtil.ResourceLocation id = new TridentUtil.ResourceLocation(inner.find("RESOURCE_LOCATION").flatten(false));
         BossbarReference ref = new BossbarReference(file.getCompiler().getModule().getNamespace(id.namespace), id.body);
 
         String rawVariable = inner.find("CHOICE").flatten(false);

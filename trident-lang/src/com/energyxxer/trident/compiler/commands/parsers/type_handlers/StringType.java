@@ -7,6 +7,7 @@ import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -85,6 +86,17 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
                     throw new EntryParsingException();
                 }
             });
+            members.put("replace", (VariableMethod)(params, patterns, pattern, file) -> {
+                if(params.length != 2) {
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'replace' requires 2 parameter, instead found " + params.length, pattern));
+                    throw new EntryParsingException();
+                }
+
+                String target = assertOfType(params[0], patterns[0], file, String.class);
+                String replacement = assertOfType(params[1], patterns[1], file, String.class);
+
+                return string.replace(target, replacement);
+            });
             members.put("length", string.length());
         }
     }
@@ -94,14 +106,22 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
         if(targetType == String.class) return object;
         if(targetType == Entity.class) {
             if(object.isEmpty()) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Player names cannot be empty"));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Player names cannot be empty", pattern));
                 throw new EntryParsingException();
             } else if(object.contains(" ")) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Player names may not contain whitespaces"));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Player names may not contain whitespaces", pattern));
                 throw new EntryParsingException();
             } else {
                 return new PlayerName(object);
             }
+        }
+        if(targetType == TridentUtil.ResourceLocation.class) {
+            TridentUtil.ResourceLocation loc = TridentUtil.ResourceLocation.createStrict(object);
+            if(loc == null) {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Illegal resource location path: " + object, pattern));
+                throw new EntryParsingException();
+            }
+            return loc;
         }
         if(targetType == TextComponent.class) {
             return new StringTextComponent(object);

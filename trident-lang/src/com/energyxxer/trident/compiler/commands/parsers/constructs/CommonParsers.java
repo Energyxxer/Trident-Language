@@ -51,6 +51,10 @@ import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
 public class CommonParsers {
+    public static NumberRange<Integer> SAMPLE_INT_RANGE = new NumberRange<>(1, 2);
+    public static NumberRange<Double> SAMPLE_REAL_RANGE = new NumberRange<>(1.0, 2.0);
+
+
     public static Type parseEntityType(TokenPattern<?> id, TridentFile file) {
         if(id.getName().equals("ENTITY_ID_TAGGED")) return parseEntityType((TokenPattern<?>) (id.getContents()), file);
         if(id.getName().equals("ABSTRACT_RESOURCE")) return parseTag(id, file, EntityType.CATEGORY, g -> g.entity, g -> g.entityTypeTags);
@@ -292,7 +296,14 @@ public class CommonParsers {
         return blockstate;
     }
 
+    @SuppressWarnings("unchecked")
     public static NumberRange<Integer> parseIntRange(TokenPattern<?> pattern, TridentFile file) {
+        TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
+        if(variable != null) {
+            Object value = InterpolationManager.parse(variable, file, Integer.class, SAMPLE_INT_RANGE.getClass());
+            if(value instanceof Integer) value = new NumberRange<>((int) value);
+            return (NumberRange<Integer>) value;
+        }
         TokenPattern<?> exact = pattern.find("EXACT");
         if(exact != null) return new NumberRange<>(parseInt(exact, file));
         List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
@@ -308,7 +319,14 @@ public class CommonParsers {
         return new NumberRange<>(min, max);
     }
 
+    @SuppressWarnings("unchecked")
     public static NumberRange<Double> parseRealRange(TokenPattern<?> pattern, TridentFile file) {
+        TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
+        if(variable != null) {
+            Object value = InterpolationManager.parse(variable, file, Double.class, SAMPLE_REAL_RANGE.getClass());
+            if(value instanceof Double) value = new NumberRange<>((double) value);
+            return (NumberRange<Double>) value;
+        }
         TokenPattern<?> exact = pattern.find("EXACT");
         if(exact != null) return new NumberRange<>(parseDouble(exact, file));
         List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
@@ -466,13 +484,13 @@ public class CommonParsers {
     public static TridentUtil.ResourceLocation parseResourceLocation(TokenPattern<?> pattern, TridentFile file) {
         if(pattern == null) return null;
 
-        TokenPattern<?> inner = (TokenStructure) pattern.getContents();
+        TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
 
         TridentUtil.ResourceLocation typeLoc;
 
         switch(inner.getName()) {
             case "RAW_RESOURCE_LOCATION_TAGGED": {
-                typeLoc = new TridentUtil.ResourceLocation(inner);
+                typeLoc = new TridentUtil.ResourceLocation(inner.flatten(false));
                 break;
             }
             case "INTERPOLATION_BLOCK": {

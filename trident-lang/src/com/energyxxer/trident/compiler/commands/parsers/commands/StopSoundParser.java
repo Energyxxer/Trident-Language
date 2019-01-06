@@ -9,6 +9,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -25,15 +26,20 @@ public class StopSoundParser implements CommandParser {
             switch(inner.getName()) {
                 case "STOP_BY_CHANNEL": {
                     PlaySoundCommand.Source channel = PlaySoundCommand.Source.valueOf(inner.find("CHANNEL").flatten(false).toUpperCase());
-                    TokenPattern<?> rawResource = inner.find("RESOURCE_LOCATION");
-                    if(rawResource != null) {
-                        return new StopSoundCommand(entity, channel, new TridentUtil.ResourceLocation(rawResource.flatten(false)).toString());
+                    TokenPattern<?> rawResource = inner.find("SOUND_RESOURCE.RESOURCE_LOCATION");
+                    TridentUtil.ResourceLocation soundResource = CommonParsers.parseResourceLocation(rawResource, file);
+                    if(soundResource != null) {
+                        soundResource.assertStandalone(rawResource, file);
+                        return new StopSoundCommand(entity, channel, soundResource.toString());
                     } else {
                         return new StopSoundCommand(entity, channel);
                     }
                 }
                 case "STOP_BY_EVENT": {
-                    return new StopSoundCommand(entity, new TridentUtil.ResourceLocation(inner.find("RESOURCE_LOCATION").flatten(false)).toString());
+                    TokenPattern<?> rawResource = inner.find("RESOURCE_LOCATION");
+                    TridentUtil.ResourceLocation soundResource = CommonParsers.parseResourceLocation(rawResource, file);
+                    soundResource.assertStandalone(rawResource, file);
+                    return new StopSoundCommand(entity, rawResource.toString());
                 }
                 default: {
                     file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));

@@ -8,12 +8,15 @@ import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.textcomponents.TextComponent;
-import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserGroup;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.HashMap;
+
+import static com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers.SAMPLE_INT_RANGE;
+import static com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers.SAMPLE_REAL_RANGE;
 
 @ParserGroup
 public interface VariableTypeHandler<T> {
@@ -24,9 +27,6 @@ public interface VariableTypeHandler<T> {
     Object cast(T object, Class targetType, TokenPattern<?> pattern, TridentFile file);
 
     class Static {
-
-        private static NumberRange<Integer> SAMPLE_INT_RANGE = new NumberRange<>(1, 2);
-        private static NumberRange<Double> SAMPLE_REAL_RANGE = new NumberRange<>(1.0, 2.0);
 
         public static String getIdentifierForClass(Class<?> cls) {
             if(VariableMethod.class.isAssignableFrom(cls)) {
@@ -55,6 +55,7 @@ public interface VariableTypeHandler<T> {
             shorthands.put("nbt_value", NBTTag.class);
             shorthands.put("nbt_path", NBTPath.class);
             shorthands.put("coordinates", CoordinateSet.class);
+            shorthands.put("resource", TridentUtil.ResourceLocation.class);
 
             //"coordinate", "integer_range", "real_range", "dictionary", "array"
         }

@@ -20,9 +20,10 @@ public interface VariableMethod {
             throw new EntryParsingException();
         }
 
-        public static Object assertOfType(Object param, TokenPattern<?> pattern, TridentFile file, Class<?>... expected) {
+        @SuppressWarnings("unchecked")
+        public static <T> T assertOfType(Object param, TokenPattern<?> pattern, TridentFile file, Class<? extends T>... expected) {
             for(Class cls : expected) {
-                if(cls.isInstance(param)) return param;
+                if(cls.isInstance(param)) return (T) param;
             }
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected parameter of one of the following types: " + Arrays.asList(expected).map((Class c) -> c.getSimpleName()).toSet().join(", "), pattern));
             throw new EntryParsingException();

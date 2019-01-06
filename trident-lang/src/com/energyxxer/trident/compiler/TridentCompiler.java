@@ -20,6 +20,7 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.instructions.AliasInstruction;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_libs.MathLib;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -150,6 +151,12 @@ public class TridentCompiler {
         typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("common.nbttm"));
         typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("entities.nbttm"));
         typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("block_entities.nbttm"));
+
+        this.setProgress("Adding native methods");
+
+        {
+            MathLib.populate(stack);
+        }
 
         this.setProgress("Scanning files");
         TokenStream ts = new TokenStream();

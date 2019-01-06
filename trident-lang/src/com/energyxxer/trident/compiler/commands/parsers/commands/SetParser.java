@@ -79,6 +79,10 @@ public class SetParser implements CommandParser {
                 }
             case "NBT_VALUE":
                 return new PointerDecorator.ValuePointer(NBTParser.parseValue(pattern, file));
+            case "INTERPOLATION_BLOCK":
+                Object value = InterpolationManager.parse(pattern, file, NBTTag.class, Integer.class);
+                if(value instanceof Integer) value = new TagInt((int) value);
+                return new PointerDecorator.ValuePointer((NBTTag) value);
             default:
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
                 throw new EntryParsingException();
