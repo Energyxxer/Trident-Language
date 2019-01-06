@@ -34,7 +34,7 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
     @Override
     public Object getMember(ListType object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         if(member.equals("length")) return object.content.size();
-        return null;
+        throw new MemberNotFoundException();
     }
 
     @Override
@@ -52,7 +52,7 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
     @Override
     public Object cast(ListType object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
         if(targetType == String.class) return content.toString();
-        return null;
+        throw new ClassCastException();
     }
 
     @NotNull

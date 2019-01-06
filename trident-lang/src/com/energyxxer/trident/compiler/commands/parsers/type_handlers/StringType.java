@@ -22,7 +22,9 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
     @Override
     public Object getMember(String str, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         StringDecorator decorator = new StringDecorator(str);
-        return decorator.members.get(member);
+        Object result = decorator.members.get(member);
+        if(result == null) throw new MemberNotFoundException();
+        return result;
     }
 
     @Override
@@ -126,6 +128,6 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
         if(targetType == TextComponent.class) {
             return new StringTextComponent(object);
         }
-        return null;
+        throw new ClassCastException();
     }
 }

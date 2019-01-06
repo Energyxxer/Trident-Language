@@ -10,16 +10,14 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
-import com.energyxxer.trident.compiler.commands.parsers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.commands.parsers.type_handlers.ListType;
-import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod;
-import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableTypeHandler;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.*;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.OperandType;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.OperationOrder;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.Operator;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.OperatorHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -168,39 +166,31 @@ public class InterpolationManager {
                 return null;
             }
             case "MEMBER": {
-                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
+                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file);
                 EObject.assertNotNull(parent, pattern.find("INTERPOLATION_VALUE"), file);
-                VariableTypeHandler handler = parent instanceof VariableTypeHandler ? (VariableTypeHandler) parent : ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(parent.getClass()));
-                if(handler == null) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + parent.getClass().getName(), pattern));
-                    throw new EntryParsingException();
-                }
+                VariableTypeHandler handler = getHandlerForObject(parent, pattern, file);
                 String memberName = pattern.find("MEMBER_NAME").flatten(false);
-                Object member = handler.getMember(parent, memberName, pattern, file, keepSymbol);
-                if(member == null) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member '" + memberName + "' of '" + parent.getClass().getSimpleName() + "'", pattern));
+                try {
+                    return handler.getMember(parent, memberName, pattern, file, keepSymbol);
+                } catch(MemberNotFoundException x) {
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member '" + memberName + "' of '" + (parent != null ? parent.getClass().getSimpleName() : "null") + "'", pattern));
                     throw new EntryParsingException();
                 }
-                return member;
             }
             case "INDEXED_MEMBER": {
-                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
+                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file);
                 EObject.assertNotNull(parent, pattern.find("INTERPOLATION_VALUE"), file);
-                VariableTypeHandler handler = parent instanceof VariableTypeHandler ? (VariableTypeHandler) parent : ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(parent.getClass()));
-                if(handler == null) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + parent.getClass().getName(), pattern));
-                    throw new EntryParsingException();
-                }
+                VariableTypeHandler handler = getHandlerForObject(parent, pattern, file);
                 Object index = parse(pattern.find("INDEX.INTERPOLATION_VALUE"), file);
-                Object member = handler.getIndexer(parent, index, pattern, file, keepSymbol);
-                if(member == null) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member for index '" + index + "' of '" + parent.getClass().getSimpleName() + "'", pattern));
+                try {
+                    return handler.getIndexer(parent, index, pattern, file, keepSymbol);
+                } catch(MemberNotFoundException x) {
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member for index " + index + " of '" + (parent != null ? parent.getClass().getSimpleName() : "null") + "'", pattern));
                     throw new EntryParsingException();
                 }
-                return member;
             }
             case "METHOD_CALL": {
-                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
+                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file);
                 EObject.assertNotNull(parent, pattern.find("INTERPOLATION_VALUE"), file);
                 if(parent instanceof VariableMethod) {
 
@@ -228,19 +218,15 @@ public class InterpolationManager {
                 return parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
             }
             case "CAST": {
-                Object parent = parse(pattern.find("CLOSED_INTERPOLATION_VALUE"), file, keepSymbol);
-                VariableTypeHandler handler = parent instanceof VariableTypeHandler ? (VariableTypeHandler) parent : ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(parent.getClass()));
-                if(handler == null) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + parent.getClass().getName(), pattern));
-                    throw new EntryParsingException();
-                }
+                Object parent = parse(pattern.find("CLOSED_INTERPOLATION_VALUE"), file);
+                VariableTypeHandler handler = getHandlerForObject(parent, pattern, file);
                 Class newType = VariableTypeHandler.Static.getClassForShorthand(pattern.find("TARGET_TYPE").flatten(false));
-                Object converted = handler.cast(parent, newType, pattern, file);
-                if(converted == null) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unable to cast " + parent.getClass().getSimpleName() + " to type " + newType.getName(), pattern));
+                try {
+                    return handler.cast(parent, newType, pattern, file);
+                } catch(ClassCastException x) {
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unable to cast " + (parent != null ? parent.getClass().getSimpleName() : "null") + " to type " + newType.getName(), pattern));
                     throw new EntryParsingException();
                 }
-                return converted;
             }
             case "EXPRESSION": {
                 //region Expression evaluation
@@ -317,5 +303,17 @@ public class InterpolationManager {
                 throw new EntryParsingException();
             }
         }
+    }
+
+    @NotNull
+    public static VariableTypeHandler getHandlerForObject(Object value, TokenPattern<?> pattern, TridentFile file) {
+        if(value instanceof VariableTypeHandler) return ((VariableTypeHandler) value);
+        if(value == null) return new NullType();
+        VariableTypeHandler handler = ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(value.getClass()));
+        if(handler == null) {
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + value.getClass().getName(), pattern));
+            throw new EntryParsingException();
+        }
+        return handler;
     }
 }

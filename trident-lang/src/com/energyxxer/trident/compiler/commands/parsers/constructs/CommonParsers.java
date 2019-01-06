@@ -508,6 +508,7 @@ public class CommonParsers {
         TridentUtil.ResourceLocation typeLoc;
 
         switch(inner.getName()) {
+            case "RAW_RESOURCE_LOCATION":
             case "RAW_RESOURCE_LOCATION_TAGGED": {
                 typeLoc = new TridentUtil.ResourceLocation(inner.flatten(false));
                 break;

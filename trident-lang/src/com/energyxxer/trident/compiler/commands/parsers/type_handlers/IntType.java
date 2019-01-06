@@ -8,18 +8,18 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class IntType implements VariableTypeHandler<Integer> {
     @Override
     public Object getMember(Integer object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
-        return null;
+        throw new MemberNotFoundException();
     }
 
     @Override
     public Object getIndexer(Integer object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
-        return null;
+        throw new MemberNotFoundException();
     }
 
     @Override
     public Object cast(Integer object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
         if(targetType == String.class) return Integer.toString(object);
         if(targetType == Double.class) return object.doubleValue();
-        return null;
+        throw new ClassCastException();
     }
 }

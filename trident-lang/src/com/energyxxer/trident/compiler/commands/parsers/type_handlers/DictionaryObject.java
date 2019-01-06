@@ -16,6 +16,9 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject> {
 
     @Override
     public Object getMember(DictionaryObject object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+        if(keepSymbol && !object.map.containsKey(member)) {
+            put(member, null);
+        }
         Symbol elem = object.map.get(member);
         return keepSymbol || elem == null ? elem : elem.getValue();
     }
@@ -23,7 +26,9 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject> {
     @Override
     public Object getIndexer(DictionaryObject object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         String key = assertOfType(index, pattern, file, String.class);
-
+        if(keepSymbol && !object.map.containsKey(key)) {
+            put(key, null);
+        }
         Symbol elem = object.map.get(key);
         return keepSymbol || elem == null ? elem : elem.getValue();
     }
@@ -31,7 +36,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject> {
     @Override
     public Object cast(DictionaryObject object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
         if(targetType == String.class) return map.toString();
-        return null;
+        throw new ClassCastException();
     }
 
     public int size() {

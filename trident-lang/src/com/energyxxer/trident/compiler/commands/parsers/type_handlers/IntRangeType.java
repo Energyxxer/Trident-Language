@@ -47,12 +47,12 @@ public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
                 return new NumberRange<>(object.getMin(), newMax);
             };
         }
-        return null;
+        throw new MemberNotFoundException();
     }
 
     @Override
     public Object getIndexer(NumberRange<Integer> object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
-        return null;
+        throw new MemberNotFoundException();
     }
 
     private int getMin(NumberRange<Integer> range) {
@@ -68,6 +68,6 @@ public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
     @Override
     public Object cast(NumberRange<Integer> range, Class targetType, TokenPattern<?> pattern, TridentFile file) {
         if(targetType == String.class) return range.toString();
-        return null;
+        throw new ClassCastException();
     }
 }
