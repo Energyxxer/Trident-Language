@@ -155,6 +155,8 @@ public class CommonParsers {
             type = new FunctionReference(ns.functions.get(typeLoc.body));
         }
 
+        if(typeLoc.equals(new TridentUtil.ResourceLocation(file.getResourceLocation().toString() + "/"))) return new FunctionReference(file.getFunction());
+
         if(type == null) {
             if(typeLoc.isTag) {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such function tag exists: #" + typeLoc, inner));

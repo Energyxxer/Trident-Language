@@ -20,6 +20,7 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.instructions.AliasInstruction;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.ReturnException;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_libs.MathLib;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
@@ -197,7 +198,11 @@ public class TridentCompiler {
 
         for(TridentFile file : sortedFiles) {
             Debug.log("Analyzing " + file);
-            file.resolveEntries();
+            try {
+                file.resolveEntries();
+            } catch(ReturnException r) {
+                report.addNotice(new Notice(NoticeType.ERROR, "Return instruction outside of inner function", r.getPattern()));
+            }
         }
 
         if(report.hasErrors()) {

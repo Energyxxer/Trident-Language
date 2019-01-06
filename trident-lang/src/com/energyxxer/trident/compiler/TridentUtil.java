@@ -60,14 +60,15 @@ public class TridentUtil {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            ResourceLocation that = (ResourceLocation) o;
-            return Objects.equals(namespace, that.namespace) &&
-                    Objects.equals(body, that.body);
+            ResourceLocation location = (ResourceLocation) o;
+            return isTag == location.isTag &&
+                    Objects.equals(namespace, location.namespace) &&
+                    Objects.equals(body, location.body);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(namespace, body);
+            return Objects.hash(isTag, namespace, body);
         }
 
         @Override

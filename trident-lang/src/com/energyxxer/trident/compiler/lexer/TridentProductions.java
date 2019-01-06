@@ -154,7 +154,7 @@ public class TridentProductions {
             CLOSED_INTERPOLATION_VALUE.add(group(literal("list"), LIST).setName("WRAPPED_LIST"));
             CLOSED_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
             CLOSED_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("new"), literal("function"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("new"), literal("function"), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
             INTERPOLATION_VALUE.add(CLOSED_INTERPOLATION_VALUE);
 
             INTERPOLATION_VALUE.add(group(brace("("), choice("integer", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinates", "integer_range", "real_range", "dict", "list", "resource").setName("TARGET_TYPE"), brace(")"), INTERPOLATION_VALUE).setName("CAST"));
@@ -1624,17 +1624,6 @@ public class TridentProductions {
                     group(keyword("var").setName("INSTRUCTION_KEYWORD"),
                             ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"),
                             choice(
-                                    group(optional(brace("<"), literal("integer"), brace(">")), equals(), choice(integer()).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("real"), brace(">")), equals(), choice(real()).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("string"), brace(">")), equals(), choice(string()).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("bool"), brace(">")), equals(), choice(ofType(BOOLEAN).setName("BOOLEAN")).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("entity"), brace(">")), equals(), choice(ENTITY).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("block"), brace(">")), equals(), choice(BLOCK_TAGGED).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("item"), brace(">")), equals(), choice(ITEM_TAGGED).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("coordinates"), brace(">")), equals(), choice(COORDINATE_SET).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("nbt_compound"), brace(">")), equals(), choice(NBT_COMPOUND).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("nbt_path"), brace(">")), equals(), choice(NBT_PATH).setName("VARIABLE_VALUE")),
-                                    group(optional(brace("<"), literal("text_component"), brace(">")), equals(), choice(TEXT_COMPONENT).setName("VARIABLE_VALUE")),
                                     group(equals(), choice(INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))
                             ).setName("VARIABLE_INITIALIZATION")
                     )
@@ -1683,6 +1672,12 @@ public class TridentProductions {
         {
             INSTRUCTION.add(
                     group(keyword("do"), keyword("if").setName("INSTRUCTION_KEYWORD"), brace("("), group(INTERPOLATION_VALUE).setName("CONDITION"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), optional(keyword("else"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("ELSE_CLAUSE"))
+            );
+        }
+
+        {
+            INSTRUCTION.add(
+                    group(literal("return").setName("INSTRUCTION_KEYWORD"), optional(INTERPOLATION_VALUE).setName("RETURN_VALUE"))
             );
         }
         //endregion
@@ -1833,63 +1828,4 @@ public class TridentProductions {
         return ofType(IDENTIFIER_TYPE_X).setName("IDENTIFIER");
     }
 
-    public class SubTridentProductions {
-        public final LazyTokenPatternMatch COMPILE_BLOCK_INNER;
-
-        private final LazyTokenStructureMatch STATEMENT;
-        private final LazyTokenStructureMatch VALUE;
-        private final LazyTokenStructureMatch EXPRESSION;
-        private final LazyTokenStructureMatch DATA_TYPE;
-
-        {
-            STATEMENT = struct("STATEMENT");
-            COMPILE_BLOCK_INNER = list(optional(STATEMENT, list(ofType(TokenType.NEWLINE)).setOptional())).setOptional().setName("COMPILE_BLOCK_INNER");
-
-            DATA_TYPE = choice(
-                    "integer",
-                    "real",
-                    "string",
-                    "bool",
-                    "entity",
-                    "block",
-                    "item",
-                    "coordinates",
-                    "nbt_compound",
-                    "nbt_path",
-                    "text_component"
-            );
-
-            VALUE = choice(
-                    INTERPOLATION_BLOCK,
-                    integer(),
-                    real(),
-                    ofType(BOOLEAN).setName("BOOLEAN"),
-                    string(),
-                    identifierX(),
-                    group(literal("entity"), brace("<"), ENTITY, brace(">")),
-                    group(literal("block"), brace("<"), ITEM, brace(">")),
-                    group(literal("item"), brace("<"), BLOCK, brace(">")),
-                    TEXT_COMPONENT,
-                    NBT_COMPOUND,
-                    COORDINATE_SET
-            ).setName("VALUE");
-
-            EXPRESSION = choice(
-                    group(VALUE, keyword("as"), DATA_TYPE).setName("CAST"),
-                    group(choice(identifierX(), INTERPOLATION_BLOCK).setName("VARIABLE_CHOICE"), ofType(COMPILER_ASSIGNMENT_OPERATOR), VALUE).setName("ASSIGNMENT")
-            );
-
-            VALUE.add(EXPRESSION);
-            EXPRESSION.add(group(VALUE));
-            EXPRESSION.add(group(VALUE, ofType(COMPILER_POSTFIX_OPERATOR).setName("POSTFIX_OPERATOR")));
-            EXPRESSION.add(group(ofType(COMPILER_PREFIX_OPERATOR).setName("PREFIX_OPERATOR"), VALUE));
-            EXPRESSION.add(group(brace("("), VALUE, brace(")")));
-            EXPRESSION.add(list(VALUE, ofType(COMPILER_OPERATOR).setName("OPERATOR")));
-
-            STATEMENT.add(group(keyword("var"), identifierX(), optional(symbol("="), VALUE).setName("INITIALIZATION")).setName("VARIABLE_DECLARATION"));
-            STATEMENT.add(group(keyword("append"), COMMAND).setName("COMMAND_APPEND"));
-            STATEMENT.add(group(keyword("for"), brace("("), optional(STATEMENT), symbol(";"), optional(EXPRESSION), symbol(";"), optional(EXPRESSION), brace(")"), optional(brace("{"), COMPILE_BLOCK_INNER, brace("}"))));
-            STATEMENT.add(EXPRESSION);
-        }
-    }
 }

@@ -54,6 +54,7 @@ public class InterpolationManager {
     @SuppressWarnings("unchecked")
     @Nullable
     public static Object parse(TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+        if(pattern == null) return null;
         //TridentCompiler compiler = file.getCompiler();
         switch(pattern.getName()) {
             case "INTERPOLATION_BLOCK": {
@@ -159,8 +160,20 @@ public class InterpolationManager {
                 }
             }
             case "NEW_FUNCTION": {
-                TridentFile innerFile = TridentFile.createInnerFile(pattern.find("ANONYMOUS_INNER_FUNCTION"), file);
-                return innerFile.getResourceLocation();
+                if(pattern.find("FORMAL_PARAMETERS") != null) {
+                    ArrayList<String> formalParams = new ArrayList<>();
+                    TokenList paramNames = (TokenList) pattern.find("FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
+                    if(paramNames != null) {
+                        for(TokenPattern<?> paramName : paramNames.searchByName("FORMAL_PARAMETER_NAME")) {
+                            formalParams.add(paramName.flatten(false));
+                        }
+                    }
+
+                    return new FunctionMethod(pattern.find("ANONYMOUS_INNER_FUNCTION"), file, formalParams);
+                } else {
+                    TridentFile innerFile = TridentFile.createInnerFile(pattern.find("ANONYMOUS_INNER_FUNCTION"), file);
+                    return innerFile.getResourceLocation();
+                }
             }
             case "NULL_VALUE": {
                 return null;

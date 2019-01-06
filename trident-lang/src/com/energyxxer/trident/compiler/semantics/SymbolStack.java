@@ -30,7 +30,7 @@ public class SymbolStack {
     }
 
     public Symbol search(@NotNull String name) {
-        for(SymbolTable table : stack) {
+        for(SymbolTable table : stack.reversed()) {
             if(table.containsKey(name)) return table.get(name);
         }
         if(global.containsKey(name)) return global.get(name);
