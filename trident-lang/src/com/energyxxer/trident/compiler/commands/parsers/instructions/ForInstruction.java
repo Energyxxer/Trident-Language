@@ -8,6 +8,7 @@ import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.Iterator;
@@ -20,13 +21,22 @@ public class ForInstruction implements Instruction {
         ForHeader header = parseHeader(pattern.find("FOR_HEADER"), file);
         TokenPattern<?> body = pattern.find("ANONYMOUS_INNER_FUNCTION");
 
-        for(header.initialize(); header.condition(); header.iterate()) {
-            int errorsPre = file.getCompiler().getReport().getErrors().size();
-            TridentFile.resolveInnerFileIntoSection(body, file, file.getFunction());
-            if(file.getCompiler().getReport().getErrors().size() > errorsPre) {
-                //exit early to avoid multiple of the same error
-                throw new EntryParsingException();
+
+        file.getCompiler().getStack().push(new SymbolTable(file));
+
+        try {
+            for (header.initialize(); header.condition(); header.iterate()) {
+                int errorsPre = file.getCompiler().getReport().getErrors().size();
+                TridentFile.resolveInnerFileIntoSection(body, file, file.getFunction());
+                if (file.getCompiler().getReport().getErrors().size() > errorsPre) {
+                    //exit early to avoid multiple of the same error
+                    throw new EntryParsingException();
+                }
             }
+        } catch(EntryParsingException x) {
+
+        } finally {
+            file.getCompiler().getStack().pop();
         }
     }
 
