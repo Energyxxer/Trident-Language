@@ -337,23 +337,11 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(usefulContexts.get(RESOURCE_LOCATION));
         contexts.add(usefulContexts.get(CASE_INSENSITIVE_RESOURCE_LOCATION));
 
-        //Comments and directive headers
+        //Comments
         contexts.add(new LexerContext() {
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if(!str.startsWith("#")) return new ScannerContextResponse(false);
-                if(str.startsWith("#:")) return new ScannerContextResponse(true, str.substring(0, 2), DIRECTIVE_HEADER);
-                if(str.contains("\n")) {
-                    return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), COMMENT);
-                } else return new ScannerContextResponse(true, str, COMMENT);
-            }
-
-            @Override
-            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
-                if(!str.startsWith("#")) return new ScannerContextResponse(false);
-                if(str.startsWith("#:") && type == DIRECTIVE_HEADER) {
-                    return new ScannerContextResponse(true, str.substring(0, 2), DIRECTIVE_HEADER);
-                }
                 if(str.contains("\n")) {
                     return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), COMMENT);
                 } else return new ScannerContextResponse(true, str, COMMENT);
@@ -366,9 +354,12 @@ public class TridentLexerProfile extends LexerProfile {
 
             @Override
             public Collection<TokenType> getHandledTypes() {
-                return Arrays.asList(COMMENT, DIRECTIVE_HEADER);
+                return Collections.singletonList(COMMENT);
             }
         });
+
+        //Directive headers
+        contexts.add(new StringMatchLexerContext(DIRECTIVE_HEADER, "@").setOnlyWhenExpected(true));
 
         //Swizzle
         contexts.add(new LexerContext() {

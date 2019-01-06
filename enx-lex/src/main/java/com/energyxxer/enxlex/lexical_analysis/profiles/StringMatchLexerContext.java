@@ -8,6 +8,7 @@ import java.util.Collections;
 public class StringMatchLexerContext implements LexerContext {
     private final TokenType type;
     private final String[] strings;
+    private boolean onlyWhenExpected = false;
 
     public StringMatchLexerContext(TokenType type, String... strings) {
         this.type = type;
@@ -16,6 +17,11 @@ public class StringMatchLexerContext implements LexerContext {
 
     @Override
     public ScannerContextResponse analyze(String str, LexerProfile profile) {
+        return !onlyWhenExpected ? analyzeExpectingType(str, type, profile) : new ScannerContextResponse(false);
+    }
+
+    @Override
+    public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
         for(String match : strings) {
             if(str.startsWith(match) && (str.length() == match.length() || !(profile.canMerge(str.charAt(match.length()-1), str.charAt(match.length()))))) return new ScannerContextResponse(true, match, type);
         }
@@ -25,5 +31,10 @@ public class StringMatchLexerContext implements LexerContext {
     @Override
     public Collection<TokenType> getHandledTypes() {
         return Collections.singletonList(type);
+    }
+
+    public StringMatchLexerContext setOnlyWhenExpected(boolean onlyWhenExpected) {
+        this.onlyWhenExpected = onlyWhenExpected;
+        return this;
     }
 }
