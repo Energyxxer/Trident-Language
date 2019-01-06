@@ -113,7 +113,7 @@ public class CommonParsers {
 
     public static String parseFunctionPath(TokenPattern<?> id, TridentFile file) {
         if(id == null) return null;
-        String flat = id.find("RESOURCE_LOCATION").flatten(false);
+        String flat = id.find("RAW_RESOURCE_LOCATION").flatten(false);
         if(flat.startsWith('/')) {
             flat = file.getFunction().getFullName() + flat;
         }

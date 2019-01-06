@@ -274,11 +274,8 @@ public class TridentFile implements CompilerExtension {
         compiler.getStack().push(parent.fileSymbols);
         popTimes++;
 
-        boolean reportedNoCommands = false;
-
         if(entryList != null) {
             TokenPattern<?>[] entries = (entryList).getContents();
-            boolean exportComments = compiler.getProperties().get("export-comments") == null || compiler.getProperties().get("export-comments").getAsBoolean();
             for (TokenPattern<?> pattern : entries) {
                 if (!pattern.getName().equals("LINE_PADDING")) {
                     TokenStructure entry = (TokenStructure) pattern.find("ENTRY");
@@ -286,58 +283,7 @@ public class TridentFile implements CompilerExtension {
                     TokenPattern<?> inner = entry.getContents();
 
                     try {
-                        switch (inner.getName()) {
-                            case "COMMAND_WRAPPER":
-                                if (!compileOnly && appendTo != null) {
-
-                                    ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
-
-                                    TokenList modifierList = (TokenList) inner.find("MODIFIERS");
-                                    if(modifierList != null) {
-                                        for(TokenPattern<?> rawModifier : modifierList.getContents()) {
-                                            ModifierParser parser = ParserManager.getParser(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
-                                            if(parser != null) {
-                                                ExecuteModifier modifier = parser.parse(rawModifier, parent);
-                                                if(modifier != null) modifiers.add(modifier);
-                                            }
-                                        }
-                                    }
-
-                                    TokenPattern<?> commandPattern = inner.find("COMMAND");
-                                    CommandParser parser = ParserManager.getParser(CommandParser.class, commandPattern.flattenTokens().get(0).value);
-                                    if (parser != null) {
-                                        Command command = parser.parse(((TokenStructure) commandPattern).getContents(), parent);
-                                        if (command != null) {
-                                            if(modifiers.isEmpty()) appendTo.append(command);
-                                            else appendTo.append(new ExecuteCommand(command, modifiers));
-                                        }
-                                    }
-                                } else if (!reportedNoCommands) {
-                                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
-                                    reportedNoCommands = true;
-                                }
-                                break;
-                            case "COMMENT":
-                                if (exportComments && appendTo != null)
-                                    appendTo.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
-                                break;
-                            case "VERBATIM_COMMAND":
-                                if (!compileOnly && appendTo != null) {
-                                    appendTo.append(new RawCommand(inner.flattenTokens().get(0).value.substring(1)));
-                                } else if (!reportedNoCommands) {
-                                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
-                                    reportedNoCommands = true;
-                                }
-                                break;
-                            case "INSTRUCTION": {
-                                String instructionKey = ((TokenStructure) inner).getContents().searchByName("INSTRUCTION_KEYWORD").get(0).flatten(false);
-                                Instruction instruction = ParserManager.getParser(Instruction.class, instructionKey);
-                                if (instruction != null) {
-                                    instruction.run(((TokenStructure) inner).getContents(), parent);
-                                }
-                                break;
-                            }
-                        }
+                        resolveEntry(inner, parent, appendTo, compileOnly);
                     } catch (EntryParsingException x) {
                         //Silently ignore; serves as a multi-scope break;
                     }
@@ -347,6 +293,63 @@ public class TridentFile implements CompilerExtension {
 
         for(int i = 0; i < popTimes; i++) {
             compiler.getStack().pop();
+        }
+    }
+
+    public static void resolveEntry(TokenPattern<?> inner, TridentFile parent, FunctionSection appendTo, boolean compileOnly) {
+        TridentCompiler compiler = parent.getCompiler();
+        boolean exportComments = compiler.getProperties().get("export-comments") == null || compiler.getProperties().get("export-comments").getAsBoolean();
+        switch (inner.getName()) {
+            case "COMMAND_WRAPPER":
+                if (!compileOnly && appendTo != null) {
+
+                    ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
+
+                    TokenList modifierList = (TokenList) inner.find("MODIFIERS");
+                    if(modifierList != null) {
+                        for(TokenPattern<?> rawModifier : modifierList.getContents()) {
+                            ModifierParser parser = ParserManager.getParser(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
+                            if(parser != null) {
+                                ExecuteModifier modifier = parser.parse(rawModifier, parent);
+                                if(modifier != null) modifiers.add(modifier);
+                            }
+                        }
+                    }
+
+                    TokenPattern<?> commandPattern = inner.find("COMMAND");
+                    CommandParser parser = ParserManager.getParser(CommandParser.class, commandPattern.flattenTokens().get(0).value);
+                    if (parser != null) {
+                        Command command = parser.parse(((TokenStructure) commandPattern).getContents(), parent);
+                        if (command != null) {
+                            if(modifiers.isEmpty()) appendTo.append(command);
+                            else appendTo.append(new ExecuteCommand(command, modifiers));
+                        }
+                    }
+                } else if (!parent.reportedNoCommands) {
+                    parent.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
+                    parent.reportedNoCommands = true;
+                }
+                break;
+            case "COMMENT":
+                if (exportComments && appendTo != null)
+                    appendTo.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
+                break;
+            case "VERBATIM_COMMAND":
+                if (!compileOnly && appendTo != null) {
+                    appendTo.append(new RawCommand(inner.flattenTokens().get(0).value.substring(1)));
+                } else if (!parent.reportedNoCommands) {
+                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
+                    parent.reportedNoCommands = true;
+                }
+                break;
+            case "INSTRUCTION": {
+                String instructionKey = ((TokenStructure) inner).getContents().searchByName("INSTRUCTION_KEYWORD").get(0).flatten(false);
+                Instruction instruction = ParserManager.getParser(Instruction.class, instructionKey);
+                if (instruction != null) {
+                    instruction.run(((TokenStructure) inner).getContents(), parent);
+                }
+                break;
+            }
         }
     }
 }

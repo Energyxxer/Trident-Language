@@ -218,7 +218,7 @@ public class InterpolationManager {
                 return parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
             }
             case "CAST": {
-                Object parent = parse(pattern.find("CLOSED_INTERPOLATION_VALUE"), file);
+                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file);
                 VariableTypeHandler handler = getHandlerForObject(parent, pattern, file);
                 Class newType = VariableTypeHandler.Static.getClassForShorthand(pattern.find("TARGET_TYPE").flatten(false));
                 try {

@@ -21,7 +21,6 @@ public class ForInstruction implements Instruction {
         ForHeader header = parseHeader(pattern.find("FOR_HEADER"), file);
         TokenPattern<?> body = pattern.find("ANONYMOUS_INNER_FUNCTION");
 
-
         file.getCompiler().getStack().push(new SymbolTable(file));
 
         try {

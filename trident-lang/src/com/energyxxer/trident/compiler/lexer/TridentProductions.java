@@ -157,7 +157,7 @@ public class TridentProductions {
             CLOSED_INTERPOLATION_VALUE.add(group(literal("new"), literal("function"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
             INTERPOLATION_VALUE.add(CLOSED_INTERPOLATION_VALUE);
 
-            INTERPOLATION_VALUE.add(group(brace("("), choice("integer", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinates", "integer_range", "real_range", "dict", "list", "resource").setName("TARGET_TYPE"), brace(")"), CLOSED_INTERPOLATION_VALUE).setName("CAST"));
+            INTERPOLATION_VALUE.add(group(brace("("), choice("integer", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinates", "integer_range", "real_range", "dict", "list", "resource").setName("TARGET_TYPE"), brace(")"), INTERPOLATION_VALUE).setName("CAST"));
 
             INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER"));
             INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("["), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("INDEXED_MEMBER"));
@@ -1671,12 +1671,18 @@ public class TridentProductions {
 
         {
             LazyTokenPatternMatch FOR_HEADER = choice(
-                    group(identifierX().setName("VARIABLE_NAME"), literal("in"), INTERPOLATION_VALUE).setName("ITERATOR_FOR"),
+                    group(identifierX().setName("VARIABLE_NAME"), keyword("in"), INTERPOLATION_VALUE).setName("ITERATOR_FOR"),
                     group(INTERPOLATION_VALUE, symbol(";"), INTERPOLATION_VALUE, symbol(";"), INTERPOLATION_VALUE).setName("CLASSICAL_FOR")
             ).setName("FOR_HEADER");
 
             INSTRUCTION.add(
-                    group(literal("for").setName("INSTRUCTION_KEYWORD"), brace("("), FOR_HEADER, brace(")"), ANONYMOUS_INNER_FUNCTION)
+                    group(keyword("for").setName("INSTRUCTION_KEYWORD"), brace("("), FOR_HEADER, brace(")"), ANONYMOUS_INNER_FUNCTION)
+            );
+        }
+
+        {
+            INSTRUCTION.add(
+                    group(keyword("do"), keyword("if").setName("INSTRUCTION_KEYWORD"), brace("("), group(INTERPOLATION_VALUE).setName("CONDITION"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), optional(keyword("else"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("ELSE_CLAUSE"))
             );
         }
         //endregion
