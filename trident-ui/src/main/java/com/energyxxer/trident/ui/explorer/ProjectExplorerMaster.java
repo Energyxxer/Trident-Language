@@ -1,6 +1,5 @@
 package com.energyxxer.trident.ui.explorer;
 
-import com.energyxxer.commodore.util.MinecraftUtils;
 import com.energyxxer.trident.global.Commons;
 import com.energyxxer.trident.global.Preferences;
 import com.energyxxer.trident.global.temp.projects.ProjectManager;
@@ -18,7 +17,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by User on 5/16/2017.
@@ -70,10 +69,10 @@ public class ProjectExplorerMaster extends ExplorerMaster {
         ProjectManager.loadWorkspace();
 
         clearSelected();
-        refresh(new ArrayList<>(this.getExpandedElements()));
+        refresh(new ArrayList<String>(this.getExpandedElements().map((ModuleToken t) -> t.getIdentifier()).toSet()));
     }
 
-    private void refresh(ArrayList<ModuleToken> toOpen) {
+    private void refresh(ArrayList<String> toOpen) {
         children.clear();
         flatList.clear();
         this.getExpandedElements().clear();
@@ -84,40 +83,6 @@ public class ProjectExplorerMaster extends ExplorerMaster {
             }
             this.children.add(new ExplorerSeparator(this));
         }
-
-        /*File[] subfiles = root.listFiles();
-        if(subfiles == null) return;
-
-        ArrayList<File> subfiles1 = new ArrayList<>();
-
-        for(File f : subfiles) {
-            if(f.isDirectory()) {
-                this.children.add(new ProjectExplorerItem(this, f, toOpen));
-            } else {
-                subfiles1.add(f);
-            }
-        }
-        for(File f : subfiles1) {
-            this.children.add(new ProjectExplorerItem(this, f, toOpen));
-        }
-
-        this.children.add(new ExplorerSeparator(this));
-
-        File[] resourceFiles = new File(System.getProperty("user.home") + File.separator + "Trident").listFiles();
-        if(resourceFiles != null) {
-            for(File f : resourceFiles) {
-                this.children.add(new ProjectExplorerItem(this, f, toOpen));
-            }
-        }
-
-        this.children.add(new ExplorerSeparator(this));
-
-        File[] minecraftFiles = new File(MinecraftUtils.getMinecraftDir() + File.separator + "saves" + File.separator + "Snapshot Tests" + File.separator + "datapacks").listFiles();
-        if(minecraftFiles != null) {
-            for(File f : minecraftFiles) {
-                this.children.add(new ProjectExplorerItem(this, f, toOpen));
-            }
-        }*/
 
         repaint();
     }
@@ -136,12 +101,12 @@ public class ProjectExplorerMaster extends ExplorerMaster {
             sb.append(File.pathSeparator);
         }
         Debug.log("Saving: " + sb);
-        Preferences.put("open_tree",sb.toString());
+        Preferences.put("open_tree", sb.toString());
     }
 
     public void openExplorerTree() {
         String openTree = Preferences.get("open_tree",null);
         Debug.log("Opening: " + openTree);
-        //refresh(new ArrayList<>(Arrays.asList(openTree.split(Matcher.quoteReplacement(File.pathSeparator)))));
+        refresh(new ArrayList<>(Arrays.asList(openTree.split(Pattern.quote(File.pathSeparator)))));
     }
 }

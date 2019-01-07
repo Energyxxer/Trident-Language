@@ -3,7 +3,7 @@ package com.energyxxer.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Provides utility managers for dealing with files.
@@ -35,7 +35,7 @@ public class FileUtil {
 	}
 
 	public static String getRelativePath(File file, File root) {
-		String result = (file.getAbsolutePath() + File.separator).replaceFirst(Matcher.quoteReplacement(root.getAbsolutePath() + File.separator),"");
+		String result = (file.getAbsolutePath() + File.separator).replaceFirst(Pattern.quote(root.getAbsolutePath() + File.separator),"");
 		if(result.endsWith(File.separator)) result = result.substring(0, result.length()-1);
 		return result;
 	}

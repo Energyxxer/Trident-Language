@@ -363,4 +363,9 @@ public class FileModuleToken implements ModuleToken {
     public boolean equals(ModuleToken other) {
         return other instanceof FileModuleToken && ((FileModuleToken) other).file.equals(this.file);
     }
+
+    @Override
+    public String toString() {
+        return "[FileModuleToken: " + getPath() + "]";
+    }
 }

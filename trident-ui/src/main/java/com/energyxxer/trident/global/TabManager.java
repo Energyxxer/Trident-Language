@@ -16,7 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Interface that allows communication between parts of the program and the tab
@@ -188,7 +188,7 @@ public class TabManager {
 	public static void openSavedTabs() {
 		String savedTabs = Preferences.get("open_tabs",null);
 		if(savedTabs != null) {
-			String[] identifiers = savedTabs.split(Matcher.quoteReplacement(File.pathSeparator));
+			String[] identifiers = savedTabs.split(Pattern.quote(File.pathSeparator));
 			for(String identifier : identifiers) {
 				ModuleToken created = ModuleToken.Static.createFromIdentifier(identifier);
 				if(created != null) openTab(created);

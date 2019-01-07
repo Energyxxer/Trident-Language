@@ -2,14 +2,12 @@ package com.energyxxer.trident.ui.explorer.base;
 
 import com.energyxxer.trident.global.TabManager;
 import com.energyxxer.trident.ui.explorer.base.elements.ExplorerElement;
-import com.energyxxer.trident.ui.modules.FileModuleToken;
 import com.energyxxer.trident.ui.modules.ModuleToken;
 import com.energyxxer.trident.util.ImageUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.ArrayList;
 
 public class StandardExplorerItem extends ExplorerElement {
@@ -24,22 +22,18 @@ public class StandardExplorerItem extends ExplorerElement {
 
     private int x = 0;
 
-    public StandardExplorerItem(ModuleToken token, StandardExplorerItem parent, ArrayList<ModuleToken> toOpen) {
+    public StandardExplorerItem(ModuleToken token, StandardExplorerItem parent, ArrayList<String> toOpen) {
         this(parent, parent.getMaster(), token, toOpen);
     }
 
-    public StandardExplorerItem(ModuleToken token, ExplorerMaster master, ArrayList<ModuleToken> toOpen) {
+    public StandardExplorerItem(ModuleToken token, ExplorerMaster master, ArrayList<String> toOpen) {
         this(null, master, token, toOpen);
     }
 
-    private StandardExplorerItem(StandardExplorerItem parent, ExplorerMaster master, ModuleToken token, ArrayList<ModuleToken> toOpen) {
+    private StandardExplorerItem(StandardExplorerItem parent, ExplorerMaster master, ModuleToken token, ArrayList<String> toOpen) {
         super(master);
         this.parent = parent;
         this.token = token;
-
-        if(toOpen.contains(this.token)) {
-            expand(toOpen);
-        }
 
         this.icon = token.getIcon();
         if(this.icon != null) this.icon = ImageUtil.fitToSize(this.icon, 16, 16);
@@ -48,9 +42,13 @@ public class StandardExplorerItem extends ExplorerElement {
             this.indentation = parent.indentation + 1;
             this.x = indentation * master.getIndentPerLevel() + master.getInitialIndent();
         }
+
+        if(toOpen.contains(this.token.getIdentifier())) {
+            expand(toOpen);
+        }
     }
 
-    private void expand(ArrayList<ModuleToken> toOpen) {
+    private void expand(ArrayList<String> toOpen) {
         for(ModuleToken subToken : token.getSubTokens()) {
             this.children.add(new StandardExplorerItem(subToken, this, toOpen));
         }

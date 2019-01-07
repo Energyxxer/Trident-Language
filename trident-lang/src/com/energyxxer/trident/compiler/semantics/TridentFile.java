@@ -29,7 +29,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TridentFile implements CompilerExtension {
     private final TridentCompiler compiler;
@@ -71,7 +71,7 @@ public class TridentFile implements CompilerExtension {
         this.languageLevel = languageLevel;
 
         String functionPath = relSourcePath.subpath(2, relSourcePath.getNameCount()).toString();
-        functionPath = functionPath.substring(0, functionPath.length()-".tdn".length()).replaceAll(Matcher.quoteReplacement(File.separator), "/");
+        functionPath = functionPath.substring(0, functionPath.length()-".tdn".length()).replaceAll(Pattern.quote(File.separator), "/");
         this.location = new TridentUtil.ResourceLocation(this.namespace.getName() + ":" + functionPath);
 
         resolveDirectives();
