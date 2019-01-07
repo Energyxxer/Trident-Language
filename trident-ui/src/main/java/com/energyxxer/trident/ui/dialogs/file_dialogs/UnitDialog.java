@@ -163,34 +163,8 @@ public class UnitDialog {
         File newFile = new File(path);
         try {
             boolean successful = newFile.createNewFile();
-            int pos;
 
-            if(successful) {
-                /*PrintWriter writer = new PrintWriter(newFile);
-
-                //<editor-fold desc="File Template Variables">
-                HashMap<String, String> variables = new HashMap<>();
-                variables.put("path", ProjectUtil.getPackage(newFile));
-                variables.put("name", filename);
-                variables.put("user", Preferences.get("username", "User"));
-                variables.put("indent", "    ");
-
-                Date date = new Date();
-                variables.put("day", Calendar.getInstance().getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault()));
-                variables.put("date", Integer.toString(Calendar.getInstance().get(Calendar.DAY_OF_MONTH)));
-                variables.put("week", Integer.toString(Calendar.getInstance().get(Calendar.WEEK_OF_YEAR)));
-                variables.put("month", Integer.toString(Calendar.getInstance().get(Calendar.MONTH) + 1));
-                variables.put("year", Integer.toString(Calendar.getInstance().get(Calendar.YEAR)));
-                variables.put("timestamp", date.toString());
-                //</editor-fold>
-
-                String text = FileDefaults.populateTemplate(FileDefaults.defaults.get(type.toString().toLowerCase()), variables);
-                pos = Math.max(0, text.indexOf("\$END$"));
-                text = text.replace("\$END$", "");
-
-                writer.print(text);
-                writer.close();*/
-            } else {
+            if (!successful) {
                 Debug.log("File creation unsuccessful", Debug.MessageType.WARN);
                 return;
             }
@@ -227,8 +201,8 @@ public class UnitDialog {
         }
 
         //Check if file exists
-        valid = !new File(destination + File.separator + str + ".trident").exists();
-        if(!valid) displayError("Error: File '" + str + ".trident" + "' already exists at the destination");
+        valid = !new File(destination + File.separator + str + ".tdn").exists();
+        if(!valid) displayError("Error: File '" + str + ".tdn" + "' already exists at the destination");
 
         //Check if filename is a valid identifier
         if(valid) {

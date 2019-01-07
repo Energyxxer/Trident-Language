@@ -238,6 +238,7 @@ public class EditorCaret extends DefaultCaret {
 
     @Override
     public void mousePressed(MouseEvent e) {
+        editor.requestFocus();
         if(!e.isAltDown() || !e.isShiftDown()) {
             dots.clear();
         }
