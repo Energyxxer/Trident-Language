@@ -750,7 +750,7 @@ public class TridentProductions {
                                     group(literal("color"), choice("blue", "green", "pink", "purple", "red", "white", "yellow")).setName("SET_COLOR"),
                                     group(literal("max"), integer()).setName("SET_MAX"),
                                     group(literal("name"), TEXT_COMPONENT).setName("SET_NAME"),
-                                    group(literal("players"), ENTITY).setName("SET_PLAYERS"),
+                                    group(literal("players"), optional(sameLine(), ENTITY).setName("OPTIONAL_ENTITY")).setName("SET_PLAYERS"),
                                     group(literal("style"), choice("progress", "notched_6", "notched_10", "notched_12", "notched_20")).setName("SET_STYLE"),
                                     group(literal("value"), integer()).setName("SET_VALUE"),
                                     group(literal("visible"), ofType(BOOLEAN)).setName("SET_VISIBLE")

@@ -89,7 +89,7 @@ public class BossbarParser implements CommandParser {
             case "SET_NAME":
                 return new BossbarSetNameCommand(ref, TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), file));
             case "SET_PLAYERS":
-                return new BossbarSetPlayersCommand(ref, EntityParser.parseEntity(inner.find("ENTITY"), file));
+                return new BossbarSetPlayersCommand(ref, EntityParser.parseEntity(inner.find("OPTIONAL_ENTITY.ENTITY"), file));
             case "SET_STYLE":
                 return new BossbarSetStyleCommand(ref, BossbarCommand.BossbarStyle.valueOf(inner.find("CHOICE").flatten(false).toUpperCase()));
             case "SET_VALUE":
