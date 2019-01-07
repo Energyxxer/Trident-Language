@@ -1,22 +1,22 @@
 package com.energyxxer.trident.ui.editor.inspector;
 
-import com.energyxxer.trident.main.window.TridentWindow;
-import com.energyxxer.trident.ui.HintStylizer;
-import com.energyxxer.util.logger.Debug;
-import com.energyxxer.xswing.hints.TextHint;
-import com.energyxxer.trident.ui.editor.TridentEditorComponent;
-import com.energyxxer.trident.ui.editor.behavior.editmanager.CharacterDriftHandler;
+import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.trident.compiler.lexer.TridentTokens;
+import com.energyxxer.trident.main.window.TridentWindow;
+import com.energyxxer.trident.ui.HintStylizer;
+import com.energyxxer.trident.ui.editor.TridentEditorComponent;
+import com.energyxxer.trident.ui.editor.behavior.editmanager.CharacterDriftHandler;
 import com.energyxxer.util.StringBounds;
+import com.energyxxer.util.logger.Debug;
+import com.energyxxer.xswing.hints.TextHint;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Highlighter;
 import javax.swing.text.JTextComponent;
-import java.awt.Graphics;
-import java.awt.Rectangle;
-import java.awt.Shape;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
@@ -55,6 +55,12 @@ public class Inspector implements Highlighter.HighlightPainter, MouseMotionListe
             ArrayList<TokenPattern<?>> matches = ts.search(inspect);
             for(TokenPattern<?> match : matches) {
                 items.add(new InspectionItem(inspect.type, inspect.name, match.getStringBounds()));
+            }
+        }
+
+        for(Token token : ts.tokens) {
+            if(token.type == TridentTokens.COMMENT && token.subSections.containsValue("deprecated_syntax")) {
+                items.add(new InspectionItem(InspectionType.WARNING, "Changed syntax, use @ instead of #:", token.getStringBounds()));
             }
         }
         editor.repaint();

@@ -343,7 +343,11 @@ public class TridentLexerProfile extends LexerProfile {
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 if(!str.startsWith("#")) return new ScannerContextResponse(false);
                 if(str.contains("\n")) {
-                    return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), COMMENT);
+                    HashMap<TokenSection, String> subSections = new HashMap<>();
+                    if(str.startsWith("#:")) {
+                        subSections.put(new TokenSection(0, 2), "deprecated_syntax");
+                    }
+                    return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), COMMENT, subSections);
                 } else return new ScannerContextResponse(true, str, COMMENT);
             }
 

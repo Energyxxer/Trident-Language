@@ -1,5 +1,6 @@
 package com.energyxxer.enxlex.lexical_analysis.token;
 
+import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.StringLocation;
 
 import java.io.File;
@@ -121,5 +122,9 @@ public class Token {
 		result = 31 * result + (loc != null ? loc.hashCode() : 0);
 		result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
 		return result;
+	}
+
+	public StringBounds getStringBounds() {
+		return new StringBounds(loc, new StringLocation(loc.index + value.length(), loc.line, loc.column + value.length()));
 	}
 }

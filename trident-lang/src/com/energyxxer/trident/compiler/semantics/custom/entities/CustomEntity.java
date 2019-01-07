@@ -21,6 +21,9 @@ import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.selectors.TypeArgumentParser;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.MemberNotFoundException;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -28,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 
-public class CustomEntity {
+public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     private final String id;
     private final Type defaultType;
     @NotNull
@@ -81,10 +84,31 @@ public class CustomEntity {
     }
 
 
+    @Override
+    public Object getMember(CustomEntity object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+        if(member.equals("getSettingNBT")) {
+            return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                TagCompound nbt = new TagCompound(new TagString("id", ((CustomEntity) this).getDefaultType().toString()));
+                nbt = ((CustomEntity) this).getDefaultNBT().merge(nbt);
+                return nbt;
+            };
+        }
+        else if(member.equals("getMatchingNBT")) {
+            return (VariableMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagList("Tags", new TagString(idTag)));
+        }
+        throw new MemberNotFoundException();
+    }
 
+    @Override
+    public Object getIndexer(CustomEntity object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+        throw new MemberNotFoundException();
+    }
 
-
-
+    @Override
+    public Object cast(CustomEntity object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+        if(targetType == String.class) return "[Custom Entity: " + id + "]";
+        throw new ClassCastException();
+    }
 
     public static void defineEntity(TokenPattern<?> pattern, TridentFile file) {
 

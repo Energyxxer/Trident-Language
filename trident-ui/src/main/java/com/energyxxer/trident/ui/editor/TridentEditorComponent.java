@@ -8,6 +8,7 @@ import com.energyxxer.trident.main.window.sections.EditArea;
 import com.energyxxer.trident.ui.editor.behavior.AdvancedEditor;
 import com.energyxxer.trident.ui.editor.behavior.editmanager.CharacterDriftHandler;
 import com.energyxxer.trident.ui.editor.inspector.Inspector;
+import com.energyxxer.trident.ui.modules.FileModuleToken;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -39,6 +40,9 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
         sd = this.getStyledDocument();
 
         //if(Lang.getLangForFile(parent.associatedTab.path) != null) this.inspector = new Inspector(this);
+        if(Lang.getLangForFile(((FileModuleToken) parent.associatedTab.token).getPath()) == Lang.TRIDENT) {
+            this.inspector = new Inspector(this);
+        }
 
         this.addCaretListener(this);
 

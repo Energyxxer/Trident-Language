@@ -18,7 +18,7 @@ public class NBTVariableFunction implements VariableFunction {
     public Object process(Object value, TokenPattern<?> pattern, TridentCompiler compiler) {
         if(value instanceof CustomEntity) {
             TagCompound nbt = new TagCompound(new TagString("id", ((CustomEntity) value).getDefaultType().toString()));
-            if(((CustomEntity) value).getDefaultNBT() != null) nbt = ((CustomEntity) value).getDefaultNBT().merge(nbt);
+            nbt = ((CustomEntity) value).getDefaultNBT().merge(nbt);
             return nbt;
         } else if(value instanceof CustomItem) {
             TagCompound nbt = new TagCompound(

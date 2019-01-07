@@ -14,6 +14,9 @@ import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.TextParser;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.MemberNotFoundException;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -22,7 +25,7 @@ import com.energyxxer.trident.compiler.semantics.custom.special.item_events.Item
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
-public class CustomItem {
+public class CustomItem implements VariableTypeHandler<CustomItem> {
     private final String id;
     private final Type defaultType;
     private TagCompound defaultNBT;
@@ -81,6 +84,59 @@ public class CustomItem {
     public Item constructItem(NBTMode mode) {
         return mode == SETTING ? new Item(defaultType, getDefaultNBT()) : new Item(defaultType, new TagCompound(new TagInt("TridentCustomItem", getItemIdHash())));
     }
+
+
+
+
+
+
+
+    @Override
+    public Object getMember(CustomItem object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+        if(member.equals("getSettingNBT")) {
+            return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                TagCompound nbt = new TagCompound(
+                        new TagString("id", ((CustomItem) this).getDefaultType().toString()),
+                        new TagByte("Count", 1));
+                if(((CustomItem) this).getDefaultNBT() != null) {
+                    TagCompound tag = ((CustomItem) this).getDefaultNBT().clone();
+                    tag.setName("tag");
+                    nbt = new TagCompound(tag).merge(nbt);
+                }
+                return nbt;
+            };
+        }
+        else if(member.equals("getMatchingNBT")) {
+            return (VariableMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
+        }
+        throw new MemberNotFoundException();
+    }
+
+    @Override
+    public Object getIndexer(CustomItem object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+        throw new MemberNotFoundException();
+    }
+
+    @Override
+    public Object cast(CustomItem object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+        if(targetType == String.class) return "[Custom Item: " + id + "]";
+        throw new ClassCastException();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     public static void defineItem(TokenPattern<?> pattern, TridentFile file) {
 
