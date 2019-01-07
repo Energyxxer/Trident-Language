@@ -9,9 +9,9 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
-import com.energyxxer.trident.compiler.lexer.TridentTokens;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.ArrayList;
@@ -29,11 +29,13 @@ public class AdvancementParser implements CommandParser {
             case "FROM_THROUGH_UNTIL": {
                 String rawLimit = inner.find("LIMIT").flatten(false);
                 AdvancementCommand.Limit limit = rawLimit.equals("from") ? AdvancementCommand.Limit.FROM : rawLimit.equals("through") ? AdvancementCommand.Limit.THROUGH : AdvancementCommand.Limit.UNTIL;
-                TridentUtil.ResourceLocation advancement = new TridentUtil.ResourceLocation(inner.search(TridentTokens.RESOURCE_LOCATION).get(0).value);
+                TridentUtil.ResourceLocation advancement = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), file);
+                advancement.assertStandalone(inner.find("RESOURCE_LOCATION"), file);
                 return new AdvancementCommand(action, entity, limit, advancement.toString());
             }
             case "ONLY": {
-                TridentUtil.ResourceLocation advancement = new TridentUtil.ResourceLocation(inner.search(TridentTokens.RESOURCE_LOCATION).get(0).value);
+                TridentUtil.ResourceLocation advancement = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), file);
+                advancement.assertStandalone(inner.find("RESOURCE_LOCATION"), file);
                 TokenList criteriaList = (TokenList) (inner.find("CRITERIA.CRITERIA_LIST"));
                 ArrayList<String> criteria = new ArrayList<>();
                 if(criteriaList != null) {

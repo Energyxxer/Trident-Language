@@ -43,14 +43,16 @@ public class BossbarParser implements CommandParser {
     }
 
     private Command parseAdd(TokenPattern<?> inner, TridentFile file) {
-        TridentUtil.ResourceLocation id = new TridentUtil.ResourceLocation(inner.search(TridentTokens.RESOURCE_LOCATION).get(0).value);
+        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), file);
+        id.assertStandalone(inner.find("RESOURCE_LOCATION"), file);
         TextComponent name = TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), file);
         BossbarReference ref = new BossbarReference(file.getCompiler().getModule().getNamespace(id.namespace), id.body);
         return new BossbarAddCommand(ref, name);
     }
 
     private Command parseGet(TokenPattern<?> inner, TridentFile file) {
-        TridentUtil.ResourceLocation id = new TridentUtil.ResourceLocation(inner.find("RESOURCE_LOCATION").flatten(false));
+        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), file);
+        id.assertStandalone(inner.find("RESOURCE_LOCATION"), file);
         BossbarReference ref = new BossbarReference(file.getCompiler().getModule().getNamespace(id.namespace), id.body);
 
         String rawVariable = inner.find("CHOICE").flatten(false);
@@ -67,13 +69,15 @@ public class BossbarParser implements CommandParser {
     }
 
     private Command parseRemove(TokenPattern<?> inner, TridentFile file) {
-        TridentUtil.ResourceLocation id = new TridentUtil.ResourceLocation(inner.search(TridentTokens.RESOURCE_LOCATION).get(0).value);
+        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), file);
+        id.assertStandalone(inner.find("RESOURCE_LOCATION"), file);
         BossbarReference ref = new BossbarReference(file.getCompiler().getModule().getNamespace(id.namespace), id.body);
         return new BossbarRemoveCommand(ref);
     }
 
     private Command parseSet(TokenPattern<?> pattern, TridentFile file) {
-        TridentUtil.ResourceLocation id = new TridentUtil.ResourceLocation(pattern.search(TridentTokens.RESOURCE_LOCATION).get(0).value);
+        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), file);
+        id.assertStandalone(pattern.find("RESOURCE_LOCATION"), file);
         BossbarReference ref = new BossbarReference(file.getCompiler().getModule().getNamespace(id.namespace), id.body);
 
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
