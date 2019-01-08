@@ -1,11 +1,9 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
 import Trident.extensions.java.lang.Object.EObject;
-import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
-import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.textcomponents.*;
 import com.energyxxer.commodore.textcomponents.events.ClickEvent;
 import com.energyxxer.commodore.textcomponents.events.HoverEvent;
@@ -96,7 +94,7 @@ public class TextParser {
             } else if(obj.has("selector")) {
                 using(obj.get("selector").getAsStringOrNull())
                         .notIfNull()
-                        .run(t -> component = new SelectorTextComponent(new GenericEntity(new Selector(Selector.BaseSelector.SENDER))))
+                        .run(t -> component = new SelectorTextComponent(new PlayerName(t)))
                         .otherwise(t -> delegate.report("Expected string in 'selector'", obj.get("selector")));
             }
             if(component == null) {
