@@ -1092,6 +1092,8 @@ public class TridentProductions {
                             group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL")
                     ).setName("NBT_PATH_KEY"));
 
+            NBT_PATH_NODE.add(group(brace("["), brace("]")).setName("NBT_PATH_LIST_ALL"));
+
             NBT_PATH_NODE.add(group(brace("["), integer(), brace("]")).setName("NBT_PATH_INDEX"));
 
             NBT_PATH_NODE.add(group(brace("["), NBT_COMPOUND, brace("]")).setName("NBT_PATH_LIST_MATCH"));

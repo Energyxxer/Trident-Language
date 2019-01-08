@@ -54,6 +54,7 @@ $ITEM_TAG: {
     Potion: String (type(potion)),
     CustomPotionColor: Int,
     display: {
+        color: Int,
         Name: String (text_component),
         Lore: [String (text_component)],
         MapColor: Int

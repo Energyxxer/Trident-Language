@@ -20,6 +20,7 @@ import javax.swing.text.StyleConstants;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -108,7 +109,7 @@ public class TridentEditorModule extends JScrollPane implements DisplayModule, U
 		byte[] encoded;
 		try {
 			encoded = Files.readAllBytes(file.toPath());
-			String s = new String(encoded);
+			String s = new String(encoded, Charset.forName("UTF-8"));
 			setText(s);
 			editorComponent.setCaretPosition(0);
 			associatedTab.updateSavedValue();

@@ -154,6 +154,9 @@ public class NBTParser {
             case "NBT_PATH_KEY": {
                 return new NBTPathKey(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("NBT_PATH_KEY_LABEL")));
             }
+            case "NBT_PATH_LIST_ALL": {
+                return new NBTListMatch();
+            }
             case "NBT_PATH_INDEX": {
                 return new NBTPathIndex(CommonParsers.parseInt(pattern.find("INTEGER"), file));
             }
