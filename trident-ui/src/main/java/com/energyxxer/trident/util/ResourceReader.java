@@ -1,7 +1,6 @@
 package com.energyxxer.trident.util;
 
 import com.energyxxer.util.logger.Debug;
-import com.energyxxer.util.out.Console;
 
 import java.io.BufferedReader;
 import java.io.IOException;

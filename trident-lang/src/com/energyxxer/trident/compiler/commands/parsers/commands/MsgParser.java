@@ -16,7 +16,7 @@ public class MsgParser implements CommandParser {
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
         String message = pattern.search(TridentTokens.TRAILING_STRING).get(0).value;
 
-        return executionContext -> new CommandResolution(executionContext, "msg \be0 " + message, entity);
+        return executionContext -> new CommandResolution(executionContext, "msg " + entity + " " + message);
     }
 
     @ParserMember(key = "w")

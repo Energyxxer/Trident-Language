@@ -5,7 +5,6 @@ import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAtEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
@@ -29,6 +28,8 @@ import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
+import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.ALL_ENTITIES;
+import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.SENDER;
 import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 
 public class CustomEntity implements VariableTypeHandler<CustomEntity> {
@@ -218,9 +219,9 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                             Entity selector = entityDecl != null ?
                                     TypeArgumentParser.getSelectorForCustomEntity(entityDecl) :
                                     defaultType != null ?
-                                            new GenericEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES, new TypeArgument(defaultType))) :
-                                            new GenericEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES));
-                            file.getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteAsEntity(selector), new ExecuteAtEntity(new GenericEntity(new Selector(Selector.BaseSelector.SENDER)))));
+                                            new Selector(ALL_ENTITIES, new TypeArgument(defaultType)) :
+                                            new Selector(ALL_ENTITIES);
+                            file.getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteAsEntity(selector), new ExecuteAtEntity(new Selector(SENDER))));
                         }
                         break;
                     }

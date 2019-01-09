@@ -5,7 +5,6 @@ import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.module.RawExportable;
-import com.energyxxer.commodore.module.options.UnusedCommandPolicy;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.tags.TagGroup;
@@ -89,7 +88,6 @@ public class TridentCompiler {
 
     public static CommandModule createModuleForProject(String name, JsonObject properties, DefinitionPack definitionPack) throws IOException {
         CommandModule module = new CommandModule(name, "Command Module created with Trident", null);
-        module.getOptionManager().UNUSED_COMMAND_POLICY.setValue(UnusedCommandPolicy.KEEP);
         module.getOptionManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
         module.importDefinitions(definitionPack);
 

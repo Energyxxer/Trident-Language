@@ -1,8 +1,6 @@
 package com.energyxxer.trident.ui.tablist;
 
-import com.energyxxer.trident.global.Commons;
 import com.energyxxer.trident.global.TabManager;
-import com.energyxxer.trident.global.temp.projects.ProjectManager;
 import com.energyxxer.trident.ui.Tab;
 import com.energyxxer.trident.ui.styledcomponents.StyledMenuItem;
 import com.energyxxer.trident.ui.styledcomponents.StyledPopupMenu;
@@ -10,12 +8,8 @@ import com.energyxxer.trident.ui.theme.Theme;
 import com.energyxxer.trident.util.ImageUtil;
 import com.energyxxer.util.StringUtil;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
 public class TabItem extends TabListElement {
     private final Tab associatedTab;

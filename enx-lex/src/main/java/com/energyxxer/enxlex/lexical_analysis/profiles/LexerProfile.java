@@ -4,7 +4,6 @@ import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Defines a profile for the lexical analysis of files.

@@ -5,7 +5,6 @@ import com.energyxxer.trident.ui.modules.FileModuleToken;
 import com.energyxxer.trident.ui.scrollbar.OverlayScrollBarUI;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
 import com.energyxxer.util.logger.Debug;
-import com.energyxxer.util.out.Console;
 import com.energyxxer.util.out.ConsoleOutputStream;
 
 import javax.swing.BorderFactory;

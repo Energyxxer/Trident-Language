@@ -4,7 +4,6 @@ import com.energyxxer.trident.global.Status;
 import com.energyxxer.trident.main.window.TridentWindow;
 import com.energyxxer.util.Disposable;
 import com.energyxxer.util.logger.Debug;
-import com.energyxxer.util.out.Console;
 
 import java.util.ArrayList;
 import java.util.List;

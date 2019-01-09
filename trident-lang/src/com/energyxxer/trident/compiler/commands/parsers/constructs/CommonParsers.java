@@ -5,7 +5,6 @@ import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
 import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
 import com.energyxxer.commodore.functionlogic.nbt.NumericNBTTag;
 import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
@@ -461,8 +460,8 @@ public class CommonParsers {
     public static Type guessEntityType(Entity entity, TridentFile file) {
         TypeDictionary dict = file.getCompiler().getModule().minecraft.types.entity;
         if(entity instanceof PlayerName) return dict.get("player");
-        if(entity instanceof GenericEntity) {
-            Selector selector = ((GenericEntity) entity).getSelector();
+        if(entity instanceof Selector) {
+            Selector selector = ((Selector) entity);
             List<SelectorArgument> typeArg = selector.getArgumentsByKey("type").toList();
             if(typeArg.isEmpty() || ((TypeArgument) typeArg.get(0)).isNegated()) return null;
             return ((TypeArgument) typeArg.get(0)).getType();

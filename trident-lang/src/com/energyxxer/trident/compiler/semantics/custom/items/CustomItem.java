@@ -203,18 +203,6 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
 
                                         file.getCompiler().getSpecialFileManager().itemEvents.addCustomItem(ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()), defaultType, itemDecl, new ItemEvent(new FunctionReference(innerFile.getFunction()), pure));
 
-
-                                        /*String criteriaKey = ;
-
-                                        String criteria = "minecraft." + criteriaKey + ":" + defaultType.toString().replace(':','.');
-
-                                        Objective objective = file.getCompiler().getModule().getObjectiveManager().create(criteriaKey.charAt(0) + "item." + new TridentUtil.ResourceLocation(defaultType.toString()).body.hashCode(), criteria, new StringTextComponent(criteriaKey + " item " + defaultType), true);
-
-                                        ScoreArgument scores = new ScoreArgument();
-                                        scores.put(objective, new NumberRange<>(1, null));
-
-                                        file.getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteAsEntity(new GenericEntity(new Selector(Selector.BaseSelector.ALL_PLAYERS, scores))), new ExecuteAtEntity(new GenericEntity(new Selector(Selector.BaseSelector.SENDER)))));
-                                        file.getTickFunction().append(new ScoreReset(new GenericEntity(new Selector(Selector.BaseSelector.ALL_PLAYERS, scores)), objective));*/
                                     }
                                 }
                             }

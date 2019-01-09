@@ -2,7 +2,6 @@ package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
 import Trident.extensions.java.lang.Object.EObject;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgument;
@@ -62,23 +61,24 @@ public class EntityParser {
         if(pattern == null) return null;
         TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
         switch(inner.getName()) {
-            case "SELECTOR": return new GenericEntity(parseSelector(inner, file));
+            case "SELECTOR":
+                return parseSelector(inner, file);
             case "PLAYER_NAME": return new PlayerName(inner.flatten(false));
             case "ENTITY_VARIABLE": {
                 Entity symbol = InterpolationManager.parse(inner.find("INTERPOLATION_BLOCK"), file, Entity.class);
                 EObject.assertNotNull(symbol, inner.find("INTERPOLATION_BLOCK"), file);
                 if(inner.find("APPENDED_ARGUMENTS") != null) {
-                    if(!(symbol instanceof GenericEntity)) {
+                    if(!(symbol instanceof Selector)) {
                         file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "The entity contained in this variable does not support selector arguments", inner));
                         throw new EntryParsingException();
                     }
 
-                    Selector copy = ((GenericEntity) symbol).getSelector().clone();
+                    Selector copy = ((Selector) symbol).clone();
 
                     TokenList argList = (TokenList) inner.find("APPENDED_ARGUMENTS.SELECTOR_ARGUMENT_LIST");
                     if(argList != null) parseSelectorArguments(argList, copy, pattern, file);
 
-                    return new GenericEntity(copy);
+                    return copy;
                 } else return symbol;
             }
         }

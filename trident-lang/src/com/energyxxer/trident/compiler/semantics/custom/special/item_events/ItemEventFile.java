@@ -7,7 +7,6 @@ import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScorePlayersOp
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreReset;
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreSet;
 import com.energyxxer.commodore.functionlogic.commands.tag.TagCommand;
-import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
 import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.functionlogic.nbt.TagByte;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
@@ -38,6 +37,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCondition.ConditionType.IF;
+import static com.energyxxer.commodore.functionlogic.commands.tag.TagCommand.Action.ADD;
+import static com.energyxxer.commodore.functionlogic.commands.tag.TagCommand.Action.REMOVE;
+import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.*;
+
 public class ItemEventFile extends SpecialFile {
     private final TridentCompiler compiler;
     private final SpecialFileManager parent;
@@ -65,20 +69,20 @@ public class ItemEventFile extends SpecialFile {
 
         {
             Function prepareDroppedItems = parent.getNamespace().functions.create("trident/prepare_dropped_items");
-            prepareDroppedItems.append(new TagCommand(TagCommand.Action.REMOVE, new GenericEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES, new TypeArgument(compiler.getModule().minecraft.types.entity.get("item")))), "tdci_dropped"));
+            prepareDroppedItems.append(new TagCommand(REMOVE, new Selector(ALL_ENTITIES, new TypeArgument(compiler.getModule().minecraft.types.entity.get("item"))), "tdci_dropped"));
             prepareDroppedItems.append(
                     new ExecuteCommand(
-                            new TagCommand(TagCommand.Action.ADD, new GenericEntity(new Selector(Selector.BaseSelector.SENDER)), "tdci_dropped"),
-                            new ExecuteAsEntity(new GenericEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES, new TypeArgument(compiler.getModule().minecraft.types.entity.get("item")), new NBTArgument(new TagCompound(new TagShort("Age",0), new TagShort("PickupDelay",40)))))),
-                            new ExecuteConditionDataEntity(ExecuteCondition.ConditionType.IF, new GenericEntity(new Selector(Selector.BaseSelector.SENDER)), new NBTPath("Item", new NBTPath("tag", new NBTPath("TridentCustomItem")))),
-                            new ExecuteConditionDataEntity(ExecuteCondition.ConditionType.IF, new GenericEntity(new Selector(Selector.BaseSelector.SENDER)), new NBTPath("Thrower"))
+                            new TagCommand(ADD, new Selector(SENDER), "tdci_dropped"),
+                            new ExecuteAsEntity(new Selector(ALL_ENTITIES, new TypeArgument(compiler.getModule().minecraft.types.entity.get("item")), new NBTArgument(new TagCompound(new TagShort("Age", 0), new TagShort("PickupDelay", 40))))),
+                            new ExecuteConditionDataEntity(IF, new Selector(SENDER), new NBTPath("Item", new NBTPath("tag", new NBTPath("TridentCustomItem")))),
+                            new ExecuteConditionDataEntity(IF, new Selector(SENDER), new NBTPath("Thrower"))
                     ));
             parent.getTickFunction().append(new FunctionCommand(prepareDroppedItems));
         }
 
 
         function = compiler.getModule().createNamespace(compiler.getDefaultNamespace()).functions.create("trident/item_events");
-        parent.getTickFunction().append(new ExecuteCommand(new FunctionCommand(function), new ExecuteAsEntity(new GenericEntity(new Selector(Selector.BaseSelector.ALL_PLAYERS))), new ExecuteAtEntity(new GenericEntity(new Selector(Selector.BaseSelector.SENDER)))));
+        parent.getTickFunction().append(new ExecuteCommand(new FunctionCommand(function), new ExecuteAsEntity(new Selector(ALL_PLAYERS)), new ExecuteAtEntity(new Selector(SENDER))));
 
         ObjectiveManager objMgr = compiler.getModule().getObjectiveManager();
         
@@ -92,7 +96,7 @@ public class ItemEventFile extends SpecialFile {
         Function prepareHeldItems;
         {
             prepareHeldItems = parent.getNamespace().functions.create("trident/prepare_held_items");
-            GenericEntity sender = new GenericEntity(new Selector(Selector.BaseSelector.SENDER));
+            Selector sender = new Selector(SENDER);
             NBTPath mainhandCI = new NBTPath("SelectedItem", new NBTPath("tag", new NBTPath("TridentCustomItem"))); //SelectedItem.tag.TridentCustomItem
             NBTPath offhandCI = new NBTPath(new NBTPathKey("Inventory"), new NBTListMatch(new TagCompound(new TagByte("Slot", -106))), new NBTPathKey("tag"), new NBTPathKey("TridentCustomItem")); //Inventory[{Slot:-106b}].tag.TridentCustomItem
 
@@ -122,14 +126,14 @@ public class ItemEventFile extends SpecialFile {
                     ParserManager.getParser(ScoreEventCriteriaHandler.class, eventType.name().toLowerCase()).mid(data);
                 }
 
-                function.append(new ScoreReset(new GenericEntity(new Selector(Selector.BaseSelector.SENDER, scores)), objective));
+                function.append(new ScoreReset(new Selector(SENDER, scores), objective));
             }
         }
 
         Function saveHeldItems;
         {
             saveHeldItems = compiler.getModule().createNamespace(compiler.getDefaultNamespace()).functions.create("trident/save_held_items");
-            GenericEntity sender = new GenericEntity(new Selector(Selector.BaseSelector.SENDER));
+            Selector sender = new Selector(SENDER);
 
             saveHeldItems.append(new ScorePlayersOperation(new LocalScore(sender, oldMainhand), ScorePlayersOperation.Operation.ASSIGN, new LocalScore(sender, mainhand))); //scoreboard players operation @s tdci_held = @s tdci_mainhand
             saveHeldItems.append(new ScorePlayersOperation(new LocalScore(sender, oldOffhand), ScorePlayersOperation.Operation.ASSIGN, new LocalScore(sender, offhand))); //scoreboard players operation @s tdci_held = @s tdci_mainhand

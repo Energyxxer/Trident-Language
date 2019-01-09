@@ -1,7 +1,6 @@
 package com.energyxxer.trident.ui.theme;
 
 import com.energyxxer.util.logger.Debug;
-import com.energyxxer.util.out.Console;
 import com.energyxxer.trident.global.temp.Lang;
 import com.energyxxer.trident.global.Preferences;
 import com.energyxxer.trident.global.Resources;

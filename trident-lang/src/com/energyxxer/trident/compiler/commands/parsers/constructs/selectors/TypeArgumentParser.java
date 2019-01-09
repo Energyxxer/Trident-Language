@@ -1,7 +1,6 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs.selectors;
 
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.entity.GenericEntity;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TagArgument;
@@ -18,6 +17,8 @@ import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
+import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.ALL_ENTITIES;
 
 @ParserMember(key = "type")
 public class TypeArgumentParser implements SelectorArgumentParser {
@@ -48,6 +49,6 @@ public class TypeArgumentParser implements SelectorArgumentParser {
     }
 
     public static Entity getSelectorForCustomEntity(CustomEntity ce, boolean negated) {
-        return new GenericEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES, new TypeArgument(ce.getDefaultType(), negated), new TagArgument(ce.getIdTag(), negated)));
+        return new Selector(ALL_ENTITIES, new TypeArgument(ce.getDefaultType(), negated), new TagArgument(ce.getIdTag(), negated));
     }
 }
