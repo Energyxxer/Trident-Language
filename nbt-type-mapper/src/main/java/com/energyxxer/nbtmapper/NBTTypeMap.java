@@ -172,6 +172,9 @@ public class NBTTypeMap {
                 case "LIST": {
                     return new ListType(NBTTypeMap.this, parseType(pattern.find("TYPE")));
                 }
+                case "ARRAY": {
+                    return new ArrayType(NBTTypeMap.this, pattern.find("ARRAY_TYPE").flatten(false));
+                }
                 case "REFERENCE": {
                     return new ReferenceType(NBTTypeMap.this, pattern.find("REFERENCE_NAME").flatten(false).substring(1), parseFlags(pattern.find("FLAGS")));
                 }

@@ -22,7 +22,7 @@ public class FlatType extends DataType {
         keyToClassMap.put("Double", TagDouble.class);
         keyToClassMap.put("Long", TagLong.class);
         keyToClassMap.put("String", TagString.class);
-        keyToClassMap.put("Boolean", TagByte.class); //TODO
+        keyToClassMap.put("JSON_Boolean", TagByte.class); //TODO
     }
 
     public FlatType(NBTTypeMap parent, String typeName) {

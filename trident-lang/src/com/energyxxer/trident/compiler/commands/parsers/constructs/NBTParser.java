@@ -74,6 +74,60 @@ public class NBTParser {
                 }
                 return list;
             }
+            case "NBT_BYTE_ARRAY": {
+                TagByteArray arr = new TagByteArray();
+                TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
+                if(entries != null) {
+                    for (TokenPattern<?> inner : entries.getContents()) {
+                        if (!inner.getName().equals("COMMA")) {
+                            NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                            if(value instanceof TagByte) {
+                                arr.add(value);
+                            } else {
+                                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected TAG_Byte in TAG_Byte_Array, instead got " + value.getType(), inner));
+                                throw new EntryParsingException();
+                            }
+                        }
+                    }
+                }
+                return arr;
+            }
+            case "NBT_INT_ARRAY": {
+                TagIntArray arr = new TagIntArray();
+                TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
+                if(entries != null) {
+                    for (TokenPattern<?> inner : entries.getContents()) {
+                        if (!inner.getName().equals("COMMA")) {
+                            NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                            if(value instanceof TagInt) {
+                                arr.add(value);
+                            } else {
+                                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected TAG_Int in TAG_Int_Array, instead got " + value.getType(), inner));
+                                throw new EntryParsingException();
+                            }
+                        }
+                    }
+                }
+                return arr;
+            }
+            case "NBT_LONG_ARRAY": {
+                TagLongArray arr = new TagLongArray();
+                TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
+                if(entries != null) {
+                    for (TokenPattern<?> inner : entries.getContents()) {
+                        if (!inner.getName().equals("COMMA")) {
+                            NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                            if(value instanceof TagLong) {
+                                arr.add(value);
+                            } else {
+                                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected TAG_Long in TAG_Long_Array, instead got " + value.getType(), inner));
+                                throw new EntryParsingException();
+                            }
+                        }
+                    }
+                }
+                return arr;
+            }
             case "BOOLEAN": {
                 return new TagByte(pattern.flattenTokens().get(0).value.equals("true") ? 1 : 0);
             }

@@ -16,7 +16,7 @@ $SKULL_TEXTURE: {
     timestamp: Long,
     profileId: String,
     profileName: String,
-    isPublic: Boolean,
+    isPublic: JSON_Boolean,
     textures: {
         SKIN: {
             url: String

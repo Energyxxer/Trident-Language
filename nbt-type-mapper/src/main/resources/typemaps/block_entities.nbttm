@@ -178,3 +178,9 @@ $BLOCK_ENTITY_MINECRAFT_STRUCTURE_BLOCK: {
     mode: String (one_of("SAVE", "LOAD", "CORNER", "DATA")),
     ignoreEntities: Byte (boolean)
 }
+
+$BLOCK_ENTITY_MINECRAFT_CAMPFIRE: {
+    Items: [$ITEM],
+    CookingTimes: [I;],
+    CookingTotalTimes: [I;]
+}

@@ -47,11 +47,12 @@ public class NBTTMLexerProfile extends LexerProfile {
 
     private void initialize(Collection<String> defcategories) {
         contexts.add(new StringTypeMatchLexerContext(
-                new String[] {",", ":", "#", "*"},
-                new TokenType[] {COMMA, COLON, HASH, WILDCARD}
+                new String[] {",", ":", ";", "#", "*"},
+                new TokenType[] {COMMA, COLON, SEMICOLON, HASH, WILDCARD}
         ));
         contexts.add(new StringMatchLexerContext(BRACE, "{", "}", "[", "]", "(", ")"));
-        contexts.add(new StringMatchLexerContext(PRIMITIVE_TYPE, "Byte", "Short", "Int", "Float", "Double", "Long", "String", "Boolean"));
+        contexts.add(new StringMatchLexerContext(PRIMITIVE_TYPE, "Byte", "Short", "Int", "Float", "Double", "Long", "String", "JSON_Boolean"));
+        contexts.add(new StringMatchLexerContext(ARRAY_TYPE, "B", "I", "L"));
         contexts.add(new IdentifierLexerContext(REFERENCE, "[a-zA-Z0-9_]", "\\$"));
         contexts.add(new IdentifierLexerContext(KEY, "[a-zA-Z,0-9_]"));
         contexts.add(new IdentifierLexerContext(IDENTIFIER, "[a-zA-Z,0-9_]"));

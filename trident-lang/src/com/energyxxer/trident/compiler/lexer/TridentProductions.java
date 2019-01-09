@@ -1074,6 +1074,36 @@ public class TridentProductions {
                 NBT_LIST.add(g);
                 NBT_VALUE.add(NBT_LIST);
             }
+            {
+                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                g.append(brace("["));
+                g.append(literal("B"));
+                g.append(symbol(";"));
+                g.append(optional().append(new LazyTokenListMatch(NBT_VALUE, comma(), true).setName("NBT_ARRAY_ENTRIES")));
+                g.append(brace("]"));
+                LazyTokenStructureMatch NBT_BYTE_ARRAY = struct("NBT_BYTE_ARRAY").add(g);
+                NBT_VALUE.add(NBT_BYTE_ARRAY);
+            }
+            {
+                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                g.append(brace("["));
+                g.append(literal("I"));
+                g.append(symbol(";"));
+                g.append(optional().append(new LazyTokenListMatch(NBT_VALUE, comma(), true).setName("NBT_ARRAY_ENTRIES")));
+                g.append(brace("]"));
+                LazyTokenStructureMatch NBT_INT_ARRAY = struct("NBT_INT_ARRAY").add(g);
+                NBT_VALUE.add(NBT_INT_ARRAY);
+            }
+            {
+                LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+                g.append(brace("["));
+                g.append(literal("L"));
+                g.append(symbol(";"));
+                g.append(optional().append(new LazyTokenListMatch(NBT_VALUE, comma(), true).setName("NBT_ARRAY_ENTRIES")));
+                g.append(brace("]"));
+                LazyTokenStructureMatch NBT_LONG_ARRAY = struct("NBT_LONG_ARRAY").add(g);
+                NBT_VALUE.add(NBT_LONG_ARRAY);
+            }
             NBT_VALUE.add(string());
             NBT_VALUE.add(ofType(IDENTIFIER_TYPE_A).setName("RAW_STRING"));
             NBT_VALUE.add(ofType(TYPED_NUMBER).setName("NBT_NUMBER"));
@@ -1694,7 +1724,7 @@ public class TridentProductions {
     }
 
     static LazyTokenItemMatch symbol(String text) {
-        return new LazyTokenItemMatch(SYMBOL, text);
+        return new LazyTokenItemMatch(SYMBOL, text).setName("SYMBOL");
     }
 
     static LazyTokenItemMatch keyword(String text) {

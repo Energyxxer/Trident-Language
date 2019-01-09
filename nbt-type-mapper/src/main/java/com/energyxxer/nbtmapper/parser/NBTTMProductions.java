@@ -31,6 +31,13 @@ public class NBTTMProductions {
                 brace("]")
         ).setName("LIST");
 
+        LazyTokenGroupMatch ARRAY = group(
+                brace("["),
+                ofType(ARRAY_TYPE).setName("ARRAY_TYPE"),
+                ofType(SEMICOLON),
+                brace("]")
+        ).setName("ARRAY");
+
         LazyTokenStructureMatch FLAG = struct("FLAG");
         FLAG.add(ofType(IDENTIFIER)); //boolean, text_component, resource_location...
         FLAG.add(group(matchItem(IDENTIFIER, "type"), brace("("), ofType(HASH).setOptional().setName("IS_TAG"), ofType(DEFINITION_CATEGORY).setName("DEFINITION_CATEGORY"), brace(")")).setName("TYPE_FLAG"));
@@ -41,6 +48,7 @@ public class NBTTMProductions {
         TYPE.add(group(ofType(PRIMITIVE_TYPE).setName("PRIMITIVE_NAME"), FLAGS).setName("PRIMITIVE"));
         TYPE.add(COMPOUND);
         TYPE.add(LIST);
+        TYPE.add(ARRAY);
         LazyTokenGroupMatch REFERENCE_S = group(ofType(REFERENCE).setName("REFERENCE_NAME"), FLAGS).setName("REFERENCE");
         TYPE.add(REFERENCE_S);
 
