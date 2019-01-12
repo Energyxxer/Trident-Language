@@ -270,8 +270,11 @@ public class TridentFile implements CompilerExtension {
         }
 
         TridentCompiler compiler = parent.getCompiler();
-        parent.fileSymbols = new SymbolTable(parent);
-        compiler.getStack().push(parent.fileSymbols);
+        SymbolTable symbols = new SymbolTable(parent);
+        if(parent.fileSymbols == null) {
+            parent.fileSymbols = symbols;
+        }
+        compiler.getStack().push(symbols);
         popTimes++;
 
         if(entryList != null) {

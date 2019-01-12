@@ -55,24 +55,6 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
         throw new ClassCastException();
     }
 
-    @NotNull
-    @Override
-    public Iterator<Object> iterator() {
-        return new Iterator<Object>() {
-            int index = 0;
-
-            @Override
-            public boolean hasNext() {
-                return index < content.size();
-            }
-
-            @Override
-            public Object next() {
-                return content.get(index++).getValue();
-            }
-        };
-    }
-
     public int size() {
         return content.size();
     }
@@ -98,6 +80,24 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
             content.get(i).setName((index - 1) + "");
         }
         return content.remove(index);
+    }
+
+    @NotNull
+    @Override
+    public Iterator<Object> iterator() {
+        return new Iterator<Object>() {
+            private Iterator<Symbol> it = content.iterator();
+
+            @Override
+            public boolean hasNext() {
+                return it.hasNext();
+            }
+
+            @Override
+            public Object next() {
+                return it.next().getValue();
+            }
+        };
     }
 
     @Override

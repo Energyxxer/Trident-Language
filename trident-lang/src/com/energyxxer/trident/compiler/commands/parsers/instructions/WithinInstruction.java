@@ -18,7 +18,7 @@ public class WithinInstruction implements Instruction {
     @Override
     public void run(TokenPattern<?> pattern, TridentFile file) {
 
-        SymbolTable table = new SymbolTable(null);
+        SymbolTable table = new SymbolTable(file);
         file.getCompiler().getStack().push(table);
 
         Symbol symbol = new Symbol(pattern.find("VARIABLE_NAME").flatten(false));

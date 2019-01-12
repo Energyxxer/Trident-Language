@@ -19,8 +19,6 @@ import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.Var
 
 @ParserMember(key = "java.lang.String")
 public class StringType implements VariableTypeHandler<java.lang.String> {
-
-
     private static HashMap<String, MemberWrapper<String>> members = new HashMap<>();
 
     static {
@@ -53,23 +51,6 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
-
-
-        /*members.put("split", (VariableMethod)(params, patterns, pattern, file) -> {
-            if(params.length != 1) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'split' requires 1 parameter, instead found " + params.length, pattern));
-                throw new EntryParsingException();
-            }
-
-            String str = assertOfType(params[0], patterns[0], file, String.class);
-
-            try {
-                return new ListType((Object[]) string.split(Pattern.quote(str)));
-            } catch(IndexOutOfBoundsException x) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, x.getMessage(), pattern));
-                throw new EntryParsingException();
-            }
-        });*/
     }
 
 

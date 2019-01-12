@@ -3,15 +3,14 @@ package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
-public class DictionaryObject implements VariableTypeHandler<DictionaryObject> {
+public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, Iterable<Object> {
     private HashMap<String, Symbol> map = new HashMap<>();
 
     @Override
@@ -82,8 +81,30 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject> {
         return map.putIfAbsent(key, new Symbol(key, Symbol.SymbolAccess.GLOBAL, value));
     }
 
+    @NotNull
+    @Override
+    public Iterator<Object> iterator() {
+        return new Iterator<Object>() {
+            private Iterator<Map.Entry<String, Symbol>> it = map.entrySet().iterator();
+
+            @Override
+            public boolean hasNext() {
+                return it.hasNext();
+            }
+
+            @Override
+            public Object next() {
+                Map.Entry<String, Symbol> entry = it.next();
+                DictionaryObject dict = new DictionaryObject();
+                dict.put("key", entry.getKey());
+                dict.put("value", entry.getValue().getValue());
+                return dict;
+            }
+        };
+    }
+
     @Override
     public String toString() {
-        return map.toString();
+        return "{" + map.values().map((Symbol s) -> s.getName() + "=" + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue()))).collect(Collectors.joining(", ")) + "}";
     }
 }
