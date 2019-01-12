@@ -54,4 +54,9 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
     public Object cast(FunctionMethod object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
         throw new ClassCastException();
     }
+
+    @Override
+    public String toString() {
+        return "<function(" + formalParameters.join(", ") + ")>";
+    }
 }

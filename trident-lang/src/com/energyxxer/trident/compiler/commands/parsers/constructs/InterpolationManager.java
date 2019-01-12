@@ -78,7 +78,7 @@ public class InterpolationManager {
                     file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' is not defined", pattern));
                     throw new EntryParsingException();
                 }
-                return keepSymbol ? symbol : symbol.getValue();
+                return keepSymbol ? symbol : sanitizeObject(symbol.getValue());
             }
             case "RAW_INTEGER": {
                 return Integer.parseInt(pattern.flatten(false));
@@ -184,9 +184,9 @@ public class InterpolationManager {
                 VariableTypeHandler handler = getHandlerForObject(parent, pattern, file);
                 String memberName = pattern.find("MEMBER_NAME").flatten(false);
                 try {
-                    return handler.getMember(parent, memberName, pattern, file, keepSymbol);
+                    return sanitizeObject(handler.getMember(parent, memberName, pattern, file, keepSymbol));
                 } catch(MemberNotFoundException x) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member '" + memberName + "' of '" + (parent != null ? parent.getClass().getSimpleName() : "null") + "'", pattern));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member '" + memberName + "' of " + (parent != null ? parent.getClass().getSimpleName() : "null"), pattern));
                     throw new EntryParsingException();
                 }
             }
@@ -196,9 +196,9 @@ public class InterpolationManager {
                 VariableTypeHandler handler = getHandlerForObject(parent, pattern, file);
                 Object index = parse(pattern.find("INDEX.INTERPOLATION_VALUE"), file);
                 try {
-                    return handler.getIndexer(parent, index, pattern, file, keepSymbol);
+                    return sanitizeObject(handler.getIndexer(parent, index, pattern, file, keepSymbol));
                 } catch(MemberNotFoundException x) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member for index " + index + " of '" + (parent != null ? parent.getClass().getSimpleName() : "null") + "'", pattern));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member for index " + index + " of " + (parent != null ? parent.getClass().getSimpleName() : "null"), pattern));
                     throw new EntryParsingException();
                 }
             }
@@ -221,7 +221,7 @@ public class InterpolationManager {
                         }
                     }
 
-                    return ((VariableMethod) parent).call(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), pattern, file);
+                    return sanitizeObject(((VariableMethod) parent).call(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), pattern, file));
                 } else {
                     file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "This is not a method", pattern.find("INTERPOLATION_VALUE")));
                     throw new EntryParsingException();
@@ -234,6 +234,7 @@ public class InterpolationManager {
                 Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file);
                 VariableTypeHandler handler = getHandlerForObject(parent, pattern, file);
                 Class newType = VariableTypeHandler.Static.getClassForShorthand(pattern.find("TARGET_TYPE").flatten(false));
+                if(newType == String.class) return String.valueOf(parent);
                 try {
                     return handler.cast(parent, newType, pattern, file);
                 } catch(ClassCastException x) {
@@ -328,5 +329,13 @@ public class InterpolationManager {
             throw new EntryParsingException();
         }
         return handler;
+    }
+
+    public static Object sanitizeObject(Object obj) {
+        if(obj == null) return null;
+        if(obj.getClass().isArray()) {
+            return new ListType((Object[]) obj);
+        }
+        return obj;
     }
 }

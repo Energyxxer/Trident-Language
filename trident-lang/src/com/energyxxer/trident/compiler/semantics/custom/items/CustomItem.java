@@ -119,9 +119,15 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
 
     @Override
     public Object cast(CustomItem object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
-        if(targetType == String.class) return "[Custom Item: " + id + "]";
         throw new ClassCastException();
     }
+
+    @Override
+    public String toString() {
+        return "[Custom Item: " + id + "]";
+    }
+
+
 
 
 

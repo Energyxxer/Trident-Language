@@ -18,7 +18,6 @@ public class BooleanType implements VariableTypeHandler<Boolean> {
 
     @Override
     public Object cast(Boolean object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
-        if(targetType == String.class) return String.valueOf(object);
         throw new ClassCastException();
     }
 }

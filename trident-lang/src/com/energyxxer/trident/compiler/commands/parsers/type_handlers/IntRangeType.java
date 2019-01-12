@@ -67,7 +67,6 @@ public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
 
     @Override
     public Object cast(NumberRange<Integer> range, Class targetType, TokenPattern<?> pattern, TridentFile file) {
-        if(targetType == String.class) return range.toString();
         throw new ClassCastException();
     }
 }

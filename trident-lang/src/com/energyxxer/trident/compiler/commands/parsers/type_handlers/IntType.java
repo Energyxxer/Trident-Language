@@ -18,7 +18,6 @@ public class IntType implements VariableTypeHandler<Integer> {
 
     @Override
     public Object cast(Integer object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
-        if(targetType == String.class) return Integer.toString(object);
         if(targetType == Double.class) return object.doubleValue();
         throw new ClassCastException();
     }

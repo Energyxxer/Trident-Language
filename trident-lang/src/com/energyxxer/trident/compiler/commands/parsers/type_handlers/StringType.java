@@ -19,12 +19,65 @@ import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.Var
 
 @ParserMember(key = "java.lang.String")
 public class StringType implements VariableTypeHandler<java.lang.String> {
+
+
+    private static HashMap<String, MemberWrapper<String>> members = new HashMap<>();
+
+    static {
+        members.put("substring", instance -> (VariableMethod) (params, patterns, pattern, file) -> {
+            if(params.length < 1 || params.length > 2) {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'substring' requires 1 or 2 parameters, instead found " + params.length, pattern));
+                throw new EntryParsingException();
+            }
+
+            int start = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], file, Integer.class);
+            int end = params.length >= 2 ? VariableMethod.HelperMethods.assertOfType(params[1], patterns[1], file, Integer.class) : instance.length();
+
+            try {
+                return instance.substring(start, end);
+            } catch(IndexOutOfBoundsException x) {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, x.getMessage(), pattern));
+                throw new EntryParsingException();
+            }
+        });
+
+        try {
+            members.put("indexOf", new MethodWrapper<>(String.class.getMethod("indexOf", String.class)));
+            members.put("lastIndexOf", new MethodWrapper<>(String.class.getMethod("lastIndexOf", String.class)));
+            members.put("split", new MethodWrapper<>("split", (instance, params) -> instance.split(Pattern.quote((String)params[0])), String.class));
+            members.put("replace", new MethodWrapper<>(String.class.getMethod("replace", CharSequence.class, CharSequence.class)));
+            members.put("toUpperCase", new MethodWrapper<>(String.class.getMethod("toUpperCase")));
+            members.put("toLowerCase", new MethodWrapper<>(String.class.getMethod("toLowerCase")));
+
+            members.put("length", new FieldWrapper<>(String::length));
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+
+
+        /*members.put("split", (VariableMethod)(params, patterns, pattern, file) -> {
+            if(params.length != 1) {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'split' requires 1 parameter, instead found " + params.length, pattern));
+                throw new EntryParsingException();
+            }
+
+            String str = assertOfType(params[0], patterns[0], file, String.class);
+
+            try {
+                return new ListType((Object[]) string.split(Pattern.quote(str)));
+            } catch(IndexOutOfBoundsException x) {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, x.getMessage(), pattern));
+                throw new EntryParsingException();
+            }
+        });*/
+    }
+
+
     @Override
     public Object getMember(String str, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
-        StringDecorator decorator = new StringDecorator(str);
-        Object result = decorator.members.get(member);
+        MemberWrapper<String> result = members.get(member);
         if(result == null) throw new MemberNotFoundException();
-        return result;
+        return result.unwrap(str);
     }
 
     @Override
@@ -36,71 +89,6 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
         }
 
         return object.charAt(realIndex) + "";
-    }
-
-    private class StringDecorator {
-        HashMap<String, Object> members = new HashMap<>();
-
-        public StringDecorator(String string) {
-            members.put("substring", (VariableMethod)(params, patterns, pattern, file) -> {
-                if(params.length < 1 || params.length > 2) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'substring' requires 1 or 2 parameters, instead found " + params.length, pattern));
-                    throw new EntryParsingException();
-                }
-
-                int start = assertOfType(params[0], patterns[0], file, Integer.class);
-                int end = params.length >= 2 ? assertOfType(params[1], patterns[1], file, Integer.class) : string.length();
-
-                try {
-                    return string.substring(start, end);
-                } catch(IndexOutOfBoundsException x) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, x.getMessage(), pattern));
-                    throw new EntryParsingException();
-                }
-            });
-            members.put("indexOf", (VariableMethod)(params, patterns, pattern, file) -> {
-                if(params.length != 1) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'indexOf' requires 1 parameter, instead found " + params.length, pattern));
-                    throw new EntryParsingException();
-                }
-
-                String str = assertOfType(params[0], patterns[0], file, String.class);
-
-                try {
-                    return string.indexOf(str);
-                } catch(IndexOutOfBoundsException x) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, x.getMessage(), pattern));
-                    throw new EntryParsingException();
-                }
-            });
-            members.put("split", (VariableMethod)(params, patterns, pattern, file) -> {
-                if(params.length != 1) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'split' requires 1 parameter, instead found " + params.length, pattern));
-                    throw new EntryParsingException();
-                }
-
-                String str = assertOfType(params[0], patterns[0], file, String.class);
-
-                try {
-                    return new ListType((Object[]) string.split(Pattern.quote(str)));
-                } catch(IndexOutOfBoundsException x) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, x.getMessage(), pattern));
-                    throw new EntryParsingException();
-                }
-            });
-            members.put("replace", (VariableMethod)(params, patterns, pattern, file) -> {
-                if(params.length != 2) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'replace' requires 2 parameter, instead found " + params.length, pattern));
-                    throw new EntryParsingException();
-                }
-
-                String target = assertOfType(params[0], patterns[0], file, String.class);
-                String replacement = assertOfType(params[1], patterns[1], file, String.class);
-
-                return string.replace(target, replacement);
-            });
-            members.put("length", string.length());
-        }
     }
 
     @Override

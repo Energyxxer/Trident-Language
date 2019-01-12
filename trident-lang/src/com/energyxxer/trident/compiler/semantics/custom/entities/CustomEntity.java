@@ -107,7 +107,6 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
     @Override
     public Object cast(CustomEntity object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
-        if(targetType == String.class) return "[Custom Entity: " + id + "]";
         throw new ClassCastException();
     }
 
@@ -232,5 +231,10 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         }
 
         if(entityDecl != null) entityDecl.endDeclaration();
+    }
+
+    @Override
+    public String toString() {
+        return "[Custom Entity: " + id + "]";
     }
 }

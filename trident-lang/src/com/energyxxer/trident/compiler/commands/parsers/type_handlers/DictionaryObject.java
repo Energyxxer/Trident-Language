@@ -35,7 +35,6 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject> {
 
     @Override
     public Object cast(DictionaryObject object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
-        if(targetType == String.class) return map.toString();
         throw new ClassCastException();
     }
 
@@ -81,5 +80,10 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject> {
 
     public Object putIfAbsent(String key, Object value) {
         return map.putIfAbsent(key, new Symbol(key, Symbol.SymbolAccess.GLOBAL, value));
+    }
+
+    @Override
+    public String toString() {
+        return map.toString();
     }
 }

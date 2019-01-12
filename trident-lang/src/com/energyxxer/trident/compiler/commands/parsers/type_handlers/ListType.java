@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.stream.Collectors;
 
 import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
@@ -51,7 +52,6 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
 
     @Override
     public Object cast(ListType object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
-        if(targetType == String.class) return content.toString();
         throw new ClassCastException();
     }
 
@@ -98,5 +98,10 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
             content.get(i).setName((index - 1) + "");
         }
         return content.remove(index);
+    }
+
+    @Override
+    public String toString() {
+        return "[" + content.map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue())).collect(Collectors.joining(", "))  + "]";
     }
 }

@@ -16,9 +16,6 @@ public class NullType implements VariableTypeHandler {
 
     @Override
     public Object cast(Object object, Class targetType, TokenPattern pattern, TridentFile file) {
-        if(targetType == String.class) {
-            return "null";
-        }
         return null;
     }
 }

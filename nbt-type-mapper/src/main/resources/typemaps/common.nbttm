@@ -101,8 +101,8 @@ $EXPLOSION: {
     Flicker: Byte (boolean),
     Trail: Byte (boolean),
     Type: Byte (boolean),
-    Colors: [Int (todo_int_arrays)],
-    FadeColors: [Int (todo_int_arrays)]
+    Colors: [I;],
+    FadeColors: [I;]
 }
 
 $ENCHANTMENT: {
