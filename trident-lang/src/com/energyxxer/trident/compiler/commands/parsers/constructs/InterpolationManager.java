@@ -11,6 +11,7 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.*;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.constructors.ObjectConstructors;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.OperandType;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.OperationOrder;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.Operator;
@@ -136,6 +137,9 @@ public class InterpolationManager {
                 if(entryList != null) {
                     for(TokenPattern<?> entry : entryList.searchByName("DICTIONARY_ENTRY")) {
                         String key = entry.find("DICTIONARY_KEY").flatten(false);
+                        if(key.startsWith("\"")) {
+                            key = CommandUtils.parseQuotedString(key);
+                        }
                         Object value = parse(entry.find("INTERPOLATION_VALUE"), file, keepSymbol);
                         dict.put(key, value);
                     }
@@ -226,6 +230,29 @@ public class InterpolationManager {
                     file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "This is not a method", pattern.find("INTERPOLATION_VALUE")));
                     throw new EntryParsingException();
                 }
+            }
+            case "CONSTRUCTOR_CALL": {
+                String constructorName = pattern.find("CONSTRUCTOR_NAME").flatten(false);
+                VariableMethod constructor = ObjectConstructors.getConstructor(constructorName);
+                if(constructor == null) {
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "There is no constructor with the name '" + constructorName + "'", pattern.find("CONSTRUCTOR_NAME")));
+                    throw new EntryParsingException();
+                }
+                ArrayList<Object> params = new ArrayList<>();
+                ArrayList<TokenPattern<?>> patterns = new ArrayList<>();
+
+                TokenList paramList = (TokenList) pattern.find("PARAMETERS");
+
+                if(paramList != null) {
+                    for(TokenPattern<?> rawParam : paramList.getContents()) {
+                        if(rawParam.getName().equals("INTERPOLATION_VALUE")) {
+                            params.add(parse(rawParam, file, keepSymbol));
+                            patterns.add(rawParam);
+                        }
+                    }
+                }
+
+                return sanitizeObject(constructor.call(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), pattern, file));
             }
             case "PARENTHESIZED_VALUE": {
                 return parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);

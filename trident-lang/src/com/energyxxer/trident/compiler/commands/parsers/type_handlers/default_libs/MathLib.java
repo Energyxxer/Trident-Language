@@ -3,6 +3,7 @@ package com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_l
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -10,11 +11,12 @@ import com.energyxxer.trident.compiler.semantics.SymbolStack;
 
 import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
-public class MathLib {
-    public static void populate(SymbolStack stack) {
+@ParserMember(key = "Math")
+public class MathLib implements DefaultLibraryPopulator {
+    public void populate(SymbolStack stack) {
         DictionaryObject math = new DictionaryObject();
         math.put("pow", (VariableMethod) (params, patterns, pattern, file) -> {
-            if(params.length != 2) {
+            if(params.length < 2) {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'pow' requires 2 parameter, instead found " + params.length, pattern));
                 throw new EntryParsingException();
             }

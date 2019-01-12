@@ -10,12 +10,30 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.stream.Collectors;
 
 import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
 public class ListType implements VariableTypeHandler<ListType>, Iterable<Object> {
+    private static HashMap<String, MemberWrapper<ListType>> members = new HashMap<>();
+
+    static {
+        try {
+            members.put("add", new MethodWrapper<>(ListType.class.getMethod("add", Object.class)));
+            members.put("remove", new MethodWrapper<>(ListType.class.getMethod("remove", int.class)));
+            members.put("isEmpty", new MethodWrapper<>(ListType.class.getMethod("isEmpty")));
+            members.put("clear", new MethodWrapper<>(ListType.class.getMethod("clear")));
+
+            members.put("length", new FieldWrapper<>(ListType::size));
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
     private ArrayList<Symbol> content = new ArrayList<>();
 
     public ListType() {
@@ -34,8 +52,9 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
 
     @Override
     public Object getMember(ListType object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
-        if(member.equals("length")) return object.content.size();
-        throw new MemberNotFoundException();
+        MemberWrapper<ListType> result = members.get(member);
+        if(result == null) throw new MemberNotFoundException();
+        return result.unwrap(object);
     }
 
     @Override
@@ -73,6 +92,10 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
 
     public boolean add(Object object) {
         return content.add(new Symbol(content.size() + "", Symbol.SymbolAccess.GLOBAL, object));
+    }
+
+    public void clear() {
+        content.clear();
     }
 
     public Symbol remove(int index) {

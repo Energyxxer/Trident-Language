@@ -4,6 +4,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.Arrays;
@@ -16,6 +17,12 @@ public interface VariableMethod {
         @SuppressWarnings("unchecked")
         public static <T> T assertOfType(Object param, TokenPattern<?> pattern, TridentFile file, Class<T> expected) {
             if(expected.isInstance(param)) return (T) param;
+            VariableTypeHandler handler = param instanceof VariableTypeHandler ? (VariableTypeHandler) param : ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(param.getClass()));
+            if(handler != null) try {
+                return (T) handler.coerce(param, expected, pattern, file);
+            } catch(ClassCastException x) {
+                //could not coerce
+            }
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected parameter of type " + expected.getSimpleName(), pattern));
             throw new EntryParsingException();
         }

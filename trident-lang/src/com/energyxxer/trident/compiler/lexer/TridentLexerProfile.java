@@ -416,7 +416,7 @@ public class TridentLexerProfile extends LexerProfile {
 
         contexts.add(new LexerContext() {
 
-            private List<String> reservedWords = Arrays.asList("integer", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinate", "integer_range", "real_range", "dict", "list", "var", "define", "mark", "do", "while", "within", "using", "as", "append", "for", "in", "switch", "function", "if", "else", "tdndebug", "new");
+            private List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinate", "int_range", "real_range", "dict", "list", "var", "define", "mark", "do", "while", "within", "using", "as", "append", "for", "in", "switch", "function", "if", "else", "tdndebug", "new");
 
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
@@ -441,6 +441,34 @@ public class TridentLexerProfile extends LexerProfile {
             @Override
             public Collection<TokenType> getHandledTypes() {
                 return Collections.singletonList(IDENTIFIER_TYPE_X);
+            }
+        });
+
+        contexts.add(new LexerContext() {
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                int i = 0;
+                while(i < str.length() && (
+                        (i == 0 && str.substring(i,i+1).matches("[a-zA-Z_]")
+                                ||
+                                (i > 0 && str.substring(i,i+1).matches("[a-zA-Z0-9_]"))
+                        ))) {
+                    i++;
+                }
+                str = str.substring(0, i);
+                if(i > 0) return new ScannerContextResponse(true, str, type);
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(IDENTIFIER_TYPE_Y);
             }
         });
 

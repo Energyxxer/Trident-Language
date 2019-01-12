@@ -26,6 +26,10 @@ public interface VariableTypeHandler<T> {
 
     Object cast(T object, Class targetType, TokenPattern<?> pattern, TridentFile file);
 
+    default Object coerce(T object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+        throw new ClassCastException();
+    }
+
     class Static {
 
         public static String getIdentifierForClass(Class<?> cls) {
@@ -43,7 +47,7 @@ public interface VariableTypeHandler<T> {
         private static HashMap<String, Class> shorthands = new HashMap<>();
 
         static {
-            shorthands.put("integer", Integer.class);
+            shorthands.put("int", Integer.class);
             shorthands.put("real", Double.class);
             shorthands.put("boolean", Boolean.class);
             shorthands.put("string", String.class);
@@ -57,7 +61,7 @@ public interface VariableTypeHandler<T> {
             shorthands.put("coordinates", CoordinateSet.class);
             shorthands.put("resource", TridentUtil.ResourceLocation.class);
 
-            //"coordinate", "integer_range", "real_range", "dictionary", "array"
+            //"coordinate", "int_range", "real_range", "dictionary", "array"
         }
 
         public static Class getClassForShorthand(String shorthand) {

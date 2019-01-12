@@ -147,17 +147,18 @@ public class TridentProductions {
             CLOSED_INTERPOLATION_VALUE.add(group(literal("nbt_value"), brace("<"), NBT_VALUE, brace(">")).setName("WRAPPED_NBT_VALUE"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("nbt_path"), brace("<"), NBT_PATH, brace(">")).setName("WRAPPED_NBT_PATH"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("coordinates"), brace("<"), COORDINATE_SET, brace(">")).setName("WRAPPED_COORDINATE"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("integer_range"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("int_range"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("real_range"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("resource"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("dict"), DICTIONARY).setName("WRAPPED_DICTIONARY"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("list"), LIST).setName("WRAPPED_LIST"));
             CLOSED_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
             CLOSED_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("new"), literal("function"), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("function"), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
             INTERPOLATION_VALUE.add(CLOSED_INTERPOLATION_VALUE);
 
-            INTERPOLATION_VALUE.add(group(brace("("), choice("integer", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinates", "integer_range", "real_range", "dict", "list", "resource").setName("TARGET_TYPE"), brace(")"), INTERPOLATION_VALUE).setName("CAST"));
+            INTERPOLATION_VALUE.add(group(brace("("), choice("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinates", "int_range", "real_range", "dict", "list", "resource").setName("TARGET_TYPE"), brace(")"), INTERPOLATION_VALUE).setName("CAST"));
+            INTERPOLATION_VALUE.add(group(literal("new"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
             INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER"));
             INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("["), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("INDEXED_MEMBER"));
@@ -167,7 +168,7 @@ public class TridentProductions {
 
             INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), brace("{").setName("INTERPOLATION_BRACE"), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE")).setName("INTERPOLATION_WRAPPER"));
 
-            DICTIONARY.add(group(brace("{"), list(group(identifierX().setName("DICTIONARY_KEY"), colon(), INTERPOLATION_VALUE).setName("DICTIONARY_ENTRY"), comma()).setOptional().setName("DICTIONARY_ENTRY_LIST"), brace("}")));
+            DICTIONARY.add(group(brace("{"), list(group(choice(identifierX(), ofType(STRING_LITERAL)).setName("DICTIONARY_KEY"), colon(), INTERPOLATION_VALUE).setName("DICTIONARY_ENTRY"), comma()).setOptional().setName("DICTIONARY_ENTRY_LIST"), brace("}")));
             LIST.add(group(brace("["), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")));
         }
 

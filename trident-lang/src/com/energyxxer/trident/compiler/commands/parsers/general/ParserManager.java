@@ -72,4 +72,11 @@ public class ParserManager {
     }
 
     public static void initialize() {}
+
+    @SuppressWarnings("unchecked")
+    public static <T> Collection<T> getAllParsers(Class<T> group) {
+        HashMap<String, Object> innerMap = groups.get(group);
+        if(innerMap == null) throw new IllegalArgumentException("No such parser group '" + group.getSimpleName() + "'");
+        return (Collection<T>) innerMap.values();
+    }
 }

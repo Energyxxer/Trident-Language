@@ -19,11 +19,13 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.instructions.AliasInstruction;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.ReturnException;
-import com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_libs.MathLib;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_libs.DefaultLibraryPopulator;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
+import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolStack;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
@@ -154,7 +156,10 @@ public class TridentCompiler {
         this.setProgress("Adding native methods");
 
         {
-            MathLib.populate(stack);
+            stack.getGlobal().put(new Symbol("new", Symbol.SymbolAccess.GLOBAL, new DictionaryObject()));
+            for(DefaultLibraryPopulator lib : ParserManager.getAllParsers(DefaultLibraryPopulator.class)) {
+                lib.populate(stack);
+            }
         }
 
         this.setProgress("Scanning files");

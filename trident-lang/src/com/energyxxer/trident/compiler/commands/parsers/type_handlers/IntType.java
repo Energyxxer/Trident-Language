@@ -21,4 +21,10 @@ public class IntType implements VariableTypeHandler<Integer> {
         if(targetType == Double.class) return object.doubleValue();
         throw new ClassCastException();
     }
+
+    @Override
+    public Object coerce(Integer object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+        if(targetType == Double.class) return object.doubleValue();
+        throw new ClassCastException();
+    }
 }
