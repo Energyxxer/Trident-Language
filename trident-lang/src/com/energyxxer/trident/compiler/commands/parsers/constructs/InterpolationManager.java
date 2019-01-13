@@ -18,6 +18,7 @@ import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.OperatorHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +101,7 @@ public class InterpolationManager {
                 return CommonParsers.parseBlock(pattern.find("BLOCK_TAGGED"), file);
             }
             case "WRAPPED_ITEM": {
-                return CommonParsers.parseBlock(pattern.find("ITEM_TAGGED"), file);
+                return CommonParsers.parseItem(pattern.find("ITEM_TAGGED"), file, NBTMode.SETTING);
             }
             case "WRAPPED_TEXT_COMPONENT": {
                 return TextParser.parseTextComponent(pattern.find("TEXT_COMPONENT"), file);

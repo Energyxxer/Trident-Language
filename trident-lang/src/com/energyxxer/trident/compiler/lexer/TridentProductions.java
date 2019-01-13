@@ -502,7 +502,8 @@ public class TridentProductions {
                             group(literal("entity"), ENTITY)
                     ).setName("TARGET"),
                     SLOT_ID,
-                    ITEM
+                    ITEM,
+                    integer().setOptional().setName("COUNT")
             ));
         }
         //endregion

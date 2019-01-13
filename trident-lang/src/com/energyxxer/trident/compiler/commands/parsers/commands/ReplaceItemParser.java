@@ -22,15 +22,20 @@ public class ReplaceItemParser implements CommandParser {
     public Command parse(TokenPattern<?> pattern, TridentFile file) {
         Type slot = file.getCompiler().getModule().minecraft.types.slot.get(pattern.find("SLOT_ID").flatten(false));
         Item item = CommonParsers.parseItem(pattern.find("ITEM"), file, NBTMode.SETTING);
+        int count = 1;
 
         if(!item.getItemType().isStandalone()) {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Item tags aren't allowed in this context", pattern.find("ITEM")));
             throw new EntryParsingException();
         }
 
+        if(pattern.find("COUNT") != null) {
+            count = CommonParsers.parseInt(pattern.find("COUNT"), file);
+        }
+
         TokenPattern<?> rawCoords = pattern.find("TARGET.COORDINATE_SET");
         if(rawCoords != null) {
-            return new ReplaceItemBlockCommand(CoordinateParser.parse(rawCoords, file), slot, item);
-        } else return new ReplaceItemEntityCommand(EntityParser.parseEntity(pattern.find("TARGET.ENTITY"), file), slot, item);
+            return new ReplaceItemBlockCommand(CoordinateParser.parse(rawCoords, file), slot, item, count);
+        } else return new ReplaceItemEntityCommand(EntityParser.parseEntity(pattern.find("TARGET.ENTITY"), file), slot, item, count);
     }
 }
