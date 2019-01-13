@@ -11,6 +11,9 @@ import java.util.stream.Collectors;
 import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
 public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, Iterable<Object> {
+    private static Stack<DictionaryObject> toStringRecursion = new Stack<>();
+
+
     private HashMap<String, Symbol> map = new HashMap<>();
 
     @Override
@@ -46,7 +49,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
     }
 
     public Object get(String key) {
-        return map.get(key);
+        return map.containsKey(key) ? map.get(key).getValue() : null;
     }
 
     public boolean containsKey(String key) {
@@ -105,6 +108,12 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
 
     @Override
     public String toString() {
-        return "{" + map.values().map((Symbol s) -> s.getName() + "=" + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue()))).collect(Collectors.joining(", ")) + "}";
+        if(toStringRecursion.contains(this)) {
+            return "{ ...circular... }";
+        }
+        toStringRecursion.push(this);
+        String str = "{" + map.values().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue()))).collect(Collectors.joining(", ")) + "}";
+        toStringRecursion.pop();
+        return str;
     }
 }

@@ -78,17 +78,20 @@ public class ForInstruction implements Instruction {
                     return new ForHeader() {
                         @Override
                         public void initialize() {
-                            file.getCompiler().getStack().peek().put(new Symbol(varName, Symbol.SymbolAccess.GLOBAL, it.next()));
+                            file.getCompiler().getStack().peek().put(new Symbol(varName, Symbol.SymbolAccess.GLOBAL, null));
                         }
 
                         @Override
                         public boolean condition() {
-                            return it.hasNext();
+                            boolean hasNext = it.hasNext();
+                            if(hasNext) {
+                                file.getCompiler().getStack().peek().get(varName).setValue(it.next());
+                            }
+                            return hasNext;
                         }
 
                         @Override
                         public void iterate() {
-                            file.getCompiler().getStack().peek().get(varName).setValue(it.next());
                         }
                     };
                 } else {
