@@ -9,6 +9,7 @@ import com.energyxxer.trident.main.window.sections.MenuBar;
 import com.energyxxer.trident.main.window.sections.tools.ConsoleBoard;
 import com.energyxxer.trident.main.window.sections.tools.NoticeBoard;
 import com.energyxxer.trident.main.window.sections.tools.ToolBoardMaster;
+import com.energyxxer.trident.ui.editor.behavior.AdvancedEditor;
 import com.energyxxer.trident.ui.explorer.NoticeExplorerMaster;
 import com.energyxxer.trident.ui.explorer.ProjectExplorerMaster;
 import com.energyxxer.trident.ui.tablist.TabListMaster;
@@ -90,7 +91,7 @@ public class TridentWindow {
                     Commons.compileActive();
                 }
                 return true;
-            } else if((e.getKeyCode() == KeyEvent.VK_W || Character.toLowerCase(e.getKeyChar()) == 'w') && e.getModifiersEx() == InputEvent.CTRL_DOWN_MASK) {
+            } else if((e.getKeyCode() == KeyEvent.VK_W || Character.toLowerCase(e.getKeyChar()) == 'w') && AdvancedEditor.isPlatformControlDown(e)) {
                 if(e.getID() == KeyEvent.KEY_PRESSED) {
                     TabManager.closeSelectedTab();
                 }

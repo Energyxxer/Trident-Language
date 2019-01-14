@@ -11,6 +11,7 @@ import com.energyxxer.trident.ui.editor.behavior.editmanager.edits.*;
 import com.energyxxer.trident.util.linepainter.LinePainter;
 import com.energyxxer.util.StringLocation;
 import com.energyxxer.util.StringLocationCache;
+import com.energyxxer.util.logger.Debug;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -23,7 +24,6 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
@@ -52,8 +52,8 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
         //this.getInputMap().setParent(null);
         this.setInputMap(JComponent.WHEN_FOCUSED,new InputMap());
 
-        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK),"undo");
-        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK),"redo");
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()),"undo");
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()),"redo");
 
         this.getActionMap().put("undo", new AbstractAction() {
             @Override
@@ -96,7 +96,7 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
             } catch(Exception x) {
                 x.printStackTrace();
             }
-        } else */if(!e.isControlDown() && !Commons.isSpecialCharacter(e.getKeyChar())) {
+        } else */if(!isPlatformControlDown(e) && !Commons.isSpecialCharacter(e.getKeyChar())) {
             editManager.insertEdit(new InsertionEdit("" + e.getKeyChar(), this));
         }
     }
@@ -115,11 +115,12 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
             }
         } else if(keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE) {
             e.consume();
-            editManager.insertEdit(new DeletionEdit(this, e.isControlDown(), keyCode == KeyEvent.VK_DELETE));
+            Debug.log("Backspace/delete consumed");
+            editManager.insertEdit(new DeletionEdit(this, isPlatformControlDown(e), keyCode == KeyEvent.VK_DELETE));
         } else if(keyCode == KeyEvent.VK_ENTER) {
             e.consume();
-            editManager.insertEdit(new NewlineEdit(this, !e.isControlDown()));
-        } else if((keyCode == KeyEvent.VK_C || keyCode == KeyEvent.VK_X) && e.isControlDown()) {
+            editManager.insertEdit(new NewlineEdit(this, !isPlatformControlDown(e)));
+        } else if((keyCode == KeyEvent.VK_C || keyCode == KeyEvent.VK_X) && isPlatformControlDown(e)) {
             e.consume();
 
             try {
@@ -152,7 +153,7 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
                 x.printStackTrace();
             }
 
-        } else if(keyCode == KeyEvent.VK_V && e.isControlDown()) {
+        } else if(keyCode == KeyEvent.VK_V && isPlatformControlDown(e)) {
             e.consume();
             try {
                 Clipboard clipboard = this.getToolkit().getSystemClipboard();
@@ -172,7 +173,7 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
             } catch(Exception x) {
                 x.printStackTrace();
             }
-        } else if(keyCode == KeyEvent.VK_A && e.isControlDown()) {
+        } else if(keyCode == KeyEvent.VK_A && isPlatformControlDown(e)) {
             e.consume();
             caret.setProfile(new CaretProfile(0, getDocument().getLength()));
         } else if(keyCode >= KeyEvent.VK_LEFT && keyCode <= KeyEvent.VK_DOWN && e.isAltDown()) {
@@ -280,6 +281,10 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
 
     public void registerCharacterDrift(CharacterDriftHandler h) {
 
+    }
+
+    public static boolean isPlatformControlDown(KeyEvent e) {
+        return (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
     }
 
     //Delegates and deprecated managers

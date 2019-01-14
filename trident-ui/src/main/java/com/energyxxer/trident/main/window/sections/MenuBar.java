@@ -1,6 +1,9 @@
 package com.energyxxer.trident.main.window.sections;
 
-import com.energyxxer.trident.global.*;
+import com.energyxxer.trident.global.Commons;
+import com.energyxxer.trident.global.Preferences;
+import com.energyxxer.trident.global.Status;
+import com.energyxxer.trident.global.TabManager;
 import com.energyxxer.trident.global.temp.projects.Project;
 import com.energyxxer.trident.main.Trident;
 import com.energyxxer.trident.main.window.TridentWindow;
@@ -14,7 +17,6 @@ import com.energyxxer.util.FileUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +67,7 @@ public class MenuBar extends JMenuBar {
 
             {
                 StyledMenuItem item = new StyledMenuItem("Save", "save");
-                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 menu.add(item);
             }
 
@@ -93,7 +95,7 @@ public class MenuBar extends JMenuBar {
 
             {
                 StyledMenuItem item = new StyledMenuItem("Close");
-                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
+                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 menu.add(item);
             }
 
@@ -101,7 +103,7 @@ public class MenuBar extends JMenuBar {
 
             {
                 StyledMenuItem item = new StyledMenuItem("Close All");
-                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, 3));
+                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.SHIFT_MASK & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 menu.add(item);
             }
 
@@ -157,7 +159,7 @@ public class MenuBar extends JMenuBar {
 
             {
                 StyledMenuItem item = new StyledMenuItem("Undo", "undo");
-                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
+                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 menu.add(item);
             }
 
@@ -165,7 +167,7 @@ public class MenuBar extends JMenuBar {
 
             {
                 StyledMenuItem item = new StyledMenuItem("Redo", "redo");
-                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ActionEvent.CTRL_MASK));
+                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 menu.add(item);
             }
 
@@ -177,7 +179,7 @@ public class MenuBar extends JMenuBar {
 
             {
                 StyledMenuItem item = new StyledMenuItem("Copy");
-                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
+                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 menu.add(item);
             }
 
@@ -185,7 +187,7 @@ public class MenuBar extends JMenuBar {
 
             {
                 StyledMenuItem item = new StyledMenuItem("Cut");
-                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.CTRL_MASK));
+                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 menu.add(item);
             }
 
@@ -193,7 +195,7 @@ public class MenuBar extends JMenuBar {
 
             {
                 StyledMenuItem item = new StyledMenuItem("Paste");
-                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.CTRL_MASK));
+                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 menu.add(item);
             }
 

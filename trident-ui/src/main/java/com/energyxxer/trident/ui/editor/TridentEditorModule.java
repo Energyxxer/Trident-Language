@@ -59,7 +59,7 @@ public class TridentEditorModule extends JScrollPane implements DisplayModule, U
 
 		this.setBorder(BorderFactory.createEmptyBorder());
 
-		KeyStroke saveKeystroke = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK);
+		KeyStroke saveKeystroke = KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
 
 		KeyStroke reloadKeystroke = KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0);
 
