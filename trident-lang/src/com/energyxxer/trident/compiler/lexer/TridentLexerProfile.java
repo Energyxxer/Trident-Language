@@ -482,7 +482,7 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new StringMatchLexerContext(SYMBOL, "*", "<=", ">=", "<", ">", "!=", "=", "$", ";"));
         contexts.add(new StringMatchLexerContext(ARROW, "->"));
 
-        contexts.add(new StringMatchLexerContext(COMPILER_OPERATOR, "+=", "-=", "*=", "/=", "%=", "+", "-", "*", "/", "%", "<=", ">=", "<", ">", "==", "!=", "="));
+        contexts.add(new StringMatchLexerContext(COMPILER_OPERATOR, "+=", "-=", "*=", "/=", "%=", "+", "-", "*", "/", "%", "<=", ">=", "<", ">", "==", "!=", "=", "&&", "||"));
         contexts.add(new StringMatchLexerContext(COMPILER_POSTFIX_OPERATOR, "++", "--"));
         contexts.add(new StringMatchLexerContext(COMPILER_PREFIX_OPERATOR, "++", "--", "!"));
 

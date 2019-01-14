@@ -27,7 +27,10 @@ import java.util.regex.Pattern;
 public class NBTParser {
     public static TagCompound parseCompound(TokenPattern<?> pattern, TridentFile file) {
         if(pattern == null) return null;
-        return (TagCompound)parseValue(pattern, file);
+        NBTTag value = parseValue(pattern, file);
+        if(value instanceof TagCompound) return ((TagCompound) value);
+        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type TagCompound", pattern));
+        throw new EntryParsingException();
     }
 
     public static NBTTag parseValue(TokenPattern<?> pattern, TridentFile file) {
@@ -39,7 +42,7 @@ public class NBTParser {
                 return parseValue(((TokenStructure)pattern).getContents(), file);
             }
             case "INTERPOLATION_BLOCK": {
-                TagCompound result = InterpolationManager.parse(pattern, file, TagCompound.class);
+                NBTTag result = InterpolationManager.parse(pattern, file, NBTTag.class);
                 EObject.assertNotNull(result, pattern, file);
                 return result;
             }
@@ -169,8 +172,11 @@ public class NBTParser {
                     }
                 }
             }
+            default: {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
+                throw new EntryParsingException();
+            }
         }
-        return new TagString("ERROR WHILE PARSING TAG " + pattern.getName());
     }
 
     /**

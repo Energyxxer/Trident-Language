@@ -1,0 +1,37 @@
+package com.energyxxer.trident.compiler.semantics;
+
+import org.jetbrains.annotations.Nullable;
+
+public class AutoPropertySymbol<T> extends Symbol {
+
+    public interface Getter<T> {
+        T get();
+    }
+    public interface Setter<T> {
+        void set(T value);
+    }
+
+    private final Class<T> cls;
+    private final Getter<T> getter;
+    private final Setter<T> setter;
+
+    public AutoPropertySymbol(String name, Class<T> cls, Getter<T> getter, Setter<T> setter) {
+        super(name);
+        this.cls = cls;
+        this.getter = getter;
+        this.setter = setter;
+    }
+
+    @Override
+    public @Nullable Object getValue() {
+        return getter.get();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void setValue(Object value) {
+        if(cls.isInstance(value)) {
+            setter.set((T) value);
+        }
+    }
+}

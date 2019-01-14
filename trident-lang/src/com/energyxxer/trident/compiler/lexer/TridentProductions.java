@@ -157,7 +157,37 @@ public class TridentProductions {
             CLOSED_INTERPOLATION_VALUE.add(group(literal("function"), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
             INTERPOLATION_VALUE.add(CLOSED_INTERPOLATION_VALUE);
 
-            INTERPOLATION_VALUE.add(group(brace("("), choice("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinates", "int_range", "real_range", "dict", "list", "resource").setName("TARGET_TYPE"), brace(")"), INTERPOLATION_VALUE).setName("CAST"));
+            INTERPOLATION_VALUE.add(group(brace("("), choice(
+                    "int",
+                    "real",
+                    "boolean",
+                    "string",
+                    "entity",
+                    "block",
+                    "item",
+                    "text_component",
+                    "nbt",
+                    "tag_compound",
+                    "tag_list",
+                    "tag_byte",
+                    "tag_short",
+                    "tag_int",
+                    "tag_float",
+                    "tag_double",
+                    "tag_long",
+                    "tag_string",
+                    "tag_byte_array",
+                    "tag_int_array",
+                    "tag_long_array",
+                    "nbt_value",
+                    "nbt_path",
+                    "coordinates",
+                    "int_range",
+                    "real_range",
+                    "dict",
+                    "list",
+                    "resource"
+            ).setName("TARGET_TYPE"), brace(")"), INTERPOLATION_VALUE).setName("CAST"));
             INTERPOLATION_VALUE.add(group(literal("new"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
             INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER"));
@@ -1110,6 +1140,7 @@ public class TridentProductions {
             NBT_VALUE.add(ofType(IDENTIFIER_TYPE_A).setName("RAW_STRING"));
             NBT_VALUE.add(ofType(TYPED_NUMBER).setName("NBT_NUMBER"));
             NBT_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
+            NBT_VALUE.add(INTERPOLATION_BLOCK);
         }
 
         {
@@ -1862,4 +1893,7 @@ public class TridentProductions {
         return ofType(IDENTIFIER_TYPE_X).setName("IDENTIFIER");
     }
 
+    public void resetNestedStructures() {
+        INTERPOLATION_VALUE.resetNested();
+    }
 }

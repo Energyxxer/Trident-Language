@@ -35,8 +35,9 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
         return keepSymbol || elem == null ? elem : elem.getValue();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object cast(DictionaryObject object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(DictionaryObject object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
         throw new ClassCastException();
     }
 

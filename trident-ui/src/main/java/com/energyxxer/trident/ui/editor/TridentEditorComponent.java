@@ -9,6 +9,7 @@ import com.energyxxer.trident.ui.editor.behavior.AdvancedEditor;
 import com.energyxxer.trident.ui.editor.behavior.editmanager.CharacterDriftHandler;
 import com.energyxxer.trident.ui.editor.inspector.Inspector;
 import com.energyxxer.trident.ui.modules.FileModuleToken;
+import com.energyxxer.util.logger.Debug;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -32,6 +33,8 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
     private Inspector inspector = null;
 
     private long lastEdit;
+
+    private Thread highlightingThread = null;
 
     TridentEditorComponent(TridentEditorModule parent) {
         super(new DefaultStyledDocument());
@@ -72,6 +75,7 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
 
         Lang lang = Lang.getLangForFile(parent.file.getPath());
 
+        Debug.log("Parsing");
         Lang.LangAnalysisResponse analysis = lang != null ? lang.analyze(parent.file, text) : null;
         if(analysis == null) return;
 
@@ -134,7 +138,13 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
     public void actionPerformed(ActionEvent arg0) {
         if (lastEdit > -1 && (new Date().getTime()) - lastEdit > 500 && parent.associatedTab.isActive()) {
             lastEdit = -1;
-            new Thread(this::highlightSyntax,"Text Highlighter").start();
+            if(highlightingThread != null) {
+                Debug.log("Interrupting");
+                highlightingThread.stop();
+                Debug.log("Interrupted");
+            }
+            highlightingThread = new Thread(this::highlightSyntax,"Text Highlighter");
+            highlightingThread.start();
         }
     }
 

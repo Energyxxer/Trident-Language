@@ -277,25 +277,27 @@ public class TridentFile implements CompilerExtension {
         compiler.getStack().push(symbols);
         popTimes++;
 
-        if(entryList != null) {
-            TokenPattern<?>[] entries = (entryList).getContents();
-            for (TokenPattern<?> pattern : entries) {
-                if (!pattern.getName().equals("LINE_PADDING")) {
-                    TokenStructure entry = (TokenStructure) pattern.find("ENTRY");
+        try {
+            if (entryList != null) {
+                TokenPattern<?>[] entries = (entryList).getContents();
+                for (TokenPattern<?> pattern : entries) {
+                    if (!pattern.getName().equals("LINE_PADDING")) {
+                        TokenStructure entry = (TokenStructure) pattern.find("ENTRY");
 
-                    TokenPattern<?> inner = entry.getContents();
+                        TokenPattern<?> inner = entry.getContents();
 
-                    try {
-                        resolveEntry(inner, parent, appendTo, compileOnly);
-                    } catch (EntryParsingException x) {
-                        //Silently ignore; serves as a multi-scope break;
+                        try {
+                            resolveEntry(inner, parent, appendTo, compileOnly);
+                        } catch (EntryParsingException x) {
+                            //Silently ignore; serves as a multi-scope break;
+                        }
                     }
                 }
             }
-        }
-
-        for(int i = 0; i < popTimes; i++) {
-            compiler.getStack().pop();
+        } finally {
+            for(int i = 0; i < popTimes; i++) {
+                compiler.getStack().pop();
+            }
         }
     }
 

@@ -105,8 +105,9 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         throw new MemberNotFoundException();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object cast(CustomEntity object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(CustomEntity object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
         throw new ClassCastException();
     }
 

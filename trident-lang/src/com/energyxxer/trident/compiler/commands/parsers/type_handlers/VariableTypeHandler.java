@@ -3,8 +3,7 @@ package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
-import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
+import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.textcomponents.TextComponent;
@@ -24,7 +23,8 @@ public interface VariableTypeHandler<T> {
 
     Object getIndexer(T object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol);
 
-    Object cast(T object, Class targetType, TokenPattern<?> pattern, TridentFile file);
+    @SuppressWarnings("unchecked")
+    <F> F cast(T object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file);
 
     default Object coerce(T object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
         throw new ClassCastException();
@@ -38,6 +38,9 @@ public interface VariableTypeHandler<T> {
             }
             if(Entity.class.isAssignableFrom(cls)) {
                 return Entity.class.getName();
+            }
+            if(TextComponent.class.isAssignableFrom(cls)) {
+                return TextComponent.class.getName();
             }
             if(cls.isInstance(SAMPLE_INT_RANGE)) return cls.getName() + "<Integer>";
             if(cls.isInstance(SAMPLE_REAL_RANGE)) return cls.getName() + "<Double>";
@@ -56,6 +59,18 @@ public interface VariableTypeHandler<T> {
             shorthands.put("item", Item.class);
             shorthands.put("text_component", TextComponent.class);
             shorthands.put("nbt", TagCompound.class);
+            shorthands.put("tag_compound", TagCompound.class);
+            shorthands.put("tag_list", TagList.class);
+            shorthands.put("tag_byte", TagByte.class);
+            shorthands.put("tag_short", TagShort.class);
+            shorthands.put("tag_int", TagInt.class);
+            shorthands.put("tag_float", TagFloat.class);
+            shorthands.put("tag_double", TagDouble.class);
+            shorthands.put("tag_long", TagLong.class);
+            shorthands.put("tag_string", TagString.class);
+            shorthands.put("tag_byte_array", TagByteArray.class);
+            shorthands.put("tag_int_array", TagIntArray.class);
+            shorthands.put("tag_long_array", TagLongArray.class);
             shorthands.put("nbt_value", NBTTag.class);
             shorthands.put("nbt_path", NBTPath.class);
             shorthands.put("coordinates", CoordinateSet.class);

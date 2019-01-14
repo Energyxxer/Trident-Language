@@ -5,6 +5,7 @@ import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.util.MethodInvocation;
 import com.energyxxer.util.Stack;
+import com.energyxxer.util.logger.Debug;
 
 import java.util.ArrayList;
 
@@ -43,6 +44,9 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
     @Override
     public TokenMatchResponse match(int index, LazyLexer lexer, Stack st) {
         if(!nestedStack.isEmpty() && nestedStack.peek().index == index) {
+            if(nestedStack.size() > 200) {
+                Debug.log("oh no");
+            }
             return nestedStack.peek().response;
         }
 
@@ -138,6 +142,10 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
             }
         }
         return newStruct;
+    }
+
+    public void resetNested() {
+        nestedStack.clear();
     }
 
     private class NestedEntry {

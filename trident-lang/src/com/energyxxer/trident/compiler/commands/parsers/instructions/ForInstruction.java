@@ -10,6 +10,7 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.util.logger.Debug;
 
 import java.util.Iterator;
 import java.util.List;
@@ -21,7 +22,9 @@ public class ForInstruction implements Instruction {
         ForHeader header = parseHeader(pattern.find("FOR_HEADER"), file);
         TokenPattern<?> body = pattern.find("ANONYMOUS_INNER_FUNCTION");
 
-        file.getCompiler().getStack().push(new SymbolTable(file));
+        SymbolTable forFrame = new SymbolTable(file);
+
+        file.getCompiler().getStack().push(forFrame);
 
         try {
             for (header.initialize(); header.condition(); header.iterate()) {
@@ -33,7 +36,10 @@ public class ForInstruction implements Instruction {
                 }
             }
         } catch(EntryParsingException x) {
-
+            boolean a = true;
+        } catch(Exception x) {
+            boolean b = true;
+            Debug.log("aaa");
         } finally {
             file.getCompiler().getStack().pop();
         }

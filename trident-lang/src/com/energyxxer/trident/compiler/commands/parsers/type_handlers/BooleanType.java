@@ -16,8 +16,9 @@ public class BooleanType implements VariableTypeHandler<Boolean> {
         throw new MemberNotFoundException();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object cast(Boolean object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(Boolean object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
         throw new ClassCastException();
     }
 }

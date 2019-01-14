@@ -50,8 +50,9 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
         throw new MemberNotFoundException();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object cast(FunctionMethod object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(FunctionMethod object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
         throw new ClassCastException();
     }
 

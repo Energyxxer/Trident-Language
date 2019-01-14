@@ -36,7 +36,7 @@ public enum Lang {
     JSON(JSONLexerProfile::new, "json", "mcmeta", TridentCompiler.PROJECT_FILE_NAME.substring(1)),
     PROPERTIES(PropertiesLexerProfile::new, "properties", "lang"),
     MCFUNCTION(MCFunctionLexerProfile::new, () -> MCFunctionProductions.FILE, "mcfunction"),
-    TRIDENT(() -> TridentLexerProfile.INSTANCE.getValue(), () -> Commons.getActiveTridentProductions(), "tdn"),
+    TRIDENT(TridentLexerProfile.INSTANCE::getValue, Commons::getActiveTridentProductions, "tdn"),
     NBTTM(() -> new NBTTMLexerProfile(StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT), () -> NBTTMProductions.FILE, "nbttm");
 
     Factory<LexerProfile> factory;

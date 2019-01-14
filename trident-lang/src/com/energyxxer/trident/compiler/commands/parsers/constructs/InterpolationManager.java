@@ -260,15 +260,8 @@ public class InterpolationManager {
             }
             case "CAST": {
                 Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file);
-                VariableTypeHandler handler = getHandlerForObject(parent, pattern, file);
                 Class newType = VariableTypeHandler.Static.getClassForShorthand(pattern.find("TARGET_TYPE").flatten(false));
-                if(newType == String.class) return String.valueOf(parent);
-                try {
-                    return handler.cast(parent, newType, pattern, file);
-                } catch(ClassCastException x) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unable to cast " + (parent != null ? parent.getClass().getSimpleName() : "null") + " to type " + newType.getName(), pattern));
-                    throw new EntryParsingException();
-                }
+                return cast(parent, newType, pattern, file);
             }
             case "EXPRESSION": {
                 //region Expression evaluation
@@ -344,6 +337,19 @@ public class InterpolationManager {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
                 throw new EntryParsingException();
             }
+        }
+    }
+
+    public static <T> T cast(Object obj, Class<T> newType, TokenPattern<?> pattern, TridentFile file) {
+        if(obj == null) return null;
+        VariableTypeHandler handler = getHandlerForObject(obj, pattern, file);
+        if(newType == obj.getClass()) return (T) obj;
+        if(newType == String.class) return (T)String.valueOf(obj);
+        try {
+            return (T) handler.cast(obj, newType, pattern, file);
+        } catch(ClassCastException x) {
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unable to cast " + obj.getClass().getSimpleName() + " to type " + newType.getName(), pattern));
+            throw new EntryParsingException();
         }
     }
 

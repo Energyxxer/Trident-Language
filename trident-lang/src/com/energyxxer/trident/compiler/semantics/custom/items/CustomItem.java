@@ -108,6 +108,8 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
         }
         else if(member.equals("getMatchingNBT")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
+        } else if(member.equals("getItem")) {
+            return (VariableMethod) (params, patterns, pattern1, file1) -> new Item(defaultType, defaultNBT);
         }
         throw new MemberNotFoundException();
     }
@@ -117,8 +119,9 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
         throw new MemberNotFoundException();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object cast(CustomItem object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(CustomItem object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
         throw new ClassCastException();
     }
 

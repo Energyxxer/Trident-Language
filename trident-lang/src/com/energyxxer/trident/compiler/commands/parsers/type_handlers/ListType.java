@@ -69,8 +69,9 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
         return keepSymbol || elem == null ? elem : elem.getValue();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object cast(ListType object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(ListType object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
         throw new ClassCastException();
     }
 

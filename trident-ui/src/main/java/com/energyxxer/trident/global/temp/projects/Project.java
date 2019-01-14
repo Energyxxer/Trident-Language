@@ -38,12 +38,12 @@ public class Project {
 		return Commons.getDefaultModule();
 	});
 
-	public final Lazy<LazyTokenPatternMatch> productions = new Lazy<>(() -> new TridentProductions(module.getValue()).FILE);
+	private final Lazy<TridentProductions> productions = new Lazy<>(() -> new TridentProductions(module.getValue()), TridentProductions::resetNestedStructures);
 
 	//region a
-    private JsonObject config;
+
+	private JsonObject config;
 	//endregion
-	
 	public Project(String name) {
 		Path rootPath = Paths.get(ProjectManager.getWorkspaceDir()).resolve(name);
 		this.rootDirectory = rootPath.toFile();
@@ -64,7 +64,7 @@ public class Project {
         config.addProperty("export-comments", true);
         config.addProperty("strict-text-components", false);
 	}
-	
+
 	public Project(File rootDirectory) {
 		this.rootDirectory = rootDirectory;
 		File config = new File(rootDirectory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
@@ -81,7 +81,11 @@ public class Project {
 		this.rootDirectory = null;
 		throw new RuntimeException("Invalid configuration file.");
 	}
-	
+
+	public LazyTokenPatternMatch getFileStructure() {
+		return productions.getValue().FILE;
+	}
+
 	public void rename(String name) throws IOException {
 		File newFile = new File(ProjectManager.getWorkspaceDir() + File.separator + name);
 		if(newFile.exists()) {

@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_libs;
 
+import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.semantics.SymbolStack;
@@ -7,7 +8,7 @@ import com.energyxxer.trident.compiler.semantics.SymbolStack;
 @ParserMember(key = "new.range")
 public class RangeConstructors implements DefaultLibraryPopulator {
     @Override
-    public void populate(SymbolStack stack) {
+    public void populate(SymbolStack stack, TridentCompiler compiler) {
         DictionaryObject newObj = ((DictionaryObject) stack.getGlobal().get("new").getValue());
 
         if(newObj == null) {

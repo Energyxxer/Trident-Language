@@ -116,7 +116,9 @@ public class Commons {
 
     public static LazyTokenPatternMatch getActiveTridentProductions() {
         Project activeProject = getActiveProject();
-        if(activeProject != null) return activeProject.productions.getValue();
+        if(activeProject != null) {
+            return activeProject.getFileStructure();
+        }
         return null;
     }
 }

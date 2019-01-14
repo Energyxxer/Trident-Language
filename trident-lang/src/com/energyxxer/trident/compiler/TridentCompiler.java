@@ -158,7 +158,7 @@ public class TridentCompiler {
         {
             stack.getGlobal().put(new Symbol("new", Symbol.SymbolAccess.GLOBAL, new DictionaryObject()));
             for(DefaultLibraryPopulator lib : ParserManager.getAllParsers(DefaultLibraryPopulator.class)) {
-                lib.populate(stack);
+                lib.populate(stack, this);
             }
         }
 

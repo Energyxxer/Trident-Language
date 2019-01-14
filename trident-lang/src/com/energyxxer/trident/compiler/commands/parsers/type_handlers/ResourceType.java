@@ -17,8 +17,9 @@ public class ResourceType implements VariableTypeHandler<TridentUtil.ResourceLoc
         throw new MemberNotFoundException();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object cast(TridentUtil.ResourceLocation object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(TridentUtil.ResourceLocation object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
         throw new ClassCastException();
     }
 }

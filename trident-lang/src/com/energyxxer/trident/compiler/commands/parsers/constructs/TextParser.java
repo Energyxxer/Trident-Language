@@ -46,7 +46,7 @@ public class TextParser {
 
     private static TextComponent component;
 
-    private static TextComponent parseTextComponent(JsonElement elem, TridentFile file, TokenPattern<?> pattern, TextComponentContext context) {
+    public static TextComponent parseTextComponent(JsonElement elem, TridentFile file, TokenPattern<?> pattern, TextComponentContext context) {
 
         boolean strict = file.getCompiler().getProperties().has("strict-text-components") && file.getCompiler().getProperties().get("strict-text-components").getAsBooleanOrNull();
 
