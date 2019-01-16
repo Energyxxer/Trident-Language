@@ -218,16 +218,24 @@ public class TridentLexerProfile extends LexerProfile {
             @Override
             public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
                 if(str.length() <= 0) return new ScannerContextResponse(false);
-                if(!str.startsWith(header)) return new ScannerContextResponse(false);
 
-                if(str.contains("\n")) {
-                    return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), VERBATIM_COMMAND);
-                } else return new ScannerContextResponse(true, str, VERBATIM_COMMAND);
+                if(type == VERBATIM_COMMAND_HEADER) {
+                    if(str.startsWith("/")) return new ScannerContextResponse(true, "/", VERBATIM_COMMAND_HEADER);
+                    else return new ScannerContextResponse(false);
+                } else {
+                    if(str.startsWith("$")) return new ScannerContextResponse(false);
+                    int endIndex = str.length();
+                    if(str.contains("\n")) {
+                        endIndex = str.indexOf("\n");
+                    }
+
+                    return new ScannerContextResponse(true, str.substring(0, endIndex), VERBATIM_COMMAND);
+                }
             }
 
             @Override
             public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(VERBATIM_COMMAND);
+                return Arrays.asList(VERBATIM_COMMAND, VERBATIM_COMMAND_HEADER);
             }
         });
 

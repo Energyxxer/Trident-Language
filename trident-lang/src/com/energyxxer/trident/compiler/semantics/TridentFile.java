@@ -17,7 +17,6 @@ import com.energyxxer.trident.compiler.CompilerExtension;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
-import com.energyxxer.trident.compiler.commands.RawCommand;
 import com.energyxxer.trident.compiler.commands.parsers.commands.CommandParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
@@ -341,14 +340,6 @@ public class TridentFile implements CompilerExtension {
                 if (exportComments && appendTo != null)
                     appendTo.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
                 break;
-            case "VERBATIM_COMMAND":
-                if (!compileOnly && appendTo != null) {
-                    appendTo.append(new RawCommand(inner.flattenTokens().get(0).value.substring(1)));
-                } else if (!parent.reportedNoCommands) {
-                    compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
-                    parent.reportedNoCommands = true;
-                }
-                break;
             case "INSTRUCTION": {
                 String instructionKey = ((TokenStructure) inner).getContents().searchByName("INSTRUCTION_KEYWORD").get(0).flatten(false);
                 Instruction instruction = ParserManager.getParser(Instruction.class, instructionKey);
@@ -356,6 +347,9 @@ public class TridentFile implements CompilerExtension {
                     instruction.run(((TokenStructure) inner).getContents(), parent);
                 }
                 break;
+            }
+            default: {
+                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
             }
         }
     }

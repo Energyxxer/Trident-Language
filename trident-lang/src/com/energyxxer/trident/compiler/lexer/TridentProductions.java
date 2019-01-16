@@ -25,7 +25,6 @@ public class TridentProductions {
     public final LazyTokenStructureMatch ENTRY;
 
     public final LazyTokenItemMatch COMMENT_S;
-    public final LazyTokenItemMatch VERBATIM_COMMAND_S;
     public final LazyTokenGroupMatch DIRECTIVE;
     public final LazyTokenStructureMatch INSTRUCTION;
     public final LazyTokenStructureMatch COMMAND;
@@ -95,6 +94,7 @@ public class TridentProductions {
     public final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
     public final LazyTokenStructureMatch INTERPOLATION_BLOCK;
     public final LazyTokenStructureMatch INTERPOLATION_VALUE;
+    public final LazyTokenStructureMatch CLOSED_INTERPOLATION_VALUE;
     public final LazyTokenStructureMatch POINTER;
 
     public TridentProductions(CommandModule module) {
@@ -116,12 +116,10 @@ public class TridentProductions {
         RESOURCE_LOCATION_TAGGED = struct("RESOURCE_LOCATION_TAGGED");
 
         COMMENT_S = new LazyTokenItemMatch(COMMENT).setName("COMMENT");
-        VERBATIM_COMMAND_S = new LazyTokenItemMatch(VERBATIM_COMMAND).setName("VERBATIM_COMMAND");
 
         ENTRY.add(COMMENT_S);
         ENTRY.add(group(list(MODIFIER).setOptional().setName("MODIFIERS"), literal("run").setOptional(), COMMAND).setName("COMMAND_WRAPPER"));
         ENTRY.add(INSTRUCTION);
-        ENTRY.add(VERBATIM_COMMAND_S);
 
         STRING_LITERAL_OR_IDENTIFIER_A.add(string());
         STRING_LITERAL_OR_IDENTIFIER_A.add(identifierA());
@@ -132,8 +130,8 @@ public class TridentProductions {
             ).setName("INTERPOLATION_BLOCK");
 
             INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
+            CLOSED_INTERPOLATION_VALUE = new LazyTokenStructureMatch("CLOSED_INTERPOLATION_VALUE");
 
-            LazyTokenStructureMatch CLOSED_INTERPOLATION_VALUE = new LazyTokenStructureMatch("CLOSED_INTERPOLATION_VALUE");
             CLOSED_INTERPOLATION_VALUE.add(identifierX().setName("VARIABLE_NAME"));
             CLOSED_INTERPOLATION_VALUE.add(ofType(REAL_NUMBER).setName("RAW_REAL"));
             CLOSED_INTERPOLATION_VALUE.add(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"));
@@ -188,12 +186,12 @@ public class TridentProductions {
                     "list",
                     "resource"
             ).setName("TARGET_TYPE"), brace(")"), INTERPOLATION_VALUE).setName("CAST"));
-            INTERPOLATION_VALUE.add(group(literal("new"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
+            CLOSED_INTERPOLATION_VALUE.add(group(literal("new"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
-            INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER"));
-            INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("["), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("INDEXED_MEMBER"));
+            CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER"));
+            CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("["), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("INDEXED_MEMBER"));
 
-            INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL"));
+            CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL"));
             INTERPOLATION_VALUE.addNested(list(INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR)).setName("EXPRESSION"));
 
             INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), brace("{").setName("INTERPOLATION_BRACE"), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE")).setName("INTERPOLATION_WRAPPER"));
@@ -236,6 +234,14 @@ public class TridentProductions {
         OPTIONAL_NAME_INNER_FUNCTION.add(group(group(RESOURCE_LOCATION_S).setOptional().setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")));
 
         //region Commands
+        //region verbatim
+        COMMAND.add(
+                group(ofType(VERBATIM_COMMAND_HEADER), ofType(VERBATIM_COMMAND))
+        );
+        COMMAND.add(
+                group(ofType(VERBATIM_COMMAND_HEADER), INTERPOLATION_BLOCK)
+        );
+        //endregion
         //region say
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
