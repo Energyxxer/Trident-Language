@@ -75,7 +75,6 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
 
         Lang lang = Lang.getLangForFile(parent.file.getPath());
 
-        Debug.log("Parsing");
         Lang.LangAnalysisResponse analysis = lang != null ? lang.analyze(parent.file, text) : null;
         if(analysis == null) return;
 
@@ -139,9 +138,7 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
         if (lastEdit > -1 && (new Date().getTime()) - lastEdit > 500 && parent.associatedTab.isActive()) {
             lastEdit = -1;
             if(highlightingThread != null) {
-                Debug.log("Interrupting");
                 highlightingThread.stop();
-                Debug.log("Interrupted");
             }
             highlightingThread = new Thread(this::highlightSyntax,"Text Highlighter");
             highlightingThread.start();
