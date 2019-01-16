@@ -126,6 +126,6 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
 
     @Override
     public String toString() {
-        return "[" + content.map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue())).collect(Collectors.joining(", "))  + "]";
+        return "[" + content.parallelStream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue())).collect(Collectors.joining(", "))  + "]";
     }
 }

@@ -5,7 +5,7 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
-@ParserMember(key = "com.energyxxer.trident.compiler.TridentUtil\$ResourceLocation")
+@ParserMember(key = "com.energyxxer.trident.compiler.TridentUtil$ResourceLocation")
 public class ResourceType implements VariableTypeHandler<TridentUtil.ResourceLocation> {
     @Override
     public Object getMember(TridentUtil.ResourceLocation object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {

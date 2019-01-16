@@ -44,7 +44,9 @@ import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.BLOCK_ENTITY;
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
@@ -113,7 +115,7 @@ public class CommonParsers {
     public static String parseFunctionPath(TokenPattern<?> id, TridentFile file) {
         if(id == null) return null;
         String flat = id.find("RAW_RESOURCE_LOCATION").flatten(false);
-        if(flat.startsWith('/')) {
+        if(flat.startsWith("/")) {
             flat = file.getFunction().getFullName() + flat;
         }
         if(flat.isEmpty()) {
@@ -462,7 +464,7 @@ public class CommonParsers {
         if(entity instanceof PlayerName) return dict.get("player");
         if(entity instanceof Selector) {
             Selector selector = ((Selector) entity);
-            List<SelectorArgument> typeArg = selector.getArgumentsByKey("type").toList();
+            List<SelectorArgument> typeArg = new ArrayList<>(selector.getArgumentsByKey("type"));
             if(typeArg.isEmpty() || ((TypeArgument) typeArg.get(0)).isNegated()) return null;
             return ((TypeArgument) typeArg.get(0)).getType();
         } else throw new IllegalArgumentException("entity");
@@ -482,9 +484,9 @@ public class CommonParsers {
             } else return null;
         } else {
             if(response.getPossibleTypes().size() > 1 && strict) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Ambiguous NBT data type for the path '" + path + "': possible types include " + response.getPossibleTypes().map(DataType::getShortTypeName).toSet().join(", ") + ". Assuming " + response.getPossibleTypes().toList().get(0).getShortTypeName(), pattern));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Ambiguous NBT data type for the path '" + path + "': possible types include " + response.getPossibleTypes().parallelStream().map(DataType::getShortTypeName).collect(Collectors.joining(", ")) + ". Assuming " + response.getPossibleTypes().parallelStream().findFirst().get().getShortTypeName(), pattern));
             }
-            DataType dataType = response.getPossibleTypes().toList().get(0);
+            DataType dataType = response.getPossibleTypes().parallelStream().findFirst().get();
             if(NumericNBTTag.class.isAssignableFrom(dataType.getCorrespondingTagType())) {
                 try {
                     NBTTag sample = dataType.getCorrespondingTagType().newInstance();

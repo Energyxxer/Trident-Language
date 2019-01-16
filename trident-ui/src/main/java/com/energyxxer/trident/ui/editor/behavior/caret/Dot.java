@@ -2,11 +2,14 @@ package com.energyxxer.trident.ui.editor.behavior.caret;
 
 import com.energyxxer.trident.ui.editor.behavior.AdvancedEditor;
 import com.energyxxer.util.StringBounds;
+import com.energyxxer.util.logger.Debug;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Utilities;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.KeyEvent;
+
+import static com.energyxxer.trident.ui.editor.behavior.AdvancedEditor.isPlatformControlDown;
 
 /**
  * Created by User on 1/7/2017.
@@ -38,7 +41,7 @@ public class Dot {
             Rectangle view = component.modelToView(index);
             if(view != null) this.x = view.x;
         } catch (BadLocationException ble) {
-            //
+            Debug.log(ble.getMessage(), Debug.MessageType.ERROR);
         }
     }
 
@@ -52,19 +55,19 @@ public class Dot {
         if(key == KeyEvent.VK_LEFT) {
             if(index != mark && !e.isShiftDown()) {
                 nextPos = Math.min(index, mark);
-                if(e.isControlDown()) nextPos = getPositionBeforeWord();
-            } else nextPos = (e.isControlDown()) ? getPositionBeforeWord() : getPositionBefore();
+                if(isPlatformControlDown(e)) nextPos = getPositionBeforeWord();
+            } else nextPos = (isPlatformControlDown(e)) ? getPositionBeforeWord() : getPositionBefore();
             doUpdateX = true;
             actionPerformed = true;
         } else if(key == KeyEvent.VK_RIGHT) {
             if(index != mark && !e.isShiftDown()) {
                 nextPos = Math.max(index, mark);
-                if(e.isControlDown()) nextPos = getPositionAfterWord();
-            } else nextPos = (e.isControlDown()) ? getPositionAfterWord() : getPositionAfter();
+                if(isPlatformControlDown(e)) nextPos = getPositionAfterWord();
+            } else nextPos = (isPlatformControlDown(e)) ? getPositionAfterWord() : getPositionAfter();
             doUpdateX = true;
             actionPerformed = true;
         } else if(key == KeyEvent.VK_UP) {
-            if(e.isControlDown()) {
+            if(isPlatformControlDown(e)) {
                 e.consume();
                 return false;
             }
@@ -75,7 +78,7 @@ public class Dot {
             }
             actionPerformed = true;
         } else if(key == KeyEvent.VK_DOWN) {
-            if(e.isControlDown()) {
+            if(isPlatformControlDown(e)) {
                 e.consume();
                 return false;
             }
@@ -86,12 +89,12 @@ public class Dot {
             }
             actionPerformed = true;
         } else if(key == KeyEvent.VK_HOME) {
-            if(e.isControlDown()) nextPos = 0;
+            if(isPlatformControlDown(e)) nextPos = 0;
             else nextPos = getRowStart();
             doUpdateX = true;
             actionPerformed = true;
         } else if(key == KeyEvent.VK_END) {
-            if(e.isControlDown()) nextPos = component.getDocument().getLength();
+            if(isPlatformControlDown(e)) nextPos = component.getDocument().getLength();
             else nextPos = getRowEnd();
             doUpdateX = true;
             actionPerformed = true;
@@ -121,21 +124,27 @@ public class Dot {
     public int getPositionAbove() {
         try {
             return Utilities.getPositionAbove(component, index, x);
-        } catch(BadLocationException ble) {}
+        } catch(BadLocationException ble) {
+            Debug.log(ble.getMessage(), Debug.MessageType.ERROR);
+        }
         return index;
     }
 
     public int getPositionBelow() {
         try {
             return Utilities.getPositionBelow(component, index, x);
-        } catch(BadLocationException ble) {}
+        } catch(BadLocationException ble) {
+            Debug.log(ble.getMessage(), Debug.MessageType.ERROR);
+        }
         return index;
     }
 
     public int getPositionBeforeWord() {
         try {
             return Math.max(component.getPreviousWord(Math.min(index,mark)), Math.max(0,getRowStart()-1));
-        } catch(BadLocationException ble) {}
+        } catch(BadLocationException ble) {
+            Debug.log(ble.getMessage(), Debug.MessageType.ERROR);
+        }
         return 0;
     }
 
@@ -144,21 +153,27 @@ public class Dot {
             int pos = component.getNextWord(Math.max(index,mark));
             int rowEnd = getRowEnd();
             return (Math.max(index, mark) == rowEnd) ? pos : Math.min(pos, rowEnd);
-        } catch(BadLocationException ble) {}
+        } catch(BadLocationException ble) {
+            Debug.log(ble.getMessage(), Debug.MessageType.ERROR);
+        }
         return component.getDocument().getLength();
     }
 
     public int getRowStart() {
         try {
             return Utilities.getRowStart(component, index);
-        } catch(BadLocationException ble) {}
+        } catch(BadLocationException ble) {
+            Debug.log(ble.getMessage(), Debug.MessageType.ERROR);
+        }
         return index;
     }
 
     public int getRowEnd() {
         try {
             return Utilities.getRowEnd(component, index);
-        } catch(BadLocationException ble) {}
+        } catch(BadLocationException ble) {
+            Debug.log(ble.getMessage(), Debug.MessageType.ERROR);
+        }
         return index;
     }
 

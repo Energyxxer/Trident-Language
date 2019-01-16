@@ -23,6 +23,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class NBTParser {
     public static TagCompound parseCompound(TokenPattern<?> pattern, TridentFile file) {
@@ -151,7 +152,7 @@ public class NBTParser {
                 String numberPart = matcher.group(1);
                 switch(matcher.group(3).toLowerCase()) {
                     case "": {
-                        return (numberPart.contains('.')) ?
+                        return (numberPart.contains(".")) ?
                                 new TagDouble(Double.parseDouble(numberPart)) :
                                 new TagInt(Integer.parseInt(numberPart));
                     }
@@ -301,9 +302,9 @@ public class NBTParser {
 
                                 if(!matched) {
                                     if(flags.getTypeCategories().size() > 1) {
-                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following types: " + flags.getTypeCategories().join(",") + "; but '" + ((TagString) value).getValue() + "' is not a type of any of the previous categories", pattern));
+                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following types: " + flags.getTypeCategories().parallelStream().collect(Collectors.joining(", ")) + "; but '" + ((TagString) value).getValue() + "' is not a type of any of the previous categories", pattern));
                                     } else {
-                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be of type '" + flags.getTypeCategories().first() + "'. Instead got '" + ((TagString) value).getValue() + "'.", pattern));
+                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be of type '" + flags.getTypeCategories().parallelStream().findFirst().get() + "'. Instead got '" + ((TagString) value).getValue() + "'.", pattern));
                                     }
                                 }
                             }
@@ -320,7 +321,7 @@ public class NBTParser {
                                     }
                                 }
                                 if(!matched) {
-                                    file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + flags.getStringOptions().join(",") + "; instead got '" + ((TagString) value).getValue() + "'", pattern));
+                                    file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + flags.getStringOptions().parallelStream().collect(Collectors.joining(", ")) + "; instead got '" + ((TagString) value).getValue() + "'", pattern));
                                 }
                             }
                             //endregion
@@ -331,9 +332,9 @@ public class NBTParser {
                 }
                 if(!isAGoodBoy) {
                     if(response.getPossibleTypes().size() > 1) {
-                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + response.getPossibleTypes().map(DataType::getShortTypeName).toList().join(", "), pattern));
+                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + response.getPossibleTypes().parallelStream().map(DataType::getShortTypeName).collect(Collectors.joining(", ")), pattern));
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be of type " + response.getPossibleTypes().toList().get(0).getShortTypeName(), pattern));
+                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be of type " + response.getPossibleTypes().parallelStream().findFirst().get().getShortTypeName(), pattern));
                     }
                 }
             } else {

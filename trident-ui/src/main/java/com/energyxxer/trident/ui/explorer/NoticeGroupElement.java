@@ -13,6 +13,8 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.List;
 
+import static com.energyxxer.trident.ui.editor.behavior.AdvancedEditor.isPlatformControlDown;
+
 /**
  * Created by User on 5/16/2017.
  */
@@ -167,7 +169,7 @@ public class NoticeGroupElement extends ExplorerElement {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if(e.getButton() == MouseEvent.BUTTON1 && !e.isControlDown() && e.getClickCount() % 2 == 0 && (e.getX() < x || e.getX() > x + master.getRowHeight())) {
+        if(e.getButton() == MouseEvent.BUTTON1 && !isPlatformControlDown(e) && e.getClickCount() % 2 == 0 && (e.getX() < x || e.getX() > x + master.getRowHeight())) {
             if(expanded) collapse();
             else expand();
         }

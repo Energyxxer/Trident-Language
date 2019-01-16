@@ -562,7 +562,7 @@ public class TridentLexerProfile extends LexerProfile {
             if(index == 0) return new ScannerContextResponse(false);
             else {
                 HashMap<TokenSection, String> tokenSections = new HashMap<>();
-                boolean relative = str.startsWith('/');
+                boolean relative = str.startsWith("/");
                 if(relative) {
                     tokenSections.put(new TokenSection(0, 1), "resource_location.relative");
                 }

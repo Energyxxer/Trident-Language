@@ -3,7 +3,6 @@ package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
-import manifold.ext.api.Self;
 
 import java.lang.reflect.Method;
 
@@ -40,7 +39,6 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
         requiredSize = paramTypes.length;
     }
 
-    @Self
     public MethodWrapper<T> setNullable(int index) {
         nullables[index] = true;
         requiredSize = paramTypes.length;

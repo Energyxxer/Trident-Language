@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Created by User on 5/16/2017.
@@ -69,7 +70,7 @@ public class ProjectExplorerMaster extends ExplorerMaster {
         ProjectManager.loadWorkspace();
 
         clearSelected();
-        refresh(new ArrayList<String>(this.getExpandedElements().map((ModuleToken t) -> t.getIdentifier()).toSet()));
+        refresh(new ArrayList<>(this.getExpandedElements().parallelStream().map(ModuleToken::getIdentifier).collect(Collectors.toSet())));
     }
 
     private void refresh(ArrayList<String> toOpen) {

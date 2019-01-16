@@ -113,7 +113,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
             return "{ ...circular... }";
         }
         toStringRecursion.push(this);
-        String str = "{" + map.values().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue()))).collect(Collectors.joining(", ")) + "}";
+        String str = "{" + map.values().parallelStream().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue()))).collect(Collectors.joining(", ")) + "}";
         toStringRecursion.pop();
         return str;
     }

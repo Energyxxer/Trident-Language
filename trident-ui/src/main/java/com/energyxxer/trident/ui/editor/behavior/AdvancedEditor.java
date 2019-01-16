@@ -24,6 +24,7 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
@@ -115,7 +116,6 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
             }
         } else if(keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE) {
             e.consume();
-            Debug.log("Backspace/delete consumed");
             editManager.insertEdit(new DeletionEdit(this, isPlatformControlDown(e), keyCode == KeyEvent.VK_DELETE));
         } else if(keyCode == KeyEvent.VK_ENTER) {
             e.consume();
@@ -150,7 +150,7 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
                     editManager.insertEdit(new InsertionEdit("", this));
                 }
             } catch(BadLocationException x) {
-                x.printStackTrace();
+                Debug.log(x.getMessage(), Debug.MessageType.ERROR);
             }
 
         } else if(keyCode == KeyEvent.VK_V && isPlatformControlDown(e)) {
@@ -219,7 +219,7 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
             }
             return (offset >= BIAS_POINT) ? superResult+1 : superResult;
         } catch(BadLocationException x) {
-            x.printStackTrace();
+            Debug.log(x.getMessage(), Debug.MessageType.ERROR);
             return superResult;
         }
     }
@@ -283,7 +283,7 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
 
     }
 
-    public static boolean isPlatformControlDown(KeyEvent e) {
+    public static boolean isPlatformControlDown(InputEvent e) {
         return (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
     }
 

@@ -3,6 +3,7 @@ package com.energyxxer.trident.ui.editor.behavior.caret;
 import com.energyxxer.trident.ui.editor.behavior.AdvancedEditor;
 import com.energyxxer.trident.util.Range;
 import com.energyxxer.util.StringLocation;
+import com.energyxxer.util.logger.Debug;
 
 import javax.swing.plaf.TextUI;
 import javax.swing.text.BadLocationException;
@@ -40,7 +41,7 @@ public class EditorCaret extends DefaultCaret {
         try {
             c.getHighlighter().addHighlight(0,0,new EditorSelectionPainter(this));
         } catch(BadLocationException x) {
-            //
+            Debug.log(x.getMessage(), Debug.MessageType.ERROR);
         }
     }
 
@@ -115,8 +116,8 @@ public class EditorCaret extends DefaultCaret {
                     getComponent().repaint(r);
                 }
             }
-        } catch (BadLocationException e) {
-            e.printStackTrace();
+        } catch (BadLocationException x) {
+            Debug.log(x.getMessage(), Debug.MessageType.ERROR);
         }
     }
 
@@ -137,8 +138,8 @@ public class EditorCaret extends DefaultCaret {
                 width = unionRect.width + 3;
                 height = unionRect.height;
             }
-        } catch (BadLocationException e) {
-            e.printStackTrace();
+        } catch (BadLocationException x) {
+            Debug.log(x.getMessage(), Debug.MessageType.ERROR);
         }
     }
 

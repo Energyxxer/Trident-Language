@@ -8,6 +8,8 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.Arrays;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public interface VariableMethod {
     Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file);
@@ -32,7 +34,7 @@ public interface VariableMethod {
             for(Class cls : expected) {
                 if(cls.isInstance(param)) return (T) param;
             }
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected parameter of one of the following types: " + Arrays.asList(expected).map((Class c) -> c.getSimpleName()).toSet().join(", "), pattern));
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected parameter of one of the following types: " + Arrays.asList(expected).parallelStream().map((Function<Class, String>) Class::getSimpleName).collect(Collectors.joining(", ")), pattern));
             throw new EntryParsingException();
         }
     }

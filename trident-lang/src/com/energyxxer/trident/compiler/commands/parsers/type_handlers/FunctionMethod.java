@@ -7,6 +7,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, VariableMethod {
     TokenPattern<?> functionPattern;
@@ -58,6 +59,6 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
 
     @Override
     public String toString() {
-        return "<function(" + formalParameters.join(", ") + ")>";
+        return "<function(" + formalParameters.parallelStream().collect(Collectors.joining(", ")) + ")>";
     }
 }

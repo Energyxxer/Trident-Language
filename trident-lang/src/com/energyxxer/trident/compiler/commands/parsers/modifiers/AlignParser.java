@@ -12,6 +12,6 @@ public class AlignParser implements ModifierParser {
     @Override
     public ExecuteModifier parse(TokenPattern<?> pattern, TridentFile file) {
         String swizzle = pattern.search(TridentTokens.SWIZZLE).get(0).value;
-        return new ExecuteAlignment(swizzle.contains('x'), swizzle.contains('y'), swizzle.contains('z'));
+        return new ExecuteAlignment(swizzle.contains("x"), swizzle.contains("y"), swizzle.contains("z"));
     }
 }

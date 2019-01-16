@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class InterpolationManager {
 
@@ -43,7 +44,7 @@ public class InterpolationManager {
         for(Class cls : expected) {
             if(cls.isInstance(obj)) return obj;
         }
-        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + Arrays.asList(expected).map((Class c) -> c.getSimpleName()).toSet().join(", "), pattern));
+        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + Arrays.asList(expected).parallelStream().map(Class::getSimpleName).collect(Collectors.joining(", ")), pattern));
         throw new EntryParsingException();
     }
 

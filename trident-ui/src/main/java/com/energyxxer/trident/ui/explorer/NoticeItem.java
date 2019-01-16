@@ -14,6 +14,8 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.io.File;
 
+import static com.energyxxer.trident.ui.editor.behavior.AdvancedEditor.isPlatformControlDown;
+
 /**
  * Created by User on 5/16/2017.
  */
@@ -120,7 +122,7 @@ public class NoticeItem extends ExplorerElement {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if(e.getButton() == MouseEvent.BUTTON1 && !e.isControlDown() && e.getClickCount() % 2 == 0 && notice.getFilePath() != null) {
+        if(e.getButton() == MouseEvent.BUTTON1 && !isPlatformControlDown(e) && e.getClickCount() % 2 == 0 && notice.getFilePath() != null) {
             TabManager.openTab(new FileModuleToken(new File(notice.getFilePath())), notice.getLocationIndex(), notice.getLocationLength());
         }
     }

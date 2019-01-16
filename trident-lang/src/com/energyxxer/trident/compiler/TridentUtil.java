@@ -36,7 +36,7 @@ public class TridentUtil {
         }
 
         public ResourceLocation(String str) {
-            if(str.startsWith('#')) {
+            if(str.startsWith("#")) {
                 isTag = true;
                 str = str.substring(1);
             }

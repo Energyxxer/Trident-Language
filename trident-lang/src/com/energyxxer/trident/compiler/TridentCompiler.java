@@ -38,6 +38,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static Trident.extensions.com.google.gson.JsonElement.EJsonElement.getAsStringOrNull;
+import static Trident.extensions.com.google.gson.JsonObject.EJsonObject.getAsBoolean;
+
 public class TridentCompiler {
 
     public static final String PROJECT_FILE_NAME = ".tdnproj";
@@ -135,7 +138,7 @@ public class TridentCompiler {
             }
         }
 
-        if(properties.has("default-namespace") && properties.get("default-namespace").isJsonPrimitive() && properties.get("default-namespace").getAsJsonPrimitive().isString() && !properties.get("default-namespace").getAsString().isBlank()) {
+        if(properties.has("default-namespace") && properties.get("default-namespace").isJsonPrimitive() && properties.get("default-namespace").getAsJsonPrimitive().isString() && !properties.get("default-namespace").getAsString().isEmpty()) {
             defaultNamespace = properties.get("default-namespace").getAsString().trim();
         }
 
@@ -319,12 +322,12 @@ public class TridentCompiler {
 
                 JsonObject obj = gson.fromJson(new FileReader(file), JsonObject.class);
 
-                tag.setOverridePolicy(Tag.OverridePolicy.valueOf(obj.getAsBoolean("replace", Tag.OverridePolicy.DEFAULT_POLICY.valueBool)));
+                tag.setOverridePolicy(Tag.OverridePolicy.valueOf(getAsBoolean(obj, "replace", Tag.OverridePolicy.DEFAULT_POLICY.valueBool)));
                 tag.setExport(true);
                 JsonArray values = obj.getAsJsonArray("values");
 
                 for(JsonElement elem : values) {
-                    String value = elem.getAsStringOrNull();
+                    String value = getAsStringOrNull(elem);
                     if(value == null) continue;
                     boolean isTag = value.startsWith("#");
                     if(isTag) value = value.substring(1);

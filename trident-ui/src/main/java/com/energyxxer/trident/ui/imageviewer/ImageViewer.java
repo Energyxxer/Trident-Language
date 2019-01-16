@@ -16,6 +16,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
+import static com.energyxxer.trident.ui.editor.behavior.AdvancedEditor.isPlatformControlDown;
+
 /**
  * Created by User on 2/8/2017.
  */
@@ -134,7 +136,7 @@ public class ImageViewer extends JPanel implements DisplayModule, MouseWheelList
         this.cursorPoint = e.getPoint();
         Point.Double fullPosOnImage = this.getPositionOnImage();
         this.posOnImage = new Point((int) Math.round(fullPosOnImage.x), (int) Math.round(fullPosOnImage.y));
-        this.crosshairVisible = e.isControlDown();
+        this.crosshairVisible = isPlatformControlDown(e);
         displayCaretInfo();
         repaint();
     }
