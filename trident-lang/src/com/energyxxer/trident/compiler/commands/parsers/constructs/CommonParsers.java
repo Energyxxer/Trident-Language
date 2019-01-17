@@ -190,6 +190,7 @@ public class CommonParsers {
     }
 
     public static Item parseItem(TokenPattern<?> pattern, TridentFile file, NBTMode mode) {
+        if(pattern == null) return null;
         if(pattern.getName().equals("ITEM_TAGGED") || pattern.getName().equals("ITEM")) return parseItem(((TokenStructure) pattern).getContents(), file, mode);
 
         if(pattern.getName().equals("ITEM_VARIABLE")) {
@@ -241,6 +242,7 @@ public class CommonParsers {
     }
 
     public static Block parseBlock(TokenPattern<?> pattern, TridentFile file) {
+        if(pattern == null) return null;
         if(pattern.getName().equals("BLOCK_TAGGED") || pattern.getName().equals("BLOCK")) return parseBlock(((TokenStructure) pattern).getContents(), file);
 
         if(pattern.getName().equals("INTERPOLATION_BLOCK")) {
