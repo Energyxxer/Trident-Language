@@ -95,6 +95,7 @@ public class TridentProductions {
     public final LazyTokenStructureMatch INTERPOLATION_BLOCK;
     public final LazyTokenStructureMatch INTERPOLATION_VALUE;
     public final LazyTokenStructureMatch CLOSED_INTERPOLATION_VALUE;
+    public final LazyTokenStructureMatch LINE_SAFE_INTERPOLATION_VALUE;
     public final LazyTokenStructureMatch POINTER;
 
     public TridentProductions(CommandModule module) {
@@ -131,6 +132,7 @@ public class TridentProductions {
 
             INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
             CLOSED_INTERPOLATION_VALUE = new LazyTokenStructureMatch("CLOSED_INTERPOLATION_VALUE");
+            LINE_SAFE_INTERPOLATION_VALUE = new LazyTokenStructureMatch("LINE_SAFE_INTERPOLATION_VALUE");
 
             CLOSED_INTERPOLATION_VALUE.add(identifierX().setName("VARIABLE_NAME"));
             CLOSED_INTERPOLATION_VALUE.add(ofType(REAL_NUMBER).setName("RAW_REAL"));
@@ -192,6 +194,10 @@ public class TridentProductions {
             CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("["), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("INDEXED_MEMBER"));
 
             CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL"));
+
+
+            LINE_SAFE_INTERPOLATION_VALUE.add(CLOSED_INTERPOLATION_VALUE);
+            LINE_SAFE_INTERPOLATION_VALUE.add(list(CLOSED_INTERPOLATION_VALUE, group(sameLine(), ofType(COMPILER_OPERATOR))).setName("EXPRESSION"));
             INTERPOLATION_VALUE.addNested(list(INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR)).setName("EXPRESSION"));
 
             INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), brace("{").setName("INTERPOLATION_BRACE"), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE")).setName("INTERPOLATION_WRAPPER"));
@@ -1695,7 +1701,7 @@ public class TridentProductions {
                     group(keyword("var").setName("INSTRUCTION_KEYWORD"),
                             ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"),
                             choice(
-                                    group(equals(), choice(INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))
+                                    group(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))
                             ).setName("VARIABLE_INITIALIZATION")
                     )
             );
@@ -1725,7 +1731,7 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(literal("eval").setName("INSTRUCTION_KEYWORD"), INTERPOLATION_VALUE)
+                    group(literal("eval").setName("INSTRUCTION_KEYWORD"), LINE_SAFE_INTERPOLATION_VALUE)
             );
         }
 
@@ -1748,7 +1754,7 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(literal("return").setName("INSTRUCTION_KEYWORD"), optional(INTERPOLATION_VALUE).setName("RETURN_VALUE"))
+                    group(literal("return").setName("INSTRUCTION_KEYWORD"), optional(LINE_SAFE_INTERPOLATION_VALUE).setName("RETURN_VALUE"))
             );
         }
         //endregion

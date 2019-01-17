@@ -17,7 +17,7 @@ import com.google.gson.JsonElement;
 import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
 @ParserMember(key = "Text")
-public class TextLib implements DefaultLibraryPopulator {
+public class TextLib implements DefaultLibraryProvider {
     private Gson gson = new Gson();
 
     @Override

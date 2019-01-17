@@ -2,7 +2,6 @@ package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
 import Trident.extensions.java.lang.Object.EObject;
 import com.energyxxer.commodore.CommandUtils;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -69,6 +68,7 @@ public class InterpolationManager {
             case "INTERPOLATION_WRAPPER": {
                 return parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
             }
+            case "LINE_SAFE_INTERPOLATION_VALUE":
             case "CLOSED_INTERPOLATION_VALUE": {
                 return parse(((TokenStructure) pattern).getContents(), file, keepSymbol);
             }
@@ -284,7 +284,7 @@ public class InterpolationManager {
                             flatValues.add(value);
                         } else {
                             //Operator
-                            Operator operator = Operator.getOperatorForSymbol(((TokenItem) contents.get(i)).getContents().value);
+                            Operator operator = Operator.getOperatorForSymbol(contents.get(i).flatten(false));
                             if(operator.getLeftOperandType() == OperandType.VARIABLE) {
                                 flatValues.remove(flatValues.size()-1);
 

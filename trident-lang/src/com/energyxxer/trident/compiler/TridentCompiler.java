@@ -21,7 +21,7 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.instructions.AliasInstruction;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.ReturnException;
-import com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_libs.DefaultLibraryPopulator;
+import com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -160,7 +160,7 @@ public class TridentCompiler {
 
         {
             stack.getGlobal().put(new Symbol("new", Symbol.SymbolAccess.GLOBAL, new DictionaryObject()));
-            for(DefaultLibraryPopulator lib : ParserManager.getAllParsers(DefaultLibraryPopulator.class)) {
+            for(DefaultLibraryProvider lib : ParserManager.getAllParsers(DefaultLibraryProvider.class)) {
                 lib.populate(stack, this);
             }
         }

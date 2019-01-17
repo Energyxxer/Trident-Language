@@ -13,7 +13,7 @@ import com.energyxxer.trident.compiler.semantics.SymbolStack;
 import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
 @ParserMember(key = "Math")
-public class MathLib implements DefaultLibraryPopulator {
+public class MathLib implements DefaultLibraryProvider {
     public void populate(SymbolStack stack, TridentCompiler compiler) {
         DictionaryObject math = new DictionaryObject();
         math.put("pow", (VariableMethod) (params, patterns, pattern, file) -> {

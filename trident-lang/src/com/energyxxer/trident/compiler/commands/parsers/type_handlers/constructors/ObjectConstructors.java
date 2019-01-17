@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.commands.parsers.type_handlers.constructors;
 
 import Trident.extensions.java.lang.Object.EObject;
+import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.commodore.textcomponents.*;
 import com.energyxxer.commodore.textcomponents.events.ClickEvent;
@@ -9,11 +10,16 @@ import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.*;
+import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.HashMap;
+import java.util.Map;
+
+import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
 public class ObjectConstructors {
     private static HashMap<String, VariableMethod> constructors = new HashMap<>();
@@ -45,6 +51,62 @@ public class ObjectConstructors {
 
 
         constructors.put("text_component", ObjectConstructors::constructTextComponent);
+        constructors.put("nbt", ObjectConstructors::constructNBT);
+    }
+
+    private static NBTTag constructNBT(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file) {
+        if(params.length == 0) return new TagCompound();
+        EObject.assertNotNull(params[0], patterns[0], file);
+
+        boolean skipIncompatibleTypes = false;
+        if(params.length >= 2) {
+            EObject.assertNotNull(params[1], patterns[1], file);
+            skipIncompatibleTypes = assertOfType(params[0], patterns[0], file, Boolean.class);
+        }
+
+        if(params[0] instanceof NBTTag) return ((NBTTag) params[0]).clone();
+        if(params[0] instanceof Number) {
+            if(params[0] instanceof Double) {
+                return new TagDouble(((double) params[0]));
+            } else {
+                return new TagInt((int) params[0]);
+            }
+        } else if(params[0] instanceof String || params[0] instanceof TridentUtil.ResourceLocation) {
+            return new TagString(params[0].toString());
+        } else if(params[0] instanceof Boolean) {
+            return new TagByte((boolean)params[0] ? 1 : 0);
+        } else if(params[0] instanceof DictionaryObject) {
+            TagCompound compound = new TagCompound();
+
+            for(Map.Entry<String, Symbol> obj : ((DictionaryObject) params[0]).entrySet()) {
+                NBTTag content = constructNBT(new Object[] {obj.getValue().getValue(), skipIncompatibleTypes}, new TokenPattern[] {patterns[0], pattern}, pattern, file);
+                if(content != null) {
+                    content.setName(obj.getKey());
+                    compound.add(content);
+                }
+            }
+
+            return compound;
+        } if(params[0] instanceof ListType) {
+            TagList list = new TagList();
+
+            for(Object obj : ((ListType) params[0])) {
+                NBTTag content = constructNBT(new Object[] {obj, skipIncompatibleTypes}, new TokenPattern[] {patterns[0], pattern}, pattern, file);
+                if(content != null) {
+                    try {
+                        list.add(content);
+                    } catch(IllegalArgumentException x) {
+                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Error while converting list object to nbt list: " + x.getMessage(), pattern));
+                        throw new EntryParsingException();
+                    }
+                }
+            }
+
+            return list;
+        } else if(!skipIncompatibleTypes) {
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot convert object of type '" + VariableTypeHandler.Static.getIdentifierForClass(params[0].getClass()) + "' to an nbt tag", pattern));
+            throw new EntryParsingException();
+        } else return null;
     }
 
     public static VariableMethod getConstructor(String name) {

@@ -9,7 +9,7 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolStack;
 
 @ParserMember(key = "Types")
-public class TypeLib implements DefaultLibraryPopulator {
+public class TypeLib implements DefaultLibraryProvider {
     @Override
     public void populate(SymbolStack stack, TridentCompiler compiler) {
         DictionaryObject block = new DictionaryObject();

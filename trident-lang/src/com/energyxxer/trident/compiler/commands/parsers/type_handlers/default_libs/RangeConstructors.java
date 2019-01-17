@@ -6,7 +6,7 @@ import com.energyxxer.trident.compiler.commands.parsers.type_handlers.Dictionary
 import com.energyxxer.trident.compiler.semantics.SymbolStack;
 
 @ParserMember(key = "new.range")
-public class RangeConstructors implements DefaultLibraryPopulator {
+public class RangeConstructors implements DefaultLibraryProvider {
     @Override
     public void populate(SymbolStack stack, TridentCompiler compiler) {
         DictionaryObject newObj = ((DictionaryObject) stack.getGlobal().get("new").getValue());
