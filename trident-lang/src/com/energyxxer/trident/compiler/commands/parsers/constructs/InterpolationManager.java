@@ -128,9 +128,6 @@ public class InterpolationManager {
             case "WRAPPED_RESOURCE": {
                 return CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION_TAGGED"), file);
             }
-            case "WRAPPED_DICTIONARY": {
-                return parse(pattern.find("DICTIONARY"), file, keepSymbol);
-            }
             case "DICTIONARY": {
                 DictionaryObject dict = new DictionaryObject();
 
@@ -148,9 +145,6 @@ public class InterpolationManager {
                 }
 
                 return dict;
-            }
-            case "WRAPPED_LIST": {
-                return parse(pattern.find("LIST"), file, keepSymbol);
             }
             case "LIST": {
                 ListType list = new ListType();

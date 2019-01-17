@@ -150,14 +150,14 @@ public class TridentProductions {
             CLOSED_INTERPOLATION_VALUE.add(group(literal("int_range"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("real_range"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("resource"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("dict"), DICTIONARY).setName("WRAPPED_DICTIONARY"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("list"), LIST).setName("WRAPPED_LIST"));
+            CLOSED_INTERPOLATION_VALUE.add(DICTIONARY);
+            CLOSED_INTERPOLATION_VALUE.add(LIST);
             CLOSED_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
             CLOSED_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("function"), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
             INTERPOLATION_VALUE.add(CLOSED_INTERPOLATION_VALUE);
 
-            INTERPOLATION_VALUE.add(group(brace("("), choice(
+            CLOSED_INTERPOLATION_VALUE.add(group(brace("("), choice(
                     "int",
                     "real",
                     "boolean",
@@ -184,8 +184,6 @@ public class TridentProductions {
                     "coordinates",
                     "int_range",
                     "real_range",
-                    "dict",
-                    "list",
                     "resource"
             ).setName("TARGET_TYPE"), brace(")"), INTERPOLATION_VALUE).setName("CAST"));
             CLOSED_INTERPOLATION_VALUE.add(group(literal("new"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
