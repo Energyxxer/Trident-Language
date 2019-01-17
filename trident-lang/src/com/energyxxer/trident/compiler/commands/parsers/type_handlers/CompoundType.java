@@ -12,6 +12,13 @@ public class CompoundType implements VariableTypeHandler<TagCompound> {
         if(member.equals("toDictionary")) {
             return new MethodWrapper<TagCompound>("toDictionary", ((instance, params) -> NBTToDictionary.convert(instance, file))).createForInstance(object);
         }
+        try {
+            if(member.equals("merge")) {
+                return new MethodWrapper<TagCompound>(TagCompound.class.getMethod("merge", TagCompound.class)).createForInstance(object);
+            }
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
         throw new MemberNotFoundException();
     }
 

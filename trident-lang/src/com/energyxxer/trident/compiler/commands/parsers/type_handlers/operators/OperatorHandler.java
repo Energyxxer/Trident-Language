@@ -5,7 +5,6 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -91,15 +90,15 @@ public interface OperatorHandler<A, B> {
             handlers.put("java.lang.Integer <= java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, TridentFile file) -> a <= b);
             handlers.put("java.lang.Double <= java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, TridentFile file) -> a <= b);
 
+            handlers.put("java.lang.Integer & java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, TridentFile file) -> a & b);
+            handlers.put("java.lang.Integer | java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, TridentFile file) -> a | b);
+            handlers.put("java.lang.Integer ^ java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, TridentFile file) -> a ^ b);
+
             handlers.put("java.lang.Boolean && java.lang.Boolean", (Boolean a, Boolean b, TokenPattern<?> pattern, TridentFile file) -> a && b);
             handlers.put("java.lang.Boolean || java.lang.Boolean", (Boolean a, Boolean b, TokenPattern<?> pattern, TridentFile file) -> a || b);
 
             handlers.put("java.lang.String + java.lang.String", (OperatorHandler<String, String>) (s, str, pattern, compiler) -> s.concat(str));
             handlers.put("java.lang.String + *", (String a, Object b, TokenPattern<?> pattern, TridentFile file) -> {
-                VariableTypeHandler handler = b instanceof VariableTypeHandler ? (VariableTypeHandler) b : ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(b.getClass()));
-                if(handler == null) {
-                    return null;
-                }
                 String converted = InterpolationManager.cast(b, String.class, pattern, file);
                 return converted != null ? a + converted : null;
             });

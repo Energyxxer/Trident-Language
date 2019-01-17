@@ -399,7 +399,8 @@ public class CommonParsers {
 
     public static Object parseAnything(TokenPattern<?> pattern, TridentFile file) {
         switch(pattern.getName()) {
-            case "INTERPOLATION_BLOCK": return InterpolationManager.parse(pattern, file);
+            case "INTERPOLATION_BLOCK":
+            case "LINE_SAFE_INTERPOLATION_VALUE":
             case "INTERPOLATION_VALUE": return InterpolationManager.parse(pattern, file);
             case "INTEGER": return parseInt(pattern, file);
             case "REAL": return parseDouble(pattern, file);
@@ -421,7 +422,7 @@ public class CommonParsers {
             case "TEXT_COMPONENT":
                 return TextParser.parseTextComponent(pattern, file);
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown value grammar name: '" + pattern.getName() + "'"));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown value grammar name: '" + pattern.getName() + "'", pattern));
                 throw new EntryParsingException();
             }
         }

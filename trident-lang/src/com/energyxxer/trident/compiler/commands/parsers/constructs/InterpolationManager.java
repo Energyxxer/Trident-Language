@@ -155,9 +155,8 @@ public class InterpolationManager {
                     for (TokenPattern<?> entry : entryList.searchByName("INTERPOLATION_VALUE")) {
                         list.add(parse(entry, file));
                     }
-
-                    return list;
                 }
+                return list;
             }
             case "NEW_FUNCTION": {
                 if(pattern.find("FORMAL_PARAMETERS") != null) {
@@ -335,11 +334,12 @@ public class InterpolationManager {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T cast(Object obj, Class<T> newType, TokenPattern<?> pattern, TridentFile file) {
         if(obj == null) return null;
+        if(newType == String.class) return (T)String.valueOf(obj);
         VariableTypeHandler handler = getHandlerForObject(obj, pattern, file);
         if(newType == obj.getClass()) return (T) obj;
-        if(newType == String.class) return (T)String.valueOf(obj);
         try {
             return (T) handler.cast(obj, newType, pattern, file);
         } catch(ClassCastException x) {

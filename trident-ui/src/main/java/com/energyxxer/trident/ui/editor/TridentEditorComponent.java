@@ -9,7 +9,6 @@ import com.energyxxer.trident.ui.editor.behavior.AdvancedEditor;
 import com.energyxxer.trident.ui.editor.behavior.editmanager.CharacterDriftHandler;
 import com.energyxxer.trident.ui.editor.inspector.Inspector;
 import com.energyxxer.trident.ui.modules.FileModuleToken;
-import com.energyxxer.util.logger.Debug;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -119,7 +118,7 @@ public class TridentEditorComponent extends AdvancedEditor implements KeyListene
         }
 
         if(analysis.response != null && !analysis.response.matched) {
-            TridentWindow.setStatus(analysis.response.getErrorMessage());
+            TridentWindow.setStatus(analysis.response.getErrorMessage() + (analysis.response.faultyToken != null ? ". (line " + analysis.response.faultyToken.loc.line + " column " + analysis.response.faultyToken.loc.column + ")" : ""));
             if(analysis.response.faultyToken != null && analysis.response.faultyToken.value != null && analysis.response.faultyToken.loc != null) sd.setCharacterAttributes(analysis.response.faultyToken.loc.index, analysis.response.faultyToken.value.length(), TridentEditorComponent.this.getStyle("error"), true);
         }
 

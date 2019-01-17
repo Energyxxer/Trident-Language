@@ -61,7 +61,7 @@ public class ObjectConstructors {
         boolean skipIncompatibleTypes = false;
         if(params.length >= 2) {
             EObject.assertNotNull(params[1], patterns[1], file);
-            skipIncompatibleTypes = assertOfType(params[0], patterns[0], file, Boolean.class);
+            skipIncompatibleTypes = assertOfType(params[1], patterns[1], file, Boolean.class);
         }
 
         if(params[0] instanceof NBTTag) return ((NBTTag) params[0]).clone();
@@ -71,7 +71,7 @@ public class ObjectConstructors {
             } else {
                 return new TagInt((int) params[0]);
             }
-        } else if(params[0] instanceof String || params[0] instanceof TridentUtil.ResourceLocation) {
+        } else if(params[0] instanceof String || params[0] instanceof TridentUtil.ResourceLocation || params[0] instanceof TextComponent) {
             return new TagString(params[0].toString());
         } else if(params[0] instanceof Boolean) {
             return new TagByte((boolean)params[0] ? 1 : 0);

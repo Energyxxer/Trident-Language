@@ -1736,7 +1736,7 @@ public class TridentProductions {
         {
             LazyTokenPatternMatch FOR_HEADER = choice(
                     group(identifierX().setName("VARIABLE_NAME"), keyword("in"), INTERPOLATION_VALUE).setName("ITERATOR_FOR"),
-                    group(INTERPOLATION_VALUE, symbol(";"), INTERPOLATION_VALUE, symbol(";"), INTERPOLATION_VALUE).setName("CLASSICAL_FOR")
+                    group(optional(INTERPOLATION_VALUE).setName("FOR_HEADER_INITIALIZATION"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_CONDITION"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_ITERATION")).setName("CLASSICAL_FOR")
             ).setName("FOR_HEADER");
 
             INSTRUCTION.add(

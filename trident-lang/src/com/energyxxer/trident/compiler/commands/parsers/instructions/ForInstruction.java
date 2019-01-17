@@ -13,7 +13,6 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.util.logger.Debug;
 
 import java.util.Iterator;
-import java.util.List;
 
 @ParserMember(key = "for")
 public class ForInstruction implements Instruction {
@@ -51,10 +50,9 @@ public class ForInstruction implements Instruction {
                 return parseHeader(((TokenStructure) pattern).getContents(), file);
             }
             case "CLASSICAL_FOR": {
-                List<TokenPattern<?>> parts = pattern.searchByName("INTERPOLATION_VALUE");
-                TokenPattern<?> initialization = parts.get(0);
-                TokenPattern<?> condition = parts.get(1);
-                TokenPattern<?> iteration = parts.get(2);
+                TokenPattern<?> initialization = pattern.find("FOR_HEADER_INITIALIZATION.INTERPOLATION_VALUE");
+                TokenPattern<?> condition = pattern.find("FOR_HEADER_CONDITION.INTERPOLATION_VALUE");
+                TokenPattern<?> iteration = pattern.find("FOR_HEADER_ITERATION.INTERPOLATION_VALUE");
                 return new ForHeader() {
                     @Override
                     public void initialize() {

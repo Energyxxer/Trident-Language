@@ -10,6 +10,6 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class ReturnInstruction implements Instruction {
     @Override
     public void run(TokenPattern<?> pattern, TridentFile file) {
-        throw new ReturnException(pattern, InterpolationManager.parse(pattern.find("RETURN_VALUE.INTERPOLATION_VALUE"), file));
+        throw new ReturnException(pattern, InterpolationManager.parse(pattern.find("RETURN_VALUE.LINE_SAFE_INTERPOLATION_VALUE"), file));
     }
 }
