@@ -123,7 +123,7 @@ public class TokenGroup extends TokenPattern<TokenPattern<?>[]> {
 				l = loc;
 				continue;
 			}
-			if(loc.index < l.index) {
+			if(loc != null && loc.index < l.index) {
 				l = loc;
 			}
 		}

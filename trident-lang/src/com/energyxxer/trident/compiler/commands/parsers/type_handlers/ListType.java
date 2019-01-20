@@ -16,6 +16,12 @@ import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.Var
 public class ListType implements VariableTypeHandler<ListType>, Iterable<Object> {
     private static HashMap<String, MemberWrapper<ListType>> members = new HashMap<>();
 
+
+    /*
+    * for(Symbol sym : content) {
+            Object result = func.call(new Object[] {sym.getValue()}, new TokenPattern[] {pattern}, pattern, file)
+        }
+    */
     static {
         try {
             members.put("add", new MethodWrapper<>(ListType.class.getMethod("add", Object.class)));
@@ -52,6 +58,25 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
 
     @Override
     public Object getMember(ListType object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+        if(member.equals("map")) {
+            return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                if(params.length < 1) {
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern));
+                    throw new EntryParsingException();
+                }
+                FunctionMethod func = assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
+
+                ListType newList = new ListType();
+
+                for(Symbol sym : content) {
+                    newList.add(func.call(new Object[] {sym.getValue()}, new TokenPattern[] {pattern1}, pattern1, file1));
+                }
+
+                return newList;
+            };
+        }
+
+
         MemberWrapper<ListType> result = members.get(member);
         if(result == null) throw new MemberNotFoundException();
         return result.unwrap(object);
