@@ -13,11 +13,13 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
     TokenPattern<?> functionPattern;
     TridentFile parent;
     ArrayList<String> formalParameters = new ArrayList<>();
+    private Object thisObject;
 
-    public FunctionMethod(TokenPattern<?> functionPattern, TridentFile parent, Collection<String> formalParameters) {
+    public FunctionMethod(TokenPattern<?> functionPattern, TridentFile parent, Collection<String> formalParameters, Object thisObject) {
         this.functionPattern = functionPattern;
         this.parent = parent;
         this.formalParameters.addAll(formalParameters);
+        this.thisObject = thisObject;
     }
 
     @Override
@@ -26,8 +28,9 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
         file.getCompiler().getStack().push(innerFrame);
 
         for(int i = 0; i < formalParameters.size(); i++) {
-            innerFrame.put(new Symbol(formalParameters.get(i), Symbol.SymbolAccess.GLOBAL, i < params.length ? params[i] : null));
+            innerFrame.put(new Symbol(formalParameters.get(i), Symbol.SymbolAccess.LOCAL, i < params.length ? params[i] : null));
         }
+        innerFrame.put(new Symbol("this", Symbol.SymbolAccess.LOCAL, thisObject));
 
         try {
             TridentFile.resolveInnerFileIntoSection(functionPattern, file, file.getFunction());

@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 
 public class InterpolationManager {
 
+    private static Object nextThis = null;
+
     @SuppressWarnings("unchecked")
     public static <T> T parse(TokenPattern<?> pattern, TridentFile file, Class<T> expected) {
         Object obj = parse(pattern, file, false);
@@ -139,7 +141,9 @@ public class InterpolationManager {
                         if(key.startsWith("\"")) {
                             key = CommandUtils.parseQuotedString(key);
                         }
+                        nextThis = dict;
                         Object value = parse(entry.find("INTERPOLATION_VALUE"), file, keepSymbol);
+                        nextThis = null;
                         dict.put(key, value);
                     }
                 }
@@ -153,7 +157,9 @@ public class InterpolationManager {
 
                 if (entryList != null) {
                     for (TokenPattern<?> entry : entryList.searchByName("INTERPOLATION_VALUE")) {
+                        nextThis = list;
                         list.add(parse(entry, file));
+                        nextThis = null;
                     }
                 }
                 return list;
@@ -168,7 +174,7 @@ public class InterpolationManager {
                         }
                     }
 
-                    return new FunctionMethod(pattern.find("ANONYMOUS_INNER_FUNCTION"), file, formalParams);
+                    return new FunctionMethod(pattern.find("ANONYMOUS_INNER_FUNCTION"), file, formalParams, nextThis);
                 } else {
                     TridentFile innerFile = TridentFile.createInnerFile(pattern.find("ANONYMOUS_INNER_FUNCTION"), file);
                     return innerFile.getResourceLocation();
