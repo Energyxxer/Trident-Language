@@ -302,9 +302,9 @@ public class NBTParser {
 
                                 if(!matched) {
                                     if(flags.getTypeCategories().size() > 1) {
-                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following types: " + flags.getTypeCategories().parallelStream().collect(Collectors.joining(", ")) + "; but '" + ((TagString) value).getValue() + "' is not a type of any of the previous categories", pattern));
+                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following types: " + flags.getTypeCategories().stream().collect(Collectors.joining(", ")) + "; but '" + ((TagString) value).getValue() + "' is not a type of any of the previous categories", pattern));
                                     } else {
-                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be of type '" + flags.getTypeCategories().parallelStream().findFirst().get() + "'. Instead got '" + ((TagString) value).getValue() + "'.", pattern));
+                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be of type '" + flags.getTypeCategories().stream().findFirst().get() + "'. Instead got '" + ((TagString) value).getValue() + "'.", pattern));
                                     }
                                 }
                             }
@@ -321,7 +321,7 @@ public class NBTParser {
                                     }
                                 }
                                 if(!matched) {
-                                    file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + flags.getStringOptions().parallelStream().collect(Collectors.joining(", ")) + "; instead got '" + ((TagString) value).getValue() + "'", pattern));
+                                    file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + flags.getStringOptions().stream().collect(Collectors.joining(", ")) + "; instead got '" + ((TagString) value).getValue() + "'", pattern));
                                 }
                             }
                             //endregion
@@ -332,9 +332,9 @@ public class NBTParser {
                 }
                 if(!isAGoodBoy) {
                     if(response.getPossibleTypes().size() > 1) {
-                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + response.getPossibleTypes().parallelStream().map(DataType::getShortTypeName).collect(Collectors.joining(", ")), pattern));
+                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + response.getPossibleTypes().stream().map(DataType::getShortTypeName).collect(Collectors.joining(", ")), pattern));
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be of type " + response.getPossibleTypes().parallelStream().findFirst().get().getShortTypeName(), pattern));
+                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be of type " + response.getPossibleTypes().stream().findFirst().get().getShortTypeName(), pattern));
                     }
                 }
             } else {

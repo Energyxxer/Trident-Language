@@ -15,18 +15,18 @@ public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
     @Override
     public Object getMember(NumberRange<Integer> object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         if(member.equals("min")) {
-            return getMin(object);
+            return object.getMin();
         }
         if(member.equals("max")) {
-            return getMax(object);
+            return object.getMax();
         }
         if(member.equals("range")) {
             return getMax(object) - getMin(object);
         }
-        if(member.equals("setMin")) {
+        if(member.equals("deriveMin")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
                 if(params.length != 1) {
-                    file1.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'setMin' requires 1 parameter, instead found " + params.length, pattern));
+                    file1.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'deriveMin' requires 1 parameter, instead found " + params.length, pattern));
                     throw new EntryParsingException();
                 }
 
@@ -35,10 +35,10 @@ public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
                 return new NumberRange<>(newMin, object.getMax());
             };
         }
-        if(member.equals("setMax")) {
+        if(member.equals("deriveMax")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
                 if(params.length != 1) {
-                    file1.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'setMax' requires 1 parameter, instead found " + params.length, pattern));
+                    file1.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'deriveMax' requires 1 parameter, instead found " + params.length, pattern));
                     throw new EntryParsingException();
                 }
 

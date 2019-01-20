@@ -34,7 +34,7 @@ public interface VariableMethod {
             for(Class cls : expected) {
                 if(cls.isInstance(param)) return (T) param;
             }
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected parameter of one of the following types: " + Arrays.asList(expected).parallelStream().map((Function<Class, String>) Class::getSimpleName).collect(Collectors.joining(", ")), pattern));
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected parameter of one of the following types: " + Arrays.asList(expected).stream().map((Function<Class, String>) Class::getSimpleName).collect(Collectors.joining(", ")), pattern));
             throw new EntryParsingException();
         }
     }

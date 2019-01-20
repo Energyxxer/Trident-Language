@@ -257,7 +257,7 @@ public class CommonParsers {
             if(appendedState != null) {
                 Blockstate state = block.getBlockstate();
                 if(state == null) state = new Blockstate();
-                block = new Block(block.getBlockType(), state.merge(parseBlockstate(appendedState)), block.getNBT()); //TODO for Commodore: add Blockstate#merge
+                block = new Block(block.getBlockType(), state.merge(parseBlockstate(appendedState)), block.getNBT());
             }
             TokenPattern<?> appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
             if(appendedNBT != null) {
@@ -487,9 +487,9 @@ public class CommonParsers {
             } else return null;
         } else {
             if(response.getPossibleTypes().size() > 1 && strict) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Ambiguous NBT data type for the path '" + path + "': possible types include " + response.getPossibleTypes().parallelStream().map(DataType::getShortTypeName).collect(Collectors.joining(", ")) + ". Assuming " + response.getPossibleTypes().parallelStream().findFirst().get().getShortTypeName(), pattern));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Ambiguous NBT data type for the path '" + path + "': possible types include " + response.getPossibleTypes().stream().map(DataType::getShortTypeName).collect(Collectors.joining(", ")) + ". Assuming " + response.getPossibleTypes().stream().findFirst().get().getShortTypeName(), pattern));
             }
-            DataType dataType = response.getPossibleTypes().parallelStream().findFirst().get();
+            DataType dataType = response.getPossibleTypes().stream().findFirst().get();
             if(NumericNBTTag.class.isAssignableFrom(dataType.getCorrespondingTagType())) {
                 try {
                     NBTTag sample = dataType.getCorrespondingTagType().newInstance();

@@ -5,6 +5,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
+import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+
 @ParserMember(key = "com.energyxxer.commodore.functionlogic.nbt.TagCompound")
 public class CompoundType implements VariableTypeHandler<TagCompound> {
     @Override
@@ -24,7 +26,9 @@ public class CompoundType implements VariableTypeHandler<TagCompound> {
 
     @Override
     public Object getIndexer(TagCompound object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
-        throw new MemberNotFoundException();
+        String key = assertOfType(index, pattern, file, String.class);
+        if(object.contains(key)) return object.get(key);
+        else return null;
     }
 
     @SuppressWarnings("unchecked")

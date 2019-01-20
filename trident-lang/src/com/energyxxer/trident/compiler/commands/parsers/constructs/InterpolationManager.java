@@ -43,7 +43,7 @@ public class InterpolationManager {
         for(Class cls : expected) {
             if(cls.isInstance(obj)) return obj;
         }
-        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + Arrays.asList(expected).parallelStream().map(Class::getSimpleName).collect(Collectors.joining(", ")), pattern));
+        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + Arrays.asList(expected).stream().map(Class::getSimpleName).collect(Collectors.joining(", ")), pattern));
         throw new EntryParsingException();
     }
 

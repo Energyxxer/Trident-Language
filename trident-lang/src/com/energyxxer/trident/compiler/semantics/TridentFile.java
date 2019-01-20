@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class TridentFile implements CompilerExtension {
     private final TridentCompiler compiler;
@@ -260,7 +259,7 @@ public class TridentFile implements CompilerExtension {
 
         int popTimes = 0;
         parent.addCascadingRequires(Collections.emptyList());
-        for (Iterator<TridentUtil.ResourceLocation> it = parent.cascadingRequires.parallelStream().collect(Collectors.toCollection(ArrayDeque::new)).descendingIterator(); it.hasNext(); ) {
+        for (Iterator<TridentUtil.ResourceLocation> it = new ArrayDeque<>(parent.cascadingRequires).descendingIterator(); it.hasNext(); ) {
             TridentUtil.ResourceLocation loc = it.next();
             TridentFile file = parent.compiler.getFile(loc);
             if(file.fileSymbols == null) {

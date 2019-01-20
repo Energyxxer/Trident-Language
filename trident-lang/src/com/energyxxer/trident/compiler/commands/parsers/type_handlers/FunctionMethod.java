@@ -59,6 +59,6 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
 
     @Override
     public String toString() {
-        return "<function(" + formalParameters.parallelStream().collect(Collectors.joining(", ")) + ")>";
+        return "<function(" + formalParameters.stream().collect(Collectors.joining(", ")) + ")>";
     }
 }

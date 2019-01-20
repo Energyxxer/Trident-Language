@@ -20,7 +20,7 @@ public class IntType implements VariableTypeHandler<Integer> {
     @SuppressWarnings("unchecked")
     @Override
     public <F> F cast(Integer object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
-        if(targetType == Double.class) return (F)(Double)object.doubleValue();
+        if(targetType == Double.class || targetType == double.class) return (F)(Double)object.doubleValue();
         if(targetType == NBTTag.class || targetType == TagInt.class) return (F)new TagInt(object);
         if(targetType == TagByte.class) return (F)new TagByte(object);
         if(targetType == TagShort.class) return (F)new TagShort(object);
@@ -32,7 +32,7 @@ public class IntType implements VariableTypeHandler<Integer> {
 
     @Override
     public Object coerce(Integer object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
-        if(targetType == Double.class) return object.doubleValue();
+        if(targetType == Double.class || targetType == double.class) return object.doubleValue();
         if(targetType == NBTTag.class || targetType == TagInt.class) return new TagInt(object);
         if(targetType == TagByte.class) return new TagByte(object);
         if(targetType == TagShort.class) return new TagShort(object);

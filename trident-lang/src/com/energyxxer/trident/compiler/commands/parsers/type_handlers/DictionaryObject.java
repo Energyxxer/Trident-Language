@@ -13,7 +13,6 @@ import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.Var
 public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, Iterable<Object> {
     private static Stack<DictionaryObject> toStringRecursion = new Stack<>();
 
-
     private HashMap<String, Symbol> map = new HashMap<>();
 
     @Override
@@ -113,7 +112,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
             return "{ ...circular... }";
         }
         toStringRecursion.push(this);
-        String str = "{" + map.values().parallelStream().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue()))).collect(Collectors.joining(", ")) + "}";
+        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue()))).collect(Collectors.joining(", ")) + "}";
         toStringRecursion.pop();
         return str;
     }

@@ -15,6 +15,7 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
@@ -46,8 +47,14 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
             members.put("lastIndexOf", new MethodWrapper<>(String.class.getMethod("lastIndexOf", String.class)));
             members.put("split", new MethodWrapper<>("split", (instance, params) -> instance.split(Pattern.quote((String)params[0])), String.class));
             members.put("replace", new MethodWrapper<>(String.class.getMethod("replace", CharSequence.class, CharSequence.class)));
-            members.put("toUpperCase", new MethodWrapper<>(String.class.getMethod("toUpperCase")));
-            members.put("toLowerCase", new MethodWrapper<>(String.class.getMethod("toLowerCase")));
+            members.put("replaceFirst", new MethodWrapper<>("replaceFirst", (instance, params) -> instance.replaceFirst(Pattern.quote((String)params[0]), (String)params[1]), String.class, String.class));
+            members.put("toUpperCase", new MethodWrapper<>("toUpperCase", (instance, params) -> instance.toUpperCase(Locale.ENGLISH)));
+            members.put("toLowerCase", new MethodWrapper<>("toLowerCase", (instance, params) -> instance.toLowerCase(Locale.ENGLISH)));
+            members.put("trim", new MethodWrapper<>(String.class.getMethod("trim")));
+            members.put("startsWith", new MethodWrapper<>(String.class.getMethod("startsWith", String.class)));
+            members.put("endsWith", new MethodWrapper<>(String.class.getMethod("endsWith", String.class)));
+            members.put("contains", new MethodWrapper<>(String.class.getMethod("contains", CharSequence.class)));
+            members.put("matches", new MethodWrapper<>(String.class.getMethod("matches", String.class)));
 
             members.put("length", new FieldWrapper<>(String::length));
         } catch (NoSuchMethodException e) {
@@ -77,7 +84,6 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
     @SuppressWarnings("unchecked")
     @Override
     public <F> F cast(String object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
-        if(targetType == String.class) return (F) object;
         if(targetType == NBTTag.class || targetType == TagString.class) {
             return (F) new TagString(object);
         }

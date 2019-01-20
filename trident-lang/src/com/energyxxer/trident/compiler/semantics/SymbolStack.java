@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Stack;
-import java.util.stream.Collectors;
 
 public class SymbolStack {
     private Stack<SymbolTable> stack = new Stack<>();
@@ -33,7 +32,7 @@ public class SymbolStack {
     }
 
     public Symbol search(@NotNull String name) {
-        for (Iterator<SymbolTable> it = stack.parallelStream().collect(Collectors.toCollection(ArrayDeque::new)).descendingIterator(); it.hasNext(); ) {
+        for (Iterator<SymbolTable> it = new ArrayDeque<>(stack).descendingIterator(); it.hasNext(); ) {
             SymbolTable table = it.next();
             if(table.containsKey(name)) return table.get(name);
         }

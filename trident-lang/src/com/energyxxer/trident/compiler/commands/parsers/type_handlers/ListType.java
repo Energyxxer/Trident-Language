@@ -8,10 +8,7 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
@@ -22,7 +19,11 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
     static {
         try {
             members.put("add", new MethodWrapper<>(ListType.class.getMethod("add", Object.class)));
+            members.put("insert", new MethodWrapper<>(ListType.class.getMethod("insert", Object.class, int.class)));
+            members.put("contains", new MethodWrapper<>(ListType.class.getMethod("contains", Object.class)));
             members.put("remove", new MethodWrapper<>(ListType.class.getMethod("remove", int.class)));
+            members.put("indexOf", new MethodWrapper<>(ListType.class.getMethod("indexOf", Object.class)));
+            members.put("lastIndexOf", new MethodWrapper<>(ListType.class.getMethod("lastIndexOf", Object.class)));
             members.put("isEmpty", new MethodWrapper<>(ListType.class.getMethod("isEmpty")));
             members.put("clear", new MethodWrapper<>(ListType.class.getMethod("clear")));
 
@@ -37,7 +38,6 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
     private ArrayList<Symbol> content = new ArrayList<>();
 
     public ListType() {
-
     }
 
     public ListType(Object... objects) {
@@ -83,16 +83,39 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
         return content.isEmpty();
     }
 
-    public boolean contains(Object o) {
-        return content.stream().anyMatch(s -> s.getValue().equals(o));
-    }
-
     public Object get(int index) {
         return content.get(index).getValue();
     }
 
-    public boolean add(Object object) {
-        return content.add(new Symbol(content.size() + "", Symbol.SymbolAccess.GLOBAL, object));
+    public void add(Object object) {
+        content.add(new Symbol(content.size() + "", Symbol.SymbolAccess.GLOBAL, object));
+    }
+
+    public void insert(Object object, int index) {
+        content.add(index, new Symbol(content.size() + "", Symbol.SymbolAccess.GLOBAL, object));
+    }
+
+    public boolean contains(Object object) {
+        return content.stream().anyMatch(s -> Objects.equals(s.getValue(), object));
+    }
+
+    public int indexOf(Object object) {
+        int index = 0;
+        for(Symbol sym : content) {
+            if(Objects.equals(sym.getValue(), object)) return index;
+            index++;
+        }
+        return -1;
+    }
+
+    public int lastIndexOf(Object object) {
+        int index = size()-1;
+        for (Iterator<Symbol> it = new ArrayDeque<>(content).descendingIterator(); it.hasNext(); ) {
+            Symbol sym = it.next();
+            if(Objects.equals(sym.getValue(), object)) return index;
+            index--;
+        }
+        return -1;
     }
 
     public void clear() {
@@ -126,6 +149,6 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
 
     @Override
     public String toString() {
-        return "[" + content.parallelStream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue())).collect(Collectors.joining(", "))  + "]";
+        return "[" + content.stream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue())).collect(Collectors.joining(", "))  + "]";
     }
 }

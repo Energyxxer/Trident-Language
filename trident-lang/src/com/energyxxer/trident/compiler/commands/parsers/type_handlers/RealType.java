@@ -20,6 +20,7 @@ public class RealType implements VariableTypeHandler<java.lang.Double> {
     @SuppressWarnings("unchecked")
     @Override
     public <F> F cast(Double object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
+        if(targetType == Integer.class || targetType == int.class) return (F) (Integer) object.intValue();
         if(targetType == NBTTag.class || targetType == TagDouble.class) return (F) new TagDouble(object);
         if(targetType == TagFloat.class) return (F) new TagFloat(object.floatValue());
         throw new ClassCastException();
