@@ -25,6 +25,7 @@ import com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_li
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
+import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolStack;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -49,6 +50,7 @@ public class TridentCompiler {
 
     private final File rootDir;
     private CommandModule module;
+    private ResourcePackGenerator resourcePack;
 
     private JsonObject properties = null;
 
@@ -142,6 +144,10 @@ public class TridentCompiler {
             defaultNamespace = properties.get("default-namespace").getAsString().trim();
         }
 
+        if(properties.has("resources-output") && properties.get("resources-output").isJsonPrimitive() && properties.get("resources-output").getAsJsonPrimitive().isString()) {
+            resourcePack = new ResourcePackGenerator(new File(properties.get("resources-output").getAsString()));
+        }
+
         this.setProgress("Importing vanilla definitions");
         try {
             module = createModuleForProject(rootDir.getName(), properties, definitionPack);
@@ -232,9 +238,18 @@ public class TridentCompiler {
         this.setProgress("Generating data pack");
 
         {
-            Path path = new File(properties.get("datapack-output").getAsString()).toPath();
             try {
-                module.compile(path.toFile());
+                module.compile(new File(properties.get("datapack-output").getAsString()));
+            } catch(IOException x) {
+                logException(x);
+                finalizeCompilation();
+            }
+        }
+
+        this.setProgress("Generating resource pack");
+        {
+            try {
+                resourcePack.generate();
             } catch(IOException x) {
                 logException(x);
                 finalizeCompilation();
@@ -258,42 +273,55 @@ public class TridentCompiler {
         for (File file : files) {
             String name = file.getName();
             if (file.isDirectory()) {
-                if(!file.getParentFile().equals(rootDir) || file.getName().equals("datapack") || file.getName().equals("internal")) {
-                    //This is not the resource pack directory.
-                    recursivelyParse(lex, file);
-                }
+                recursivelyParse(lex, file);
             } else {
-                if(name.endsWith(".tdn")) {
-                    try {
-                        String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
-                        lex.tokenizeParse(file, str, new TridentLexerProfile(module));
+                if(file.toPath().startsWith(rootDir.toPath().resolve("datapack"))) {
+                    if(name.endsWith(".tdn")) {
+                        try {
+                            String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
+                            lex.tokenizeParse(file, str, new TridentLexerProfile(module));
 
-                        if(lex.getMatchResponse().matched) {
-                            filePatterns.put(file, lex.getMatchResponse().pattern);
+                            if(lex.getMatchResponse().matched) {
+                                filePatterns.put(file, lex.getMatchResponse().pattern);
+                            }
+                        } catch (IOException x) {
+                            logException(x);
                         }
-                    } catch (IOException x) {
-                        report.addNotice(new Notice(NoticeType.ERROR, "IOException: " + x.getMessage()));
+                    } else {
+                        Path dataPath = rootDir.toPath().resolve("datapack").resolve("data");
+                        try {
+                            if (name.endsWith(".json") && file.toPath().startsWith(dataPath) && dataPath.relativize(file.toPath()).getName(1).startsWith("tags")) {
+                                loadTag(file);
+                            } else {
+                                Path relPath = rootDir.toPath().resolve("datapack").relativize(file.toPath());
+                                byte[] data = Files.readAllBytes(file.toPath());
+                                module.exportables.add(new RawExportable(relPath.toString().replace(File.separator, "/"), data));
+                            }
+                        } catch (IOException x) {
+                            logException(x);
+                        }
                     }
-                } else if(name.endsWith(".nbttm")) {
+                } else if(file.toPath().startsWith(rootDir.toPath().resolve("resources"))) {
+                    if(resourcePack == null) break;
                     try {
-                        String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
-                        typeMap.parsing.parseNBTTMFile(file, str);
+                        Path relPath = rootDir.toPath().resolve("resources").relativize(file.toPath());
+                        byte[] data = Files.readAllBytes(file.toPath());
+                        resourcePack.exportables.add(new RawExportable(relPath.toString().replace(File.separator, "/"), data));
+                    } catch (IOException x) {
+                        logException(x);
+                    } catch (OutOfMemoryError x) {
+                        logException(x);
+                        Debug.log(file);
+                    }
+                } else if(file.toPath().startsWith(rootDir.toPath().resolve("internal"))) {
+                    if(name.endsWith(".nbttm")) {
+                        try {
+                            String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
+                            typeMap.parsing.parseNBTTMFile(file, str);
 
-                    } catch(IOException x) {
-                        report.addNotice(new Notice(NoticeType.ERROR, "IOException: " + x.getMessage()));
-                    }
-                } else if(file.toPath().startsWith(rootDir.toPath().resolve("datapack"))) {
-                    Path dataPath = rootDir.toPath().resolve("datapack").resolve("data");
-                    try {
-                        if (name.endsWith(".json") && file.toPath().startsWith(dataPath) && dataPath.relativize(file.toPath()).getName(1).startsWith("tags")) {
-                            loadTag(file);
-                        } else {
-                            Path relPath = rootDir.toPath().resolve("datapack").relativize(file.toPath());
-                            String fileContent = new String(Files.readAllBytes(file.toPath()));
-                            module.exportables.add(new RawExportable(relPath.toString().replace(File.separator, "/"), fileContent));
+                        } catch(IOException x) {
+                            logException(x);
                         }
-                    } catch (IOException x) {
-                        report.addNotice(new Notice(NoticeType.ERROR, "IOException: " + x.getMessage()));
                     }
                 }
             }
@@ -352,7 +380,7 @@ public class TridentCompiler {
         }
     }
 
-    private void logException(Exception x) {
+    private void logException(Throwable x) {
         this.report.addNotice(new Notice(NoticeType.ERROR, x.getMessage()));
         finalizeCompilation();
     }

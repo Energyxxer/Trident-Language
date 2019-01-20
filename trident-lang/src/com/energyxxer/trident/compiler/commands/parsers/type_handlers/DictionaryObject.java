@@ -1,9 +1,6 @@
 package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
@@ -17,24 +14,6 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
     private static Stack<DictionaryObject> toStringRecursion = new Stack<>();
 
     private HashMap<String, Symbol> map = new HashMap<>();
-
-    public DictionaryObject() {
-        this.put("map", (VariableMethod) (params, patterns, pattern1, file1) -> {
-            if(params.length < 1) {
-                file1.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1));
-                throw new EntryParsingException();
-            }
-            FunctionMethod func = assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
-
-            DictionaryObject newDict = new DictionaryObject();
-
-            for(Map.Entry<String, Symbol> entry : map.entrySet()) {
-                newDict.put(entry.getKey(), func.call(new Object[] {entry.getKey(), entry.getValue().getValue()}, new TokenPattern[] {pattern1, pattern1}, pattern1, file1));
-            }
-
-            return newDict;
-        });
-    }
 
     @Override
     public Object getMember(DictionaryObject object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
