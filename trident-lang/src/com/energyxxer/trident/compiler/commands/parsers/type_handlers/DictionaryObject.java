@@ -1,8 +1,12 @@
 package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.util.logger.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -16,22 +20,48 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
     private HashMap<String, Symbol> map = new HashMap<>();
 
     @Override
-    public Object getMember(DictionaryObject object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
-        if(keepSymbol && !object.map.containsKey(member)) {
+    public Object getMember(DictionaryObject dict, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+        if(keepSymbol && !dict.map.containsKey(member)) {
             put(member, null);
         }
-        Symbol elem = object.map.get(member);
+        if(!keepSymbol && !dict.map.containsKey(member)) {
+            try {
+                switch (member) {
+                    case "map":
+                        return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                            if (params.length < 1) {
+                                file1.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1));
+                                throw new EntryParsingException();
+                            }
+                            FunctionMethod func = assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
+
+                            DictionaryObject newDict = new DictionaryObject();
+
+                            for (Map.Entry<String, Symbol> entry : dict.entrySet()) {
+                                newDict.put(entry.getKey(), func.call(new Object[]{entry.getKey(), entry.getValue().getValue()}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
+                            }
+
+                            return newDict;
+                        };
+                    case "merge":
+                        return new MethodWrapper<>(DictionaryObject.class.getMethod("merge", DictionaryObject.class)).createForInstance(dict);
+                    case "remove":
+                        return new MethodWrapper<>(DictionaryObject.class.getMethod("remove", String.class)).createForInstance(dict);
+                    case "clear":
+                        return new MethodWrapper<>(DictionaryObject.class.getMethod("clear")).createForInstance(dict);
+                }
+            } catch(NoSuchMethodException x) {
+                Debug.log(x.getMessage()); //sugma
+            }
+        }
+        Symbol elem = dict.map.get(member);
         return keepSymbol || elem == null ? elem : elem.getValue();
     }
 
     @Override
     public Object getIndexer(DictionaryObject object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         String key = assertOfType(index, pattern, file, String.class);
-        if(keepSymbol && !object.map.containsKey(key)) {
-            put(key, null);
-        }
-        Symbol elem = object.map.get(key);
-        return keepSymbol || elem == null ? elem : elem.getValue();
+        return getMember(object, key, pattern, file, keepSymbol);
     }
 
     @SuppressWarnings("unchecked")
@@ -82,6 +112,17 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
 
     public Object putIfAbsent(String key, Object value) {
         return map.putIfAbsent(key, new Symbol(key, Symbol.SymbolAccess.GLOBAL, value));
+    }
+
+    public DictionaryObject merge(DictionaryObject other) {
+        DictionaryObject newDict = new DictionaryObject();
+        for(Map.Entry<String, Symbol> entry : this.entrySet()) {
+            newDict.put(entry.getKey(), entry.getValue().getValue());
+        }
+        for(Map.Entry<String, Symbol> entry : other.entrySet()) {
+            newDict.put(entry.getKey(), entry.getValue().getValue());
+        }
+        return newDict;
     }
 
     @NotNull

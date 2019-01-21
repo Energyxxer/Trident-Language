@@ -74,11 +74,14 @@ public class Project {
 		File resourceCacheFile = rootDirectory.toPath().resolve(".tdnui").resolve("resource_cache").toFile();
 		if(resourceCacheFile.exists() && resourceCacheFile.isFile()) {
 			try {
-				for(Map.Entry<String, JsonElement> entry : new Gson().fromJson(new FileReader(resourceCacheFile), JsonObject.class).entrySet()) {
-					try {
-						resourceCache.put(Integer.parseInt(entry.getKey()), entry.getValue().getAsInt());
-					} catch(NumberFormatException | UnsupportedOperationException x) {
-						x.printStackTrace();
+				JsonObject jsonObject = new Gson().fromJson(new FileReader(resourceCacheFile), JsonObject.class);
+				if(jsonObject != null) {
+					for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
+						try {
+							resourceCache.put(Integer.parseInt(entry.getKey()), entry.getValue().getAsInt());
+						} catch (NumberFormatException | UnsupportedOperationException x) {
+							x.printStackTrace();
+						}
 					}
 				}
 			} catch (FileNotFoundException | JsonParseException x) {

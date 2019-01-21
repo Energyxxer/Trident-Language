@@ -67,9 +67,9 @@ public class ResourcePackGenerator {
             zipStream = new ZipOutputStream(new FileOutputStream(rootFile));
         }
 
-        progressDelta = 1f/(exportables.size() + 1);
+        progressDelta = exportables.isEmpty() ? 1 : 1f/(exportables.size());
 
-        createPackMcmeta();
+        //createPackMcmeta();
 
         for(Exportable exportable : exportables) {
             if(exportable.shouldExport()) {
