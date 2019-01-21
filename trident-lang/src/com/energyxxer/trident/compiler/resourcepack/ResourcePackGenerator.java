@@ -2,6 +2,7 @@ package com.energyxxer.trident.compiler.resourcepack;
 
 import com.energyxxer.commodore.module.Exportable;
 import com.energyxxer.commodore.module.ModulePackGenerator;
+import com.energyxxer.trident.compiler.TridentCompiler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -17,6 +18,8 @@ import static com.energyxxer.commodore.module.ModulePackGenerator.OutputType.FOL
 import static com.energyxxer.commodore.module.ModulePackGenerator.OutputType.ZIP;
 
 public class ResourcePackGenerator {
+    @NotNull
+    private final TridentCompiler compiler;
 
     @NotNull
     private final String rootPath;
@@ -35,11 +38,14 @@ public class ResourcePackGenerator {
 
     private ZipOutputStream zipStream;
 
-    public ResourcePackGenerator(@NotNull File outFile) {
-        this(outFile, outFile.isFile() && outFile.getName().endsWith(".zip") ? ZIP : FOLDER);
+    public ResourcePackGenerator(@NotNull TridentCompiler compiler, @NotNull File outFile) {
+        this(compiler, outFile, outFile.isFile() && outFile.getName().endsWith(".zip") ? ZIP : FOLDER);
     }
 
-    public ResourcePackGenerator(@NotNull File outFile, @NotNull ModulePackGenerator.OutputType outputType) {
+    private float progressDelta = 1;
+
+    public ResourcePackGenerator(@NotNull TridentCompiler compiler, @NotNull File outFile, @NotNull ModulePackGenerator.OutputType outputType) {
+        this.compiler = compiler;
         this.outputType = outputType;
 
         if(outputType == FOLDER && !outFile.exists()) {
@@ -60,6 +66,8 @@ public class ResourcePackGenerator {
         if(outputType == ZIP) {
             zipStream = new ZipOutputStream(new FileOutputStream(rootFile));
         }
+
+        progressDelta = 1f/(exportables.size() + 1);
 
         createPackMcmeta();
 
@@ -85,6 +93,8 @@ public class ResourcePackGenerator {
 
     private void createFile(@Nullable String path, @Nullable byte[] contents) throws IOException {
         if(path == null || contents == null) return;
+        compiler.progress += progressDelta;
+        compiler.setProgress("Generating resource pack: " + path);
         if(outputType == ZIP) {
             ZipEntry e = new ZipEntry(path);
             zipStream.putNextEntry(e);
@@ -102,5 +112,10 @@ public class ResourcePackGenerator {
                 writer.flush();
             }
         }
+    }
+
+    @NotNull
+    public ModulePackGenerator.OutputType getOutputType() {
+        return outputType;
     }
 }

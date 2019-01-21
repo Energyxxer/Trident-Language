@@ -16,7 +16,7 @@ public class NBTArgumentParser implements SimpleSelectorArgumentParser {
     @Override
     public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentFile file) {
         TagCompound nbt = NBTParser.parseCompound(pattern.find("NBT_COMPOUND"), file);
-        PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
+        PathContext context = new PathContext().setIsSetting(false).setProtocol(ENTITY);
         NBTParser.analyzeTag(nbt, context, pattern.find("NBT_COMPOUND"), file);
         return new NBTArgument(nbt, pattern.find("NEGATED") != null);
     }

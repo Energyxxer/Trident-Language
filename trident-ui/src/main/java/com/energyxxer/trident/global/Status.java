@@ -6,6 +6,7 @@ package com.energyxxer.trident.global;
 public class Status {
     private String message = "";
     private String type = INFO;
+    private Float progress = null;
 
     public static final String INFO = "INFO";
     public static final String WARNING = "WARNING";
@@ -18,8 +19,13 @@ public class Status {
     }
 
     public Status(String type, String message) {
+        this(type, message, null);
+    }
+
+    public Status(String type, String message, Float progress) {
         this.type = type;
         this.message = message;
+        this.progress = progress;
     }
 
     public String getMessage() {
@@ -36,5 +42,13 @@ public class Status {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public Float getProgress() {
+        return progress;
+    }
+
+    public void setProgress(Float progress) {
+        this.progress = progress;
     }
 }

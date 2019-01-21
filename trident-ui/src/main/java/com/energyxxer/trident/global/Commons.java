@@ -100,12 +100,13 @@ public class Commons {
     public static void compileActive() {
         if(Commons.getActiveProject() == null) return;
         TridentCompiler c = new TridentCompiler(Commons.getActiveProject().getRootDirectory());
-        c.addProgressListener(TridentWindow::setStatus);
+        c.addProgressListener((message, progress) -> TridentWindow.setStatus(new Status(Status.INFO, message, progress)));
         c.addCompletionListener(() -> {
             TridentWindow.noticeExplorer.setNotices(c.getReport().groupByLabel());
             if (c.getReport().getTotal() > 0) TridentWindow.noticeBoard.open();
             c.getReport().getWarnings().forEach(Console.warn::println);
             c.getReport().getErrors().forEach(Console.err::println);
+            TridentWindow.statusBar.setProgress(null);
         });
         c.compile();
     }

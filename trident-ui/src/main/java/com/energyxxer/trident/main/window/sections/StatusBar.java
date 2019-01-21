@@ -26,6 +26,8 @@ public class StatusBar extends JPanel implements MouseListener {
 
     private Status currentStatus = null;
 
+    private ProgressBar progressBar;
+
     private ExtendedStatusBar extension = new ExtendedStatusBar();
 
     private ThemeListenerManager tlm = new ThemeListenerManager();
@@ -44,9 +46,19 @@ public class StatusBar extends JPanel implements MouseListener {
                 ));}
             )
         );
+
+        JPanel progressWrapper = new JPanel(new BorderLayout());
+        progressWrapper.setOpaque(false);
+
         statusLabel = new StyledLabel("");
         statusLabel.setIconName("info");
-        this.add(statusLabel,BorderLayout.CENTER);
+        this.add(statusLabel,BorderLayout.WEST);
+        this.add(progressWrapper, BorderLayout.CENTER);
+
+        progressBar = new ProgressBar();
+        progressBar.setVisible(false);
+        progressBar.setPreferredSize(new Dimension(200, 5));
+        progressWrapper.add(progressBar, BorderLayout.EAST);
 
         this.add(extension,BorderLayout.EAST);
 
@@ -73,13 +85,21 @@ public class StatusBar extends JPanel implements MouseListener {
         statusLabel.setIconName(status.getType().toLowerCase());
         statusLabel.setText(status.getMessage());
 
+        setProgress(status.getProgress());
+
         this.currentStatus = status;
+    }
+
+    public void setProgress(Float progress) {
+        progressBar.setVisible(progress != null);
+        if(progress != null) progressBar.setProgress(progress);
     }
 
     public void dismissStatus(Status status) {
         if(status == currentStatus) {
             statusLabel.setText("");
             statusLabel.setBackground(new Color(0,0,0,0));
+            progressBar.setVisible(false);
         }
     }
 

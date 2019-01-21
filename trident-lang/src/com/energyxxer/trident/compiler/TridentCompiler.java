@@ -118,6 +118,8 @@ public class TridentCompiler {
         return module;
     }
 
+    public float progress = -1;
+
     private void runCompilation() {
 
         this.setProgress("Initializing default command parsers");
@@ -145,7 +147,7 @@ public class TridentCompiler {
         }
 
         if(properties.has("resources-output") && properties.get("resources-output").isJsonPrimitive() && properties.get("resources-output").getAsJsonPrimitive().isString()) {
-            resourcePack = new ResourcePackGenerator(new File(properties.get("resources-output").getAsString()));
+            resourcePack = new ResourcePackGenerator(this, new File(properties.get("resources-output").getAsString()));
         }
 
         this.setProgress("Importing vanilla definitions");
@@ -208,13 +210,16 @@ public class TridentCompiler {
 
         sortedFiles.sort((a,b) -> (a.isCompileOnly() != b.isCompileOnly()) ? a.isCompileOnly() ? -1 : 1 : 0);
 
+        progress = 0;
+        float delta = 1f / sortedFiles.size();
         for(TridentFile file : sortedFiles) {
-            Debug.log("Analyzing " + file);
+            this.setProgress("Analyzing " + file.getResourceLocation());
             try {
                 file.resolveEntries();
             } catch(ReturnException r) {
                 report.addNotice(new Notice(NoticeType.ERROR, "Return instruction outside of inner function", r.getPattern()));
             }
+            progress += delta;
         }
 
         if(report.hasErrors()) {
@@ -235,8 +240,8 @@ public class TridentCompiler {
         loadTag.addValue(new FunctionReference(initFunction));
         module.getObjectiveManager().setCreationFunction(initFunction);
 
+        progress = -1;
         this.setProgress("Generating data pack");
-
         {
             try {
                 module.compile(new File(properties.get("datapack-output").getAsString()));
@@ -246,6 +251,7 @@ public class TridentCompiler {
             }
         }
 
+        progress = 0;
         this.setProgress("Generating resource pack");
         {
             try {
@@ -276,6 +282,7 @@ public class TridentCompiler {
                 recursivelyParse(lex, file);
             } else {
                 if(file.toPath().startsWith(rootDir.toPath().resolve("datapack"))) {
+                    this.setProgress("Scanning file: " + rootDir.toPath().relativize(file.toPath()));
                     if(name.endsWith(".tdn")) {
                         try {
                             String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
@@ -303,17 +310,16 @@ public class TridentCompiler {
                     }
                 } else if(file.toPath().startsWith(rootDir.toPath().resolve("resources"))) {
                     if(resourcePack == null) break;
+                    this.setProgress("Scanning file: " + rootDir.toPath().relativize(file.toPath()));
                     try {
                         Path relPath = rootDir.toPath().resolve("resources").relativize(file.toPath());
                         byte[] data = Files.readAllBytes(file.toPath());
                         resourcePack.exportables.add(new RawExportable(relPath.toString().replace(File.separator, "/"), data));
                     } catch (IOException x) {
                         logException(x);
-                    } catch (OutOfMemoryError x) {
-                        logException(x);
-                        Debug.log(file);
                     }
                 } else if(file.toPath().startsWith(rootDir.toPath().resolve("internal"))) {
+                    this.setProgress("Scanning file: " + rootDir.toPath().relativize(file.toPath()));
                     if(name.endsWith(".nbttm")) {
                         try {
                             String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
@@ -400,12 +406,12 @@ public class TridentCompiler {
         progressListeners.remove(l);
     }
 
-    private void setProgress(String message) {
+    public void setProgress(String message) {
         setProgress(message, true);
     }
 
     private void setProgress(String message, boolean includeProjectName) {
-        progressListeners.forEach(l -> l.onProgress(message + (includeProjectName ? ("... [" + rootDir.getName() + "]") : "")));
+        progressListeners.forEach(l -> l.onProgress(message + (includeProjectName ? ("... [" + rootDir.getName() + "]") : ""), progress));
     }
 
     public CompilerReport getReport() {
