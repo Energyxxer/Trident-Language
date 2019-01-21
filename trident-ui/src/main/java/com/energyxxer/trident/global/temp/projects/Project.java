@@ -9,15 +9,14 @@ import com.energyxxer.trident.global.Commons;
 import com.energyxxer.util.Lazy;
 import com.energyxxer.util.StringUtil;
 import com.energyxxer.util.logger.Debug;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Project {
 
@@ -43,6 +42,8 @@ public class Project {
 	//region a
 
 	private JsonObject config;
+	private HashMap<Integer, Integer> resourceCache = new HashMap<>();
+
 	//endregion
 	public Project(String name) {
 		Path rootPath = Paths.get(ProjectManager.getWorkspaceDir()).resolve(name);
@@ -69,7 +70,23 @@ public class Project {
 		this.rootDirectory = rootDirectory;
 		File config = new File(rootDirectory.getAbsolutePath() + File.separator + TridentCompiler.PROJECT_FILE_NAME);
 		this.name = rootDirectory.getName();
-		if(config.exists() && config.isFile() && config.getName().equals(TridentCompiler.PROJECT_FILE_NAME)) {
+
+		File resourceCacheFile = rootDirectory.toPath().resolve(".tdnui").resolve("resource_cache").toFile();
+		if(resourceCacheFile.exists() && resourceCacheFile.isFile()) {
+			try {
+				for(Map.Entry<String, JsonElement> entry : new Gson().fromJson(new FileReader(resourceCacheFile), JsonObject.class).entrySet()) {
+					try {
+						resourceCache.put(Integer.parseInt(entry.getKey()), entry.getValue().getAsInt());
+					} catch(NumberFormatException | UnsupportedOperationException x) {
+						x.printStackTrace();
+					}
+				}
+			} catch (FileNotFoundException | JsonParseException x) {
+				x.printStackTrace();
+			}
+		}
+
+		if(config.exists() && config.isFile()) {
             try {
                 this.config = new Gson().fromJson(new FileReader(config), JsonObject.class);
                 return;
@@ -149,6 +166,33 @@ public class Project {
 			return icons.get(path);
 		}
 		return null;
+	}
+
+	public void updateResourceCache(HashMap<Integer, Integer> resourceCache) {
+		this.resourceCache = resourceCache;
+		File cache = rootDirectory.toPath().resolve(".tdnui").resolve("resource_cache").toFile();
+
+		JsonObject jsonObj = new JsonObject();
+		for(Map.Entry<Integer, Integer> entry : resourceCache.entrySet()) {
+			jsonObj.addProperty(entry.getKey().toString(), entry.getValue());
+		}
+
+		try {
+			cache.getParentFile().mkdirs();
+			cache.createNewFile();
+		} catch(IOException x) {
+			Debug.log(x.getMessage());
+		}
+
+		try(PrintWriter writer = new PrintWriter(cache, "UTF-8")) {
+			writer.print(new GsonBuilder().setPrettyPrinting().create().toJson(jsonObj));
+		} catch (IOException x) {
+			Debug.log(x.getMessage());
+		}
+	}
+
+	public HashMap<Integer, Integer> getResourceCache() {
+		return resourceCache;
 	}
 
     public File getRootDirectory() {

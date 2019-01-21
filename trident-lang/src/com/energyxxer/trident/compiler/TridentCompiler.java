@@ -3,6 +3,7 @@ package com.energyxxer.trident.compiler;
 import com.energyxxer.commodore.defpacks.DefinitionPack;
 import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.module.ModulePackGenerator;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.module.RawExportable;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
@@ -71,6 +72,9 @@ public class TridentCompiler {
     private String defaultNamespace = null;
 
     private NBTTypeMap typeMap;
+
+    private HashMap<Integer, Integer> inResourceCache = new HashMap<>();
+    private HashMap<Integer, Integer> outResourceCache = new HashMap<>();
 
     public TridentCompiler(File rootDir) {
         this.rootDir = rootDir;
@@ -278,7 +282,7 @@ public class TridentCompiler {
         if(files == null) return;
         for (File file : files) {
             String name = file.getName();
-            if (file.isDirectory()) {
+            if (file.isDirectory() && (!file.getParentFile().equals(rootDir) || Arrays.asList("datapack", "resources", "internal").contains(file.getName()))) {
                 recursivelyParse(lex, file);
             } else {
                 if(file.toPath().startsWith(rootDir.toPath().resolve("datapack"))) {
@@ -311,10 +315,18 @@ public class TridentCompiler {
                 } else if(file.toPath().startsWith(rootDir.toPath().resolve("resources"))) {
                     if(resourcePack == null) break;
                     this.setProgress("Scanning file: " + rootDir.toPath().relativize(file.toPath()));
+
                     try {
                         Path relPath = rootDir.toPath().resolve("resources").relativize(file.toPath());
                         byte[] data = Files.readAllBytes(file.toPath());
-                        resourcePack.exportables.add(new RawExportable(relPath.toString().replace(File.separator, "/"), data));
+                        int hashCode = Arrays.hashCode(data);
+
+                        outResourceCache.put(relPath.hashCode(), hashCode);
+
+                        if(resourcePack.getOutputType() == ModulePackGenerator.OutputType.ZIP
+                                || !Objects.equals(inResourceCache.get(relPath.hashCode()), hashCode)) {
+                            resourcePack.exportables.add(new RawExportable(relPath.toString().replace(File.separator, "/"), data));
+                        }
                     } catch (IOException x) {
                         logException(x);
                     }
@@ -479,6 +491,14 @@ public class TridentCompiler {
         catch(NullPointerException | TypeNotFoundException x) {
             return null;
         }
+    }
+
+    public void setInResourceCache(HashMap<Integer, Integer> inResourceCache) {
+        this.inResourceCache = inResourceCache;
+    }
+
+    public HashMap<Integer, Integer> getOutResourceCache() {
+        return outResourceCache;
     }
 
     private static class Resources {
