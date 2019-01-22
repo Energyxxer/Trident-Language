@@ -42,6 +42,7 @@ public class TridentFile {
     private final TridentUtil.ResourceLocation location;
 
     private boolean compileOnly = false;
+    private float priority = 0;
     private boolean valid = true;
 
     private int languageLevel;
@@ -154,6 +155,10 @@ public class TridentFile {
                         } else this.languageLevel = level;
                         break;
                     }
+                    case "PRIORITY_DIRECTIVE": {
+                        this.priority = (float) CommonParsers.parseDouble(directiveBody.find("REAL"), this);
+                        break;
+                    }
                     default: {
                         compiler.getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown directive type '" + directiveBody.getName() + "'", directiveBody));
                     }
@@ -234,6 +239,10 @@ public class TridentFile {
 
     public int getLanguageLevel() {
         return languageLevel;
+    }
+
+    public float getPriority() {
+        return priority;
     }
 
     public Function getTickFunction() {

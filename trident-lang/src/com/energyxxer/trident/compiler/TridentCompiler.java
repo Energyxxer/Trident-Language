@@ -212,7 +212,7 @@ public class TridentCompiler {
 
         files.values().forEach(this::getAllRequires);
 
-        sortedFiles.sort((a,b) -> (a.isCompileOnly() != b.isCompileOnly()) ? a.isCompileOnly() ? -1 : 1 : 0);
+        sortedFiles.sort((a,b) -> (a.isCompileOnly() != b.isCompileOnly()) ? a.isCompileOnly() ? -2 : 2 : (int) Math.signum((b.getPriority() - a.getPriority()) * 1000));
 
         progress = 0;
         float delta = 1f / sortedFiles.size();

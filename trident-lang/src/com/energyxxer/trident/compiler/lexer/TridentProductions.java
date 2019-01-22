@@ -218,7 +218,7 @@ public class TridentProductions {
             directiveBody.add(group(literal("on"), ofType(DIRECTIVE_ON_KEYWORD)).setName("ON_DIRECTIVE"));
             directiveBody.add(group(literal("tag"), ofType(RESOURCE_LOCATION)).setName("TAG_DIRECTIVE"));
             directiveBody.add(group(literal("require"), ofType(RESOURCE_LOCATION)).setName("REQUIRE_DIRECTIVE"));
-            directiveBody.add(group(literal("priority"), integer()).setName("REQUIRE_DIRECTIVE"));
+            directiveBody.add(group(literal("priority"), real()).setName("PRIORITY_DIRECTIVE"));
             directiveBody.add(group(literal("language_level"), integer()).setName("LANGUAGE_LEVEL_DIRECTIVE"));
         }
 
