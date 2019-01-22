@@ -1729,6 +1729,8 @@ public class TridentProductions {
             );
         }
 
+        LazyTokenGroupMatch blockLabel = optional(identifierX().setName("LABEL"), colon());
+
         {
             INSTRUCTION.add(
                     group(literal("eval").setName("INSTRUCTION_KEYWORD"), LINE_SAFE_INTERPOLATION_VALUE)
@@ -1739,10 +1741,20 @@ public class TridentProductions {
             LazyTokenPatternMatch FOR_HEADER = choice(
                     group(identifierX().setName("VARIABLE_NAME"), keyword("in"), INTERPOLATION_VALUE).setName("ITERATOR_FOR"),
                     group(optional(INTERPOLATION_VALUE).setName("FOR_HEADER_INITIALIZATION"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_CONDITION"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_ITERATION")).setName("CLASSICAL_FOR")
-            ).setName("FOR_HEADER");
+            ).setName("LOOP_HEADER");
 
             INSTRUCTION.add(
-                    group(keyword("for").setName("INSTRUCTION_KEYWORD"), brace("("), FOR_HEADER, brace(")"), ANONYMOUS_INNER_FUNCTION)
+                    group(blockLabel, keyword("for").setName("INSTRUCTION_KEYWORD"), brace("("), FOR_HEADER, brace(")"), ANONYMOUS_INNER_FUNCTION)
+            );
+        }
+
+        {
+            LazyTokenPatternMatch WHILE_HEADER = choice(
+                    group(INTERPOLATION_VALUE).setName("WHILE_HEADER")
+            ).setName("LOOP_HEADER");
+
+            INSTRUCTION.add(
+                    group(blockLabel, keyword("while").setName("INSTRUCTION_KEYWORD"), brace("("), WHILE_HEADER, brace(")"), ANONYMOUS_INNER_FUNCTION)
             );
         }
 
@@ -1773,6 +1785,18 @@ public class TridentProductions {
         {
             INSTRUCTION.add(
                     group(literal("return").setName("INSTRUCTION_KEYWORD"), optional(LINE_SAFE_INTERPOLATION_VALUE).setName("RETURN_VALUE"))
+            );
+        }
+
+        {
+            INSTRUCTION.add(
+                    group(literal("break").setName("INSTRUCTION_KEYWORD"), identifierX().setName("BREAK_LABEL").setOptional())
+            );
+        }
+
+        {
+            INSTRUCTION.add(
+                    group(literal("continue").setName("INSTRUCTION_KEYWORD"), identifierX().setName("CONTINUE_LABEL").setOptional())
             );
         }
         //endregion

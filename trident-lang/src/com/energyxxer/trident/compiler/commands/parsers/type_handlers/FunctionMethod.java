@@ -1,10 +1,7 @@
 package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.semantics.CallStack;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.SymbolTable;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.*;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -21,7 +21,7 @@ import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.instructions.AliasInstruction;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.commands.parsers.type_handlers.ReturnException;
+import com.energyxxer.trident.compiler.semantics.ReturnException;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
@@ -221,7 +221,11 @@ public class TridentCompiler {
             try {
                 file.resolveEntries();
             } catch(ReturnException r) {
-                report.addNotice(new Notice(NoticeType.ERROR, "Return instruction outside of inner function", r.getPattern()));
+                report.addNotice(new Notice(NoticeType.ERROR, "Return instruction outside inner function", r.getPattern()));
+            } catch(BreakException b) {
+                report.addNotice(new Notice(NoticeType.ERROR, "Break instruction outside loop", b.getPattern()));
+            } catch(ContinueException c) {
+                report.addNotice(new Notice(NoticeType.ERROR, "Continue instruction outside loop", c.getPattern()));
             }
             progress += delta;
         }
