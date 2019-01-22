@@ -24,7 +24,7 @@ public class Symbol {
     public Symbol(String name, SymbolAccess access, Object value) {
         this.name = name;
         this.access = access;
-        setValue(value);
+        if(value != null) setValue(value);
     }
 
     public String getName() {

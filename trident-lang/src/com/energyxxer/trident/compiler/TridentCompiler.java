@@ -177,7 +177,7 @@ public class TridentCompiler {
             }
         }
 
-        this.setProgress("Scanning files");
+        this.setProgress("Parsing files");
         TokenStream ts = new TokenStream();
         LazyLexer lex = new LazyLexer(ts, new TridentProductions(module).FILE);
         recursivelyParse(lex, rootDir);
@@ -286,7 +286,7 @@ public class TridentCompiler {
                 recursivelyParse(lex, file);
             } else {
                 if(file.toPath().startsWith(rootDir.toPath().resolve("datapack"))) {
-                    this.setProgress("Scanning file: " + rootDir.toPath().relativize(file.toPath()));
+                    this.setProgress("Parsing file: " + rootDir.toPath().relativize(file.toPath()));
                     if(name.endsWith(".tdn")) {
                         try {
                             String str = new String(Files.readAllBytes(Paths.get(file.getPath())));

@@ -7,11 +7,9 @@ import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.commodore.textcomponents.StringTextComponent;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.HashMap;
@@ -27,8 +25,7 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
     static {
         members.put("substring", instance -> (VariableMethod) (params, patterns, pattern, file) -> {
             if(params.length < 1 || params.length > 2) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'substring' requires 1 or 2 parameters, instead found " + params.length, pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'substring' requires 1 or 2 parameters, instead found " + params.length, pattern, file);
             }
 
             int start = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], file, Integer.class);
@@ -37,8 +34,7 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
             try {
                 return instance.substring(start, end);
             } catch(IndexOutOfBoundsException x) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, x.getMessage(), pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.getMessage(), pattern, file);
             }
         });
 
@@ -74,8 +70,7 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
     public Object getIndexer(String object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         int realIndex = assertOfType(index, pattern, file, Integer.class);
         if(realIndex < 0 || realIndex >= object.length()) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Index out of bounds: " + index, pattern));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index, pattern, file);
         }
 
         return object.charAt(realIndex) + "";
@@ -89,11 +84,9 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
         }
         if(targetType == Entity.class) {
             if(object.isEmpty()) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Player names cannot be empty", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names cannot be empty", pattern, file);
             } else if(object.contains(" ")) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Player names may not contain whitespaces", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names may not contain whitespaces", pattern, file);
             } else {
                 return (F) new PlayerName(object);
             }
@@ -101,8 +94,7 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
         if(targetType == TridentUtil.ResourceLocation.class) {
             TridentUtil.ResourceLocation loc = TridentUtil.ResourceLocation.createStrict(object);
             if(loc == null) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Illegal resource location path: " + object, pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Illegal resource location path: " + object, pattern, file);
             }
             return (F) loc;
         }

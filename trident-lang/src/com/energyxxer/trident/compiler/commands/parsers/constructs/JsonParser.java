@@ -3,9 +3,7 @@ package com.energyxxer.trident.compiler.commands.parsers.constructs;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -65,8 +63,7 @@ public class JsonParser {
                 patternCache.put(bool, pattern);
                 return bool;
             default:
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown json element production name: '" + pattern.getName() + "'", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown json element production name: '" + pattern.getName() + "'", pattern, file);
         }
     }
 

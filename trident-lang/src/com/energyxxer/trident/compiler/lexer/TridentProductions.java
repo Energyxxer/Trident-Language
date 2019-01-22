@@ -218,6 +218,7 @@ public class TridentProductions {
             directiveBody.add(group(literal("on"), ofType(DIRECTIVE_ON_KEYWORD)).setName("ON_DIRECTIVE"));
             directiveBody.add(group(literal("tag"), ofType(RESOURCE_LOCATION)).setName("TAG_DIRECTIVE"));
             directiveBody.add(group(literal("require"), ofType(RESOURCE_LOCATION)).setName("REQUIRE_DIRECTIVE"));
+            directiveBody.add(group(literal("priority"), integer()).setName("REQUIRE_DIRECTIVE"));
             directiveBody.add(group(literal("language_level"), integer()).setName("LANGUAGE_LEVEL_DIRECTIVE"));
         }
 
@@ -1175,10 +1176,10 @@ public class TridentProductions {
 
             NBT_PATH_NODE.add(group(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH"));
 
-            NBT_PATH.add(INTERPOLATION_BLOCK);
             NBT_PATH.add(group(
                     choice(group(group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL")).setName("NBT_PATH_KEY")).setName("NBT_PATH_NODE"),
                     list(group(glue(), NBT_PATH_NODE)).setOptional().setName("OTHER_NODES")).setName("RAW_NBT_PATH"));
+            NBT_PATH.add(INTERPOLATION_BLOCK);
         }
         //endregion
         //region Selector

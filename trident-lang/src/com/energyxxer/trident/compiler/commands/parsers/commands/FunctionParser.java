@@ -4,11 +4,9 @@ import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @ParserMember(key = "function")
@@ -25,8 +23,7 @@ public class FunctionParser implements CommandParser {
                 return new FunctionCommand(inner.getFunction());
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + choice.getName() + "'", choice));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown grammar branch name '" + choice.getName() + "'", choice, file);
             }
         }
     }

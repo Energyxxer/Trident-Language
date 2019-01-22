@@ -3,11 +3,9 @@ package com.energyxxer.trident.compiler;
 import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentTokens;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.Objects;
@@ -78,8 +76,7 @@ public class TridentUtil {
 
         public void assertStandalone(TokenPattern<?> pattern, TridentFile file) {
             if(this.isTag) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected standalone resource location, instead got tag", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Expected standalone resource location, instead got tag", pattern, file);
             }
         }
     }

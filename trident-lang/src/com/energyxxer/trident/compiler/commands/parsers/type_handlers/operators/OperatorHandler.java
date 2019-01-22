@@ -1,12 +1,10 @@
 package com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.HashMap;
@@ -33,13 +31,11 @@ public interface OperatorHandler<A, B> {
             if(handler == null) handler = handlers.get("* " + operator.getSymbol() + " *");
 
             if(handler == null) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "The operator " + operator.getSymbol() + " is not defined for types " + idA.replace("*", "null") + " and " + idB.replace("*", "null"), pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "The operator " + operator.getSymbol() + " is not defined for types " + idA.replace("*", "null") + " and " + idB.replace("*", "null"), pattern, file);
             }
             Object result = handler.perform(a, b, pattern, file);
             if(result == null) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "The operator " + operator.getSymbol() + " is not defined for types " + (a != null ? a.getClass().getSimpleName() : "null") + " and " + (b != null ? b.getClass().getSimpleName() : "null"), pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "The operator " + operator.getSymbol() + " is not defined for types " + (a != null ? a.getClass().getSimpleName() : "null") + " and " + (b != null ? b.getClass().getSimpleName() : "null"), pattern, file);
             }
             return result;
         }

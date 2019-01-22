@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.semantics;
 
+import com.energyxxer.util.logger.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
@@ -11,15 +12,23 @@ public class SymbolStack {
 
     private SymbolTable global;
 
+    private Stack<StackTraceElement> debugStack = new Stack<>();
+
     public SymbolStack() {
         global = new SymbolTable(null);
     }
 
     public SymbolTable push(@NotNull SymbolTable item) {
+        debugStack.push(Thread.currentThread().getStackTrace()[2]);
         return stack.push(item);
     }
-
     public SymbolTable pop() {
+        if(!debugStack.peek().getMethodName().equals(Thread.currentThread().getStackTrace()[2].getMethodName())) {
+            StackTraceElement owner = debugStack.peek();
+            StackTraceElement intruder = Thread.currentThread().getStackTrace()[2];
+            Debug.log("Illegal call stack pop");
+        }
+        debugStack.pop();
         return stack.pop();
     }
 

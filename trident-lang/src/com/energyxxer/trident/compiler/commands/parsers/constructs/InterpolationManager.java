@@ -5,9 +5,6 @@ import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.*;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.constructors.ObjectConstructors;
@@ -16,6 +13,7 @@ import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.Operator;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.operators.OperatorHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +34,7 @@ public class InterpolationManager {
         if(expected.isInstance(obj)) {
             return (T) obj;
         } else {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + expected.getSimpleName(), pattern));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + expected.getSimpleName(), pattern, file);
         }
     }
 
@@ -46,8 +43,7 @@ public class InterpolationManager {
         for(Class cls : expected) {
             if(cls.isInstance(obj)) return obj;
         }
-        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + Arrays.asList(expected).stream().map(Class::getSimpleName).collect(Collectors.joining(", ")), pattern));
-        throw new EntryParsingException();
+        throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + Arrays.asList(expected).stream().map(Class::getSimpleName).collect(Collectors.joining(", ")), pattern, file);
     }
 
     @SuppressWarnings("unchecked")
@@ -81,8 +77,7 @@ public class InterpolationManager {
             case "VARIABLE_NAME": {
                 Symbol symbol = file.getCompiler().getSymbolStack().search(pattern.flatten(false));
                 if(symbol == null) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' is not defined", pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' is not defined", pattern, file);
                 }
                 return keepSymbol ? symbol : sanitizeObject(symbol.getValue());
             }
@@ -194,8 +189,7 @@ public class InterpolationManager {
                 try {
                     return sanitizeObject(handler.getMember(parent, memberName, pattern, file, keepSymbol));
                 } catch(MemberNotFoundException x) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member '" + memberName + "' of " + (parent != null ? parent.getClass().getSimpleName() : "null"), pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member '" + memberName + "' of " + parent.getClass().getSimpleName(), pattern, file);
                 }
             }
             case "INDEXED_MEMBER": {
@@ -206,8 +200,7 @@ public class InterpolationManager {
                 try {
                     return sanitizeObject(handler.getIndexer(parent, index, pattern, file, keepSymbol));
                 } catch(MemberNotFoundException x) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot resolve member for index " + index + " of " + (parent != null ? parent.getClass().getSimpleName() : "null"), pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member for index " + index + " of " + parent.getClass().getSimpleName(), pattern, file);
                 }
             }
             case "METHOD_CALL": {
@@ -231,16 +224,14 @@ public class InterpolationManager {
 
                     return sanitizeObject(((VariableMethod) parent).call(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), pattern, file));
                 } else {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "This is not a method", pattern.find("INTERPOLATION_VALUE")));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "This is not a method", pattern.find("INTERPOLATION_VALUE"), file);
                 }
             }
             case "CONSTRUCTOR_CALL": {
                 String constructorName = pattern.find("CONSTRUCTOR_NAME").flatten(false);
                 VariableMethod constructor = ObjectConstructors.getConstructor(constructorName);
                 if(constructor == null) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "There is no constructor with the name '" + constructorName + "'", pattern.find("CONSTRUCTOR_NAME")));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "There is no constructor with the name '" + constructorName + "'", pattern.find("CONSTRUCTOR_NAME"), file);
                 }
                 ArrayList<Object> params = new ArrayList<>();
                 ArrayList<TokenPattern<?>> patterns = new ArrayList<>();
@@ -294,8 +285,7 @@ public class InterpolationManager {
                                 if(symbol instanceof Symbol) {
                                     flatValues.add(symbol);
                                 } else {
-                                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected symbol in the left hand side of the expression", pattern));
-                                    throw new EntryParsingException();
+                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected symbol in the left hand side of the expression", pattern, file);
                                 }
                             }
                             flatOperators.add(operator);
@@ -337,8 +327,7 @@ public class InterpolationManager {
                 //endregion
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
             }
         }
     }
@@ -352,8 +341,7 @@ public class InterpolationManager {
         try {
             return (T) handler.cast(obj, newType, pattern, file);
         } catch(ClassCastException x) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unable to cast " + obj.getClass().getSimpleName() + " to type " + newType.getName(), pattern));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Unable to cast " + obj.getClass().getSimpleName() + " to type " + newType.getName(), pattern, file);
         }
     }
 
@@ -363,8 +351,7 @@ public class InterpolationManager {
         if(value == null) return new NullType();
         VariableTypeHandler handler = ParserManager.getParser(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(value.getClass()));
         if(handler == null) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Couldn't find handler for type " + value.getClass().getName(), pattern));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Couldn't find handler for type " + value.getClass().getName(), pattern, file);
         }
         return handler;
     }

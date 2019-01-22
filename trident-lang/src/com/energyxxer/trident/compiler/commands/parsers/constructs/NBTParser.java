@@ -16,7 +16,7 @@ import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
 import com.energyxxer.nbtmapper.tags.FlatType;
 import com.energyxxer.nbtmapper.tags.TypeFlags;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.ArrayList;
@@ -29,8 +29,7 @@ public class NBTParser {
         if(pattern == null) return null;
         NBTTag value = parseValue(pattern, file);
         if(value instanceof TagCompound) return ((TagCompound) value);
-        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type TagCompound", pattern));
-        throw new EntryParsingException();
+        throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type TagCompound", pattern, file);
     }
 
     public static NBTTag parseValue(TokenPattern<?> pattern, TridentFile file) {
@@ -84,8 +83,7 @@ public class NBTParser {
                             if(value instanceof TagByte) {
                                 arr.add(value);
                             } else {
-                                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected TAG_Byte in TAG_Byte_Array, instead got " + value.getType(), inner));
-                                throw new EntryParsingException();
+                                throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Byte in TAG_Byte_Array, instead got " + value.getType(), inner, file);
                             }
                         }
                     }
@@ -102,8 +100,7 @@ public class NBTParser {
                             if(value instanceof TagInt) {
                                 arr.add(value);
                             } else {
-                                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected TAG_Int in TAG_Int_Array, instead got " + value.getType(), inner));
-                                throw new EntryParsingException();
+                                throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Int in TAG_Int_Array, instead got " + value.getType(), inner, file);
                             }
                         }
                     }
@@ -120,8 +117,7 @@ public class NBTParser {
                             if(value instanceof TagLong) {
                                 arr.add(value);
                             } else {
-                                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected TAG_Long in TAG_Long_Array, instead got " + value.getType(), inner));
-                                throw new EntryParsingException();
+                                throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Long in TAG_Long_Array, instead got " + value.getType(), inner, file);
                             }
                         }
                     }
@@ -167,8 +163,7 @@ public class NBTParser {
                 }
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
             }
         }
     }
@@ -220,15 +215,13 @@ public class NBTParser {
             case "NBT_PATH_LIST_UNKNOWN": {
                 Object val = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file, Integer.class, TagCompound.class);
                 if(val == null) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unexpected null at path", pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null at path", pattern, file);
                 } else if(val instanceof Integer) {
                     return new NBTPathIndex((int) val);
                 } else if(val instanceof TagCompound){
                     return new NBTListMatch((TagCompound) val);
                 } else {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown symbol return type: " + val.getClass().getSimpleName(), pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown symbol return type: " + val.getClass().getSimpleName(), pattern, file);
                 }
             }
             case "NBT_PATH_COMPOUND_MATCH": {

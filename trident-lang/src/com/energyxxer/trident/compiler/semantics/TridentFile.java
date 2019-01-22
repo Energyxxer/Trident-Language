@@ -15,7 +15,6 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.commands.CommandParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
@@ -111,8 +110,7 @@ public class TridentFile {
 
     public static void resolveInnerFileIntoSection(TokenPattern<?> pattern, TridentFile parent, FunctionSection function) {
         if(pattern.find("FILE_INNER..DIRECTIVES") != null) {
-            parent.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Directives aren't allowed in this context", pattern.find("FILE_INNER..DIRECTIVES")));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Directives aren't allowed in this context", pattern.find("FILE_INNER..DIRECTIVES"), parent);
         }
 
         resolveEntries((TokenList) pattern.find("FILE_INNER.ENTRIES"), parent, function, false);
@@ -291,8 +289,6 @@ public class TridentFile {
 
                         try {
                             resolveEntry(inner, parent, appendTo, compileOnly);
-                        } catch(EntryParsingException x) {
-                            //Silently ignore; serves as a multi-scope break;
                         } catch(TridentException x) {
                             if(compiler.getTryStack().isEmpty()) {
                                 x.getNotice().setExtendedMessage("Uncaught " + x.getSource().getHumanReadableName() + ": " + x.getNotice().getExtendedMessage());

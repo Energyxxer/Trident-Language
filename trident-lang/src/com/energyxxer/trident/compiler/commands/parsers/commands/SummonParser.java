@@ -10,11 +10,11 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.nbtmapper.tags.PathProtocol;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 
@@ -46,8 +46,7 @@ public class SummonParser implements CommandParser {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Error while merging given NBT with custom entity's NBT: " + x.getMessage(), pattern));
             }
         } else {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), id));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), id, file);
         }
 
         if(pos == null && nbt != null) pos = new CoordinateSet();

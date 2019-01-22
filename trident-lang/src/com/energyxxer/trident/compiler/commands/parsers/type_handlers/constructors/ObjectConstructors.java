@@ -11,9 +11,9 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.*;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.HashMap;
@@ -96,16 +96,14 @@ public class ObjectConstructors {
                     try {
                         list.add(content);
                     } catch(IllegalArgumentException x) {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Error while converting list object to nbt list: " + x.getMessage(), pattern));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Error while converting list object to nbt list: " + x.getMessage(), pattern, file);
                     }
                 }
             }
 
             return list;
         } else if(!skipIncompatibleTypes) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot convert object of type '" + VariableTypeHandler.Static.getIdentifierForClass(params[0].getClass()) + "' to an nbt tag", pattern));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot convert object of type '" + VariableTypeHandler.Static.getIdentifierForClass(params[0].getClass()) + "' to an nbt tag", pattern, file);
         } else return null;
     }
 
@@ -130,8 +128,7 @@ public class ObjectConstructors {
                     if (textObj instanceof String) {
                         tc = new StringTextComponent(((String) textObj));
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected string in text component property 'text'", patterns[0]));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected string in text component property 'text'", patterns[0], file);
                     }
                 }
             }
@@ -141,8 +138,7 @@ public class ObjectConstructors {
                     if (textObj instanceof String) {
                         tc = new TranslateTextComponent(((String) textObj));
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected string in text component property 'translate'", patterns[0]));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected string in text component property 'translate'", patterns[0], file);
                     }
                 }
             }
@@ -152,8 +148,7 @@ public class ObjectConstructors {
                     if (textObj instanceof String) {
                         tc = new KeybindTextComponent(((String) textObj));
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected string in text component property 'keybind'", patterns[0]));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected string in text component property 'keybind'", patterns[0], file);
                     }
                 }
             }
@@ -163,15 +158,13 @@ public class ObjectConstructors {
                     if (textObj instanceof String) {
                         tc = new SelectorTextComponent(new PlayerName((String) textObj));
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected string in text component property 'selector'", patterns[0]));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected string in text component property 'selector'", patterns[0], file);
                     }
                 }
             }
 
             if (tc == null) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Don't know how to turn this into a text component: " + dict.toString(), patterns[0]));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know how to turn this into a text component: " + dict.toString(), patterns[0], file);
             }
             //endregion
 
@@ -188,8 +181,7 @@ public class ObjectConstructors {
                             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Illegal text color '" + colorObj + "'", patterns[0]));
                         }
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected string in text component property 'color'", patterns[0]));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected string in text component property 'color'", patterns[0], file);
                     }
                 }
             }
@@ -204,8 +196,7 @@ public class ObjectConstructors {
                             style.setFlags((byte) (style.getFlags() & ~TextStyle.BOLD));
                         }
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected boolean in text component property 'bold'", patterns[0]));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected boolean in text component property 'bold'", patterns[0], file);
                     }
                 }
             }
@@ -220,8 +211,7 @@ public class ObjectConstructors {
                             style.setFlags((byte) (style.getFlags() & ~TextStyle.ITALIC));
                         }
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected boolean in text component property 'italic'", patterns[0]));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected boolean in text component property 'italic'", patterns[0], file);
                     }
                 }
             }
@@ -236,8 +226,7 @@ public class ObjectConstructors {
                             style.setFlags((byte) (style.getFlags() & ~TextStyle.STRIKETHROUGH));
                         }
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected boolean in text component property 'strikethrough'", patterns[0]));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected boolean in text component property 'strikethrough'", patterns[0], file);
                     }
                 }
             }
@@ -252,8 +241,7 @@ public class ObjectConstructors {
                             style.setFlags((byte) (style.getFlags() & ~TextStyle.OBFUSCATED));
                         }
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected boolean in text component property 'obfuscated'", patterns[0]));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected boolean in text component property 'obfuscated'", patterns[0], file);
                     }
                 }
             }
@@ -272,22 +260,18 @@ public class ObjectConstructors {
                             try {
                                 action = HoverEvent.Action.valueOf(((String) actionObj).toUpperCase());
                             } catch (IllegalArgumentException x) {
-                                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Illegal hoverEvent action '" + actionObj + "'", patterns[0]));
-                                throw new EntryParsingException();
+                                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Illegal hoverEvent action '" + actionObj + "'", patterns[0], file);
                             }
                         } else if (actionObj == null) {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Missing hoverEvent action", patterns[0]));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Missing hoverEvent action", patterns[0], file);
                         } else {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected string in hoverEvent action", patterns[0]));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected string in hoverEvent action", patterns[0], file);
                         }
 
                         TextComponent value = constructTextComponent(new Object[] {((DictionaryObject) evtObj).get("value")}, patterns, pattern, file);
                         tc.addEvent(new HoverEvent(action, value));
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected string in text component property 'color'", patterns[0]));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected string in text component property 'color'", patterns[0], file);
                     }
                 }
             }
@@ -302,15 +286,12 @@ public class ObjectConstructors {
                             try {
                                 action = ClickEvent.Action.valueOf(((String) actionObj).toUpperCase());
                             } catch (IllegalArgumentException x) {
-                                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Illegal clickEvent action '" + actionObj + "'", patterns[0]));
-                                throw new EntryParsingException();
+                                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Illegal clickEvent action '" + actionObj + "'", patterns[0], file);
                             }
                         } else if (actionObj == null) {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Missing clickEvent action", patterns[0]));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Missing clickEvent action", patterns[0], file);
                         } else {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected string in clickEvent action", patterns[0]));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected string in clickEvent action", patterns[0], file);
                         }
 
                         Object valueObj = ((DictionaryObject) evtObj).get("value");
@@ -318,15 +299,12 @@ public class ObjectConstructors {
                         if(valueObj instanceof String) {
                             tc.addEvent(new ClickEvent(action, ((String) valueObj)));
                         } else if(valueObj == null) {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Missing clickEvent value", patterns[0]));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Missing clickEvent value", patterns[0], file);
                         } else {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected string in clickEvent value", patterns[0]));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Expected string in clickEvent value", patterns[0], file);
                         }
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected string in text component property 'color'", patterns[0]));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected string in text component property 'color'", patterns[0], file);
                     }
                 }
             }
@@ -346,8 +324,7 @@ public class ObjectConstructors {
         } else if(params[0] instanceof TextComponent) {
             return ((TextComponent) params[0]);
         } else {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot turn a value of type " + VariableTypeHandler.Static.getIdentifierForClass(params[0].getClass()) + " into a text component", patterns[0]));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot turn a value of type " + VariableTypeHandler.Static.getIdentifierForClass(params[0].getClass()) + " into a text component", patterns[0], file);
         }
     }
 }

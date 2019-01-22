@@ -3,12 +3,10 @@ package com.energyxxer.trident.compiler.commands.parsers.instructions;
 import Trident.extensions.java.lang.Object.EObject;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @ParserMember(key = "if")
@@ -19,8 +17,7 @@ public class IfInstruction implements Instruction {
         EObject.assertNotNull(condition, pattern, file);
 
         if(condition.getClass() != Boolean.class) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Required boolean in 'if' condition", pattern.find("CONDITION")));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Required boolean in 'if' condition", pattern.find("CONDITION"), file);
         }
 
         if((boolean)condition) {

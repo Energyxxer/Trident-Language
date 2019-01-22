@@ -10,9 +10,9 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.selectors.SelectorArgumentParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.util.logger.Debug;
 
@@ -69,8 +69,7 @@ public class EntityParser {
                 EObject.assertNotNull(symbol, inner.find("INTERPOLATION_BLOCK"), file);
                 if(inner.find("APPENDED_ARGUMENTS") != null) {
                     if(!(symbol instanceof Selector)) {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "The entity contained in this variable does not support selector arguments", inner));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The entity contained in this variable does not support selector arguments", inner, file);
                     }
 
                     Selector copy = ((Selector) symbol).clone();

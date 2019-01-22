@@ -4,14 +4,12 @@ import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.Map;
@@ -25,8 +23,7 @@ public class BlockTypeHandler implements VariableTypeHandler<Block> {
                 if(file.getCompiler().getModule().namespaceExists(value.namespace) && file.getCompiler().getModule().getNamespace(value.namespace).types.block.exists(value.body)) {
                     object.setBlockType(file.getCompiler().getModule().getNamespace(value.namespace).types.block.get(value.body));
                 } else {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, value + " is not a valid block type", pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, value + " is not a valid block type", pattern, file);
                 }
             });
             return keepSymbol ? property : property.getValue();

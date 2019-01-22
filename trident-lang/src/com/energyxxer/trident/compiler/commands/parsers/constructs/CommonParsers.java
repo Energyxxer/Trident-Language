@@ -38,7 +38,6 @@ import com.energyxxer.nbtmapper.tags.DataType;
 import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
 import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
@@ -103,11 +102,10 @@ public class CommonParsers {
 
         if(type == null) {
             if(isTag) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such " + category + " tag exists: #" + typeLoc, id));
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such " + category + " tag exists: #" + typeLoc, id, file);
             } else {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such " + category + " type exists: " + typeLoc, id));
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such " + category + " type exists: " + typeLoc, id, file);
             }
-            throw new EntryParsingException();
         }
 
         return type;
@@ -145,8 +143,7 @@ public class CommonParsers {
                 break;
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
         Namespace ns = file.getCompiler().getModule().getNamespace(typeLoc.namespace);
@@ -161,11 +158,10 @@ public class CommonParsers {
 
         if(type == null) {
             if(typeLoc.isTag) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such function tag exists: #" + typeLoc, inner));
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such function tag exists: #" + typeLoc, inner, file);
             } else {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such function exists: " + typeLoc, inner));
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such function exists: " + typeLoc, inner, file);
             }
-            throw new EntryParsingException();
         }
         return type;
     }
@@ -174,8 +170,7 @@ public class CommonParsers {
         TridentUtil.ResourceLocation tagLoc = new TridentUtil.ResourceLocation(id.flattenTokens().get(0).value);
         ItemTag returned = file.getCompiler().getModule().getNamespace(tagLoc.namespace).tags.itemTags.get(tagLoc.body);
         if(returned == null) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such item tag exists: #" + tagLoc, id));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such item tag exists: #" + tagLoc, id, file);
         }
         return returned;
     }
@@ -184,8 +179,7 @@ public class CommonParsers {
         TridentUtil.ResourceLocation tagLoc = new TridentUtil.ResourceLocation(id.flattenTokens().get(0).value);
         BlockTag returned = file.getCompiler().getModule().getNamespace(tagLoc.namespace).tags.blockTags.get(tagLoc.body);
         if(returned == null) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "No such block tag exists: #" + tagLoc, id));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such block tag exists: #" + tagLoc, id, file);
         }
         return returned;
     }
@@ -198,15 +192,13 @@ public class CommonParsers {
             Object reference = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file, Item.class, CustomItem.class);
             Item item;
             if(reference == null) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unexpected null value for item", pattern.find("INTERPOLATION_BLOCK")));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null value for item", pattern.find("INTERPOLATION_BLOCK"), file);
             } else if(reference instanceof Item) {
                 item = (Item) reference;
             } else if(reference instanceof CustomItem) {
                 item = ((CustomItem) reference).constructItem(mode);
             } else {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown item reference return type: " + reference.getClass().getSimpleName(), pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Unknown item reference return type: " + reference.getClass().getSimpleName(), pattern, file);
             }
 
             TokenPattern<?> appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
@@ -431,8 +423,7 @@ public class CommonParsers {
             case "TEXT_COMPONENT":
                 return TextParser.parseTextComponent(pattern, file);
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown value grammar name: '" + pattern.getName() + "'", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown value grammar name: '" + pattern.getName() + "'", pattern, file);
             }
         }
     }
@@ -447,8 +438,7 @@ public class CommonParsers {
                 return result;
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
     }
@@ -463,8 +453,7 @@ public class CommonParsers {
                 return result;
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
     }
@@ -489,8 +478,7 @@ public class CommonParsers {
 
         if(response.isEmpty()) {
             if(strict) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Don't know the correct NBT data type for the path '" + path + "'", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know the correct NBT data type for the path '" + path + "'", pattern, file);
             } else return null;
         } else {
             if(response.getPossibleTypes().size() > 1 && strict) {
@@ -502,12 +490,10 @@ public class CommonParsers {
                     NBTTag sample = dataType.getCorrespondingTagType().newInstance();
                     return ((NumericNBTTag) sample).getNumericType();
                 } catch (InstantiationException | IllegalAccessException x) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Exception while instantiating default " + dataType.getCorrespondingTagType().getSimpleName() + ": " + x, pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Exception while instantiating default " + dataType.getCorrespondingTagType().getSimpleName() + ": " + x, pattern, file);
                 }
             } else if (strict) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected numeric NBT data type, instead got " + dataType.getShortTypeName(), pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected numeric NBT data type, instead got " + dataType.getShortTypeName(), pattern, file);
             }
             return null;
         }
@@ -532,8 +518,7 @@ public class CommonParsers {
                 break;
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
 
@@ -550,8 +535,7 @@ public class CommonParsers {
                 return result;
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
             }
         }
     }

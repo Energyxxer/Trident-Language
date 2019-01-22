@@ -19,11 +19,10 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.TridentCompiler;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.*;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.commands.parsers.modifiers.StoreParser;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.util.Lazy;
 
@@ -37,7 +36,7 @@ public class SetParser implements CommandParser {
         PointerDecorator target = parsePointer(pattern.find("POINTER"), file);
         PointerDecorator source = parsePointer(pattern.find("VALUE"), file);
 
-        return target.setFrom(source, pattern, file.getCompiler());
+        return target.setFrom(source, pattern, file);
 
         //* SCORE = SCORE > scoreboard players operation ...
         //* SCORE = NBT > execute store result score ... data get ...
@@ -65,35 +64,30 @@ public class SetParser implements CommandParser {
             case "VARIABLE_POINTER":
                 Object symbol = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file, Entity.class, CoordinateSet.class);
                 if(symbol == null) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unexpected null value at pointer", pattern.find("INTERPOLATION_BLOCK")));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unexpected null value at pointer", pattern.find("INTERPOLATION_BLOCK"), file);
                 }
                 head = parsePointerHead(symbol, pattern.find("POINTER_HEAD"), file);
                 if(symbol instanceof Entity) {
                     return new PointerDecorator.EntityPointer((Entity) symbol, head);
                 } else if(symbol instanceof CoordinateSet) {
                     if(!head.isNBT()) {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "This pointer subject only accepts NBT pointer heads", pattern));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.COMMAND_ERROR, "This pointer subject only accepts NBT pointer heads", pattern, file);
                     }
                     return new PointerDecorator.BlockPointer((CoordinateSet) symbol, head);
                 } else {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown CommonParsers#retrieveSymbol return type: " + symbol.getClass(), pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown CommonParsers#retrieveSymbol return type: " + symbol.getClass(), pattern, file);
                 }
             case "NBT_VALUE":
                 return new PointerDecorator.ValuePointer(NBTParser.parseValue(pattern, file));
             case "INTERPOLATION_BLOCK":
                 Object value = InterpolationManager.parse(pattern, file, NBTTag.class, Integer.class);
                 if(value == null) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unexpected null value at pointer", pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unexpected null value at pointer", pattern, file);
                 }
                 if(value instanceof Integer) value = new TagInt((int) value);
                 return new PointerDecorator.ValuePointer((NBTTag) value);
             default:
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
         }
     }
 
@@ -116,14 +110,13 @@ public class SetParser implements CommandParser {
 
                 return new PointerHead.NBTPointerHead(path, scale, new Lazy<>(() -> StoreParser.parseNumericType(pattern.find("TYPE_CAST.NUMERIC_DATA_TYPE"), body, path, file, pattern, true)));
             default:
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
         }
     }
 
     interface PointerDecorator {
 
-        Command setFrom(PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler);
+        Command setFrom(PointerDecorator source, TokenPattern<?> pattern, TridentFile file);
 
         class EntityPointer implements PointerDecorator {
             Entity target;
@@ -135,8 +128,8 @@ public class SetParser implements CommandParser {
             }
 
             @Override
-            public Command setFrom(PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
-                return head.setToEntityFrom(target, source, pattern, compiler);
+            public Command setFrom(PointerDecorator source, TokenPattern<?> pattern, TridentFile file) {
+                return head.setToEntityFrom(target, source, pattern, file);
             }
 
             @Override
@@ -155,8 +148,8 @@ public class SetParser implements CommandParser {
             }
 
             @Override
-            public Command setFrom(PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
-                return head.setToBlockFrom(pos, source, pattern, compiler);
+            public Command setFrom(PointerDecorator source, TokenPattern<?> pattern, TridentFile file) {
+                return head.setToBlockFrom(pos, source, pattern, file);
             }
 
             @Override
@@ -173,7 +166,7 @@ public class SetParser implements CommandParser {
             }
 
             @Override
-            public Command setFrom(PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
+            public Command setFrom(PointerDecorator source, TokenPattern<?> pattern, TridentFile file) {
                 return null;
             }
 
@@ -185,25 +178,23 @@ public class SetParser implements CommandParser {
     }
 
     interface PointerHead {
-        default void assertNBT(TokenPattern<?> pattern, TridentCompiler compiler) {
+        default void assertNBT(TokenPattern<?> pattern, TridentFile file) {
             if(!this.isNBT()) {
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "This pointer subject only accepts NBT pointer heads", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "This pointer subject only accepts NBT pointer heads", pattern, file);
             }
         }
-        default void assertScore(TokenPattern<?> pattern, TridentCompiler compiler) {
+        default void assertScore(TokenPattern<?> pattern, TridentFile file) {
             if(!this.isScore()) {
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "This pointer subject only accepts score pointer heads", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "This pointer subject only accepts score pointer heads", pattern, file);
             }
         }
 
         boolean isScore();
         boolean isNBT();
 
-        Command setToEntityFrom(Entity target, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler);
+        Command setToEntityFrom(Entity target, PointerDecorator source, TokenPattern<?> pattern, TridentFile file);
 
-        Command setToBlockFrom(CoordinateSet target, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler);
+        Command setToBlockFrom(CoordinateSet target, PointerDecorator source, TokenPattern<?> pattern, TridentFile file);
 
         class ScorePointerHead implements PointerHead {
             Objective objective;
@@ -215,7 +206,7 @@ public class SetParser implements CommandParser {
             }
 
             @Override
-            public Command setToEntityFrom(Entity target, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
+            public Command setToEntityFrom(Entity target, PointerDecorator source, TokenPattern<?> pattern, TridentFile file) {
                 // SCORE = SCORE
                 // SCORE = NBT
                 // SCORE = VALUE
@@ -227,7 +218,7 @@ public class SetParser implements CommandParser {
                         double scale = this.scale * ((ScorePointerHead) sourceHead).scale;
 
                         if(scale != 1) {
-                            compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Scales between score pointers are not yet implemented", pattern));
+                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Scales between score pointers are not yet implemented", pattern));
                         }
 
                         return new ScorePlayersOperation(
@@ -237,12 +228,11 @@ public class SetParser implements CommandParser {
                     } else if(sourceHead instanceof NBTPointerHead) {
                         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
                         if(((PointerDecorator.EntityPointer) source).target.getLimit() != 1) {
-                            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Expected a single entity, but this selector allows for more than one entity", pattern));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Expected a single entity, but this selector allows for more than one entity", pattern, file);
                         }
 
                         if(this.scale != 1) {
-                            compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Scales between score pointers and nbt pointers are not yet implemented", pattern));
+                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Scales between score pointers and nbt pointers are not yet implemented", pattern));
                         }
 
                         modifiers.add(new ExecuteStoreScore(new LocalScore(target, this.objective)));
@@ -254,7 +244,7 @@ public class SetParser implements CommandParser {
                     ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
 
                     if(this.scale != 1) {
-                        compiler.getReport().addNotice(new Notice(NoticeType.WARNING, "Scales between score pointers and nbt pointers are not yet implemented", pattern));
+                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Scales between score pointers and nbt pointers are not yet implemented", pattern));
                     }
 
                     modifiers.add(new ExecuteStoreScore(new LocalScore(target, this.objective)));
@@ -266,15 +256,14 @@ public class SetParser implements CommandParser {
                     if(value instanceof TagInt) {
                         return new ScoreSet(new LocalScore(target, this.objective), ((TagInt) value).getValue());
                     } else {
-                        compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot put non-integer values into scores", pattern));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.COMMAND_ERROR, "Cannot put non-integer values into scores", pattern, file);
                     }
                 }
                 return null;
             }
 
             @Override
-            public Command setToBlockFrom(CoordinateSet target, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
+            public Command setToBlockFrom(CoordinateSet target, PointerDecorator source, TokenPattern<?> pattern, TridentFile file) {
                 //mojang hasn't given us block scores yet and probably will never do so.
                 return null;
             }
@@ -309,7 +298,7 @@ public class SetParser implements CommandParser {
 
 
             @Override
-            public Command setToEntityFrom(Entity target, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
+            public Command setToEntityFrom(Entity target, PointerDecorator source, TokenPattern<?> pattern, TridentFile file) {
                 if(source instanceof PointerDecorator.EntityPointer) {
                     PointerHead sourceHead = ((PointerDecorator.EntityPointer) source).head;
                     if(sourceHead instanceof ScorePointerHead) {
@@ -318,8 +307,7 @@ public class SetParser implements CommandParser {
 
                         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
                         if(((PointerDecorator.EntityPointer) source).target.getLimit() != 1) {
-                            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Expected a single entity, but this selector allows for more than one entity", pattern));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Expected a single entity, but this selector allows for more than one entity", pattern, file);
                         }
 
                         modifiers.add(new ExecuteStoreEntity(target, this.path, this.type.getValue(), this.scale * ((ScorePointerHead) sourceHead).scale));
@@ -332,8 +320,7 @@ public class SetParser implements CommandParser {
 
                         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
                         if(((PointerDecorator.EntityPointer) source).target.getLimit() != 1) {
-                            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Expected a single entity, but this selector allows for more than one entity", pattern));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Expected a single entity, but this selector allows for more than one entity", pattern, file);
                         }
 
                         modifiers.add(new ExecuteStoreEntity(target, this.path, this.type.getValue(), this.scale));
@@ -356,8 +343,7 @@ public class SetParser implements CommandParser {
                         if(value instanceof NumericNBTTag) {
                             return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceValue(((NumericNBTTag) value).scale(scale)));
                         } else {
-                            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot scale a non-numerical value, found " + value.getType(), pattern));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Cannot scale a non-numerical value, found " + value.getType(), pattern, file);
                         }
                     }
 
@@ -367,7 +353,7 @@ public class SetParser implements CommandParser {
             }
 
             @Override
-            public Command setToBlockFrom(CoordinateSet target, PointerDecorator source, TokenPattern<?> pattern, TridentCompiler compiler) {
+            public Command setToBlockFrom(CoordinateSet target, PointerDecorator source, TokenPattern<?> pattern, TridentFile file) {
                 if(source instanceof PointerDecorator.EntityPointer) {
                     PointerHead sourceHead = ((PointerDecorator.EntityPointer) source).head;
                     if(sourceHead instanceof ScorePointerHead) {
@@ -376,8 +362,7 @@ public class SetParser implements CommandParser {
 
                         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
                         if(((PointerDecorator.EntityPointer) source).target.getLimit() != 1) {
-                            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Expected a single entity, but this selector allows for more than one entity", pattern));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Expected a single entity, but this selector allows for more than one entity", pattern, file);
                         }
 
                         modifiers.add(new ExecuteStoreBlock(target, this.path, this.type.getValue(), this.scale * ((ScorePointerHead) sourceHead).scale));
@@ -409,8 +394,7 @@ public class SetParser implements CommandParser {
                         if(value instanceof NumericNBTTag) {
                             return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceValue(((NumericNBTTag) value).scale(scale)));
                         } else {
-                            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot scale a non-numerical value, found " + value.getType(), pattern));
-                            throw new EntryParsingException();
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Cannot scale a non-numerical value, found " + value.getType(), pattern, file);
                         }
                     }
 

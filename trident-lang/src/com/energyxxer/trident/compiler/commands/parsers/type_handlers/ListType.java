@@ -1,10 +1,8 @@
 package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,8 +59,7 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
         if(member.equals("map")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
                 if(params.length < 1) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern, file);
                 }
                 FunctionMethod func = assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
 
@@ -86,8 +83,7 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
     public Object getIndexer(ListType object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         int realIndex = assertOfType(index, pattern, file, Integer.class);
         if(realIndex < 0 || realIndex >= object.content.size()) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Index out of bounds: " + index, pattern));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index, pattern, file);
         }
 
         Symbol elem = object.content.get(realIndex);

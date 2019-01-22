@@ -12,7 +12,7 @@ public class CompoundType implements VariableTypeHandler<TagCompound> {
     @Override
     public Object getMember(TagCompound object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
         if(member.equals("toDictionary")) {
-            return new MethodWrapper<TagCompound>("toDictionary", ((instance, params) -> NBTToDictionary.convert(instance, file))).createForInstance(object);
+            return new MethodWrapper<TagCompound>("toDictionary", ((instance, params) -> NBTToDictionary.convert(instance, pattern, file))).createForInstance(object);
         }
         try {
             if(member.equals("merge")) {

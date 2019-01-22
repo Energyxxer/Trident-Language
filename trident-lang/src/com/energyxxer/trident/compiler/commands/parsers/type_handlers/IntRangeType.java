@@ -2,10 +2,8 @@ package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
@@ -26,8 +24,7 @@ public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
         if(member.equals("deriveMin")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
                 if(params.length != 1) {
-                    file1.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'deriveMin' requires 1 parameter, instead found " + params.length, pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMin' requires 1 parameter, instead found " + params.length, pattern, file);
                 }
 
                 int newMin = assertOfType(params[0], patterns[0], file, Integer.class);
@@ -38,8 +35,7 @@ public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
         if(member.equals("deriveMax")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
                 if(params.length != 1) {
-                    file1.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'deriveMax' requires 1 parameter, instead found " + params.length, pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMax' requires 1 parameter, instead found " + params.length, pattern, file);
                 }
 
                 int newMax = assertOfType(params[0], patterns[0], file, Integer.class);

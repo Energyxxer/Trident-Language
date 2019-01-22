@@ -3,12 +3,10 @@ package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @ParserMember(key = "com.energyxxer.commodore.item.Item")
@@ -20,8 +18,7 @@ public class ItemTypeHandler implements VariableTypeHandler<Item> {
                 if(file.getCompiler().getModule().namespaceExists(value.namespace) && file.getCompiler().getModule().getNamespace(value.namespace).types.item.exists(value.body)) {
                     object.setItemType(file.getCompiler().getModule().getNamespace(value.namespace).types.item.get(value.body));
                 } else {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, value + " is not a valid item type", pattern));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, value + " is not a valid item type", pattern, file);
                 }
             });
             return keepSymbol ? property : property.getValue();

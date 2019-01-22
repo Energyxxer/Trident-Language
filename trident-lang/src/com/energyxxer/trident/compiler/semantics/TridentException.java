@@ -13,11 +13,12 @@ import java.util.Iterator;
 public class TridentException extends RuntimeException implements VariableTypeHandler<TridentException> {
 
     public enum Source {
-        PARSING_ERROR("Parsing Error"),
+        TYPE_ERROR("Type Error"),
         COMMAND_ERROR("Command Error"),
         INTERNAL_EXCEPTION("Internal Exception"),
         USER_EXCEPTION("User Exception"),
-        IMPOSSIBLE("Impossible Exception");
+        IMPOSSIBLE("Impossible Exception"),
+        STRUCTURAL_ERROR("Structural Error");
 
         private final String humanReadableName;
 

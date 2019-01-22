@@ -2,9 +2,6 @@ package com.energyxxer.trident.compiler.commands.parsers.instructions;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -19,6 +16,7 @@ public class ForInstruction implements Instruction {
     @Override
     public void run(TokenPattern<?> pattern, TridentFile file) {
         ForHeader header = parseHeader(pattern.find("FOR_HEADER"), file);
+        if(header == null) return;
         TokenPattern<?> body = pattern.find("ANONYMOUS_INNER_FUNCTION");
 
         SymbolTable forFrame = new SymbolTable(file);
@@ -73,8 +71,7 @@ public class ForInstruction implements Instruction {
                     public boolean condition() {
                         Object returnValue = InterpolationManager.parse(condition, file);
                         if(returnValue != null && returnValue.getClass() == Boolean.class) return (boolean)returnValue;
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Required boolean in 'for' condition", condition));
-                        throw new EntryParsingException();
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Required boolean in 'for' condition", condition, file);
                     }
 
                     @Override
@@ -88,7 +85,7 @@ public class ForInstruction implements Instruction {
                 Object iterable = InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), file);
                 if(iterable instanceof Iterable) {
                     Iterator it = ((Iterable) iterable).iterator();
-                    if(!it.hasNext()) throw new EntryParsingException();
+                    if(!it.hasNext()) return null;
                     return new ForHeader() {
                         @Override
                         public void initialize() {
@@ -109,13 +106,11 @@ public class ForInstruction implements Instruction {
                         }
                     };
                 } else {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Required iterable in 'for' iterator", pattern.find("INTERPOLATION_VALUE")));
-                    throw new EntryParsingException();
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Required iterable in 'for' iterator", pattern.find("INTERPOLATION_VALUE"), file);
                 }
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
             }
         }
     }

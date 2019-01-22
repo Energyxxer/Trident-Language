@@ -6,13 +6,11 @@ import com.energyxxer.commodore.functionlogic.commands.replaceitem.ReplaceItemEn
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
@@ -25,8 +23,7 @@ public class ReplaceItemParser implements CommandParser {
         int count = 1;
 
         if(!item.getItemType().isStandalone()) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Item tags aren't allowed in this context", pattern.find("ITEM")));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Item tags aren't allowed in this context", pattern.find("ITEM"), file);
         }
 
         if(pattern.find("COUNT") != null) {

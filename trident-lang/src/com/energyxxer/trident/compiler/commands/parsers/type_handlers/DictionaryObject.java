@@ -1,10 +1,8 @@
 package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.util.logger.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +28,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
                     case "map":
                         return (VariableMethod) (params, patterns, pattern1, file1) -> {
                             if (params.length < 1) {
-                                file1.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1));
-                                throw new EntryParsingException();
+                                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1, file);
                             }
                             FunctionMethod func = assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
 

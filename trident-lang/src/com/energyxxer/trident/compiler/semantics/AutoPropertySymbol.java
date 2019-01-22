@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.semantics;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AutoPropertySymbol<T> extends Symbol {
@@ -11,11 +12,12 @@ public class AutoPropertySymbol<T> extends Symbol {
         void set(T value);
     }
 
+    @NotNull
     private final Class<T> cls;
     private final Getter<T> getter;
     private final Setter<T> setter;
 
-    public AutoPropertySymbol(String name, Class<T> cls, Getter<T> getter, Setter<T> setter) {
+    public AutoPropertySymbol(String name, @NotNull Class<T> cls, Getter<T> getter, Setter<T> setter) {
         super(name);
         this.cls = cls;
         this.getter = getter;

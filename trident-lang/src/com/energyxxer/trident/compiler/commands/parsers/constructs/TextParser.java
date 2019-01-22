@@ -12,15 +12,13 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import static Trident.extensions.com.google.gson.JsonElement.EJsonElement.getAsBooleanOrNull;
-import static Trident.extensions.com.google.gson.JsonElement.EJsonElement.getAsJsonObjectOrNull;
-import static Trident.extensions.com.google.gson.JsonElement.EJsonElement.getAsStringOrNull;
+import static Trident.extensions.com.google.gson.JsonElement.EJsonElement.*;
 import static com.energyxxer.trident.compiler.util.Using.using;
 
 public class TextParser {
@@ -41,8 +39,7 @@ public class TextParser {
                 return parseTextComponent(JsonParser.parseJson(pattern, file), file, pattern, TextComponentContext.CHAT);
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown text component production: '" + pattern.getName() + "'", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown text component production: '" + pattern.getName() + "'", pattern, file);
             }
         }
     }
@@ -53,7 +50,7 @@ public class TextParser {
 
         boolean strict = file.getCompiler().getProperties().has("strict-text-components") && getAsBooleanOrNull(file.getCompiler().getProperties().get("strict-text-components"));
 
-        ReportDelegate delegate = new ReportDelegate(file.getCompiler(), strict, pattern);
+        ReportDelegate delegate = new ReportDelegate(file.getCompiler(), strict, pattern, file);
 
         if(elem.isJsonPrimitive() && ((JsonPrimitive)elem).isString()) {
             return new StringTextComponent(getAsStringOrNull(elem));
@@ -101,8 +98,7 @@ public class TextParser {
                         .otherwise(t -> delegate.report("Expected string in 'selector'", obj.get("selector")));
             }
             if(component == null) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Don't know how to turn this into a text component", pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know how to turn this into a text component", pattern, file);
             }
 
             TextStyle style = new TextStyle(0);
@@ -203,8 +199,7 @@ public class TextParser {
 
             return component;
         } else {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Don't know how to turn this into a text component", pattern));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know how to turn this into a text component", pattern, file);
         }
     }
 
@@ -220,11 +215,13 @@ class ReportDelegate {
     private TridentCompiler compiler;
     private boolean strict;
     private TokenPattern<?> pattern;
+    private TridentFile file;
 
-    public ReportDelegate(TridentCompiler compiler, boolean strict, TokenPattern<?> pattern) {
+    public ReportDelegate(TridentCompiler compiler, boolean strict, TokenPattern<?> pattern, TridentFile file) {
         this.compiler = compiler;
         this.strict = strict;
         this.pattern = pattern;
+        this.file = file;
     }
 
     public void report(String message) {
@@ -249,10 +246,10 @@ class ReportDelegate {
 
     public void report(String strict, String notStrict, TokenPattern<?> pattern) {
         if(pattern == null) pattern = this.pattern;
-        compiler.getReport().addNotice(new Notice(
-                this.strict ? NoticeType.ERROR : NoticeType.WARNING,
-                this.strict ? strict : notStrict,
-                pattern));
-        if(this.strict) throw new EntryParsingException();
+        if(this.strict) {
+            throw new TridentException(TridentException.Source.COMMAND_ERROR, strict, pattern, file);
+        } else {
+            compiler.getReport().addNotice(new Notice(NoticeType.WARNING, notStrict, pattern));
+        }
     }
 }

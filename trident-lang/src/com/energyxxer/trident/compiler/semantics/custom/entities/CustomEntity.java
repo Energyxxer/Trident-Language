@@ -16,7 +16,6 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.PathContext;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.selectors.TypeArgumentParser;
@@ -25,6 +24,7 @@ import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMe
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -124,8 +124,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         CustomEntity entityDecl = null;
         if(!entityName.equals("default")) {
             if(defaultType == null || !defaultType.isStandalone()) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Cannot create a non-default entity with this type", pattern.find("ENTITY_BASE")));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot create a non-default entity with this type", pattern.find("ENTITY_BASE"), file);
             }
             entityDecl = new CustomEntity(entityName, defaultType);
             SymbolTable table = global ? file.getCompiler().getSymbolStack().getGlobal() : file.getCompiler().getSymbolStack().peek();
@@ -173,8 +172,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                 } else if(reference instanceof CustomEntity) {
                                     passengerCompound = ((CustomEntity) reference).getDefaultNBT().merge(new TagCompound(new TagString("id", ((CustomEntity) reference).getDefaultType().toString())));
                                 } else {
-                                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID")));
-                                    throw new EntryParsingException();
+                                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID"), file);
                                 }
                                 TokenPattern<?> auxNBT = rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND");
                                 if(auxNBT != null) {

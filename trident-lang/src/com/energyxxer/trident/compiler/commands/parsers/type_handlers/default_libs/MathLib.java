@@ -1,15 +1,13 @@
 package com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_libs;
 
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.MethodWrapper;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolStack;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 
 import static com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
@@ -22,8 +20,7 @@ public class MathLib implements DefaultLibraryProvider {
         DictionaryObject math = new DictionaryObject();
         math.put("pow", (VariableMethod) (params, patterns, pattern, file) -> {
             if(params.length < 2) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'pow' requires 2 parameters, instead found " + params.length, pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'pow' requires 2 parameters, instead found " + params.length, pattern, file);
             }
 
             Number base = assertOfType(params[0], patterns[0], file, Double.class, Integer.class);
@@ -36,8 +33,7 @@ public class MathLib implements DefaultLibraryProvider {
         });
         math.put("min", (VariableMethod) (params, patterns, pattern, file) -> {
             if(params.length < 2) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'min' requires 2 parameters, instead found " + params.length, pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'min' requires 2 parameters, instead found " + params.length, pattern, file);
             }
 
             Number base = assertOfType(params[0], patterns[0], file, Double.class, Integer.class);
@@ -50,8 +46,7 @@ public class MathLib implements DefaultLibraryProvider {
         });
         math.put("max", (VariableMethod) (params, patterns, pattern, file) -> {
             if(params.length < 2) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'max' requires 2 parameters, instead found " + params.length, pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'max' requires 2 parameters, instead found " + params.length, pattern, file);
             }
 
             Number base = assertOfType(params[0], patterns[0], file, Double.class, Integer.class);
@@ -64,8 +59,7 @@ public class MathLib implements DefaultLibraryProvider {
         });
         math.put("abs", (VariableMethod) (params, patterns, pattern, file) -> {
             if(params.length < 1) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method 'max' requires 2 parameters, instead found " + params.length, pattern));
-                throw new EntryParsingException();
+                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'max' requires 2 parameters, instead found " + params.length, pattern, file);
             }
 
             Number num = assertOfType(params[0], patterns[0], file, Double.class, Integer.class);

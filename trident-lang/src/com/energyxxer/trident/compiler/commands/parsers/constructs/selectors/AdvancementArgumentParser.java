@@ -8,10 +8,9 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.advancement.Adv
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @ParserMember(key = "advancements")
@@ -38,8 +37,7 @@ public class AdvancementArgumentParser implements SimpleSelectorArgumentParser, 
                             break;
                         }
                         default: {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + rawValue.getName() + "'", rawValue));
-                            return null;
+                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + rawValue.getName() + "'", rawValue, file);
                         }
                     }
                 }
