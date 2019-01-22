@@ -39,6 +39,7 @@ import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
 import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
@@ -367,15 +368,21 @@ public class CommonParsers {
         }
     }
 
-    public static String parseStringLiteralOrIdentifierA(TokenPattern<?> pattern) {
-        String str = "";
-        if(pattern != null) {
-            str = pattern.flatten(false);
-            if(!pattern.deepSearchByName("STRING_LITERAL").isEmpty()) {
-                str = CommandUtils.parseQuotedString(str);
-            }
+    public static String parseStringLiteralOrIdentifierA(TokenPattern<?> pattern, TridentFile file) {
+        switch(pattern.getName()) {
+            case "STRING_LITERAL_OR_IDENTIFIER_A":
+            case "STRING_LITERAL_OR_IDENTIFIER_D":
+                return parseStringLiteralOrIdentifierA(((TokenStructure) pattern).getContents(), file);
+            case "STRING":
+            case "STRING_LITERAL":
+            case "INTERPOLATION_BLOCK":
+                return parseStringLiteral(pattern, file);
+            case "IDENTIFIER_A":
+            case "IDENTIFIER_D":
+                return pattern.flatten(false);
+            default:
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
         }
-        return str;
     }
 
     /**
@@ -531,6 +538,22 @@ public class CommonParsers {
         }
 
         return typeLoc;
+    }
+
+    public static String parseStringLiteral(TokenPattern<?> pattern, TridentFile file) {
+        switch(pattern.getName()) {
+            case "STRING": return parseStringLiteral(((TokenStructure) pattern).getContents(), file);
+            case "STRING_LITERAL": return CommandUtils.parseQuotedString(pattern.flatten(false));
+            case "INTERPOLATION_BLOCK": {
+                String result = InterpolationManager.parse(pattern, file, String.class);
+                EObject.assertNotNull(result, pattern, file);
+                return result;
+            }
+            default: {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
+                throw new EntryParsingException();
+            }
+        }
     }
 
     public interface TypeGroupPicker {

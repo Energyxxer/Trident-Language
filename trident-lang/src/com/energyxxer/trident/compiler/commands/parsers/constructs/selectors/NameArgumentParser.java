@@ -11,6 +11,6 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class NameArgumentParser implements SimpleSelectorArgumentParser {
     @Override
     public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentFile file) {
-        return new NameArgument(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find(".STRING_LITERAL_OR_IDENTIFIER_A")), pattern.find("NEGATED") != null);
+        return new NameArgument(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find(".STRING_LITERAL_OR_IDENTIFIER_A"), file), pattern.find("NEGATED") != null);
     }
 }

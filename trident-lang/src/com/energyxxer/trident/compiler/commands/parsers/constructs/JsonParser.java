@@ -1,6 +1,5 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
-import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -32,7 +31,7 @@ public class JsonParser {
                 if(entries != null) {
                     for (TokenPattern<?> entry : entries.getContents()) {
                         if (!entry.getName().equals("COMMA")) {
-                            String key = CommandUtils.parseQuotedString(entry.find("JSON_OBJECT_KEY").flattenTokens().get(0).value);
+                            String key = CommonParsers.parseStringLiteral(entry.find("JSON_OBJECT_KEY.STRING"), file);
                             JsonElement value = parseJson(entry.find("JSON_ELEMENT"), file);
                             object.add(key, value);
                         }
@@ -53,8 +52,8 @@ public class JsonParser {
                 }
                 patternCache.put(arr, pattern);
                 return arr;
-            case "STRING_LITERAL":
-                JsonPrimitive string = new JsonPrimitive(CommandUtils.parseQuotedString(pattern.flattenTokens().get(0).value));
+            case "STRING":
+                JsonPrimitive string = new JsonPrimitive(CommonParsers.parseStringLiteral(pattern, file));
                 patternCache.put(string, pattern);
                 return string;
             case "NUMBER":

@@ -1,7 +1,6 @@
 package com.energyxxer.trident.compiler.commands.parsers.constructs;
 
 import Trident.extensions.java.lang.Object.EObject;
-import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.*;
 import com.energyxxer.commodore.types.Type;
@@ -53,10 +52,7 @@ public class NBTParser {
                 if(entries != null) {
                     for (TokenPattern<?> inner : entries.getContents()) {
                         if (inner instanceof TokenGroup) {
-                            String key = inner.find("NBT_KEY").flattenTokens().get(0).value;
-                            if (key.startsWith("\"")) {
-                                key = CommandUtils.parseQuotedString(key);
-                            }
+                            String key = CommonParsers.parseStringLiteralOrIdentifierA(inner.find("NBT_KEY.STRING_LITERAL_OR_IDENTIFIER_A"), file);
                             NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
                             value.setName(key);
                             compound.add(value);
@@ -135,11 +131,8 @@ public class NBTParser {
             case "BOOLEAN": {
                 return new TagByte(pattern.flattenTokens().get(0).value.equals("true") ? 1 : 0);
             }
-            case "RAW_STRING": {
-                return new TagString(pattern.flattenTokens().get(0).value);
-            }
-            case "STRING_LITERAL": {
-                return new TagString(CommandUtils.parseQuotedString(pattern.flattenTokens().get(0).value));
+            case "STRING": {
+                return new TagString(CommonParsers.parseStringLiteral(pattern, file));
             }
             case "NBT_NUMBER": {
                 String flat = pattern.flattenTokens().get(0).value;
@@ -213,7 +206,7 @@ public class NBTParser {
                 return parsePathNode(((TokenStructure) pattern).getContents(), file);
             }
             case "NBT_PATH_KEY": {
-                return new NBTPathKey(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("NBT_PATH_KEY_LABEL")));
+                return new NBTPathKey(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("NBT_PATH_KEY_LABEL.STRING_LITERAL_OR_IDENTIFIER_D"), file));
             }
             case "NBT_PATH_LIST_ALL": {
                 return new NBTListMatch();

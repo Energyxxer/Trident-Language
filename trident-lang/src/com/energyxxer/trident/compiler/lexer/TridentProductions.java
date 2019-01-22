@@ -122,9 +122,6 @@ public class TridentProductions {
         ENTRY.add(group(list(MODIFIER).setOptional().setName("MODIFIERS"), literal("run").setOptional(), COMMAND).setName("COMMAND_WRAPPER"));
         ENTRY.add(INSTRUCTION);
 
-        STRING_LITERAL_OR_IDENTIFIER_A.add(string());
-        STRING_LITERAL_OR_IDENTIFIER_A.add(identifierA());
-
         {
             INTERPOLATION_BLOCK = choice(
                     group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
@@ -203,6 +200,9 @@ public class TridentProductions {
             DICTIONARY.add(group(brace("{"), list(group(choice(identifierX(), ofType(STRING_LITERAL)).setName("DICTIONARY_KEY"), colon(), INTERPOLATION_VALUE).setName("DICTIONARY_ENTRY"), comma()).setOptional().setName("DICTIONARY_ENTRY_LIST"), brace("}")));
             LIST.add(group(brace("["), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")));
         }
+
+        STRING_LITERAL_OR_IDENTIFIER_A.add(string());
+        STRING_LITERAL_OR_IDENTIFIER_A.add(identifierA());
 
         RESOURCE_LOCATION_S.add(ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION"));
         RESOURCE_LOCATION_S.add(INTERPOLATION_BLOCK);
@@ -1065,7 +1065,7 @@ public class TridentProductions {
                 g.append(brace("{"));
                 {
                     LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
-                    g2.append(string().setName("JSON_OBJECT_KEY"));
+                    g2.append(group(string()).setName("JSON_OBJECT_KEY"));
                     g2.append(colon());
                     g2.append(JSON_ELEMENT);
                     g.append(new LazyTokenListMatch(g2, comma(), true).setName("JSON_OBJECT_ENTRIES"));
@@ -1082,13 +1082,13 @@ public class TridentProductions {
                 JSON_ELEMENT.add(g);
                 JSON_ROOT.add(g);
             }
-            JSON_ELEMENT.add(string().setName("STRING_LITERAL"));
-            JSON_ROOT.add(string().setName("STRING_LITERAL"));
+            JSON_ELEMENT.add(string());
+            JSON_ROOT.add(string());
             JSON_ELEMENT.add(real().setName("NUMBER"));
             JSON_ELEMENT.add(ofType(BOOLEAN).setName("BOOLEAN"));
 
-            TEXT_COMPONENT.add(INTERPOLATION_BLOCK);
             TEXT_COMPONENT.add(JSON_ROOT);
+            TEXT_COMPONENT.add(INTERPOLATION_BLOCK);
         }
         //endregion
         //region NBT
@@ -1098,7 +1098,7 @@ public class TridentProductions {
                 g.append(brace("{"));
                 {
                     LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
-                    g2.append(new LazyTokenGroupMatch().append(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_KEY"));
+                    g2.append(group(STRING_LITERAL_OR_IDENTIFIER_A).setName("NBT_KEY"));
                     g2.append(colon());
                     g2.append(NBT_VALUE);
                     g.append(new LazyTokenListMatch(g2, comma(), true).setName("NBT_COMPOUND_ENTRIES"));
@@ -1758,6 +1758,12 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
+                    group(literal("throw").setName("INSTRUCTION_KEYWORD"), string())
+            );
+        }
+
+        {
+            INSTRUCTION.add(
                     group(literal("return").setName("INSTRUCTION_KEYWORD"), optional(LINE_SAFE_INTERPOLATION_VALUE).setName("RETURN_VALUE"))
             );
         }
@@ -1820,8 +1826,8 @@ public class TridentProductions {
         return ofType(HASH).setName("HASH");
     }
 
-    static LazyTokenItemMatch string() {
-        return ofType(STRING_LITERAL).setName("STRING_LITERAL");
+    LazyTokenStructureMatch string() {
+        return choice(ofType(STRING_LITERAL).setName("STRING_LITERAL"), INTERPOLATION_BLOCK).setName("STRING");
     }
 
     LazyTokenStructureMatch integer() {
