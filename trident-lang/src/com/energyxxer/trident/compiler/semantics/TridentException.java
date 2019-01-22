@@ -67,6 +67,10 @@ public class TridentException extends RuntimeException implements VariableTypeHa
         return this;
     }
 
+    public TokenPattern<?> getCausePattern() {
+        return cause;
+    }
+
     public static class Grouped extends RuntimeException implements Iterable<TridentException> {
         private ArrayList<TridentException> exceptions;
 

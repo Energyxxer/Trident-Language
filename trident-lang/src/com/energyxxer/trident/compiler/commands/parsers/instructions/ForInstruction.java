@@ -9,6 +9,7 @@ import com.energyxxer.trident.compiler.commands.parsers.constructs.Interpolation
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.Iterator;
@@ -24,17 +25,32 @@ public class ForInstruction implements Instruction {
 
         file.getCompiler().getSymbolStack().push(forFrame);
 
+        boolean wasEmpty = file.getCompiler().getTryStack().isEmpty();
+
+        if(wasEmpty || file.getCompiler().getTryStack().isRecovering()) {
+            file.getCompiler().getTryStack().pushRecovering();
+        } else if(file.getCompiler().getTryStack().isBreaking()) {
+            file.getCompiler().getTryStack().pushBreaking();
+        }
+
         try {
             for (header.initialize(); header.condition(); header.iterate()) {
-                int errorsPre = file.getCompiler().getReport().getErrors().size();
                 TridentFile.resolveInnerFileIntoSection(body, file, file.getFunction());
-                if (file.getCompiler().getReport().getErrors().size() > errorsPre) {
-                    //exit early to avoid multiple of the same error
-                    throw new EntryParsingException();
+            }
+        } catch(TridentException | TridentException.Grouped x) {
+            if(wasEmpty) {
+                if(x instanceof TridentException) {
+                    file.getCompiler().getReport().addNotice(((TridentException) x).getNotice());
+                } else {
+                    for(TridentException ex : ((TridentException.Grouped) x).getExceptions()) {
+                        file.getCompiler().getReport().addNotice(ex.getNotice());
+                    }
                 }
             }
+            else throw x;
         } finally {
             file.getCompiler().getSymbolStack().pop();
+            file.getCompiler().getTryStack().pop();
         }
     }
 
