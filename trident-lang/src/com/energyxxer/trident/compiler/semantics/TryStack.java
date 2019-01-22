@@ -3,12 +3,12 @@ package com.energyxxer.trident.compiler.semantics;
 import java.util.Stack;
 
 public class TryStack {
-    public static final int BLOCKING_TRY = 1;
+    public static final int BREAKING_TRY = 1;
     public static final int RECOVERING_TRY = 2;
     private Stack<Integer> stack = new Stack<>();
 
-    public void pushBlocking() {
-        stack.push(BLOCKING_TRY);
+    public void pushBreaking() {
+        stack.push(BREAKING_TRY);
     }
 
     public void pushRecovering() {
@@ -27,8 +27,8 @@ public class TryStack {
         return stack.peek();
     }
 
-    public boolean isBlocking() {
-        return stack.peek() == BLOCKING_TRY;
+    public boolean isBreaking() {
+        return stack.peek() == BREAKING_TRY;
     }
 
     public boolean isRecovering() {

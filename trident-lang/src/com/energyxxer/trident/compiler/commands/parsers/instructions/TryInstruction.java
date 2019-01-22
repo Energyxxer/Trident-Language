@@ -13,7 +13,7 @@ public class TryInstruction implements Instruction {
     @Override
     public void run(TokenPattern<?> pattern, TridentFile file) {
         if(pattern.find("LITERAL_RECOVERING") != null) file.getCompiler().getTryStack().pushRecovering();
-        else file.getCompiler().getTryStack().pushBlocking();
+        else file.getCompiler().getTryStack().pushBreaking();
 
         Object variable = null;
 

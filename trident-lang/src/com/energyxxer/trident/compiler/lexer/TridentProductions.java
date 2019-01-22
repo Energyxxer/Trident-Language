@@ -1691,9 +1691,10 @@ public class TridentProductions {
 
             INSTRUCTION.add(
                     group(keyword("tdndebug").setName("INSTRUCTION_KEYWORD"),
-                            INTERPOLATION_BLOCK)
+                            INTERPOLATION_BLOCK).setName("DEPRECATED_FOR_REMOVAL")
             );
         }
+
         {
             INSTRUCTION.add(
                     group(keyword("var").setName("INSTRUCTION_KEYWORD"),
@@ -1759,6 +1760,12 @@ public class TridentProductions {
         {
             INSTRUCTION.add(
                     group(literal("throw").setName("INSTRUCTION_KEYWORD"), string())
+            );
+        }
+
+        {
+            INSTRUCTION.add(
+                    group(literal("log").setName("INSTRUCTION_KEYWORD"), choice("info", "warning", "error").setName("NOTICE_GROUP"), LINE_SAFE_INTERPOLATION_VALUE)
             );
         }
 

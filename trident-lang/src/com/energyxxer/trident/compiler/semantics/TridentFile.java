@@ -295,10 +295,12 @@ public class TridentFile {
                             //Silently ignore; serves as a multi-scope break;
                         } catch(TridentException x) {
                             if(compiler.getTryStack().isEmpty()) {
+                                x.getNotice().setExtendedMessage("Uncaught " + x.getSource().getHumanReadableName() + ": " + x.getNotice().getExtendedMessage());
                                 compiler.getReport().addNotice(x.getNotice());
+                                if(x.isBreaking()) break;
                             } else if(compiler.getTryStack().isRecovering()) {
                                 queuedExceptions.add(x);
-                            } else if(compiler.getTryStack().isBlocking()) {
+                            } else if(compiler.getTryStack().isBreaking()) {
                                 throw x;
                             }
                         }

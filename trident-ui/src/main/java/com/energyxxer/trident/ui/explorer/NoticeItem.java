@@ -7,7 +7,6 @@ import com.energyxxer.trident.ui.explorer.base.ExplorerMaster;
 import com.energyxxer.trident.ui.explorer.base.elements.ExplorerElement;
 import com.energyxxer.trident.ui.modules.FileModuleToken;
 import com.energyxxer.trident.ui.modules.ModuleToken;
-import com.energyxxer.util.logger.Debug;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -38,7 +37,6 @@ public class NoticeItem extends ExplorerElement {
         this.notice = notice;
 
         lineCount = notice.getExtendedMessage().split("\n").length;
-        Debug.log(lineCount);
 
         this.x = (parent.indentation + 1) * master.getIndentPerLevel() + master.getInitialIndent();
     }

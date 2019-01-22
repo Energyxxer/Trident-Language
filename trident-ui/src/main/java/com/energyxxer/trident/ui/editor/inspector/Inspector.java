@@ -62,6 +62,9 @@ public class Inspector implements Highlighter.HighlightPainter, MouseMotionListe
             if(token.type == TridentTokens.COMMENT && token.subSections.containsValue("deprecated_syntax")) {
                 items.add(new InspectionItem(InspectionType.WARNING, "Changed syntax, use @ instead of #:", token.getStringBounds()));
             }
+            if(token.type == TridentTokens.KEYWORD && token.value.equals("tdndebug")) {
+                items.add(new InspectionItem(InspectionType.WARNING, "Debug feature deprecated for removal; use the 'log' instruction instead instead", token.getStringBounds()));
+            }
         }
         editor.repaint();
     }

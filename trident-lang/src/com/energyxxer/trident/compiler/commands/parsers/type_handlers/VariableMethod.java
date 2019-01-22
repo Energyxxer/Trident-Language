@@ -23,7 +23,7 @@ public interface VariableMethod {
             } catch(ClassCastException x) {
                 //could not coerce
             }
-            throw new TridentException(TridentException.Source.USER_EXCEPTION, "Expected parameter of type " + expected.getSimpleName(), pattern, file);
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of type " + expected.getSimpleName(), pattern, file);
         }
 
         @SuppressWarnings("unchecked")
@@ -31,7 +31,7 @@ public interface VariableMethod {
             for(Class cls : expected) {
                 if(cls.isInstance(param)) return (T) param;
             }
-            throw new TridentException(TridentException.Source.USER_EXCEPTION, "Expected parameter of one of the following types: " + Arrays.asList(expected).stream().map((Function<Class, String>) Class::getSimpleName).collect(Collectors.joining(", ")), pattern, file);
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of one of the following types: " + Arrays.asList(expected).stream().map((Function<Class, String>) Class::getSimpleName).collect(Collectors.joining(", ")), pattern, file);
         }
     }
 }

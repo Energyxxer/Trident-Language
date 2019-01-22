@@ -13,16 +13,29 @@ import java.util.Iterator;
 public class TridentException extends RuntimeException implements VariableTypeHandler<TridentException> {
 
     public enum Source {
-        PARSING_ERROR,
-        COMMAND_ERROR,
-        USER_EXCEPTION,
-        IMPOSSIBLE
+        PARSING_ERROR("Parsing Error"),
+        COMMAND_ERROR("Command Error"),
+        INTERNAL_EXCEPTION("Internal Exception"),
+        USER_EXCEPTION("User Exception"),
+        IMPOSSIBLE("Impossible Exception");
+
+        private final String humanReadableName;
+
+        Source(String humanReadableName) {
+            this.humanReadableName = humanReadableName;
+        }
+
+        public String getHumanReadableName() {
+            return humanReadableName;
+        }
     }
 
     private Source source;
     private Notice notice;
     private TokenPattern<?> cause;
+    private boolean breaking = false;
 
+    @Deprecated
     public TridentException(Source source, String message, TokenPattern<?> cause) {
         this(source, message, cause, (CallStack.StackTrace) null);
     }
@@ -43,6 +56,15 @@ public class TridentException extends RuntimeException implements VariableTypeHa
 
     public Notice getNotice() {
         return notice;
+    }
+
+    public boolean isBreaking() {
+        return breaking;
+    }
+
+    public TridentException setBreaking(boolean breaking) {
+        this.breaking = breaking;
+        return this;
     }
 
     public static class Grouped extends RuntimeException implements Iterable<TridentException> {

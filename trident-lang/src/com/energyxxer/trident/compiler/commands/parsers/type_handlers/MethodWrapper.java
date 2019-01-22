@@ -53,7 +53,7 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
             file.getCompiler().getCallStack().push(new CallStack.Call(methodName, null, null, pattern));
             try {
                 if (params.length < requiredSize) {
-                    throw new TridentException(TridentException.Source.USER_EXCEPTION, "Method '" + methodName + "' requires " + (requiredSize != paramTypes.length ? "at least " : "") + requiredSize + " parameter" + (requiredSize == 1 ? "" : "s") + ", instead found " + params.length, pattern, file);
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method '" + methodName + "' requires " + (requiredSize != paramTypes.length ? "at least " : "") + requiredSize + " parameter" + (requiredSize == 1 ? "" : "s") + ", instead found " + params.length, pattern, file);
                 }
                 int i = 0;
                 for (Class<?> cls : paramTypes) {
@@ -78,7 +78,7 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
                     }
                     return invoker.invoke(instance, actualParams);
                 } catch (Exception x) {
-                    throw new TridentException(TridentException.Source.USER_EXCEPTION, x.getMessage(), pattern, file);
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.getMessage(), pattern, file);
                 }
             } finally {
                 file.getCompiler().getCallStack().pop();

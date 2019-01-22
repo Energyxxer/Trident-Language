@@ -11,6 +11,6 @@ public class ThrowInstruction implements Instruction {
     @Override
     public void run(TokenPattern<?> pattern, TridentFile file) {
         String message = CommonParsers.parseStringLiteral(pattern.find("STRING"), file);
-        throw new TridentException(TridentException.Source.USER_EXCEPTION, message, pattern, file);
+        throw new TridentException(TridentException.Source.USER_EXCEPTION, message, pattern, file).setBreaking(true);
     }
 }
