@@ -10,7 +10,6 @@ import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.util.logger.Debug;
 
 import java.util.Iterator;
 
@@ -23,7 +22,7 @@ public class ForInstruction implements Instruction {
 
         SymbolTable forFrame = new SymbolTable(file);
 
-        file.getCompiler().getStack().push(forFrame);
+        file.getCompiler().getSymbolStack().push(forFrame);
 
         try {
             for (header.initialize(); header.condition(); header.iterate()) {
@@ -34,13 +33,8 @@ public class ForInstruction implements Instruction {
                     throw new EntryParsingException();
                 }
             }
-        } catch(EntryParsingException x) {
-            boolean a = true;
-        } catch(Exception x) {
-            boolean b = true;
-            Debug.log("aaa");
         } finally {
-            file.getCompiler().getStack().pop();
+            file.getCompiler().getSymbolStack().pop();
         }
     }
 
@@ -82,14 +76,14 @@ public class ForInstruction implements Instruction {
                     return new ForHeader() {
                         @Override
                         public void initialize() {
-                            file.getCompiler().getStack().peek().put(new Symbol(varName, Symbol.SymbolAccess.GLOBAL, null));
+                            file.getCompiler().getSymbolStack().peek().put(new Symbol(varName, Symbol.SymbolAccess.GLOBAL, null));
                         }
 
                         @Override
                         public boolean condition() {
                             boolean hasNext = it.hasNext();
                             if(hasNext) {
-                                file.getCompiler().getStack().peek().get(varName).setValue(it.next());
+                                file.getCompiler().getSymbolStack().peek().get(varName).setValue(it.next());
                             }
                             return hasNext;
                         }

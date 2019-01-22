@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 public class InterpolationManager {
 
     private static Object nextThis = null;
+    private static String nextFunctionName = null;
 
     @SuppressWarnings("unchecked")
     public static <T> T parse(TokenPattern<?> pattern, TridentFile file, Class<T> expected) {
@@ -78,7 +79,7 @@ public class InterpolationManager {
                 return parse(((TokenStructure) pattern).getContents(), file, keepSymbol);
             }
             case "VARIABLE_NAME": {
-                Symbol symbol = file.getCompiler().getStack().search(pattern.flatten(false));
+                Symbol symbol = file.getCompiler().getSymbolStack().search(pattern.flatten(false));
                 if(symbol == null) {
                     file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Symbol '" + pattern.flatten(false) + "' is not defined", pattern));
                     throw new EntryParsingException();
@@ -142,8 +143,10 @@ public class InterpolationManager {
                             key = CommandUtils.parseQuotedString(key);
                         }
                         nextThis = dict;
+                        nextFunctionName = key;
                         Object value = parse(entry.find("INTERPOLATION_VALUE"), file, keepSymbol);
                         nextThis = null;
+                        nextFunctionName = null;
                         dict.put(key, value);
                     }
                 }
@@ -174,7 +177,7 @@ public class InterpolationManager {
                         }
                     }
 
-                    return new FunctionMethod(pattern.find("ANONYMOUS_INNER_FUNCTION"), file, formalParams, nextThis);
+                    return new FunctionMethod(pattern.find("ANONYMOUS_INNER_FUNCTION"), file, formalParams, nextThis, nextFunctionName);
                 } else {
                     TridentFile innerFile = TridentFile.createInnerFile(pattern.find("ANONYMOUS_INNER_FUNCTION"), file);
                     return innerFile.getResourceLocation();

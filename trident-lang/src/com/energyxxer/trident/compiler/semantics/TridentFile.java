@@ -13,7 +13,6 @@ import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.enxlex.pattern_matching.structures.*;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.CompilerExtension;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
@@ -30,7 +29,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class TridentFile implements CompilerExtension {
+public class TridentFile {
     private final TridentCompiler compiler;
     private final CommandModule module;
     private final Namespace namespace;
@@ -158,7 +157,7 @@ public class TridentFile implements CompilerExtension {
                         break;
                     }
                     default: {
-                        reportNotice(new Notice(NoticeType.DEBUG, "Unknown directive type '" + directiveBody.getName() + "'", directiveBody));
+                        compiler.getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown directive type '" + directiveBody.getName() + "'", directiveBody));
                     }
                 }
             }
@@ -255,9 +254,10 @@ public class TridentFile implements CompilerExtension {
         return "TDN: " + location;
     }
 
-    public static void resolveEntries(TokenList entryList, TridentFile parent, FunctionSection appendTo, boolean compileOnly) {
+    private static void resolveEntries(TokenList entryList, TridentFile parent, FunctionSection appendTo, boolean compileOnly) {
 
         int popTimes = 0;
+        boolean popCall = false;
         parent.addCascadingRequires(Collections.emptyList());
         for (Iterator<TridentUtil.ResourceLocation> it = new ArrayDeque<>(parent.cascadingRequires).descendingIterator(); it.hasNext(); ) {
             TridentUtil.ResourceLocation loc = it.next();
@@ -265,7 +265,7 @@ public class TridentFile implements CompilerExtension {
             if(file.fileSymbols == null) {
                 file.resolveEntries();
             }
-            parent.compiler.getStack().push(file.fileSymbols);
+            parent.compiler.getSymbolStack().push(file.fileSymbols);
             popTimes++;
         }
 
@@ -273,8 +273,11 @@ public class TridentFile implements CompilerExtension {
         SymbolTable symbols = new SymbolTable(parent);
         if(parent.fileSymbols == null) {
             parent.fileSymbols = symbols;
+            compiler.getCallStack().push(new CallStack.Call("<body>", entryList, parent, entryList));
+            popCall = true;
         }
-        compiler.getStack().push(symbols);
+        ArrayList<TridentException> queuedExceptions = new ArrayList<>();
+        compiler.getSymbolStack().push(symbols);
         popTimes++;
 
         try {
@@ -288,16 +291,28 @@ public class TridentFile implements CompilerExtension {
 
                         try {
                             resolveEntry(inner, parent, appendTo, compileOnly);
-                        } catch (EntryParsingException x) {
+                        } catch(EntryParsingException x) {
                             //Silently ignore; serves as a multi-scope break;
+                        } catch(TridentException x) {
+                            if(compiler.getTryStack().isEmpty()) {
+                                compiler.getReport().addNotice(x.getNotice());
+                            } else if(compiler.getTryStack().isRecovering()) {
+                                queuedExceptions.add(x);
+                            } else if(compiler.getTryStack().isBlocking()) {
+                                throw x;
+                            }
                         }
                     }
                 }
             }
+            if(!queuedExceptions.isEmpty()) {
+                throw new TridentException.Grouped(queuedExceptions);
+            }
         } finally {
             for(int i = 0; i < popTimes; i++) {
-                compiler.getStack().pop();
+                compiler.getSymbolStack().pop();
             }
+            if(popCall) compiler.getCallStack().pop();
         }
     }
 

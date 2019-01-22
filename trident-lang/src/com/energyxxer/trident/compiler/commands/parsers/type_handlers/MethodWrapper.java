@@ -1,8 +1,7 @@
 package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
+import com.energyxxer.trident.compiler.semantics.CallStack;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 
 import java.lang.reflect.Method;
 
@@ -51,34 +50,38 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
 
     public VariableMethod createForInstance(T instance) {
         return (params, patterns, pattern, file) -> {
-            if(params.length < requiredSize) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Method '" + methodName + "' requires " + (requiredSize != paramTypes.length ? "at least " : "") + requiredSize + " parameter" + (requiredSize == 1 ? "" : "s") + ", instead found " + params.length, pattern));
-                throw new EntryParsingException();
-            }
-            int i = 0;
-            for(Class<?> cls : paramTypes) {
-                if(i < requiredSize) {
-                    if(params[i] != null || !nullables[i]) params[i] = assertOfType(params[i], patterns[i], file, cls);
-                } else { //if we reach this, the remaining parameter types are nullable
-                    if(i >= params.length) break;
-                    if(i < paramTypes.length) { //param is present
-                        if(params[i] != null) {
-                            params[i] = assertOfType(params[i], patterns[i], file, cls);
-                        }
-                    } else break;
-                }
-                i++;
-            }
-
+            file.getCompiler().getCallStack().push(new CallStack.Call(methodName, null, null, pattern));
             try {
-                Object[] actualParams = new Object[paramTypes.length];
-                for(i = 0; i < paramTypes.length; i++) {
-                    actualParams[i] = params[i];
+                if (params.length < requiredSize) {
+                    throw new TridentException(TridentException.Source.USER_EXCEPTION, "Method '" + methodName + "' requires " + (requiredSize != paramTypes.length ? "at least " : "") + requiredSize + " parameter" + (requiredSize == 1 ? "" : "s") + ", instead found " + params.length, pattern, file);
                 }
-                return invoker.invoke(instance, actualParams);
-            } catch (Exception x) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, x.getMessage(), pattern));
-                throw new EntryParsingException();
+                int i = 0;
+                for (Class<?> cls : paramTypes) {
+                    if (i < requiredSize) {
+                        if (params[i] != null || !nullables[i])
+                            params[i] = assertOfType(params[i], patterns[i], file, cls);
+                    } else { //if we reach this, the remaining parameter types are nullable
+                        if (i >= params.length) break;
+                        if (i < paramTypes.length) { //param is present
+                            if (params[i] != null) {
+                                params[i] = assertOfType(params[i], patterns[i], file, cls);
+                            }
+                        } else break;
+                    }
+                    i++;
+                }
+
+                try {
+                    Object[] actualParams = new Object[paramTypes.length];
+                    for (i = 0; i < paramTypes.length; i++) {
+                        actualParams[i] = params[i];
+                    }
+                    return invoker.invoke(instance, actualParams);
+                } catch (Exception x) {
+                    throw new TridentException(TridentException.Source.USER_EXCEPTION, x.getMessage(), pattern, file);
+                }
+            } finally {
+                file.getCompiler().getCallStack().pop();
             }
         };
     }

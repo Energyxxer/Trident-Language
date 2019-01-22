@@ -104,7 +104,7 @@ public class Commons {
         c.setInResourceCache(project.getResourceCache());
         c.addProgressListener((message, progress) -> TridentWindow.setStatus(new Status(Status.INFO, message, progress)));
         c.addCompletionListener(() -> {
-            TridentWindow.noticeExplorer.setNotices(c.getReport().groupByLabel());
+            TridentWindow.noticeExplorer.setNotices(c.getReport().group());
             if (c.getReport().getTotal() > 0) TridentWindow.noticeBoard.open();
             c.getReport().getWarnings().forEach(Console.warn::println);
             c.getReport().getErrors().forEach(Console.err::println);

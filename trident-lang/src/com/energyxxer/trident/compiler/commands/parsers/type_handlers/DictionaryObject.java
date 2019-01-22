@@ -49,9 +49,12 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
                         return new MethodWrapper<>(DictionaryObject.class.getMethod("remove", String.class)).createForInstance(dict);
                     case "clear":
                         return new MethodWrapper<>(DictionaryObject.class.getMethod("clear")).createForInstance(dict);
+                    case "debug":
+                        Debug.log(file.getCompiler().getCallStack().getView());
+                        return null;
                 }
             } catch(NoSuchMethodException x) {
-                Debug.log(x.getMessage()); //sugma
+                Debug.log(x.getMessage());
             }
         }
         Symbol elem = dict.map.get(member);

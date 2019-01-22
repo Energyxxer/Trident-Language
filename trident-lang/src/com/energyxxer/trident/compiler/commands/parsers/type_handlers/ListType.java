@@ -46,13 +46,13 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
     public ListType() {
     }
 
-    public ListType(Object... objects) {
+    public ListType(Object[] objects) {
         for(Object obj : objects) {
             add(obj);
         }
     }
 
-    public ListType(Collection<Object> objects) {
+    public <T> ListType(Iterable<T> objects) {
         objects.forEach(this::add);
     }
 

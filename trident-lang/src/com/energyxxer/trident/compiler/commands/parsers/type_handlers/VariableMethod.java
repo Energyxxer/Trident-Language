@@ -1,10 +1,8 @@
 package com.energyxxer.trident.compiler.commands.parsers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.Arrays;
@@ -25,8 +23,7 @@ public interface VariableMethod {
             } catch(ClassCastException x) {
                 //could not coerce
             }
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected parameter of type " + expected.getSimpleName(), pattern));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.USER_EXCEPTION, "Expected parameter of type " + expected.getSimpleName(), pattern, file);
         }
 
         @SuppressWarnings("unchecked")
@@ -34,8 +31,7 @@ public interface VariableMethod {
             for(Class cls : expected) {
                 if(cls.isInstance(param)) return (T) param;
             }
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Expected parameter of one of the following types: " + Arrays.asList(expected).stream().map((Function<Class, String>) Class::getSimpleName).collect(Collectors.joining(", ")), pattern));
-            throw new EntryParsingException();
+            throw new TridentException(TridentException.Source.USER_EXCEPTION, "Expected parameter of one of the following types: " + Arrays.asList(expected).stream().map((Function<Class, String>) Class::getSimpleName).collect(Collectors.joining(", ")), pattern, file);
         }
     }
 }

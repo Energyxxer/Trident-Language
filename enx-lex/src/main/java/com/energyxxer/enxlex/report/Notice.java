@@ -9,47 +9,61 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 public class Notice {
     private NoticeType type;
     private String message;
+    private String extendedMessage;
     private String formattedPath;
 
     private String filePath;
     private int locationIndex;
     private int locationLength;
 
-    private String label;
+    private String group;
 
     public Notice(NoticeType type, String message) {
         this(null, type, message);
     }
 
-    public Notice(String label, NoticeType type, String message) {
-        this(label, type, message, (String) null);
+    public Notice(String group, NoticeType type, String message) {
+        this(group, type, message, (String) null);
     }
 
     public Notice(NoticeType type, String message, TokenPattern<?> pattern) {
-        this(null, type, message, pattern);
+        this(type, message, message, pattern);
     }
 
-    public Notice(String label, NoticeType type, String message, TokenPattern<?> pattern) {
-        this(label, type, message, (pattern != null) ? pattern.getFormattedPath() : null);
+    public Notice(NoticeType type, String message, String extendedMessage, TokenPattern<?> pattern) {
+        this(null, type, message, extendedMessage, pattern);
+    }
+
+    public Notice(String group, NoticeType type, String message, TokenPattern<?> pattern) {
+        this(group, type, message, message, pattern);
+    }
+
+    public Notice(String group, NoticeType type, String message, String extendedMessage, TokenPattern<?> pattern) {
+        this(group, type, message, extendedMessage, (pattern != null) ? pattern.getFormattedPath() : null);
     }
 
     public Notice(NoticeType type, String message, Token token) {
         this(null, type, message, token);
     }
 
-    public Notice(String label, NoticeType type, String message, Token token) {
-        this(label, type, message, (token != null) ? token.getFormattedPath() : null);
+    public Notice(String group, NoticeType type, String message, Token token) {
+        this(group, type, message, (token != null) ? token.getFormattedPath() : null);
     }
 
     public Notice(NoticeType type, String message, String formattedPath) {
         this(null, type, message, formattedPath);
     }
 
-    public Notice(String label, NoticeType type, String message, String formattedPath) {
+    public Notice(String group, NoticeType type, String message, String formattedPath) {
+        this(group, type, message, message, formattedPath);
+    }
+
+    public Notice(String group, NoticeType type, String message, String extendedMessage, String formattedPath) {
         this.type = type;
         this.message = message;
+        this.extendedMessage = extendedMessage;
         this.setFormattedPath(formattedPath);
-        if(label != null) this.label = label;
+        if(group != null) this.group = group;
     }
 
     public NoticeType getType() {
@@ -80,7 +94,7 @@ public class Notice {
             this.locationIndex = Integer.parseInt(segments[2]);
             this.locationLength = Integer.parseInt(segments[3]);
 
-            this.label = this.filePath;
+            this.group = this.filePath;
         }
     }
 
@@ -96,16 +110,24 @@ public class Notice {
         return locationLength;
     }
 
-    public String getLabel() {
-        return label;
+    public String getGroup() {
+        return group;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
+    public void setGroup(String group) {
+        this.group = group;
     }
 
     @Override
     public String toString() {
         return message + ((formattedPath != null) ? ("\n    at " + formattedPath) : "");
+    }
+
+    public String getExtendedMessage() {
+        return extendedMessage;
+    }
+
+    public void setExtendedMessage(String extendedMessage) {
+        this.extendedMessage = extendedMessage;
     }
 }

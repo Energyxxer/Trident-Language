@@ -128,7 +128,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                 throw new EntryParsingException();
             }
             entityDecl = new CustomEntity(entityName, defaultType);
-            SymbolTable table = global ? file.getCompiler().getStack().getGlobal() : file.getCompiler().getStack().peek();
+            SymbolTable table = global ? file.getCompiler().getSymbolStack().getGlobal() : file.getCompiler().getSymbolStack().peek();
             table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, entityDecl));
         }
 
@@ -199,7 +199,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
                         double health = CommonParsers.parseDouble(entry.find("HEALTH"), file);
                         if(health < 0) {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Health must be non-negative"));
+                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Health must be non-negative", entry.find("HEALTH")));
                             break;
                         }
 

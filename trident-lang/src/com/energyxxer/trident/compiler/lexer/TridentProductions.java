@@ -1752,6 +1752,12 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
+                    group(keyword("try").setName("INSTRUCTION_KEYWORD"), literal("recovering").setOptional(), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), group(keyword("catch"), brace("("), identifierX().setName("EXCEPTION_VARIABLE"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("CATCH_CLAUSE"))
+            );
+        }
+
+        {
+            INSTRUCTION.add(
                     group(literal("return").setName("INSTRUCTION_KEYWORD"), optional(LINE_SAFE_INTERPOLATION_VALUE).setName("RETURN_VALUE"))
             );
         }

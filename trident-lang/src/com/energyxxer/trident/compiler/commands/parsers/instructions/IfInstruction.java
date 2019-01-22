@@ -8,6 +8,7 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.commands.EntryParsingException;
 import com.energyxxer.trident.compiler.commands.parsers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserMember;
+import com.energyxxer.trident.compiler.semantics.SymbolTable;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @ParserMember(key = "if")
@@ -29,7 +30,7 @@ public class IfInstruction implements Instruction {
         }
     }
 
-    private void resolveBlock(TokenPattern<?> pattern, TridentFile file) {
+    public static void resolveBlock(TokenPattern<?> pattern, TridentFile file) {
         if(pattern.getName().equals("EXECUTION_BLOCK")) {
             resolveBlock(((TokenStructure) pattern).getContents(), file);
             return;
@@ -37,7 +38,12 @@ public class IfInstruction implements Instruction {
         if(pattern.getName().equals("ANONYMOUS_INNER_FUNCTION")) {
             TridentFile.resolveInnerFileIntoSection(pattern, file, file.getFunction());
         } else {
-            TridentFile.resolveEntry(((TokenStructure)pattern).getContents(), file, file.getFunction(), false);
+            file.getCompiler().getSymbolStack().push(new SymbolTable(file));
+            try {
+                TridentFile.resolveEntry(((TokenStructure) pattern).getContents(), file, file.getFunction(), false);
+            } finally {
+                file.getCompiler().getSymbolStack().pop();
+            }
         }
     }
 }

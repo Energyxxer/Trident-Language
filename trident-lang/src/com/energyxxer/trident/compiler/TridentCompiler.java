@@ -27,9 +27,7 @@ import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
 import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.SymbolStack;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.*;
@@ -66,7 +64,9 @@ public class TridentCompiler {
 
     private Gson gson;
 
-    private SymbolStack stack = new SymbolStack();
+    private SymbolStack symbolStack = new SymbolStack();
+    private CallStack callStack = new CallStack();
+    private TryStack tryStack = new TryStack();
     private SpecialFileManager specialFileManager;
     private int languageLevel = 1;
     private String defaultNamespace = null;
@@ -171,9 +171,9 @@ public class TridentCompiler {
         this.setProgress("Adding native methods");
 
         {
-            stack.getGlobal().put(new Symbol("new", Symbol.SymbolAccess.GLOBAL, new DictionaryObject()));
+            symbolStack.getGlobal().put(new Symbol("new", Symbol.SymbolAccess.GLOBAL, new DictionaryObject()));
             for(DefaultLibraryProvider lib : ParserManager.getAllParsers(DefaultLibraryProvider.class)) {
-                lib.populate(stack, this);
+                lib.populate(symbolStack, this);
             }
         }
 
@@ -457,8 +457,12 @@ public class TridentCompiler {
         return null;
     }
 
-    public SymbolStack getStack() {
-        return stack;
+    public SymbolStack getSymbolStack() {
+        return symbolStack;
+    }
+
+    public CallStack getCallStack() {
+        return callStack;
     }
 
     public int getLanguageLevel() {
@@ -499,6 +503,10 @@ public class TridentCompiler {
 
     public HashMap<Integer, Integer> getOutResourceCache() {
         return outResourceCache;
+    }
+
+    public TryStack getTryStack() {
+        return tryStack;
     }
 
     private static class Resources {

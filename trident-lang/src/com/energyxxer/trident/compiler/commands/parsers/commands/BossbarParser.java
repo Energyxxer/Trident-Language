@@ -62,7 +62,7 @@ public class BossbarParser implements CommandParser {
             case "players": return new BossbarGetPlayersCommand(ref);
             case "visible": return new BossbarGetVisibleCommand(ref);
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown bossbar get branch '" + rawVariable + "'"));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown bossbar get branch '" + rawVariable + "'", inner));
                 return null;
             }
         }
@@ -97,7 +97,7 @@ public class BossbarParser implements CommandParser {
             case "SET_VISIBLE":
                 return new BossbarSetVisibleCommand(ref, inner.search(TridentTokens.BOOLEAN).get(0).value.equals("true"));
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown bossbar set branch '" + inner.getName() + "'"));
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown bossbar set branch '" + inner.getName() + "'", inner));
                 return null;
             }
         }

@@ -1,12 +1,12 @@
 package com.energyxxer.trident.ui.explorer;
 
+import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.trident.global.Commons;
+import com.energyxxer.trident.ui.explorer.base.ExplorerFlag;
 import com.energyxxer.trident.ui.explorer.base.ExplorerMaster;
 import com.energyxxer.trident.ui.theme.change.ThemeListenerManager;
-import com.energyxxer.enxlex.report.Notice;
 
-import java.awt.Color;
-import java.awt.Image;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +43,8 @@ public class NoticeExplorerMaster extends ExplorerMaster {
             assets.put("warning",Commons.getIcon("warn").getScaledInstance(16, 16, Image.SCALE_SMOOTH));
             assets.put("error",Commons.getIcon("error").getScaledInstance(16, 16, Image.SCALE_SMOOTH));
         });
+
+        explorerFlags.put(ExplorerFlag.DYNAMIC_ROW_HEIGHT, true);
     }
 
     public void addNotice(Notice n) {

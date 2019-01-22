@@ -19,7 +19,7 @@ public class WithinInstruction implements Instruction {
     public void run(TokenPattern<?> pattern, TridentFile file) {
 
         SymbolTable table = new SymbolTable(file);
-        file.getCompiler().getStack().push(table);
+        file.getCompiler().getSymbolStack().push(table);
 
         Symbol symbol = new Symbol(pattern.find("VARIABLE_NAME").flatten(false));
         table.put(symbol);
@@ -41,8 +41,8 @@ public class WithinInstruction implements Instruction {
                         from.getY().getType() != to.getY().getType() ||
                         from.getZ().getType() != to.getZ().getType()
         ) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "'from' and 'to' coordinate sets must have matching coordinate types"));
-            file.getCompiler().getStack().pop();
+            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "'from' and 'to' coordinate sets must have matching coordinate types", pattern.find("TO")));
+            file.getCompiler().getSymbolStack().pop();
             throw new EntryParsingException();
         }
 
@@ -59,14 +59,13 @@ public class WithinInstruction implements Instruction {
                     symbol.setValue(new CoordinateSet(new Coordinate(from.getX().getType(), x), new Coordinate(from.getY().getType(), y), new Coordinate(from.getZ().getType(), z)));
                     try {
                         TridentFile.resolveInnerFileIntoSection(pattern.find("ANONYMOUS_INNER_FUNCTION"), file, file.getFunction());
-                    } catch(EntryParsingException ex) {
-                        file.getCompiler().getStack().pop();
-                        throw ex;
+                    } finally {
+                        file.getCompiler().getSymbolStack().pop();
                     }
                 }
             }
         }
 
-        file.getCompiler().getStack().pop();
+        file.getCompiler().getSymbolStack().pop();
     }
 }

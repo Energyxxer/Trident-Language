@@ -161,7 +161,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
             itemDecl = new CustomItem(entityName, defaultType);
             if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, file));
 
-            SymbolTable table = global ? file.getCompiler().getStack().getGlobal() : file.getCompiler().getStack().peek();
+            SymbolTable table = global ? file.getCompiler().getSymbolStack().getGlobal() : file.getCompiler().getSymbolStack().peek();
             table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, itemDecl));
         } else if(rawCustomModelData != null) {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default items don't support custom model data specifiers", rawCustomModelData));
