@@ -2,6 +2,7 @@ package com.energyxxer.util.logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -18,7 +19,11 @@ public class Debug {
     private static void logRaw(String message) {
         for(OutputStream stream : streams) {
             try {
-                stream.write(message.getBytes());
+                if(stream instanceof PrintStream) {
+                    ((PrintStream) stream).print(message);
+                } else {
+                    stream.write(message.getBytes());
+                }
                 stream.flush();
             } catch(IOException x) {
                 //idk what to do now

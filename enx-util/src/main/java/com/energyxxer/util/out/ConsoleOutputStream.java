@@ -5,14 +5,13 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import java.awt.*;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.HashMap;
 
 /**
  * Created by User on 1/8/2017.
  */
-public class ConsoleOutputStream extends OutputStream {
+public class ConsoleOutputStream extends PrintStream {
 
     private final JTextPane component;
     public String style = "";
@@ -28,20 +27,22 @@ public class ConsoleOutputStream extends OutputStream {
     private int hyperLinkStage = NONE;
 
     public ConsoleOutputStream(final JTextPane component) {
+        super(System.out);
         this.component = component;
     }
 
     public ConsoleOutputStream(JTextPane component, String style) {
+        super(System.out);
         this.component = component;
         this.style = style;
     }
 
     @Override
-    public void flush() throws IOException {
+    public void flush() {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
     }
 
     public void setStyle(String style) {
@@ -49,8 +50,15 @@ public class ConsoleOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(int b) throws IOException {
-        if (b == '\r')
+    public void print(String string) {
+        for(char c : string.toCharArray()) {
+            print(c);
+        }
+    }
+
+    @Override
+    public void print(char c) {
+        if (c == '\r')
             return;
 
         //Hyperlink Syntax:
@@ -58,7 +66,7 @@ public class ConsoleOutputStream extends OutputStream {
 
         switch(hyperLinkStage) {
             case NONE: {
-                if(b == '\b') {
+                if(c == '\b') {
                     hyperLinkStage++;
                     hyperLinkElements.put("PATH",new StringBuilder());
                     hyperLinkElements.put("LOCATION",new StringBuilder());
@@ -67,38 +75,38 @@ public class ConsoleOutputStream extends OutputStream {
                 } else {
                     SwingUtilities.invokeLater(() -> {
                         try {
-                            component.getStyledDocument().insertString(component.getStyledDocument().getLength(),((char) b) + "", (style == null) ? null : component.getStyle(style));
+                            component.getStyledDocument().insertString(component.getStyledDocument().getLength(), c + "", (style == null) ? null : component.getStyle(style));
                         } catch(BadLocationException e) {}
                     });
                 }
                 break;
             }
             case PATH: {
-                if(b == '\b') {
+                if(c == '\b') {
                     hyperLinkStage++;
                 } else {
-                    hyperLinkElements.get("PATH").append((char) b);
+                    hyperLinkElements.get("PATH").append(c);
                 }
                 break;
             }
             case LOCATION: {
-                if(b == '\b') {
+                if(c == '\b') {
                     hyperLinkStage++;
-                } else if(Character.isDigit((char) b)) {
-                    hyperLinkElements.get("LOCATION").append((char) b);
+                } else if(Character.isDigit(c)) {
+                    hyperLinkElements.get("LOCATION").append(c);
                 }
                 break;
             }
             case LENGTH: {
-                if(b == '\b') {
+                if(c == '\b') {
                     hyperLinkStage++;
-                } else if(Character.isDigit((char) b)) {
-                    hyperLinkElements.get("LENGTH").append((char) b);
+                } else if(Character.isDigit(c)) {
+                    hyperLinkElements.get("LENGTH").append(c);
                 }
                 break;
             }
             case TEXT: {
-                if(b == '\b') {
+                if(c == '\b') {
                     //Finalize
                     hyperLinkStage = NONE;
 
@@ -124,7 +132,7 @@ public class ConsoleOutputStream extends OutputStream {
                     });
 
                 } else {
-                    hyperLinkElements.get("TEXT").append((char) b);
+                    hyperLinkElements.get("TEXT").append(c);
                 }
                 break;
             }
