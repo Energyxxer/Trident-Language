@@ -9,6 +9,11 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class ResourceType implements VariableTypeHandler<TridentUtil.ResourceLocation> {
     @Override
     public Object getMember(TridentUtil.ResourceLocation object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+        switch(member) {
+            case "namespace": return object.namespace;
+            case "isTag": return object.isTag;
+            case "body": return object.body;
+        }
         throw new MemberNotFoundException();
     }
 

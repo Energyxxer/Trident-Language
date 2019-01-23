@@ -1772,7 +1772,7 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(literal("throw").setName("INSTRUCTION_KEYWORD"), string())
+                    group(literal("throw").setName("INSTRUCTION_KEYWORD"), LINE_SAFE_INTERPOLATION_VALUE)
             );
         }
 
