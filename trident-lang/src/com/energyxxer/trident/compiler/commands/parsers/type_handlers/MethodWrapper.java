@@ -78,7 +78,7 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
                     }
                     return invoker.invoke(instance, actualParams);
                 } catch (Exception x) {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.getMessage(), pattern, file);
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.toString(), pattern, file);
                 }
             } finally {
                 file.getCompiler().getCallStack().pop();

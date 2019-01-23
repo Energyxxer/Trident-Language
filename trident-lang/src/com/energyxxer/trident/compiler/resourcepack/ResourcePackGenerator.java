@@ -39,7 +39,7 @@ public class ResourcePackGenerator {
     private ZipOutputStream zipStream;
 
     public ResourcePackGenerator(@NotNull TridentCompiler compiler, @NotNull File outFile) {
-        this(compiler, outFile, outFile.isFile() && outFile.getName().endsWith(".zip") ? ZIP : FOLDER);
+        this(compiler, outFile, outFile.getName().endsWith(".zip") ? ZIP : FOLDER);
     }
 
     private float progressDelta = 1;
@@ -59,7 +59,6 @@ public class ResourcePackGenerator {
         this.rootFile = outFile;
         this.exportables = new ArrayList<>();
         this.description = "Resource Pack created with Trident";
-        if(rootFile.isDirectory() && !rootFile.exists()) rootFile.mkdirs();
     }
 
     public void generate() throws IOException {

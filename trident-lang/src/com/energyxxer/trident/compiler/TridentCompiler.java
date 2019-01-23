@@ -513,6 +513,14 @@ public class TridentCompiler {
         return tryStack;
     }
 
+    public File getRootDir() {
+        return rootDir;
+    }
+
+    public ResourcePackGenerator getResourcePackGenerator() {
+        return resourcePack;
+    }
+
     private static class Resources {
         public static final HashMap<String, String> defaults = new HashMap<>();
 

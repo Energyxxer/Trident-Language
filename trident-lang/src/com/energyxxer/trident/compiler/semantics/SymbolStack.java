@@ -44,11 +44,7 @@ public class SymbolStack {
         for (Iterator<SymbolTable> it = new ArrayDeque<>(stack).descendingIterator(); it.hasNext(); ) {
             SymbolTable table = it.next();
             if(table.containsKey(name)) {
-                Symbol symbol = table.get(name);
-                if(symbol.getAccess() == Symbol.SymbolAccess.GLOBAL
-                || (symbol.getAccess() == Symbol.SymbolAccess.LOCAL && (from.equals(table.getFile()) || hasImported(from, table.getFile()) || from.isSubFileOf(table.getFile())))
-                || (symbol.getAccess() == Symbol.SymbolAccess.PRIVATE && (from.equals(table.getFile()) || from.isSubFileOf(table.getFile()))))
-                return symbol;
+                return table.get(name);
             }
         }
         if(global.containsKey(name)) return global.get(name);
