@@ -9,6 +9,7 @@ import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolStack;
 
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,7 +32,7 @@ public class FileLib implements DefaultLibraryProvider {
                     if(!path.startsWith(compiler.getRootDir().toPath())) {
                         throw new IllegalArgumentException("Cannot read files outside of the current project: " + path);
                     }
-                    return new String(Files.readAllBytes(path));
+                    return new String(Files.readAllBytes(path), Charset.forName("UTF-8"));
                 }), String.class).createForInstance(null));
         stack.getGlobal().put(new Symbol("File", Symbol.SymbolAccess.GLOBAL, fileLib));
 
@@ -50,7 +51,7 @@ public class FileLib implements DefaultLibraryProvider {
             }
             ResourcePackGenerator resourcePack = compiler.getResourcePackGenerator();
             if(resourcePack != null) {
-                resourcePack.exportables.add(new RawExportable(path.toString(), ((String) params[1]).getBytes()));
+                resourcePack.exportables.add(new RawExportable(path.toString(), ((String) params[1]).getBytes(Charset.forName("UTF-8"))));
             }
             return null;
         }), String.class, String.class).createForInstance(null));
@@ -64,7 +65,7 @@ public class FileLib implements DefaultLibraryProvider {
             if(path.startsWith(Paths.get("../"))) {
                 throw new IllegalArgumentException("Cannot write files outside the data pack: " + path);
             }
-            compiler.getModule().exportables.add(new RawExportable(path.toString(), ((String) params[1]).getBytes()));
+            compiler.getModule().exportables.add(new RawExportable(path.toString(), ((String) params[1]).getBytes(Charset.forName("UTF-8"))));
             return null;
         }), String.class, String.class).createForInstance(null));
     }

@@ -5,11 +5,12 @@ import com.energyxxer.commodore.module.ModulePackGenerator;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -77,17 +78,6 @@ public class ResourcePackGenerator {
         }
 
         if(zipStream != null) zipStream.close();
-    }
-
-    private void createPackMcmeta() throws IOException {
-        JsonObject root = new JsonObject();
-        JsonObject inner = new JsonObject();
-        root.add("pack", inner);
-        inner.addProperty("pack_format", 1);
-
-        inner.addProperty("description", description);
-
-        createFile("pack.mcmeta", gson.toJson(root).getBytes());
     }
 
     private void createFile(@Nullable String path, @Nullable byte[] contents) throws IOException {

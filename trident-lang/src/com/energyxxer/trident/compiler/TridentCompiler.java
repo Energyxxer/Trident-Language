@@ -21,7 +21,6 @@ import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
 import com.energyxxer.trident.compiler.commands.parsers.instructions.AliasInstruction;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.semantics.ReturnException;
 import com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
@@ -33,6 +32,7 @@ import com.energyxxer.util.logger.Debug;
 import com.google.gson.*;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -293,7 +293,7 @@ public class TridentCompiler {
                     this.setProgress("Parsing file: " + rootDir.toPath().relativize(file.toPath()));
                     if(name.endsWith(".tdn")) {
                         try {
-                            String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
+                            String str = new String(Files.readAllBytes(Paths.get(file.getPath())), Charset.forName("UTF-8"));
                             lex.tokenizeParse(file, str, new TridentLexerProfile(module));
 
                             if(lex.getMatchResponse().matched) {
@@ -338,7 +338,7 @@ public class TridentCompiler {
                     this.setProgress("Scanning file: " + rootDir.toPath().relativize(file.toPath()));
                     if(name.endsWith(".nbttm")) {
                         try {
-                            String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
+                            String str = new String(Files.readAllBytes(Paths.get(file.getPath())), Charset.forName("UTF-8"));
                             typeMap.parsing.parseNBTTMFile(file, str);
 
                         } catch(IOException x) {

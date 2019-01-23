@@ -3,6 +3,7 @@ package com.energyxxer.util.logger;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class Debug {
                 if(stream instanceof PrintStream) {
                     ((PrintStream) stream).print(message);
                 } else {
-                    stream.write(message.getBytes());
+                    stream.write(message.getBytes(Charset.forName("UTF-8")));
                 }
                 stream.flush();
             } catch(IOException x) {
