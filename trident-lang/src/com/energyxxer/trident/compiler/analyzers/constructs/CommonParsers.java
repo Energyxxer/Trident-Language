@@ -534,6 +534,7 @@ public class CommonParsers {
                 EObject.assertNotNull(result, pattern, file);
                 return result;
             }
+            case "RAW_STRING": return pattern.flatten(false);
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
             }

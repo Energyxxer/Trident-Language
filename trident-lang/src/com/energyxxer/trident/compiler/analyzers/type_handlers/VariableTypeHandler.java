@@ -7,13 +7,18 @@ import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.textcomponents.TextComponent;
+import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Map;
 
 @AnalyzerGroup
 public interface VariableTypeHandler<T> {
@@ -46,10 +51,13 @@ public interface VariableTypeHandler<T> {
         }
 
         private static HashMap<String, Class> shorthands = new HashMap<>();
+        private static ArrayList<Class> superclasses = new ArrayList<>();
 
         static {
             shorthands.put("int", Integer.class);
             shorthands.put("real", Double.class);
+            shorthands.put("int_range", CommonParsers.SAMPLE_INT_RANGE.getClass());
+            shorthands.put("real_range", CommonParsers.SAMPLE_REAL_RANGE.getClass());
             shorthands.put("boolean", Boolean.class);
             shorthands.put("string", String.class);
             shorthands.put("entity", Entity.class);
@@ -73,12 +81,31 @@ public interface VariableTypeHandler<T> {
             shorthands.put("nbt_path", NBTPath.class);
             shorthands.put("coordinates", CoordinateSet.class);
             shorthands.put("resource", TridentUtil.ResourceLocation.class);
+            shorthands.put("dictionary", DictionaryObject.class);
+            shorthands.put("list", ListType.class);
+            shorthands.put("function", VariableMethod.class);
+            shorthands.put("exception", TridentException.class);
 
-            //"coordinate", "int_range", "real_range", "dictionary", "array"
+            superclasses.add(NBTTag.class);
         }
 
         public static Class getClassForShorthand(String shorthand) {
             return shorthands.get(shorthand);
+        }
+
+        public static String getShorthandForObject(Object obj) {
+            if(obj instanceof NumberRange) {
+                if(((NumberRange) obj).getNumberClass() == Double.class) {
+                    return "real_range";
+                } else {
+                    return "int_range";
+                }
+            }
+            return shorthands.entrySet().stream().filter(e -> e.getValue().isInstance(obj) && !superclasses.contains(e.getValue())).max(Comparator.comparingInt(a -> a.getKey().length())).map(Map.Entry::getKey).orElse(null);
+        }
+
+        public static String getShorthandForClass(Class cls) {
+            return shorthands.entrySet().stream().filter(e -> e.getValue() == cls).max(Comparator.comparingInt(a -> a.getKey().length())).map(Map.Entry::getKey).orElse(null);
         }
     }
 }

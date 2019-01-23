@@ -47,6 +47,18 @@ public class TridentException extends RuntimeException implements VariableTypeHa
 
     public TridentException(Source source, String message, TokenPattern<?> cause, CallStack.StackTrace stackTrace) {
         this.source = source;
+
+        if(source == Source.IMPOSSIBLE) {
+            StackTraceElement[] javaStackTrace = Thread.currentThread().getStackTrace();
+            for(int i = 1; i < javaStackTrace.length; i++) {
+                if(!javaStackTrace[i].getClassName().equals(getClass().getName())) {
+
+                    message += " (" + javaStackTrace[i].getFileName() + ":" + javaStackTrace[i].getLineNumber() + ") Please report as soon as possible";
+                    break;
+                }
+            }
+        }
+
         this.notice = new Notice(NoticeType.ERROR, message, message + (stackTrace != null ? ("\n" + stackTrace.toString()) : ""), cause);
         this.cause = cause;
     }

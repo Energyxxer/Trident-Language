@@ -127,6 +127,7 @@ public class NBTParser {
             case "BOOLEAN": {
                 return new TagByte(pattern.flattenTokens().get(0).value.equals("true") ? 1 : 0);
             }
+            case "RAW_STRING":
             case "STRING": {
                 return new TagString(CommonParsers.parseStringLiteral(pattern, file));
             }
