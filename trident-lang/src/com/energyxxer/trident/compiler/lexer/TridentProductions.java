@@ -7,7 +7,7 @@ import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.*;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
-import com.energyxxer.trident.compiler.commands.parsers.instructions.AliasInstruction;
+import com.energyxxer.trident.compiler.analyzers.instructions.AliasInstruction;
 import com.energyxxer.util.logger.Debug;
 
 import java.util.HashMap;

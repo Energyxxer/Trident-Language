@@ -14,10 +14,12 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.nio.charset.Charset;
 
 public class Trident {
 	public static Trident trident;
-	public static final Version VERSION = new Version(0,1,3);
+	public static final Version VERSION = new Version(0,2,0);
+	public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 
 	public static TridentWindow window;
 

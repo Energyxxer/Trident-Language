@@ -15,11 +15,11 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.commands.parsers.commands.CommandParser;
-import com.energyxxer.trident.compiler.commands.parsers.constructs.CommonParsers;
-import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
-import com.energyxxer.trident.compiler.commands.parsers.instructions.Instruction;
-import com.energyxxer.trident.compiler.commands.parsers.modifiers.ModifierParser;
+import com.energyxxer.trident.compiler.analyzers.commands.CommandParser;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
+import com.energyxxer.trident.compiler.analyzers.instructions.Instruction;
+import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
 import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
@@ -337,22 +337,26 @@ public class TridentFile {
                     TokenList modifierList = (TokenList) inner.find("MODIFIERS");
                     if(modifierList != null) {
                         for(TokenPattern<?> rawModifier : modifierList.getContents()) {
-                            ModifierParser parser = ParserManager.getParser(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
+                            ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
                             if(parser != null) {
                                 ExecuteModifier modifier = parser.parse(rawModifier, parent);
                                 if(modifier != null) modifiers.add(modifier);
+                            } else {
+                                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + rawModifier.flattenTokens().get(0).value + "'", rawModifier, parent);
                             }
                         }
                     }
 
                     TokenPattern<?> commandPattern = inner.find("COMMAND");
-                    CommandParser parser = ParserManager.getParser(CommandParser.class, commandPattern.flattenTokens().get(0).value);
+                    CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandPattern.flattenTokens().get(0).value);
                     if (parser != null) {
                         Command command = parser.parse(((TokenStructure) commandPattern).getContents(), parent);
                         if (command != null) {
                             if(modifiers.isEmpty()) appendTo.append(command);
                             else appendTo.append(new ExecuteCommand(command, modifiers));
                         }
+                    } else {
+                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + commandPattern.flattenTokens().get(0).value + "'", commandPattern, parent);
                     }
                 } else if (!parent.reportedNoCommands) {
                     parent.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
@@ -365,9 +369,11 @@ public class TridentFile {
                 break;
             case "INSTRUCTION": {
                 String instructionKey = ((TokenStructure) inner).getContents().searchByName("INSTRUCTION_KEYWORD").get(0).flatten(false);
-                Instruction instruction = ParserManager.getParser(Instruction.class, instructionKey);
+                Instruction instruction = AnalyzerManager.getAnalyzer(Instruction.class, instructionKey);
                 if (instruction != null) {
                     instruction.run(((TokenStructure) inner).getContents(), parent);
+                } else {
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown instruction analyzer for '" + instructionKey + "'", inner, parent);
                 }
                 break;
             }

@@ -84,20 +84,7 @@ public class AdvancedEditor extends JTextPane implements KeyListener, CaretListe
     public void keyTyped(KeyEvent e) {
         e.consume();
         TridentWindow.setStatus(e.getKeyChar() + ":" + Character.getName(e.getKeyChar()));
-        /*if(e.getKeyChar() == '`') {
-            try {
-                Object rawContents = this.getToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
-                if(rawContents == null) return;
-                String contents = ((String) rawContents);
-                String log = "";
-                for(byte c : contents.getBytes()) {
-                    log += "" + c + ": \"" + (char) c + "\" (" + Character.getName(c) + ")\n";
-                }
-                Console.debug.println(log);
-            } catch(Exception x) {
-                x.printStackTrace();
-            }
-        } else */if(!isPlatformControlDown(e) && !Commons.isSpecialCharacter(e.getKeyChar())) {
+        if(!isPlatformControlDown(e) && !Commons.isSpecialCharacter(e.getKeyChar())) {
             editManager.insertEdit(new InsertionEdit("" + e.getKeyChar(), this));
         }
     }

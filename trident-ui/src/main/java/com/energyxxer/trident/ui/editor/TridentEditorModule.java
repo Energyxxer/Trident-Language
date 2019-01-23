@@ -2,6 +2,7 @@ package com.energyxxer.trident.ui.editor;
 
 import com.energyxxer.trident.global.TabManager;
 import com.energyxxer.trident.global.temp.Lang;
+import com.energyxxer.trident.main.Trident;
 import com.energyxxer.trident.ui.Tab;
 import com.energyxxer.trident.ui.display.DisplayModule;
 import com.energyxxer.trident.ui.scrollbar.OverlayScrollPaneLayout;
@@ -18,9 +19,11 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -109,7 +112,7 @@ public class TridentEditorModule extends JScrollPane implements DisplayModule, U
 		byte[] encoded;
 		try {
 			encoded = Files.readAllBytes(file.toPath());
-			String s = new String(encoded, Charset.forName("UTF-8"));
+			String s = new String(encoded, Trident.DEFAULT_CHARSET);
 			setText(s);
 			editorComponent.setCaretPosition(0);
 			associatedTab.updateSavedValue();

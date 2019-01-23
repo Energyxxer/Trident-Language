@@ -18,10 +18,10 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
-import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
-import com.energyxxer.trident.compiler.commands.parsers.instructions.AliasInstruction;
-import com.energyxxer.trident.compiler.commands.parsers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.commands.parsers.type_handlers.default_libs.DefaultLibraryProvider;
+import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
+import com.energyxxer.trident.compiler.analyzers.instructions.AliasInstruction;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
+import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -38,12 +38,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static Trident.extensions.com.google.gson.JsonElement.EJsonElement.getAsStringOrNull;
-import static Trident.extensions.com.google.gson.JsonObject.EJsonObject.getAsBoolean;
+import static com.energyxxer.trident.extensions.EJsonElement.getAsStringOrNull;
+import static com.energyxxer.trident.extensions.EJsonObject.getAsBoolean;
 
 public class TridentCompiler {
 
     public static final String PROJECT_FILE_NAME = ".tdnproj";
+    public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 
     private final DefinitionPack definitionPack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
 
@@ -126,9 +127,9 @@ public class TridentCompiler {
 
     private void runCompilation() {
 
-        this.setProgress("Initializing default command parsers");
+        this.setProgress("Initializing analyzers");
 
-        ParserManager.initialize();
+        AnalyzerManager.initialize();
 
         this.setProgress("Reading project settings file");
         try {
@@ -172,7 +173,7 @@ public class TridentCompiler {
 
         {
             symbolStack.getGlobal().put(new Symbol("new", Symbol.SymbolAccess.GLOBAL, new DictionaryObject()));
-            for(DefaultLibraryProvider lib : ParserManager.getAllParsers(DefaultLibraryProvider.class)) {
+            for(DefaultLibraryProvider lib : AnalyzerManager.getAllParsers(DefaultLibraryProvider.class)) {
                 lib.populate(symbolStack, this);
             }
         }
@@ -293,7 +294,7 @@ public class TridentCompiler {
                     this.setProgress("Parsing file: " + rootDir.toPath().relativize(file.toPath()));
                     if(name.endsWith(".tdn")) {
                         try {
-                            String str = new String(Files.readAllBytes(Paths.get(file.getPath())), Charset.forName("UTF-8"));
+                            String str = new String(Files.readAllBytes(Paths.get(file.getPath())), DEFAULT_CHARSET);
                             lex.tokenizeParse(file, str, new TridentLexerProfile(module));
 
                             if(lex.getMatchResponse().matched) {
@@ -318,7 +319,7 @@ public class TridentCompiler {
                     }
                 } else if(file.toPath().startsWith(rootDir.toPath().resolve("resources"))) {
                     if(resourcePack == null) break;
-                    this.setProgress("Scanning file: " + rootDir.toPath().relativize(file.toPath()));
+                    this.setProgress("Parsing file: " + rootDir.toPath().relativize(file.toPath()));
 
                     try {
                         Path relPath = rootDir.toPath().resolve("resources").relativize(file.toPath());
@@ -335,10 +336,10 @@ public class TridentCompiler {
                         logException(x);
                     }
                 } else if(file.toPath().startsWith(rootDir.toPath().resolve("internal"))) {
-                    this.setProgress("Scanning file: " + rootDir.toPath().relativize(file.toPath()));
+                    this.setProgress("Parsing file: " + rootDir.toPath().relativize(file.toPath()));
                     if(name.endsWith(".nbttm")) {
                         try {
-                            String str = new String(Files.readAllBytes(Paths.get(file.getPath())), Charset.forName("UTF-8"));
+                            String str = new String(Files.readAllBytes(Paths.get(file.getPath())), DEFAULT_CHARSET);
                             typeMap.parsing.parseNBTTMFile(file, str);
 
                         } catch(IOException x) {

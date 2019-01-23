@@ -26,7 +26,7 @@ import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.commands.parsers.general.ParserManager;
+import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFile;
 import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
@@ -123,7 +123,7 @@ public class ItemEventFile extends SpecialFile {
 
                 for(Map.Entry<CustomItem, ArrayList<ItemEvent>> itemEntry : typeEntry.getValue().entrySet()) {
                     ScoreEventCriteriaData data = new ScoreEventCriteriaData(compiler, itemType, objective, function, itemEntry.getKey(), itemEntry.getValue(), mainhand, offhand, held, oldMainhand, oldOffhand, oldHeld);
-                    ParserManager.getParser(ScoreEventCriteriaHandler.class, eventType.name().toLowerCase()).mid(data);
+                    AnalyzerManager.getAnalyzer(ScoreEventCriteriaHandler.class, eventType.name().toLowerCase()).mid(data);
                 }
 
                 function.append(new ScoreReset(new Selector(SENDER, scores), objective));

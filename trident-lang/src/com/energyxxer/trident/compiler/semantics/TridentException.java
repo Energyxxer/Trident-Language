@@ -3,8 +3,8 @@ package com.energyxxer.trident.compiler.semantics;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.commands.parsers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.commands.parsers.type_handlers.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
