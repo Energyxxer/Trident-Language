@@ -7,14 +7,14 @@ public class Symbol {
 
 
     public enum SymbolAccess {
-        GLOBAL, LOCAL, PROTECTED;
+        GLOBAL, LOCAL, PRIVATE
     }
     private String name;
 
     private final SymbolAccess access;
     private Object value;
     public Symbol(String name) {
-        this(name, SymbolAccess.PROTECTED);
+        this(name, SymbolAccess.LOCAL);
     }
 
     public Symbol(String name, SymbolAccess access) {

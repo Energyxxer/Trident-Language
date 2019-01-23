@@ -1729,7 +1729,7 @@ public class TridentProductions {
             );
         }
 
-        LazyTokenGroupMatch blockLabel = optional(identifierX().setName("LABEL"), colon());
+        LazyTokenGroupMatch blockLabel = optional(identifierX().setName("LABEL"), colon()).setName("BLOCK_LABEL");
 
         {
             INSTRUCTION.add(

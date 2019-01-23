@@ -38,4 +38,8 @@ public class SymbolTable {
     public void clear() {
         symbols.clear();
     }
+
+    public TridentFile getFile() {
+        return file;
+    }
 }

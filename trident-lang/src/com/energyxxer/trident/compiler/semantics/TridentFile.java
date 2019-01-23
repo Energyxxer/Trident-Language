@@ -32,6 +32,7 @@ public class TridentFile {
     private final TridentCompiler compiler;
     private final CommandModule module;
     private final Namespace namespace;
+    private TridentFile parent = null;
     private TokenPattern<?> pattern;
     private final HashMap<TokenPattern<?>, TridentUtil.ResourceLocation> requires = new HashMap<>();
     private ArrayList<TridentUtil.ResourceLocation> cascadingRequires = null;
@@ -78,43 +79,6 @@ public class TridentFile {
         }
 
         this.function = compileOnly ? null : namespace.functions.get(functionPath);
-    }
-
-    public static TridentFile createInnerFile(TokenPattern<?> pattern, TridentFile parent) {
-        TokenPattern<?> namePattern = pattern.find("INNER_FUNCTION_NAME.RESOURCE_LOCATION");
-        String innerFilePathRaw = parent.getPath().toString();
-        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
-
-        if(namePattern != null) {
-            TridentUtil.ResourceLocation suggestedLoc = CommonParsers.parseResourceLocation(namePattern, parent);
-            suggestedLoc.assertStandalone(namePattern, parent);
-            if(!suggestedLoc.namespace.equals("minecraft")) {
-                innerFilePathRaw = suggestedLoc.namespace + File.separator + "functions" + File.separator + suggestedLoc.body + ".tdn";
-            } else {
-                String functionName = suggestedLoc.body;
-                while(functionName.startsWith("/")) {
-                    functionName = functionName.substring(1);
-                }
-                innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(functionName + ".tdn").toString();
-            }
-        } else {
-            innerFilePathRaw = Paths.get(innerFilePathRaw).resolve("_anonymous" + parent.anonymousChildren + ".tdn").toString();
-            parent.anonymousChildren++;
-        }
-
-        TokenPattern<?> innerFilePattern = pattern.find("FILE_INNER");
-
-        TridentFile innerFile = new TridentFile(parent.getCompiler(), Paths.get(innerFilePathRaw), innerFilePattern);
-        innerFile.resolveEntries();
-        return innerFile;
-    }
-
-    public static void resolveInnerFileIntoSection(TokenPattern<?> pattern, TridentFile parent, FunctionSection function) {
-        if(pattern.find("FILE_INNER..DIRECTIVES") != null) {
-            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Directives aren't allowed in this context", pattern.find("FILE_INNER..DIRECTIVES"), parent);
-        }
-
-        resolveEntries((TokenList) pattern.find("FILE_INNER.ENTRIES"), parent, function, false);
     }
 
     private void resolveDirectives() {
@@ -165,6 +129,44 @@ public class TridentFile {
                 }
             }
         }
+    }
+
+    public static TridentFile createInnerFile(TokenPattern<?> pattern, TridentFile parent) {
+        TokenPattern<?> namePattern = pattern.find("INNER_FUNCTION_NAME.RESOURCE_LOCATION");
+        String innerFilePathRaw = parent.getPath().toString();
+        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
+
+        if(namePattern != null) {
+            TridentUtil.ResourceLocation suggestedLoc = CommonParsers.parseResourceLocation(namePattern, parent);
+            suggestedLoc.assertStandalone(namePattern, parent);
+            if(!suggestedLoc.namespace.equals("minecraft")) {
+                innerFilePathRaw = suggestedLoc.namespace + File.separator + "functions" + File.separator + suggestedLoc.body + ".tdn";
+            } else {
+                String functionName = suggestedLoc.body;
+                while(functionName.startsWith("/")) {
+                    functionName = functionName.substring(1);
+                }
+                innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(functionName + ".tdn").toString();
+            }
+        } else {
+            innerFilePathRaw = Paths.get(innerFilePathRaw).resolve("_anonymous" + parent.anonymousChildren + ".tdn").toString();
+            parent.anonymousChildren++;
+        }
+
+        TokenPattern<?> innerFilePattern = pattern.find("FILE_INNER");
+
+        TridentFile innerFile = new TridentFile(parent.getCompiler(), Paths.get(innerFilePathRaw), innerFilePattern);
+        innerFile.parent = parent;
+        innerFile.resolveEntries();
+        return innerFile;
+    }
+
+    public static void resolveInnerFileIntoSection(TokenPattern<?> pattern, TridentFile parent, FunctionSection function) {
+        if(pattern.find("FILE_INNER..DIRECTIVES") != null) {
+            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Directives aren't allowed in this context", pattern.find("FILE_INNER..DIRECTIVES"), parent);
+        }
+
+        resolveEntries((TokenList) pattern.find("FILE_INNER.ENTRIES"), parent, function, false);
     }
 
     public void addCascadingRequires(Collection<TridentUtil.ResourceLocation> locations) {
@@ -373,5 +375,9 @@ public class TridentFile {
                 compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
             }
         }
+    }
+
+    public boolean isSubFileOf(TridentFile parent) {
+        return this.parent != null && (this.parent == parent || this.parent.isSubFileOf(parent));
     }
 }

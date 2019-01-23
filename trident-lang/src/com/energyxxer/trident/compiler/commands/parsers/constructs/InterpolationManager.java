@@ -75,7 +75,7 @@ public class InterpolationManager {
                 return parse(((TokenStructure) pattern).getContents(), file, keepSymbol);
             }
             case "VARIABLE_NAME": {
-                Symbol symbol = file.getCompiler().getSymbolStack().search(pattern.flatten(false));
+                Symbol symbol = file.getCompiler().getSymbolStack().search(pattern.flatten(false), file);
                 if(symbol == null) {
                     throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' is not defined", pattern, file);
                 }

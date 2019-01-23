@@ -20,6 +20,7 @@ public class LoopInstruction implements Instruction {
         LoopHeader header = parseHeader(pattern.find("LOOP_HEADER"), file);
         if(header == null) return;
         TokenPattern<?> body = pattern.find("ANONYMOUS_INNER_FUNCTION");
+        String label = getLabel(pattern);
 
         SymbolTable forFrame = new SymbolTable(file);
 
@@ -38,10 +39,14 @@ public class LoopInstruction implements Instruction {
                 try {
                     TridentFile.resolveInnerFileIntoSection(body, file, file.getFunction());
                 } catch(BreakException x) {
-                    break;
+                    if(x.getLabel() == null || x.getLabel().equals(label)) {
+                        break;
+                    } else throw x;
                 } catch(ContinueException x) {
-                    // IntelliJ: 'continue' is unnecessary as the last statement in a loop
-                    // Also IntelliJ: EmPtY 'cAtCh' BlOcK
+                    if (x.getLabel() != null && !x.getLabel().equals(label)) {
+                        throw x;
+                    }
+                    // else continue; //pretend this is here
                 }
             }
         } catch(TridentException | TridentException.Grouped x) {
@@ -59,6 +64,11 @@ public class LoopInstruction implements Instruction {
             file.getCompiler().getSymbolStack().pop();
             file.getCompiler().getTryStack().pop();
         }
+    }
+
+    private String getLabel(TokenPattern<?> pattern) {
+        TokenPattern<?> labelPattern = pattern.find("BLOCK_LABEL.LABEL");
+        return labelPattern != null ? labelPattern.flatten(false) : null;
     }
 
     private LoopHeader parseHeader(TokenPattern<?> pattern, TridentFile file) {
