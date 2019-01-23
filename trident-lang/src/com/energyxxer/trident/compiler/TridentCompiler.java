@@ -14,14 +14,14 @@ import com.energyxxer.commodore.types.TypeNotFoundException;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.enxlex.pattern_matching.ParsingSignature;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
+import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.instructions.AliasInstruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -60,7 +60,7 @@ public class TridentCompiler {
 
     private Thread thread;
 
-    private HashMap<File, TokenPattern<?>> filePatterns = new HashMap<>();
+    private HashMap<File, ParsingSignature> filePatterns = new HashMap<>();
     private HashMap<File, TridentFile> files = new HashMap<>();
 
     private Gson gson;
@@ -192,13 +192,13 @@ public class TridentCompiler {
 
         Path dataRoot = new File(rootDir, "datapack" + File.separator + "data").toPath();
 
-        for(Map.Entry<File, TokenPattern<?>> entry : filePatterns.entrySet()) {
+        for(Map.Entry<File, ParsingSignature> entry : filePatterns.entrySet()) {
             Path relativePath = dataRoot.relativize(entry.getKey().toPath());
             if("functions".equals(relativePath.getName(1).toString())) {
-                files.put(entry.getKey(), new TridentFile(this, relativePath, entry.getValue()));
+                files.put(entry.getKey(), new TridentFile(this, relativePath, entry.getValue().getPattern()));
             }
             else {
-                report.addNotice(new Notice(NoticeType.WARNING, "Found .tdn file outside of a function folder, ignoring: " + relativePath, entry.getValue()));
+                report.addNotice(new Notice(NoticeType.WARNING, "Found .tdn file outside of a function folder, ignoring: " + relativePath, entry.getValue().getPattern()));
             }
         }
 
@@ -295,10 +295,14 @@ public class TridentCompiler {
                     if(name.endsWith(".tdn")) {
                         try {
                             String str = new String(Files.readAllBytes(Paths.get(file.getPath())), DEFAULT_CHARSET);
-                            lex.tokenizeParse(file, str, new TridentLexerProfile(module));
+                            int hashCode = str.hashCode();
 
-                            if(lex.getMatchResponse().matched) {
-                                filePatterns.put(file, lex.getMatchResponse().pattern);
+                            if(!filePatterns.containsKey(file) || filePatterns.get(file).getHashCode() != hashCode) {
+                                lex.tokenizeParse(file, str, new TridentLexerProfile(module));
+
+                                if (lex.getMatchResponse().matched) {
+                                    filePatterns.put(file, new ParsingSignature(hashCode, lex.getMatchResponse().pattern));
+                                }
                             }
                         } catch (IOException x) {
                             logException(x);
@@ -503,11 +507,21 @@ public class TridentCompiler {
     }
 
     public void setInResourceCache(HashMap<Integer, Integer> inResourceCache) {
+        if(inResourceCache != null)
         this.inResourceCache = inResourceCache;
     }
 
     public HashMap<Integer, Integer> getOutResourceCache() {
         return outResourceCache;
+    }
+
+    public void setResourceCache(HashMap<File, ParsingSignature> cache) {
+        if(cache != null)
+        this.filePatterns = cache;
+    }
+
+    public HashMap<File, ParsingSignature> getSourceCache() {
+        return filePatterns;
     }
 
     public TryStack getTryStack() {

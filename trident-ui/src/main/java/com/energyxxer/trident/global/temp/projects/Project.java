@@ -2,6 +2,7 @@ package com.energyxxer.trident.global.temp.projects;
 
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
+import com.energyxxer.enxlex.pattern_matching.ParsingSignature;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenPatternMatch;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -43,6 +44,8 @@ public class Project {
 
 	private JsonObject config;
 	private HashMap<Integer, Integer> resourceCache = new HashMap<>();
+
+	private HashMap<File, ParsingSignature> sourceCache = new HashMap<>();
 
 	//endregion
 	public Project(String name) {
@@ -192,6 +195,14 @@ public class Project {
 		} catch (IOException x) {
 			Debug.log(x.getMessage());
 		}
+	}
+
+	public void updateSourceCache(HashMap<File, ParsingSignature> sourceCache) {
+		this.sourceCache = sourceCache;
+	}
+
+	public HashMap<File, ParsingSignature> getSourceCache() {
+		return sourceCache;
 	}
 
 	public HashMap<Integer, Integer> getResourceCache() {

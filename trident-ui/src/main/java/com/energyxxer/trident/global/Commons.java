@@ -101,6 +101,7 @@ public class Commons {
         if(Commons.getActiveProject() == null) return;
         Project project = Commons.getActiveProject();
         TridentCompiler c = new TridentCompiler(project.getRootDirectory());
+        c.setResourceCache(project.getSourceCache());
         c.setInResourceCache(project.getResourceCache());
         c.addProgressListener((message, progress) -> TridentWindow.setStatus(new Status(Status.INFO, message, progress)));
         c.addCompletionListener(() -> {
@@ -109,6 +110,7 @@ public class Commons {
             c.getReport().getWarnings().forEach(Console.warn::println);
             c.getReport().getErrors().forEach(Console.err::println);
             TridentWindow.statusBar.setProgress(null);
+            project.updateSourceCache(c.getSourceCache());
             project.updateResourceCache(c.getOutResourceCache());
         });
         c.compile();
