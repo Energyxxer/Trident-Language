@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.energyxxer.trident.extensions.EObject.assertNotNull;
+
 public interface VariableMethod {
     Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file);
 
@@ -17,6 +19,7 @@ public interface VariableMethod {
         @SuppressWarnings("unchecked")
         public static <T> T assertOfType(Object param, TokenPattern<?> pattern, TridentFile file, Class<T> expected) {
             if(expected.isInstance(param)) return (T) param;
+            assertNotNull(param, pattern, file);
             VariableTypeHandler handler = param instanceof VariableTypeHandler ? (VariableTypeHandler) param : AnalyzerManager.getAnalyzer(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(param.getClass()));
             if(handler != null) try {
                 return (T) handler.coerce(param, expected, pattern, file);

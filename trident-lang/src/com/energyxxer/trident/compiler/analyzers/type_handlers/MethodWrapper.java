@@ -3,13 +3,17 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 import com.energyxxer.trident.compiler.semantics.CallStack;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
+import java.lang.annotation.*;
 import java.lang.reflect.Method;
-
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
 public class MethodWrapper<T> implements MemberWrapper<T> {
     public interface Invoker<T> {
         Object invoke(T instance, Object... params) throws Exception;
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface TridentNullable {
     }
 
     private final String methodName;
@@ -28,6 +32,17 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
         this.paramTypes = method.getParameterTypes();
         this.nullables = new boolean[paramTypes.length];
         requiredSize = paramTypes.length;
+
+        int i = 0;
+        for(Annotation[] param : method.getParameterAnnotations()) {
+            for(Annotation annot : param) {
+                if(annot.annotationType() == TridentNullable.class) {
+                    nullables[i] = true;
+                    break;
+                }
+            }
+            i++;
+        }
     }
 
     public MethodWrapper(String methodName, Invoker<T> invoker, Class<?>... paramTypes) {

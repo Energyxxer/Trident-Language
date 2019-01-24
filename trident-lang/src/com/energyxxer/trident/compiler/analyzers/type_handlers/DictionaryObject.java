@@ -4,7 +4,6 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.util.logger.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -14,6 +13,17 @@ import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMe
 
 public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, Iterable<Object> {
     private static Stack<DictionaryObject> toStringRecursion = new Stack<>();
+    private static HashMap<String, MemberWrapper<DictionaryObject>> members = new HashMap<>();
+
+    static {
+        try {
+            members.put("merge", new MethodWrapper<>(DictionaryObject.class.getMethod("merge", DictionaryObject.class)));
+            members.put("remove", new MethodWrapper<>(DictionaryObject.class.getMethod("remove", String.class)));
+            members.put("clear", new MethodWrapper<>(DictionaryObject.class.getMethod("clear")));
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
 
     private HashMap<String, Symbol> map = new HashMap<>();
 
@@ -23,35 +33,26 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
             put(member, null);
         }
         if(!keepSymbol && !dict.map.containsKey(member)) {
-            try {
-                switch (member) {
-                    case "map":
-                        return (VariableMethod) (params, patterns, pattern1, file1) -> {
-                            if (params.length < 1) {
-                                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1, file);
-                            }
-                            FunctionMethod func = assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
+            if(member.equals("map")) {
+                return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                    if (params.length < 1) {
+                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1, file);
+                    }
+                    FunctionMethod func = assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
 
-                            DictionaryObject newDict = new DictionaryObject();
+                    DictionaryObject newDict = new DictionaryObject();
 
-                            for (Map.Entry<String, Symbol> entry : dict.entrySet()) {
-                                newDict.put(entry.getKey(), func.call(new Object[]{entry.getKey(), entry.getValue().getValue()}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
-                            }
+                    for (Map.Entry<String, Symbol> entry : dict.entrySet()) {
+                        newDict.put(entry.getKey(), func.call(new Object[]{entry.getKey(), entry.getValue().getValue()}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
+                    }
 
-                            return newDict;
-                        };
-                    case "merge":
-                        return new MethodWrapper<>(DictionaryObject.class.getMethod("merge", DictionaryObject.class)).createForInstance(dict);
-                    case "remove":
-                        return new MethodWrapper<>(DictionaryObject.class.getMethod("remove", String.class)).createForInstance(dict);
-                    case "clear":
-                        return new MethodWrapper<>(DictionaryObject.class.getMethod("clear")).createForInstance(dict);
-                    case "debug":
-                        Debug.log(file.getCompiler().getCallStack().getView());
-                        return null;
-                }
-            } catch(NoSuchMethodException x) {
-                Debug.log(x.getMessage());
+                    return newDict;
+                };
+            }
+
+            MemberWrapper<DictionaryObject> result = members.get(member);
+            if (result != null) {
+                return result.unwrap(dict);
             }
         }
         Symbol elem = dict.map.get(member);

@@ -9,17 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
-
 public class ListType implements VariableTypeHandler<ListType>, Iterable<Object> {
     private static HashMap<String, MemberWrapper<ListType>> members = new HashMap<>();
 
-
-    /*
-    * for(Symbol sym : content) {
-            Object result = func.call(new Object[] {sym.getValue()}, new TokenPattern[] {pattern}, pattern, file)
-        }
-    */
     static {
         try {
             members.put("add", new MethodWrapper<>(ListType.class.getMethod("add", Object.class)));
@@ -108,19 +100,19 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
         return content.get(index).getValue();
     }
 
-    public void add(Object object) {
+    public void add(@MethodWrapper.TridentNullable Object object) {
         content.add(new Symbol(content.size() + "", Symbol.SymbolAccess.GLOBAL, object));
     }
 
-    public void insert(Object object, int index) {
+    public void insert(@MethodWrapper.TridentNullable Object object, int index) {
         content.add(index, new Symbol(content.size() + "", Symbol.SymbolAccess.GLOBAL, object));
     }
 
-    public boolean contains(Object object) {
+    public boolean contains(@MethodWrapper.TridentNullable Object object) {
         return content.stream().anyMatch(s -> Objects.equals(s.getValue(), object));
     }
 
-    public int indexOf(Object object) {
+    public int indexOf(@MethodWrapper.TridentNullable Object object) {
         int index = 0;
         for(Symbol sym : content) {
             if(Objects.equals(sym.getValue(), object)) return index;
@@ -129,7 +121,7 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
         return -1;
     }
 
-    public int lastIndexOf(Object object) {
+    public int lastIndexOf(@MethodWrapper.TridentNullable Object object) {
         int index = size()-1;
         for (Iterator<Symbol> it = new ArrayDeque<>(content).descendingIterator(); it.hasNext(); ) {
             Symbol sym = it.next();
