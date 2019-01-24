@@ -151,7 +151,7 @@ $BLOCK_ENTITY_MINECRAFT_SHULKER_BOX: {
 }
 
 $BLOCK_ENTITY_MINECRAFT_SIGN: {
-    Color: String (one_of("white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black")),
+    Color: String (one_of("white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "gray", "cyan", "purple", "blue", "brown", "green", "red", "black")),
     Text1: String (text_component),
     Text2: String (text_component),
     Text3: String (text_component),

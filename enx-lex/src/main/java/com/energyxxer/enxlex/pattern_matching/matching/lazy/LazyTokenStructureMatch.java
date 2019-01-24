@@ -89,7 +89,7 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
                         if (!longestMatch.matched || itemMatch.matched) {
                             changed = true;
                             longestMatch = itemMatch;
-                            nestedStack.peek().response = new TokenMatchResponse(true, null, longestMatch.length, new TokenStructure(this.name, longestMatch.pattern).addTags(this.tags));
+                            nestedStack.peek().response = new TokenMatchResponse(longestMatch.matched, longestMatch.faultyToken, longestMatch.length, new TokenStructure(this.name, longestMatch.pattern).addTags(this.tags));
                         }
                     }
                 }
