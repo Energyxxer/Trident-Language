@@ -67,7 +67,9 @@ public class TeamParser implements CommandParser {
         if(valueClass == Boolean.class) {
             return new TeamModifyCommand(team, key, inner.find("BOOLEAN").flatten(false).equals("true"));
         } else if(valueClass == TextColor.class) {
-            return new TeamModifyCommand(team, key, TextColor.valueOf(inner.find("TEXT_COLOR").flatten(false).toUpperCase()));
+            String argument = inner.find("TEAM_COLOR").flatten(false).toUpperCase();
+            TextColor value = argument.equals("RESET") ? null : TextColor.valueOf(argument);
+            return new TeamModifyCommand(team, key, value);
         } else if(valueClass == TextComponent.class) {
             return new TeamModifyCommand(team, key, TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), file));
         } else if(valueClass == TeamModifyCommand.AppliesTo.class) {

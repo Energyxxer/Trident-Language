@@ -715,7 +715,7 @@ public class TridentProductions {
         {
             LazyTokenStructureMatch teamOptions = choice(
                     group(literal("collisionRule"), choice("always", "never", "pushOtherTeams", "pushOwnTeam")).setName("TEAM_COMPARISON_ARG"),
-                    group(literal("color"), TEXT_COLOR).setName("COLOR_ARG"),
+                    group(literal("color"), choice(TEXT_COLOR, literal("reset")).setName("TEAM_COLOR")).setName("COLOR_ARG"),
                     group(literal("deathMessageVisibility"), choice("always", "hideForOtherTeams", "hideForOwnTeam", "never")).setName("TEAM_COMPARISON_ARG"),
                     group(literal("displayName"), TEXT_COMPONENT).setName("TEXT_COMPONENT_ARG"),
                     group(literal("friendlyFire"), ofType(BOOLEAN).setName("BOOLEAN")).setName("BOOLEAN_ARG"),
