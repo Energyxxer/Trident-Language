@@ -39,6 +39,7 @@ public class TypeLib implements DefaultLibraryProvider {
             if(params[1].equals("real_range")) {
                 return params[0] instanceof NumberRange && ((NumberRange) params[0]).getNumberClass() == Double.class;
             }
+            if(params[1].equals("real") && params[0] instanceof Integer) return true;
             return cls.isInstance(params[0]);
         }, Object.class, String.class).createForInstance(null)));
     }
