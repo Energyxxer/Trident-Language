@@ -1,12 +1,13 @@
 package com.energyxxer.trident.compiler.analyzers.constructs;
 
-import com.energyxxer.trident.extensions.EObject;
+import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.commodore.textcomponents.*;
 import com.energyxxer.commodore.textcomponents.events.ClickEvent;
 import com.energyxxer.commodore.textcomponents.events.HoverEvent;
+import com.energyxxer.commodore.textcomponents.events.InsertionEvent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
@@ -14,12 +15,14 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.extensions.EObject;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import org.jetbrains.annotations.NotNull;
 
-import static com.energyxxer.trident.extensions.EJsonElement.*;
 import static com.energyxxer.trident.compiler.util.Using.using;
+import static com.energyxxer.trident.extensions.EJsonElement.*;
 
 public class TextParser {
 
@@ -48,13 +51,13 @@ public class TextParser {
         }
     }
 
-    private static TextComponent component;
-
     public static TextComponent parseTextComponent(JsonElement elem, TridentFile file, TokenPattern<?> pattern, TextComponentContext context) {
 
         boolean strict = file.getCompiler().getProperties().has("strict-text-components") && getAsBooleanOrNull(file.getCompiler().getProperties().get("strict-text-components"));
 
         ReportDelegate delegate = new ReportDelegate(file.getCompiler(), strict, pattern, file);
+
+        final TextComponent[] component = new TextComponent[1];
 
         if(elem.isJsonPrimitive() && ((JsonPrimitive)elem).isString()) {
             return new StringTextComponent(getAsStringOrNull(elem));
@@ -67,22 +70,28 @@ public class TextParser {
         } else if(elem.isJsonObject()) {
             JsonObject obj = getAsJsonObjectOrNull(elem);
 
-            component = null;
+            component[0] = null;
 
             if(obj.has("text")) {
                 using(getAsStringOrNull(obj.get("text")))
                         .notIfNull()
-                        .run(t -> component = new StringTextComponent(t))
+                        .run(t -> component[0] = new StringTextComponent(t))
                         .otherwise(t -> delegate.report("Expected string in 'text'", obj.get("text")));
             } else if(obj.has("translate")) {
                 using(getAsStringOrNull(obj.get("translate")))
                         .notIfNull()
-                        .run(t -> component = new TranslateTextComponent(t))
-                        .otherwise(t -> delegate.report("Expected string in 'translate'", obj.get("translate")));
+                        .run(t -> {
+                            component[0] = new TranslateTextComponent(t);
+                            if(obj.has("with")) {
+                                using(getAsJsonArrayOrNull(obj.get("with"))).notIfNull().run(
+                                        a -> a.forEach(e -> ((TranslateTextComponent) component[0]).addWith(parseTextComponent(e, file, pattern, context)))
+                                ).otherwise(v -> delegate.report("Expected array in 'with'", obj.get("with")));
+                            }
+                        }).otherwise(t -> delegate.report("Expected string in 'translate'", obj.get("translate")));
             } else if(obj.has("keybind")) {
                 using(getAsStringOrNull(obj.get("keybind")))
                         .notIfNull()
-                        .run(t -> component = new KeybindTextComponent(t))
+                        .run(t -> component[0] = new KeybindTextComponent(t))
                         .otherwise(t -> delegate.report("Expected string in 'keybind'", obj.get("keybind")));
             } else if(obj.has("score")) {
                 using(getAsJsonObjectOrNull(obj.get("score"))).notIfNull().run(s -> {
@@ -90,18 +99,35 @@ public class TextParser {
                     if(name == null) delegate.report("Missing 'name' string for 'score' text component", s);
                     String objectiveName = getAsStringOrNull(s.get("objective"));
                     if(objectiveName == null) delegate.report("Missing 'objective' string for 'score' text component", s);
-                    Objective objective;
-                    if(file.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) objective = file.getCompiler().getModule().getObjectiveManager().get(objectiveName);
-                    else objective = file.getCompiler().getModule().getObjectiveManager().create(objectiveName, true);
-                    component = new ScoreTextComponent(new LocalScore(objective, new PlayerName(name)));
+                    if(name != null && objectiveName != null) {
+                        Objective objective;
+                        if (file.getCompiler().getModule().getObjectiveManager().contains(objectiveName))
+                            objective = file.getCompiler().getModule().getObjectiveManager().get(objectiveName);
+                        else
+                            objective = file.getCompiler().getModule().getObjectiveManager().create(objectiveName, true);
+                        component[0] = new ScoreTextComponent(new LocalScore(objective, new PlayerName(name)));
+                    }
                 }).otherwise(v -> delegate.report("Expected object in 'score'", obj.get("score")));
             } else if(obj.has("selector")) {
                 using(getAsStringOrNull(obj.get("selector")))
                         .notIfNull()
-                        .run(t -> component = new SelectorTextComponent(new PlayerName(t)))
+                        .run(t -> component[0] = new SelectorTextComponent(new PlayerName(t)))
                         .otherwise(t -> delegate.report("Expected string in 'selector'", obj.get("selector")));
+            } else if(obj.has("nbt")) {
+                using(getAsStringOrNull(obj.get("nbt"))).notIfNull().run(s -> {
+                    Boolean rawInterpret = getAsBooleanOrNull(obj.get("interpret"));
+                    boolean interpret = rawInterpret != null && rawInterpret;
+
+                    using(getAsStringOrNull(obj.get("entity"))).notIfNull().run(e ->
+                            component[0] = new RawNBTTextComponent(s, "entity", e, interpret))
+                            .otherwise(
+                                    v -> using(getAsStringOrNull(obj.get("block"))).notIfNull().run(b ->
+                                            component[0] = new RawNBTTextComponent(s, "block", b, interpret))
+                                            .otherwise(w -> delegate.report("Expected either 'entity' or 'block' in nbt text component, got neither.", obj))
+                    );
+                }).otherwise(v -> delegate.report("Expected object in 'nbt'", obj.get("nbt")));
             }
-            if(component == null) {
+            if(component[0] == null) {
                 throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know how to turn this into a text component", pattern, file);
             }
 
@@ -162,7 +188,7 @@ public class TextParser {
                             }
                         }).otherwise(v -> delegate.report("Expected boolean in 'obfuscated'", obj.get("obfuscated")));
             }
-            component.setStyle(style);
+            component[0].setStyle(style);
 
             if(obj.has("hoverEvent")) {
                 using(obj.getAsJsonObject("hoverEvent")).notIfNull().run(e -> {
@@ -179,7 +205,7 @@ public class TextParser {
                             } else {
                                 value = (parseTextComponent(v, file, pattern, TextComponentContext.TOOLTIP)).toString();
                             }
-                            component.addEvent(new HoverEvent(action, value));
+                            component[0].addEvent(new HoverEvent(action, value));
                         }).otherwise(v -> delegate.report("Missing hover event value", e));
                     }).otherwise(a -> delegate.report("Missing hover event action", e));
                 });
@@ -195,13 +221,24 @@ public class TextParser {
                                 using(e.get("value")).notIfNull().run(v -> {
                                     String value = getAsStringOrNull(v);
                                     if(value == null) delegate.report("Missing click event value", e);
-                                    else component.addEvent(new ClickEvent(action, value));
+                                    else component[0].addEvent(new ClickEvent(action, value));
                                 }).otherwise(v -> delegate.report("Missing click event value", e));
                             }).otherwise(a -> delegate.report("Missing click event action", e));
                 });
             }
+            if(obj.has("insertion")) {
+                using(getAsStringOrNull(obj.get("insertion"))).notIfNull().run(
+                        t -> component[0].addEvent(new InsertionEvent(t))
+                ).otherwise(v -> delegate.report("Expected string in 'insertion'", obj.get("insertion")));
+            }
 
-            return component;
+            if(obj.has("extra")) {
+                using(getAsJsonArrayOrNull(obj.get("extra"))).notIfNull().run(
+                        a -> a.forEach(e -> component[0].addExtra(parseTextComponent(e, file, pattern, context)))
+                ).otherwise(v -> delegate.report("Expected array in 'extra'", obj.get("extra")));
+            }
+
+            return component[0];
         } else {
             throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know how to turn this into a text component", pattern, file);
         }
@@ -212,6 +249,40 @@ public class TextParser {
      */
     private TextParser() {
 
+    }
+
+    public static class RawNBTTextComponent extends TextComponent {
+        @NotNull
+        private final String path;
+        @NotNull
+        private final String key;
+        @NotNull
+        private final String toPrint;
+        private final boolean interpret;
+
+        RawNBTTextComponent(@NotNull String path, @NotNull String key, @NotNull String toPrint, boolean interpret) {
+            this.path = path;
+            this.key = key;
+            this.toPrint = toPrint;
+            this.interpret = interpret;
+        }
+
+        @Override
+        public boolean supportsProperties() {
+            return true;
+        }
+
+        @Override
+        public String toString(TextStyle parentStyle) {
+            String baseProperties = this.getBaseProperties(parentStyle);
+
+            String extra = "\"" + key + "\":\"" + CommandUtils.escape(toPrint) + "\"";
+            if(interpret) extra += ",\"interpret\":true";
+            return "{\"nbt\":\"" + CommandUtils.escape(path) + "\"," +
+                    extra +
+                    (baseProperties != null ? "," + baseProperties : "") +
+                    '}';
+        }
     }
 }
 
