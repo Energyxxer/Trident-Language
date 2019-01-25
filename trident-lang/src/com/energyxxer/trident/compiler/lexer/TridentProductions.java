@@ -1949,5 +1949,6 @@ public class TridentProductions {
 
     public void resetNestedStructures() {
         INTERPOLATION_VALUE.resetNested();
+        CLOSED_INTERPOLATION_VALUE.resetNested();
     }
 }

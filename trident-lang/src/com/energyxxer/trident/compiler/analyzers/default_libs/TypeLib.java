@@ -41,6 +41,6 @@ public class TypeLib implements DefaultLibraryProvider {
             }
             if(params[1].equals("real") && params[0] instanceof Integer) return true;
             return cls.isInstance(params[0]);
-        }, Object.class, String.class).createForInstance(null)));
+        }, Object.class, String.class).setNullable(0).createForInstance(null)));
     }
 }

@@ -1,10 +1,15 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.constructors;
 
+import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
+import com.energyxxer.commodore.item.Item;
+import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.textcomponents.*;
 import com.energyxxer.commodore.textcomponents.events.ClickEvent;
 import com.energyxxer.commodore.textcomponents.events.HoverEvent;
+import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
@@ -43,7 +48,8 @@ public class ObjectConstructors {
                 }), Double.class, Double.class).setNullable(0).setNullable(1)
                         .createForInstance(null));
 
-
+        constructors.put("block",ObjectConstructors::constructBlock);
+        constructors.put("item",ObjectConstructors::constructItem);
 
 
 
@@ -52,6 +58,40 @@ public class ObjectConstructors {
 
         constructors.put("text_component", ObjectConstructors::constructTextComponent);
         constructors.put("nbt", ObjectConstructors::constructNBT);
+    }
+
+    private static Block constructBlock(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file) {
+        CommandModule module = file.getCompiler().getModule();
+        if(params.length == 0 || params[0] == null) return new Block(module.minecraft.types.block.get("air"));
+        TridentUtil.ResourceLocation loc = assertOfType(params[0], patterns[0], file, TridentUtil.ResourceLocation.class);
+        Namespace ns = module.getNamespace(loc.namespace);
+
+        Type type;
+
+        if(loc.isTag) {
+            type = ns.tags.blockTags.get(loc.body);
+        } else {
+            type = ns.types.block.get(loc.body);
+        }
+
+        return new Block(type);
+    }
+
+    private static Item constructItem(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file) {
+        CommandModule module = file.getCompiler().getModule();
+        if(params.length == 0 || params[0] == null) return new Item(module.minecraft.types.item.get("air"));
+        TridentUtil.ResourceLocation loc = assertOfType(params[0], patterns[0], file, TridentUtil.ResourceLocation.class);
+        Namespace ns = module.getNamespace(loc.namespace);
+
+        Type type;
+
+        if(loc.isTag) {
+            type = ns.tags.itemTags.get(loc.body);
+        } else {
+            type = ns.types.item.get(loc.body);
+        }
+
+        return new Item(type);
     }
 
     private static NBTTag constructNBT(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file) {

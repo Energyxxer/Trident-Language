@@ -33,11 +33,7 @@ public interface OperatorHandler<A, B> {
             if(handler == null) {
                 throw new TridentException(TridentException.Source.TYPE_ERROR, "The operator " + operator.getSymbol() + " is not defined for types " + idA.replace("*", "null") + " and " + idB.replace("*", "null"), pattern, file);
             }
-            Object result = handler.perform(a, b, pattern, file);
-            if(result == null) {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "The operator " + operator.getSymbol() + " is not defined for types " + (a != null ? a.getClass().getSimpleName() : "null") + " and " + (b != null ? b.getClass().getSimpleName() : "null"), pattern, file);
-            }
-            return result;
+            return handler.perform(a, b, pattern, file);
         }
 
         static {
@@ -96,7 +92,7 @@ public interface OperatorHandler<A, B> {
             handlers.put("java.lang.String + java.lang.String", (OperatorHandler<String, String>) (s, str, pattern, compiler) -> s.concat(str));
             handlers.put("java.lang.String + *", (String a, Object b, TokenPattern<?> pattern, TridentFile file) -> {
                 String converted = InterpolationManager.cast(b, String.class, pattern, file);
-                return converted != null ? a + converted : null;
+                return a + converted;
             });
 
             handlers.put("* == *", (Object a, Object b, TokenPattern<?> pattern, TridentFile file) -> Objects.equals(a,b));

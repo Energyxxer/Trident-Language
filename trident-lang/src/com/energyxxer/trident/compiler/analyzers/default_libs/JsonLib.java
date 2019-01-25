@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.analyzers.default_libs;
 
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListType;
@@ -75,7 +76,7 @@ public class JsonLib implements DefaultLibraryProvider {
     }
 
     private JsonElement toJson(Object obj) {
-        if(obj instanceof String) return new JsonPrimitive(obj.toString());
+        if(obj instanceof String || obj instanceof TridentUtil.ResourceLocation) return new JsonPrimitive(obj.toString());
         if(obj instanceof Number) return new JsonPrimitive(((Number) obj));
         if(obj instanceof Boolean) return new JsonPrimitive((Boolean) obj);
         if(obj instanceof ListType) {
