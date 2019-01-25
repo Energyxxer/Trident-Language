@@ -13,6 +13,7 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.google.gson.*;
 
 import java.util.Map;
+import java.util.function.Function;
 
 @AnalyzerMember(key = "JSON")
 public class JsonLib implements DefaultLibraryProvider {
@@ -76,13 +77,17 @@ public class JsonLib implements DefaultLibraryProvider {
     }
 
     public static JsonElement toJson(Object obj) {
+        return toJson(obj, null);
+    }
+
+    public static JsonElement toJson(Object obj, Function<Object, JsonElement> filter) {
         if(obj instanceof String || obj instanceof TridentUtil.ResourceLocation) return new JsonPrimitive(obj.toString());
         if(obj instanceof Number) return new JsonPrimitive(((Number) obj));
         if(obj instanceof Boolean) return new JsonPrimitive((Boolean) obj);
         if(obj instanceof ListType) {
             JsonArray arr = new JsonArray();
             for(Object elem : ((ListType) obj)) {
-                JsonElement result = toJson(elem);
+                JsonElement result = toJson(elem, filter);
                 if(result != null) arr.add(result);
             }
             return arr;
@@ -90,11 +95,54 @@ public class JsonLib implements DefaultLibraryProvider {
         if(obj instanceof DictionaryObject) {
             JsonObject jObj = new JsonObject();
             for(Map.Entry<String, Symbol> elem : ((DictionaryObject) obj).entrySet()) {
-                JsonElement result = toJson(elem.getValue().getValue());
+                JsonElement result = toJson(elem.getValue().getValue(), filter);
                 if(result != null) jObj.add(elem.getKey(), result);
             }
             return jObj;
         }
-        return null;
+        return filter != null ? filter.apply(obj) : null;
+    }
+
+    public static class WrapperJsonElement<T> extends JsonElement {
+        private T wrapped;
+        private Class<T> cls;
+
+        public WrapperJsonElement(T wrapped, Class<T> cls) {
+            this.wrapped = wrapped;
+            this.cls = cls;
+        }
+
+        @Override
+        public JsonElement deepCopy() {
+            return new WrapperJsonElement<>(wrapped, cls);
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(wrapped);
+        }
+
+        @Override
+        public boolean isJsonPrimitive() {
+            return true;
+        }
+
+        @Override
+        public JsonPrimitive getAsJsonPrimitive() {
+            return new JsonPrimitive(String.valueOf(wrapped));
+        }
+
+        @Override
+        public String getAsString() {
+            return String.valueOf(wrapped);
+        }
+
+        public T getWrapped() {
+            return wrapped;
+        }
+
+        public Class<T> getContentClass() {
+            return cls;
+        }
     }
 }

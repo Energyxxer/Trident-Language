@@ -154,7 +154,7 @@ public class ObjectConstructors {
     private static TextComponent constructTextComponent(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file) {
         if (params.length == 0) return new StringTextComponent("");
         EObject.assertNotNull(params[0], patterns[0], file);
-        JsonElement asJson = JsonLib.toJson(params[0]);
+        JsonElement asJson = JsonLib.toJson(params[0], e -> e instanceof TextComponent ? new TextParser.TextComponentJsonElement(((TextComponent) e)) : null);
         if (asJson != null) {
             return TextParser.parseTextComponent(asJson, file, patterns[0], TextComponentContext.CHAT);
         } else {

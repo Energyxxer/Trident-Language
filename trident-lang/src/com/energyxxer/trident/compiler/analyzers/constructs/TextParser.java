@@ -13,6 +13,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.analyzers.default_libs.JsonLib;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.extensions.EObject;
@@ -52,6 +53,7 @@ public class TextParser {
     }
 
     public static TextComponent parseTextComponent(JsonElement elem, TridentFile file, TokenPattern<?> pattern, TextComponentContext context) {
+        if(elem instanceof TextComponentJsonElement) return ((TextComponentJsonElement) elem).getWrapped();
 
         boolean strict = file.getCompiler().getProperties().has("strict-text-components") && getAsBooleanOrNull(file.getCompiler().getProperties().get("strict-text-components"));
 
@@ -282,6 +284,12 @@ public class TextParser {
                     extra +
                     (baseProperties != null ? "," + baseProperties : "") +
                     '}';
+        }
+    }
+
+    public static class TextComponentJsonElement extends JsonLib.WrapperJsonElement<TextComponent> {
+        public TextComponentJsonElement(TextComponent wrapped) {
+            super(wrapped, TextComponent.class);
         }
     }
 }
