@@ -9,6 +9,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -53,7 +54,7 @@ public class AdvancementArgumentParser implements SimpleSelectorArgumentParser, 
         if(criterionList != null) {
             for(TokenPattern<?> rawArg : criterionList.getContents()) {
                 if(rawArg.getName().equals("CRITERION_ENTRY")) {
-                    String criterionName = rawArg.find("CRITERION_NAME").flatten(false);
+                    String criterionName = CommonParsers.parseIdentifierA(rawArg.find("CRITERION_NAME.IDENTIFIER_A"), file);
                     boolean value = rawArg.find("BOOLEAN").flatten(false).equals("true");
                     criteria.addCriteria(new AdvancementCriterionEntry(criterionName, value));
                 }

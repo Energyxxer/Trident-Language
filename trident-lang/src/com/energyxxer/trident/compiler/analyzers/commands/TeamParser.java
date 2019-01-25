@@ -10,6 +10,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
@@ -22,16 +23,16 @@ public class TeamParser implements CommandParser {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "ADD": {
-                TeamReference team = new TeamReference(inner.find("TEAM").flatten(false));
+                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), file));
                 TextComponent displayName = TextParser.parseTextComponent(inner.find("DISPLAY_NAME.TEXT_COMPONENT"), file);
                 return new TeamCreateCommand(team, displayName);
             }
             case "EMPTY": {
-                TeamReference team = new TeamReference(inner.find("TEAM").flatten(false));
+                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), file));
                 return new TeamEmptyCommand(team);
             }
             case "JOIN": {
-                TeamReference team = new TeamReference(inner.find("TEAM").flatten(false));
+                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), file));
                 Entity entity = EntityParser.parseEntity(inner.find("SUBJECT.ENTITY"), file);
                 return new TeamJoinCommand(team, entity);
             }
@@ -40,16 +41,16 @@ public class TeamParser implements CommandParser {
                 return new TeamLeaveCommand(entity);
             }
             case "LIST": {
-                TokenPattern<?> rawTeam = inner.find(".TEAM");
-                if(rawTeam != null) return new TeamListCommand(new TeamReference(rawTeam.flatten(false)));
+                TokenPattern<?> rawTeam = inner.find(".TEAM.IDENTIFIER_A");
+                if(rawTeam != null) return new TeamListCommand(new TeamReference(CommonParsers.parseIdentifierA(rawTeam, file)));
                 else return new TeamListCommand();
             }
             case "MODIFY": {
-                TeamReference team = new TeamReference(inner.find("TEAM").flatten(false));
+                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), file));
                 return parseModify(inner.find("TEAM_OPTIONS"), file, team);
             }
             case "REMOVE": {
-                TeamReference team = new TeamReference(inner.find("TEAM").flatten(false));
+                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), file));
                 return new TeamRemoveCommand(team);
             }
             default: {

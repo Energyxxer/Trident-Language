@@ -39,7 +39,7 @@ public class ScoreboardParser implements CommandParser {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "ADD": {
-                String objectiveName = inner.find("OBJECTIVE_NAME").flatten(false);
+                String objectiveName = CommonParsers.parseIdentifierA(inner.find("OBJECTIVE_NAME.IDENTIFIER_A"), file);
                 String criteria = inner.find("CRITERIA").flatten(false);
                 TextComponent displayName = TextParser.parseTextComponent(inner.find(".TEXT_COMPONENT"), file);
                 Objective objective;

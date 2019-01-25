@@ -111,7 +111,7 @@ public class TridentProductions {
         TEXT_COMPONENT = new LazyTokenStructureMatch("TEXT_COMPONENT");
         SELECTOR = new LazyTokenStructureMatch("SELECTOR");
         SELECTOR_ARGUMENT = new LazyTokenStructureMatch("SELECTOR_ARGUMENT");
-        PLAYER_NAME = choice(identifierB()).setName("PLAYER_NAME");
+        PLAYER_NAME = struct("PLAYER_NAME");
 
         RESOURCE_LOCATION_S = struct("RESOURCE_LOCATION");
         RESOURCE_LOCATION_TAGGED = struct("RESOURCE_LOCATION_TAGGED");
@@ -201,8 +201,10 @@ public class TridentProductions {
             LIST.add(group(brace("["), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")));
         }
 
-        STRING_LITERAL_OR_IDENTIFIER_A.add(string());
+        PLAYER_NAME.add(identifierB());
+
         STRING_LITERAL_OR_IDENTIFIER_A.add(identifierA());
+        STRING_LITERAL_OR_IDENTIFIER_A.add(string());
 
         RESOURCE_LOCATION_S.add(ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION"));
         RESOURCE_LOCATION_S.add(INTERPOLATION_BLOCK);
@@ -728,13 +730,13 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "team"),
                     choice(
-                            group(literal("add"), identifierA().setName("TEAM"), optional(TEXT_COMPONENT).setName("DISPLAY_NAME")).setName("ADD"),
-                            group(literal("empty"), identifierA().setName("TEAM")).setName("EMPTY"),
-                            group(literal("join"), identifierA().setName("TEAM"), optional(sameLine(), ENTITY).setName("SUBJECT")).setName("JOIN"),
+                            group(literal("add"), group(identifierA()).setName("TEAM"), optional(TEXT_COMPONENT).setName("DISPLAY_NAME")).setName("ADD"),
+                            group(literal("empty"), group(identifierA()).setName("TEAM")).setName("EMPTY"),
+                            group(literal("join"), group(identifierA()).setName("TEAM"), optional(sameLine(), ENTITY).setName("SUBJECT")).setName("JOIN"),
                             group(literal("leave"), ENTITY).setName("LEAVE"),
-                            group(literal("list"), optional(sameLine(), identifierA().setName("TEAM"))).setName("LIST"),
-                            group(literal("modify"), identifierA().setName("TEAM"), teamOptions).setName("MODIFY"),
-                            group(literal("remove"), identifierA().setName("TEAM")).setName("REMOVE")
+                            group(literal("list"), optional(sameLine(), group(identifierA()).setName("TEAM"))).setName("LIST"),
+                            group(literal("modify"), group(identifierA()).setName("TEAM"), teamOptions).setName("MODIFY"),
+                            group(literal("remove"), group(identifierA()).setName("TEAM")).setName("REMOVE")
                     )
             ));
         }
@@ -745,22 +747,22 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "scoreboard"),
                     choice(
                             group(literal("objectives"), choice(
-                                    group(literal("add"), identifierA().setName("OBJECTIVE_NAME"), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT)).setName("ADD"),
+                                    group(literal("add"), group(identifierA()).setName("OBJECTIVE_NAME"), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT)).setName("ADD"),
                                     literal("list").setName("LIST"),
-                                    group(literal("modify"), identifierA().setName("OBJECTIVE"), choice(
+                                    group(literal("modify"), group(identifierA()).setName("OBJECTIVE"), choice(
                                             group(literal("displayname"), TEXT_COMPONENT).setName("DISPLAYNAME"),
                                             group(literal("rendertype"), choice("integer", "hearts")).setName("RENDERTYPE")
                                     )).setName("MODIFY"),
-                                    group(literal("remove"), identifierA().setName("OBJECTIVE")).setName("REMOVE"),
-                                    group(literal("setdisplay"), identifierA().setName("DISPLAY_SLOT"), optional(sameLine(), identifierA().setName("OBJECTIVE")).setName("OBJECTIVE_CLAUSE")).setName("SETDISPLAY")
+                                    group(literal("remove"), group(identifierA()).setName("OBJECTIVE")).setName("REMOVE"),
+                                    group(literal("setdisplay"), group(identifierA()).setName("DISPLAY_SLOT"), optional(sameLine(), group(identifierA()).setName("OBJECTIVE")).setName("OBJECTIVE_CLAUSE")).setName("SETDISPLAY")
                             )).setName("OBJECTIVES"),
                             group(literal("players"), choice(
-                                    group(choice("add", "remove", "set"), ENTITY, identifierA().setName("OBJECTIVE"), integer()).setName("CHANGE"),
-                                    group(literal("enable"), ENTITY, identifierA().setName("OBJECTIVE")).setName("ENABLE"),
-                                    group(literal("get"), ENTITY, identifierA().setName("OBJECTIVE")).setName("GET"),
+                                    group(choice("add", "remove", "set"), ENTITY, group(identifierA()).setName("OBJECTIVE"), integer()).setName("CHANGE"),
+                                    group(literal("enable"), ENTITY, group(identifierA()).setName("OBJECTIVE")).setName("ENABLE"),
+                                    group(literal("get"), ENTITY, group(identifierA()).setName("OBJECTIVE")).setName("GET"),
                                     group(literal("list"), optional(sameLine(), ENTITY)).setName("LIST"),
-                                    group(literal("operation"), group(ENTITY).setName("TARGET"), identifierA().setName("TARGET_OBJECTIVE"), ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), group(ENTITY).setName("SOURCE"), identifierA().setName("SOURCE_OBJECTIVE")).setName("OPERATION"),
-                                    group(literal("reset"), choice(ENTITY, symbol("*")).setName("TARGET"), optional(sameLine(), identifierA().setName("OBJECTIVE")).setName("OBJECTIVE_CLAUSE")).setName("RESET")
+                                    group(literal("operation"), group(ENTITY).setName("TARGET"), group(identifierA()).setName("TARGET_OBJECTIVE"), ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), group(ENTITY).setName("SOURCE"), group(identifierA()).setName("SOURCE_OBJECTIVE")).setName("OPERATION"),
+                                    group(literal("reset"), choice(ENTITY, symbol("*")).setName("TARGET"), optional(sameLine(), group(identifierA()).setName("OBJECTIVE")).setName("OBJECTIVE_CLAUSE")).setName("RESET")
                             )).setName("PLAYERS")
                     )
             ));
@@ -936,9 +938,9 @@ public class TridentProductions {
                     choice(
                             group(literal("entity"), ENTITY).setName("ENTITY_CONDITION"),
                             group(literal("block"), COORDINATE_SET, BLOCK_TAGGED).setName("BLOCK_CONDITION"),
-                            group(literal("score"), ENTITY, identifierA().setName("OBJECTIVE"), choice(
+                            group(literal("score"), ENTITY, group(identifierA()).setName("OBJECTIVE"), choice(
                                     matchItem(TridentTokens.SYNTACTIC_SUGAR, "isset").setName("ISSET"),
-                                    group(choice(symbol("<"), symbol("<="), symbol("="), symbol(">="), symbol(">")).setName("OPERATOR"), ENTITY, identifierA().setName("OBJECTIVE")).setName("COMPARISON"),
+                                    group(choice(symbol("<"), symbol("<="), symbol("="), symbol(">="), symbol(">")).setName("OPERATOR"), ENTITY, group(identifierA()).setName("OBJECTIVE")).setName("COMPARISON"),
                                     group(literal("matches"), INTEGER_NUMBER_RANGE).setName("MATCHES"))
                             ).setName("SCORE_CONDITION"),
                             group(literal("blocks"),
@@ -989,7 +991,7 @@ public class TridentProductions {
                             group(literal("block"), COORDINATE_SET, NBT_PATH, ofType(NUMERIC_DATA_TYPE).setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_BLOCK"),
                             group(literal("bossbar"), RESOURCE_LOCATION_S, choice("max", "value").setName("BOSSBAR_VARIABLE")).setName("STORE_BOSSBAR"),
                             group(literal("entity"), ENTITY, NBT_PATH, ofType(NUMERIC_DATA_TYPE).setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_ENTITY"),
-                            group(literal("score"), ENTITY, identifierA().setName("OBJECTIVE")).setName("STORE_SCORE")
+                            group(literal("score"), ENTITY, group(identifierA()).setName("OBJECTIVE")).setName("STORE_SCORE")
                     )
             ));
         }
@@ -1342,7 +1344,7 @@ public class TridentProductions {
                                     ofType(BOOLEAN).setName("BOOLEAN"),
                                     group(
                                             brace("{"),
-                                            list(group(identifierA().setName("CRITERION_NAME"), equals(), ofType(BOOLEAN).setName("BOOLEAN")).setName("CRITERION_ENTRY"), comma()).setOptional().setName("CRITERION_LIST"),
+                                            list(group(group(identifierA()).setName("CRITERION_NAME"), equals(), ofType(BOOLEAN).setName("BOOLEAN")).setName("CRITERION_ENTRY"), comma()).setOptional().setName("CRITERION_LIST"),
                                             brace("}")
                                     ).setName("CRITERION_GROUP")
                             ).setName("ADVANCEMENT_ENTRY_VALUE")
@@ -1363,7 +1365,7 @@ public class TridentProductions {
             LazyTokenPatternMatch scoreArgumentBlock = group(
                     brace("{"),
                     list(group(
-                            identifierA().setName("OBJECTIVE_NAME"),
+                            group(identifierA()).setName("OBJECTIVE_NAME"),
                             equals(),
                             choice(matchItem(SYNTACTIC_SUGAR, "isset").setName("ISSET"), INTEGER_NUMBER_RANGE).setName("SCORE_VALUE")
                     ).setName("SCORE_ENTRY"), comma()).setOptional().setName("SCORE_LIST"),
@@ -1626,7 +1628,7 @@ public class TridentProductions {
         LazyTokenPatternMatch scale = group(symbol("*"), real()).setOptional().setName("SCALE");
         LazyTokenPatternMatch typeCast = group(brace("("), ofType(NUMERIC_DATA_TYPE).setName("NUMERIC_DATA_TYPE"), brace(")")).setOptional().setName("TYPE_CAST");
 
-        LazyTokenGroupMatch scoreHead = group(ofType(ARROW), identifierA().setName("OBJECTIVE"), scale).setName("SCORE_POINTER_HEAD");
+        LazyTokenGroupMatch scoreHead = group(ofType(ARROW), group(identifierA()).setName("OBJECTIVE"), scale).setName("SCORE_POINTER_HEAD");
         LazyTokenGroupMatch nbtHead = group(dot(), NBT_PATH, scale, typeCast).setName("NBT_POINTER_HEAD");
 
         LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead).setName("POINTER_HEAD");
@@ -1681,8 +1683,7 @@ public class TridentProductions {
             INSTRUCTION.add(
                     group(keyword("define").setName("INSTRUCTION_KEYWORD"),
                             choice(
-                                    group(literal("objective"), identifierA().setName("OBJECTIVE_NAME"), optional(sameLine(), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE"),
-                                    group(literal("local").setOptional(), literal("databank"), identifierA().setName("DATABANK_NAME"), nbtPointer).setName("DEFINE_DATABANK"),
+                                    group(literal("objective"), group(identifierA()).setName("OBJECTIVE_NAME"), optional(sameLine(), group(identifierB()).setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE"),
                                     group(literal("local").setOptional(), literal("entity"), choice(identifierX(), literal("default")).setName("ENTITY_NAME"), choice(symbol("*"), ENTITY_ID_TAGGED).setName("ENTITY_BASE"), entityBody).setName("DEFINE_ENTITY"),
                                     group(literal("local").setOptional(), literal("item"), choice(identifierX(), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM"),
                                     group(literal("function"), INNER_FUNCTION).setName("DEFINE_FUNCTION")
@@ -1878,12 +1879,12 @@ public class TridentProductions {
         return ofType(LINE_GLUE).setName("LINE_GLUE");
     }
 
-    static LazyTokenItemMatch identifierA() {
-        return ofType(IDENTIFIER_TYPE_A).setName("IDENTIFIER_A");
+    LazyTokenStructureMatch identifierA() {
+        return choice(string(), ofType(IDENTIFIER_TYPE_A).setName("RAW_IDENTIFIER_A")).setName("IDENTIFIER_A");
     }
 
-    static LazyTokenPatternMatch identifierB() {
-        return ofType(IDENTIFIER_TYPE_B).setName("IDENTIFIER_B");
+    LazyTokenStructureMatch identifierB() {
+        return choice(string(), ofType(IDENTIFIER_TYPE_B).setName("RAW_IDENTIFIER_B")).setName("IDENTIFIER_B");
     }
 
     static LazyTokenPatternMatch identifierC() {

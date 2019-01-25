@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.constructs;
 
+import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.extensions.EObject;
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.block.Block;
@@ -351,7 +352,10 @@ public class CommonParsers {
     }
 
     public static Objective parseObjective(TokenPattern<?> pattern, TridentFile file) {
-        String name = pattern.flatten(true);
+        if(pattern == null) return null;
+        TokenPattern<?> inner = pattern.find("IDENTIFIER_A");
+        if(inner == null) inner = pattern;
+        String name = parseIdentifierA(inner, file);
         if(!file.getCompiler().getModule().getObjectiveManager().contains(name)) {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Undefined objective name '" + name + "'", pattern));
             return file.getCompiler().getModule().getObjectiveManager().create(name, true);
@@ -370,6 +374,8 @@ public class CommonParsers {
             case "INTERPOLATION_BLOCK":
                 return parseStringLiteral(pattern, file);
             case "IDENTIFIER_A":
+                return parseIdentifierA(pattern, file); //should never have a string literal inside because of
+                                                    // the order of the entries in the grammar but just to be safe...
             case "IDENTIFIER_D":
                 return pattern.flatten(false);
             default:
@@ -526,6 +532,7 @@ public class CommonParsers {
     }
 
     public static String parseStringLiteral(TokenPattern<?> pattern, TridentFile file) {
+        if(pattern == null) return null;
         switch(pattern.getName()) {
             case "STRING": return parseStringLiteral(((TokenStructure) pattern).getContents(), file);
             case "STRING_LITERAL": return CommandUtils.parseQuotedString(pattern.flatten(false));
@@ -535,6 +542,44 @@ public class CommonParsers {
                 return result;
             }
             case "RAW_STRING": return pattern.flatten(false);
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
+            }
+        }
+    }
+
+    public static String parseIdentifierA(TokenPattern<?> pattern, TridentFile file) {
+        if(pattern == null) return null;
+        switch(pattern.getName()) {
+            case "IDENTIFIER_A": return parseIdentifierA(((TokenStructure)pattern).getContents(), file);
+            case "RAW_IDENTIFIER_A": return pattern.flatten(false);
+            case "STRING": {
+                String result = parseStringLiteral(pattern, file);
+                if(result.matches(TridentLexerProfile.IDENTIFIER_A_REGEX)) {
+                    return result;
+                } else {
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "The string '" + result + "' is not a valid argument here", pattern, file);
+                }
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
+            }
+        }
+    }
+
+    public static String parseIdentifierB(TokenPattern<?> pattern, TridentFile file) {
+        if(pattern == null) return null;
+        switch(pattern.getName()) {
+            case "IDENTIFIER_B": return parseIdentifierB(((TokenStructure)pattern).getContents(), file);
+            case "RAW_IDENTIFIER_B": return pattern.flatten(false);
+            case "STRING": {
+                String result = parseStringLiteral(pattern, file);
+                if(result.matches(TridentLexerProfile.IDENTIFIER_B_REGEX)) {
+                    return result;
+                } else {
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "The string '" + result + "' is not a valid argument here", pattern, file);
+                }
+            }
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
             }

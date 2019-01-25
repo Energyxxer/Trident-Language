@@ -24,6 +24,11 @@ public class TridentLexerProfile extends LexerProfile {
 
     public static final HashMap<TokenType, LexerContext> usefulContexts = new HashMap<>();
 
+    public static final String IDENTIFIER_A_REGEX = "[a-zA-Z0-9._\\-+]+";
+    public static final String IDENTIFIER_B_REGEX = "[^@\\s]\\S*";
+    public static final String IDENTIFIER_C_REGEX = "\\S+";
+    public static final String IDENTIFIER_D_REGEX = "[a-zA-Z0-9_\\-+]+";
+
     static {
         usefulContexts.put(RESOURCE_LOCATION, new ResourceLocationContext("[a-z0-9_\\.-]","[a-z0-9_/\\.-]", RESOURCE_LOCATION));
         usefulContexts.put(CASE_INSENSITIVE_RESOURCE_LOCATION, new ResourceLocationContext("[a-zA-Z0-9_\\.-]","[a-zA-Z0-9_/\\.-]", CASE_INSENSITIVE_RESOURCE_LOCATION));
@@ -416,7 +421,7 @@ public class TridentLexerProfile extends LexerProfile {
         });
 
         contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_A, "[a-zA-Z0-9._\\-+]"));
-        contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_B, "[^@\\$\\s]\\S*"));
+        contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_B, "\\S*", "[^@\\$\\s]"));
         contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_C, "\\S*"));
         contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_D, "[a-zA-Z0-9_\\-+]"));
 

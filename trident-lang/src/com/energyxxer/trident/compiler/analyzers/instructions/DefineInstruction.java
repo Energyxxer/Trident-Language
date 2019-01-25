@@ -5,6 +5,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -36,13 +37,13 @@ public class DefineInstruction implements Instruction {
     }
 
     private void defineObjective(TokenPattern<?> pattern, TridentFile file) {
-        String objectiveName = pattern.find("OBJECTIVE_NAME").flatten(false);
+        String objectiveName = CommonParsers.parseIdentifierA(pattern.find("OBJECTIVE_NAME.IDENTIFIER_A"), file);
         String criteria = "dummy";
         TextComponent displayName = null;
 
         TokenPattern<?> sub = pattern.find("");
         if(sub != null) {
-            criteria = sub.find("CRITERIA").flatten(false);
+            criteria = CommonParsers.parseIdentifierB(sub.find("CRITERIA"), file);
             TokenPattern<?> rawDisplayName = sub.find(".TEXT_COMPONENT");
             if(rawDisplayName != null) {
                 displayName = TextParser.parseTextComponent(rawDisplayName, file);

@@ -65,22 +65,23 @@ public class EntityParser {
         switch(inner.getName()) {
             case "SELECTOR":
                 return parseSelector(inner, file);
-            case "PLAYER_NAME": return new PlayerName(inner.flatten(false));
+            case "PLAYER_NAME": return new PlayerName(CommonParsers.parseIdentifierB(inner, file));
             case "ENTITY_VARIABLE": {
-                Entity symbol = InterpolationManager.parse(inner.find("INTERPOLATION_BLOCK"), file, Entity.class);
-                EObject.assertNotNull(symbol, inner.find("INTERPOLATION_BLOCK"), file);
+                Object symbol = InterpolationManager.parse(inner.find("INTERPOLATION_BLOCK"), file, Entity.class, String.class);
+                Entity entity = symbol instanceof Entity ? (Entity) symbol : new PlayerName(((String) symbol));
+                EObject.assertNotNull(entity, inner.find("INTERPOLATION_BLOCK"), file);
                 if(inner.find("APPENDED_ARGUMENTS") != null) {
-                    if(!(symbol instanceof Selector)) {
+                    if(!(entity instanceof Selector)) {
                         throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The entity contained in this variable does not support selector arguments", inner, file);
                     }
 
-                    Selector copy = ((Selector) symbol).clone();
+                    Selector copy = ((Selector) entity).clone();
 
                     TokenList argList = (TokenList) inner.find("APPENDED_ARGUMENTS.SELECTOR_ARGUMENT_LIST");
                     if(argList != null) parseSelectorArguments(argList, copy, pattern, file);
 
                     return copy;
-                } else return symbol;
+                } else return entity;
             }
         }
         Debug.log(pattern);

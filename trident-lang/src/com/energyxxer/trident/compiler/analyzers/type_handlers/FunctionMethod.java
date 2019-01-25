@@ -35,6 +35,8 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
 
         try {
             TridentFile.resolveInnerFileIntoSection(functionPattern, file, file.getFunction());
+        } catch(StackOverflowError x) {
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Stack Overflow Error", pattern, file);
         } catch(ReturnException x) {
             return x.getValue();
         } finally {

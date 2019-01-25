@@ -58,6 +58,9 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
 
         if(entries.isEmpty()) throw new IllegalStateException("Cannot attempt match; TokenStructureMatch '" + this.name + "' is empty.");
         for (LazyTokenPatternMatch entry : entries) {
+            if(entry == null) {
+                Debug.log("noo");
+            }
             lexer.setCurrentIndex(index);
 
             MethodInvocation newInvoc = new MethodInvocation(entry, "match", new String[]{"int"}, new Object[]{index});
@@ -117,11 +120,11 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
 
     public String deepToString(int levels) {
         if(levels <= 0) return toString();
-        String s = ((optional) ? "[" : "<") + "-";
+        StringBuilder s = new StringBuilder(((optional) ? "[" : "<") + "-");
         for (int i = 0; i < entries.size(); i++) {
-            s += entries.get(i).deepToString(levels-1);
+            s.append(entries.get(i).deepToString(levels - 1));
             if (i < entries.size() - 1) {
-                s += "\n OR ";
+                s.append("\n OR ");
             }
         }
         return s + "-" + ((optional) ? "]" : ">");
