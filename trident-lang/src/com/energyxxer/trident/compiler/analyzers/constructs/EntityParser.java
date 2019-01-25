@@ -65,7 +65,7 @@ public class EntityParser {
         switch(inner.getName()) {
             case "SELECTOR":
                 return parseSelector(inner, file);
-            case "PLAYER_NAME": return new PlayerName(CommonParsers.parseIdentifierB(inner, file));
+            case "PLAYER_NAME": return new PlayerName(CommonParsers.parseIdentifierB(inner.find("IDENTIFIER_B"), file));
             case "ENTITY_VARIABLE": {
                 Object symbol = InterpolationManager.parse(inner.find("INTERPOLATION_BLOCK"), file, Entity.class, String.class);
                 Entity entity = symbol instanceof Entity ? (Entity) symbol : new PlayerName(((String) symbol));

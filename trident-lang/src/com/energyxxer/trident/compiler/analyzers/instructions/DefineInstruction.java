@@ -43,7 +43,7 @@ public class DefineInstruction implements Instruction {
 
         TokenPattern<?> sub = pattern.find("");
         if(sub != null) {
-            criteria = CommonParsers.parseIdentifierB(sub.find("CRITERIA"), file);
+            criteria = CommonParsers.parseIdentifierB(sub.find("CRITERIA.IDENTIFIER_B"), file);
             TokenPattern<?> rawDisplayName = sub.find(".TEXT_COMPONENT");
             if(rawDisplayName != null) {
                 displayName = TextParser.parseTextComponent(rawDisplayName, file);

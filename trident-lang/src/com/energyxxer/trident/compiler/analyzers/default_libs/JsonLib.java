@@ -75,7 +75,7 @@ public class JsonLib implements DefaultLibraryProvider {
         } else throw new IllegalArgumentException("Unknown json type: " + elem);
     }
 
-    private JsonElement toJson(Object obj) {
+    public static JsonElement toJson(Object obj) {
         if(obj instanceof String || obj instanceof TridentUtil.ResourceLocation) return new JsonPrimitive(obj.toString());
         if(obj instanceof Number) return new JsonPrimitive(((Number) obj));
         if(obj instanceof Boolean) return new JsonPrimitive((Boolean) obj);

@@ -36,7 +36,11 @@ public class TextParser {
             }
             case "JSON_ROOT":
             case "JSON_ELEMENT": {
-                return parseTextComponent(JsonParser.parseJson(pattern, file), file, pattern, TextComponentContext.CHAT);
+                try {
+                    return parseTextComponent(JsonParser.parseJson(pattern, file), file, pattern, TextComponentContext.CHAT);
+                } finally {
+                    JsonParser.clearCache();
+                }
             }
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown text component production: '" + pattern.getName() + "'", pattern, file);
