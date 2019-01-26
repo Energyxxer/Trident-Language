@@ -94,7 +94,7 @@ public class TridentProductions {
     public final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
     public final LazyTokenStructureMatch INTERPOLATION_BLOCK;
     public final LazyTokenStructureMatch INTERPOLATION_VALUE;
-    public final LazyTokenStructureMatch CLOSED_INTERPOLATION_VALUE;
+    public final LazyTokenStructureMatch ROOT_INTERPOLATION_VALUE;
     public final LazyTokenStructureMatch LINE_SAFE_INTERPOLATION_VALUE;
     public final LazyTokenStructureMatch POINTER;
 
@@ -128,33 +128,43 @@ public class TridentProductions {
             ).setName("INTERPOLATION_BLOCK");
 
             INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
-            CLOSED_INTERPOLATION_VALUE = new LazyTokenStructureMatch("CLOSED_INTERPOLATION_VALUE");
+            ROOT_INTERPOLATION_VALUE = new LazyTokenStructureMatch("ROOT_INTERPOLATION_VALUE");
             LINE_SAFE_INTERPOLATION_VALUE = new LazyTokenStructureMatch("LINE_SAFE_INTERPOLATION_VALUE");
 
-            CLOSED_INTERPOLATION_VALUE.add(identifierX().setName("VARIABLE_NAME"));
-            CLOSED_INTERPOLATION_VALUE.add(ofType(REAL_NUMBER).setName("RAW_REAL"));
-            CLOSED_INTERPOLATION_VALUE.add(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"));
-            CLOSED_INTERPOLATION_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
-            CLOSED_INTERPOLATION_VALUE.add(ofType(STRING_LITERAL).setName("STRING_LITERAL"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("entity"), brace("<"), ENTITY, brace(">")).setName("WRAPPED_ENTITY"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("block"), brace("<"), BLOCK_TAGGED, brace(">")).setName("WRAPPED_BLOCK"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("item"), brace("<"), ITEM_TAGGED, brace(">")).setName("WRAPPED_ITEM"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("text_component"), brace("<"), TEXT_COMPONENT, brace(">")).setName("WRAPPED_TEXT_COMPONENT"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("nbt"), brace("<"), NBT_COMPOUND, brace(">")).setName("WRAPPED_NBT"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("nbt_value"), brace("<"), NBT_VALUE, brace(">")).setName("WRAPPED_NBT_VALUE"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("nbt_path"), brace("<"), NBT_PATH, brace(">")).setName("WRAPPED_NBT_PATH"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("coordinates"), brace("<"), COORDINATE_SET, brace(">")).setName("WRAPPED_COORDINATE"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("int_range"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("real_range"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("resource"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
-            CLOSED_INTERPOLATION_VALUE.add(DICTIONARY);
-            CLOSED_INTERPOLATION_VALUE.add(LIST);
-            CLOSED_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
-            CLOSED_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("function"), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
-            INTERPOLATION_VALUE.add(CLOSED_INTERPOLATION_VALUE);
+            ROOT_INTERPOLATION_VALUE.add(identifierX().setName("VARIABLE_NAME"));
+            ROOT_INTERPOLATION_VALUE.add(ofType(REAL_NUMBER).setName("RAW_REAL"));
+            ROOT_INTERPOLATION_VALUE.add(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"));
+            ROOT_INTERPOLATION_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
+            ROOT_INTERPOLATION_VALUE.add(ofType(STRING_LITERAL).setName("STRING_LITERAL"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("entity"), brace("<"), ENTITY, brace(">")).setName("WRAPPED_ENTITY"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("block"), brace("<"), BLOCK_TAGGED, brace(">")).setName("WRAPPED_BLOCK"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("item"), brace("<"), ITEM_TAGGED, brace(">")).setName("WRAPPED_ITEM"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("text_component"), brace("<"), TEXT_COMPONENT, brace(">")).setName("WRAPPED_TEXT_COMPONENT"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt"), brace("<"), NBT_COMPOUND, brace(">")).setName("WRAPPED_NBT"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_value"), brace("<"), NBT_VALUE, brace(">")).setName("WRAPPED_NBT_VALUE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_path"), brace("<"), NBT_PATH, brace(">")).setName("WRAPPED_NBT_PATH"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("coordinates"), brace("<"), COORDINATE_SET, brace(">")).setName("WRAPPED_COORDINATE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("int_range"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("real_range"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("resource"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
+            ROOT_INTERPOLATION_VALUE.add(DICTIONARY);
+            ROOT_INTERPOLATION_VALUE.add(LIST);
+            ROOT_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
+            ROOT_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("function"), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("new"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
-            CLOSED_INTERPOLATION_VALUE.add(group(brace("("), choice(
+            LazyTokenStructureMatch MEMBER_ACCESS = choice(
+                    group(dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER_KEY"),
+                    group(brace("["), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("MEMBER_INDEX"),
+                    group(brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL")
+            ).setName("MEMBER_ACCESS");
+
+            LazyTokenGroupMatch INTERPOLATION_CHAIN = group(ROOT_INTERPOLATION_VALUE, list(MEMBER_ACCESS).setOptional().setName("MEMBER_ACCESSES")).setName("INTERPOLATION_CHAIN");
+
+            LazyTokenStructureMatch MID_INTERPOLATION_VALUE = struct("MID_INTERPOLATION_VALUE");
+            MID_INTERPOLATION_VALUE.add(INTERPOLATION_CHAIN);
+            MID_INTERPOLATION_VALUE.add(group(brace("("), choice(
                     "int",
                     "real",
                     "boolean",
@@ -182,18 +192,10 @@ public class TridentProductions {
                     "int_range",
                     "real_range",
                     "resource"
-            ).setName("TARGET_TYPE"), brace(")"), INTERPOLATION_VALUE).setName("CAST"));
-            CLOSED_INTERPOLATION_VALUE.add(group(literal("new"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
+            ).setName("TARGET_TYPE"), brace(")"), INTERPOLATION_CHAIN).setName("CAST"));
 
-            CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER"));
-            CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("["), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("INDEXED_MEMBER"));
-
-            CLOSED_INTERPOLATION_VALUE.addNested(group(INTERPOLATION_VALUE, brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL"));
-
-
-            LINE_SAFE_INTERPOLATION_VALUE.add(CLOSED_INTERPOLATION_VALUE);
-            LINE_SAFE_INTERPOLATION_VALUE.add(list(CLOSED_INTERPOLATION_VALUE, group(sameLine(), ofType(COMPILER_OPERATOR))).setName("EXPRESSION"));
-            INTERPOLATION_VALUE.addNested(list(INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR)).setName("EXPRESSION"));
+            INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR)).setName("EXPRESSION"));
+            LINE_SAFE_INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, group(sameLine(), ofType(COMPILER_OPERATOR))).setName("EXPRESSION"));
 
             INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), brace("{").setName("INTERPOLATION_BRACE"), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE")).setName("INTERPOLATION_WRAPPER"));
 
@@ -1946,10 +1948,5 @@ public class TridentProductions {
 
     LazyTokenItemMatch identifierX() {
         return ofType(IDENTIFIER_TYPE_X).setName("IDENTIFIER");
-    }
-
-    public void resetNestedStructures() {
-        INTERPOLATION_VALUE.resetNested();
-        CLOSED_INTERPOLATION_VALUE.resetNested();
     }
 }

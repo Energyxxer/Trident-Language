@@ -38,7 +38,7 @@ public class Project {
 		return Commons.getDefaultModule();
 	});
 
-	private final Lazy<TridentProductions> productions = new Lazy<>(() -> new TridentProductions(module.getValue()), TridentProductions::resetNestedStructures);
+	private final Lazy<TridentProductions> productions = new Lazy<>(() -> new TridentProductions(module.getValue()));
 
 	//region a
 

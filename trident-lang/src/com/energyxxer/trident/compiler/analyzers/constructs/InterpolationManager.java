@@ -68,10 +68,9 @@ public class InterpolationManager {
                 return parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
             }
             case "LINE_SAFE_INTERPOLATION_VALUE":
-            case "CLOSED_INTERPOLATION_VALUE": {
-                return parse(((TokenStructure) pattern).getContents(), file, keepSymbol);
-            }
-            case "INTERPOLATION_VALUE": {
+            case "INTERPOLATION_VALUE":
+            case "MID_INTERPOLATION_VALUE":
+            case "ROOT_INTERPOLATION_VALUE": {
                 return parse(((TokenStructure) pattern).getContents(), file, keepSymbol);
             }
             case "VARIABLE_NAME": {
@@ -181,6 +180,23 @@ public class InterpolationManager {
             case "NULL_VALUE": {
                 return null;
             }
+            case "INTERPOLATION_CHAIN": {
+                TokenPattern<?> toBlame = pattern.find("ROOT_INTERPOLATION_VALUE");
+                TokenList accessors = (TokenList) pattern.find("MEMBER_ACCESSES");
+                Object parent = parse(toBlame, file, keepSymbol && accessors == null);
+
+                if(accessors != null) {
+                    int i = accessors.getContents().length-1;
+                    for(TokenPattern<?> accessor : accessors.getContents()) {
+                        EObject.assertNotNull(parent, toBlame, file);
+                        parent = parseAccessor(parent, toBlame, accessor, file, keepSymbol && i == 0);
+                        toBlame = accessor;
+                        i--;
+                    }
+                }
+
+                return parent;
+            }
             case "MEMBER": {
                 Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file);
                 EObject.assertNotNull(parent, pattern.find("INTERPOLATION_VALUE"), file);
@@ -253,7 +269,7 @@ public class InterpolationManager {
                 return parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
             }
             case "CAST": {
-                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file);
+                Object parent = parse(pattern.find("INTERPOLATION_CHAIN"), file);
                 Class newType = VariableTypeHandler.Static.getClassForShorthand(pattern.find("TARGET_TYPE").flatten(false));
                 return cast(parent, newType, pattern, file);
             }
@@ -273,7 +289,7 @@ public class InterpolationManager {
                     for(int i = 0; i < contents.size(); i++) {
                         if((i & 1) == 0) {
                             //Operand
-                            Object value = parse(contents.get(i), file, keepSymbol);
+                            Object value = parse(contents.get(i), file);
                             flatValues.add(value);
                         } else {
                             //Operator
@@ -328,6 +344,57 @@ public class InterpolationManager {
             }
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object parseAccessor(Object parent, TokenPattern<?> parentPattern, TokenPattern<?> accessorPattern, TridentFile file, boolean keepSymbol) {
+        if(accessorPattern.getName().equals("MEMBER_ACCESS")) return parseAccessor(parent, parentPattern, ((TokenStructure) accessorPattern).getContents(), file, keepSymbol);
+        EObject.assertNotNull(parent, parentPattern, file);
+        switch(accessorPattern.getName()) {
+            case "MEMBER_KEY": {
+                String memberName = accessorPattern.find("MEMBER_NAME").flatten(false);
+                VariableTypeHandler handler = getHandlerForObject(parent, parentPattern, file);
+                try {
+                    return sanitizeObject(handler.getMember(parent, memberName, accessorPattern, file, keepSymbol));
+                } catch(MemberNotFoundException x) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member '" + memberName + "' of " + parent.getClass().getSimpleName(), accessorPattern, file);
+                }
+            }
+            case "MEMBER_INDEX": {
+                Object index = parse(accessorPattern.find("INDEX.INTERPOLATION_VALUE"), file);
+                VariableTypeHandler handler = getHandlerForObject(parent, parentPattern, file);
+                try {
+                    return sanitizeObject(handler.getIndexer(parent, index, accessorPattern, file, keepSymbol));
+                } catch(MemberNotFoundException x) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member for index " + index + " of " + parent.getClass().getSimpleName(), accessorPattern, file);
+                }
+            }
+            case "METHOD_CALL": {
+                if(parent instanceof VariableMethod) {
+
+                    ArrayList<Object> params = new ArrayList<>();
+                    ArrayList<TokenPattern<?>> patterns = new ArrayList<>();
+
+                    TokenList paramList = (TokenList) accessorPattern.find("PARAMETERS");
+
+                    if(paramList != null) {
+                        for(TokenPattern<?> rawParam : paramList.getContents()) {
+                            if(rawParam.getName().equals("INTERPOLATION_VALUE")) {
+                                params.add(parse(rawParam, file, keepSymbol));
+                                patterns.add(rawParam);
+                            }
+                        }
+                    }
+
+                    return sanitizeObject(((VariableMethod) parent).call(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), accessorPattern, file));
+                } else {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "This is not a method", parentPattern, file);
+                }
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + accessorPattern.getName() + "'", accessorPattern, file);
             }
         }
     }
