@@ -192,7 +192,7 @@ public class TridentProductions {
                     "int_range",
                     "real_range",
                     "resource"
-            ).setName("TARGET_TYPE"), brace(")"), INTERPOLATION_CHAIN).setName("CAST"));
+            ).setName("TARGET_TYPE"), brace(")"), MID_INTERPOLATION_VALUE).setName("CAST"));
 
             INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR)).setName("EXPRESSION"));
             LINE_SAFE_INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, group(sameLine(), ofType(COMPILER_OPERATOR))).setName("EXPRESSION"));
