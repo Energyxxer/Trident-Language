@@ -201,13 +201,13 @@ public class TextParser {
                             .run(a -> {
                         HoverEvent.Action action = HoverEvent.Action.valueOf(a.toUpperCase());
                         using(e.get("value")).notIfNull().run(v -> {
-                            String value;
                             if(v.isJsonPrimitive() && v.getAsJsonPrimitive().isString()) {
-                                value = getAsStringOrNull(v);
+                                String value = getAsStringOrNull(v);
+                                component[0].addEvent(new HoverEvent(action, value));
                             } else {
-                                value = (parseTextComponent(v, file, pattern, TextComponentContext.TOOLTIP)).toString();
+                                TextComponent value = (parseTextComponent(v, file, pattern, TextComponentContext.TOOLTIP));
+                                component[0].addEvent(new HoverEvent(action, value));
                             }
-                            component[0].addEvent(new HoverEvent(action, value));
                         }).otherwise(v -> delegate.report("Missing hover event value", e));
                     }).otherwise(a -> delegate.report("Missing hover event action", e));
                 });
