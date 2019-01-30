@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.execute.EntityAnchor;
 import com.energyxxer.commodore.functionlogic.commands.teleport.TeleportCommand;
@@ -16,6 +17,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "teleport")
@@ -37,7 +39,14 @@ public class TeleportParser implements CommandParser {
                 victim = first;
                 TokenPattern<?> rawDestinationEntity = rawDestination.find("ENTITY");
                 if(rawDestinationEntity != null) {
-                    destination = new EntityDestination(EntityParser.parseEntity(rawDestinationEntity, file));
+                    try {
+                        destination = new EntityDestination(EntityParser.parseEntity(rawDestinationEntity, file));
+                    } catch(CommodoreException x) {
+                        TridentException.handleCommodoreException(x, pattern, file)
+                                .map(CommodoreException.Source.ENTITY_ERROR, rawDestinationEntity)
+                                .invokeThrow();
+                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", rawDestinationEntity, file);
+                    }
                 } else {
                     destination = new BlockDestination(CoordinateParser.parse(rawDestination.find(".COORDINATE_SET"), file));
                     TokenPattern<?> rotationOption = rawDestination.find("ROTATION_OPTION");
@@ -52,16 +61,22 @@ public class TeleportParser implements CommandParser {
                                 } else {
                                     Entity facingEntity = EntityParser.parseEntity(rotationOption.find("CHOICE..ENTITY"), file);
                                     TokenPattern<?> rawAnchor = rotationOption.find("CHOICE..ANCHOR");
-                                    if(rawAnchor != null) {
-                                        facing = new EntityFacing(facingEntity, EntityAnchor.valueOf(rawAnchor.flatten(false).toUpperCase()));
-                                    } else {
-                                        facing = new EntityFacing(facingEntity);
+                                    try {
+                                        if(rawAnchor != null) {
+                                            facing = new EntityFacing(facingEntity, EntityAnchor.valueOf(rawAnchor.flatten(false).toUpperCase()));
+                                        } else {
+                                            facing = new EntityFacing(facingEntity);
+                                        }
+                                    } catch(CommodoreException x) {
+                                        TridentException.handleCommodoreException(x, pattern, file)
+                                                .map(CommodoreException.Source.ENTITY_ERROR, rotationOption.find("CHOICE..ENTITY"))
+                                                .invokeThrow();
                                     }
                                 }
                                 break;
                             }
                             case "TWO_COORDINATE_SET": {
-                                facing = new RotationFacing(CoordinateParser.parseRotation(rotationOption));
+                                facing = new RotationFacing(CoordinateParser.parseRotation(rotationOption, file));
                                 break;
                             }
                         }

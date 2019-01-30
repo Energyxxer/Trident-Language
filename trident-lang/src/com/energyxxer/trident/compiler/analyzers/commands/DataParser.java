@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.data.*;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
@@ -8,14 +9,13 @@ import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.BLOCK_ENTITY;
@@ -32,8 +32,7 @@ public class DataParser implements CommandParser {
             case "MODIFY": return parseModify(inner, file);
             case "REMOVE": return parseRemove(inner, file);
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
     }
@@ -42,17 +41,24 @@ public class DataParser implements CommandParser {
         Object target = parseTarget(inner.find("DATA_TARGET"), file);
         NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"), file);
 
-        if(target instanceof CoordinateSet) {
-            return new DataRemoveCommand((CoordinateSet) target, path);
-        } else {
-            return new DataRemoveCommand((Entity) target, path);
+        try {
+            if(target instanceof CoordinateSet) {
+                return new DataRemoveCommand((CoordinateSet) target, path);
+            } else {
+                return new DataRemoveCommand((Entity) target, path);
+            }
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, inner, file)
+                    .map(CommodoreException.Source.ENTITY_ERROR, inner.find("DATA_TARGET.ENTITY"))
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, file);
         }
     }
 
     private Command parseModify(TokenPattern<?> pattern, TridentFile file) {
         Object target = parseTarget(pattern.find("DATA_TARGET"), file);
         NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"), file);
-        DataModifyCommand.ModifyOperation operation = null;
+        DataModifyCommand.ModifyOperation operation;
 
 
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
@@ -79,17 +85,23 @@ public class DataParser implements CommandParser {
                 operation = DataModifyCommand.SET();
                 break;
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
 
         DataModifyCommand.ModifySource source = parseSource(inner.find("DATA_SOURCE"), file);
 
-        if(target instanceof CoordinateSet) {
-            return new DataModifyCommand((CoordinateSet) target, path, operation, source);
-        } else {
-            return new DataModifyCommand((Entity) target, path, operation, source);
+        try {
+            if(target instanceof CoordinateSet) {
+                return new DataModifyCommand((CoordinateSet) target, path, operation, source);
+            } else {
+                return new DataModifyCommand((Entity) target, path, operation, source);
+            }
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, pattern, file)
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("DATA_TARGET.ENTITY"))
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
         }
     }
 
@@ -97,39 +109,53 @@ public class DataParser implements CommandParser {
         Object target = parseTarget(inner.find("DATA_TARGET"), file);
         TagCompound nbt = NBTParser.parseCompound(inner.find("NBT_COMPOUND"), file);
 
-        if(target instanceof CoordinateSet) {
-            PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
-            NBTParser.analyzeTag(nbt, context, inner.find("NBT_COMPOUND"), file);
-            return new DataMergeCommand((CoordinateSet) target, nbt);
-        } else {
-            PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
-            NBTParser.analyzeTag(nbt, context, inner.find("NBT_COMPOUND"), file);
-            return new DataMergeCommand((Entity) target, nbt);
+        try {
+            if(target instanceof CoordinateSet) {
+                PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
+                NBTParser.analyzeTag(nbt, context, inner.find("NBT_COMPOUND"), file);
+                return new DataMergeCommand((CoordinateSet) target, nbt);
+            } else {
+                PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
+                NBTParser.analyzeTag(nbt, context, inner.find("NBT_COMPOUND"), file);
+                return new DataMergeCommand((Entity) target, nbt);
+            }
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, inner, file)
+                    .map(CommodoreException.Source.ENTITY_ERROR, inner.find("DATA_TARGET.ENTITY"))
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, file);
         }
     }
 
     private Command parseGet(TokenPattern<?> inner, TridentFile file) {
         Object target = parseTarget(inner.find("DATA_TARGET"), file);
 
-        TokenPattern<?> pathClause = inner.find("PATH_CLAUSE");
-        if(pathClause != null) {
-            NBTPath path = NBTParser.parsePath(pathClause.find("NBT_PATH"), file);
-            TokenPattern<?> scalePattern = pathClause.find("SCALE");
-            double scale = 1;
-            if(scalePattern != null) {
-                scale = CommonParsers.parseDouble(scalePattern, file);
+        try {
+            TokenPattern<?> pathClause = inner.find("PATH_CLAUSE");
+            if(pathClause != null) {
+                NBTPath path = NBTParser.parsePath(pathClause.find("NBT_PATH"), file);
+                TokenPattern<?> scalePattern = pathClause.find("SCALE");
+                double scale = 1;
+                if(scalePattern != null) {
+                    scale = CommonParsers.parseDouble(scalePattern, file);
+                }
+                if(target instanceof CoordinateSet) {
+                    return new DataGetCommand((CoordinateSet) target, path, scale);
+                } else {
+                    return new DataGetCommand((Entity) target, path, scale);
+                }
             }
-            if(target instanceof CoordinateSet) {
-                return new DataGetCommand((CoordinateSet) target, path, scale);
-            } else {
-                return new DataGetCommand((Entity) target, path, scale);
-            }
-        }
 
-        if(target instanceof CoordinateSet) {
-            return new DataGetCommand((CoordinateSet) target);
-        } else {
-            return new DataGetCommand((Entity) target);
+            if(target instanceof CoordinateSet) {
+                return new DataGetCommand((CoordinateSet) target);
+            } else {
+                return new DataGetCommand((Entity) target);
+            }
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, inner, file)
+                    .map(CommodoreException.Source.ENTITY_ERROR, inner.find("DATA_TARGET.ENTITY"))
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, file);
         }
     }
 
@@ -156,8 +182,7 @@ public class DataParser implements CommandParser {
                 }
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
     }

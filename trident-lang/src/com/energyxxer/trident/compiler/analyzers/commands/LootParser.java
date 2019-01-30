@@ -1,18 +1,18 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.loot.*;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
@@ -29,7 +29,13 @@ public class LootParser implements CommandParser {
         pattern = ((TokenStructure) pattern).getContents();
         switch(pattern.getName()) {
             case "GIVE": {
-                return new LootGive(EntityParser.parseEntity(pattern.find("ENTITY"), file));
+                try {
+                    return new LootGive(EntityParser.parseEntity(pattern.find("ENTITY"), file));
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, pattern, file)
+                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                            .invokeThrow();
+                }
             }
             case "INSERT": {
                 return new LootInsertBlock(CoordinateParser.parse(pattern.find("COORDINATE_SET"), file));
@@ -45,8 +51,7 @@ public class LootParser implements CommandParser {
                 return new LootSpawn(CoordinateParser.parse(pattern.find("COORDINATE_SET"), file));
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
             }
         }
     }
@@ -61,7 +66,13 @@ public class LootParser implements CommandParser {
                 return new LootFromFish(table.toString(), pos, tool);
             }
             case "KILL": {
-                return new LootFromKill(EntityParser.parseEntity(pattern.find("ENTITY"), file));
+                try {
+                    return new LootFromKill(EntityParser.parseEntity(pattern.find("ENTITY"), file));
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, pattern, file)
+                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                            .invokeThrow();
+                }
             }
             case "LOOT": {
                 TridentUtil.ResourceLocation table = new TridentUtil.ResourceLocation(pattern.find("RESOURCE_LOCATION").flatten(false));
@@ -73,8 +84,7 @@ public class LootParser implements CommandParser {
                 return new LootFromMine(pos, tool);
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
             }
         }
     }

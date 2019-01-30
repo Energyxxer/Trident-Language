@@ -1,13 +1,12 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.summon.SummonCommand;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
@@ -42,8 +41,8 @@ public class SummonParser implements CommandParser {
             if(nbt == null) nbt = new TagCompound();
             try {
                 nbt = ce.getDefaultNBT().merge(nbt);
-            } catch(IllegalArgumentException x) {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Error while merging given NBT with custom entity's NBT: " + x.getMessage(), pattern));
+            } catch(CommodoreException x) {
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Error while merging given NBT with custom entity's NBT: " + x.getMessage(), pattern, file);
             }
         } else {
             throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), id, file);
@@ -51,6 +50,13 @@ public class SummonParser implements CommandParser {
 
         if(pos == null && nbt != null) pos = new CoordinateSet();
 
-        return new SummonCommand(type, pos, nbt);
+        try {
+            return new SummonCommand(type, pos, nbt);
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, pattern, file)
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("ENTITY_ID"))
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
+        }
     }
 }

@@ -21,7 +21,7 @@ public class RotatedParser implements ModifierParser {
                 return new ExecutePositionedAsEntity(EntityParser.parseEntity(branch.find("ENTITY"), file));
             }
             case "TWO_COORDINATE_SET": {
-                return CoordinateParser.parseRotation(branch);
+                return CoordinateParser.parseRotation(branch, file);
             }
             default: {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branch.getName() + "'", branch));

@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.title.TitleClearCommand;
 import com.energyxxer.commodore.functionlogic.commands.title.TitleResetCommand;
@@ -15,6 +16,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "title")
@@ -28,16 +30,37 @@ public class TitleCommand implements CommandParser {
                 TextComponent text = TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), file);
                 TitleShowCommand.Display display = TitleShowCommand.Display.valueOf(inner.find("DISPLAY").flatten(false).toUpperCase());
 
-                return new TitleShowCommand(entity, display, text);
+                try {
+                    return new TitleShowCommand(entity, display, text);
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, pattern, file)
+                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                            .invokeThrow();
+                }
             }
             case "CLEAR_RESET": {
-                return inner.find("LITERAL_CLEAR") != null ? new TitleClearCommand(entity) : new TitleResetCommand(entity);
+                try {
+                    return inner.find("LITERAL_CLEAR") != null ? new TitleClearCommand(entity) : new TitleResetCommand(entity);
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, pattern, file)
+                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                            .invokeThrow();
+                }
             }
             case "TIMES": {
                 int fadeIn = CommonParsers.parseInt(inner.find("FADEIN"), file);
                 int stay = CommonParsers.parseInt(inner.find("STAY"), file);
                 int fadeOut = CommonParsers.parseInt(inner.find("FADEOUT"), file);
-                return new TitleTimesCommand(entity, fadeIn, stay, fadeOut);
+                try {
+                    return new TitleTimesCommand(entity, fadeIn, stay, fadeOut);
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, pattern, file)
+                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                            .map("FADE_IN", inner.find("FADEIN"))
+                            .map("STAY", inner.find("STAY"))
+                            .map("FADE_OUT", inner.find("FADEOUT"))
+                            .invokeThrow();
+                }
             }
             default: {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));

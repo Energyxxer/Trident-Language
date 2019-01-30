@@ -1,6 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.constructs;
 
-import com.energyxxer.trident.extensions.EObject;
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.*;
 import com.energyxxer.commodore.types.Type;
@@ -18,6 +18,7 @@ import com.energyxxer.nbtmapper.tags.TypeFlags;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.extensions.EObject;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -33,139 +34,145 @@ public class NBTParser {
     }
 
     public static NBTTag parseValue(TokenPattern<?> pattern, TridentFile file) {
-        switch(pattern.getName()) {
-            case "NBT_VALUE": {
-                return parseValue(((TokenStructure)pattern).getContents(), file);
-            }
-            case "NBT_COMPOUND": {
-                return parseValue(((TokenStructure)pattern).getContents(), file);
-            }
-            case "INTERPOLATION_BLOCK": {
-                NBTTag result = InterpolationManager.parse(pattern, file, NBTTag.class);
-                EObject.assertNotNull(result, pattern, file);
-                return result;
-            }
-            case "NBT_COMPOUND_GROUP": {
-                TagCompound compound = new TagCompound();
-                TokenList entries = (TokenList) pattern.find("NBT_COMPOUND_ENTRIES");
-                if(entries != null) {
-                    for (TokenPattern<?> inner : entries.getContents()) {
-                        if (inner instanceof TokenGroup) {
-                            String key = CommonParsers.parseStringLiteralOrIdentifierA(inner.find("NBT_KEY.STRING_LITERAL_OR_IDENTIFIER_A"), file);
-                            NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
-                            value.setName(key);
-                            compound.add(value);
-                        }
-                    }
+        try {
+            switch(pattern.getName()) {
+                case "NBT_VALUE": {
+                    return parseValue(((TokenStructure)pattern).getContents(), file);
                 }
-                return compound;
-            }
-            case "NBT_LIST": {
-                TagList list = new TagList();
-                TokenList entries = (TokenList) pattern.find("..NBT_LIST_ENTRIES");
-                if(entries != null) {
-                    for (TokenPattern<?> inner : entries.getContents()) {
-                        if (!inner.getName().equals("COMMA")) {
-                            NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
-                            list.add(value);
-                        }
-                    }
+                case "NBT_COMPOUND": {
+                    return parseValue(((TokenStructure)pattern).getContents(), file);
                 }
-                return list;
-            }
-            case "NBT_BYTE_ARRAY": {
-                TagByteArray arr = new TagByteArray();
-                TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
-                if(entries != null) {
-                    for (TokenPattern<?> inner : entries.getContents()) {
-                        if (!inner.getName().equals("COMMA")) {
-                            NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
-                            if(value instanceof TagByte) {
-                                arr.add(value);
-                            } else {
-                                throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Byte in TAG_Byte_Array, instead got " + value.getType(), inner, file);
+                case "INTERPOLATION_BLOCK": {
+                    NBTTag result = InterpolationManager.parse(pattern, file, NBTTag.class);
+                    EObject.assertNotNull(result, pattern, file);
+                    return result;
+                }
+                case "NBT_COMPOUND_GROUP": {
+                    TagCompound compound = new TagCompound();
+                    TokenList entries = (TokenList) pattern.find("NBT_COMPOUND_ENTRIES");
+                    if(entries != null) {
+                        for (TokenPattern<?> inner : entries.getContents()) {
+                            if (inner instanceof TokenGroup) {
+                                String key = CommonParsers.parseStringLiteralOrIdentifierA(inner.find("NBT_KEY.STRING_LITERAL_OR_IDENTIFIER_A"), file);
+                                NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                                value.setName(key);
+                                compound.add(value);
                             }
                         }
                     }
+                    return compound;
                 }
-                return arr;
-            }
-            case "NBT_INT_ARRAY": {
-                TagIntArray arr = new TagIntArray();
-                TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
-                if(entries != null) {
-                    for (TokenPattern<?> inner : entries.getContents()) {
-                        if (!inner.getName().equals("COMMA")) {
-                            NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
-                            if(value instanceof TagInt) {
-                                arr.add(value);
-                            } else {
-                                throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Int in TAG_Int_Array, instead got " + value.getType(), inner, file);
+                case "NBT_LIST": {
+                    TagList list = new TagList();
+                    TokenList entries = (TokenList) pattern.find("..NBT_LIST_ENTRIES");
+                    if(entries != null) {
+                        for (TokenPattern<?> inner : entries.getContents()) {
+                            if (!inner.getName().equals("COMMA")) {
+                                NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                                list.add(value);
                             }
                         }
                     }
+                    return list;
                 }
-                return arr;
-            }
-            case "NBT_LONG_ARRAY": {
-                TagLongArray arr = new TagLongArray();
-                TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
-                if(entries != null) {
-                    for (TokenPattern<?> inner : entries.getContents()) {
-                        if (!inner.getName().equals("COMMA")) {
-                            NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
-                            if(value instanceof TagLong) {
-                                arr.add(value);
-                            } else {
-                                throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Long in TAG_Long_Array, instead got " + value.getType(), inner, file);
+                case "NBT_BYTE_ARRAY": {
+                    TagByteArray arr = new TagByteArray();
+                    TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
+                    if(entries != null) {
+                        for (TokenPattern<?> inner : entries.getContents()) {
+                            if (!inner.getName().equals("COMMA")) {
+                                NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                                if(value instanceof TagByte) {
+                                    arr.add(value);
+                                } else {
+                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Byte in TAG_Byte_Array, instead got " + value.getType(), inner, file);
+                                }
                             }
                         }
                     }
+                    return arr;
                 }
-                return arr;
-            }
-            case "BOOLEAN": {
-                return new TagByte(pattern.flattenTokens().get(0).value.equals("true") ? 1 : 0);
-            }
-            case "RAW_STRING":
-            case "STRING": {
-                return new TagString(CommonParsers.parseStringLiteral(pattern, file));
-            }
-            case "NBT_NUMBER": {
-                String flat = pattern.flattenTokens().get(0).value;
+                case "NBT_INT_ARRAY": {
+                    TagIntArray arr = new TagIntArray();
+                    TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
+                    if(entries != null) {
+                        for (TokenPattern<?> inner : entries.getContents()) {
+                            if (!inner.getName().equals("COMMA")) {
+                                NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                                if(value instanceof TagInt) {
+                                    arr.add(value);
+                                } else {
+                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Int in TAG_Int_Array, instead got " + value.getType(), inner, file);
+                                }
+                            }
+                        }
+                    }
+                    return arr;
+                }
+                case "NBT_LONG_ARRAY": {
+                    TagLongArray arr = new TagLongArray();
+                    TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
+                    if(entries != null) {
+                        for (TokenPattern<?> inner : entries.getContents()) {
+                            if (!inner.getName().equals("COMMA")) {
+                                NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                                if(value instanceof TagLong) {
+                                    arr.add(value);
+                                } else {
+                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Long in TAG_Long_Array, instead got " + value.getType(), inner, file);
+                                }
+                            }
+                        }
+                    }
+                    return arr;
+                }
+                case "BOOLEAN": {
+                    return new TagByte(pattern.flattenTokens().get(0).value.equals("true") ? 1 : 0);
+                }
+                case "RAW_STRING":
+                case "STRING": {
+                    return new TagString(CommonParsers.parseStringLiteral(pattern, file));
+                }
+                case "NBT_NUMBER": {
+                    String flat = pattern.flattenTokens().get(0).value;
 
-                final Pattern regex = Pattern.compile("([+-]?\\d+(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
+                    final Pattern regex = Pattern.compile("([+-]?\\d+(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
 
-                Matcher matcher = regex.matcher(flat);
-                matcher.lookingAt(); //must be true
+                    Matcher matcher = regex.matcher(flat);
+                    matcher.lookingAt(); //must be true
 
-                String numberPart = matcher.group(1);
-                switch(matcher.group(3).toLowerCase()) {
-                    case "": {
-                        return (numberPart.contains(".")) ?
-                                new TagDouble(Double.parseDouble(numberPart)) :
-                                new TagInt(Integer.parseInt(numberPart));
-                    }
-                    case "b": {
-                        return new TagByte(Integer.parseInt(numberPart));
-                    }
-                    case "d": {
-                        return new TagDouble(Double.parseDouble(numberPart));
-                    }
-                    case "f": {
-                        return new TagFloat(Float.parseFloat(numberPart));
-                    }
-                    case "s": {
-                        return new TagShort(Short.parseShort(numberPart));
-                    }
-                    case "l": {
-                        return new TagLong(Long.parseLong(numberPart));
+                    String numberPart = matcher.group(1);
+                    switch(matcher.group(3).toLowerCase()) {
+                        case "": {
+                            return (numberPart.contains(".")) ?
+                                    new TagDouble(Double.parseDouble(numberPart)) :
+                                    new TagInt(Integer.parseInt(numberPart));
+                        }
+                        case "b": {
+                            return new TagByte(Integer.parseInt(numberPart));
+                        }
+                        case "d": {
+                            return new TagDouble(Double.parseDouble(numberPart));
+                        }
+                        case "f": {
+                            return new TagFloat(Float.parseFloat(numberPart));
+                        }
+                        case "s": {
+                            return new TagShort(Short.parseShort(numberPart));
+                        }
+                        case "l": {
+                            return new TagLong(Long.parseLong(numberPart));
+                        }
                     }
                 }
+                default: {
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
+                }
             }
-            default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
-            }
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, pattern, file)
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
         }
     }
 

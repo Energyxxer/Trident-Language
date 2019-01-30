@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.semantics;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
@@ -328,58 +329,61 @@ public class TridentFile {
     public static void resolveEntry(TokenPattern<?> inner, TridentFile parent, FunctionSection appendTo, boolean compileOnly) {
         TridentCompiler compiler = parent.getCompiler();
         boolean exportComments = compiler.getProperties().get("export-comments") == null || compiler.getProperties().get("export-comments").getAsBoolean();
-        switch (inner.getName()) {
-            case "COMMAND_WRAPPER":
-                if (!compileOnly && appendTo != null) {
+        try {
+            switch (inner.getName()) {
+                case "COMMAND_WRAPPER":
+                    if (!compileOnly && appendTo != null) {
 
-                    ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
+                        ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
 
-                    TokenList modifierList = (TokenList) inner.find("MODIFIERS");
-                    if(modifierList != null) {
-                        for(TokenPattern<?> rawModifier : modifierList.getContents()) {
-                            ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
-                            if(parser != null) {
-                                ExecuteModifier modifier = parser.parse(rawModifier, parent);
-                                if(modifier != null) modifiers.add(modifier);
-                            } else {
-                                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + rawModifier.flattenTokens().get(0).value + "'", rawModifier, parent);
+                        TokenList modifierList = (TokenList) inner.find("MODIFIERS");
+                        if (modifierList != null) {
+                            for (TokenPattern<?> rawModifier : modifierList.getContents()) {
+                                ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
+                                if (parser != null) {
+                                    ExecuteModifier modifier = parser.parse(rawModifier, parent);
+                                    if (modifier != null) modifiers.add(modifier);
+                                } else {
+                                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + rawModifier.flattenTokens().get(0).value + "'", rawModifier, parent);
+                                }
                             }
                         }
-                    }
 
-                    TokenPattern<?> commandPattern = inner.find("COMMAND");
-                    CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandPattern.flattenTokens().get(0).value);
-                    if (parser != null) {
-                        Command command = parser.parse(((TokenStructure) commandPattern).getContents(), parent);
-                        if (command != null) {
-                            if(modifiers.isEmpty()) appendTo.append(command);
-                            else appendTo.append(new ExecuteCommand(command, modifiers));
+                        TokenPattern<?> commandPattern = inner.find("COMMAND");
+                        CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandPattern.flattenTokens().get(0).value);
+                        if (parser != null) {
+                            Command command = parser.parse(((TokenStructure) commandPattern).getContents(), parent);
+                            if (command != null) {
+                                if (modifiers.isEmpty()) appendTo.append(command);
+                                else appendTo.append(new ExecuteCommand(command, modifiers));
+                            }
+                        } else {
+                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + commandPattern.flattenTokens().get(0).value + "'", commandPattern, parent);
                         }
-                    } else {
-                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + commandPattern.flattenTokens().get(0).value + "'", commandPattern, parent);
+                    } else if (!parent.reportedNoCommands) {
+                        parent.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
+                        parent.reportedNoCommands = true;
                     }
-                } else if (!parent.reportedNoCommands) {
-                    parent.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
-                    parent.reportedNoCommands = true;
+                    break;
+                case "COMMENT":
+                    if (exportComments && appendTo != null)
+                        appendTo.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
+                    break;
+                case "INSTRUCTION": {
+                    String instructionKey = ((TokenStructure) inner).getContents().searchByName("INSTRUCTION_KEYWORD").get(0).flatten(false);
+                    Instruction instruction = AnalyzerManager.getAnalyzer(Instruction.class, instructionKey);
+                    if (instruction != null) {
+                        instruction.run(((TokenStructure) inner).getContents(), parent);
+                    } else {
+                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown instruction analyzer for '" + instructionKey + "'", inner, parent);
+                    }
+                    break;
+                } default: {
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, parent);
                 }
-                break;
-            case "COMMENT":
-                if (exportComments && appendTo != null)
-                    appendTo.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
-                break;
-            case "INSTRUCTION": {
-                String instructionKey = ((TokenStructure) inner).getContents().searchByName("INSTRUCTION_KEYWORD").get(0).flatten(false);
-                Instruction instruction = AnalyzerManager.getAnalyzer(Instruction.class, instructionKey);
-                if (instruction != null) {
-                    instruction.run(((TokenStructure) inner).getContents(), parent);
-                } else {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown instruction analyzer for '" + instructionKey + "'", inner, parent);
-                }
-                break;
             }
-            default: {
-                compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-            }
+        } catch(CommodoreException x) {
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Commodore Exception of type " + x.getSource() + ": " + x.getMessage(), inner, parent);
         }
     }
 

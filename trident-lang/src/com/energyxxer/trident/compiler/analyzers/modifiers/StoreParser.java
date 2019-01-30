@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.modifiers;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.execute.*;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
@@ -10,14 +11,13 @@ import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.types.defaults.BossbarReference;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "store")
@@ -46,7 +46,13 @@ public class StoreParser implements ModifierParser {
                 NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"), file);
                 NumericNBTType type = parseNumericType(inner.find("NUMERIC_TYPE"), entity, path, file, inner, true);
                 double scale = CommonParsers.parseDouble(inner.find("SCALE"), file);
-                return new ExecuteStoreEntity(storeValue, entity, path, type, scale);
+                try {
+                    return new ExecuteStoreEntity(storeValue, entity, path, type, scale);
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, pattern, file)
+                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find("ENTITY"))
+                            .invokeThrow();
+                }
             }
             case "STORE_SCORE": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
@@ -54,8 +60,7 @@ public class StoreParser implements ModifierParser {
                 return new ExecuteStoreScore(new LocalScore(entity, objective));
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
     }

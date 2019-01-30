@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.give.GiveCommand;
 import com.energyxxer.commodore.item.Item;
@@ -19,10 +20,15 @@ public class GiveParser implements CommandParser {
         TokenPattern<?> amountPattern = pattern.find("AMOUNT");
         int amount = amountPattern != null ? CommonParsers.parseInt(amountPattern, file) : 1;
 
-        if(!item.getItemType().isStandalone()) {
-            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Item tags aren't allowed in this context", pattern.find("ITEM"), file);
+        try {
+            return new GiveCommand(EntityParser.parseEntity(pattern.find("ENTITY"), file), item, amount);
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, pattern, file)
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                    .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, amountPattern)
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("ITEM"))
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
         }
-
-        return new GiveCommand(EntityParser.parseEntity(pattern.find("ENTITY"), file), item, amount);
     }
 }

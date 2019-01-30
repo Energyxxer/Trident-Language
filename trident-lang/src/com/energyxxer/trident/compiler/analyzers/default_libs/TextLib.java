@@ -30,7 +30,7 @@ public class TextLib implements DefaultLibraryProvider {
 
             try {
                 return TextParser.parseTextComponent(gson.fromJson(raw, JsonElement.class), file, patterns[0], TextComponentContext.CHAT);
-            } catch(TridentException x) {
+            } catch(TridentException | TridentException.Grouped x) {
                 throw x;
             } catch(Exception x) {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.toString(), pattern, file);

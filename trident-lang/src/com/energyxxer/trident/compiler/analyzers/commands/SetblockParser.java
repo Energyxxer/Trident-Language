@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.setblock.SetblockCommand;
@@ -19,15 +20,18 @@ public class SetblockParser implements CommandParser {
         Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), file);
         SetblockCommand.OldBlockHandlingMode mode = SetblockCommand.OldBlockHandlingMode.DEFAULT;
 
-        if(!block.getBlockType().isStandalone()) {
-            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Block tags aren't allowed in this context", pattern.find("BLOCK"), file);
-        }
-
         TokenPattern<?> rawMode = pattern.find("OLD_BLOCK_HANDLING");
         if(rawMode != null) {
             mode = SetblockCommand.OldBlockHandlingMode.valueOf(rawMode.flatten(false).toUpperCase());
         }
 
-        return new SetblockCommand(pos, block, mode);
+        try {
+            return new SetblockCommand(pos, block, mode);
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, pattern, file)
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("BLOCK"))
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", rawMode, file);
+        }
     }
 }

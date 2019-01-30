@@ -43,7 +43,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
                     DictionaryObject newDict = new DictionaryObject();
 
                     for (Map.Entry<String, Symbol> entry : dict.entrySet()) {
-                        newDict.put(entry.getKey(), func.call(new Object[]{entry.getKey(), entry.getValue().getValue()}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
+                        newDict.put(entry.getKey(), func.safeCall(new Object[]{entry.getKey(), entry.getValue().getValue()}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
                     }
 
                     return newDict;

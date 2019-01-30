@@ -92,6 +92,8 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
                         actualParams[i] = params[i];
                     }
                     return invoker.invoke(instance, actualParams);
+                } catch(TridentException | TridentException.Grouped x) {
+                    throw x;
                 } catch (Exception x) {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.toString(), pattern, file);
                 }

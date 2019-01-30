@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.semantics;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
@@ -8,7 +9,10 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandl
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class TridentException extends RuntimeException implements VariableTypeHandler<TridentException> {
 
@@ -63,6 +67,10 @@ public class TridentException extends RuntimeException implements VariableTypeHa
         this.cause = cause;
     }
 
+    public static ExceptionMapper handleCommodoreException(CommodoreException x, TokenPattern<?> defaultPattern, TridentFile file) {
+        return new ExceptionMapper(x, defaultPattern, file);
+    }
+
     public Source getSource() {
         return source;
     }
@@ -82,24 +90,6 @@ public class TridentException extends RuntimeException implements VariableTypeHa
 
     public TokenPattern<?> getCausePattern() {
         return cause;
-    }
-
-    public static class Grouped extends RuntimeException implements Iterable<TridentException> {
-        private ArrayList<TridentException> exceptions;
-
-        public Grouped(ArrayList<TridentException> exceptions) {
-            this.exceptions = exceptions;
-        }
-
-        public ArrayList<TridentException> getExceptions() {
-            return exceptions;
-        }
-
-        @NotNull
-        @Override
-        public Iterator<TridentException> iterator() {
-            return exceptions.iterator();
-        }
     }
 
     @Override
@@ -128,5 +118,66 @@ public class TridentException extends RuntimeException implements VariableTypeHa
     @Override
     public String toString() {
         return notice.getMessage();
+    }
+
+    public static class Grouped extends RuntimeException implements Iterable<TridentException> {
+        private ArrayList<TridentException> exceptions;
+
+        public Grouped(ArrayList<TridentException> exceptions) {
+            this.exceptions = exceptions;
+        }
+
+        public ArrayList<TridentException> getExceptions() {
+            return exceptions;
+        }
+
+        @NotNull
+        @Override
+        public Iterator<TridentException> iterator() {
+            return exceptions.iterator();
+        }
+    }
+
+    public static class ExceptionMapper {
+        private CommodoreException ex;
+        private TokenPattern<?> defaultPattern;
+        private TridentFile file;
+        private HashMap<CommodoreException.Source, TokenPattern<?>> sourceMap = new HashMap<>();
+        private HashMap<String, Supplier<TokenPattern<?>>> causeMap = new HashMap<>();
+
+        public ExceptionMapper(CommodoreException ex, TokenPattern<?> defaultPattern, TridentFile file) {
+            this.ex = ex;
+            this.defaultPattern = defaultPattern;
+            this.file = file;
+        }
+
+        public ExceptionMapper map(CommodoreException.Source source, TokenPattern<?> pattern) {
+            sourceMap.put(source, pattern);
+            return this;
+        }
+
+        public ExceptionMapper map(String cause, TokenPattern<?> pattern) {
+            causeMap.put(cause, () -> pattern);
+            return this;
+        }
+
+        public ExceptionMapper map(String cause, Supplier<TokenPattern<?>> pattern) {
+            causeMap.put(cause, pattern);
+            return this;
+        }
+
+        public void invokeThrow() throws TridentException {
+            for(Map.Entry<String, Supplier<TokenPattern<?>>> entry : causeMap.entrySet()) {
+                if(entry.getKey().equals(ex.getCauseKey())) {
+                    throw new TridentException(Source.COMMAND_ERROR, ex.getMessage(), entry.getValue().get(), file);
+                }
+            }
+            for(Map.Entry<CommodoreException.Source, TokenPattern<?>> entry : sourceMap.entrySet()) {
+                if(ex.getSource() == entry.getKey()) {
+                    throw new TridentException(Source.COMMAND_ERROR, ex.getMessage(), entry.getValue(), file);
+                }
+            }
+            throw new TridentException(Source.COMMAND_ERROR, ex.getMessage(), defaultPattern, file);
+        }
     }
 }

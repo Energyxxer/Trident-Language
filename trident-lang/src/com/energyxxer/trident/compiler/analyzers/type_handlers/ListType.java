@@ -58,7 +58,7 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
                 ListType newList = new ListType();
 
                 for(Symbol sym : content) {
-                    newList.add(func.call(new Object[] {sym.getValue()}, new TokenPattern[] {pattern1}, pattern1, file1));
+                    newList.add(func.safeCall(new Object[] {sym.getValue()}, new TokenPattern[] {pattern1}, pattern1, file1));
                 }
 
                 return newList;

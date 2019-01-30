@@ -219,30 +219,6 @@ public class InterpolationManager {
                     throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member for index " + index + " of " + parent.getClass().getSimpleName(), pattern, file);
                 }
             }
-            case "METHOD_CALL": {
-                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), file);
-                EObject.assertNotNull(parent, pattern.find("INTERPOLATION_VALUE"), file);
-                if(parent instanceof VariableMethod) {
-
-                    ArrayList<Object> params = new ArrayList<>();
-                    ArrayList<TokenPattern<?>> patterns = new ArrayList<>();
-
-                    TokenList paramList = (TokenList) pattern.find("PARAMETERS");
-
-                    if(paramList != null) {
-                        for(TokenPattern<?> rawParam : paramList.getContents()) {
-                            if(rawParam.getName().equals("INTERPOLATION_VALUE")) {
-                                params.add(parse(rawParam, file, keepSymbol));
-                                patterns.add(rawParam);
-                            }
-                        }
-                    }
-
-                    return sanitizeObject(((VariableMethod) parent).call(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), pattern, file));
-                } else {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "This is not a method", pattern.find("INTERPOLATION_VALUE"), file);
-                }
-            }
             case "CONSTRUCTOR_CALL": {
                 String constructorName = pattern.find("CONSTRUCTOR_NAME").flatten(false);
                 VariableMethod constructor = ObjectConstructors.getConstructor(constructorName);
@@ -263,7 +239,7 @@ public class InterpolationManager {
                     }
                 }
 
-                return sanitizeObject(constructor.call(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), pattern, file));
+                return sanitizeObject(constructor.safeCall(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), pattern, file));
             }
             case "PARENTHESIZED_VALUE": {
                 return parse(pattern.find("INTERPOLATION_VALUE"), file, keepSymbol);
@@ -388,7 +364,7 @@ public class InterpolationManager {
                         }
                     }
 
-                    return sanitizeObject(((VariableMethod) parent).call(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), accessorPattern, file));
+                    return sanitizeObject(((VariableMethod) parent).safeCall(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), accessorPattern, file));
                 } else {
                     throw new TridentException(TridentException.Source.TYPE_ERROR, "This is not a method", parentPattern, file);
                 }

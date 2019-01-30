@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.modifiers;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.execute.*;
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreComparison;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
@@ -8,13 +9,12 @@ import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 public class ConditionalParser implements ModifierParser {
@@ -42,23 +42,29 @@ public class ConditionalParser implements ModifierParser {
                 LocalScore scoreA = new LocalScore(CommonParsers.parseObjective(subject.find("OBJECTIVE"), file), EntityParser.parseEntity(subject.find("ENTITY"), file));
                 TokenStructure choice = (TokenStructure) subject.find("CHOICE");
                 String branchName = choice.getContents().getName();
-                switch(branchName) {
-                    case "COMPARISON": {
-                        LocalScore scoreB = new LocalScore(CommonParsers.parseObjective(choice.find("OBJECTIVE"), file), EntityParser.parseEntity(choice.find("ENTITY"), file));
-                        String rawOp = choice.find("OPERATOR").flatten(false);
-                        return new ExecuteConditionScoreComparison(conditionType, scoreA, ScoreComparison.getValueForSymbol(rawOp), scoreB);
+                try {
+                    switch(branchName) {
+                        case "COMPARISON": {
+                            LocalScore scoreB = new LocalScore(CommonParsers.parseObjective(choice.find("OBJECTIVE"), file), EntityParser.parseEntity(choice.find("ENTITY"), file));
+                            String rawOp = choice.find("OPERATOR").flatten(false);
+                            return new ExecuteConditionScoreComparison(conditionType, scoreA, ScoreComparison.getValueForSymbol(rawOp), scoreB);
+                        }
+                        case "MATCHES": {
+                            NumberRange<Integer> range = CommonParsers.parseIntRange(choice.find("INTEGER_NUMBER_RANGE"), file);
+                            return new ExecuteConditionScoreMatch(conditionType, scoreA, range);
+                        }
+                        case "ISSET": {
+                            return new ExecuteConditionScoreMatch(conditionType, scoreA, new NumberRange<>(Integer.MIN_VALUE, null));
+                        }
+                        default: {
+                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + branchName + "'", choice, file);
+                        }
                     }
-                    case "MATCHES": {
-                        NumberRange<Integer> range = CommonParsers.parseIntRange(choice.find("INTEGER_NUMBER_RANGE"), file);
-                        return new ExecuteConditionScoreMatch(conditionType, scoreA, range);
-                    }
-                    case "ISSET": {
-                        return new ExecuteConditionScoreMatch(conditionType, scoreA, new NumberRange<>(Integer.MIN_VALUE, null));
-                    }
-                    default: {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + branchName + "'", choice));
-                        return null;
-                    }
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, pattern, file)
+                            .map("TARGET_ENTITY", subject.find("ENTITY"))
+                            .map("SOURCE_ENTITY", choice.find("ENTITY"))
+                            .invokeThrow();
                 }
             }
             case "REGION_CONDITION": {
@@ -72,18 +78,22 @@ public class ConditionalParser implements ModifierParser {
                 NBTPath path = NBTParser.parsePath(subject.find("NBT_PATH"), file);
 
                 TokenPattern<?> dataSubject = ((TokenStructure)subject.find("CHOICE")).getContents();
-                switch(dataSubject.getName()) {
-                    case "BLOCK_SUBJECT": return new ExecuteConditionDataBlock(conditionType, CoordinateParser.parse(dataSubject.find("COORDINATE_SET"), file), path);
-                    case "ENTITY_SUBJECT": return new ExecuteConditionDataEntity(conditionType, EntityParser.parseEntity(dataSubject.find("ENTITY"), file), path);
-                    default: {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + dataSubject.getName() + "'", dataSubject));
-                        return null;
+                try {
+                    switch(dataSubject.getName()) {
+                        case "BLOCK_SUBJECT": return new ExecuteConditionDataBlock(conditionType, CoordinateParser.parse(dataSubject.find("COORDINATE_SET"), file), path);
+                        case "ENTITY_SUBJECT": return new ExecuteConditionDataEntity(conditionType, EntityParser.parseEntity(dataSubject.find("ENTITY"), file), path);
+                        default: {
+                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + dataSubject.getName() + "'", dataSubject, file);
+                        }
                     }
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, pattern, file)
+                            .map(CommodoreException.Source.ENTITY_ERROR, dataSubject.find("ENTITY"))
+                            .invokeThrow();
                 }
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + subject.getName() + "'", subject));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + subject.getName() + "'", subject, file);
             }
         }
     }

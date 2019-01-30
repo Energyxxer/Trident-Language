@@ -5,10 +5,9 @@ import com.energyxxer.commodore.functionlogic.commands.tag.TagCommand;
 import com.energyxxer.commodore.functionlogic.commands.tag.TagQueryCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "tag")
@@ -23,8 +22,7 @@ public class TagParser implements CommandParser {
             case "remove":
                 return new TagCommand(TagCommand.Action.REMOVE, entity, pattern.find("CHOICE").flattenTokens().get(1).value);
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown command node '" + pattern.find("CHOICE").flattenTokens().get(0).value + "'", pattern.find("CHOICE")));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
             }
         }
     }

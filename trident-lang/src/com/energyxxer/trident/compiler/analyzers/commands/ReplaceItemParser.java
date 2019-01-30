@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.replaceitem.ReplaceItemBlockCommand;
 import com.energyxxer.commodore.functionlogic.commands.replaceitem.ReplaceItemEntityCommand;
@@ -22,17 +23,22 @@ public class ReplaceItemParser implements CommandParser {
         Item item = CommonParsers.parseItem(pattern.find("ITEM"), file, NBTMode.SETTING);
         int count = 1;
 
-        if(!item.getItemType().isStandalone()) {
-            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Item tags aren't allowed in this context", pattern.find("ITEM"), file);
-        }
-
         if(pattern.find("COUNT") != null) {
             count = CommonParsers.parseInt(pattern.find("COUNT"), file);
         }
 
         TokenPattern<?> rawCoords = pattern.find("TARGET.COORDINATE_SET");
-        if(rawCoords != null) {
-            return new ReplaceItemBlockCommand(CoordinateParser.parse(rawCoords, file), slot, item, count);
-        } else return new ReplaceItemEntityCommand(EntityParser.parseEntity(pattern.find("TARGET.ENTITY"), file), slot, item, count);
+        try {
+            if(rawCoords != null) {
+                return new ReplaceItemBlockCommand(CoordinateParser.parse(rawCoords, file), slot, item, count);
+            } else return new ReplaceItemEntityCommand(EntityParser.parseEntity(pattern.find("TARGET.ENTITY"), file), slot, item, count);
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, pattern, file)
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("TARGET.ENTITY"))
+                    .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.find("COUNT"))
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("ITEM"))
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
+        }
     }
 }

@@ -1,8 +1,7 @@
 package com.energyxxer.trident.compiler.analyzers.constructs;
 
-import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
-import com.energyxxer.trident.extensions.EObject;
 import com.energyxxer.commodore.CommandUtils;
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
@@ -39,11 +38,13 @@ import com.energyxxer.nbtmapper.tags.DataType;
 import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
 import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
+import com.energyxxer.trident.extensions.EObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -307,48 +308,60 @@ public class CommonParsers {
 
     @SuppressWarnings("unchecked")
     public static NumberRange<Integer> parseIntRange(TokenPattern<?> pattern, TridentFile file) {
-        TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
-        if(variable != null) {
-            Object value = InterpolationManager.parse(variable, file, Integer.class, SAMPLE_INT_RANGE.getClass());
-            if(value instanceof Integer) value = new NumberRange<>((int) value);
-            return (NumberRange<Integer>) value;
+        try {
+            TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
+            if(variable != null) {
+                Object value = InterpolationManager.parse(variable, file, Integer.class, SAMPLE_INT_RANGE.getClass());
+                if(value instanceof Integer) value = new NumberRange<>((int) value);
+                return (NumberRange<Integer>) value;
+            }
+            TokenPattern<?> exact = pattern.find("EXACT");
+            if(exact != null) return new NumberRange<>(parseInt(exact, file));
+            List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
+            List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
+            Integer min = null;
+            Integer max = null;
+            if(!minRaw.isEmpty()) {
+                min = Integer.parseInt(minRaw.get(0).flatten(false));
+            }
+            if(!maxRaw.isEmpty()) {
+                max = Integer.parseInt(maxRaw.get(0).flatten(false));
+            }
+            return new NumberRange<>(min, max);
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, pattern, file)
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
         }
-        TokenPattern<?> exact = pattern.find("EXACT");
-        if(exact != null) return new NumberRange<>(parseInt(exact, file));
-        List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
-        List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
-        Integer min = null;
-        Integer max = null;
-        if(!minRaw.isEmpty()) {
-            min = Integer.parseInt(minRaw.get(0).flatten(false));
-        }
-        if(!maxRaw.isEmpty()) {
-            max = Integer.parseInt(maxRaw.get(0).flatten(false));
-        }
-        return new NumberRange<>(min, max);
     }
 
     @SuppressWarnings("unchecked")
     public static NumberRange<Double> parseRealRange(TokenPattern<?> pattern, TridentFile file) {
-        TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
-        if(variable != null) {
-            Object value = InterpolationManager.parse(variable, file, Double.class, SAMPLE_REAL_RANGE.getClass());
-            if(value instanceof Double) value = new NumberRange<>((double) value);
-            return (NumberRange<Double>) value;
+        try {
+            TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
+            if(variable != null) {
+                Object value = InterpolationManager.parse(variable, file, Double.class, SAMPLE_REAL_RANGE.getClass());
+                if(value instanceof Double) value = new NumberRange<>((double) value);
+                return (NumberRange<Double>) value;
+            }
+            TokenPattern<?> exact = pattern.find("EXACT");
+            if(exact != null) return new NumberRange<>(parseDouble(exact, file));
+            List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
+            List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
+            Double min = null;
+            Double max = null;
+            if(!minRaw.isEmpty()) {
+                min = CommonParsers.parseDouble(minRaw.get(0), file);
+            }
+            if(!maxRaw.isEmpty()) {
+                max = CommonParsers.parseDouble(maxRaw.get(0), file);
+            }
+            return new NumberRange<>(min, max);
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, pattern, file)
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
         }
-        TokenPattern<?> exact = pattern.find("EXACT");
-        if(exact != null) return new NumberRange<>(parseDouble(exact, file));
-        List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
-        List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
-        Double min = null;
-        Double max = null;
-        if(!minRaw.isEmpty()) {
-            min = CommonParsers.parseDouble(minRaw.get(0), file);
-        }
-        if(!maxRaw.isEmpty()) {
-            max = CommonParsers.parseDouble(maxRaw.get(0), file);
-        }
-        return new NumberRange<>(min, max);
     }
 
     public static Objective parseObjective(TokenPattern<?> pattern, TridentFile file) {
@@ -390,18 +403,24 @@ public class CommonParsers {
     }
 
     public static TimeSpan parseTime(TokenPattern<?> time, TridentFile file) {
-        String raw = time.flatten(false);
-        TimeSpan.Units units = TimeSpan.Units.TICKS;
+        try {
+            String raw = time.flatten(false);
+            TimeSpan.Units units = TimeSpan.Units.TICKS;
 
-        for(TimeSpan.Units unitValue : TimeSpan.Units.values()) {
-            if(raw.endsWith(unitValue.suffix)) {
-                units = unitValue;
-                raw = raw.substring(0, raw.length() - unitValue.suffix.length());
-                break;
+            for(TimeSpan.Units unitValue : TimeSpan.Units.values()) {
+                if(raw.endsWith(unitValue.suffix)) {
+                    units = unitValue;
+                    raw = raw.substring(0, raw.length() - unitValue.suffix.length());
+                    break;
+                }
             }
-        }
 
-        return new TimeSpan(Double.parseDouble(raw), units);
+            return new TimeSpan(Double.parseDouble(raw), units);
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, time, file)
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", time, file);
+        }
     }
 
     public static Object parseAnything(TokenPattern<?> pattern, TridentFile file) {

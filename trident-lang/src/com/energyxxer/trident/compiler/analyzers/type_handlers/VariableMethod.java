@@ -14,6 +14,16 @@ import static com.energyxxer.trident.extensions.EObject.assertNotNull;
 public interface VariableMethod {
     Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file);
 
+    default Object safeCall(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file) {
+        try {
+            return call(params, patterns, pattern, file);
+        } catch(TridentException | TridentException.Grouped x) {
+            throw x;
+        } catch (Exception x) {
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.toString(), pattern, file);
+        }
+    }
+
     class HelperMethods {
 
         @SuppressWarnings("unchecked")

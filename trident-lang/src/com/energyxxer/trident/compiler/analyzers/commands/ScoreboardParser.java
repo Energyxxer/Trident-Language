@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.*;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
@@ -8,12 +9,11 @@ import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "scoreboard")
@@ -29,8 +29,7 @@ public class ScoreboardParser implements CommandParser {
                 return parsePlayers(inner, file);
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
     }
@@ -64,8 +63,7 @@ public class ScoreboardParser implements CommandParser {
                         return new ObjectiveModifyCommand(objective, ObjectiveModifyCommand.ObjectiveModifyKey.RENDER_TYPE, ObjectiveModifyCommand.ObjectiveRenderType.valueOf(sub.find("CHOICE").flatten(false).toUpperCase()));
                     }
                     default: {
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + sub.getName() + "'", sub));
-                        return null;
+                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + sub.getName() + "'", sub, file);
                     }
                 }
             }
@@ -85,8 +83,7 @@ public class ScoreboardParser implements CommandParser {
                 return new SetObjectiveDisplayCommand(displaySlot);
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
     }
@@ -106,20 +103,37 @@ public class ScoreboardParser implements CommandParser {
             case "ENABLE": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
                 Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), file);
-                if(!objective.getType().equals("trigger")) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unable to use objective '" + objective.getName() + "' with trigger enable; Expected objective of type 'trigger', instead got '" + objective.getType() + "'", inner.find("OBJECTIVE")));
-                    return null;
+                try {
+                    return new TriggerEnable(entity, objective);
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, inner, file)
+                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find("ENTITY"))
+                            .map(CommodoreException.Source.TYPE_ERROR, inner.find("OBJECTIVE"))
+                            .invokeThrow();
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, file);
                 }
-                return new TriggerEnable(entity, objective);
             }
             case "GET": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
                 Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), file);
-                return new ScoreGet(new LocalScore(entity, objective));
+                try {
+                    return new ScoreGet(new LocalScore(entity, objective));
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, inner, file)
+                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find("ENTITY"))
+                            .invokeThrow();
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, file);
+                }
             }
             case "LIST": {
                 Entity entity = EntityParser.parseEntity(inner.find(".ENTITY"), file);
-                return new ScoreList(entity);
+                try {
+                    return new ScoreList(entity);
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, inner, file)
+                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find(".ENTITY"))
+                            .invokeThrow();
+                }
             }
             case "OPERATION": {
                 LocalScore target = new LocalScore(
@@ -149,8 +163,7 @@ public class ScoreboardParser implements CommandParser {
                 else return new ScoreReset();
             }
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
     }

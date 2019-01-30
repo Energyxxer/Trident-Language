@@ -14,14 +14,13 @@ import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.commodore.types.defaults.BossbarReference;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.lexer.TridentTokens;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "bossbar")
@@ -36,8 +35,7 @@ public class BossbarParser implements CommandParser {
             case "REMOVE": return parseRemove(inner, file);
             case "SET": return parseSet(inner, file);
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
     }
@@ -62,8 +60,7 @@ public class BossbarParser implements CommandParser {
             case "players": return new BossbarGetPlayersCommand(ref);
             case "visible": return new BossbarGetVisibleCommand(ref);
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown bossbar get branch '" + rawVariable + "'", inner));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + rawVariable + "'", inner, file);
             }
         }
     }
@@ -97,8 +94,7 @@ public class BossbarParser implements CommandParser {
             case "SET_VISIBLE":
                 return new BossbarSetVisibleCommand(ref, inner.search(TridentTokens.BOOLEAN).get(0).value.equals("true"));
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown bossbar set branch '" + inner.getName() + "'", inner));
-                return null;
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
     }

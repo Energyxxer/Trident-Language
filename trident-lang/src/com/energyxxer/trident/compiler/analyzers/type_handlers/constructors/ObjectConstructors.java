@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.constructors;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.item.Item;
@@ -135,7 +136,7 @@ public class ObjectConstructors {
                 if(content != null) {
                     try {
                         list.add(content);
-                    } catch(IllegalArgumentException x) {
+                    } catch(CommodoreException x) {
                         throw new TridentException(TridentException.Source.TYPE_ERROR, "Error while converting list object to nbt list: " + x.getMessage(), pattern, file);
                     }
                 }

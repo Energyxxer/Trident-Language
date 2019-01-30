@@ -1,13 +1,12 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.fill.*;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
@@ -21,9 +20,6 @@ public class FillParser implements CommandParser {
         CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file);
         CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file);
         Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), file);
-        if(!block.getBlockType().isStandalone()) {
-            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Block tags aren't allowed in this context", pattern.find("BLOCK"), file);
-        }
         FillCommand.FillMode mode = new FillReplaceMode();
 
         TokenPattern<?> inner = pattern.find("CHOICE");
@@ -52,12 +48,18 @@ public class FillParser implements CommandParser {
                     break;
                 }
                 default: {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
-                    return null;
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
                 }
             }
         }
 
-        return new FillCommand(from, to, block, mode);
+        try {
+            return new FillCommand(from, to, block, mode);
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, pattern, file)
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("BLOCK"))
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
+        }
     }
 }

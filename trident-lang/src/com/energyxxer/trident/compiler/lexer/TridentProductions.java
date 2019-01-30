@@ -822,7 +822,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "data"),
                     choice(
-                            group(literal("get"), target, optional(NBT_PATH, real().setOptional().setName("SCALE")).setName("PATH_CLAUSE")).setName("GET"),
+                            group(literal("get"), target, optional(sameLine(), NBT_PATH, real().setOptional().setName("SCALE")).setName("PATH_CLAUSE")).setName("GET"),
                             group(literal("merge"), target, NBT_COMPOUND).setName("MERGE"),
                             group(literal("modify"), target, NBT_PATH, choice(
                                     group(literal("append"), source).setName("MODIFY_APPEND"),
