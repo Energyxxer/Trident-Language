@@ -390,4 +390,8 @@ public class TridentFile {
     public boolean isSubFileOf(TridentFile parent) {
         return this.parent != null && (this.parent == parent || this.parent.isSubFileOf(parent));
     }
+
+    public TokenPattern<?> getPattern() {
+        return pattern;
+    }
 }

@@ -101,6 +101,6 @@ public class MathLib implements DefaultLibraryProvider {
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
-        stack.getGlobal().put(new Symbol("Math", Symbol.SymbolAccess.GLOBAL, math));
+        stack.getGlobal().put(new Symbol("Math", Symbol.SymbolVisibility.GLOBAL, math));
     }
 }

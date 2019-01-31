@@ -112,8 +112,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     }
 
     public static void defineEntity(TokenPattern<?> pattern, TridentFile file) {
-
-        boolean global = pattern.find("LITERAL_LOCAL") == null;
+        Symbol.SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), file, Symbol.SymbolVisibility.GLOBAL);
 
         String entityName = pattern.find("ENTITY_NAME").flatten(false);
         Type defaultType = null;
@@ -127,8 +126,8 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot create a non-default entity with this type", pattern.find("ENTITY_BASE"), file);
             }
             entityDecl = new CustomEntity(entityName, defaultType);
-            SymbolTable table = global ? file.getCompiler().getSymbolStack().getGlobal() : file.getCompiler().getSymbolStack().peek();
-            table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, entityDecl));
+            SymbolTable table = file.getCompiler().getSymbolStack().getTableForVisibility(visibility);
+            table.put(new Symbol(entityName, visibility, entityDecl));
         }
 
         TokenList bodyEntries = (TokenList) pattern.find("ENTITY_DECLARATION_BODY.ENTITY_BODY_ENTRIES");
@@ -223,8 +222,9 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                         }
                         break;
                     }
-                    default:
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + entry.getName() + "'", entry));
+                    default: {
+                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, file);
+                    }
                 }
             }
         }

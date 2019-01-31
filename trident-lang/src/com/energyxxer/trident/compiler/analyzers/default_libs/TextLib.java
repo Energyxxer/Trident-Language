@@ -36,6 +36,6 @@ public class TextLib implements DefaultLibraryProvider {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.toString(), pattern, file);
             }
         });
-        stack.getGlobal().put(new Symbol("Text", Symbol.SymbolAccess.GLOBAL, tlib));
+        stack.getGlobal().put(new Symbol("Text", Symbol.SymbolVisibility.GLOBAL, tlib));
     }
 }

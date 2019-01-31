@@ -88,7 +88,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
     }
 
     public Object put(String key, Object value) {
-        return map.put(key, new Symbol(key, Symbol.SymbolAccess.GLOBAL, value));
+        return map.put(key, new Symbol(key, Symbol.SymbolVisibility.GLOBAL, value));
     }
 
     public Object remove(String key) {
@@ -112,7 +112,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
     }
 
     public Object putIfAbsent(String key, Object value) {
-        return map.putIfAbsent(key, new Symbol(key, Symbol.SymbolAccess.GLOBAL, value));
+        return map.putIfAbsent(key, new Symbol(key, Symbol.SymbolVisibility.GLOBAL, value));
     }
 
     public DictionaryObject merge(DictionaryObject other) {

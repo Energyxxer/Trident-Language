@@ -33,7 +33,7 @@ public class FileLib implements DefaultLibraryProvider {
                     }
                     return new String(Files.readAllBytes(path), TridentCompiler.DEFAULT_CHARSET);
                 }), String.class).createForInstance(null));
-        stack.getGlobal().put(new Symbol("File", Symbol.SymbolAccess.GLOBAL, fileLib));
+        stack.getGlobal().put(new Symbol("File", Symbol.SymbolVisibility.GLOBAL, fileLib));
 
 
         DictionaryObject out = new DictionaryObject();

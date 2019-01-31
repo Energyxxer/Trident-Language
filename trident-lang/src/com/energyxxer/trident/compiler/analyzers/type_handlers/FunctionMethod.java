@@ -24,17 +24,17 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
 
     @Override
     public Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file) {
-        SymbolTable innerFrame = new SymbolTable(file);
+        SymbolTable innerFrame = new SymbolTable(declaringFile);
         file.getCompiler().getSymbolStack().push(innerFrame);
         file.getCompiler().getCallStack().push(new CallStack.Call(functionName, functionPattern, declaringFile, pattern));
 
         for(int i = 0; i < formalParameters.size(); i++) {
-            innerFrame.put(new Symbol(formalParameters.get(i), Symbol.SymbolAccess.LOCAL, i < params.length ? params[i] : null));
+            innerFrame.put(new Symbol(formalParameters.get(i), Symbol.SymbolVisibility.LOCAL, i < params.length ? params[i] : null));
         }
-        innerFrame.put(new Symbol("this", Symbol.SymbolAccess.LOCAL, thisObject));
+        innerFrame.put(new Symbol("this", Symbol.SymbolVisibility.LOCAL, thisObject));
 
         try {
-            TridentFile.resolveInnerFileIntoSection(functionPattern, file, file.getFunction());
+            TridentFile.resolveInnerFileIntoSection(functionPattern, declaringFile, file.getFunction());
         } catch(StackOverflowError x) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Stack Overflow Error", pattern, file);
         } catch(ReturnException x) {

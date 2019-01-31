@@ -30,7 +30,7 @@ public class TryInstruction implements Instruction {
         try {
             SymbolTable symbolTable = new SymbolTable(file);
             String variableName = pattern.find("CATCH_CLAUSE.EXCEPTION_VARIABLE").flatten(false);
-            symbolTable.put(new Symbol(variableName, Symbol.SymbolAccess.LOCAL, variable));
+            symbolTable.put(new Symbol(variableName, Symbol.SymbolVisibility.LOCAL, variable));
             file.getCompiler().getSymbolStack().push(symbolTable);
 
             IfInstruction.resolveBlock(pattern.find("CATCH_CLAUSE.EXECUTION_BLOCK"), file);

@@ -39,6 +39,7 @@ import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
 import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
+import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
@@ -601,6 +602,18 @@ public class CommonParsers {
             }
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
+            }
+        }
+    }
+
+    public static Symbol.SymbolVisibility parseVisibility(TokenPattern<?> pattern, TridentFile file, Symbol.SymbolVisibility defaultValue) {
+        if(pattern == null) return defaultValue;
+        switch(pattern.flatten(false)) {
+            case "global": return Symbol.SymbolVisibility.GLOBAL;
+            case "local": return Symbol.SymbolVisibility.LOCAL;
+            case "private": return Symbol.SymbolVisibility.PRIVATE;
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.flatten(false) + "'", pattern, file);
             }
         }
     }

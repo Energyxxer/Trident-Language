@@ -109,7 +109,7 @@ public class LoopInstruction implements Instruction {
                     return new LoopHeader() {
                         @Override
                         public void initialize() {
-                            file.getCompiler().getSymbolStack().peek().put(new Symbol(varName, Symbol.SymbolAccess.GLOBAL, null));
+                            file.getCompiler().getSymbolStack().peek().put(new Symbol(varName, Symbol.SymbolVisibility.GLOBAL, null));
                         }
 
                         @Override

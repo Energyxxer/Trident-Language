@@ -101,11 +101,11 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
     }
 
     public void add(@MethodWrapper.TridentNullable Object object) {
-        content.add(new Symbol(content.size() + "", Symbol.SymbolAccess.GLOBAL, object));
+        content.add(new Symbol(content.size() + "", Symbol.SymbolVisibility.GLOBAL, object));
     }
 
     public void insert(@MethodWrapper.TridentNullable Object object, int index) {
-        content.add(index, new Symbol(content.size() + "", Symbol.SymbolAccess.GLOBAL, object));
+        content.add(index, new Symbol(content.size() + "", Symbol.SymbolVisibility.GLOBAL, object));
     }
 
     public boolean contains(@MethodWrapper.TridentNullable Object object) {

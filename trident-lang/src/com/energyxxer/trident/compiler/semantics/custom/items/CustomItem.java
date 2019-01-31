@@ -148,8 +148,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
 
 
     public static void defineItem(TokenPattern<?> pattern, TridentFile file) {
-
-        boolean global = pattern.find("LITERAL_LOCAL") == null;
+        Symbol.SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), file, Symbol.SymbolVisibility.GLOBAL);
 
         String entityName = pattern.find("ITEM_NAME").flatten(false);
         Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), file);
@@ -161,8 +160,8 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
             itemDecl = new CustomItem(entityName, defaultType);
             if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, file));
 
-            SymbolTable table = global ? file.getCompiler().getSymbolStack().getGlobal() : file.getCompiler().getSymbolStack().peek();
-            table.put(new Symbol(entityName, Symbol.SymbolAccess.GLOBAL, itemDecl));
+            SymbolTable table = file.getCompiler().getSymbolStack().getTableForVisibility(visibility);
+            table.put(new Symbol(entityName, visibility, itemDecl));
         } else if(rawCustomModelData != null) {
             file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default items don't support custom model data specifiers", rawCustomModelData));
         }

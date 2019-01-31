@@ -172,7 +172,7 @@ public class TridentCompiler {
         this.setProgress("Adding native methods");
 
         {
-            symbolStack.getGlobal().put(new Symbol("new", Symbol.SymbolAccess.GLOBAL, new DictionaryObject()));
+            symbolStack.getGlobal().put(new Symbol("new", Symbol.SymbolVisibility.GLOBAL, new DictionaryObject()));
             for(DefaultLibraryProvider lib : AnalyzerManager.getAllParsers(DefaultLibraryProvider.class)) {
                 lib.populate(symbolStack, this);
             }

@@ -44,7 +44,11 @@ public class SymbolStack {
         for (Iterator<SymbolTable> it = new ArrayDeque<>(stack).descendingIterator(); it.hasNext(); ) {
             SymbolTable table = it.next();
             if(table.containsKey(name)) {
-                return table.get(name);
+                Symbol symbol = table.get(name);
+                if(symbol.getVisibility() == Symbol.SymbolVisibility.PRIVATE && table.getFile() != null && !table.getFile().getPattern().getFile().equals(from.getPattern().getFile())) {
+                    return null;
+                }
+                return symbol;
             }
         }
         if(global.containsKey(name)) return global.get(name);
@@ -57,5 +61,10 @@ public class SymbolStack {
 
     public SymbolTable getGlobal() {
         return global;
+    }
+
+    public SymbolTable getTableForVisibility(Symbol.SymbolVisibility visibility) {
+        if(visibility == Symbol.SymbolVisibility.GLOBAL) return global;
+        return peek();
     }
 }

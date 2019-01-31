@@ -9,7 +9,7 @@ public class DataBank extends Symbol {
     private final Object value;
 
     public DataBank(String name, Object value) {
-        super(name, SymbolAccess.GLOBAL);
+        super(name, SymbolVisibility.GLOBAL);
 
         this.value = value;
 

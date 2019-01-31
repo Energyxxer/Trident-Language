@@ -4,26 +4,24 @@ import org.jetbrains.annotations.Nullable;
 
 public class Symbol {
 
-
-
-    public enum SymbolAccess {
+    public enum SymbolVisibility {
         GLOBAL, LOCAL, PRIVATE
     }
     private String name;
 
-    private final SymbolAccess access;
+    private final SymbolVisibility visibility;
     private Object value;
     public Symbol(String name) {
-        this(name, SymbolAccess.LOCAL);
+        this(name, SymbolVisibility.LOCAL);
     }
 
-    public Symbol(String name, SymbolAccess access) {
-        this(name, access, null);
+    public Symbol(String name, SymbolVisibility visibility) {
+        this(name, visibility, null);
     }
 
-    public Symbol(String name, SymbolAccess access, Object value) {
+    public Symbol(String name, SymbolVisibility visibility, Object value) {
         this.name = name;
-        this.access = access;
+        this.visibility = visibility;
         if(value != null) setValue(value);
     }
 
@@ -35,8 +33,8 @@ public class Symbol {
         this.name = name;
     }
 
-    public SymbolAccess getAccess() {
-        return access;
+    public SymbolVisibility getVisibility() {
+        return visibility;
     }
 
     @Nullable

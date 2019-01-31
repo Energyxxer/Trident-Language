@@ -41,7 +41,7 @@ public class JsonLib implements DefaultLibraryProvider {
 
                     return gb.create().toJson(toJson(param));
                 });
-        stack.getGlobal().put(new Symbol("JSON", Symbol.SymbolAccess.GLOBAL, block));
+        stack.getGlobal().put(new Symbol("JSON", Symbol.SymbolVisibility.GLOBAL, block));
     }
 
     private Object parseJson(JsonElement elem) {

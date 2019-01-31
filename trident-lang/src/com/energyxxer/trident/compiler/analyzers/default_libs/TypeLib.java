@@ -23,13 +23,13 @@ public class TypeLib implements DefaultLibraryProvider {
                     if(loc == null) return false;
                     return compiler.getModule().namespaceExists(loc.namespace) && compiler.getModule().getNamespace(loc.namespace).types.block.exists(loc.body);
                 }), String.class).createForInstance(null));
-        stack.getGlobal().put(new Symbol("Block", Symbol.SymbolAccess.GLOBAL, block));
+        stack.getGlobal().put(new Symbol("Block", Symbol.SymbolVisibility.GLOBAL, block));
 
 
-        stack.getGlobal().put(new Symbol("typeOf", Symbol.SymbolAccess.GLOBAL, (VariableMethod) (params, patterns, pattern, file) ->
+        stack.getGlobal().put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (VariableMethod) (params, patterns, pattern, file) ->
                 (params.length >= 1 && params[0] != null) ? VariableTypeHandler.Static.getShorthandForObject(params[0]) : "null"
         ));
-        stack.getGlobal().put(new Symbol("isInstance", Symbol.SymbolAccess.GLOBAL, new MethodWrapper<>("isInstance", (instance, params) -> {
+        stack.getGlobal().put(new Symbol("isInstance", Symbol.SymbolVisibility.GLOBAL, new MethodWrapper<>("isInstance", (instance, params) -> {
             params[1] = ((String) params[1]).trim();
             Class cls = VariableTypeHandler.Static.getClassForShorthand((String)params[1]);
             if(cls == null) {

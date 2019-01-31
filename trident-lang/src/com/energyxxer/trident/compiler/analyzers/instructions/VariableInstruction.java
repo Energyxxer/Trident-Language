@@ -11,8 +11,9 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 public class VariableInstruction implements Instruction {
     @Override
     public void run(TokenPattern<?> pattern, TridentFile file) {
-        SymbolTable table = file.getCompiler().getSymbolStack().peek();
-        Symbol symbol = new Symbol(pattern.find("VARIABLE_NAME").flatten(false));
+        Symbol.SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), file, Symbol.SymbolVisibility.LOCAL);
+        SymbolTable table = file.getCompiler().getSymbolStack().getTableForVisibility(visibility);
+        Symbol symbol = new Symbol(pattern.find("VARIABLE_NAME").flatten(false), visibility);
 
         Object value = CommonParsers.parseAnything((TokenPattern<?>) ((pattern.find("VARIABLE_INITIALIZATION.VARIABLE_VALUE")).getContents()), file);
 
