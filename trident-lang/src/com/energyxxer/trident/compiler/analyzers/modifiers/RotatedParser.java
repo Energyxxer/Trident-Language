@@ -12,9 +12,9 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "rotated")
-public class RotatedParser implements ModifierParser {
+public class RotatedParser implements SimpleModifierParser {
     @Override
-    public ExecuteModifier parse(TokenPattern<?> pattern, TridentFile file) {
+    public ExecuteModifier parseSingle(TokenPattern<?> pattern, TridentFile file) {
         TokenPattern<?> branch = ((TokenStructure) pattern.find("CHOICE")).getContents();
         switch(branch.getName()) {
             case "ENTITY_BRANCH": {

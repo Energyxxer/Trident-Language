@@ -8,9 +8,9 @@ import com.energyxxer.trident.compiler.lexer.TridentTokens;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "align")
-public class AlignParser implements ModifierParser {
+public class AlignParser implements SimpleModifierParser {
     @Override
-    public ExecuteModifier parse(TokenPattern<?> pattern, TridentFile file) {
+    public ExecuteModifier parseSingle(TokenPattern<?> pattern, TridentFile file) {
         String swizzle = pattern.search(TridentTokens.SWIZZLE).get(0).value;
         return new ExecuteAlignment(swizzle.contains("x"), swizzle.contains("y"), swizzle.contains("z"));
     }

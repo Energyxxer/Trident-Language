@@ -17,14 +17,14 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
-public class ConditionalParser implements ModifierParser {
+public class ConditionalParser implements SimpleModifierParser {
     @AnalyzerMember(key = "if")
-    public static class IfParser extends ConditionalParser implements ModifierParser {}
+    public static class IfParser extends ConditionalParser implements SimpleModifierParser {}
     @AnalyzerMember(key = "unless")
-    public static class UnlessParser extends ConditionalParser implements ModifierParser {}
+    public static class UnlessParser extends ConditionalParser implements SimpleModifierParser {}
 
     @Override
-    public ExecuteModifier parse(TokenPattern<?> pattern, TridentFile file) {
+    public ExecuteModifier parseSingle(TokenPattern<?> pattern, TridentFile file) {
         ExecuteCondition.ConditionType conditionType =
                 pattern.find("HEADER").flatten(false).equals("if") ?
                         ExecuteCondition.ConditionType.IF :

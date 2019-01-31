@@ -12,9 +12,9 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "positioned")
-public class PositionedParser implements ModifierParser {
+public class PositionedParser implements SimpleModifierParser {
     @Override
-    public ExecuteModifier parse(TokenPattern<?> pattern, TridentFile file) {
+    public ExecuteModifier parseSingle(TokenPattern<?> pattern, TridentFile file) {
         TokenPattern<?> branch = ((TokenStructure) pattern.find("CHOICE")).getContents();
         switch(branch.getName()) {
             case "ENTITY_BRANCH": {

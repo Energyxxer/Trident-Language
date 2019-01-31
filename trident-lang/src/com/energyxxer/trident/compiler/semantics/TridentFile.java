@@ -341,8 +341,8 @@ public class TridentFile {
                             for (TokenPattern<?> rawModifier : modifierList.getContents()) {
                                 ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
                                 if (parser != null) {
-                                    ExecuteModifier modifier = parser.parse(rawModifier, parent);
-                                    if (modifier != null) modifiers.add(modifier);
+                                    Collection<ExecuteModifier> modifier = parser.parse(rawModifier, parent);
+                                    modifiers.addAll(modifier);
                                 } else {
                                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + rawModifier.flattenTokens().get(0).value + "'", rawModifier, parent);
                                 }

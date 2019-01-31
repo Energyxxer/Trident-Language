@@ -8,9 +8,9 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "at")
-public class AtParser implements ModifierParser {
+public class AtParser implements SimpleModifierParser {
     @Override
-    public ExecuteModifier parse(TokenPattern<?> pattern, TridentFile file) {
+    public ExecuteModifier parseSingle(TokenPattern<?> pattern, TridentFile file) {
         return new ExecuteAtEntity(EntityParser.parseEntity(pattern.find("ENTITY"), file));
     }
 }

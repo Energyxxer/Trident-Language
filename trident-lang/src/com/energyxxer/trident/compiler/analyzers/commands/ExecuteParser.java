@@ -13,6 +13,7 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 @AnalyzerMember(key = "execute")
 public class ExecuteParser implements CommandParser {
@@ -26,8 +27,8 @@ public class ExecuteParser implements CommandParser {
             for(TokenPattern<?> inner : list.getContents()) {
                 ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, inner.flattenTokens().get(0).value);
                 if(parser != null) {
-                    ExecuteModifier modifier = parser.parse(inner, file);
-                    if(modifier != null) modifiers.add(modifier);
+                    Collection<ExecuteModifier> modifier = parser.parse(inner, file);
+                    modifiers.addAll(modifier);
                 } else {
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + inner.flattenTokens().get(0).value + "'", inner, file);
                 }

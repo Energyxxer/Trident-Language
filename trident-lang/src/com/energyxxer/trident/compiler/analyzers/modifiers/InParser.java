@@ -8,9 +8,9 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "in")
-public class InParser implements ModifierParser {
+public class InParser implements SimpleModifierParser {
     @Override
-    public ExecuteModifier parse(TokenPattern<?> pattern, TridentFile file) {
+    public ExecuteModifier parseSingle(TokenPattern<?> pattern, TridentFile file) {
         return new ExecuteInDimension(CommonParsers.parseType(pattern.find("DIMENSION_ID"), file, m -> m.dimension));
     }
 }

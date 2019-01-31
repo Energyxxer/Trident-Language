@@ -9,9 +9,9 @@ import com.energyxxer.trident.compiler.lexer.TridentTokens;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "anchored")
-public class AnchoredParser implements ModifierParser {
+public class AnchoredParser implements SimpleModifierParser {
     @Override
-    public ExecuteModifier parse(TokenPattern<?> pattern, TridentFile file) {
+    public ExecuteModifier parseSingle(TokenPattern<?> pattern, TridentFile file) {
         return new ExecuteAnchor(pattern.search(TridentTokens.ANCHOR).get(0).value.equals("eyes") ? EntityAnchor.EYES : EntityAnchor.FEET);
     }
 }

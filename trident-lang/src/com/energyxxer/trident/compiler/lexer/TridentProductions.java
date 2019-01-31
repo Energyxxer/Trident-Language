@@ -998,6 +998,14 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //region raw
+        {
+            MODIFIER.add(group(
+                    matchItem(MODIFIER_HEADER, "raw"),
+                    choice(string(), INTERPOLATION_BLOCK).setName("RAW_MODIFIER_VALUE")
+            ));
+        }
+        //endregion
         //endregion
 
         //region Constructs
