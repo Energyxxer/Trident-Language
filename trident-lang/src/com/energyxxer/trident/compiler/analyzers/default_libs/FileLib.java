@@ -9,6 +9,7 @@ import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.SymbolStack;
 
+import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,7 +32,10 @@ public class FileLib implements DefaultLibraryProvider {
                     if(!path.startsWith(compiler.getRootDir().toPath())) {
                         throw new IllegalArgumentException("Cannot read files outside of the current project: " + path);
                     }
-                    return new String(Files.readAllBytes(path), TridentCompiler.DEFAULT_CHARSET);
+                    if(Files.exists(path)) {
+                        if(Files.isDirectory(path)) return path.toFile().list();
+                        return new String(Files.readAllBytes(path), TridentCompiler.DEFAULT_CHARSET);
+                    } else throw new FileNotFoundException(path.toString());
                 }), String.class).createForInstance(null));
         stack.getGlobal().put(new Symbol("File", Symbol.SymbolVisibility.GLOBAL, fileLib));
 
