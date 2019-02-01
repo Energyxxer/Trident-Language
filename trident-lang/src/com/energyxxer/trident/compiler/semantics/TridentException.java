@@ -22,7 +22,8 @@ public class TridentException extends RuntimeException implements VariableTypeHa
         INTERNAL_EXCEPTION("Internal Exception"),
         USER_EXCEPTION("User Exception"),
         IMPOSSIBLE("Impossible Exception"),
-        STRUCTURAL_ERROR("Structural Error");
+        STRUCTURAL_ERROR("Structural Error"),
+        DUPLICATION_ERROR("Duplication Error");
 
         private final String humanReadableName;
 
@@ -77,6 +78,10 @@ public class TridentException extends RuntimeException implements VariableTypeHa
 
     public Notice getNotice() {
         return notice;
+    }
+
+    public void expandToUncaught() {
+        notice.setExtendedMessage("Uncaught " + source.getHumanReadableName() + ": " + notice.getExtendedMessage());
     }
 
     public boolean isBreaking() {

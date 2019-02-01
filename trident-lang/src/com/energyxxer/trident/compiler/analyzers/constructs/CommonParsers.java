@@ -510,7 +510,7 @@ public class CommonParsers {
             if(response.getPossibleTypes().size() > 1 && strict) {
                 file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Ambiguous NBT data type for the path '" + path + "': possible types include " + response.getPossibleTypes().stream().map(DataType::getShortTypeName).collect(Collectors.joining(", ")) + ". Assuming " + response.getPossibleTypes().stream().findFirst().get().getShortTypeName(), pattern));
             }
-            DataType dataType = response.getPossibleTypes().stream().findFirst().get();
+            DataType dataType = response.getPossibleTypes().toArray(new DataType[0])[0];
             if(NumericNBTTag.class.isAssignableFrom(dataType.getCorrespondingTagType())) {
                 try {
                     NBTTag sample = dataType.getCorrespondingTagType().newInstance();

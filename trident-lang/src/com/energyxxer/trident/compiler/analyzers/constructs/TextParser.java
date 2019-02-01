@@ -292,47 +292,47 @@ public class TextParser {
             super(wrapped, TextComponent.class);
         }
     }
-}
 
-class ReportDelegate {
-    private TridentCompiler compiler;
-    private boolean strict;
-    private TokenPattern<?> pattern;
-    private TridentFile file;
+    static class ReportDelegate {
+        private TridentCompiler compiler;
+        private boolean strict;
+        private TokenPattern<?> pattern;
+        private TridentFile file;
 
-    public ReportDelegate(TridentCompiler compiler, boolean strict, TokenPattern<?> pattern, TridentFile file) {
-        this.compiler = compiler;
-        this.strict = strict;
-        this.pattern = pattern;
-        this.file = file;
-    }
+        public ReportDelegate(TridentCompiler compiler, boolean strict, TokenPattern<?> pattern, TridentFile file) {
+            this.compiler = compiler;
+            this.strict = strict;
+            this.pattern = pattern;
+            this.file = file;
+        }
 
-    public void report(String message) {
-        report(message, this.pattern);
-    }
+        public void report(String message) {
+            report(message, this.pattern);
+        }
 
-    public void report(String message, JsonElement element) {
-        report(message, message, JsonParser.getPatternFor(element));
-    }
+        public void report(String message, JsonElement element) {
+            report(message, message, JsonParser.getPatternFor(element));
+        }
 
-    public void report(String message, TokenPattern<?> pattern) {
-        report(message, message, pattern);
-    }
+        public void report(String message, TokenPattern<?> pattern) {
+            report(message, message, pattern);
+        }
 
-    public void report(String strict, String notStrict) {
-        report(strict, notStrict, this.pattern);
-    }
+        public void report(String strict, String notStrict) {
+            report(strict, notStrict, this.pattern);
+        }
 
-    public void report(String strict, String notStrict, JsonElement element) {
-        report(strict, notStrict, JsonParser.getPatternFor(element));
-    }
+        public void report(String strict, String notStrict, JsonElement element) {
+            report(strict, notStrict, JsonParser.getPatternFor(element));
+        }
 
-    public void report(String strict, String notStrict, TokenPattern<?> pattern) {
-        if(pattern == null) pattern = this.pattern;
-        if(this.strict) {
-            throw new TridentException(TridentException.Source.COMMAND_ERROR, strict, pattern, file);
-        } else {
-            compiler.getReport().addNotice(new Notice(NoticeType.WARNING, notStrict, pattern));
+        public void report(String strict, String notStrict, TokenPattern<?> pattern) {
+            if(pattern == null) pattern = this.pattern;
+            if(this.strict) {
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, strict, pattern, file);
+            } else {
+                compiler.getReport().addNotice(new Notice(NoticeType.WARNING, notStrict, pattern));
+            }
         }
     }
 }

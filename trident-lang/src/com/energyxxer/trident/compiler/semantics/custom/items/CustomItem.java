@@ -8,8 +8,6 @@ import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
@@ -17,9 +15,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.SymbolTable;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
@@ -163,98 +159,111 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
             SymbolTable table = file.getCompiler().getSymbolStack().getTableForVisibility(visibility);
             table.put(new Symbol(entityName, visibility, itemDecl));
         } else if(rawCustomModelData != null) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default items don't support custom model data specifiers", rawCustomModelData));
+            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default items don't support custom model data specifiers", rawCustomModelData, file);
         }
 
-        TokenList bodyEntries = (TokenList) pattern.find("ITEM_DECLARATION_BODY.ITEM_BODY_ENTRIES");
 
-        if(bodyEntries != null) {
-            for(TokenPattern<?> rawEntry : bodyEntries.getContents()) {
-                TokenPattern<?> entry = ((TokenStructure) rawEntry).getContents();
-                switch(entry.getName()) {
-                    case "DEFAULT_NBT": {
-                        if(itemDecl == null) {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default items", entry));
+
+        ExceptionCollector collector = new ExceptionCollector(file);
+        collector.begin();
+
+        try {
+            TokenList bodyEntries = (TokenList) pattern.find("ITEM_DECLARATION_BODY.ITEM_BODY_ENTRIES");
+
+            if (bodyEntries != null) {
+                for (TokenPattern<?> rawEntry : bodyEntries.getContents()) {
+                    TokenPattern<?> entry = ((TokenStructure) rawEntry).getContents();
+                    switch (entry.getName()) {
+                        case "DEFAULT_NBT": {
+                            if (itemDecl == null) {
+                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, file));
+                                break;
+                            }
+                            TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file);
+                            PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
+                            NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), file);
+                            itemDecl.defaultNBT = itemDecl.defaultNBT.merge(newNBT);
                             break;
                         }
-                        TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file);
-                        PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
-                        NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), file);
-                        itemDecl.defaultNBT = itemDecl.defaultNBT.merge(newNBT);
-                        break;
-                    }
-                    case "ITEM_INNER_FUNCTION": {
-                        TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), file);
+                        case "ITEM_INNER_FUNCTION": {
+                            TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), file);
 
-                        TokenPattern<?> rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
-                        if(rawFunctionModifiers != null) {
-                            TokenPattern<?> modifiers = ((TokenStructure)rawFunctionModifiers).getContents();
-                            switch(modifiers.getName()) {
-                                case "FUNCTION_ON": {
+                            TokenPattern<?> rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
+                            if (rawFunctionModifiers != null) {
+                                TokenPattern<?> modifiers = ((TokenStructure) rawFunctionModifiers).getContents();
+                                switch (modifiers.getName()) {
+                                    case "FUNCTION_ON": {
 
-                                    TokenPattern<?> onWhat = ((TokenStructure)modifiers.find("FUNCTION_ON_INNER")).getContents();
+                                        TokenPattern<?> onWhat = ((TokenStructure) modifiers.find("FUNCTION_ON_INNER")).getContents();
 
-                                    boolean pure = false;
-                                    if(modifiers.find("LITERAL_PURE") != null) {
-                                        if(itemDecl != null) {
-                                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "The 'pure' modifier is only allowed for default items", modifiers.find("LITERAL_PURE")));
-                                        } else {
-                                            pure = true;
-                                        }
-                                    }
-
-                                    if(onWhat.getName().equals("ITEM_CRITERIA")) {
-                                        if(itemDecl != null && file.getLanguageLevel() < 2) {
-                                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Custom non-default item events are only supported in language level 2 and up", entry));
-                                            break;
+                                        boolean pure = false;
+                                        if (modifiers.find("LITERAL_PURE") != null) {
+                                            if (itemDecl != null) {
+                                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The 'pure' modifier is only allowed for default items", modifiers.find("LITERAL_PURE"), file));
+                                            } else {
+                                                pure = true;
+                                            }
                                         }
 
-                                        file.getCompiler().getSpecialFileManager().itemEvents.addCustomItem(ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()), defaultType, itemDecl, new ItemEvent(new FunctionReference(innerFile.getFunction()), pure));
+                                        if (onWhat.getName().equals("ITEM_CRITERIA")) {
+                                            if (itemDecl != null && file.getLanguageLevel() < 2) {
+                                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Custom non-default item events are only supported in language level 2 and up", entry, file));
+                                                break;
+                                            }
 
+                                            file.getCompiler().getSpecialFileManager().itemEvents.addCustomItem(ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()), defaultType, itemDecl, new ItemEvent(new FunctionReference(innerFile.getFunction()), pure));
+
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        break;
-                    }
-                    case "DEFAULT_NAME": {
-                        if(itemDecl == null) {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default items", entry));
                             break;
                         }
-
-                        NBTCompoundBuilder builder = new NBTCompoundBuilder();
-                        builder.put(new NBTPath("display",new NBTPath("Name")), new TagString("Name", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), file).toString()));
-
-                        itemDecl.defaultNBT = itemDecl.defaultNBT.merge(builder.getCompound());
-                        break;
-                    }
-                    case "DEFAULT_LORE": {
-                        if(itemDecl == null) {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default items", entry));
-                            break;
-                        }
-                        TagList loreList = new TagList("Lore");
-                        TagCompound newNBT = new TagCompound("", new TagCompound("display", loreList));
-
-                        TokenList rawLoreList = (TokenList)(entry.find("LORE_LIST"));
-                        if(rawLoreList != null) {
-                            for(TokenPattern<?> rawLine : rawLoreList.getContents()) {
-                                if(rawLine.getName().equals("TEXT_COMPONENT")) loreList.add(new TagString(TextParser.parseTextComponent(rawLine, file).toString()));
+                        case "DEFAULT_NAME": {
+                            if (itemDecl == null) {
+                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, file));
+                                break;
                             }
-                        }
 
-                        itemDecl.defaultNBT = itemDecl.defaultNBT.merge(newNBT);
-                        break;
+                            NBTCompoundBuilder builder = new NBTCompoundBuilder();
+                            builder.put(new NBTPath("display", new NBTPath("Name")), new TagString("Name", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), file).toString()));
+
+                            itemDecl.defaultNBT = itemDecl.defaultNBT.merge(builder.getCompound());
+                            break;
+                        }
+                        case "DEFAULT_LORE": {
+                            if (itemDecl == null) {
+                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, file));
+                                break;
+                            }
+                            TagList loreList = new TagList("Lore");
+                            TagCompound newNBT = new TagCompound("", new TagCompound("display", loreList));
+
+                            TokenList rawLoreList = (TokenList) (entry.find("LORE_LIST"));
+                            if (rawLoreList != null) {
+                                for (TokenPattern<?> rawLine : rawLoreList.getContents()) {
+                                    if (rawLine.getName().equals("TEXT_COMPONENT"))
+                                        loreList.add(new TagString(TextParser.parseTextComponent(rawLine, file).toString()));
+                                }
+                            }
+
+                            itemDecl.defaultNBT = itemDecl.defaultNBT.merge(newNBT);
+                            break;
+                        }
+                        default: {
+                            collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, file));
+                            break;
+                        }
                     }
-                    default:
-                        file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + entry.getName() + "'", entry));
                 }
             }
+        } catch(TridentException | TridentException.Grouped x) {
+            collector.log(x);
+        } finally {
+            collector.end();
+            if(itemDecl != null) itemDecl.endDeclaration();
         }
-
-        if(itemDecl != null) itemDecl.endDeclaration();
     }
 
     public int getItemIdHash() {

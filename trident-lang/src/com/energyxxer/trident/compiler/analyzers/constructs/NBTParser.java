@@ -243,17 +243,15 @@ public class NBTParser {
 
     public static void analyzeTag(TagCompound compound, PathContext context, TokenPattern<?> pattern, TridentFile file) {
         if(pattern == null) throw new RuntimeException();
-        NoticeType noticeType = file.getCompiler().getProperties().has("strict-nbt") &&
+
+        ReportDelegate delegate = new ReportDelegate(file, file.getCompiler().getProperties().has("strict-nbt") &&
                 file.getCompiler().getProperties().get("strict-nbt").isJsonPrimitive() &&
                 file.getCompiler().getProperties().get("strict-nbt").getAsJsonPrimitive().isBoolean() &&
-                file.getCompiler().getProperties().get("strict-nbt").getAsBoolean() ?
-                NoticeType.ERROR : NoticeType.WARNING;
-
-        String auxiliaryVerb = noticeType == NoticeType.ERROR ? "must" : "should";
+                file.getCompiler().getProperties().get("strict-nbt").getAsBoolean(), pattern);
 
         TagCompoundTraverser traverser = new TagCompoundTraverser(compound);
 
-        TagCompoundTraverser.PathContents next = null;
+        TagCompoundTraverser.PathContents next;
         while((next = (traverser.next())) != null) {
             NBTPath path = next.getPath();
             NBTTag value = next.getValue();
@@ -261,10 +259,10 @@ public class NBTParser {
             DataTypeQueryResponse response = file.getCompiler().getTypeMap().collectTypeInformation(next.getPath(), context);
 
             if(!response.isEmpty()) {
-                boolean isAGoodBoy = false;
+                boolean matchesType = false;
                 for(DataType type : response.getPossibleTypes()) {
                     if(type.getCorrespondingTagType() == value.getClass()) {
-                        isAGoodBoy = true;
+                        matchesType = true;
 
                         TypeFlags flags;
                         if(type instanceof FlatType && (flags = type.getFlags()) != null) {
@@ -273,7 +271,7 @@ public class NBTParser {
                             if(flags.hasFlag("boolean") && value instanceof TagByte) {
                                 byte byteValue = ((TagByte) value).getValue();
                                 if(byteValue != 0 && byteValue != 1) {
-                                    file.getCompiler().getReport().addNotice(new Notice(noticeType, "Byte at path '" + path + "' is boolean-like; " + auxiliaryVerb + " be either 0b or 1b", pattern));
+                                    delegate.report("Byte at path '" + path + "' is boolean-like; %s be either 0b or 1b");
                                 }
                             }
                             //endregion
@@ -283,7 +281,7 @@ public class NBTParser {
                                 boolean matched = false;
                                 TridentUtil.ResourceLocation location = TridentUtil.ResourceLocation.createStrict(((TagString)value).getValue());
                                 if(location == null) {
-                                    file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' is a type; but it doesn't look like a resource location", pattern));
+                                    delegate.report("String at path '" + path + "' is a type; but it doesn't look like a resource location");
                                     continue;
                                 }
                                 for(String category : flags.getTypeCategories()) {
@@ -296,9 +294,9 @@ public class NBTParser {
 
                                 if(!matched) {
                                     if(flags.getTypeCategories().size() > 1) {
-                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following types: " + flags.getTypeCategories().stream().collect(Collectors.joining(", ")) + "; but '" + ((TagString) value).getValue() + "' is not a type of any of the previous categories", pattern));
+                                        delegate.report("String at path '" + path + "' %s be one of the following types: " + String.join(", ", flags.getTypeCategories()) + "; but '" + ((TagString) value).getValue() + "' is not a type of any of the previous categories");
                                     } else {
-                                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be of type '" + flags.getTypeCategories().stream().findFirst().get() + "'. Instead got '" + ((TagString) value).getValue() + "'.", pattern));
+                                        delegate.report("String at path '" + path + "' %s be of type '" + flags.getTypeCategories().toArray(new String[0])[0] + "'. Instead got '" + ((TagString) value).getValue() + "'.");
                                     }
                                 }
                             }
@@ -315,7 +313,7 @@ public class NBTParser {
                                     }
                                 }
                                 if(!matched) {
-                                    file.getCompiler().getReport().addNotice(new Notice(noticeType, "String at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + flags.getStringOptions().stream().collect(Collectors.joining(", ")) + "; instead got '" + ((TagString) value).getValue() + "'", pattern));
+                                    delegate.report("String at path '" + path + "' %s be one of the following: " + String.join(", ", flags.getStringOptions()) + "; instead got '" + ((TagString) value).getValue() + "'");
                                 }
                             }
                             //endregion
@@ -324,15 +322,43 @@ public class NBTParser {
                         break;
                     }
                 }
-                if(!isAGoodBoy) {
+                if(!matchesType) {
                     if(response.getPossibleTypes().size() > 1) {
-                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be one of the following: " + response.getPossibleTypes().stream().map(DataType::getShortTypeName).collect(Collectors.joining(", ")), pattern));
+                        delegate.report("Data type at path '" + path + "' %s be one of the following: " + response.getPossibleTypes().stream().map(DataType::getShortTypeName).collect(Collectors.joining(", ")));
                     } else {
-                        file.getCompiler().getReport().addNotice(new Notice(noticeType, "Data type at path '" + path + "' " + auxiliaryVerb + " be of type " + response.getPossibleTypes().stream().findFirst().get().getShortTypeName(), pattern));
+                        delegate.report("Data type at path '" + path + "' %s be of type " + response.getPossibleTypes().toArray(new DataType[0])[0].getShortTypeName());
                     }
                 }
             } else {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown data type for path '" + next.getPath() + "'. Consider adding it to the type map", pattern));
+                if(delegate.strict) {
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown data type for path '" + next.getPath() + "'. Consider adding it to the type map", pattern));
+                }
+            }
+        }
+    }
+
+
+    static class ReportDelegate {
+        private boolean strict;
+        private TokenPattern<?> pattern;
+        private TridentFile file;
+
+        private String auxiliaryVerb;
+
+        ReportDelegate(TridentFile file, boolean strict, TokenPattern<?> pattern) {
+            this.strict = strict;
+            this.pattern = pattern;
+            this.file = file;
+
+            auxiliaryVerb = strict ? "must" : "should";
+        }
+
+        public void report(String message) {
+            message = message.replace("%s", auxiliaryVerb);
+            if(this.strict) {
+                throw new TridentException(TridentException.Source.TYPE_ERROR, message, pattern, file);
+            } else {
+                file.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, message, pattern));
             }
         }
     }

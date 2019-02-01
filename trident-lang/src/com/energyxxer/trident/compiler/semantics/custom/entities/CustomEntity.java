@@ -13,8 +13,6 @@ import com.energyxxer.commodore.util.attributes.Attribute;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
@@ -22,10 +20,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.selectors.TypeArgume
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.SymbolTable;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.*;
 import org.jetbrains.annotations.NotNull;
 
 import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.ALL_ENTITIES;
@@ -116,13 +111,13 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
         String entityName = pattern.find("ENTITY_NAME").flatten(false);
         Type defaultType = null;
-        if(pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED") != null) {
+        if (pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED") != null) {
             defaultType = CommonParsers.parseEntityType(pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED"), file);
         }
 
         CustomEntity entityDecl = null;
-        if(!entityName.equals("default")) {
-            if(defaultType == null || !defaultType.isStandalone()) {
+        if (!entityName.equals("default")) {
+            if (defaultType == null || !defaultType.isStandalone()) {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot create a non-default entity with this type", pattern.find("ENTITY_BASE"), file);
             }
             entityDecl = new CustomEntity(entityName, defaultType);
@@ -130,106 +125,117 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
             table.put(new Symbol(entityName, visibility, entityDecl));
         }
 
-        TokenList bodyEntries = (TokenList) pattern.find("ENTITY_DECLARATION_BODY.ENTITY_BODY_ENTRIES");
 
-        if(bodyEntries != null) {
-            for(TokenPattern<?> rawEntry : bodyEntries.getContents()) {
-                TokenPattern<?> entry = ((TokenStructure) rawEntry).getContents();
-                switch(entry.getName()) {
-                    case "DEFAULT_NBT": {
-                        if(entityDecl == null) {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default NBT isn't allowed for default entities", entry));
-                            break;
-                        }
+        ExceptionCollector collector = new ExceptionCollector(file);
+        collector.begin();
 
-                        TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file);
-                        if(newNBT != null) {
-                            PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
-                            NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), file);
-                        }
+        try {
+            TokenList bodyEntries = (TokenList) pattern.find("ENTITY_DECLARATION_BODY.ENTITY_BODY_ENTRIES");
 
-                        entityDecl.mergeNBT(newNBT);
-                        break;
-                    }
-                    case "DEFAULT_PASSENGERS": {
-                        if(entityDecl == null) {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default passengers aren't allowed for default entities", entry));
-                            break;
-                        }
-
-                        TagList passengersTag = new TagList("Passengers");
-
-                        for(TokenPattern<?> rawPassenger : ((TokenList)entry.find("PASSENGER_LIST")).getContents()) {
-                            if(rawPassenger.getName().equals("PASSENGER")) {
-
-                                TagCompound passengerCompound;
-
-                                Object reference = CommonParsers.parseEntityReference(rawPassenger.find("ENTITY_ID"), file);
-
-                                if(reference instanceof Type) {
-                                    passengerCompound = new TagCompound(new TagString("id", reference.toString()));
-                                } else if(reference instanceof CustomEntity) {
-                                    passengerCompound = ((CustomEntity) reference).getDefaultNBT().merge(new TagCompound(new TagString("id", ((CustomEntity) reference).getDefaultType().toString())));
-                                } else {
-                                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID"), file);
-                                }
-                                TokenPattern<?> auxNBT = rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND");
-                                if(auxNBT != null) {
-                                    TagCompound tag = NBTParser.parseCompound(auxNBT, file);
-                                    PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
-                                    NBTParser.analyzeTag(tag, context, auxNBT, file);
-                                    passengerCompound = passengerCompound.merge(tag);
-                                }
-
-                                passengersTag.add(passengerCompound);
+            if (bodyEntries != null) {
+                for (TokenPattern<?> rawEntry : bodyEntries.getContents()) {
+                    TokenPattern<?> entry = ((TokenStructure) rawEntry).getContents();
+                    switch (entry.getName()) {
+                        case "DEFAULT_NBT": {
+                            if (entityDecl == null) {
+                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default entities", entry, file));
+                                break;
                             }
-                        }
 
-                        entityDecl.mergeNBT(new TagCompound(passengersTag));
-                        break;
-                    }
-                    case "DEFAULT_HEALTH": {
-                        if(entityDecl == null) {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Default health isn't allowed for default entities", entry));
+                            TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file);
+                            if (newNBT != null) {
+                                PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
+                                NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), file);
+                            }
+
+                            entityDecl.mergeNBT(newNBT);
                             break;
                         }
+                        case "DEFAULT_PASSENGERS": {
+                            if (entityDecl == null) {
+                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default passengers aren't allowed for default entities", entry, file));
+                                break;
+                            }
 
-                        double health = CommonParsers.parseDouble(entry.find("HEALTH"), file);
-                        if(health < 0) {
-                            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Health must be non-negative", entry.find("HEALTH")));
+                            TagList passengersTag = new TagList("Passengers");
+
+                            for (TokenPattern<?> rawPassenger : ((TokenList) entry.find("PASSENGER_LIST")).getContents()) {
+                                if (rawPassenger.getName().equals("PASSENGER")) {
+
+                                    TagCompound passengerCompound;
+
+                                    Object reference = CommonParsers.parseEntityReference(rawPassenger.find("ENTITY_ID"), file);
+
+                                    if (reference instanceof Type) {
+                                        passengerCompound = new TagCompound(new TagString("id", reference.toString()));
+                                    } else if (reference instanceof CustomEntity) {
+                                        passengerCompound = ((CustomEntity) reference).getDefaultNBT().merge(new TagCompound(new TagString("id", ((CustomEntity) reference).getDefaultType().toString())));
+                                    } else {
+                                        collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID"), file));
+                                        break;
+                                    }
+                                    TokenPattern<?> auxNBT = rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND");
+                                    if (auxNBT != null) {
+                                        TagCompound tag = NBTParser.parseCompound(auxNBT, file);
+                                        PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
+                                        NBTParser.analyzeTag(tag, context, auxNBT, file);
+                                        passengerCompound = passengerCompound.merge(tag);
+                                    }
+
+                                    passengersTag.add(passengerCompound);
+                                }
+                            }
+
+                            entityDecl.mergeNBT(new TagCompound(passengersTag));
                             break;
                         }
+                        case "DEFAULT_HEALTH": {
+                            if (entityDecl == null) {
+                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default health isn't allowed for default entities", entry, file));
+                                break;
+                            }
 
-                        TagCompound healthNBT = new TagCompound();
-                        healthNBT.add(new TagFloat("Health", (float)health));
-                        healthNBT.add(new TagList("Attributes", new TagCompound(new TagString("Name", Attribute.MAX_HEALTH), new TagDouble("Base", health))));
+                            double health = CommonParsers.parseDouble(entry.find("HEALTH"), file);
+                            if (health < 0) {
+                                collector.log(new TridentException(TridentException.Source.COMMAND_ERROR, "Health must be non-negative", entry.find("HEALTH"), file));
+                                break;
+                            }
 
-                        entityDecl.mergeNBT(healthNBT);
-                        break;
-                    }
-                    case "ENTITY_INNER_FUNCTION": {
-                        boolean ticking = entry.find("LITERAL_TICKING") != null;
+                            TagCompound healthNBT = new TagCompound();
+                            healthNBT.add(new TagFloat("Health", (float) health));
+                            healthNBT.add(new TagList("Attributes", new TagCompound(new TagString("Name", Attribute.MAX_HEALTH), new TagDouble("Base", health))));
 
-                        TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), file);
-
-                        if(ticking) {
-                            Entity selector = entityDecl != null ?
-                                    TypeArgumentParser.getSelectorForCustomEntity(entityDecl) :
-                                    defaultType != null ?
-                                            new Selector(ALL_ENTITIES, new TypeArgument(defaultType)) :
-                                            new Selector(ALL_ENTITIES);
-                            file.getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteAsEntity(selector), new ExecuteAtEntity(new Selector(SENDER))));
+                            entityDecl.mergeNBT(healthNBT);
+                            break;
                         }
-                        break;
-                    }
-                    default: {
-                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, file);
+                        case "ENTITY_INNER_FUNCTION": {
+                            boolean ticking = entry.find("LITERAL_TICKING") != null;
+
+                            TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), file);
+
+                            if (ticking) {
+                                Entity selector = entityDecl != null ?
+                                        TypeArgumentParser.getSelectorForCustomEntity(entityDecl) :
+                                        defaultType != null ?
+                                                new Selector(ALL_ENTITIES, new TypeArgument(defaultType)) :
+                                                new Selector(ALL_ENTITIES);
+                                file.getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteAsEntity(selector), new ExecuteAtEntity(new Selector(SENDER))));
+                            }
+                            break;
+                        }
+                        default: {
+                            collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, file));
+                            break;
+                        }
                     }
                 }
             }
+        } catch(TridentException | TridentException.Grouped x) {
+            collector.log(x);
+        } finally {
+            collector.end();
+            if (entityDecl != null) entityDecl.endDeclaration();
         }
-
-        if(entityDecl != null) entityDecl.endDeclaration();
     }
 
     @Override

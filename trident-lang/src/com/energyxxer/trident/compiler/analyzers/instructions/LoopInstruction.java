@@ -52,6 +52,7 @@ public class LoopInstruction implements Instruction {
         } catch(TridentException | TridentException.Grouped x) {
             if(wasEmpty) {
                 if(x instanceof TridentException) {
+                    ((TridentException) x).expandToUncaught();
                     file.getCompiler().getReport().addNotice(((TridentException) x).getNotice());
                 } else {
                     for(TridentException ex : ((TridentException.Grouped) x).getExceptions()) {

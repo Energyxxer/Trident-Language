@@ -3,11 +3,10 @@ package com.energyxxer.trident.compiler.analyzers.instructions;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.report.Notice;
-import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
@@ -31,7 +30,7 @@ public class DefineInstruction implements Instruction {
                 TridentFile.createInnerFile(inner.find("INNER_FUNCTION"), file);
                 break;
             default: {
-                file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + inner.getName() + "'", inner));
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
             }
         }
     }
@@ -51,7 +50,7 @@ public class DefineInstruction implements Instruction {
         }
 
         if(file.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) {
-            file.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "An objective with the name '" + objectiveName + "' has already been defined", pattern));
+            throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "An objective with the name '" + objectiveName + "' has already been defined", pattern, file);
         } else {
             file.getCompiler().getModule().getObjectiveManager().create(objectiveName, criteria, displayName, true);
         }

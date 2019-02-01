@@ -303,7 +303,7 @@ public class TridentFile {
                             resolveEntry(inner, parent, appendTo, compileOnly);
                         } catch(TridentException x) {
                             if(compiler.getTryStack().isEmpty()) {
-                                x.getNotice().setExtendedMessage("Uncaught " + x.getSource().getHumanReadableName() + ": " + x.getNotice().getExtendedMessage());
+                                x.expandToUncaught();
                                 compiler.getReport().addNotice(x.getNotice());
                                 if(x.isBreaking()) break;
                             } else if(compiler.getTryStack().isRecovering()) {
@@ -361,8 +361,8 @@ public class TridentFile {
                             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + commandPattern.flattenTokens().get(0).value + "'", commandPattern, parent);
                         }
                     } else if (!parent.reportedNoCommands) {
-                        parent.getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have commands", inner));
                         parent.reportedNoCommands = true;
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "A compile-only function may not have commands", inner, parent);
                     }
                     break;
                 case "COMMENT":
