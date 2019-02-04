@@ -62,8 +62,10 @@ public interface OperatorHandler<A, B> {
                     }
                 }
 
+                String errorType = idA.replace("*",idB).replace("*", "null");
+
                 if (handler == null) {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "The operator " + operator.getSymbol() + " is not defined for types " + idA.replace("*", "null") + " nor " + idB.replace("*", "null"), pattern, ctx);
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "The operator " + operator.getSymbol() + " is not defined for type " + errorType, pattern, ctx);
                 }
                 return handler.perform(a, b, pattern, ctx);
             } else {
