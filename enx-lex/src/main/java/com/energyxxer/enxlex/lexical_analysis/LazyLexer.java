@@ -12,7 +12,6 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.util.StringLocation;
 import com.energyxxer.util.StringLocationCache;
-import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
 
@@ -54,6 +53,7 @@ public class LazyLexer extends Lexer {
             //Debug.log("Successfully matched: " + matchResponse.pattern);
             matchResponse.pattern.validate();
             for(Token token : matchResponse.pattern.flattenTokens()) {
+                notices.addAll(token.attachedNotices);
                 stream.write(token);
             }
         } else {
@@ -100,9 +100,13 @@ public class LazyLexer extends Lexer {
                     notices.add(new Notice(NoticeType.ERROR, response.errorMessage, "\b" + file.getAbsolutePath() + "\b" + (getLookingIndexTrimmed() + response.errorIndex) + "\b" + response.errorLength));
                 }*/
                 if (response.success && response.tokenType == type) {
-                    return new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(context.ignoreLeadingWhitespace() ?
+                    Token token = new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(context.ignoreLeadingWhitespace() ?
                             getLookingIndexTrimmed() :
                             getCurrentIndex()), response.subSections);
+                    if (response.errorMessage != null) {
+                        token.attachedNotices.add(new Notice(NoticeType.ERROR, response.errorMessage, "\b" + file.getAbsolutePath() + "\b" + (getLookingIndexTrimmed() + response.errorIndex) + "\b" + response.errorLength));
+                    }
+                    return token;
                 }
             }
         }
@@ -142,11 +146,15 @@ public class LazyLexer extends Lexer {
                             getLookingAt(),
                     profile);
             if (response.success) {
-                return new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(
+                Token token = new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(
                         context.ignoreLeadingWhitespace() ?
                                 getLookingIndexTrimmed() :
                                 getCurrentIndex()
                 ), response.subSections);
+                if (response.errorMessage != null) {
+                    token.attachedNotices.add(new Notice(NoticeType.ERROR, response.errorMessage, "\b" + file.getAbsolutePath() + "\b" + (getLookingIndexTrimmed() + response.errorIndex) + "\b" + response.errorLength));
+                }
+                return token;
             }
         }
         if(getLookingIndexTrimmed() == fileContents.length()) {
@@ -167,9 +175,6 @@ public class LazyLexer extends Lexer {
             }
             if(sb.length() > 0) {
                 return new Token(sb.toString(), TokenType.UNKNOWN, file, lineCache.getLocationForOffset(getLookingIndexTrimmed()));
-            } else {
-                boolean a = true;
-                Debug.log(a);
             }
         }
         return null;

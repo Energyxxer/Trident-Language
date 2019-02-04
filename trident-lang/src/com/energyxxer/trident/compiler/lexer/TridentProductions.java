@@ -1777,6 +1777,21 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
+                    group(blockLabel, keyword("switch").setName("INSTRUCTION_KEYWORD"), brace("("), group(INTERPOLATION_VALUE).setName("SWITCH_VALUE"), brace(")"),
+                            brace("{"),
+                            list(
+                                    group(
+                                            choice(keyword("default"), group(keyword("case"), INTERPOLATION_VALUE)).setName("CASE_BRANCH"), colon(),
+                                            choice(list(ENTRY).setName("BRACELESS_BLOCK"), ANONYMOUS_INNER_FUNCTION).setOptional().setName("CASE_BLOCK")
+                                    )
+                            ).setOptional().setName("SWITCH_CASES"),
+                            brace("}")
+                    )
+            );
+        }
+
+        {
+            INSTRUCTION.add(
                     group(keyword("try").setName("INSTRUCTION_KEYWORD"), literal("recovering").setOptional(), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), group(keyword("catch"), brace("("), identifierX().setName("EXCEPTION_VARIABLE"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("CATCH_CLAUSE"))
             );
         }

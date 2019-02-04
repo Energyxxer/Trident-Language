@@ -231,7 +231,7 @@ public class TridentCompiler {
             } catch(ReturnException r) {
                 report.addNotice(new Notice(NoticeType.ERROR, "Return instruction outside inner function", r.getPattern()));
             } catch(BreakException b) {
-                report.addNotice(new Notice(NoticeType.ERROR, "Break instruction outside loop", b.getPattern()));
+                report.addNotice(new Notice(NoticeType.ERROR, "Break instruction outside loop or switch", b.getPattern()));
             } catch(ContinueException c) {
                 report.addNotice(new Notice(NoticeType.ERROR, "Continue instruction outside loop", c.getPattern()));
             }

@@ -168,6 +168,11 @@ public class TridentFile extends SymbolContext {
         resolveEntries((TokenList) pattern.find("FILE_INNER.ENTRIES"), parentCtx, function, false);
     }
 
+    //Sub context NOT automatically created
+    public static void resolveEntryListIntoSection(TokenList list, ISymbolContext parentCtx, FunctionSection function) {
+        resolveEntries(list, parentCtx, function, false);
+    }
+
     public void addCascadingRequires(Collection<TridentUtil.ResourceLocation> locations) { //TODO clean up; this lazy initialization is misleading
         if(cascadingRequires == null) cascadingRequires = new ArrayList<>(requires.values());
         cascadingRequires.addAll(locations);

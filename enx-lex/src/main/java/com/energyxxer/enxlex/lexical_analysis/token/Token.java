@@ -1,5 +1,6 @@
 package com.energyxxer.enxlex.lexical_analysis.token;
 
+import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.StringLocation;
 
@@ -21,6 +22,7 @@ public class Token {
 	public HashMap<TokenSection, String> subSections;
 
 	public ArrayList<String> tags = new ArrayList<>();
+	public ArrayList<Notice> attachedNotices = new ArrayList<>();
 
     public Token(String value, File file, StringLocation loc) {
 		this.value = value;

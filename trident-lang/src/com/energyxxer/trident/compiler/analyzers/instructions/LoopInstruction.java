@@ -69,7 +69,7 @@ public class LoopInstruction implements Instruction {
         }
     }
 
-    private String getLabel(TokenPattern<?> pattern) {
+    public static String getLabel(TokenPattern<?> pattern) {
         TokenPattern<?> labelPattern = pattern.find("BLOCK_LABEL.LABEL");
         return labelPattern != null ? labelPattern.flatten(false) : null;
     }
