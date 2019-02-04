@@ -12,8 +12,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,14 +22,14 @@ import java.util.Map;
 
 @AnalyzerGroup
 public interface VariableTypeHandler<T> {
-    Object getMember(T object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol);
+    Object getMember(T object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol);
 
-    Object getIndexer(T object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol);
+    Object getIndexer(T object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol);
 
     @SuppressWarnings("unchecked")
-    <F> F cast(T object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file);
+    <F> F cast(T object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx);
 
-    default Object coerce(T object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+    default Object coerce(T object, Class targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 

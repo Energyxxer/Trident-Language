@@ -6,8 +6,8 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
 import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.SymbolStack;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
@@ -17,7 +17,7 @@ import java.nio.file.Paths;
 @AnalyzerMember(key = "File")
 public class FileLib implements DefaultLibraryProvider {
     @Override
-    public void populate(SymbolStack stack, TridentCompiler compiler) {
+    public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         DictionaryObject fileLib = new DictionaryObject();
         DictionaryObject in = new DictionaryObject();
         fileLib.put("in", in);
@@ -37,7 +37,7 @@ public class FileLib implements DefaultLibraryProvider {
                         return new String(Files.readAllBytes(path), TridentCompiler.DEFAULT_CHARSET);
                     } else throw new FileNotFoundException(path.toString());
                 }), String.class).createForInstance(null));
-        stack.getGlobal().put(new Symbol("File", Symbol.SymbolVisibility.GLOBAL, fileLib));
+        globalCtx.put(new Symbol("File", Symbol.SymbolVisibility.GLOBAL, fileLib));
 
 
         DictionaryObject out = new DictionaryObject();

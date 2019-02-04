@@ -3,7 +3,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.HashMap;
 
@@ -22,9 +22,9 @@ public class CompoundType implements VariableTypeHandler<TagCompound> {
     }
 
     @Override
-    public Object getMember(TagCompound object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getMember(TagCompound object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(member.equals("toDictionary")) {
-            return new MethodWrapper<TagCompound>("toDictionary", ((instance, params) -> NBTToDictionary.convert(instance, pattern, file))).createForInstance(object);
+            return new MethodWrapper<TagCompound>("toDictionary", ((instance, params) -> NBTToDictionary.convert(instance, pattern, ctx))).createForInstance(object);
         }
         MemberWrapper<TagCompound> result = members.get(member);
         if(result == null) throw new MemberNotFoundException();
@@ -32,15 +32,15 @@ public class CompoundType implements VariableTypeHandler<TagCompound> {
     }
 
     @Override
-    public Object getIndexer(TagCompound object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
-        String key = assertOfType(index, pattern, file, String.class);
+    public Object getIndexer(TagCompound object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        String key = assertOfType(index, pattern, ctx, String.class);
         if(object.contains(key)) return object.get(key);
         else return null;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(TagCompound object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(TagCompound object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 }

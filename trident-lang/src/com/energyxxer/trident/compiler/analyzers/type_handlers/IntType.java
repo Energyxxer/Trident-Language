@@ -3,23 +3,23 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "java.lang.Integer")
 public class IntType implements VariableTypeHandler<Integer> {
     @Override
-    public Object getMember(Integer object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getMember(Integer object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
     }
 
     @Override
-    public Object getIndexer(Integer object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getIndexer(Integer object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(Integer object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(Integer object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(targetType == Double.class || targetType == double.class) return (F)(Double)object.doubleValue();
         if(targetType == NBTTag.class || targetType == TagInt.class) return (F)new TagInt(object);
         if(targetType == TagByte.class) return (F)new TagByte(object);
@@ -31,7 +31,7 @@ public class IntType implements VariableTypeHandler<Integer> {
     }
 
     @Override
-    public Object coerce(Integer object, Class targetType, TokenPattern<?> pattern, TridentFile file) {
+    public Object coerce(Integer object, Class targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(targetType == Double.class || targetType == double.class) return object.doubleValue();
         if(targetType == NBTTag.class || targetType == TagInt.class) return new TagInt(object);
         if(targetType == TagByte.class) return new TagByte(object);

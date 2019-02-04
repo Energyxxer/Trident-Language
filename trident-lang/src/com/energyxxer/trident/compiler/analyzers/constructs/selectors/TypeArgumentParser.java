@@ -9,8 +9,8 @@ import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 
 import java.util.ArrayList;
@@ -21,11 +21,11 @@ import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelec
 @AnalyzerMember(key = "type")
 public class TypeArgumentParser implements SelectorArgumentParser {
     @Override
-    public Collection<SelectorArgument> parse(TokenPattern<?> pattern, TridentFile file) {
+    public Collection<SelectorArgument> parse(TokenPattern<?> pattern, ISymbolContext ctx) {
         boolean negated = pattern.find("NEGATED") != null;
         ArrayList<SelectorArgument> args = new ArrayList<>();
 
-        Object reference = CommonParsers.parseEntityReference(pattern.find("ENTITY_ID_TAGGED"), file);
+        Object reference = CommonParsers.parseEntityReference(pattern.find("ENTITY_ID_TAGGED"), ctx);
 
         if(reference instanceof Type) {
             args.add(new TypeArgument((Type) reference, negated));
@@ -35,7 +35,7 @@ public class TypeArgumentParser implements SelectorArgumentParser {
 
             args.add(new TagArgument(ce.getIdTag(), negated));
         } else {
-            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID"), file);
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID"), ctx);
         }
 
         return args;

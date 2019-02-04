@@ -11,49 +11,49 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
 
 import java.util.List;
 
 public class CoordinateParser {
-    public static CoordinateSet parse(TokenPattern<?> pattern, TridentFile file) {
+    public static CoordinateSet parse(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
         Coordinate x, y, z;
         switch (pattern.getName()) {
             case "TWO_COORDINATE_SET":
             case "COORDINATE_SET": {
-                return parse(((TokenStructure) pattern).getContents(), file);
+                return parse(((TokenStructure) pattern).getContents(), ctx);
             }
             case "INTERPOLATION_BLOCK": {
-                CoordinateSet result = InterpolationManager.parse(pattern, file, CoordinateSet.class);
-                EObject.assertNotNull(result, pattern, file);
+                CoordinateSet result = InterpolationManager.parse(pattern, ctx, CoordinateSet.class);
+                EObject.assertNotNull(result, pattern, ctx);
                 return result;
             }
             case "MIXED_COORDINATE_SET":
             case "LOCAL_COORDINATE_SET":
                 TokenPattern<?>[] triple = ((TokenGroup) pattern).getContents();
-                x = parseCoordinate(triple[0], Axis.X, file);
-                y = parseCoordinate(triple[1], Axis.Y, file);
-                z = parseCoordinate(triple[2], Axis.Z, file);
+                x = parseCoordinate(triple[0], Axis.X, ctx);
+                y = parseCoordinate(triple[1], Axis.Y, ctx);
+                z = parseCoordinate(triple[2], Axis.Z, ctx);
                 break;
             case "MIXED_TWO_COORDINATE_SET":
                 TokenPattern<?>[] tuple = ((TokenGroup) pattern).getContents();
-                x = parseCoordinate(tuple[0], Axis.X, file);
+                x = parseCoordinate(tuple[0], Axis.X, ctx);
                 y = new Coordinate(Coordinate.Type.RELATIVE, 0);
-                z = parseCoordinate(tuple[1], Axis.Z, file);
+                z = parseCoordinate(tuple[1], Axis.Z, ctx);
                 break;
             default:
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
         }
         return x != null && y != null && z != null ? new CoordinateSet(x, y, z) : null;
     }
 
-    private static Coordinate parseCoordinate(TokenPattern<?> pattern, Axis axis, TridentFile file) {
+    private static Coordinate parseCoordinate(TokenPattern<?> pattern, Axis axis, ISymbolContext ctx) {
         List<Token> flattened;
         switch(pattern.getName()) {
             case "MIXABLE_COORDINATE":
-                return parseCoordinate((TokenStructure)pattern.getContents(), axis, file);
+                return parseCoordinate((TokenStructure)pattern.getContents(), axis, ctx);
             case "RELATIVE_COORDINATE":
                 flattened = pattern.flattenTokens();
                 return new Coordinate(Coordinate.Type.RELATIVE, flattened.size() >= 3 ? Double.parseDouble(flattened.get(2).value) : 0);
@@ -63,7 +63,7 @@ public class CoordinateParser {
                 flattened = pattern.flattenTokens();
                 return new Coordinate(Coordinate.Type.LOCAL, flattened.size() >= 3 ? Double.parseDouble(flattened.get(2).value) : 0);
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
             }
         }
     }
@@ -74,32 +74,32 @@ public class CoordinateParser {
         return num;
     }
 
-    public static Rotation parseRotation(TokenPattern<?> pattern, TridentFile file) {
+    public static Rotation parseRotation(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
         TokenPattern<?>[] tuple = ((TokenGroup) pattern.getContents()).getContents();
-        RotationUnit yaw =  parseRotationUnit(tuple[0], file);
-        RotationUnit pitch = parseRotationUnit(tuple[1], file);
+        RotationUnit yaw =  parseRotationUnit(tuple[0], ctx);
+        RotationUnit pitch = parseRotationUnit(tuple[1], ctx);
         return new Rotation(yaw, pitch);
     }
 
-    public static RotationUnit parseRotationUnit(TokenPattern<?> pattern, TridentFile file) {
+    public static RotationUnit parseRotationUnit(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             switch(pattern.getName()) {
                 case "MIXABLE_COORDINATE":
-                    return parseRotationUnit((TokenStructure)pattern.getContents(), file);
+                    return parseRotationUnit((TokenStructure)pattern.getContents(), ctx);
                 case "RELATIVE_COORDINATE":
                     List<Token> flattened = pattern.flattenTokens();
                     return new RotationUnit(RotationUnit.Type.RELATIVE, flattened.size() >= 3 ? Double.parseDouble(flattened.get(2).value) : 0);
                 case "ABSOLUTE_COORDINATE":
                     return new RotationUnit(RotationUnit.Type.ABSOLUTE, Double.parseDouble(pattern.flattenTokens().get(0).value));
                 default: {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
                 }
             }
         } catch(CommodoreException x) {
-            TridentException.handleCommodoreException(x, pattern, file)
+            TridentException.handleCommodoreException(x, pattern, ctx)
                     .invokeThrow();
-            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }
     }
 }

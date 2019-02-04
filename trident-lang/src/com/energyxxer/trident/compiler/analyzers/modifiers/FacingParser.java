@@ -12,32 +12,32 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.lexer.TridentTokens;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.List;
 
 @AnalyzerMember(key = "facing")
 public class FacingParser implements SimpleModifierParser {
     @Override
-    public ExecuteModifier parseSingle(TokenPattern<?> pattern, TridentFile file) {
+    public ExecuteModifier parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> branch = ((TokenStructure) pattern.find("CHOICE")).getContents();
         switch(branch.getName()) {
             case "ENTITY_BRANCH": {
                 List<Token> anchorToken = branch.search(TridentTokens.ANCHOR);
                 try {
-                    return new ExecuteFacingEntity(EntityParser.parseEntity(branch.find("ENTITY"), file), (!anchorToken.isEmpty() && anchorToken.get(0).value.equals("eyes")) ? EntityAnchor.EYES : EntityAnchor.FEET);
+                    return new ExecuteFacingEntity(EntityParser.parseEntity(branch.find("ENTITY"), ctx), (!anchorToken.isEmpty() && anchorToken.get(0).value.equals("eyes")) ? EntityAnchor.EYES : EntityAnchor.FEET);
                 } catch(CommodoreException x) {
-                    TridentException.handleCommodoreException(x, pattern, file)
+                    TridentException.handleCommodoreException(x, pattern, ctx)
                             .map(CommodoreException.Source.ENTITY_ERROR, branch.find(".ENTITY"))
                             .invokeThrow();
                 }
             }
             case "BLOCK_BRANCH": {
-                return new ExecuteFacingBlock(CoordinateParser.parse(branch.find("COORDINATE_SET"), file));
+                return new ExecuteFacingBlock(CoordinateParser.parse(branch.find("COORDINATE_SET"), ctx));
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + branch.getName() + "'", branch, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + branch.getName() + "'", branch, ctx);
             }
         }
     }

@@ -1,13 +1,13 @@
 package com.energyxxer.trident.extensions;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 public class EObject {
-    public static void assertNotNull(Object thiz, TokenPattern<?> pattern, TridentFile file) {
+    public static void assertNotNull(Object thiz, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(thiz == null) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null value", pattern, file);
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null value", pattern, ctx);
         }
     }
 }

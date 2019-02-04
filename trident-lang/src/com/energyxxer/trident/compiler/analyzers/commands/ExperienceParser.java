@@ -11,8 +11,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "experience")
 public class ExperienceParser implements CommandParser {
@@ -20,28 +20,28 @@ public class ExperienceParser implements CommandParser {
     public static class ExperienceParserAlias extends ExperienceParser implements CommandParser {}
 
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("SUBCOMMAND")).getContents();
         switch(inner.getName()) {
             case "ADD": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
-                int amount = CommonParsers.parseInt(inner.find("INTEGER"), file);
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
+                int amount = CommonParsers.parseInt(inner.find("INTEGER"), ctx);
                 ExperienceCommand.Unit unit = parseUnit(inner.find("UNIT"));
                 return new ExperienceAddCommand(entity, amount, unit);
             }
             case "SET": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
-                int amount = CommonParsers.parseInt(inner.find("INTEGER"), file);
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
+                int amount = CommonParsers.parseInt(inner.find("INTEGER"), ctx);
                 ExperienceCommand.Unit unit = parseUnit(inner.find("UNIT"));
                 return new ExperienceSetCommand(entity, amount, unit);
             }
             case "QUERY": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
                 ExperienceCommand.Unit unit = parseUnit(inner.find("UNIT"));
                 return new ExperienceQueryCommand(entity, unit);
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
             }
         }
     }

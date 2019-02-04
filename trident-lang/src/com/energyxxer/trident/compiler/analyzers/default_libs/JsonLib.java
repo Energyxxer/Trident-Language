@@ -7,8 +7,8 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListType;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.SymbolStack;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.google.gson.*;
 
@@ -18,7 +18,7 @@ import java.util.function.Function;
 @AnalyzerMember(key = "JSON")
 public class JsonLib implements DefaultLibraryProvider {
     @Override
-    public void populate(SymbolStack stack, TridentCompiler compiler) {
+    public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         DictionaryObject block = new DictionaryObject();
 
         block.put("parse",
@@ -41,7 +41,7 @@ public class JsonLib implements DefaultLibraryProvider {
 
                     return gb.create().toJson(toJson(param));
                 });
-        stack.getGlobal().put(new Symbol("JSON", Symbol.SymbolVisibility.GLOBAL, block));
+        globalCtx.put(new Symbol("JSON", Symbol.SymbolVisibility.GLOBAL, block));
     }
 
     private Object parseJson(JsonElement elem) {

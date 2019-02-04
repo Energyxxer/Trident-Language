@@ -17,7 +17,7 @@ import com.energyxxer.nbtmapper.tags.FlatType;
 import com.energyxxer.nbtmapper.tags.TypeFlags;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
 
 import java.util.ArrayList;
@@ -26,25 +26,25 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class NBTParser {
-    public static TagCompound parseCompound(TokenPattern<?> pattern, TridentFile file) {
+    public static TagCompound parseCompound(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
-        NBTTag value = parseValue(pattern, file);
+        NBTTag value = parseValue(pattern, ctx);
         if(value instanceof TagCompound) return ((TagCompound) value);
-        throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type TagCompound", pattern, file);
+        throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type TagCompound", pattern, ctx);
     }
 
-    public static NBTTag parseValue(TokenPattern<?> pattern, TridentFile file) {
+    public static NBTTag parseValue(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             switch(pattern.getName()) {
                 case "NBT_VALUE": {
-                    return parseValue(((TokenStructure)pattern).getContents(), file);
+                    return parseValue(((TokenStructure)pattern).getContents(), ctx);
                 }
                 case "NBT_COMPOUND": {
-                    return parseValue(((TokenStructure)pattern).getContents(), file);
+                    return parseValue(((TokenStructure)pattern).getContents(), ctx);
                 }
                 case "INTERPOLATION_BLOCK": {
-                    NBTTag result = InterpolationManager.parse(pattern, file, NBTTag.class);
-                    EObject.assertNotNull(result, pattern, file);
+                    NBTTag result = InterpolationManager.parse(pattern, ctx, NBTTag.class);
+                    EObject.assertNotNull(result, pattern, ctx);
                     return result;
                 }
                 case "NBT_COMPOUND_GROUP": {
@@ -53,8 +53,8 @@ public class NBTParser {
                     if(entries != null) {
                         for (TokenPattern<?> inner : entries.getContents()) {
                             if (inner instanceof TokenGroup) {
-                                String key = CommonParsers.parseStringLiteralOrIdentifierA(inner.find("NBT_KEY.STRING_LITERAL_OR_IDENTIFIER_A"), file);
-                                NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                                String key = CommonParsers.parseStringLiteralOrIdentifierA(inner.find("NBT_KEY.STRING_LITERAL_OR_IDENTIFIER_A"), ctx);
+                                NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
                                 value.setName(key);
                                 compound.add(value);
                             }
@@ -68,7 +68,7 @@ public class NBTParser {
                     if(entries != null) {
                         for (TokenPattern<?> inner : entries.getContents()) {
                             if (!inner.getName().equals("COMMA")) {
-                                NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                                NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
                                 list.add(value);
                             }
                         }
@@ -81,11 +81,11 @@ public class NBTParser {
                     if(entries != null) {
                         for (TokenPattern<?> inner : entries.getContents()) {
                             if (!inner.getName().equals("COMMA")) {
-                                NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                                NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
                                 if(value instanceof TagByte) {
                                     arr.add(value);
                                 } else {
-                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Byte in TAG_Byte_Array, instead got " + value.getType(), inner, file);
+                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Byte in TAG_Byte_Array, instead got " + value.getType(), inner, ctx);
                                 }
                             }
                         }
@@ -98,11 +98,11 @@ public class NBTParser {
                     if(entries != null) {
                         for (TokenPattern<?> inner : entries.getContents()) {
                             if (!inner.getName().equals("COMMA")) {
-                                NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                                NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
                                 if(value instanceof TagInt) {
                                     arr.add(value);
                                 } else {
-                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Int in TAG_Int_Array, instead got " + value.getType(), inner, file);
+                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Int in TAG_Int_Array, instead got " + value.getType(), inner, ctx);
                                 }
                             }
                         }
@@ -115,11 +115,11 @@ public class NBTParser {
                     if(entries != null) {
                         for (TokenPattern<?> inner : entries.getContents()) {
                             if (!inner.getName().equals("COMMA")) {
-                                NBTTag value = parseValue(inner.find("NBT_VALUE"), file);
+                                NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
                                 if(value instanceof TagLong) {
                                     arr.add(value);
                                 } else {
-                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Long in TAG_Long_Array, instead got " + value.getType(), inner, file);
+                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Long in TAG_Long_Array, instead got " + value.getType(), inner, ctx);
                                 }
                             }
                         }
@@ -131,7 +131,7 @@ public class NBTParser {
                 }
                 case "RAW_STRING":
                 case "STRING": {
-                    return new TagString(CommonParsers.parseStringLiteral(pattern, file));
+                    return new TagString(CommonParsers.parseStringLiteral(pattern, ctx));
                 }
                 case "NBT_NUMBER": {
                     String flat = pattern.flattenTokens().get(0).value;
@@ -166,13 +166,13 @@ public class NBTParser {
                     }
                 }
                 default: {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
                 }
             }
         } catch(CommodoreException x) {
-            TridentException.handleCommodoreException(x, pattern, file)
+            TridentException.handleCommodoreException(x, pattern, ctx)
                     .invokeThrow();
-            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }
     }
 
@@ -182,7 +182,7 @@ public class NBTParser {
     private NBTParser() {
     }
 
-    public static NBTPath parsePath(TokenPattern<?> pattern, TridentFile file) {
+    public static NBTPath parsePath(TokenPattern<?> pattern, ISymbolContext file) {
         if(pattern == null) return null;
         if((((TokenStructure)pattern).getContents()).getName().equals("INTERPOLATION_BLOCK")) {
             NBTPath result = InterpolationManager.parse(((TokenStructure) pattern).getContents(), file, NBTPath.class);
@@ -203,7 +203,7 @@ public class NBTParser {
         return new NBTPath(nodes.toArray(new NBTPathNode[0]));
     }
 
-    private static NBTPathNode parsePathNode(TokenPattern<?> pattern, TridentFile file) {
+    private static NBTPathNode parsePathNode(TokenPattern<?> pattern, ISymbolContext file) {
         switch(pattern.getName()) {
             case "NBT_PATH_NODE": {
                 return parsePathNode(((TokenStructure) pattern).getContents(), file);
@@ -241,7 +241,7 @@ public class NBTParser {
         }
     }
 
-    public static void analyzeTag(TagCompound compound, PathContext context, TokenPattern<?> pattern, TridentFile file) {
+    public static void analyzeTag(TagCompound compound, PathContext context, TokenPattern<?> pattern, ISymbolContext file) {
         if(pattern == null) throw new RuntimeException();
 
         ReportDelegate delegate = new ReportDelegate(file, file.getCompiler().getProperties().has("strict-nbt") &&
@@ -341,11 +341,11 @@ public class NBTParser {
     static class ReportDelegate {
         private boolean strict;
         private TokenPattern<?> pattern;
-        private TridentFile file;
+        private ISymbolContext file;
 
         private String auxiliaryVerb;
 
-        ReportDelegate(TridentFile file, boolean strict, TokenPattern<?> pattern) {
+        ReportDelegate(ISymbolContext file, boolean strict, TokenPattern<?> pattern) {
             this.strict = strict;
             this.pattern = pattern;
             this.file = file;

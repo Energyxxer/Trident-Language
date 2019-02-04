@@ -10,27 +10,27 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "spreadplayers")
 public class SpreadPlayersParser implements CommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        CoordinateSet pos = CoordinateParser.parse(pattern.find("TWO_COORDINATE_SET"), file);
-        double spreadDistance = CommonParsers.parseDouble(pattern.find("SPREAD_DISTANCE"), file);
-        double maxRange = CommonParsers.parseDouble(pattern.find("MAX_RANGE"), file);
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+        CoordinateSet pos = CoordinateParser.parse(pattern.find("TWO_COORDINATE_SET"), ctx);
+        double spreadDistance = CommonParsers.parseDouble(pattern.find("SPREAD_DISTANCE"), ctx);
+        double maxRange = CommonParsers.parseDouble(pattern.find("MAX_RANGE"), ctx);
         boolean respectTeams = pattern.find("RESPECT_TEAMS").flatten(false).equals("true");
-        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
+        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
         try {
             return new SpreadPlayersCommand(entity, pos, spreadDistance, maxRange, respectTeams);
         } catch(CommodoreException x) {
-            TridentException.handleCommodoreException(x, pattern, file)
+            TridentException.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
                     .map("SPREAD_DISTANCE", pattern.find("SPREAD_DISTANCE"))
                     .map("MAX_RANGE", pattern.find("MAX_RANGE"))
                     .invokeThrow();
-            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }
     }
 }

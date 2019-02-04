@@ -11,13 +11,13 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "advancements")
 public class AdvancementArgumentParser implements SimpleSelectorArgumentParser, SelectorArgumentParser {
     @Override
-    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentFile file) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenList advancementList = (TokenList) pattern.find("ADVANCEMENT_LIST");
 
         AdvancementArgument advancements = new AdvancementArgument();
@@ -33,12 +33,12 @@ public class AdvancementArgumentParser implements SimpleSelectorArgumentParser, 
                             break;
                         }
                         case "CRITERION_GROUP": {
-                            AdvancementCriterionGroupEntry criteria = parseCriterionGroup(rawValue, file, advancementLoc);
+                            AdvancementCriterionGroupEntry criteria = parseCriterionGroup(rawValue, ctx, advancementLoc);
                             advancements.addEntry(criteria);
                             break;
                         }
                         default: {
-                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + rawValue.getName() + "'", rawValue, file);
+                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + rawValue.getName() + "'", rawValue, ctx);
                         }
                     }
                 }
@@ -48,13 +48,13 @@ public class AdvancementArgumentParser implements SimpleSelectorArgumentParser, 
         return advancements;
     }
 
-    private AdvancementCriterionGroupEntry parseCriterionGroup(TokenPattern<?> pattern, TridentFile file, TridentUtil.ResourceLocation advancementLoc) {
+    private AdvancementCriterionGroupEntry parseCriterionGroup(TokenPattern<?> pattern, ISymbolContext ctx, TridentUtil.ResourceLocation advancementLoc) {
         AdvancementCriterionGroupEntry criteria = new AdvancementCriterionGroupEntry(advancementLoc.toString());
         TokenList criterionList = (TokenList) pattern.find("CRITERION_LIST");
         if(criterionList != null) {
             for(TokenPattern<?> rawArg : criterionList.getContents()) {
                 if(rawArg.getName().equals("CRITERION_ENTRY")) {
-                    String criterionName = CommonParsers.parseIdentifierA(rawArg.find("CRITERION_NAME.IDENTIFIER_A"), file);
+                    String criterionName = CommonParsers.parseIdentifierA(rawArg.find("CRITERION_NAME.IDENTIFIER_A"), ctx);
                     boolean value = rawArg.find("BOOLEAN").flatten(false).equals("true");
                     criteria.addCriteria(new AdvancementCriterionEntry(criterionName, value));
                 }

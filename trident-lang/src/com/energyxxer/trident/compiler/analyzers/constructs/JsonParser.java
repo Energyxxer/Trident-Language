@@ -4,7 +4,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -16,12 +16,12 @@ public class JsonParser {
 
     private static HashMap<JsonElement, TokenPattern<?>> patternCache = new HashMap<>();
 
-    public static JsonElement parseJson(TokenPattern<?> pattern, TridentFile file) {
+    public static JsonElement parseJson(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenList entries;
         switch(pattern.getName()) {
             case "JSON_ROOT":
             case "JSON_ELEMENT":
-                return parseJson(((TokenStructure) pattern).getContents(), file);
+                return parseJson(((TokenStructure) pattern).getContents(), ctx);
             case "JSON_OBJECT":
                 JsonObject object = new JsonObject();
 
@@ -29,8 +29,8 @@ public class JsonParser {
                 if(entries != null) {
                     for (TokenPattern<?> entry : entries.getContents()) {
                         if (!entry.getName().equals("COMMA")) {
-                            String key = CommonParsers.parseStringLiteral(entry.find("JSON_OBJECT_KEY.STRING"), file);
-                            JsonElement value = parseJson(entry.find("JSON_ELEMENT"), file);
+                            String key = CommonParsers.parseStringLiteral(entry.find("JSON_OBJECT_KEY.STRING"), ctx);
+                            JsonElement value = parseJson(entry.find("JSON_ELEMENT"), ctx);
                             object.add(key, value);
                         }
                     }
@@ -44,14 +44,14 @@ public class JsonParser {
                 if(entries != null) {
                     for (TokenPattern<?> entry : entries.getContents()) {
                         if (!entry.getName().equals("COMMA")) {
-                            arr.add(parseJson(entry, file));
+                            arr.add(parseJson(entry, ctx));
                         }
                     }
                 }
                 patternCache.put(arr, pattern);
                 return arr;
             case "STRING":
-                JsonPrimitive string = new JsonPrimitive(CommonParsers.parseStringLiteral(pattern, file));
+                JsonPrimitive string = new JsonPrimitive(CommonParsers.parseStringLiteral(pattern, ctx));
                 patternCache.put(string, pattern);
                 return string;
             case "NUMBER":
@@ -63,7 +63,7 @@ public class JsonParser {
                 patternCache.put(bool, pattern);
                 return bool;
             default:
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown json element production name: '" + pattern.getName() + "'", pattern, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown json element production name: '" + pattern.getName() + "'", pattern, ctx);
         }
     }
 

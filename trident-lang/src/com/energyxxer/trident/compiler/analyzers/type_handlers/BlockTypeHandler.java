@@ -7,23 +7,21 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.*;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.Map;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.block.Block")
 public class BlockTypeHandler implements VariableTypeHandler<Block> {
     @Override
-    public Object getMember(Block object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getMember(Block object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(member.equals("blockType")) {
             AutoPropertySymbol property = new AutoPropertySymbol<>("blockType", TridentUtil.ResourceLocation.class, () -> new TridentUtil.ResourceLocation(object.getBlockType().toString()), value -> {
-                if(file.getCompiler().getModule().namespaceExists(value.namespace) && file.getCompiler().getModule().getNamespace(value.namespace).types.block.exists(value.body)) {
-                    object.setBlockType(file.getCompiler().getModule().getNamespace(value.namespace).types.block.get(value.body));
+                if(ctx.getCompiler().getModule().namespaceExists(value.namespace) && ctx.getCompiler().getModule().getNamespace(value.namespace).types.block.exists(value.body)) {
+                    object.setBlockType(ctx.getCompiler().getModule().getNamespace(value.namespace).types.block.get(value.body));
                 } else {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, value + " is not a valid block type", pattern, file);
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, value + " is not a valid block type", pattern, ctx);
                 }
             });
             return keepSymbol ? property : property.getValue();
@@ -45,7 +43,7 @@ public class BlockTypeHandler implements VariableTypeHandler<Block> {
             }, value -> {
                 Blockstate newState = new Blockstate();
                 for (Map.Entry<String, Symbol> a : value.entrySet()) {
-                    newState.put(a.getKey(), InterpolationManager.cast(a.getValue(), String.class, pattern, file));
+                    newState.put(a.getKey(), InterpolationManager.cast(a.getValue(), String.class, pattern, ctx));
                 }
                 object.setBlockstate(newState);
             });
@@ -55,12 +53,12 @@ public class BlockTypeHandler implements VariableTypeHandler<Block> {
     }
 
     @Override
-    public Object getIndexer(Block object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getIndexer(Block object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
     }
 
     @Override
-    public <F> F cast(Block object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(Block object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 }

@@ -9,13 +9,13 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "scores")
 public class ScoresArgumentParser implements SimpleSelectorArgumentParser {
     @Override
-    public SelectorArgument parseSingle(TokenPattern<?> pattern, TridentFile file) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenList scoreList = (TokenList) pattern.find("SCORE_LIST");
 
         ScoreArgument scores = new ScoreArgument();
@@ -23,19 +23,19 @@ public class ScoresArgumentParser implements SimpleSelectorArgumentParser {
         if(scoreList != null) {
             for(TokenPattern<?> rawArg : scoreList.getContents()) {
                 if(rawArg.getName().equals("SCORE_ENTRY")) {
-                    Objective objective = CommonParsers.parseObjective(rawArg.find("OBJECTIVE_NAME"), file);
+                    Objective objective = CommonParsers.parseObjective(rawArg.find("OBJECTIVE_NAME"), ctx);
                     NumberRange<Integer> range;
 
                     TokenPattern<?> valueInner = ((TokenStructure) rawArg.find("SCORE_VALUE")).getContents();
                     switch(valueInner.getName()) {
                         case "INTEGER_NUMBER_RANGE":
-                            range = CommonParsers.parseIntRange(valueInner, file);
+                            range = CommonParsers.parseIntRange(valueInner, ctx);
                             break;
                         case "ISSET":
                             range = new NumberRange<>(Integer.MIN_VALUE, null);
                             break;
                         default: {
-                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + valueInner.getName() + "'", valueInner, file);
+                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + valueInner.getName() + "'", valueInner, ctx);
                         }
                     }
 

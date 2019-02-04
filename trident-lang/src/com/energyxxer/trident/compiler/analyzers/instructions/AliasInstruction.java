@@ -4,7 +4,7 @@ import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -88,7 +88,7 @@ public class AliasInstruction implements Instruction {
     }
 
     @Override
-    public void run(TokenPattern<?> pattern, TridentFile file) {
-        file.getCompiler().getModule().minecraft.types.block.create((c, ns, n) -> new AliasType(c, ns, n, file.getCompiler().getModule().minecraft, "carved_stone"), "a");
+    public void run(TokenPattern<?> pattern, ISymbolContext ctx) {
+        ctx.getCompiler().getModule().minecraft.types.block.create((c, ns, n) -> new AliasType(c, ns, n, ctx.getCompiler().getModule().minecraft, "carved_stone"), "a");
     }
 }

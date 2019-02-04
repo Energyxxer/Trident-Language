@@ -10,16 +10,16 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "fill")
 public class FillParser implements CommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), file);
-        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), file);
-        Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), file);
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+        CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), ctx);
+        CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), ctx);
+        Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), ctx);
         FillCommand.FillMode mode = new FillReplaceMode();
 
         TokenPattern<?> inner = pattern.find("CHOICE");
@@ -43,12 +43,12 @@ public class FillParser implements CommandParser {
                     break;
                 }
                 case "REPLACE": {
-                    Block replaceBlock = CommonParsers.parseBlock(inner.find(".BLOCK_TAGGED"), file);
+                    Block replaceBlock = CommonParsers.parseBlock(inner.find(".BLOCK_TAGGED"), ctx);
                     if(replaceBlock != null) mode = new FillReplaceMode(replaceBlock);
                     break;
                 }
                 default: {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
                 }
             }
         }
@@ -56,10 +56,10 @@ public class FillParser implements CommandParser {
         try {
             return new FillCommand(from, to, block, mode);
         } catch(CommodoreException x) {
-            TridentException.handleCommodoreException(x, pattern, file)
+            TridentException.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.TYPE_ERROR, pattern.find("BLOCK"))
                     .invokeThrow();
-            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }
     }
 }

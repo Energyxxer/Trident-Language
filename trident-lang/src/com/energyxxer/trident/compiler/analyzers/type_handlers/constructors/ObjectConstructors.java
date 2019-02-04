@@ -17,8 +17,8 @@ import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.default_libs.JsonLib;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.extensions.EObject;
 import com.google.gson.JsonElement;
 
@@ -61,10 +61,10 @@ public class ObjectConstructors {
         constructors.put("nbt", ObjectConstructors::constructNBT);
     }
 
-    private static Block constructBlock(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file) {
-        CommandModule module = file.getCompiler().getModule();
+    private static Block constructBlock(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        CommandModule module = ctx.getCompiler().getModule();
         if(params.length == 0 || params[0] == null) return new Block(module.minecraft.types.block.get("air"));
-        TridentUtil.ResourceLocation loc = assertOfType(params[0], patterns[0], file, TridentUtil.ResourceLocation.class);
+        TridentUtil.ResourceLocation loc = assertOfType(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
         Namespace ns = module.getNamespace(loc.namespace);
 
         Type type;
@@ -78,10 +78,10 @@ public class ObjectConstructors {
         return new Block(type);
     }
 
-    private static Item constructItem(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file) {
-        CommandModule module = file.getCompiler().getModule();
+    private static Item constructItem(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        CommandModule module = ctx.getCompiler().getModule();
         if(params.length == 0 || params[0] == null) return new Item(module.minecraft.types.item.get("air"));
-        TridentUtil.ResourceLocation loc = assertOfType(params[0], patterns[0], file, TridentUtil.ResourceLocation.class);
+        TridentUtil.ResourceLocation loc = assertOfType(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
         Namespace ns = module.getNamespace(loc.namespace);
 
         Type type;
@@ -95,14 +95,14 @@ public class ObjectConstructors {
         return new Item(type);
     }
 
-    private static NBTTag constructNBT(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file) {
+    private static NBTTag constructNBT(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(params.length == 0) return new TagCompound();
-        EObject.assertNotNull(params[0], patterns[0], file);
+        EObject.assertNotNull(params[0], patterns[0], ctx);
 
         boolean skipIncompatibleTypes = false;
         if(params.length >= 2) {
-            EObject.assertNotNull(params[1], patterns[1], file);
-            skipIncompatibleTypes = assertOfType(params[1], patterns[1], file, Boolean.class);
+            EObject.assertNotNull(params[1], patterns[1], ctx);
+            skipIncompatibleTypes = assertOfType(params[1], patterns[1], ctx, Boolean.class);
         }
 
         if(params[0] instanceof NBTTag) return ((NBTTag) params[0]).clone();
@@ -120,7 +120,7 @@ public class ObjectConstructors {
             TagCompound compound = new TagCompound();
 
             for(Map.Entry<String, Symbol> obj : ((DictionaryObject) params[0]).entrySet()) {
-                NBTTag content = constructNBT(new Object[] {obj.getValue().getValue(), skipIncompatibleTypes}, new TokenPattern[] {patterns[0], pattern}, pattern, file);
+                NBTTag content = constructNBT(new Object[] {obj.getValue().getValue(), skipIncompatibleTypes}, new TokenPattern[] {patterns[0], pattern}, pattern, ctx);
                 if(content != null) {
                     content.setName(obj.getKey());
                     compound.add(content);
@@ -132,19 +132,19 @@ public class ObjectConstructors {
             TagList list = new TagList();
 
             for(Object obj : ((ListType) params[0])) {
-                NBTTag content = constructNBT(new Object[] {obj, skipIncompatibleTypes}, new TokenPattern[] {patterns[0], pattern}, pattern, file);
+                NBTTag content = constructNBT(new Object[] {obj, skipIncompatibleTypes}, new TokenPattern[] {patterns[0], pattern}, pattern, ctx);
                 if(content != null) {
                     try {
                         list.add(content);
                     } catch(CommodoreException x) {
-                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Error while converting list object to nbt list: " + x.getMessage(), pattern, file);
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Error while converting list object to nbt list: " + x.getMessage(), pattern, ctx);
                     }
                 }
             }
 
             return list;
         } else if(!skipIncompatibleTypes) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot convert object of type '" + VariableTypeHandler.Static.getIdentifierForClass(params[0].getClass()) + "' to an nbt tag", pattern, file);
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot convert object of type '" + VariableTypeHandler.Static.getIdentifierForClass(params[0].getClass()) + "' to an nbt tag", pattern, ctx);
         } else return null;
     }
 
@@ -152,14 +152,14 @@ public class ObjectConstructors {
         return constructors.get(name);
     }
 
-    private static TextComponent constructTextComponent(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, TridentFile file) {
+    private static TextComponent constructTextComponent(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         if (params.length == 0) return new StringTextComponent("");
-        EObject.assertNotNull(params[0], patterns[0], file);
+        EObject.assertNotNull(params[0], patterns[0], ctx);
         JsonElement asJson = JsonLib.toJson(params[0], e -> e instanceof TextComponent ? new TextParser.TextComponentJsonElement(((TextComponent) e)) : null);
         if (asJson != null) {
-            return TextParser.parseTextComponent(asJson, file, patterns[0], TextComponentContext.CHAT);
+            return TextParser.parseTextComponent(asJson, ctx, patterns[0], TextComponentContext.CHAT);
         } else {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot turn a value of type " + VariableTypeHandler.Static.getIdentifierForClass(params[0].getClass()) + " into a text component", patterns[0], file);
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot turn a value of type " + VariableTypeHandler.Static.getIdentifierForClass(params[0].getClass()) + " into a text component", patterns[0], ctx);
         }
     }
 }

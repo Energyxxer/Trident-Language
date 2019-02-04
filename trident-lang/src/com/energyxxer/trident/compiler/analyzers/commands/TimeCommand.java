@@ -9,13 +9,13 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "time")
 public class TimeCommand implements CommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "QUERY": {
@@ -23,9 +23,9 @@ public class TimeCommand implements CommandParser {
             }
             case "ADD": {
                 try {
-                    return new TimeAddCommand(CommonParsers.parseTime(inner.find("TIME"), file));
+                    return new TimeAddCommand(CommonParsers.parseTime(inner.find("TIME"), ctx));
                 } catch(CommodoreException x) {
-                    TridentException.handleCommodoreException(x, pattern, file)
+                    TridentException.handleCommodoreException(x, pattern, ctx)
                             .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.find("TIME"))
                             .invokeThrow();
                 }
@@ -38,20 +38,20 @@ public class TimeCommand implements CommandParser {
                     }
                     case "TIME": {
                         try {
-                            return new TimeSetCommand(CommonParsers.parseTime(sub, file));
+                            return new TimeSetCommand(CommonParsers.parseTime(sub, ctx));
                         } catch(CommodoreException x) {
-                            TridentException.handleCommodoreException(x, pattern, file)
+                            TridentException.handleCommodoreException(x, pattern, ctx)
                                     .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, sub)
                                     .invokeThrow();
                         }
                     }
                     default: {
-                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + sub.getName() + "'", sub, file);
+                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + sub.getName() + "'", sub, ctx);
                     }
                 }
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
             }
         }
     }

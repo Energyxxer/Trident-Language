@@ -2,11 +2,11 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 public class NBTToDictionary {
-    public static Object convert(NBTTag tag, TokenPattern<?> pattern, TridentFile file) {
+    public static Object convert(NBTTag tag, TokenPattern<?> pattern, ISymbolContext ctx) {
         switch(tag.getType()) {
             case "TAG_Byte": {
                 return (int)((TagByte) tag).getValue();
@@ -34,7 +34,7 @@ public class NBTToDictionary {
                 TagCompound compound = (TagCompound) tag;
 
                 for(NBTTag inner : compound.getAllTags()) {
-                    dict.put(inner.getName(), convert(inner, pattern, file));
+                    dict.put(inner.getName(), convert(inner, pattern, ctx));
                 }
 
                 return dict;
@@ -47,13 +47,13 @@ public class NBTToDictionary {
                 ComplexNBTTag compound = (ComplexNBTTag) tag;
 
                 for(NBTTag inner : compound.getAllTags()) {
-                    list.add(convert(inner, pattern, file));
+                    list.add(convert(inner, pattern, ctx));
                 }
 
                 return list;
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown NBT tag type: " + tag.getType(), pattern, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown NBT tag type: " + tag.getType(), pattern, ctx);
             }
         }
     }

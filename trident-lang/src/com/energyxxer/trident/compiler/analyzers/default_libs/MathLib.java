@@ -5,8 +5,8 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.SymbolStack;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
@@ -16,7 +16,7 @@ public class MathLib implements DefaultLibraryProvider {
     private static final double LN_2 = Math.log(2);
 
     @SuppressWarnings("unchecked")
-    public void populate(SymbolStack stack, TridentCompiler compiler) {
+    public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         DictionaryObject math = new DictionaryObject();
         math.put("pow", (VariableMethod) (params, patterns, pattern, file) -> {
             if(params.length < 2) {
@@ -101,6 +101,6 @@ public class MathLib implements DefaultLibraryProvider {
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
-        stack.getGlobal().put(new Symbol("Math", Symbol.SymbolVisibility.GLOBAL, math));
+        globalCtx.put(new Symbol("Math", Symbol.SymbolVisibility.GLOBAL, math));
     }
 }

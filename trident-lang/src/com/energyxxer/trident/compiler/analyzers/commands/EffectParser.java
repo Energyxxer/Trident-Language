@@ -12,44 +12,44 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import static com.energyxxer.trident.compiler.util.Using.using;
 
 @AnalyzerMember(key = "effect")
 public class EffectParser implements CommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "CLEAR": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
-                Type effect = CommonParsers.parseType(inner.find(".EFFECT_ID"), file, d->d.effect);
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
+                Type effect = CommonParsers.parseType(inner.find(".EFFECT_ID"), ctx, d->d.effect);
                 return new EffectClearCommand(entity, effect);
             }
             case "GIVE": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
-                StatusEffect effect = new StatusEffect(CommonParsers.parseType(inner.find("EFFECT_ID"), file, d->d.effect));
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
+                StatusEffect effect = new StatusEffect(CommonParsers.parseType(inner.find("EFFECT_ID"), ctx, d->d.effect));
                 using(inner.find(".DURATION")).notIfNull()
                         .except(CommodoreException.class,
-                                (ex, obj) -> TridentException.handleCommodoreException((CommodoreException) ex, inner, file)
+                                (ex, obj) -> TridentException.handleCommodoreException((CommodoreException) ex, inner, ctx)
                                         .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.find(".DURATION"))
                                         .invokeThrow()
                         )
-                        .run(p -> effect.setDuration(20 * CommonParsers.parseInt(p, file)));
+                        .run(p -> effect.setDuration(20 * CommonParsers.parseInt(p, ctx)));
                 using(inner.find("..AMPLIFIER")).notIfNull()
                         .except(CommodoreException.class,
-                                (ex, obj) -> TridentException.handleCommodoreException((CommodoreException) ex, inner, file)
+                                (ex, obj) -> TridentException.handleCommodoreException((CommodoreException) ex, inner, ctx)
                                         .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.find(".DURATION"))
                                         .invokeThrow()
                         )
-                        .run(p -> effect.setAmplifier(CommonParsers.parseInt(p, file)));
+                        .run(p -> effect.setAmplifier(CommonParsers.parseInt(p, ctx)));
                 using(inner.find("..HIDE_PARTICLES")).notIfNull().run(p -> effect.setVisibility(p.flatten(false).equals("true") ? StatusEffect.ParticleVisibility.HIDDEN : StatusEffect.ParticleVisibility.VISIBLE));
                 return new EffectGiveCommand(entity, effect);
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
             }
         }
     }

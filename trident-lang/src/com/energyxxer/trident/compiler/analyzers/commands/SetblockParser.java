@@ -9,15 +9,15 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "setblock")
 public class SetblockParser implements CommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"), file);
-        Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), file);
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+        CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx);
+        Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), ctx);
         SetblockCommand.OldBlockHandlingMode mode = SetblockCommand.OldBlockHandlingMode.DEFAULT;
 
         TokenPattern<?> rawMode = pattern.find("OLD_BLOCK_HANDLING");
@@ -28,10 +28,10 @@ public class SetblockParser implements CommandParser {
         try {
             return new SetblockCommand(pos, block, mode);
         } catch(CommodoreException x) {
-            TridentException.handleCommodoreException(x, pattern, file)
+            TridentException.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.TYPE_ERROR, pattern.find("BLOCK"))
                     .invokeThrow();
-            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", rawMode, file);
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", rawMode, ctx);
         }
     }
 }

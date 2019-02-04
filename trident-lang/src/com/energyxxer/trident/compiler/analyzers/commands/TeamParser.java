@@ -12,53 +12,53 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "team")
 public class TeamParser implements CommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "ADD": {
-                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), file));
-                TextComponent displayName = TextParser.parseTextComponent(inner.find("DISPLAY_NAME.TEXT_COMPONENT"), file);
+                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), ctx));
+                TextComponent displayName = TextParser.parseTextComponent(inner.find("DISPLAY_NAME.TEXT_COMPONENT"), ctx);
                 return new TeamCreateCommand(team, displayName);
             }
             case "EMPTY": {
-                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), file));
+                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), ctx));
                 return new TeamEmptyCommand(team);
             }
             case "JOIN": {
-                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), file));
-                Entity entity = EntityParser.parseEntity(inner.find("SUBJECT.ENTITY"), file);
+                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), ctx));
+                Entity entity = EntityParser.parseEntity(inner.find("SUBJECT.ENTITY"), ctx);
                 return new TeamJoinCommand(team, entity);
             }
             case "LEAVE": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
                 return new TeamLeaveCommand(entity);
             }
             case "LIST": {
                 TokenPattern<?> rawTeam = inner.find(".TEAM.IDENTIFIER_A");
-                if(rawTeam != null) return new TeamListCommand(new TeamReference(CommonParsers.parseIdentifierA(rawTeam, file)));
+                if(rawTeam != null) return new TeamListCommand(new TeamReference(CommonParsers.parseIdentifierA(rawTeam, ctx)));
                 else return new TeamListCommand();
             }
             case "MODIFY": {
-                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), file));
-                return parseModify(inner.find("TEAM_OPTIONS"), file, team);
+                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), ctx));
+                return parseModify(inner.find("TEAM_OPTIONS"), ctx, team);
             }
             case "REMOVE": {
-                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), file));
+                TeamReference team = new TeamReference(CommonParsers.parseIdentifierA(inner.find("TEAM.IDENTIFIER_A"), ctx));
                 return new TeamRemoveCommand(team);
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
             }
         }
     }
 
-    private Command parseModify(TokenPattern<?> pattern, TridentFile file, TeamReference team) {
+    private Command parseModify(TokenPattern<?> pattern, ISymbolContext ctx, TeamReference team) {
         TokenPattern<?> inner = ((TokenStructure)pattern).getContents();
         TeamModifyCommand.TeamModifyKey key = TeamModifyCommand.TeamModifyKey.getValueForKey(inner.flattenTokens().get(0).value);
 
@@ -70,7 +70,7 @@ public class TeamParser implements CommandParser {
             TextColor value = argument.equals("RESET") ? null : TextColor.valueOf(argument);
             return new TeamModifyCommand(team, key, value);
         } else if(valueClass == TextComponent.class) {
-            return new TeamModifyCommand(team, key, TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), file));
+            return new TeamModifyCommand(team, key, TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), ctx));
         } else if(valueClass == TeamModifyCommand.AppliesTo.class) {
             String rawValue = inner.find("CHOICE").flatten(false);
             for(TeamModifyCommand.AppliesTo rule : TeamModifyCommand.AppliesTo.values()) {
@@ -81,6 +81,6 @@ public class TeamParser implements CommandParser {
                 }
             }
         }
-        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Something went wrong with team modify: " + key, pattern, file);
+        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Something went wrong with team modify: " + key, pattern, ctx);
     }
 }

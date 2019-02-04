@@ -21,13 +21,14 @@ import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.instructions.AliasInstruction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
 import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
 import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
+import com.energyxxer.trident.compiler.semantics.symbols.GlobalSymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.*;
 
@@ -46,34 +47,41 @@ public class TridentCompiler {
     public static final String PROJECT_FILE_NAME = ".tdnproj";
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 
+    //Resources
     private final DefinitionPack definitionPack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
+    private NBTTypeMap typeMap;
 
+    //Output objects
     private final File rootDir;
     private CommandModule module;
     private ResourcePackGenerator resourcePack;
-
-    private JsonObject properties = null;
-
-    private ArrayList<ProgressListener> progressListeners = new ArrayList<>();
-    private ArrayList<Runnable> completionListeners = new ArrayList<>();
-    private CompilerReport report = null;
-
-    private Thread thread;
-
-    private HashMap<File, ParsingSignature> filePatterns = new HashMap<>();
-    private HashMap<File, TridentFile> files = new HashMap<>();
-
-    private Gson gson;
-
-    private SymbolStack symbolStack = new SymbolStack();
-    private CallStack callStack = new CallStack();
-    private TryStack tryStack = new TryStack();
     private SpecialFileManager specialFileManager;
+
+    //Properties
+    private JsonObject properties = null;
     private int languageLevel = 1;
     private String defaultNamespace = null;
 
-    private NBTTypeMap typeMap;
+    //Caller Feedback
+    private ArrayList<ProgressListener> progressListeners = new ArrayList<>();
+    private ArrayList<Runnable> completionListeners = new ArrayList<>();
+    private CompilerReport report = null;
+    private Thread thread;
 
+    //File Structure Tracking
+    private HashMap<File, ParsingSignature> filePatterns = new HashMap<>();
+    private HashMap<File, TridentFile> files = new HashMap<>();
+
+    //idk why we need a gson object but here it is
+    private Gson gson;
+
+    //Stacks
+    private ISymbolContext global = new GlobalSymbolContext(this);
+    private CallStack callStack = new CallStack();
+    private TryStack tryStack = new TryStack();
+    private Stack<TridentFile> writingStack = new Stack<>();
+
+    //Caches
     private HashMap<Integer, Integer> inResourceCache = new HashMap<>();
     private HashMap<Integer, Integer> outResourceCache = new HashMap<>();
 
@@ -172,9 +180,8 @@ public class TridentCompiler {
         this.setProgress("Adding native methods");
 
         {
-            symbolStack.getGlobal().put(new Symbol("new", Symbol.SymbolVisibility.GLOBAL, new DictionaryObject()));
             for(DefaultLibraryProvider lib : AnalyzerManager.getAllParsers(DefaultLibraryProvider.class)) {
-                lib.populate(symbolStack, this);
+                lib.populate(global, this);
             }
         }
 
@@ -466,10 +473,6 @@ public class TridentCompiler {
         return null;
     }
 
-    public SymbolStack getSymbolStack() {
-        return symbolStack;
-    }
-
     public CallStack getCallStack() {
         return callStack;
     }
@@ -534,6 +537,22 @@ public class TridentCompiler {
 
     public ResourcePackGenerator getResourcePackGenerator() {
         return resourcePack;
+    }
+
+    public void pushWritingFile(TridentFile file) {
+        writingStack.push(file);
+    }
+
+    public void popWritingFile() {
+        writingStack.pop();
+    }
+
+    public TridentFile getWritingFile() {
+        return writingStack.peek();
+    }
+
+    public ISymbolContext getGlobalContext() {
+        return global;
     }
 
     private static class Resources {

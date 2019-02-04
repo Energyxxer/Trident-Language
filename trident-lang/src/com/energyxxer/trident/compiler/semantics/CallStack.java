@@ -11,13 +11,13 @@ public class CallStack {
     public static class Call {
 
         String calledFunction;
+
         TokenPattern<?> calledPattern;
         TridentFile calledFile;
         TokenPattern<?> calledBy;
         public Call(TokenPattern<?> calledPattern, TridentFile calledFile, TokenPattern<?> calledBy) {
             this("<anonymous function>", calledPattern, calledFile, calledBy);
         }
-
         public Call(String calledFunction, TokenPattern<?> calledPattern, TridentFile calledFile, TokenPattern<?> calledBy) {
             this.calledFunction = calledFunction;
             this.calledPattern = calledPattern;
@@ -29,12 +29,12 @@ public class CallStack {
         public String toString() {
             return "at " + calledFile.getResourceLocation() + " :: " + calledFunction + " (" + calledBy.getFile().getName() + ":" + calledBy.getStringLocation().line + ")\n";
         }
-    }
 
+    }
     public static class StackTrace {
+
         private ArrayList<Call> calls;
         private TokenPattern<?> leaf;
-
         StackTrace(List<Call> calls) {
             this.calls = new ArrayList<>();
             for(int i = calls.size()-1; i >= 0; i--) {
@@ -72,8 +72,8 @@ public class CallStack {
             }
             return sb.toString();
         }
-    }
 
+    }
     private Stack<Call> stack = new Stack<>();
 
     public Call push(Call item) {
@@ -90,5 +90,14 @@ public class CallStack {
 
     public StackTrace getView() {
         return new StackTrace(stack);
+    }
+
+    public TridentFile getWritingFile() {
+        TridentFile prev = null;
+        for(Call call : stack) {
+            if(prev == null || prev == call.calledFile) prev = call.calledFile;
+            else break;
+        }
+        return prev;
     }
 }

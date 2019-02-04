@@ -11,24 +11,24 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.List;
 
 @AnalyzerMember(key = "playsound")
 public class PlaySoundParser implements CommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
-        TridentUtil.ResourceLocation soundEvent = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), file);
-        soundEvent.assertStandalone(pattern, file);
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+        TridentUtil.ResourceLocation soundEvent = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), ctx);
+        soundEvent.assertStandalone(pattern, ctx);
         PlaySoundCommand.Source channel = PlaySoundCommand.Source.valueOf(pattern.find("CHANNEL").flatten(false).toUpperCase());
-        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), file);
+        Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
 
         TokenPattern<?> sub = pattern.find("");
         try {
             if(sub != null) {
-                CoordinateSet pos = CoordinateParser.parse(sub.find("COORDINATE_SET"), file);
+                CoordinateSet pos = CoordinateParser.parse(sub.find("COORDINATE_SET"), ctx);
 
                 float maxVol = 1;
                 float pitch = 1;
@@ -48,13 +48,13 @@ public class PlaySoundParser implements CommandParser {
                 return new PlaySoundCommand(soundEvent.toString(), channel, entity, pos, maxVol, pitch, minVol);
             } else return new PlaySoundCommand(soundEvent.toString(), channel, entity);
         } catch(CommodoreException x) {
-            TridentException.handleCommodoreException(x, pattern, file)
+            TridentException.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
                     .map("MAX_VOLUME", () -> sub.searchByName("REAL").get(0))
                     .map("PITCH", () -> sub.searchByName("REAL").get(1))
                     .map("MIN_VOLUME", () -> sub.searchByName("REAL").get(2))
                     .invokeThrow();
-            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", sub, file);
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", sub, ctx);
         }
     }
 }

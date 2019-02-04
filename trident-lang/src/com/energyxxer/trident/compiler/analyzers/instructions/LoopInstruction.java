@@ -5,6 +5,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.*;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 
 import java.util.Iterator;
 
@@ -16,28 +18,28 @@ public class LoopInstruction implements Instruction {
     public static class WhileInstruction extends LoopInstruction implements Instruction {}
 
     @Override
-    public void run(TokenPattern<?> pattern, TridentFile file) {
-        LoopHeader header = parseHeader(pattern.find("LOOP_HEADER"), file);
+    public void run(TokenPattern<?> pattern, ISymbolContext ctx) {
+        SymbolContext forFrame = new SymbolContext(ctx);
+
+        LoopHeader header = parseHeader(pattern.find("LOOP_HEADER"), forFrame);
         if(header == null) return;
         TokenPattern<?> body = pattern.find("ANONYMOUS_INNER_FUNCTION");
         String label = getLabel(pattern);
 
-        SymbolTable forFrame = new SymbolTable(file);
+        //ctx.getCompiler().getSymbolStack().push(forFrame);
 
-        file.getCompiler().getSymbolStack().push(forFrame);
+        boolean wasEmpty = ctx.getCompiler().getTryStack().isEmpty();
 
-        boolean wasEmpty = file.getCompiler().getTryStack().isEmpty();
-
-        if(wasEmpty || file.getCompiler().getTryStack().isRecovering()) {
-            file.getCompiler().getTryStack().pushRecovering();
-        } else if(file.getCompiler().getTryStack().isBreaking()) {
-            file.getCompiler().getTryStack().pushBreaking();
+        if(wasEmpty || ctx.getCompiler().getTryStack().isRecovering()) {
+            ctx.getCompiler().getTryStack().pushRecovering();
+        } else if(ctx.getCompiler().getTryStack().isBreaking()) {
+            ctx.getCompiler().getTryStack().pushBreaking();
         }
 
         try {
             for (header.initialize(); header.condition(); header.iterate()) {
                 try {
-                    TridentFile.resolveInnerFileIntoSection(body, file, file.getFunction());
+                    TridentFile.resolveInnerFileIntoSection(body, forFrame, ctx.getWritingFile().getFunction());
                 } catch(BreakException x) {
                     if(x.getLabel() == null || x.getLabel().equals(label)) {
                         break;
@@ -53,17 +55,17 @@ public class LoopInstruction implements Instruction {
             if(wasEmpty) {
                 if(x instanceof TridentException) {
                     ((TridentException) x).expandToUncaught();
-                    file.getCompiler().getReport().addNotice(((TridentException) x).getNotice());
+                    ctx.getCompiler().getReport().addNotice(((TridentException) x).getNotice());
                 } else {
                     for(TridentException ex : ((TridentException.Grouped) x).getExceptions()) {
-                        file.getCompiler().getReport().addNotice(ex.getNotice());
+                        ctx.getCompiler().getReport().addNotice(ex.getNotice());
                     }
                 }
             }
             else throw x;
         } finally {
-            file.getCompiler().getSymbolStack().pop();
-            file.getCompiler().getTryStack().pop();
+            //ctx.getCompiler().getSymbolStack().pop();
+            ctx.getCompiler().getTryStack().pop();
         }
     }
 
@@ -72,11 +74,11 @@ public class LoopInstruction implements Instruction {
         return labelPattern != null ? labelPattern.flatten(false) : null;
     }
 
-    private LoopHeader parseHeader(TokenPattern<?> pattern, TridentFile file) {
+    private LoopHeader parseHeader(TokenPattern<?> pattern, ISymbolContext ctx) {
         switch(pattern.getName()) {
             case "LOOP_HEADER":
             case "FOR_HEADER": {
-                return parseHeader(((TokenStructure) pattern).getContents(), file);
+                return parseHeader(((TokenStructure) pattern).getContents(), ctx);
             }
             case "CLASSICAL_FOR": {
                 TokenPattern<?> initialization = pattern.find("FOR_HEADER_INITIALIZATION.INTERPOLATION_VALUE");
@@ -85,39 +87,39 @@ public class LoopInstruction implements Instruction {
                 return new LoopHeader() {
                     @Override
                     public void initialize() {
-                        InterpolationManager.parse(initialization, file);
+                        InterpolationManager.parse(initialization, ctx);
                     }
 
                     @Override
                     public boolean condition() {
-                        Object returnValue = InterpolationManager.parse(condition, file);
+                        Object returnValue = InterpolationManager.parse(condition, ctx);
                         if(returnValue != null && returnValue.getClass() == Boolean.class) return (boolean)returnValue;
-                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Required boolean in 'for' condition", condition, file);
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Required boolean in 'for' condition", condition, ctx);
                     }
 
                     @Override
                     public void iterate() {
-                        InterpolationManager.parse(iteration, file);
+                        InterpolationManager.parse(iteration, ctx);
                     }
                 };
             }
             case "ITERATOR_FOR": {
                 String varName = pattern.find("VARIABLE_NAME").flatten(false);
-                Object iterable = InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), file);
+                Object iterable = InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), ctx);
                 if(iterable instanceof Iterable) {
                     Iterator it = ((Iterable) iterable).iterator();
                     if(!it.hasNext()) return null;
                     return new LoopHeader() {
                         @Override
                         public void initialize() {
-                            file.getCompiler().getSymbolStack().peek().put(new Symbol(varName, Symbol.SymbolVisibility.GLOBAL, null));
+                            ctx.put(new Symbol(varName, Symbol.SymbolVisibility.GLOBAL, null));
                         }
 
                         @Override
                         public boolean condition() {
                             boolean hasNext = it.hasNext();
                             if(hasNext) {
-                                file.getCompiler().getSymbolStack().peek().get(varName).setValue(it.next());
+                                ctx.search(varName, ctx).setValue(it.next());
                             }
                             return hasNext;
                         }
@@ -127,7 +129,7 @@ public class LoopInstruction implements Instruction {
                         }
                     };
                 } else {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Required iterable in 'for' iterator", pattern.find("INTERPOLATION_VALUE"), file);
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Required iterable in 'for' iterator", pattern.find("INTERPOLATION_VALUE"), ctx);
                 }
             }
             case "WHILE_HEADER": {
@@ -140,9 +142,9 @@ public class LoopInstruction implements Instruction {
 
                     @Override
                     public boolean condition() {
-                        Object returnValue = InterpolationManager.parse(condition, file);
+                        Object returnValue = InterpolationManager.parse(condition, ctx);
                         if(returnValue != null && returnValue.getClass() == Boolean.class) return (boolean)returnValue;
-                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Required boolean in 'while' condition", condition, file);
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Required boolean in 'while' condition", condition, ctx);
                     }
 
                     @Override
@@ -152,7 +154,7 @@ public class LoopInstruction implements Instruction {
                 };
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
             }
         }
     }

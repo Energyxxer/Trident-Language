@@ -20,38 +20,38 @@ import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.lexer.TridentTokens;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "bossbar")
 public class BossbarParser implements CommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "LIST": return new BossbarListCommand();
-            case "ADD": return parseAdd(inner, file);
-            case "GET": return parseGet(inner, file);
-            case "REMOVE": return parseRemove(inner, file);
-            case "SET": return parseSet(inner, file);
+            case "ADD": return parseAdd(inner, ctx);
+            case "GET": return parseGet(inner, ctx);
+            case "REMOVE": return parseRemove(inner, ctx);
+            case "SET": return parseSet(inner, ctx);
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
             }
         }
     }
 
-    private Command parseAdd(TokenPattern<?> inner, TridentFile file) {
-        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), file);
-        id.assertStandalone(inner.find("RESOURCE_LOCATION"), file);
-        TextComponent name = TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), file);
-        BossbarReference ref = new BossbarReference(file.getCompiler().getModule().getNamespace(id.namespace), id.body);
+    private Command parseAdd(TokenPattern<?> inner, ISymbolContext ctx) {
+        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), ctx);
+        id.assertStandalone(inner.find("RESOURCE_LOCATION"), ctx);
+        TextComponent name = TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), ctx);
+        BossbarReference ref = new BossbarReference(ctx.getCompiler().getModule().getNamespace(id.namespace), id.body);
         return new BossbarAddCommand(ref, name);
     }
 
-    private Command parseGet(TokenPattern<?> inner, TridentFile file) {
-        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), file);
-        id.assertStandalone(inner.find("RESOURCE_LOCATION"), file);
-        BossbarReference ref = new BossbarReference(file.getCompiler().getModule().getNamespace(id.namespace), id.body);
+    private Command parseGet(TokenPattern<?> inner, ISymbolContext ctx) {
+        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), ctx);
+        id.assertStandalone(inner.find("RESOURCE_LOCATION"), ctx);
+        BossbarReference ref = new BossbarReference(ctx.getCompiler().getModule().getNamespace(id.namespace), id.body);
 
         String rawVariable = inner.find("CHOICE").flatten(false);
         switch(rawVariable) {
@@ -60,41 +60,41 @@ public class BossbarParser implements CommandParser {
             case "players": return new BossbarGetPlayersCommand(ref);
             case "visible": return new BossbarGetVisibleCommand(ref);
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + rawVariable + "'", inner, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + rawVariable + "'", inner, ctx);
             }
         }
     }
 
-    private Command parseRemove(TokenPattern<?> inner, TridentFile file) {
-        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), file);
-        id.assertStandalone(inner.find("RESOURCE_LOCATION"), file);
-        BossbarReference ref = new BossbarReference(file.getCompiler().getModule().getNamespace(id.namespace), id.body);
+    private Command parseRemove(TokenPattern<?> inner, ISymbolContext ctx) {
+        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), ctx);
+        id.assertStandalone(inner.find("RESOURCE_LOCATION"), ctx);
+        BossbarReference ref = new BossbarReference(ctx.getCompiler().getModule().getNamespace(id.namespace), id.body);
         return new BossbarRemoveCommand(ref);
     }
 
-    private Command parseSet(TokenPattern<?> pattern, TridentFile file) {
-        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), file);
-        id.assertStandalone(pattern.find("RESOURCE_LOCATION"), file);
-        BossbarReference ref = new BossbarReference(file.getCompiler().getModule().getNamespace(id.namespace), id.body);
+    private Command parseSet(TokenPattern<?> pattern, ISymbolContext ctx) {
+        TridentUtil.ResourceLocation id = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), ctx);
+        id.assertStandalone(pattern.find("RESOURCE_LOCATION"), ctx);
+        BossbarReference ref = new BossbarReference(ctx.getCompiler().getModule().getNamespace(id.namespace), id.body);
 
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "SET_COLOR":
                 return new BossbarSetColorCommand(ref, BossbarCommand.BossbarColor.valueOf(inner.find("CHOICE").flatten(false).toUpperCase()));
             case "SET_MAX":
-                return new BossbarSetMaxCommand(ref, CommonParsers.parseInt(inner.find("INTEGER"), file));
+                return new BossbarSetMaxCommand(ref, CommonParsers.parseInt(inner.find("INTEGER"), ctx));
             case "SET_NAME":
-                return new BossbarSetNameCommand(ref, TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), file));
+                return new BossbarSetNameCommand(ref, TextParser.parseTextComponent(inner.find("TEXT_COMPONENT"), ctx));
             case "SET_PLAYERS":
-                return new BossbarSetPlayersCommand(ref, EntityParser.parseEntity(inner.find("OPTIONAL_ENTITY.ENTITY"), file));
+                return new BossbarSetPlayersCommand(ref, EntityParser.parseEntity(inner.find("OPTIONAL_ENTITY.ENTITY"), ctx));
             case "SET_STYLE":
                 return new BossbarSetStyleCommand(ref, BossbarCommand.BossbarStyle.valueOf(inner.find("CHOICE").flatten(false).toUpperCase()));
             case "SET_VALUE":
-                return new BossbarSetValueCommand(ref, CommonParsers.parseInt(inner.find("INTEGER"), file));
+                return new BossbarSetValueCommand(ref, CommonParsers.parseInt(inner.find("INTEGER"), ctx));
             case "SET_VISIBLE":
                 return new BossbarSetVisibleCommand(ref, inner.search(TridentTokens.BOOLEAN).get(0).value.equals("true"));
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
             }
         }
     }

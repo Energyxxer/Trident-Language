@@ -9,8 +9,8 @@ import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -60,17 +60,17 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
 
 
     @Override
-    public Object getMember(String str, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getMember(String str, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         MemberWrapper<String> result = members.get(member);
         if(result == null) throw new MemberNotFoundException();
         return result.unwrap(str);
     }
 
     @Override
-    public Object getIndexer(String object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
-        int realIndex = assertOfType(index, pattern, file, Integer.class);
+    public Object getIndexer(String object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        int realIndex = assertOfType(index, pattern, ctx, Integer.class);
         if(realIndex < 0 || realIndex >= object.length()) {
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index, pattern, file);
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index, pattern, ctx);
         }
 
         return object.charAt(realIndex) + "";
@@ -78,15 +78,15 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(String object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(String object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(targetType == NBTTag.class || targetType == TagString.class) {
             return (F) new TagString(object);
         }
         if(targetType == Entity.class) {
             if(object.isEmpty()) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names cannot be empty", pattern, file);
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names cannot be empty", pattern, ctx);
             } else if(object.contains(" ")) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names may not contain whitespaces", pattern, file);
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names may not contain whitespaces", pattern, ctx);
             } else {
                 return (F) new PlayerName(object);
             }
@@ -94,7 +94,7 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
         if(targetType == TridentUtil.ResourceLocation.class) {
             TridentUtil.ResourceLocation loc = TridentUtil.ResourceLocation.createStrict(object);
             if(loc == null) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Illegal resource location path: " + object, pattern, file);
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Illegal resource location path: " + object, pattern, ctx);
             }
             return (F) loc;
         }

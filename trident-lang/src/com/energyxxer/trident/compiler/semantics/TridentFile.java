@@ -21,6 +21,9 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.instructions.Instruction;
 import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.ImportedSymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
@@ -29,11 +32,9 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class TridentFile {
-    private final TridentCompiler compiler;
+public class TridentFile extends SymbolContext {
     private final CommandModule module;
     private final Namespace namespace;
-    private TridentFile parent = null;
     private TokenPattern<?> pattern;
     private final HashMap<TokenPattern<?>, TridentUtil.ResourceLocation> requires = new HashMap<>();
     private ArrayList<TridentUtil.ResourceLocation> cascadingRequires = null;
@@ -51,18 +52,13 @@ public class TridentFile {
 
     private int anonymousChildren = 0;
 
-    private SymbolTable fileSymbols;
-
-    public TridentFile(TridentFile parent, Path relSourcePath, TokenPattern<?> filePattern) {
-        this(parent.getCompiler(), relSourcePath, filePattern, parent.languageLevel);
-    }
-
     public TridentFile(TridentCompiler compiler, Path relSourcePath, TokenPattern<?> filePattern) {
-        this(compiler, relSourcePath, filePattern, compiler.getLanguageLevel());
+        this(compiler, null, relSourcePath, filePattern, compiler.getLanguageLevel());
     }
 
-    private TridentFile(TridentCompiler compiler, Path relSourcePath, TokenPattern<?> filePattern, int languageLevel) {
-        this.compiler = compiler;
+    private TridentFile(TridentCompiler compiler, ISymbolContext parentContext, Path relSourcePath, TokenPattern<?> filePattern, int languageLevel) {
+        super(compiler);
+        this.parentScope = parentContext;
         this.module = compiler.getModule();
         this.namespace = module.createNamespace(relSourcePath.getName(0).toString());
         this.pattern = filePattern;
@@ -77,6 +73,7 @@ public class TridentFile {
         resolveDirectives();
         if(!compileOnly && namespace.functions.contains(functionPath)) {
             compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "A function by the name '" + namespace.getName() + ":" + functionPath + "' already exists", pattern));
+            valid = false;
         }
 
         this.function = compileOnly ? null : namespace.functions.get(functionPath);
@@ -132,9 +129,10 @@ public class TridentFile {
         }
     }
 
-    public static TridentFile createInnerFile(TokenPattern<?> pattern, TridentFile parent) {
+    //Sub context automatically created
+    public static TridentFile createInnerFile(TokenPattern<?> pattern, ISymbolContext parent) {
         TokenPattern<?> namePattern = pattern.find("INNER_FUNCTION_NAME.RESOURCE_LOCATION");
-        String innerFilePathRaw = parent.getPath().toString();
+        String innerFilePathRaw = parent.getStaticParentFile().getPath().toString();
         innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
 
         if(namePattern != null) {
@@ -150,27 +148,27 @@ public class TridentFile {
                 innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(functionName + ".tdn").toString();
             }
         } else {
-            innerFilePathRaw = Paths.get(innerFilePathRaw).resolve("_anonymous" + parent.anonymousChildren + ".tdn").toString();
-            parent.anonymousChildren++;
+            innerFilePathRaw = Paths.get(innerFilePathRaw).resolve("_anonymous" + parent.getStaticParentFile().anonymousChildren + ".tdn").toString();
+            parent.getStaticParentFile().anonymousChildren++;
         }
 
         TokenPattern<?> innerFilePattern = pattern.find("FILE_INNER");
 
-        TridentFile innerFile = new TridentFile(parent.getCompiler(), Paths.get(innerFilePathRaw), innerFilePattern);
-        innerFile.parent = parent;
+        TridentFile innerFile = new TridentFile(parent.getCompiler(), parent, Paths.get(innerFilePathRaw), innerFilePattern, parent.getCompiler().getLanguageLevel());
         innerFile.resolveEntries();
         return innerFile;
     }
 
-    public static void resolveInnerFileIntoSection(TokenPattern<?> pattern, TridentFile parent, FunctionSection function) {
+    //Sub context NOT automatically created
+    public static void resolveInnerFileIntoSection(TokenPattern<?> pattern, ISymbolContext parentCtx, FunctionSection function) {
         if(pattern.find("FILE_INNER..DIRECTIVES") != null) {
-            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Directives aren't allowed in this context", pattern.find("FILE_INNER..DIRECTIVES"), parent);
+            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Directives aren't allowed in this context", pattern.find("FILE_INNER..DIRECTIVES"), parentCtx);
         }
 
-        resolveEntries((TokenList) pattern.find("FILE_INNER.ENTRIES"), parent, function, false);
+        resolveEntries((TokenList) pattern.find("FILE_INNER.ENTRIES"), parentCtx, function, false);
     }
 
-    public void addCascadingRequires(Collection<TridentUtil.ResourceLocation> locations) {
+    public void addCascadingRequires(Collection<TridentUtil.ResourceLocation> locations) { //TODO clean up; this lazy initialization is misleading
         if(cascadingRequires == null) cascadingRequires = new ArrayList<>(requires.values());
         cascadingRequires.addAll(locations);
     }
@@ -179,15 +177,11 @@ public class TridentFile {
 
     public void resolveEntries() {
         if(!valid) return;
-        if(fileSymbols != null) return;
+        if(entriesResolved) return;
 
         if(function != null) tags.forEach(l -> module.createNamespace(l.namespace).tags.functionTags.create(l.body).addValue(new FunctionReference(this.function)));
 
         resolveEntries((TokenList) this.pattern.find(".ENTRIES"), this, function, compileOnly);
-    }
-
-    public TridentCompiler getCompiler() {
-        return compiler;
     }
 
     public Function getFunction() {
@@ -264,31 +258,29 @@ public class TridentFile {
         return "TDN: " + location;
     }
 
-    private static void resolveEntries(TokenList entryList, TridentFile parent, FunctionSection appendTo, boolean compileOnly) {
+    private static void resolveEntries(TokenList entryList, ISymbolContext parent, FunctionSection appendTo, boolean compileOnly) {
+        TridentFile parentFile = parent.getStaticParentFile();
 
-        int popTimes = 0;
         boolean popCall = false;
-        parent.addCascadingRequires(Collections.emptyList());
-        for (Iterator<TridentUtil.ResourceLocation> it = new ArrayDeque<>(parent.cascadingRequires).descendingIterator(); it.hasNext(); ) {
-            TridentUtil.ResourceLocation loc = it.next();
-            TridentFile file = parent.compiler.getFile(loc);
-            if(file.fileSymbols == null) {
-                file.resolveEntries();
-            }
-            parent.compiler.getSymbolStack().push(file.fileSymbols);
-            popTimes++;
-        }
-
+        parentFile.addCascadingRequires(Collections.emptyList());
         TridentCompiler compiler = parent.getCompiler();
-        SymbolTable symbols = new SymbolTable(parent);
-        if(parent.fileSymbols == null) {
-            parent.fileSymbols = symbols;
-            compiler.getCallStack().push(new CallStack.Call("<body>", entryList, parent, entryList));
+
+        if(!parentFile.entriesResolved) {
+            ImportedSymbolContext imports = new ImportedSymbolContext(parent.getCompiler());
+            imports.setParentScope(parentFile.parentScope);
+            for (Iterator<TridentUtil.ResourceLocation> it = new ArrayDeque<>(parentFile.cascadingRequires).descendingIterator(); it.hasNext(); ) {
+                TridentUtil.ResourceLocation loc = it.next();
+                TridentFile file = parent.getCompiler().getFile(loc);
+                file.resolveEntries();
+                imports.addContext(file);
+            }
+            parentFile.parentScope = imports;
+
+            compiler.getCallStack().push(new CallStack.Call("<body>", entryList, parentFile, entryList));
+            compiler.pushWritingFile(parentFile);
             popCall = true;
         }
         ArrayList<TridentException> queuedExceptions = new ArrayList<>();
-        compiler.getSymbolStack().push(symbols);
-        popTimes++;
 
         try {
             if (entryList != null) {
@@ -319,14 +311,17 @@ public class TridentFile {
                 throw new TridentException.Grouped(queuedExceptions);
             }
         } finally {
-            for(int i = 0; i < popTimes; i++) {
-                compiler.getSymbolStack().pop();
+            if(popCall) {
+                compiler.getCallStack().pop();
+                compiler.popWritingFile();
             }
-            if(popCall) compiler.getCallStack().pop();
+            parentFile.entriesResolved = true;
         }
     }
 
-    public static void resolveEntry(TokenPattern<?> inner, TridentFile parent, FunctionSection appendTo, boolean compileOnly) {
+    private boolean entriesResolved = false;
+
+    public static void resolveEntry(TokenPattern<?> inner, ISymbolContext parent, FunctionSection appendTo, boolean compileOnly) {
         TridentCompiler compiler = parent.getCompiler();
         boolean exportComments = compiler.getProperties().get("export-comments") == null || compiler.getProperties().get("export-comments").getAsBoolean();
         try {
@@ -360,8 +355,8 @@ public class TridentFile {
                         } else {
                             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + commandPattern.flattenTokens().get(0).value + "'", commandPattern, parent);
                         }
-                    } else if (!parent.reportedNoCommands) {
-                        parent.reportedNoCommands = true;
+                    } else if (!parent.getStaticParentFile().reportedNoCommands) {
+                        parent.getStaticParentFile().reportedNoCommands = true;
                         throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "A compile-only function may not have commands", inner, parent);
                     }
                     break;
@@ -385,10 +380,6 @@ public class TridentFile {
         } catch(CommodoreException x) {
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Commodore Exception of type " + x.getSource() + ": " + x.getMessage(), inner, parent);
         }
-    }
-
-    public boolean isSubFileOf(TridentFile parent) {
-        return this.parent != null && (this.parent == parent || this.parent.isSubFileOf(parent));
     }
 
     public TokenPattern<?> getPattern() {

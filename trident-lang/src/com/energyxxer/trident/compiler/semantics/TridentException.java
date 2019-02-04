@@ -6,6 +6,7 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -46,8 +47,8 @@ public class TridentException extends RuntimeException implements VariableTypeHa
         this(source, message, cause, (CallStack.StackTrace) null);
     }
 
-    public TridentException(Source source, String message, TokenPattern<?> cause, TridentFile file) {
-        this(source, message, cause, file.getCompiler().getCallStack().getView());
+    public TridentException(Source source, String message, TokenPattern<?> cause, ISymbolContext ctx) {
+        this(source, message, cause, ctx.getCompiler().getCallStack().getView());
     }
 
     public TridentException(Source source, String message, TokenPattern<?> cause, CallStack.StackTrace stackTrace) {
@@ -68,8 +69,8 @@ public class TridentException extends RuntimeException implements VariableTypeHa
         this.cause = cause;
     }
 
-    public static ExceptionMapper handleCommodoreException(CommodoreException x, TokenPattern<?> defaultPattern, TridentFile file) {
-        return new ExceptionMapper(x, defaultPattern, file);
+    public static ExceptionMapper handleCommodoreException(CommodoreException x, TokenPattern<?> defaultPattern, ISymbolContext ctx) {
+        return new ExceptionMapper(x, defaultPattern, ctx);
     }
 
     public Source getSource() {
@@ -98,7 +99,7 @@ public class TridentException extends RuntimeException implements VariableTypeHa
     }
 
     @Override
-    public Object getMember(TridentException object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getMember(TridentException object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         switch(member) {
             case "message": return notice.getMessage();
             case "extendedMessage": return notice.getExtendedMessage();
@@ -111,12 +112,12 @@ public class TridentException extends RuntimeException implements VariableTypeHa
     }
 
     @Override
-    public Object getIndexer(TridentException object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getIndexer(TridentException object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
     }
 
     @Override
-    public <F> F cast(TridentException object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(TridentException object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
@@ -146,14 +147,14 @@ public class TridentException extends RuntimeException implements VariableTypeHa
     public static class ExceptionMapper {
         private CommodoreException ex;
         private TokenPattern<?> defaultPattern;
-        private TridentFile file;
+        private ISymbolContext ctx;
         private HashMap<CommodoreException.Source, TokenPattern<?>> sourceMap = new HashMap<>();
         private HashMap<String, Supplier<TokenPattern<?>>> causeMap = new HashMap<>();
 
-        public ExceptionMapper(CommodoreException ex, TokenPattern<?> defaultPattern, TridentFile file) {
+        public ExceptionMapper(CommodoreException ex, TokenPattern<?> defaultPattern, ISymbolContext ctx) {
             this.ex = ex;
             this.defaultPattern = defaultPattern;
-            this.file = file;
+            this.ctx = ctx;
         }
 
         public ExceptionMapper map(CommodoreException.Source source, TokenPattern<?> pattern) {
@@ -174,15 +175,15 @@ public class TridentException extends RuntimeException implements VariableTypeHa
         public void invokeThrow() throws TridentException {
             for(Map.Entry<String, Supplier<TokenPattern<?>>> entry : causeMap.entrySet()) {
                 if(entry.getKey().equals(ex.getCauseKey())) {
-                    throw new TridentException(Source.COMMAND_ERROR, ex.getMessage(), entry.getValue().get(), file);
+                    throw new TridentException(Source.COMMAND_ERROR, ex.getMessage(), entry.getValue().get(), ctx);
                 }
             }
             for(Map.Entry<CommodoreException.Source, TokenPattern<?>> entry : sourceMap.entrySet()) {
                 if(ex.getSource() == entry.getKey()) {
-                    throw new TridentException(Source.COMMAND_ERROR, ex.getMessage(), entry.getValue(), file);
+                    throw new TridentException(Source.COMMAND_ERROR, ex.getMessage(), entry.getValue(), ctx);
                 }
             }
-            throw new TridentException(Source.COMMAND_ERROR, ex.getMessage(), defaultPattern, file);
+            throw new TridentException(Source.COMMAND_ERROR, ex.getMessage(), defaultPattern, ctx);
         }
     }
 }

@@ -1,9 +1,10 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -47,11 +48,11 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
     }
 
     @Override
-    public Object getMember(ListType object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getMember(ListType object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(member.equals("map")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
                 if(params.length < 1) {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern, file);
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern, ctx);
                 }
                 FunctionMethod func = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
 
@@ -72,10 +73,10 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
     }
 
     @Override
-    public Object getIndexer(ListType object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
-        int realIndex = VariableMethod.HelperMethods.assertOfType(index, pattern, file, Integer.class);
+    public Object getIndexer(ListType object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        int realIndex = VariableMethod.HelperMethods.assertOfType(index, pattern, ctx, Integer.class);
         if(realIndex < 0 || realIndex >= object.content.size()) {
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index, pattern, file);
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index, pattern, ctx);
         }
 
         Symbol elem = object.content.get(realIndex);
@@ -84,7 +85,7 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(ListType object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(ListType object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
@@ -162,6 +163,6 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
 
     @Override
     public String toString() {
-        return "[" + content.stream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue())).collect(Collectors.joining(", "))  + "]";
+        return "[" + content.stream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue())).collect(Collectors.joining(", "))  + "]";
     }
 }

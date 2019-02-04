@@ -1,15 +1,17 @@
 package com.energyxxer.trident.compiler.semantics;
 
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+
 import java.util.ArrayList;
 
 public class ExceptionCollector {
-    private final TridentFile file;
+    private final ISymbolContext file;
     private ArrayList<TridentException> exceptions = new ArrayList<>();
     private boolean wasEmpty;
     private boolean wasBreaking;
 
-    public ExceptionCollector(TridentFile file) {
-        this.file = file;
+    public ExceptionCollector(ISymbolContext ctx) {
+        this.file = ctx;
     }
 
     public void begin() {

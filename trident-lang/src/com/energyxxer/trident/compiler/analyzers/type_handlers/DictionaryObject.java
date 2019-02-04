@@ -1,9 +1,10 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -28,7 +29,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
     private HashMap<String, Symbol> map = new HashMap<>();
 
     @Override
-    public Object getMember(DictionaryObject dict, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getMember(DictionaryObject dict, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(keepSymbol && !dict.map.containsKey(member)) {
             put(member, null);
         }
@@ -36,7 +37,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
             if(member.equals("map")) {
                 return (VariableMethod) (params, patterns, pattern1, file1) -> {
                     if (params.length < 1) {
-                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1, file);
+                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1, ctx);
                     }
                     FunctionMethod func = assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
 
@@ -60,14 +61,14 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
     }
 
     @Override
-    public Object getIndexer(DictionaryObject object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
-        String key = assertOfType(index, pattern, file, String.class);
-        return getMember(object, key, pattern, file, keepSymbol);
+    public Object getIndexer(DictionaryObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        String key = assertOfType(index, pattern, ctx, String.class);
+        return getMember(object, key, pattern, ctx, keepSymbol);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(DictionaryObject object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(DictionaryObject object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
@@ -154,7 +155,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
             return "{ ...circular... }";
         }
         toStringRecursion.push(this);
-        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : String.valueOf(s.getValue()))).collect(Collectors.joining(", ")) + "}";
+        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue()))).collect(Collectors.joining(", ")) + "}";
         toStringRecursion.pop();
         return str;
     }

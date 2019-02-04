@@ -17,6 +17,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
@@ -88,7 +89,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
 
 
     @Override
-    public Object getMember(CustomItem object, String member, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getMember(CustomItem object, String member, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
         if(member.equals("getSettingNBT")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
                 TagCompound nbt = new TagCompound(
@@ -111,13 +112,13 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
     }
 
     @Override
-    public Object getIndexer(CustomItem object, Object index, TokenPattern<?> pattern, TridentFile file, boolean keepSymbol) {
+    public Object getIndexer(CustomItem object, Object index, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
         throw new MemberNotFoundException();
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(CustomItem object, Class<F> targetType, TokenPattern<?> pattern, TridentFile file) {
+    public <F> F cast(CustomItem object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext file) {
         throw new ClassCastException();
     }
 
@@ -143,28 +144,27 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
 
 
 
-    public static void defineItem(TokenPattern<?> pattern, TridentFile file) {
-        Symbol.SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), file, Symbol.SymbolVisibility.GLOBAL);
+    public static void defineItem(TokenPattern<?> pattern, ISymbolContext ctx) {
+        Symbol.SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), ctx, Symbol.SymbolVisibility.GLOBAL);
 
         String entityName = pattern.find("ITEM_NAME").flatten(false);
-        Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), file);
+        Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), ctx);
 
         CustomItem itemDecl = null;
         TokenPattern<?> rawCustomModelData = pattern.find("CUSTOM_MODEL_DATA.INTEGER");
 
         if(!entityName.equals("default")) {
             itemDecl = new CustomItem(entityName, defaultType);
-            if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, file));
+            if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, ctx));
 
-            SymbolTable table = file.getCompiler().getSymbolStack().getTableForVisibility(visibility);
-            table.put(new Symbol(entityName, visibility, itemDecl));
+            ctx.getContextForVisibility(visibility).put(new Symbol(entityName, visibility, itemDecl));
         } else if(rawCustomModelData != null) {
-            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default items don't support custom model data specifiers", rawCustomModelData, file);
+            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default items don't support custom model data specifiers", rawCustomModelData, ctx);
         }
 
 
 
-        ExceptionCollector collector = new ExceptionCollector(file);
+        ExceptionCollector collector = new ExceptionCollector(ctx);
         collector.begin();
 
         try {
@@ -176,17 +176,17 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                     switch (entry.getName()) {
                         case "DEFAULT_NBT": {
                             if (itemDecl == null) {
-                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, file));
+                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, ctx));
                                 break;
                             }
-                            TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), file);
+                            TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), ctx);
                             PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
-                            NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), file);
+                            NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), ctx);
                             itemDecl.defaultNBT = itemDecl.defaultNBT.merge(newNBT);
                             break;
                         }
                         case "ITEM_INNER_FUNCTION": {
-                            TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), file);
+                            TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx);
 
                             TokenPattern<?> rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
                             if (rawFunctionModifiers != null) {
@@ -199,19 +199,19 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                                         boolean pure = false;
                                         if (modifiers.find("LITERAL_PURE") != null) {
                                             if (itemDecl != null) {
-                                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The 'pure' modifier is only allowed for default items", modifiers.find("LITERAL_PURE"), file));
+                                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The 'pure' modifier is only allowed for default items", modifiers.find("LITERAL_PURE"), ctx));
                                             } else {
                                                 pure = true;
                                             }
                                         }
 
                                         if (onWhat.getName().equals("ITEM_CRITERIA")) {
-                                            if (itemDecl != null && file.getLanguageLevel() < 2) {
-                                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Custom non-default item events are only supported in language level 2 and up", entry, file));
+                                            if (itemDecl != null && ctx.getStaticParentFile().getLanguageLevel() < 2) {
+                                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Custom non-default item events are only supported in language level 2 and up", entry, ctx));
                                                 break;
                                             }
 
-                                            file.getCompiler().getSpecialFileManager().itemEvents.addCustomItem(ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()), defaultType, itemDecl, new ItemEvent(new FunctionReference(innerFile.getFunction()), pure));
+                                            ctx.getCompiler().getSpecialFileManager().itemEvents.addCustomItem(ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()), defaultType, itemDecl, new ItemEvent(new FunctionReference(innerFile.getFunction()), pure));
 
                                         }
                                     }
@@ -222,19 +222,19 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                         }
                         case "DEFAULT_NAME": {
                             if (itemDecl == null) {
-                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, file));
+                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, ctx));
                                 break;
                             }
 
                             NBTCompoundBuilder builder = new NBTCompoundBuilder();
-                            builder.put(new NBTPath("display", new NBTPath("Name")), new TagString("Name", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), file).toString()));
+                            builder.put(new NBTPath("display", new NBTPath("Name")), new TagString("Name", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), ctx).toString()));
 
                             itemDecl.defaultNBT = itemDecl.defaultNBT.merge(builder.getCompound());
                             break;
                         }
                         case "DEFAULT_LORE": {
                             if (itemDecl == null) {
-                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, file));
+                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, ctx));
                                 break;
                             }
                             TagList loreList = new TagList("Lore");
@@ -244,7 +244,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                             if (rawLoreList != null) {
                                 for (TokenPattern<?> rawLine : rawLoreList.getContents()) {
                                     if (rawLine.getName().equals("TEXT_COMPONENT"))
-                                        loreList.add(new TagString(TextParser.parseTextComponent(rawLine, file).toString()));
+                                        loreList.add(new TagString(TextParser.parseTextComponent(rawLine, ctx).toString()));
                                 }
                             }
 
@@ -252,7 +252,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                             break;
                         }
                         default: {
-                            collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, file));
+                            collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, ctx));
                             break;
                         }
                     }

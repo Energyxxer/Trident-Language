@@ -9,8 +9,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,7 +18,7 @@ import java.util.Collection;
 @AnalyzerMember(key = "execute")
 public class ExecuteParser implements CommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
 
         TokenPattern<?> rawList = pattern.find("MODIFIER_LIST");
@@ -27,10 +27,10 @@ public class ExecuteParser implements CommandParser {
             for(TokenPattern<?> inner : list.getContents()) {
                 ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, inner.flattenTokens().get(0).value);
                 if(parser != null) {
-                    Collection<ExecuteModifier> modifier = parser.parse(inner, file);
+                    Collection<ExecuteModifier> modifier = parser.parse(inner, ctx);
                     modifiers.addAll(modifier);
                 } else {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + inner.flattenTokens().get(0).value + "'", inner, file);
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + inner.flattenTokens().get(0).value + "'", inner, ctx);
                 }
             }
         }
@@ -39,10 +39,10 @@ public class ExecuteParser implements CommandParser {
         if(rawCommand != null) {
             CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, rawCommand.flattenTokens().get(0).value);
             if(parser != null) {
-                Command command = parser.parse((TokenPattern<?>) (rawCommand.getContents()), file);
+                Command command = parser.parse((TokenPattern<?>) (rawCommand.getContents()), ctx);
                 if(command != null) return new ExecuteCommand(command, modifiers);
             } else {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + rawCommand.flattenTokens().get(0).value + "'", rawCommand, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + rawCommand.flattenTokens().get(0).value + "'", rawCommand, ctx);
             }
         }
         return new ExecuteCommand(new EmptyCommand(), modifiers);

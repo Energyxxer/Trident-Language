@@ -13,39 +13,39 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "scoreboard")
 public class ScoreboardParser implements CommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "OBJECTIVES": {
-                return parseObjectives(inner, file);
+                return parseObjectives(inner, ctx);
             }
             case "PLAYERS": {
-                return parsePlayers(inner, file);
+                return parsePlayers(inner, ctx);
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
             }
         }
     }
 
-    private Command parseObjectives(TokenPattern<?> pattern, TridentFile file) {
+    private Command parseObjectives(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "ADD": {
-                String objectiveName = CommonParsers.parseIdentifierA(inner.find("OBJECTIVE_NAME.IDENTIFIER_A"), file);
+                String objectiveName = CommonParsers.parseIdentifierA(inner.find("OBJECTIVE_NAME.IDENTIFIER_A"), ctx);
                 String criteria = inner.find("CRITERIA").flatten(false);
-                TextComponent displayName = TextParser.parseTextComponent(inner.find(".TEXT_COMPONENT"), file);
+                TextComponent displayName = TextParser.parseTextComponent(inner.find(".TEXT_COMPONENT"), ctx);
                 Objective objective;
-                if(file.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) {
-                    objective = file.getCompiler().getModule().getObjectiveManager().get(objectiveName);
+                if(ctx.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) {
+                    objective = ctx.getCompiler().getModule().getObjectiveManager().get(objectiveName);
                 } else {
-                    objective = file.getCompiler().getModule().getObjectiveManager().create(objectiveName, criteria, displayName, true);
+                    objective = ctx.getCompiler().getModule().getObjectiveManager().create(objectiveName, criteria, displayName, true);
                 }
                 return new ObjectivesAddCommand(objective);
             }
@@ -53,22 +53,22 @@ public class ScoreboardParser implements CommandParser {
                 return new ObjectivesListCommand();
             }
             case "MODIFY": {
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), file);
+                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), ctx);
                 TokenPattern<?> sub = ((TokenStructure)inner.find("CHOICE")).getContents();
                 switch(sub.getName()) {
                     case "DISPLAYNAME": {
-                        return new ObjectiveModifyCommand(objective, ObjectiveModifyCommand.ObjectiveModifyKey.DISPLAY_NAME, TextParser.parseTextComponent(sub.find("TEXT_COMPONENT"), file));
+                        return new ObjectiveModifyCommand(objective, ObjectiveModifyCommand.ObjectiveModifyKey.DISPLAY_NAME, TextParser.parseTextComponent(sub.find("TEXT_COMPONENT"), ctx));
                     }
                     case "RENDERTYPE": {
                         return new ObjectiveModifyCommand(objective, ObjectiveModifyCommand.ObjectiveModifyKey.RENDER_TYPE, ObjectiveModifyCommand.ObjectiveRenderType.valueOf(sub.find("CHOICE").flatten(false).toUpperCase()));
                     }
                     default: {
-                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + sub.getName() + "'", sub, file);
+                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + sub.getName() + "'", sub, ctx);
                     }
                 }
             }
             case "REMOVE": {
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), file);
+                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), ctx);
                 return new ObjectivesRemoveCommand(objective);
             }
             case "SETDISPLAY": {
@@ -76,82 +76,82 @@ public class ScoreboardParser implements CommandParser {
                 TokenPattern<?> objectiveClause = inner.find("OBJECTIVE_CLAUSE");
                 if(objectiveClause != null) {
                     return new SetObjectiveDisplayCommand(
-                            CommonParsers.parseObjective(objectiveClause.find("OBJECTIVE"), file),
+                            CommonParsers.parseObjective(objectiveClause.find("OBJECTIVE"), ctx),
                             displaySlot
                     );
                 }
                 return new SetObjectiveDisplayCommand(displaySlot);
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
             }
         }
     }
 
-    private Command parsePlayers(TokenPattern<?> pattern, TridentFile file) {
+    private Command parsePlayers(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "CHANGE": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), file);
-                int amount = CommonParsers.parseInt(inner.find("INTEGER"), file);
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
+                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), ctx);
+                int amount = CommonParsers.parseInt(inner.find("INTEGER"), ctx);
 
                 if(inner.find("CHOICE.LITERAL_SET") != null) return new ScoreSet(new LocalScore(entity, objective), amount);
                 if(inner.find("CHOICE.LITERAL_REMOVE") != null) amount *= -1;
                 return new ScoreAdd(new LocalScore(entity, objective), amount);
             }
             case "ENABLE": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), file);
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
+                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), ctx);
                 try {
                     return new TriggerEnable(entity, objective);
                 } catch(CommodoreException x) {
-                    TridentException.handleCommodoreException(x, inner, file)
+                    TridentException.handleCommodoreException(x, inner, ctx)
                             .map(CommodoreException.Source.ENTITY_ERROR, inner.find("ENTITY"))
                             .map(CommodoreException.Source.TYPE_ERROR, inner.find("OBJECTIVE"))
                             .invokeThrow();
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, file);
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
                 }
             }
             case "GET": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), file);
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), file);
+                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
+                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), ctx);
                 try {
                     return new ScoreGet(new LocalScore(entity, objective));
                 } catch(CommodoreException x) {
-                    TridentException.handleCommodoreException(x, inner, file)
+                    TridentException.handleCommodoreException(x, inner, ctx)
                             .map(CommodoreException.Source.ENTITY_ERROR, inner.find("ENTITY"))
                             .invokeThrow();
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, file);
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
                 }
             }
             case "LIST": {
-                Entity entity = EntityParser.parseEntity(inner.find(".ENTITY"), file);
+                Entity entity = EntityParser.parseEntity(inner.find(".ENTITY"), ctx);
                 try {
                     return new ScoreList(entity);
                 } catch(CommodoreException x) {
-                    TridentException.handleCommodoreException(x, inner, file)
+                    TridentException.handleCommodoreException(x, inner, ctx)
                             .map(CommodoreException.Source.ENTITY_ERROR, inner.find(".ENTITY"))
                             .invokeThrow();
                 }
             }
             case "OPERATION": {
                 LocalScore target = new LocalScore(
-                        EntityParser.parseEntity(inner.find("TARGET.ENTITY"), file),
-                        CommonParsers.parseObjective(inner.find("TARGET_OBJECTIVE"), file)
+                        EntityParser.parseEntity(inner.find("TARGET.ENTITY"), ctx),
+                        CommonParsers.parseObjective(inner.find("TARGET_OBJECTIVE"), ctx)
                 );
                 LocalScore source = new LocalScore(
-                        EntityParser.parseEntity(inner.find("SOURCE.ENTITY"), file),
-                        CommonParsers.parseObjective(inner.find("SOURCE_OBJECTIVE"), file)
+                        EntityParser.parseEntity(inner.find("SOURCE.ENTITY"), ctx),
+                        CommonParsers.parseObjective(inner.find("SOURCE_OBJECTIVE"), ctx)
                 );
                 String rawOperator = inner.find("OPERATOR").flatten(false);
                 return new ScorePlayersOperation(target, ScorePlayersOperation.Operation.getOperationForSymbol(rawOperator), source);
             }
             case "RESET": {
-                Entity entity = EntityParser.parseEntity(inner.find("TARGET.ENTITY"), file);
+                Entity entity = EntityParser.parseEntity(inner.find("TARGET.ENTITY"), ctx);
                 TokenPattern<?> objectiveClause = inner.find("OBJECTIVE_CLAUSE");
                 if(objectiveClause != null) {
-                    Objective objective = CommonParsers.parseObjective(objectiveClause.find("OBJECTIVE"), file);
+                    Objective objective = CommonParsers.parseObjective(objectiveClause.find("OBJECTIVE"), ctx);
                     if(entity != null) {
                         return new ScoreReset(entity, objective);
                     } else {
@@ -163,7 +163,7 @@ public class ScoreboardParser implements CommandParser {
                 else return new ScoreReset();
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, file);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
             }
         }
     }

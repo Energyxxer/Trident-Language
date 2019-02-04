@@ -13,24 +13,24 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 
 @AnalyzerMember(key = "summon")
 public class SummonParser implements CommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, TridentFile file) {
+    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> id = pattern.find("ENTITY_ID");
         Type type = null;
-        CoordinateSet pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"), file);
-        TagCompound nbt = NBTParser.parseCompound(pattern.find("..NBT_COMPOUND"), file);
+        CoordinateSet pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"), ctx);
+        TagCompound nbt = NBTParser.parseCompound(pattern.find("..NBT_COMPOUND"), ctx);
         if(nbt != null) {
             PathContext context = new PathContext().setIsSetting(true).setProtocol(PathProtocol.ENTITY, type);
-            NBTParser.analyzeTag(nbt, context, pattern.find("..NBT_COMPOUND"), file);
+            NBTParser.analyzeTag(nbt, context, pattern.find("..NBT_COMPOUND"), ctx);
         }
 
-        Object reference = CommonParsers.parseEntityReference(id, file);
+        Object reference = CommonParsers.parseEntityReference(id, ctx);
 
         if(reference instanceof Type) {
             type = (Type) reference;
@@ -42,10 +42,10 @@ public class SummonParser implements CommandParser {
             try {
                 nbt = ce.getDefaultNBT().merge(nbt);
             } catch(CommodoreException x) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Error while merging given NBT with custom entity's NBT: " + x.getMessage(), pattern, file);
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Error while merging given NBT with custom entity's NBT: " + x.getMessage(), pattern, ctx);
             }
         } else {
-            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), id, file);
+            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), id, ctx);
         }
 
         if(pos == null && nbt != null) pos = new CoordinateSet();
@@ -53,10 +53,10 @@ public class SummonParser implements CommandParser {
         try {
             return new SummonCommand(type, pos, nbt);
         } catch(CommodoreException x) {
-            TridentException.handleCommodoreException(x, pattern, file)
+            TridentException.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.TYPE_ERROR, pattern.find("ENTITY_ID"))
                     .invokeThrow();
-            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, file);
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }
     }
 }
