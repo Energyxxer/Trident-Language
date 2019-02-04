@@ -19,21 +19,56 @@ public interface OperatorHandler<A, B> {
 
         @SuppressWarnings("unchecked")
         public static Object perform(Object a, Operator operator, Object b, TokenPattern<?> pattern, ISymbolContext ctx) {
+            OperatorType operatorType = operator.getOperatorType();
+            
+            if(operatorType == OperatorType.BINARY) {
+                String idA = a != null ? VariableTypeHandler.Static.getIdentifierForClass(a.getClass()) : "*";
+                String idB = b != null ? VariableTypeHandler.Static.getIdentifierForClass(b.getClass()) : "*";
+                OperatorHandler handler = handlers.get(idA + " " + operator.getSymbol() + " " + idB);
 
-            String idA = a != null ? VariableTypeHandler.Static.getIdentifierForClass(a.getClass()) : "*";
-            String idB = b != null ? VariableTypeHandler.Static.getIdentifierForClass(b.getClass()) : "*";
-            OperatorHandler handler = handlers.get(idA + " " + operator.getSymbol() + " " + idB);
+                if (handler == null) handler = handlers.get(idA + " " + operator.getSymbol() + " *");
 
-            if(handler == null) handler = handlers.get(idA + " " + operator.getSymbol() + " *");
+                if (handler == null) handler = handlers.get("* " + operator.getSymbol() + " " + idB);
 
-            if(handler == null) handler = handlers.get("* " + operator.getSymbol() + " " + idB);
+                if (handler == null) handler = handlers.get("* " + operator.getSymbol() + " *");
 
-            if(handler == null) handler = handlers.get("* " + operator.getSymbol() + " *");
+                if (handler == null) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "The operator " + operator.getSymbol() + " is not defined for types " + idA.replace("*", "null") + " and " + idB.replace("*", "null"), pattern, ctx);
+                }
+                return handler.perform(a, b, pattern, ctx);
+            } else if(operatorType == OperatorType.UNARY_ANY || operatorType == OperatorType.UNARY_LEFT || operatorType == OperatorType.UNARY_RIGHT) {
+                OperatorHandler handler = null;
+                String idA = a != null ? VariableTypeHandler.Static.getIdentifierForClass(a.getClass()) : "*";
+                String idB = b != null ? VariableTypeHandler.Static.getIdentifierForClass(b.getClass()) : "*";
 
-            if(handler == null) {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "The operator " + operator.getSymbol() + " is not defined for types " + idA.replace("*", "null") + " and " + idB.replace("*", "null"), pattern, ctx);
+                if(operatorType == OperatorType.UNARY_LEFT) {
+                    handler = handlers.get(operator.getSymbol() + " " + idB);
+                    if(handler == null) handler = handlers.get(operator.getSymbol() + " *");
+                } else if(operatorType == OperatorType.UNARY_RIGHT) {
+                    handler = handlers.get(idA + " " + operator.getSymbol());
+                    if(handler == null) handler = handlers.get("* " + operator.getSymbol());
+                } else {
+                    if(a == null && b == null) {
+                        handler = handlers.get("* " + operator.getSymbol());
+                        if(handler == null) handler = handlers.get(operator.getSymbol() + " *");
+                    } else {
+                        if(a == null) {
+                            handler = handlers.get(operator.getSymbol() + " " + idB);
+                            if(handler == null) handler = handlers.get(operator.getSymbol() + " *");
+                        } else if(b == null) {
+                            handler = handlers.get(idA + " " + operator.getSymbol());
+                            if(handler == null) handler = handlers.get("* " + operator.getSymbol());
+                        }
+                    }
+                }
+
+                if (handler == null) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "The operator " + operator.getSymbol() + " is not defined for types " + idA.replace("*", "null") + " nor " + idB.replace("*", "null"), pattern, ctx);
+                }
+                return handler.perform(a, b, pattern, ctx);
+            } else {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "The operator " + operator.getSymbol() + " is not defined", pattern, ctx);
             }
-            return handler.perform(a, b, pattern, ctx);
         }
 
         static {
@@ -98,6 +133,36 @@ public interface OperatorHandler<A, B> {
             handlers.put("* == *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> Objects.equals(a,b));
             handlers.put("* != *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> !Objects.equals(a,b));
 
+            handlers.put("- java.lang.Integer", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> -a);
+            handlers.put("- java.lang.Double", (Object nl, Double a, TokenPattern<?> pattern, ISymbolContext ctx) -> -a);
+            handlers.put("+ java.lang.Integer", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> a);
+            handlers.put("+ java.lang.Double", (Object nl, Double a, TokenPattern<?> pattern, ISymbolContext ctx) -> a);
+            handlers.put("! java.lang.Boolean", (Object nl, Boolean a, TokenPattern<?> pattern, ISymbolContext ctx) -> !a);
+            handlers.put("~ java.lang.Integer", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> ~a);
+
+            handlers.put("com.energyxxer.trident.compiler.semantics.Symbol ++", (Symbol a, Object nl, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object oldValue = a.getValue();
+                Object result = perform(a.getValue(), Operator.ADD, 1, pattern, ctx);
+                a.setValue(result);
+                return oldValue;
+            });
+            handlers.put("com.energyxxer.trident.compiler.semantics.Symbol --", (Symbol a, Object nl, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object oldValue = a.getValue();
+                Object result = perform(a.getValue(), Operator.SUBTRACT, 1, pattern, ctx);
+                a.setValue(result);
+                return oldValue;
+            });
+
+            handlers.put("++ com.energyxxer.trident.compiler.semantics.Symbol", (Object nl, Symbol a, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(), Operator.ADD, 1, pattern, ctx);
+                a.setValue(result);
+                return a.getValue();
+            });
+            handlers.put("-- com.energyxxer.trident.compiler.semantics.Symbol", (Object nl, Symbol a, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(), Operator.SUBTRACT, 1, pattern, ctx);
+                a.setValue(result);
+                return a.getValue();
+            });
 
             handlers.put("com.energyxxer.trident.compiler.semantics.Symbol = *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 a.setValue(b);

@@ -10,7 +10,10 @@ public enum Operator {
     //USED ON OPERATIONS
     INCREMENT("++", 0, UNARY_ANY, OperationOrder.LTR, VARIABLE),
     DECREMENT("--", 0, UNARY_ANY, OperationOrder.LTR, VARIABLE),
+    NEGATE_UNARY("-", 2, UNARY_LEFT, OperationOrder.LTR, VALUE),
+    PLUS_UNARY("+", 2, UNARY_LEFT, OperationOrder.LTR, VALUE), //why would you need this one
     NOT("!", 0, UNARY_LEFT, OperationOrder.RTL, VALUE),
+    BITWISE_NOT("~", 0, UNARY_LEFT, OperationOrder.RTL, VALUE),
     MULTIPLY("*", 1, BINARY, OperationOrder.LTR, VALUE),
     DIVIDE("/", 1, BINARY, OperationOrder.LTR, VALUE),
     MODULO("%", 1, BINARY, OperationOrder.LTR, VALUE),
@@ -74,8 +77,12 @@ public enum Operator {
     }
 
     public static Operator getOperatorForSymbol(String symbol) {
+        return getOperatorForSymbol(symbol, false);
+    }
+
+    public static Operator getOperatorForSymbol(String symbol, boolean unary) {
         for(Operator op : values())
-            if(op.symbol.equals(symbol)) return op;
+            if(op.symbol.equals(symbol) && (!unary || op.operatorType != BINARY)) return op;
         throw new IllegalArgumentException("Unknown operator symbol '" + symbol + "'");
     }
 

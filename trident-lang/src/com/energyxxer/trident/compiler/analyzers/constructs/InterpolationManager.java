@@ -250,6 +250,45 @@ public class InterpolationManager {
                 Class newType = VariableTypeHandler.Static.getClassForShorthand(pattern.find("TARGET_TYPE").flatten(false));
                 return cast(parent, newType, pattern, ctx);
             }
+            case "SURROUNDED_INTERPOLATION_VALUE": {
+                if(pattern.find("PREFIX_OPERATORS") == null && pattern.find("POSTFIX_OPERATORS") == null) return parse(pattern.find("INTERPOLATION_CHAIN"), ctx, keepSymbol);
+
+                boolean keepValueSymbol = false;
+                TokenList rawPrefixList = (TokenList) pattern.find("PREFIX_OPERATORS");
+                TokenList rawPostfixList = (TokenList) pattern.find("POSTFIX_OPERATORS");
+
+                ArrayList<Operator> prefixList = new ArrayList<>();
+                ArrayList<Operator> postfixList = new ArrayList<>();
+
+                if(rawPrefixList != null) {
+                    for(TokenPattern<?> rawOp : rawPrefixList.getContents()) {
+                        prefixList.add(0, Operator.getOperatorForSymbol(rawOp.flatten(false), true));
+                    }
+                }
+                if(rawPostfixList != null) {
+                    for(TokenPattern<?> rawOp : rawPostfixList.getContents()) {
+                        postfixList.add(Operator.getOperatorForSymbol(rawOp.flatten(false), true));
+                    }
+                }
+
+                if(!prefixList.isEmpty()) keepValueSymbol = prefixList.get(0).getLeftOperandType() == OperandType.VARIABLE;
+                else if(!postfixList.isEmpty()) keepValueSymbol = postfixList.get(0).getLeftOperandType() == OperandType.VARIABLE;
+
+                Object value = parse(pattern.find("INTERPOLATION_CHAIN"), ctx, keepValueSymbol);
+
+                int i = 0;
+                for(Operator op : prefixList) {
+                    value = OperatorHandler.Static.perform(null, op, value, rawPrefixList.getContents()[prefixList.size()-1-i], ctx);
+                    i++;
+                }
+                i = 0;
+                for(Operator op : postfixList) {
+                    value = OperatorHandler.Static.perform(value, op, null, rawPostfixList.getContents()[i], ctx);
+                    i++;
+                }
+
+                return value;
+            }
             case "EXPRESSION": {
                 //region Expression evaluation
                 TokenList list = (TokenList) pattern;
