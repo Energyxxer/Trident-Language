@@ -3,6 +3,7 @@ package com.energyxxer.trident.compiler.semantics.custom.entities;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAsEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAtEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.nbt.*;
@@ -17,12 +18,20 @@ import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.selectors.TypeArgumentParser;
+import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
+import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
-import com.energyxxer.trident.compiler.semantics.*;
+import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
+import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.ALL_ENTITIES;
 import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.SENDER;
@@ -209,17 +218,44 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                             break;
                         }
                         case "ENTITY_INNER_FUNCTION": {
-                            boolean ticking = entry.find("LITERAL_TICKING") != null;
-
                             TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx);
 
-                            if (ticking) {
-                                Entity selector = entityDecl != null ?
-                                        TypeArgumentParser.getSelectorForCustomEntity(entityDecl) :
-                                        defaultType != null ?
-                                                new Selector(ALL_ENTITIES, new TypeArgument(defaultType)) :
-                                                new Selector(ALL_ENTITIES);
-                                ctx.getWritingFile().getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteAsEntity(selector), new ExecuteAtEntity(new Selector(SENDER))));
+                            TokenPattern<?> functionModifier = entry.find("ENTITY_FUNCTION_MODIFIER");
+                            if(functionModifier != null) {
+                                functionModifier = ((TokenStructure) functionModifier).getContents();
+                                switch(functionModifier.getName()) {
+                                    case "TICKING_ENTITY_FUNCTION": {
+
+                                        TokenList rawModifiers = (TokenList) functionModifier.find("TICKING_MODIFIERS");
+                                        ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
+
+
+                                        Entity selector = entityDecl != null ?
+                                                TypeArgumentParser.getSelectorForCustomEntity(entityDecl) :
+                                                defaultType != null ?
+                                                        new Selector(ALL_ENTITIES, new TypeArgument(defaultType)) :
+                                                        new Selector(ALL_ENTITIES);
+
+                                        modifiers.add(new ExecuteAsEntity(selector));
+                                        modifiers.add(new ExecuteAtEntity(new Selector(SENDER)));
+
+
+                                        if(rawModifiers != null) {
+                                            for(TokenPattern<?> rawModifier : rawModifiers.getContents()) {
+                                                ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
+                                                if(parser != null) {
+                                                    Collection<ExecuteModifier> modifier = parser.parse(rawModifier, ctx);
+                                                    modifiers.addAll(modifier);
+                                                } else {
+                                                    collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + rawModifier.flattenTokens().get(0).value + "'", rawModifier, ctx));
+                                                }
+                                            }
+                                        }
+
+
+                                        ctx.getWritingFile().getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
+                                    }
+                                }
                             }
                             break;
                         }

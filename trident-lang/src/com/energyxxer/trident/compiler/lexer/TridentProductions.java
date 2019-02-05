@@ -1660,7 +1660,7 @@ public class TridentProductions {
                     group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT"),
                     group(literal("default"), literal("passengers"), brace("["), list(group(ENTITY_ID, optional(NBT_COMPOUND).setName("PASSENGER_NBT")).setName("PASSENGER"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
                     group(literal("default"), literal("health"), real().setName("HEALTH")).setName("DEFAULT_HEALTH"),
-                    group(literal("ticking").setOptional(), literal("function"), OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_INNER_FUNCTION")
+                    group(choice(group(literal("ticking"), list(MODIFIER).setOptional().setName("TICKING_MODIFIERS")).setName("TICKING_ENTITY_FUNCTION")).setOptional().setName("ENTITY_FUNCTION_MODIFIER"), literal("function"), OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_INNER_FUNCTION")
             );
 
             LazyTokenPatternMatch entityBody = group(
