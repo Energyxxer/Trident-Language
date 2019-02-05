@@ -82,7 +82,7 @@ public enum Operator {
 
     public static Operator getOperatorForSymbol(String symbol, boolean unary) {
         for(Operator op : values())
-            if(op.symbol.equals(symbol) && (!unary || op.operatorType != BINARY)) return op;
+            if(op.symbol.equals(symbol) && ((unary && op.operatorType != BINARY) || (!unary && op.operatorType == BINARY))) return op;
         throw new IllegalArgumentException("Unknown operator symbol '" + symbol + "'");
     }
 
