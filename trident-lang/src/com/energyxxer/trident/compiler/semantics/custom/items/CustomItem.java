@@ -9,15 +9,21 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
-import com.energyxxer.trident.compiler.semantics.*;
+import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
+import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+
+import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
@@ -29,6 +35,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
     private boolean useModelData = false;
     private int customModelData = 0;
     private boolean fullyDeclared = false;
+    private HashMap<String, TridentUtil.ResourceLocation> members = new HashMap<>();
 
     public CustomItem(String id, Type defaultType) {
         this.id = id;
@@ -90,6 +97,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
 
     @Override
     public Object getMember(CustomItem object, String member, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
+        if(members.containsKey(member)) return members.get(member);
         if(member.equals("getSettingNBT")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
                 TagCompound nbt = new TagCompound(
@@ -187,6 +195,10 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                         }
                         case "ITEM_INNER_FUNCTION": {
                             TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx);
+                            TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
+                            if(itemDecl != null && namePattern != null) {
+                                itemDecl.members.put(namePattern.flatten(false), innerFile.getResourceLocation());
+                            }
 
                             TokenPattern<?> rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
                             if (rawFunctionModifiers != null) {

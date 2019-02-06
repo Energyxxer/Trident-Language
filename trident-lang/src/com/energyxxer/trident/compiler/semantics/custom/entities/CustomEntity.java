@@ -15,6 +15,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.selectors.TypeArgumentParser;
@@ -32,10 +33,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.ALL_ENTITIES;
 import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.SENDER;
 import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
 public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     private final String id;
@@ -44,6 +47,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     private TagCompound defaultNBT;
     private String idTag;
     private boolean fullyDeclared = false;
+    private HashMap<String, TridentUtil.ResourceLocation> members = new HashMap<>();
 
     public CustomEntity(String id, Type defaultType) {
         this.id = id;
@@ -92,6 +96,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
     @Override
     public Object getMember(CustomEntity object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(members.containsKey(member)) return members.get(member);
         if(member.equals("getSettingNBT")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
                 TagCompound nbt = new TagCompound(new TagString("id", ((CustomEntity) this).getDefaultType().toString()));
@@ -106,8 +111,9 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     }
 
     @Override
-    public Object getIndexer(CustomEntity object, Object index, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
-        throw new MemberNotFoundException();
+    public Object getIndexer(CustomEntity object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        String indexStr = assertOfType(index, pattern, ctx, String.class);
+        return members.get(indexStr);
     }
 
     @SuppressWarnings("unchecked")
@@ -133,7 +139,6 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
             entityDecl = new CustomEntity(entityName, defaultType);
             ctx.getContextForVisibility(visibility).put(new Symbol(entityName, visibility, entityDecl));
         }
-
 
         ExceptionCollector collector = new ExceptionCollector(ctx);
         collector.begin();
@@ -219,6 +224,10 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                         }
                         case "ENTITY_INNER_FUNCTION": {
                             TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx);
+                            TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
+                            if(entityDecl != null && namePattern != null) {
+                                entityDecl.members.put(namePattern.flatten(false), innerFile.getResourceLocation());
+                            }
 
                             TokenPattern<?> functionModifier = entry.find("ENTITY_FUNCTION_MODIFIER");
                             if(functionModifier != null) {
