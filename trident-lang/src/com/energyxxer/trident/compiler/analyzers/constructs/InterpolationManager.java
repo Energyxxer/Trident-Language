@@ -6,6 +6,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.constructors.Obje
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperationOrder;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.Operator;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperatorHandler;
+import com.energyxxer.trident.compiler.semantics.LazyValue;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.extensions.EObject;
 import com.energyxxer.commodore.CommandUtils;
@@ -305,12 +306,11 @@ public class InterpolationManager {
                     for(int i = 0; i < contents.size(); i++) {
                         if((i & 1) == 0) {
                             //Operand
-                            Object value = parse(contents.get(i), ctx);
-                            flatValues.add(value);
+                            flatValues.add(contents.get(i));
                         } else {
                             //Operator
                             Operator operator = Operator.getOperatorForSymbol(contents.get(i).flatten(false));
-                            if(operator.getLeftOperandType() == OperandType.VARIABLE) {
+                            /*if(operator.getLeftOperandType() == OperandType.VARIABLE) {
                                 flatValues.remove(flatValues.size()-1);
 
                                 Object symbol = parse(contents.get(i-1), ctx, true);
@@ -319,7 +319,7 @@ public class InterpolationManager {
                                 } else {
                                     throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected symbol in the left hand side of the expression", pattern, ctx);
                                 }
-                            }
+                            }*/
                             flatOperators.add(operator);
                         }
                     }
@@ -347,6 +347,21 @@ public class InterpolationManager {
 
                         flatValues.remove(index);
                         flatValues.remove(index);
+
+                        if(a instanceof TokenPattern<?>) {
+                            if(topOperator.isShortCircuiting()) {
+                                a = new LazyValue(((TokenPattern) a), ctx, topOperator.getLeftOperandType() == OperandType.VARIABLE);
+                            } else {
+                                a = parse(((TokenPattern) a), ctx, topOperator.getLeftOperandType() == OperandType.VARIABLE);
+                            }
+                        }
+                        if(b instanceof TokenPattern<?>) {
+                            if(topOperator.isShortCircuiting()) {
+                                b = new LazyValue(((TokenPattern) b), ctx);
+                            } else {
+                                b = parse(((TokenPattern) b), ctx);
+                            }
+                        }
 
                         Object result = OperatorHandler.Static.perform(a, topOperator, b, pattern, ctx);
 

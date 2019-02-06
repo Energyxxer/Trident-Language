@@ -42,11 +42,11 @@ public interface VariableMethod {
         }
 
         @SuppressWarnings("unchecked")
-        public static <T> T assertOfType(Object param, TokenPattern<?> pattern, ISymbolContext file, Class<? extends T>... expected) {
+        public static <T> T assertOfType(Object param, TokenPattern<?> pattern, ISymbolContext ctx, Class<? extends T>... expected) {
             for(Class cls : expected) {
                 if(cls.isInstance(param)) return (T) param;
             }
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of one of the following types: " + Arrays.asList(expected).stream().map((Function<Class, String>) Class::getSimpleName).collect(Collectors.joining(", ")), pattern, file);
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of one of the following types: " + Arrays.stream(expected).map((Function<Class, String>) Class::getSimpleName).collect(Collectors.joining(", ")), pattern, ctx);
         }
     }
 }

@@ -76,6 +76,10 @@ public enum Operator {
         return leftOperandType;
     }
 
+    public boolean isShortCircuiting() {
+        return this == OR || this == AND;
+    }
+
     public static Operator getOperatorForSymbol(String symbol) {
         return getOperatorForSymbol(symbol, false);
     }
