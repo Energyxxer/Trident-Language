@@ -1,7 +1,6 @@
 package com.energyxxer.trident.compiler;
 
 import com.energyxxer.commodore.defpacks.DefinitionPack;
-import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.ModulePackGenerator;
 import com.energyxxer.commodore.module.Namespace;
@@ -250,12 +249,6 @@ public class TridentCompiler {
             return;
         }
 
-        Function initFunction = module.minecraft.functions.get("trident_start");
-
-        Tag loadTag = module.minecraft.tags.functionTags.create("load");
-        loadTag.addValue(new FunctionReference(initFunction));
-        module.getObjectiveManager().setCreationFunction(initFunction);
-
         progress = -1;
         this.setProgress("Generating data pack");
         {
@@ -483,13 +476,15 @@ public class TridentCompiler {
 
     private boolean givenDefaultNamespaceNotice = false;
 
-    public String getDefaultNamespace() {
-        if(defaultNamespace == null && !givenDefaultNamespaceNotice) {
-            report.addNotice(new Notice(NoticeType.WARNING, "Some language features used require a default namespace. Please specify a default namespace in the project settings"));
+    public Namespace getDefaultNamespace() {
+        if(defaultNamespace == null) {
             defaultNamespace = "trident_temp_please_specify_default_namespace";
-            givenDefaultNamespaceNotice = true;
+            if(!givenDefaultNamespaceNotice) {
+                report.addNotice(new Notice(NoticeType.WARNING, "Some language features used require a default namespace. Please specify a default namespace in the project settings"));
+                givenDefaultNamespaceNotice = true;
+            }
         }
-        return defaultNamespace;
+        return module.createNamespace(defaultNamespace);
     }
 
     public SpecialFileManager getSpecialFileManager() {

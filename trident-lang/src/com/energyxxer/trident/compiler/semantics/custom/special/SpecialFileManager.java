@@ -20,10 +20,13 @@ public class SpecialFileManager {
 
     public SpecialFileManager(TridentCompiler compiler) {
         this.compiler = compiler;
+
         put(new ItemEventFile(this));
         put(new PrepareHeldItemsFile(this));
         put(new PrepareDroppedItemsFile(this));
         put(new SaveHeldItemsFile(this));
+
+        put(new ObjectiveCreationFile(this));
 
         tickFunction = new Lazy<>(() -> {
             Function function = getNamespace().functions.create("trident/tick");
@@ -39,7 +42,7 @@ public class SpecialFileManager {
     }
 
     public Namespace getNamespace() {
-        return compiler.getModule().createNamespace(compiler.getDefaultNamespace());
+        return compiler.getDefaultNamespace();
     }
 
     public Function getTickFunction() {
