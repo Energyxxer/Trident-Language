@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.semantics.custom.special;
 
 import com.energyxxer.commodore.functionlogic.functions.Function;
+import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.trident.compiler.TridentCompiler;
@@ -17,6 +18,7 @@ public class SpecialFileManager {
     private final HashMap<String, SpecialFile> files = new HashMap<>();
 
     private Lazy<Function> tickFunction;
+    private Lazy<Objective> globalObjective;
 
     public SpecialFileManager(TridentCompiler compiler) {
         this.compiler = compiler;
@@ -33,6 +35,7 @@ public class SpecialFileManager {
             compiler.getModule().minecraft.tags.functionTags.create("tick").addValue(new FunctionReference(function));
             return function;
         });
+        globalObjective = new Lazy<>(() -> compiler.getModule().getObjectiveManager().create("trident_global", true));
     }
 
     public void compile() {
@@ -47,6 +50,10 @@ public class SpecialFileManager {
 
     public Function getTickFunction() {
         return tickFunction.getValue();
+    }
+
+    public Objective getGlobalObjective() {
+        return globalObjective.getValue();
     }
 
     public TridentCompiler getCompiler() {
