@@ -24,6 +24,7 @@ public class TridentException extends RuntimeException implements VariableTypeHa
         USER_EXCEPTION("User Exception"),
         IMPOSSIBLE("Impossible Exception"),
         STRUCTURAL_ERROR("Structural Error"),
+        LANGUAGE_LEVEL_ERROR("Language Level Error"),
         DUPLICATION_ERROR("Duplication Error");
 
         private final String humanReadableName;
