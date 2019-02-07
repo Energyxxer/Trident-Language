@@ -6,6 +6,7 @@ import com.energyxxer.commodore.types.Type;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventObjectives;
 
 import java.util.ArrayList;
 
@@ -17,26 +18,15 @@ public class ScoreEventCriteriaData {
     public CustomItem customItem;
     public ArrayList<ItemEvent> events;
 
-    public Objective mainhandObjective;
-    public Objective offhandObjective;
-    public Objective heldObjective;
+    public ItemEventObjectives objectives;
 
-    public Objective oldMainhandObjective;
-    public Objective oldOffhandObjective;
-    public Objective oldHeldObjective;
-
-    public ScoreEventCriteriaData(TridentCompiler compiler, Type itemType, Objective itemCriteriaObjective, Function function, CustomItem customItem, ArrayList<ItemEvent> events, Objective mainhandObjective, Objective offhandObjective, Objective heldObjective, Objective oldMainhandObjective, Objective oldOffhandObjective, Objective oldHeldObjective) {
+    public ScoreEventCriteriaData(TridentCompiler compiler, Type itemType, Objective itemCriteriaObjective, Function function, CustomItem customItem, ArrayList<ItemEvent> events, ItemEventObjectives objectives) {
         this.compiler = compiler;
         this.itemType = itemType;
         this.itemCriteriaObjective = itemCriteriaObjective;
         this.function = function;
         this.customItem = customItem;
         this.events = events;
-        this.mainhandObjective = mainhandObjective;
-        this.offhandObjective = offhandObjective;
-        this.heldObjective = heldObjective;
-        this.oldMainhandObjective = oldMainhandObjective;
-        this.oldOffhandObjective = oldOffhandObjective;
-        this.oldHeldObjective = oldHeldObjective;
+        this.objectives = objectives;
     }
 }

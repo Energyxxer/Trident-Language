@@ -13,7 +13,9 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.TagArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
 
 import java.util.ArrayList;
 
@@ -23,7 +25,13 @@ import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelec
 @AnalyzerMember(key = "dropped")
 public class DroppedScoreEvent implements ScoreEventCriteriaHandler {
     @Override
-    public void start(ScoreEventCriteriaData data) {
+    public void globalStart(SpecialFileManager mgr) {
+        mgr.get("prepare_dropped_items").startCompilation();
+        mgr.getTickFunction().append(new FunctionCommand(mgr.get("prepare_dropped_items").getFunction()));
+    }
+
+    @Override
+    public void start(SpecialFileManager data, ItemEventFile itemEventFile) {
 
     }
 
@@ -47,7 +55,12 @@ public class DroppedScoreEvent implements ScoreEventCriteriaHandler {
     }
 
     @Override
-    public void end(ScoreEventCriteriaData data) {
+    public void end(SpecialFileManager data, ItemEventFile itemEventFile) {
+
+    }
+
+    @Override
+    public void globalEnd(SpecialFileManager mgr) {
 
     }
 }

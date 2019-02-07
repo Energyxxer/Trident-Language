@@ -5,20 +5,37 @@ import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.preparation.PrepareDroppedItemsFile;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.preparation.PrepareHeldItemsFile;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.preparation.SaveHeldItemsFile;
+import com.energyxxer.util.Lazy;
+
+import java.util.HashMap;
 
 public class SpecialFileManager {
     private final TridentCompiler compiler;
-    public final ItemEventFile itemEvents;
+    private final HashMap<String, SpecialFile> files = new HashMap<>();
 
-    private Function tickFunction = null;
+    private Lazy<Function> tickFunction;
 
     public SpecialFileManager(TridentCompiler compiler) {
         this.compiler = compiler;
-        this.itemEvents = new ItemEventFile(this);
+        put(new ItemEventFile(this));
+        put(new PrepareHeldItemsFile(this));
+        put(new PrepareDroppedItemsFile(this));
+        put(new SaveHeldItemsFile(this));
+
+        tickFunction = new Lazy<>(() -> {
+            Function function = getNamespace().functions.create("trident/tick");
+            compiler.getModule().minecraft.tags.functionTags.create("tick").addValue(new FunctionReference(function));
+            return function;
+        });
     }
 
     public void compile() {
-        itemEvents.compile();
+        for(SpecialFile file : files.values()) {
+            if(file.shouldForceCompile()) file.startCompilation();
+        }
     }
 
     public Namespace getNamespace() {
@@ -26,14 +43,18 @@ public class SpecialFileManager {
     }
 
     public Function getTickFunction() {
-        if(tickFunction == null) {
-            tickFunction = getNamespace().functions.create("trident/tick");
-            compiler.getModule().minecraft.tags.functionTags.create("tick").addValue(new FunctionReference(tickFunction));
-        }
-        return tickFunction;
+        return tickFunction.getValue();
     }
 
     public TridentCompiler getCompiler() {
         return compiler;
+    }
+
+    public void put(SpecialFile file) {
+        files.put(file.getFunctionName(), file);
+    }
+
+    public SpecialFile get(String key) {
+        return files.get(key);
     }
 }

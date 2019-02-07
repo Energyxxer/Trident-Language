@@ -8,7 +8,9 @@ import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.ScoreArgument;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
 
 import java.util.ArrayList;
 
@@ -17,7 +19,12 @@ import static com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCon
 @AnalyzerMember(key = "picked_up")
 public class PickedUpScoreEvent implements ScoreEventCriteriaHandler {
     @Override
-    public void start(ScoreEventCriteriaData data) {
+    public void globalStart(SpecialFileManager mgr) {
+
+    }
+
+    @Override
+    public void start(SpecialFileManager data, ItemEventFile itemEventFile) {
 
     }
 
@@ -41,7 +48,12 @@ public class PickedUpScoreEvent implements ScoreEventCriteriaHandler {
     }
 
     @Override
-    public void end(ScoreEventCriteriaData data) {
+    public void end(SpecialFileManager data, ItemEventFile itemEventFile) {
+
+    }
+
+    @Override
+    public void globalEnd(SpecialFileManager mgr) {
 
     }
 }

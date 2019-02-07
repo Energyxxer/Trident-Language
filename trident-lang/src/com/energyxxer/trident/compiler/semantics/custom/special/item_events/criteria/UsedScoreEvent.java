@@ -7,7 +7,11 @@ import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.ScoreArgument;
 import com.energyxxer.commodore.util.NumberRange;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.preparation.PrepareHeldItemsFile;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.preparation.SaveHeldItemsFile;
 
 import java.util.ArrayList;
 
@@ -17,8 +21,15 @@ import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelec
 @AnalyzerMember(key = "used")
 public class UsedScoreEvent implements ScoreEventCriteriaHandler {
     @Override
-    public void start(ScoreEventCriteriaData data) {
+    public void globalStart(SpecialFileManager mgr) {
 
+    }
+
+    @Override
+    public void start(SpecialFileManager data, ItemEventFile itemEventFile) {
+        ((PrepareHeldItemsFile) itemEventFile.getParent().get("prepare_held_items")).setObjectives(itemEventFile.objectives);
+        itemEventFile.getParent().get("prepare_held_items").startCompilation();
+        itemEventFile.getFunction().append(new FunctionCommand(itemEventFile.getParent().get("prepare_held_items").getFunction()));
     }
 
     @Override
@@ -32,18 +43,25 @@ public class UsedScoreEvent implements ScoreEventCriteriaHandler {
         modifiers.add(new ExecuteConditionEntity(IF, initialSelector));
 
         if(data.customItem != null) {
-            scores.put(data.oldHeldObjective, new NumberRange<>(data.customItem.getItemIdHash()));
+            scores.put(data.objectives.oldHeld, new NumberRange<>(data.customItem.getItemIdHash()));
         }
 
         for(ItemEvent event : data.events) {
             ArrayList<ExecuteModifier> eventModifiers = new ArrayList<>(modifiers);
-            if(data.customItem == null && event.pure) eventModifiers.add(new ExecuteConditionScoreMatch(ExecuteCondition.ConditionType.IF, new LocalScore(new Selector(SENDER), data.oldHeldObjective), new NumberRange<>(0)));
+            if(data.customItem == null && event.pure) eventModifiers.add(new ExecuteConditionScoreMatch(ExecuteCondition.ConditionType.IF, new LocalScore(new Selector(SENDER), data.objectives.oldHeld), new NumberRange<>(0)));
             data.function.append(new ExecuteCommand(new FunctionCommand(event.toCall), eventModifiers));
         }
     }
 
     @Override
-    public void end(ScoreEventCriteriaData data) {
+    public void end(SpecialFileManager data, ItemEventFile itemEventFile) {
+        ((SaveHeldItemsFile) itemEventFile.getParent().get("save_held_items")).setObjectives(itemEventFile.objectives);
+        itemEventFile.getParent().get("save_held_items").startCompilation();
+        itemEventFile.getFunction().append(new FunctionCommand(itemEventFile.getParent().get("save_held_items").getFunction()));
+    }
+
+    @Override
+    public void globalEnd(SpecialFileManager mgr) {
 
     }
 }
