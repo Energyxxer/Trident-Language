@@ -1,9 +1,6 @@
 package com.energyxxer.trident.compiler.lexer;
 
-import com.energyxxer.commodore.defpacks.CategoryDeclaration;
-import com.energyxxer.commodore.defpacks.DefinitionPack;
 import com.energyxxer.commodore.module.CommandModule;
-import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.enxlex.lexical_analysis.profiles.*;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
@@ -11,7 +8,6 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.util.Lazy;
 import com.energyxxer.util.StringLocation;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,7 +16,7 @@ import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
 public class TridentLexerProfile extends LexerProfile {
 
-    public static final Lazy<TridentLexerProfile> INSTANCE = new Lazy<>(() -> new TridentLexerProfile(StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT));
+    public static final Lazy<TridentLexerProfile> INSTANCE = new Lazy<>(TridentLexerProfile::new);
 
     public static final HashMap<TokenType, LexerContext> usefulContexts = new HashMap<>();
 
@@ -34,20 +30,8 @@ public class TridentLexerProfile extends LexerProfile {
         usefulContexts.put(CASE_INSENSITIVE_RESOURCE_LOCATION, new ResourceLocationContext("[a-zA-Z0-9_\\.-]","[a-zA-Z0-9_/\\.-]", CASE_INSENSITIVE_RESOURCE_LOCATION));
     }
 
-    public TridentLexerProfile(DefinitionPack defPack) {
-        ArrayList<String> defcategories = new ArrayList<>();
-        try {
-            defPack.load();
-            for(CategoryDeclaration decl : defPack.getDefinedCategories()) {
-                //Debug.log("Added category '" + decl.getCategory() + "'");
-                defcategories.add(decl.getCategory().toLowerCase());
-            }
-        } catch (IOException e) {
-            defcategories.addAll(Arrays.asList("entity, block, item, particle, enchantment, dimension, effect, difficulty, gamemode, gamerule, slot".split(", ")));
-            e.printStackTrace();
-        }
-
-        this.initialize(defcategories);
+    public TridentLexerProfile() {
+        this.initialize();
     }
 
     public TridentLexerProfile(CommandModule module) {
@@ -56,10 +40,10 @@ public class TridentLexerProfile extends LexerProfile {
             if(!defcategories.contains(d.getCategory())) defcategories.add(d.getCategory());
         }));
 
-        this.initialize(defcategories);
+        this.initialize();
     }
 
-    private void initialize(Collection<String> defcategories) {
+    private void initialize() {
 
         //Numbers
         contexts.add(new LexerContext() {
@@ -505,8 +489,6 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new StringMatchLexerContext(ANCHOR, "feet", "eyes"));
 
         contexts.add(new StringMatchLexerContext(NULL, "null"));
-
-        contexts.add(new StringMatchLexerContext(DEFINITION_CATEGORY, defcategories.toArray(new String[0])));
 
     }
 

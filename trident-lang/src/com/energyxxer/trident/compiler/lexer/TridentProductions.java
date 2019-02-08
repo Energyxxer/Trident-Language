@@ -7,7 +7,7 @@ import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.*;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
-import com.energyxxer.trident.compiler.analyzers.instructions.AliasInstruction;
+import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.util.logger.Debug;
 
 import java.util.HashMap;
@@ -1460,8 +1460,8 @@ public class TridentProductions {
                     }
                     for(Type type : dict.list()) {
                         String name = type.getName();
-                        if(type instanceof AliasInstruction.AliasType) {
-                            name = ((AliasInstruction.AliasType)type).getAliasName();
+                        if(type instanceof AliasType) {
+                            name = ((AliasType)type).getAliasName();
                         }
                         typeName.add(literal(name));
                         usesNamespace = type.useNamespace();
@@ -1720,19 +1720,17 @@ public class TridentProductions {
                     group(literal("within").setName("INSTRUCTION_KEYWORD"),
                             ofType(CASE_INSENSITIVE_RESOURCE_LOCATION).setName("VARIABLE_NAME"),
                             group(COORDINATE_SET).setName("FROM"), group(COORDINATE_SET).setName("TO"), optional(literal("step"), real()).setName("STEP"), ANONYMOUS_INNER_FUNCTION
-                            )
+                    )
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(literal("alias").setName("INSTRUCTION_KEYWORD"),
-                            group(RESOURCE_LOCATION_S).setName("ALIAS_NAME"),
-                            brace("<"),
-                            list(ofType(DEFINITION_CATEGORY).setName("CATEGORY"), comma()).setName("CATEGORY_LIST"),
-                            brace(">"),
-                            symbol("="),
-                            group(RESOURCE_LOCATION_S).setName("REAL_NAME")
+                    group(literal("using").setName("INSTRUCTION_KEYWORD"),
+                            choice(
+                                    group(literal("tag"), group(identifierA()).setName("USING_TAG_NAME"), ENTITY, list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_TAG")
+                            ).setName("USING_CASE"),
+                            ANONYMOUS_INNER_FUNCTION
                     )
             );
         }

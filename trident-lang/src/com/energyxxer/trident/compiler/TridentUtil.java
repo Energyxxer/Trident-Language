@@ -1,12 +1,14 @@
 package com.energyxxer.trident.compiler;
 
+import com.energyxxer.commodore.functionlogic.entity.Entity;
+import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentTokens;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.Objects;
 
@@ -15,6 +17,11 @@ public class TridentUtil {
      * TridentUtil should not be instantiated.
      * */
     private TridentUtil() {
+    }
+
+    public static Entity getTopLevelEntity(Entity entity) {
+        if(entity instanceof Selector) return new Selector(((Selector) entity).getBase());
+        else return new Selector(Selector.BaseSelector.ALL_PLAYERS);
     }
 
     public static class ResourceLocation {

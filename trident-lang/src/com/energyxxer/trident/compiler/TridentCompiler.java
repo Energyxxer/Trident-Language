@@ -19,7 +19,7 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
-import com.energyxxer.trident.compiler.analyzers.instructions.AliasInstruction;
+import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -121,7 +121,7 @@ public class TridentCompiler {
                         if(alias == null) continue;
                         if(real == null) continue;
 
-                        module.createNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasInstruction.AliasType(c, ns, n, module.createNamespace(real.namespace), real.body), alias.body);
+                        module.createNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasType(c, ns, n, module.createNamespace(real.namespace), real.body), alias.body);
                         //Debug.log("Created alias '" + alias + "' for '" + real + "'");
                     }
                 }
