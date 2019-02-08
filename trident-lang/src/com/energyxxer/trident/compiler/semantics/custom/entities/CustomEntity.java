@@ -18,6 +18,7 @@ import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
+import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.selectors.TypeArgumentParser;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
@@ -217,6 +218,15 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                             healthNBT.add(new TagList("Attributes", new TagCompound(new TagString("Name", Attribute.MAX_HEALTH), new TagDouble("Base", health))));
 
                             entityDecl.mergeNBT(healthNBT);
+                            break;
+                        }
+                        case "DEFAULT_NAME": {
+                            if (entityDecl == null) {
+                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default entities", entry, ctx));
+                                break;
+                            }
+
+                            entityDecl.defaultNBT = entityDecl.defaultNBT.merge(new TagCompound(new TagString("CustomName", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), ctx).toString())));
                             break;
                         }
                         case "ENTITY_INNER_FUNCTION": {
