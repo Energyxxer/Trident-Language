@@ -13,9 +13,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "enchant")
-public class EnchantParser implements CommandParser {
+public class EnchantParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
         Type enchantment = CommonParsers.parseType(pattern.find("ENCHANTMENT_ID"), ctx, d -> d.enchantment);
         int level = 1;

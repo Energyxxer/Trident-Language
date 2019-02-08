@@ -7,9 +7,9 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "seed")
-public class SeedParser implements CommandParser {
+public class SeedParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         return new SeedCommand();
     }
 }

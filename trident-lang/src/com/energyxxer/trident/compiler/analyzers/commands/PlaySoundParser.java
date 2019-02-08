@@ -17,9 +17,9 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import java.util.List;
 
 @AnalyzerMember(key = "playsound")
-public class PlaySoundParser implements CommandParser {
+public class PlaySoundParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TridentUtil.ResourceLocation soundEvent = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), ctx);
         soundEvent.assertStandalone(pattern, ctx);
         PlaySoundCommand.Source channel = PlaySoundCommand.Source.valueOf(pattern.find("CHANNEL").flatten(false).toUpperCase());

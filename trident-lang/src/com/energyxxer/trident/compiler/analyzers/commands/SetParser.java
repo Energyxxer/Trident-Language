@@ -29,9 +29,9 @@ import com.energyxxer.util.Lazy;
 import java.util.ArrayList;
 
 @AnalyzerMember(key = "set")
-public class SetParser implements CommandParser {
+public class SetParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
 
         PointerDecorator target = parsePointer(pattern.find("POINTER"), ctx);
         PointerDecorator source = parsePointer(pattern.find("VALUE"), ctx);

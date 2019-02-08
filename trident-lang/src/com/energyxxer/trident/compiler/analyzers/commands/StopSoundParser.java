@@ -15,9 +15,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "stopsound")
-public class StopSoundParser implements CommandParser {
+public class StopSoundParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
 
         TokenPattern<?> inner = pattern.find("CHOICE");

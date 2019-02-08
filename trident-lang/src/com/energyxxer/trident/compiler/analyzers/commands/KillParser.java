@@ -12,9 +12,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.SENDER;
 
 @AnalyzerMember(key = "kill")
-public class KillParser implements CommandParser {
+public class KillParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         Entity entity = EntityParser.parseEntity(pattern.find(".ENTITY"), ctx);
         if(entity == null) entity = new Selector(SENDER);
         return new KillCommand(entity);

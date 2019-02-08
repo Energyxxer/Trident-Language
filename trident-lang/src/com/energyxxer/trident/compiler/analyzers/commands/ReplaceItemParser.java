@@ -16,9 +16,9 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
 @AnalyzerMember(key = "replaceitem")
-public class ReplaceItemParser implements CommandParser {
+public class ReplaceItemParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         Type slot = ctx.getCompiler().getModule().minecraft.types.slot.get(pattern.find("SLOT_ID").flatten(false));
         Item item = CommonParsers.parseItem(pattern.find("ITEM"), ctx, NBTMode.SETTING);
         int count = 1;

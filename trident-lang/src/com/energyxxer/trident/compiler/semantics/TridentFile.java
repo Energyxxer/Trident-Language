@@ -352,8 +352,8 @@ public class TridentFile extends SymbolContext {
                         TokenPattern<?> commandPattern = inner.find("COMMAND");
                         CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandPattern.flattenTokens().get(0).value);
                         if (parser != null) {
-                            Command command = parser.parse(((TokenStructure) commandPattern).getContents(), parent);
-                            if (command != null) {
+                            Collection<Command> commands = parser.parse(((TokenStructure) commandPattern).getContents(), parent);
+                            for(Command command : commands) {
                                 if (modifiers.isEmpty()) appendTo.append(command);
                                 else appendTo.append(new ExecuteCommand(command, modifiers));
                             }

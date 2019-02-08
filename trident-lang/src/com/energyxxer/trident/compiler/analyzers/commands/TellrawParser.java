@@ -13,9 +13,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "tellraw")
-public class TellrawParser implements CommandParser {
+public class TellrawParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TextComponent text = TextParser.parseTextComponent(pattern.find("TEXT_COMPONENT"), ctx);
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
         try {

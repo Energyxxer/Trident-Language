@@ -11,9 +11,9 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 
 @AnalyzerMember(key = "function")
-public class FunctionParser implements CommandParser {
+public class FunctionParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> choice = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(choice.getName()) {
             case "RESOURCE_LOCATION_TAGGED": {

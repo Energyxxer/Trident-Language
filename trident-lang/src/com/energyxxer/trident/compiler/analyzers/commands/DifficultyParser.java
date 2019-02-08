@@ -8,9 +8,9 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "difficulty")
-public class DifficultyParser implements CommandParser {
+public class DifficultyParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> rawDifficulty = pattern.find(".DIFFICULTY");
         if(rawDifficulty != null) {
             return new DifficultySetCommand(ctx.getCompiler().getModule().minecraft.types.difficulty.get(rawDifficulty.flatten(false)));

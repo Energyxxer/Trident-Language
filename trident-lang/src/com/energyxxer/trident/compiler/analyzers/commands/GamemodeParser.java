@@ -12,9 +12,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "gamemode")
-public class GamemodeParser implements CommandParser {
+public class GamemodeParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         Type gamemode = ctx.getCompiler().getModule().minecraft.types.gamemode.get(pattern.find("GAMEMODE").flatten(false));
         Entity entity = EntityParser.parseEntity(pattern.find("PLAYER.ENTITY"), ctx);
 

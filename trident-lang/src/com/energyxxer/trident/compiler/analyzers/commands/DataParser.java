@@ -22,9 +22,9 @@ import static com.energyxxer.nbtmapper.tags.PathProtocol.BLOCK_ENTITY;
 import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 
 @AnalyzerMember(key = "data")
-public class DataParser implements CommandParser {
+public class DataParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "GET": return parseGet(inner, ctx);

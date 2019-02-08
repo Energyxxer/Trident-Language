@@ -13,9 +13,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "spawnpoint")
-public class SpawnpointParser implements CommandParser {
+public class SpawnpointParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         Entity entity = EntityParser.parseEntity(pattern.find(".ENTITY"), ctx);
         TokenPattern<?> rawCoords = pattern.find("..COORDINATE_SET");
         CoordinateSet pos = rawCoords != null ? CoordinateParser.parse(rawCoords, ctx) : null;

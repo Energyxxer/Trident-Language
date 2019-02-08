@@ -14,9 +14,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "spreadplayers")
-public class SpreadPlayersParser implements CommandParser {
+public class SpreadPlayersParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         CoordinateSet pos = CoordinateParser.parse(pattern.find("TWO_COORDINATE_SET"), ctx);
         double spreadDistance = CommonParsers.parseDouble(pattern.find("SPREAD_DISTANCE"), ctx);
         double maxRange = CommonParsers.parseDouble(pattern.find("MAX_RANGE"), ctx);

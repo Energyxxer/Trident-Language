@@ -253,7 +253,7 @@ public class CommonParsers {
             if(appendedState != null) {
                 Blockstate state = block.getBlockstate();
                 if(state == null) state = new Blockstate();
-                block = new Block(block.getBlockType(), state.merge(parseBlockstate(appendedState)), block.getNBT());
+                block = new Block(block.getBlockType(), state.merge(parseBlockstate(appendedState, ctx)), block.getNBT());
             }
             TokenPattern<?> appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
             if(appendedNBT != null) {
@@ -278,7 +278,7 @@ public class CommonParsers {
         }
 
 
-        Blockstate state = parseBlockstate(pattern.find("BLOCKSTATE_CLAUSE.BLOCKSTATE"));
+        Blockstate state = parseBlockstate(pattern.find("BLOCKSTATE_CLAUSE.BLOCKSTATE"), ctx);
         TagCompound tag = NBTParser.parseCompound(pattern.find("NBT_CLAUSE.NBT_COMPOUND"), ctx);
         if(tag != null) {
             PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
@@ -287,7 +287,7 @@ public class CommonParsers {
         return new Block(type, state, tag);
     }
 
-    public static Blockstate parseBlockstate(TokenPattern<?> pattern) {
+    public static Blockstate parseBlockstate(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
         TokenPattern<?> rawList = pattern.find("BLOCKSTATE_LIST");
 
@@ -296,8 +296,8 @@ public class CommonParsers {
             TokenList list = (TokenList) rawList;
             for(TokenPattern<?> inner : list.getContents()) {
                 if(inner.getName().equals("BLOCKSTATE_PROPERTY")) {
-                    String key = inner.find("BLOCKSTATE_PROPERTY_KEY").flattenTokens().get(0).value;
-                    String value = inner.find("BLOCKSTATE_PROPERTY_VALUE").flattenTokens().get(0).value;
+                    String key = parseIdentifierA(inner.find("BLOCKSTATE_PROPERTY_KEY.IDENTIFIER_A"), ctx);
+                    String value = parseIdentifierA(inner.find("BLOCKSTATE_PROPERTY_VALUE.IDENTIFIER_A"), ctx);
 
                     if(blockstate == null) blockstate = new Blockstate();
                     blockstate.put(key, value);

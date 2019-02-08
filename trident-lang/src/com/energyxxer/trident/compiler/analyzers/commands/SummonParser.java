@@ -18,9 +18,9 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 
 @AnalyzerMember(key = "summon")
-public class SummonParser implements CommandParser {
+public class SummonParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> id = pattern.find("ENTITY_ID");
         Type type = null;
         CoordinateSet pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"), ctx);

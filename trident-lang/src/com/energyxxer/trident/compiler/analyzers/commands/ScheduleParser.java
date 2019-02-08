@@ -11,9 +11,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "schedule")
-public class ScheduleParser implements CommandParser {
+public class ScheduleParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             return new ScheduleCommand(CommonParsers.parseFunctionTag((TokenStructure) pattern.find("RESOURCE_LOCATION_TAGGED"), ctx), CommonParsers.parseTime(pattern.find("TIME"), ctx));
         } catch(CommodoreException x) {

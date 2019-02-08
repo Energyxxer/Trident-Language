@@ -13,9 +13,9 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
 @AnalyzerMember(key = "give")
-public class GiveParser implements CommandParser {
+public class GiveParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         Item item = CommonParsers.parseItem(pattern.find("ITEM"), ctx, NBTMode.SETTING);
         TokenPattern<?> amountPattern = pattern.find("AMOUNT");
         int amount = amountPattern != null ? CommonParsers.parseInt(amountPattern, ctx) : 1;

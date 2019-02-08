@@ -18,9 +18,9 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import static com.energyxxer.trident.compiler.util.Using.using;
 
 @AnalyzerMember(key = "effect")
-public class EffectParser implements CommandParser {
+public class EffectParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "CLEAR": {

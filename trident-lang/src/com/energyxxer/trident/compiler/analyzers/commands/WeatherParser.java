@@ -10,9 +10,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "weather")
-public class WeatherParser implements CommandParser {
+public class WeatherParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         WeatherCommand.Mode mode = WeatherCommand.Mode.valueOf(pattern.find("CHOICE").flatten(false).toUpperCase());
         TokenPattern<?> rawDuration = pattern.find("INTEGER");
         try {

@@ -17,9 +17,9 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import java.util.ArrayList;
 
 @AnalyzerMember(key = "advancement")
-public class AdvancementParser implements CommandParser {
+public class AdvancementParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         AdvancementCommand.Action action = pattern.find("ACTION").flatten(false).equals("revoke") ? AdvancementCommand.Action.REVOKE : AdvancementCommand.Action.GRANT;
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
         TokenPattern<?> inner = ((TokenStructure) pattern.find("INNER")).getContents();

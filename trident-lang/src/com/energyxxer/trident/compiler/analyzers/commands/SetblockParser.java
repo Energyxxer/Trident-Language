@@ -13,9 +13,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "setblock")
-public class SetblockParser implements CommandParser {
+public class SetblockParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx);
         Block block = CommonParsers.parseBlock(pattern.find("BLOCK"), ctx);
         SetblockCommand.OldBlockHandlingMode mode = SetblockCommand.OldBlockHandlingMode.DEFAULT;

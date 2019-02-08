@@ -22,9 +22,9 @@ import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import java.util.ArrayList;
 
 @AnalyzerMember(key = "particle")
-public class ParticleParser implements CommandParser {
+public class ParticleParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             Particle particle = parseParticle(pattern.find("PARTICLE"), ctx);
             TokenPattern<?> sub = pattern.find("");

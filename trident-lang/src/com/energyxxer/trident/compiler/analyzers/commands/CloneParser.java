@@ -15,9 +15,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "clone")
-public class CloneParser implements CommandParser {
+public class CloneParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         CoordinateSet from = CoordinateParser.parse(pattern.find("FROM.COORDINATE_SET"), ctx);
         CoordinateSet to = CoordinateParser.parse(pattern.find("TO.COORDINATE_SET"), ctx);
         CoordinateSet destination = CoordinateParser.parse(pattern.find("DESTINATION.COORDINATE_SET"), ctx);

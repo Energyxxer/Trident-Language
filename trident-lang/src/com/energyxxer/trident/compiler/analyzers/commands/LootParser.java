@@ -17,9 +17,9 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 
 @AnalyzerMember(key = "loot")
-public class LootParser implements CommandParser {
+public class LootParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         LootCommand.LootDestination destination = parseDestination(pattern.find("LOOT_DESTINATION"), ctx);
         LootCommand.LootSource source = parseSource(pattern.find("LOOT_SOURCE"), ctx);
         return new LootCommand(destination, source);

@@ -9,9 +9,9 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "setworldspawn")
-public class SetWorldSpawnParser implements CommandParser {
+public class SetWorldSpawnParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> rawCoords = pattern.find(".COORDINATE_SET");
         return rawCoords != null ? new SetWorldSpawnCommand(CoordinateParser.parse(rawCoords, ctx)) : new SetWorldSpawnCommand(new CoordinateSet());
     }

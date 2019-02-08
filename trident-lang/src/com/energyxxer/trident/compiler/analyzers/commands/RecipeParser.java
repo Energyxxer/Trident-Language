@@ -12,9 +12,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "recipe")
-public class RecipeParser implements CommandParser {
+public class RecipeParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         RecipeCommand.Action action = pattern.find("ACTION").flatten(false).equals("take") ? RecipeCommand.Action.TAKE : RecipeCommand.Action.GIVE;
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
         String recipe = pattern.find("CHOICE").flatten(false);

@@ -12,9 +12,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "msg")
-public class MsgParser implements CommandParser {
+public class MsgParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
         String message = pattern.search(TridentTokens.TRAILING_STRING).get(0).value;
 
@@ -29,8 +29,8 @@ public class MsgParser implements CommandParser {
     }
 
     @AnalyzerMember(key = "w")
-    public static class MsgParserAlias0 extends MsgParser implements CommandParser {}
+    public static class MsgParserAlias0 extends MsgParser implements SimpleCommandParser {}
 
     @AnalyzerMember(key = "tell")
-    public static class MsgParserAlias1 extends MsgParser implements CommandParser {}
+    public static class MsgParserAlias1 extends MsgParser implements SimpleCommandParser {}
 }

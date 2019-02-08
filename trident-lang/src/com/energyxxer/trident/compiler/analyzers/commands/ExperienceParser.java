@@ -15,12 +15,12 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "experience")
-public class ExperienceParser implements CommandParser {
+public class ExperienceParser implements SimpleCommandParser {
     @AnalyzerMember(key = "xp")
-    public static class ExperienceParserAlias extends ExperienceParser implements CommandParser {}
+    public static class ExperienceParserAlias extends ExperienceParser implements SimpleCommandParser {}
 
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("SUBCOMMAND")).getContents();
         switch(inner.getName()) {
             case "ADD": {

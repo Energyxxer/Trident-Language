@@ -11,9 +11,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "trigger")
-public class TriggerParser implements CommandParser {
+public class TriggerParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         Objective objective = CommonParsers.parseObjective(pattern.find("OBJECTIVE_NAME"), ctx);
         TriggerCommand.Action action = TriggerCommand.Action.ADD;
         int amount = 1;

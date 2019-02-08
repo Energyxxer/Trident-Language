@@ -8,9 +8,9 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "/")
-public class VerbatimParser implements CommandParser {
+public class VerbatimParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> iblock = pattern.find("INTERPOLATION_BLOCK");
         if(iblock != null) {
             return new RawCommand(InterpolationManager.parse(iblock, ctx, String.class));

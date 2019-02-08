@@ -21,9 +21,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 @AnalyzerMember(key = "teleport")
-public class TeleportParser implements CommandParser {
+public class TeleportParser implements SimpleCommandParser {
     @Override
-    public Command parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         Entity victim;
         TeleportDestination destination;
         TeleportFacing facing = null;
@@ -91,5 +91,5 @@ public class TeleportParser implements CommandParser {
     }
 
     @AnalyzerMember(key = "tp")
-    public static class TeleportParserAlias extends TeleportParser implements CommandParser {}
+    public static class TeleportParserAlias extends TeleportParser implements SimpleCommandParser {}
 }

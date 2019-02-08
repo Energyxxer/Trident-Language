@@ -292,8 +292,8 @@ public class TridentProductions {
             g.append(ENTITY);
             g.append(choice(
                     literal("list"),
-                    group(literal("add"), ofType(IDENTIFIER_TYPE_A)),
-                    group(literal("remove"), ofType(IDENTIFIER_TYPE_A))
+                    group(literal("add"), identifierA()),
+                    group(literal("remove"), identifierA())
             ));
             COMMAND.add(g);
         }
@@ -687,7 +687,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "trigger"),
-                    ofType(IDENTIFIER_TYPE_A).setName("OBJECTIVE_NAME"),
+                    group(identifierA()).setName("OBJECTIVE_NAME"),
                     optional(choice("add", "set"), integer()).setName("INNER")
             ));
         }
@@ -1015,14 +1015,10 @@ public class TridentProductions {
             g.append(brace("["));
             {
                 LazyTokenGroupMatch g2 = new LazyTokenGroupMatch().setName("BLOCKSTATE_PROPERTY");
-                g2.append(ofType(IDENTIFIER_TYPE_A).setName("BLOCKSTATE_PROPERTY_KEY"));
+                g2.append(group(identifierA()).setName("BLOCKSTATE_PROPERTY_KEY"));
                 g2.append(equals());
                 {
-                    LazyTokenStructureMatch s = new LazyTokenStructureMatch("BLOCKSTATE_PROPERTY_VALUE");
-                    s.add(real());
-                    s.add(ofType(BOOLEAN));
-                    s.add(ofType(IDENTIFIER_TYPE_A));
-                    g2.append(s);
+                    g2.append(group(identifierA()).setName("BLOCKSTATE_PROPERTY_VALUE"));
                 }
                 g.append(new LazyTokenListMatch(g2, comma(), true).setName("BLOCKSTATE_LIST"));
             }
