@@ -294,7 +294,7 @@ public class TridentProductions {
                     literal("list"),
                     group(literal("add"), identifierA()),
                     group(literal("remove"), identifierA()),
-                    group(matchItem(TridentTokens.SYNTACTIC_SUGAR, "update"), identifierA())
+                    group(matchItem(TridentTokens.CUSTOM_COMMAND_KEYWORD, "update"), identifierA())
             ));
             COMMAND.add(g);
         }
@@ -942,7 +942,7 @@ public class TridentProductions {
                             group(literal("entity"), ENTITY).setName("ENTITY_CONDITION"),
                             group(literal("block"), COORDINATE_SET, BLOCK_TAGGED).setName("BLOCK_CONDITION"),
                             group(literal("score"), ENTITY, group(identifierA()).setName("OBJECTIVE"), choice(
-                                    matchItem(TridentTokens.SYNTACTIC_SUGAR, "isset").setName("ISSET"),
+                                    matchItem(TridentTokens.CUSTOM_COMMAND_KEYWORD, "isset").setName("ISSET"),
                                     group(choice(symbol("<"), symbol("<="), symbol("="), symbol(">="), symbol(">")).setName("OPERATOR"), ENTITY, group(identifierA()).setName("OBJECTIVE")).setName("COMPARISON"),
                                     group(literal("matches"), INTEGER_NUMBER_RANGE).setName("MATCHES"))
                             ).setName("SCORE_CONDITION"),
@@ -1374,7 +1374,7 @@ public class TridentProductions {
                     list(group(
                             group(identifierA()).setName("OBJECTIVE_NAME"),
                             equals(),
-                            choice(matchItem(SYNTACTIC_SUGAR, "isset").setName("ISSET"), INTEGER_NUMBER_RANGE).setName("SCORE_VALUE")
+                            choice(matchItem(CUSTOM_COMMAND_KEYWORD, "isset").setName("ISSET"), INTEGER_NUMBER_RANGE).setName("SCORE_VALUE")
                     ).setName("SCORE_ENTRY"), comma()).setOptional().setName("SCORE_LIST"),
                     brace("}")
             ).setName("SCORE_ARGUMENT_BLOCK");
