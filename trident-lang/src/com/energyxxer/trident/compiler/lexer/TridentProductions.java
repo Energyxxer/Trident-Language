@@ -623,6 +623,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "summon"),
                     ENTITY_ID,
+                    optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("FEATURE_LIST"), brace("]")).setName("IMPLEMENTED_FEATURES"),
                     optional(
                             COORDINATE_SET,
                             optional(NBT_COMPOUND)
@@ -1655,7 +1656,7 @@ public class TridentProductions {
         {
             LazyTokenStructureMatch entityBodyEntry = choice(
                     group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT"),
-                    group(literal("default"), literal("passengers"), brace("["), list(group(ENTITY_ID, optional(NBT_COMPOUND).setName("PASSENGER_NBT")).setName("PASSENGER"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
+                    group(literal("default"), literal("passengers"), brace("["), list(group(ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("FEATURE_LIST"), brace("]")).setName("IMPLEMENTED_FEATURES"), optional(NBT_COMPOUND).setName("PASSENGER_NBT")).setName("PASSENGER"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
                     group(literal("default"), literal("health"), real().setName("HEALTH")).setName("DEFAULT_HEALTH"),
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(choice(group(literal("ticking"), list(MODIFIER).setOptional().setName("TICKING_MODIFIERS")).setName("TICKING_ENTITY_FUNCTION")).setOptional().setName("ENTITY_FUNCTION_MODIFIER"), literal("function"), OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_INNER_FUNCTION")
@@ -1692,7 +1693,10 @@ public class TridentProductions {
                     group(keyword("define").setName("INSTRUCTION_KEYWORD"),
                             choice(
                                     group(literal("objective"), group(identifierA()).setName("OBJECTIVE_NAME"), optional(sameLine(), group(identifierB()).setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE"),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("entity"), choice(identifierX(), literal("default")).setName("ENTITY_NAME"), choice(symbol("*"), ENTITY_ID_TAGGED).setName("ENTITY_BASE"), entityBody).setName("DEFINE_ENTITY"),
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("entity"), choice(
+                                            group(choice(identifierX(), literal("default")).setName("ENTITY_NAME"), choice(symbol("*"), ENTITY_ID_TAGGED).setName("ENTITY_BASE")).setName("CONCRETE_ENTITY_DECLARATION"),
+                                            group(literal("feature"), group(identifierX()).setName("ENTITY_NAME")).setName("ABSTRACT_ENTITY_DECLARATION")
+                                    ).setName("ENTITY_DECLARATION_HEADER"), optional(keyword("implements"), list(INTERPOLATION_VALUE, comma()).setName("FEATURE_LIST")).setName("IMPLEMENTED_FEATURES"), entityBody).setName("DEFINE_ENTITY"),
                                     group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("item"), choice(identifierX(), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM"),
                                     group(literal("function"), INNER_FUNCTION).setName("DEFINE_FUNCTION")
                             )
@@ -1730,7 +1734,7 @@ public class TridentProductions {
                     group(literal("using").setName("INSTRUCTION_KEYWORD"),
                             choice(
                                     group(literal("tag"), group(identifierA()).setName("USING_TAG_NAME"), ENTITY, list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_TAG"),
-                                    group(literal("summon"), ENTITY_ID, optional(COORDINATE_SET, optional(NBT_COMPOUND)), literal("with"), group(identifierA()).setName("USING_SUMMON_TAG_NAME"), list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_SUMMON")
+                                    group(literal("summon"), ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("FEATURE_LIST"), brace("]")).setName("IMPLEMENTED_FEATURES"), optional(COORDINATE_SET, optional(NBT_COMPOUND)), literal("with"), group(identifierA()).setName("USING_SUMMON_TAG_NAME"), list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_SUMMON")
                             ).setName("USING_CASE"),
                             ANONYMOUS_INNER_FUNCTION
                     )

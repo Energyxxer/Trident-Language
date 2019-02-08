@@ -31,7 +31,7 @@ public class TypeArgumentParser implements SelectorArgumentParser {
             args.add(new TypeArgument((Type) reference, negated));
         } else if(reference instanceof CustomEntity) {
             CustomEntity ce = (CustomEntity) reference;
-            args.add(new TypeArgument(ce.getDefaultType(), negated));
+            if(ce.getDefaultType() != null) args.add(new TypeArgument(ce.getDefaultType(), negated));
 
             args.add(new TagArgument(ce.getIdTag(), negated));
         } else {
@@ -46,6 +46,11 @@ public class TypeArgumentParser implements SelectorArgumentParser {
     }
 
     public static Entity getSelectorForCustomEntity(CustomEntity ce, boolean negated) {
-        return new Selector(ALL_ENTITIES, new TypeArgument(ce.getDefaultType(), negated), new TagArgument(ce.getIdTag(), negated));
+        Selector sel = new Selector(ALL_ENTITIES);
+        if(ce.getDefaultType() != null) {
+            sel.addArgument(new TypeArgument(ce.getDefaultType(), negated));
+        }
+        sel.addArgument(new TagArgument(ce.getIdTag(), negated));
+        return sel;
     }
 }

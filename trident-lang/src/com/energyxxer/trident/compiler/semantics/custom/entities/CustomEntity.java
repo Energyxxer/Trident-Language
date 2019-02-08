@@ -16,7 +16,9 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.analyzers.commands.SummonParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.selectors.TypeArgumentParser;
@@ -53,7 +55,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     public CustomEntity(String id, @Nullable Type defaultType) {
         this.id = id;
         this.defaultType = defaultType;
-        this.idTag = "trident-entity." + id.replace(':', '.').replace('/','.');
+        this.idTag = "trident-" + (defaultType == null ? "feature" : "entity") + "." + id.replace(':', '.').replace('/','.');
         this.defaultNBT = getBaseNBT();
     }
 
@@ -130,27 +132,57 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     public static void defineEntity(TokenPattern<?> pattern, ISymbolContext ctx) {
         Symbol.SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), ctx, Symbol.SymbolVisibility.GLOBAL);
 
-        String entityName = pattern.find("ENTITY_NAME").flatten(false);
+        String entityName;
         Type defaultType = null;
         CustomEntity superEntity = null;
-        if (pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED") != null) {
-            Object referencedType = CommonParsers.parseEntityReference(pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
-            if(referencedType instanceof Type) {
-                defaultType = ((Type) referencedType);
-            } else if(referencedType instanceof CustomEntity) {
-                superEntity = ((CustomEntity) referencedType);
-                if(!superEntity.isFeature()) {
-                    defaultType = superEntity.defaultType;
+
+        TokenPattern<?> headerDeclaration = ((TokenStructure) pattern.find("ENTITY_DECLARATION_HEADER")).getContents();
+
+        switch(headerDeclaration.getName()) {
+            case "CONCRETE_ENTITY_DECLARATION": {
+                entityName = headerDeclaration.find("ENTITY_NAME").flatten(false);
+
+                if (headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED") != null) {
+                    Object referencedType = CommonParsers.parseEntityReference(headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
+                    if(referencedType instanceof Type) {
+                        defaultType = ((Type) referencedType);
+                    } else if(referencedType instanceof CustomEntity) {
+                        superEntity = ((CustomEntity) referencedType);
+                        if(!superEntity.isFeature()) {
+                            defaultType = superEntity.defaultType;
+                        }
+                    } else {
+                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", headerDeclaration, ctx);
+                    }
                 }
-            } else {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
+                break;
+            }
+            case "ABSTRACT_ENTITY_DECLARATION": {
+                entityName = headerDeclaration.find("ENTITY_NAME").flatten(false);
+                break;
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + headerDeclaration.getName() + "'", headerDeclaration, ctx);
+            }
+        }
+
+        ArrayList<CustomEntity> implemented = new ArrayList<>();
+        TokenList rawFeatureList = ((TokenList) pattern.find("IMPLEMENTED_FEATURES.FEATURE_LIST"));
+        if(rawFeatureList != null) {
+            for(TokenPattern<?> rawFeature : rawFeatureList.searchByName("INTERPOLATION_VALUE")) {
+                CustomEntity feature = InterpolationManager.parse(rawFeature, ctx, CustomEntity.class);
+                if(feature.isFeature()) {
+                    implemented.add(feature);
+                } else {
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity feature here, instead got an entity", rawFeature, ctx);
+                }
             }
         }
 
         CustomEntity entityDecl = null;
         if (!entityName.equals("default")) {
-            if (defaultType == null || !defaultType.isStandalone()) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot create a non-default entity with this type", pattern.find("ENTITY_BASE"), ctx);
+            if (defaultType != null && !defaultType.isStandalone()) {
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot create a non-default entity with this type: " + defaultType, pattern.find("ENTITY_DECLARATION_HEADER.ENTITY_BASE"), ctx);
             }
             entityDecl = new CustomEntity(entityName, defaultType);
             entityDecl.superEntity = superEntity;
@@ -158,10 +190,15 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
             if(superEntity != null) {
                 entityDecl.mergeNBT(superEntity.getDefaultNBT());
+                entityDecl.members.putAll(superEntity.members);
+            }
+            for(CustomEntity feature : implemented) {
+                entityDecl.mergeNBT(feature.getDefaultNBT());
+                entityDecl.members.putAll(feature.members);
             }
         } else {
             if(superEntity != null) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default entities may not inherit from custom entities", pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default entities may not inherit from custom entities", pattern.find("ENTITY_DECLARATION_HEADER.ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
             }
         }
 
@@ -203,28 +240,16 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
                                     TagCompound passengerCompound;
 
-                                    Object reference = CommonParsers.parseEntityReference(rawPassenger.find("ENTITY_ID"), ctx);
+                                    SummonParser.SummonData passengerData = new SummonParser.SummonData(rawPassenger, ctx,
+                                            rawPassenger.find("ENTITY_ID"),
+                                            null,
+                                            rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND"),
+                                            ((TokenList) rawPassenger.find("IMPLEMENTED_FEATURES.FEATURE_LIST"))
+                                    );
 
-                                    if (reference instanceof Type) {
-                                        passengerCompound = new TagCompound(new TagString("id", reference.toString()));
-                                    } else if (reference instanceof CustomEntity) {
-                                        if(!((CustomEntity) reference).isFeature()) {
-                                            passengerCompound = ((CustomEntity) reference).getDefaultNBT().merge(new TagCompound(new TagString("id", ((CustomEntity) reference).getDefaultType().toString())));
-                                        } else {
-                                            collector.log(new TridentException(TridentException.Source.TYPE_ERROR, "Unable to use an abstract entity as a passenger", rawPassenger, ctx));
-                                            break;
-                                        }
-                                    } else {
-                                        collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID"), ctx));
-                                        break;
-                                    }
-                                    TokenPattern<?> auxNBT = rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND");
-                                    if (auxNBT != null) {
-                                        TagCompound tag = NBTParser.parseCompound(auxNBT, ctx);
-                                        PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
-                                        NBTParser.analyzeTag(tag, context, auxNBT, ctx);
-                                        passengerCompound = passengerCompound.merge(tag);
-                                    }
+                                    passengerData.fillDefaults();
+
+                                    passengerCompound = passengerData.nbt.merge(new TagCompound(new TagString("id", passengerData.type.toString())));
 
                                     passengersTag.add(passengerCompound);
                                 }
@@ -306,7 +331,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         }
     }
 
-    private boolean isFeature() {
+    public boolean isFeature() {
         return defaultType == null;
     }
 

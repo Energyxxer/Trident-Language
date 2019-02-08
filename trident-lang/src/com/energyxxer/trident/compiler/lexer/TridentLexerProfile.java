@@ -413,7 +413,7 @@ public class TridentLexerProfile extends LexerProfile {
 
         contexts.add(new LexerContext() {
 
-            private List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinate", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "global", "case", "switch", "default");
+            private List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinate", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "global", "case", "switch", "default", "feature", "implements");
 
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
@@ -470,7 +470,7 @@ public class TridentLexerProfile extends LexerProfile {
         });
 
         contexts.add(new StringMatchLexerContext(DIRECTIVE_ON_KEYWORD, "compile"));
-        contexts.add(new StringMatchLexerContext(KEYWORD, "var", "define", "mark", "do", "while", "within", "using", "as", "append", "for", "in", "switch", "function", "if", "else", "try", "catch", "tdndebug", "switch", "case", "default"));
+        contexts.add(new StringMatchLexerContext(KEYWORD, "var", "define", "mark", "do", "while", "within", "using", "as", "append", "for", "in", "switch", "function", "if", "else", "try", "catch", "tdndebug", "switch", "case", "default", "implements"));
         contexts.add(new StringMatchLexerContext(CUSTOM_COMMAND_KEYWORD, "isset", "update"));
         contexts.add(new StringMatchLexerContext(BOOLEAN, "true", "false"));
         contexts.add(new IdentifierLexerContext(COMMAND_HEADER, "[a-zA-Z0-9._\\-+]"));
