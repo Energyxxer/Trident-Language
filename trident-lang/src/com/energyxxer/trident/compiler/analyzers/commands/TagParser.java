@@ -22,9 +22,9 @@ public class TagParser implements CommandParser {
         switch(pattern.find("CHOICE").flattenTokens().get(0).value) {
             case "list": return Collections.singletonList(new TagQueryCommand(entity));
             case "add":
-                return Collections.singletonList(new TagCommand(TagCommand.Action.ADD, entity, CommonParsers.parseIdentifierA(pattern.find("IDENTIFIER_A"), ctx)));
+                return Collections.singletonList(new TagCommand(TagCommand.Action.ADD, entity, CommonParsers.parseIdentifierA(pattern.find("CHOICE.IDENTIFIER_A"), ctx)));
             case "remove":
-                return Collections.singletonList(new TagCommand(TagCommand.Action.REMOVE, entity, CommonParsers.parseIdentifierA(pattern.find("IDENTIFIER_A"), ctx)));
+                return Collections.singletonList(new TagCommand(TagCommand.Action.REMOVE, entity, CommonParsers.parseIdentifierA(pattern.find("CHOICE.IDENTIFIER_A"), ctx)));
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
             }

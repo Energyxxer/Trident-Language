@@ -487,7 +487,7 @@ public class TridentLexerProfile extends LexerProfile {
 
         contexts.add(new StringMatchLexerContext(DIRECTIVE_ON_KEYWORD, "compile"));
         contexts.add(new StringMatchLexerContext(KEYWORD, "var", "define", "mark", "do", "while", "within", "using", "as", "append", "for", "in", "switch", "function", "if", "else", "try", "catch", "tdndebug", "switch", "case", "default"));
-        contexts.add(new StringMatchLexerContext(SYNTACTIC_SUGAR, "isset"));
+        contexts.add(new StringMatchLexerContext(SYNTACTIC_SUGAR, "isset", "update"));
         contexts.add(new StringMatchLexerContext(BOOLEAN, "true", "false"));
         contexts.add(new IdentifierLexerContext(COMMAND_HEADER, "[a-zA-Z0-9._\\-+]"));
         contexts.add(new IdentifierLexerContext(MODIFIER_HEADER, "[a-zA-Z0-9._\\-+]"));

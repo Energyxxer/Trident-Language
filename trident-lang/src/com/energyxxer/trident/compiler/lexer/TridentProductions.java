@@ -293,7 +293,8 @@ public class TridentProductions {
             g.append(choice(
                     literal("list"),
                     group(literal("add"), identifierA()),
-                    group(literal("remove"), identifierA())
+                    group(literal("remove"), identifierA()),
+                    group(matchItem(TridentTokens.SYNTACTIC_SUGAR, "update"), identifierA())
             ));
             COMMAND.add(g);
         }
