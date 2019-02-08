@@ -46,13 +46,15 @@ public class SummonParser implements SimpleCommandParser {
 
         if(nbt != null) {
             PathContext context = new PathContext().setIsSetting(true).setProtocol(PathProtocol.ENTITY, type);
-            NBTParser.analyzeTag(nbt, context, pattern.find("..NBT_COMPOUND"), ctx);
+            TokenPattern<?> nbtPattern = pattern.find("..NBT_COMPOUND");
+            if(nbtPattern == null) nbtPattern = id;
+            NBTParser.analyzeTag(nbt, context, nbtPattern, ctx);
         }
 
         if(pos == null && nbt != null) pos = new CoordinateSet();
 
         try {
-            return new SummonCommand(type, pos, nbt);
+            return new SummonCommand(type, pos, nbt); //TODO handle featueres
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.TYPE_ERROR, pattern.find("ENTITY_ID"))

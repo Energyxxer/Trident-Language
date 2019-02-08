@@ -29,6 +29,7 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,14 +41,16 @@ import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMe
 
 public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     private final String id;
+    @Nullable
     private final Type defaultType;
     @NotNull
     private TagCompound defaultNBT;
+    private CustomEntity superEntity = null;
     private String idTag;
     private boolean fullyDeclared = false;
     private HashMap<String, TridentUtil.ResourceLocation> members = new HashMap<>();
 
-    public CustomEntity(String id, Type defaultType) {
+    public CustomEntity(String id, @Nullable Type defaultType) {
         this.id = id;
         this.defaultType = defaultType;
         this.idTag = "trident-entity." + id.replace(':', '.').replace('/','.');
@@ -58,6 +61,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         return id;
     }
 
+    @Nullable
     public Type getDefaultType() {
         return defaultType;
     }
@@ -97,8 +101,11 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         if(members.containsKey(member)) return members.get(member);
         if(member.equals("getSettingNBT")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
-                TagCompound nbt = new TagCompound(new TagString("id", ((CustomEntity) this).getDefaultType().toString()));
-                nbt = ((CustomEntity) this).getDefaultNBT().merge(nbt);
+                TagCompound nbt = new TagCompound();
+                if(this.getDefaultType() != null) {
+                    nbt.add(new TagString("id", this.getDefaultType().toString()));
+                }
+                nbt = this.getDefaultNBT().merge(nbt);
                 return nbt;
             };
         }
@@ -125,8 +132,19 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
         String entityName = pattern.find("ENTITY_NAME").flatten(false);
         Type defaultType = null;
+        CustomEntity superEntity = null;
         if (pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED") != null) {
-            defaultType = CommonParsers.parseEntityType(pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
+            Object referencedType = CommonParsers.parseEntityReference(pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
+            if(referencedType instanceof Type) {
+                defaultType = ((Type) referencedType);
+            } else if(referencedType instanceof CustomEntity) {
+                superEntity = ((CustomEntity) referencedType);
+                if(!superEntity.isFeature()) {
+                    defaultType = superEntity.defaultType;
+                }
+            } else {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
+            }
         }
 
         CustomEntity entityDecl = null;
@@ -135,7 +153,16 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot create a non-default entity with this type", pattern.find("ENTITY_BASE"), ctx);
             }
             entityDecl = new CustomEntity(entityName, defaultType);
+            entityDecl.superEntity = superEntity;
             ctx.getContextForVisibility(visibility).put(new Symbol(entityName, visibility, entityDecl));
+
+            if(superEntity != null) {
+                entityDecl.mergeNBT(superEntity.getDefaultNBT());
+            }
+        } else {
+            if(superEntity != null) {
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default entities may not inherit from custom entities", pattern.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
+            }
         }
 
         ExceptionCollector collector = new ExceptionCollector(ctx);
@@ -181,7 +208,12 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                     if (reference instanceof Type) {
                                         passengerCompound = new TagCompound(new TagString("id", reference.toString()));
                                     } else if (reference instanceof CustomEntity) {
-                                        passengerCompound = ((CustomEntity) reference).getDefaultNBT().merge(new TagCompound(new TagString("id", ((CustomEntity) reference).getDefaultType().toString())));
+                                        if(!((CustomEntity) reference).isFeature()) {
+                                            passengerCompound = ((CustomEntity) reference).getDefaultNBT().merge(new TagCompound(new TagString("id", ((CustomEntity) reference).getDefaultType().toString())));
+                                        } else {
+                                            collector.log(new TridentException(TridentException.Source.TYPE_ERROR, "Unable to use an abstract entity as a passenger", rawPassenger, ctx));
+                                            break;
+                                        }
                                     } else {
                                         collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID"), ctx));
                                         break;
@@ -272,6 +304,10 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
             collector.end();
             if (entityDecl != null) entityDecl.endDeclaration();
         }
+    }
+
+    private boolean isFeature() {
+        return defaultType == null;
     }
 
     @Override

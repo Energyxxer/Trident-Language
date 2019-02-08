@@ -127,7 +127,7 @@ public class UsingInstruction implements Instruction {
 
         if(pos == null) pos = new CoordinateSet();
 
-        function.append(new SummonCommand(type, pos, nbt));
+        function.append(new SummonCommand(type, pos, nbt)); //TODO handle features
         //endregion
 
         ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) pattern.find("MODIFIER_LIST")), ctx);
