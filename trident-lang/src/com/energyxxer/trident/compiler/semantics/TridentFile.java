@@ -20,7 +20,6 @@ import com.energyxxer.trident.compiler.analyzers.commands.CommandParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.instructions.Instruction;
-import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ImportedSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
@@ -127,6 +126,19 @@ public class TridentFile extends SymbolContext {
                 }
             }
         }
+    }
+
+    public static Function createAnonymousSubFunction(ISymbolContext parent) {
+        String innerFilePathRaw = parent.getStaticParentFile().getPath().toString();
+        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
+
+        Path relSourcePath = Paths.get(innerFilePathRaw).resolve("_anonymous" + parent.getStaticParentFile().anonymousChildren + ".tdn");
+        parent.getStaticParentFile().anonymousChildren++;
+
+        String functionPath = relSourcePath.subpath(2, relSourcePath.getNameCount()).toString();
+        functionPath = functionPath.substring(0, functionPath.length()-".tdn".length()).replaceAll(Pattern.quote(File.separator), "/");
+
+        return parent.getCompiler().getModule().createNamespace(relSourcePath.getName(0).toString()).functions.get(functionPath);
     }
 
     //Sub context automatically created
@@ -334,20 +346,7 @@ public class TridentFile extends SymbolContext {
                 case "COMMAND_WRAPPER":
                     if (!compileOnly && appendTo != null) {
 
-                        ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
-
-                        TokenList modifierList = (TokenList) inner.find("MODIFIERS");
-                        if (modifierList != null) {
-                            for (TokenPattern<?> rawModifier : modifierList.getContents()) {
-                                ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
-                                if (parser != null) {
-                                    Collection<ExecuteModifier> modifier = parser.parse(rawModifier, parent);
-                                    modifiers.addAll(modifier);
-                                } else {
-                                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + rawModifier.flattenTokens().get(0).value + "'", rawModifier, parent);
-                                }
-                            }
-                        }
+                        ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList((TokenList) inner.find("MODIFIERS"), parent);
 
                         TokenPattern<?> commandPattern = inner.find("COMMAND");
                         CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandPattern.flattenTokens().get(0).value);

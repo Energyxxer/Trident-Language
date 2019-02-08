@@ -19,8 +19,6 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.selectors.TypeArgumentParser;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
-import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
@@ -32,7 +30,6 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 
 import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.ALL_ENTITIES;
@@ -235,9 +232,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                 switch(functionModifier.getName()) {
                                     case "TICKING_ENTITY_FUNCTION": {
 
-                                        TokenList rawModifiers = (TokenList) functionModifier.find("TICKING_MODIFIERS");
-                                        ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
-
+                                        ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) functionModifier.find("TICKING_MODIFIERS")), ctx, collector);
 
                                         Entity selector = entityDecl != null ?
                                                 TypeArgumentParser.getSelectorForCustomEntity(entityDecl) :
@@ -245,22 +240,8 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                                         new Selector(ALL_ENTITIES, new TypeArgument(defaultType)) :
                                                         new Selector(ALL_ENTITIES);
 
-                                        modifiers.add(new ExecuteAsEntity(selector));
-                                        modifiers.add(new ExecuteAtEntity(new Selector(SENDER)));
-
-
-                                        if(rawModifiers != null) {
-                                            for(TokenPattern<?> rawModifier : rawModifiers.getContents()) {
-                                                ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
-                                                if(parser != null) {
-                                                    Collection<ExecuteModifier> modifier = parser.parse(rawModifier, ctx);
-                                                    modifiers.addAll(modifier);
-                                                } else {
-                                                    collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + rawModifier.flattenTokens().get(0).value + "'", rawModifier, ctx));
-                                                }
-                                            }
-                                        }
-
+                                        modifiers.add(0, new ExecuteAsEntity(selector));
+                                        modifiers.add(1, new ExecuteAtEntity(new Selector(SENDER)));
 
                                         ctx.getWritingFile().getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
                                     }

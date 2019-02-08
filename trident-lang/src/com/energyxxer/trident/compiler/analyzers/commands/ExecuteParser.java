@@ -7,9 +7,9 @@ import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -20,21 +20,7 @@ import java.util.Collection;
 public class ExecuteParser implements SimpleCommandParser {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
-
-        TokenPattern<?> rawList = pattern.find("MODIFIER_LIST");
-        if(rawList instanceof TokenList) {
-            TokenList list = (TokenList) rawList;
-            for(TokenPattern<?> inner : list.getContents()) {
-                ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, inner.flattenTokens().get(0).value);
-                if(parser != null) {
-                    Collection<ExecuteModifier> modifier = parser.parse(inner, ctx);
-                    modifiers.addAll(modifier);
-                } else {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + inner.flattenTokens().get(0).value + "'", inner, ctx);
-                }
-            }
-        }
+        ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) pattern.find("MODIFIER_LIST")), ctx);
 
         TokenPattern<?> rawCommand = pattern.find("CHAINED_COMMAND.COMMAND");
         if(rawCommand != null) {

@@ -1728,7 +1728,8 @@ public class TridentProductions {
             INSTRUCTION.add(
                     group(literal("using").setName("INSTRUCTION_KEYWORD"),
                             choice(
-                                    group(literal("tag"), group(identifierA()).setName("USING_TAG_NAME"), ENTITY, list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_TAG")
+                                    group(literal("tag"), group(identifierA()).setName("USING_TAG_NAME"), ENTITY, list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_TAG"),
+                                    group(literal("summon"), ENTITY_ID, optional(COORDINATE_SET, optional(NBT_COMPOUND)), literal("with"), group(identifierA()).setName("USING_SUMMON_TAG_NAME"), list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_SUMMON")
                             ).setName("USING_CASE"),
                             ANONYMOUS_INNER_FUNCTION
                     )

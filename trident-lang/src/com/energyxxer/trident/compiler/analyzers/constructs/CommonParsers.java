@@ -4,6 +4,7 @@ import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
 import com.energyxxer.commodore.functionlogic.nbt.NumericNBTTag;
@@ -38,16 +39,20 @@ import com.energyxxer.nbtmapper.tags.DataType;
 import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
 import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
+import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
+import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -616,6 +621,28 @@ public class CommonParsers {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.flatten(false) + "'", pattern, ctx);
             }
         }
+    }
+
+    public static ArrayList<ExecuteModifier> parseModifierList(TokenList rawModifierList, ISymbolContext ctx) {
+        return parseModifierList(rawModifierList, ctx, null);
+    }
+
+    public static ArrayList<ExecuteModifier> parseModifierList(TokenList rawModifierList, ISymbolContext ctx, ExceptionCollector collector) {
+        ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
+        if(rawModifierList != null) {
+            for(TokenPattern<?> rawModifier : rawModifierList.getContents()) {
+                ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
+                if(parser != null) {
+                    Collection<ExecuteModifier> modifier = parser.parse(rawModifier, ctx);
+                    modifiers.addAll(modifier);
+                } else {
+                    TridentException x = new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + rawModifier.flattenTokens().get(0).value + "'", rawModifier, ctx);
+                    if(collector != null) collector.log(x);
+                    else throw x;
+                }
+            }
+        }
+        return modifiers;
     }
 
     public interface TypeGroupPicker {

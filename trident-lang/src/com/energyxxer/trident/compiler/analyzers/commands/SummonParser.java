@@ -13,22 +13,18 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "summon")
 public class SummonParser implements SimpleCommandParser {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> id = pattern.find("ENTITY_ID");
-        Type type = null;
+        Type type;
         CoordinateSet pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"), ctx);
         TagCompound nbt = NBTParser.parseCompound(pattern.find("..NBT_COMPOUND"), ctx);
-        if(nbt != null) {
-            PathContext context = new PathContext().setIsSetting(true).setProtocol(PathProtocol.ENTITY, type);
-            NBTParser.analyzeTag(nbt, context, pattern.find("..NBT_COMPOUND"), ctx);
-        }
 
         Object reference = CommonParsers.parseEntityReference(id, ctx);
 
@@ -46,6 +42,11 @@ public class SummonParser implements SimpleCommandParser {
             }
         } else {
             throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), id, ctx);
+        }
+
+        if(nbt != null) {
+            PathContext context = new PathContext().setIsSetting(true).setProtocol(PathProtocol.ENTITY, type);
+            NBTParser.analyzeTag(nbt, context, pattern.find("..NBT_COMPOUND"), ctx);
         }
 
         if(pos == null && nbt != null) pos = new CoordinateSet();
