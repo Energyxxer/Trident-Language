@@ -18,8 +18,10 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.commands.CommandParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.instructions.Instruction;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ImportedSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
@@ -50,6 +52,8 @@ public class TridentFile extends SymbolContext {
     private int languageLevel;
 
     private int anonymousChildren = 0;
+
+    private DictionaryObject metadata;
 
     public TridentFile(TridentCompiler compiler, Path relSourcePath, TokenPattern<?> filePattern) {
         this(compiler, null, relSourcePath, filePattern, compiler.getLanguageLevel());
@@ -120,11 +124,22 @@ public class TridentFile extends SymbolContext {
                         this.priority = (float) CommonParsers.parseDouble(directiveBody.find("REAL"), this);
                         break;
                     }
+                    case "METADATA_DIRECTIVE": {
+                        if (this.metadata == null) {
+                            this.metadata = InterpolationManager.parse(directiveBody.find("DICTIONARY"), this, DictionaryObject.class);
+                        } else {
+                            getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Duplicate metadata directive", directiveList));
+                        }
+                        break;
+                    }
                     default: {
                         compiler.getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown directive type '" + directiveBody.getName() + "'", directiveBody));
                     }
                 }
             }
+        }
+        if(metadata == null) {
+            metadata = new DictionaryObject();
         }
     }
 
@@ -388,5 +403,13 @@ public class TridentFile extends SymbolContext {
 
     public TokenPattern<?> getPattern() {
         return pattern;
+    }
+
+    public DictionaryObject getMetadata() {
+        return metadata;
+    }
+
+    public Collection<TridentUtil.ResourceLocation> getTags() {
+        return tags;
     }
 }

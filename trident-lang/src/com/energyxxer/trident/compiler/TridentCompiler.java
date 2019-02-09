@@ -559,6 +559,10 @@ public class TridentCompiler {
         return globalObjective.getValue();
     }
 
+    public Collection<TridentFile> getAllFiles() {
+        return files.values();
+    }
+
     private static class Resources {
         public static final HashMap<String, String> defaults = new HashMap<>();
 

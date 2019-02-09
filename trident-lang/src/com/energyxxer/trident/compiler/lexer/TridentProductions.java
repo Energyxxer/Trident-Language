@@ -219,11 +219,12 @@ public class TridentProductions {
 
             DIRECTIVE = group(ofType(DIRECTIVE_HEADER), directiveBody).setName("DIRECTIVE");
 
-            directiveBody.add(group(literal("on"), ofType(DIRECTIVE_ON_KEYWORD)).setName("ON_DIRECTIVE"));
-            directiveBody.add(group(literal("tag"), ofType(RESOURCE_LOCATION)).setName("TAG_DIRECTIVE"));
-            directiveBody.add(group(literal("require"), ofType(RESOURCE_LOCATION)).setName("REQUIRE_DIRECTIVE"));
-            directiveBody.add(group(literal("priority"), real()).setName("PRIORITY_DIRECTIVE"));
-            directiveBody.add(group(literal("language_level"), integer()).setName("LANGUAGE_LEVEL_DIRECTIVE"));
+            directiveBody.add(group(literal("on").setName("DIRECTIVE_LABEL"), ofType(DIRECTIVE_ON_KEYWORD)).setName("ON_DIRECTIVE"));
+            directiveBody.add(group(literal("tag").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION)).setName("TAG_DIRECTIVE"));
+            directiveBody.add(group(literal("require").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION)).setName("REQUIRE_DIRECTIVE"));
+            directiveBody.add(group(literal("priority").setName("DIRECTIVE_LABEL"), real()).setName("PRIORITY_DIRECTIVE"));
+            directiveBody.add(group(literal("language_level").setName("DIRECTIVE_LABEL"), integer()).setName("LANGUAGE_LEVEL_DIRECTIVE"));
+            directiveBody.add(group(literal("metadata").setName("DIRECTIVE_LABEL"), DICTIONARY).setName("METADATA_DIRECTIVE"));
         }
 
         {
