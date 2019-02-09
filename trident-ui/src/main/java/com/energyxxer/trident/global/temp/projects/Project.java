@@ -67,6 +67,12 @@ public class Project {
         config.addProperty("resources-output", outFolder.resolve(name + "-resources.zip").toString());
         config.addProperty("export-comments", true);
         config.addProperty("strict-text-components", false);
+        JsonObject loggerObj = new JsonObject();
+		loggerObj.addProperty("compact", false);
+		loggerObj.addProperty("timestamp-enabled", true);
+		loggerObj.addProperty("line-number-enabled", false);
+		loggerObj.addProperty("pos-enabled", true);
+        config.add("game-logger", loggerObj);
 	}
 
 	public Project(File rootDirectory) {

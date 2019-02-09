@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler;
 
 import com.energyxxer.commodore.defpacks.DefinitionPack;
+import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.ModulePackGenerator;
 import com.energyxxer.commodore.module.Namespace;
@@ -19,7 +20,6 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
-import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -28,6 +28,7 @@ import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
 import com.energyxxer.trident.compiler.semantics.symbols.GlobalSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.util.Lazy;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.*;
 
@@ -55,6 +56,9 @@ public class TridentCompiler {
     private CommandModule module;
     private ResourcePackGenerator resourcePack;
     private SpecialFileManager specialFileManager;
+
+    //Utilities
+    private Lazy<Objective> globalObjective;
 
     //Properties
     private JsonObject properties = null;
@@ -92,6 +96,7 @@ public class TridentCompiler {
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.setPrettyPrinting();
         this.gson = gsonBuilder.create();
+        globalObjective = new Lazy<>(() -> this.getModule().getObjectiveManager().create("trident_global", true));
     }
 
     public void compile() {
@@ -548,6 +553,10 @@ public class TridentCompiler {
 
     public ISymbolContext getGlobalContext() {
         return global;
+    }
+
+    public Objective getGlobalObjective() {
+        return globalObjective.getValue();
     }
 
     private static class Resources {

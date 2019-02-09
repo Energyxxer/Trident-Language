@@ -1654,6 +1654,12 @@ public class TridentProductions {
         );
 
         {
+            COMMAND.add(
+                    group(matchItem(COMMAND_HEADER, "gamelog"), choice("info", "debug", "warning", "error", "fatal").setName("DEBUG_GROUP"), LINE_SAFE_INTERPOLATION_VALUE)
+            );
+        }
+
+        {
             LazyTokenStructureMatch entityBodyEntry = choice(
                     group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT"),
                     group(literal("default"), literal("passengers"), brace("["), list(group(ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("FEATURE_LIST"), brace("]")).setName("IMPLEMENTED_FEATURES"), optional(NBT_COMPOUND).setName("PASSENGER_NBT")).setName("PASSENGER"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),

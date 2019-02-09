@@ -144,13 +144,13 @@ public class UsingInstruction implements Instruction {
         Command innerCallCommand = new FunctionCommand(innerFile.getFunction());
 
         if(collapse) {
-            innerFile.getFunction().append(tagRemoveCommand);
+            innerFile.getFunction().prepend(tagRemoveCommand);
             modifiers.add(0, new ExecuteAsEntity(summoned));
             function.append(new ExecuteCommand(innerCallCommand, modifiers));
         } else {
             Function middleFunction = TridentFile.createAnonymousSubFunction(ctx);
-            middleFunction.append(new ExecuteCommand(innerCallCommand, modifiers));
             middleFunction.append(tagRemoveCommand);
+            middleFunction.append(new ExecuteCommand(innerCallCommand, modifiers));
             function.append(new ExecuteCommand(new FunctionCommand(middleFunction), new ExecuteAsEntity(summoned)));
         }
 

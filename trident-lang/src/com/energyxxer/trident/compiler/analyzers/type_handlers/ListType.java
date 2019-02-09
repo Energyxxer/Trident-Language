@@ -11,6 +11,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ListType implements VariableTypeHandler<ListType>, Iterable<Object> {
+    private static Stack<ListType> toStringRecursion = new Stack<>();
+
     private static HashMap<String, MemberWrapper<ListType>> members = new HashMap<>();
 
     static {
@@ -163,6 +165,12 @@ public class ListType implements VariableTypeHandler<ListType>, Iterable<Object>
 
     @Override
     public String toString() {
-        return "[" + content.stream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue())).collect(Collectors.joining(", "))  + "]";
+        if(toStringRecursion.contains(this)) {
+            return "[ ...circular... ]";
+        }
+        toStringRecursion.push(this);
+        String str = "[" + content.stream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue())).collect(Collectors.joining(", "))  + "]";
+        toStringRecursion.pop();
+        return str;
     }
 }

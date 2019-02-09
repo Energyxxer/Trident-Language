@@ -18,7 +18,7 @@ import java.nio.charset.Charset;
 
 public class Trident {
 	public static Trident trident;
-	public static final Version VERSION = new Version(0,2,0);
+	public static final Version VERSION = new Version(0,4,0);
 	public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 
 	public static TridentWindow window;

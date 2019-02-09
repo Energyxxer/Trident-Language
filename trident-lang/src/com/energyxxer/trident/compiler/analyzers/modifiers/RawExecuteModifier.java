@@ -3,6 +3,8 @@ package com.energyxxer.trident.compiler.analyzers.modifiers;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.commands.execute.SubCommandResult;
 import com.energyxxer.commodore.functionlogic.inspection.ExecutionContext;
+import com.energyxxer.commodore.functionlogic.inspection.ExecutionVariable;
+import com.energyxxer.commodore.functionlogic.inspection.ExecutionVariableMap;
 import org.jetbrains.annotations.NotNull;
 
 public class RawExecuteModifier implements ExecuteModifier {
@@ -31,5 +33,15 @@ public class RawExecuteModifier implements ExecuteModifier {
     @Override
     public boolean isAbsolute() {
         return false;
+    }
+
+    @Override
+    public ExecutionVariableMap getUsedExecutionVariables() {
+        return new ExecutionVariableMap(ExecutionVariable.values());
+    }
+
+    @Override
+    public ExecutionVariableMap getModifiedExecutionVariables() {
+        return new ExecutionVariableMap(ExecutionVariable.values());
     }
 }
