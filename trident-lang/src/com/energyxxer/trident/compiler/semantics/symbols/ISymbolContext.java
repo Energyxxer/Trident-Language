@@ -1,7 +1,10 @@
 package com.energyxxer.trident.compiler.semantics.symbols;
 
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,5 +31,20 @@ public interface ISymbolContext {
     default ISymbolContext getContextForVisibility(Symbol.SymbolVisibility visibility) {
         if(visibility == Symbol.SymbolVisibility.GLOBAL) return getGlobalContext();
         return this;
+    }
+
+    default void assertLanguageLevel(int minLevel, String featureDesc, TokenPattern<?> pattern) {
+        assertLanguageLevel(minLevel, featureDesc, pattern, null);
+    }
+
+    default void assertLanguageLevel(int minLevel, String featureDesc, TokenPattern<?> pattern, ExceptionCollector collector) {
+        if(getStaticParentFile().getLanguageLevel() < minLevel) {
+            TridentException x = new TridentException(TridentException.Source.LANGUAGE_LEVEL_ERROR, featureDesc + " only supported in language level " + minLevel + (minLevel < 3 ? " and above": ""), pattern, this);
+            if(collector != null) {
+                collector.log(x);
+            } else {
+                throw x;
+            }
+        }
     }
 }

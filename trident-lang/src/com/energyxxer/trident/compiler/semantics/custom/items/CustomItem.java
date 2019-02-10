@@ -219,10 +219,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                                         }
 
                                         if (onWhat.getName().equals("ITEM_CRITERIA")) {
-                                            if (itemDecl != null && ctx.getStaticParentFile().getLanguageLevel() < 3) {
-                                                collector.log(new TridentException(TridentException.Source.LANGUAGE_LEVEL_ERROR, "Custom non-default item events are only supported in language level 3", entry, ctx));
-                                                break;
-                                            }
+                                            ctx.assertLanguageLevel(3, "Custom non-default item events are", entry, collector);
 
                                             ((ItemEventFile) ctx.getCompiler().getSpecialFileManager().get("item_events")).addCustomItem(ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()), defaultType, itemDecl, new ItemEvent(new FunctionReference(innerFile.getFunction()), pure));
 

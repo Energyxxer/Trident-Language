@@ -74,6 +74,7 @@ public class UsingInstruction implements Instruction {
     }
 
     private void usingSummon(TokenPattern<?> pattern, ISymbolContext ctx, TokenPattern<?> executionBlock) {
+        ctx.assertLanguageLevel(2, "The using-summon instruction is", pattern);
         FunctionSection function = ctx.getWritingFile().getFunction();
 
         String tag = CommonParsers.parseIdentifierA(pattern.find("USING_SUMMON_TAG_NAME.IDENTIFIER_A"), ctx);

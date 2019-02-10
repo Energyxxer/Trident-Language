@@ -28,9 +28,7 @@ public class TagParser implements CommandParser {
             case "remove":
                 return Collections.singletonList(new TagCommand(TagCommand.Action.REMOVE, entity, CommonParsers.parseIdentifierA(pattern.find("CHOICE.IDENTIFIER_A"), ctx)));
             case "update": {
-                if(ctx.getStaticParentFile().getLanguageLevel() < 2) {
-                    throw new TridentException(TridentException.Source.LANGUAGE_LEVEL_ERROR, "The tag-update subcommand is only supported in language level 2 and above", pattern, ctx);
-                }
+                ctx.assertLanguageLevel(2, "The tag-update subcommand is", pattern);
                 ArrayList<Command> commands = new ArrayList<>();
                 Entity removeFrom = entity instanceof Selector ? new Selector(((Selector) entity).getBase()) : new Selector(Selector.BaseSelector.ALL_PLAYERS);
                 String tag = CommonParsers.parseIdentifierA(pattern.find("CHOICE.IDENTIFIER_A"), ctx);

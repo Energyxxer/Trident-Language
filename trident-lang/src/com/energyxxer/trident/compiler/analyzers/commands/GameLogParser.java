@@ -11,7 +11,6 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListType;
-import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.special.GameLogFetcherFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -25,9 +24,7 @@ public class GameLogParser implements CommandParser {
 
     @Override
     public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(ctx.getStaticParentFile().getLanguageLevel() < 3) {
-            throw new TridentException(TridentException.Source.LANGUAGE_LEVEL_ERROR, "The gamelog command is only supported in language level 3", pattern, ctx);
-        }
+        ctx.assertLanguageLevel(3, "The gamelog command is", pattern);
 
         ArrayList<Command> commands = new ArrayList<>();
 
