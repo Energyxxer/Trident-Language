@@ -54,6 +54,7 @@ public class UsingInstruction implements Instruction {
     }
 
     private void usingTag(TokenPattern<?> pattern, ISymbolContext ctx, TokenPattern<?> executionBlock) {
+        ctx.assertLanguageLevel(2, "The using-tag instruction is", pattern);
         FunctionSection function = ctx.getWritingFile().getFunction();
 
         String tag = CommonParsers.parseIdentifierA(pattern.find("USING_TAG_NAME.IDENTIFIER_A"), ctx);
