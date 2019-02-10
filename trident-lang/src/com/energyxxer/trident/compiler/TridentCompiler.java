@@ -46,6 +46,7 @@ public class TridentCompiler {
 
     public static final String PROJECT_FILE_NAME = ".tdnproj";
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+    public static final String TRIDENT_LANGUAGE_VERSION = "0.4.1-alpha";
 
     //Resources
     private final DefinitionPack definitionPack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
@@ -257,11 +258,15 @@ public class TridentCompiler {
         progress = -1;
         this.setProgress("Generating data pack");
         {
-            try {
-                module.compile(new File(properties.get("datapack-output").getAsString()));
-            } catch(IOException x) {
-                logException(x);
-                finalizeCompilation();
+            if(properties.has("datapack-output") && properties.get("datapack-output").isJsonPrimitive() && properties.get("datapack-output").getAsJsonPrimitive().isString()) {
+                try {
+                    module.compile(new File(properties.get("datapack-output").getAsString()));
+                } catch(IOException x) {
+                    logException(x);
+                    finalizeCompilation();
+                }
+            } else {
+                this.report.addNotice(new Notice(NoticeType.ERROR, "Datapack output directory not specified"));
             }
         }
 
