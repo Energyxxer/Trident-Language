@@ -3,6 +3,9 @@ package com.energyxxer.enxlex.pattern_matching.matching.lazy;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.enxlex.suggestions.ComplexSuggestion;
+import com.energyxxer.enxlex.suggestions.SuggestionModule;
+import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.util.MethodInvocation;
 import com.energyxxer.util.Stack;
 
@@ -38,6 +41,37 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
         MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[]{"int"}, new Object[]{index});
         st.push(thisInvoc);
 
+        int popSuggestionStatus = 0;
+
+        if(lexer.getSuggestionModule() != null) {
+
+            if(tags.contains(SuggestionTags.ENABLED)) {
+                lexer.getSuggestionModule().pushStatus(SuggestionModule.SuggestionStatus.ENABLED);
+                popSuggestionStatus++;
+            } else if(tags.contains(SuggestionTags.DISABLED)) {
+                lexer.getSuggestionModule().pushStatus(SuggestionModule.SuggestionStatus.DISABLED);
+                popSuggestionStatus++;
+            }
+
+            if(lexer.getSuggestionModule().isAtFocusedIndex(index)) {
+                if(tags.contains(SuggestionTags.ENABLED_INDEX)) {
+                    lexer.getSuggestionModule().pushStatus(SuggestionModule.SuggestionStatus.ENABLED);
+                    popSuggestionStatus++;
+                } else if(tags.contains(SuggestionTags.DISABLED_INDEX)) {
+                    lexer.getSuggestionModule().pushStatus(SuggestionModule.SuggestionStatus.DISABLED);
+                    popSuggestionStatus++;
+                }
+            }
+
+            if(lexer.getSuggestionModule().isAtFocusedIndex(index) && lexer.getSuggestionModule().shouldSuggest()) {
+                for(String tag : tags) {
+                    if(tag.startsWith("csk:")) {
+                        lexer.getSuggestionModule().addSuggestion(new ComplexSuggestion(tag.substring("csk:".length())));
+                    }
+                }
+            }
+        }
+
         TokenMatchResponse longestMatch = null;
 
         if(entries.isEmpty()) throw new IllegalStateException("Cannot attempt match; TokenStructureMatch '" + this.name + "' is empty.");
@@ -58,6 +92,9 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
         }
 
         st.pop();
+        while(--popSuggestionStatus >= 0) {
+            lexer.getSuggestionModule().popStatus();
+        }
 
         if (longestMatch == null || longestMatch.matched) {
             return new TokenMatchResponse(true, null, (longestMatch == null) ? 0 : longestMatch.length, (longestMatch == null) ? null : new TokenStructure(this.name, longestMatch.pattern).addTags(this.tags));

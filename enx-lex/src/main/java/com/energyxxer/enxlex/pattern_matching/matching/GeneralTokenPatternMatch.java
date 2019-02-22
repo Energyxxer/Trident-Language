@@ -9,7 +9,6 @@ public abstract class GeneralTokenPatternMatch {
     public boolean optional;
     public List<String> tags = new ArrayList<>();
 
-
     public GeneralTokenPatternMatch addTags(String... newTags) {
         tags.addAll(Arrays.asList(newTags));
         return this;

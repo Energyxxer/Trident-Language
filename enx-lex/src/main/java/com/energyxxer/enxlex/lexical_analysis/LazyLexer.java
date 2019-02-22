@@ -10,6 +10,7 @@ import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenPatternMatch;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.enxlex.suggestions.SuggestionModule;
 import com.energyxxer.util.StringLocation;
 import com.energyxxer.util.StringLocationCache;
 
@@ -186,5 +187,11 @@ public class LazyLexer extends Lexer {
 
     public TokenMatchResponse getMatchResponse() {
         return matchResponse;
+    }
+
+    @Override
+    public void setSuggestionModule(SuggestionModule suggestionModule) {
+        super.setSuggestionModule(suggestionModule);
+        suggestionModule.setLexer(this);
     }
 }

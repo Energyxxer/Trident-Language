@@ -7,6 +7,7 @@ import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.*;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
+import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.util.logger.Debug;
 
@@ -105,6 +106,8 @@ public class TridentProductions {
         ANONYMOUS_INNER_FUNCTION = new LazyTokenStructureMatch("ANONYMOUS_INNER_FUNCTION");
         OPTIONAL_NAME_INNER_FUNCTION = new LazyTokenStructureMatch("OPTIONAL_NAME_INNER_FUNCTION");
         ENTRY = new LazyTokenStructureMatch("ENTRY");
+        ENTRY.addTags(SuggestionTags.ENABLED);
+        ENTRY.addTags(SuggestionTags.DISABLED_INDEX);
         COMMAND = new LazyTokenStructureMatch("COMMAND");
         INSTRUCTION = new LazyTokenStructureMatch("INSTRUCTION");
         MODIFIER = new LazyTokenStructureMatch("MODIFIER");
@@ -126,6 +129,7 @@ public class TridentProductions {
             INTERPOLATION_BLOCK = choice(
                     group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
             ).setName("INTERPOLATION_BLOCK");
+            INTERPOLATION_BLOCK.addTags(SuggestionTags.DISABLED);
 
             INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
             ROOT_INTERPOLATION_VALUE = new LazyTokenStructureMatch("ROOT_INTERPOLATION_VALUE");
@@ -155,7 +159,7 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(group(literal("new"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
             LazyTokenStructureMatch MEMBER_ACCESS = choice(
-                    group(dot(), identifierX().setName("MEMBER_NAME")).setName("MEMBER_KEY"),
+                    group(dot(), identifierX().setName("MEMBER_NAME").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.IDENTIFIER_MEMBER)).setName("MEMBER_KEY"),
                     group(brace("["), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("MEMBER_INDEX"),
                     group(brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL")
             ).setName("MEMBER_ACCESS");
@@ -1032,7 +1036,7 @@ public class TridentProductions {
         //endregion
         //region Block
         {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE");
+            LazyTokenGroupMatch g = (LazyTokenGroupMatch) new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BLOCK);
             g.append(new LazyTokenGroupMatch().append(BLOCK_ID).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE).setName("BLOCKSTATE_CLAUSE"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND).setName("NBT_CLAUSE"));
@@ -1857,7 +1861,9 @@ public class TridentProductions {
     }
 
     static LazyTokenItemMatch brace(String brace) {
-        return matchItem(BRACE, brace);
+        LazyTokenItemMatch item = matchItem(BRACE, brace);
+        item.addTags(SuggestionTags.DISABLED);
+        return item;
     }
 
     static LazyTokenItemMatch colon() {
@@ -1865,11 +1871,15 @@ public class TridentProductions {
     }
 
     static LazyTokenItemMatch comma() {
-        return ofType(COMMA).setName("COMMA");
+        LazyTokenItemMatch item = ofType(COMMA).setName("COMMA");
+        item.addTags(SuggestionTags.DISABLED);
+        return item;
     }
 
     static LazyTokenItemMatch dot() {
-        return ofType(DOT);
+        LazyTokenItemMatch item = ofType(DOT);
+        item.addTags(SuggestionTags.DISABLED);
+        return item;
     }
 
     static LazyTokenItemMatch equals() {
