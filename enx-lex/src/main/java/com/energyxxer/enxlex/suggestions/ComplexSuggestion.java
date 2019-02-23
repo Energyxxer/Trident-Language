@@ -1,9 +1,12 @@
 package com.energyxxer.enxlex.suggestions;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
 
 public class ComplexSuggestion extends Suggestion {
     private String key;
+    private ArrayList<String> tags = new ArrayList<>();
 
     public ComplexSuggestion(String key) {
         this.key = key;
@@ -29,5 +32,13 @@ public class ComplexSuggestion extends Suggestion {
 
     public String getKey() {
         return key;
+    }
+
+    public void addTag(String tag) {
+        tags.add(tag);
+    }
+
+    public Collection<String> getTags() {
+        return tags;
     }
 }

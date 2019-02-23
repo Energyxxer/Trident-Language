@@ -46,7 +46,7 @@ public class TridentCompiler {
 
     public static final String PROJECT_FILE_NAME = ".tdnproj";
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
-    public static final String TRIDENT_LANGUAGE_VERSION = "0.4.2-alpha";
+    public static final String TRIDENT_LANGUAGE_VERSION = "0.4.3-alpha";
 
     //Resources
     private final DefinitionPack definitionPack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;

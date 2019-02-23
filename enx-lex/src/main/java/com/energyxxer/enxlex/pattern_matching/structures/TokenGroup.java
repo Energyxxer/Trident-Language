@@ -139,26 +139,33 @@ public class TokenGroup extends TokenPattern<TokenPattern<?>[]> {
 		//Find start
 		for (TokenPattern<?> pattern : patterns) {
 			StringLocation loc = pattern.getStringLocation();
-			if(start == null) {
-				start = loc;
-				continue;
-			}
-			if(loc.index < start.index) {
-				start = loc;
+			if(loc != null) {
+				if (start == null) {
+					start = loc;
+					continue;
+				}
+				if (loc.index < start.index) {
+					start = loc;
+				}
 			}
 		}
+		if(start == null) return null;
 
 		//Find end
 		for (TokenPattern<?> pattern : patterns) {
-			StringLocation loc = pattern.getStringBounds().end;
-			if(end == null) {
-				end = loc;
-				continue;
-			}
-			if(loc.index > end.index) {
-				end = loc;
+			StringBounds bounds = pattern.getStringBounds();
+			if(bounds != null) {
+				if (end == null) {
+					end = bounds.end;
+					continue;
+				}
+				if (bounds.end.index > end.index) {
+					end = bounds.end;
+				}
 			}
 		}
+
+		if(end == null) return null;
 		return new StringBounds(start, end);
 	}
 

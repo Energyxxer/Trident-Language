@@ -27,7 +27,6 @@ public class TridentLexerProfile extends LexerProfile {
 
     static {
         usefulContexts.put(RESOURCE_LOCATION, new ResourceLocationContext("[a-z0-9_\\.-]","[a-z0-9_/\\.-]", RESOURCE_LOCATION));
-        usefulContexts.put(CASE_INSENSITIVE_RESOURCE_LOCATION, new ResourceLocationContext("[a-zA-Z0-9_\\.-]","[a-zA-Z0-9_/\\.-]", CASE_INSENSITIVE_RESOURCE_LOCATION));
     }
 
     public TridentLexerProfile() {
@@ -332,7 +331,6 @@ public class TridentLexerProfile extends LexerProfile {
 
         //Resource Locations
         contexts.add(usefulContexts.get(RESOURCE_LOCATION));
-        contexts.add(usefulContexts.get(CASE_INSENSITIVE_RESOURCE_LOCATION));
 
         //Comments
         contexts.add(new LexerContext() {

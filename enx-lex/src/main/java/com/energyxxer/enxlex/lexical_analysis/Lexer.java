@@ -1,5 +1,6 @@
 package com.energyxxer.enxlex.lexical_analysis;
 
+import com.energyxxer.enxlex.lexical_analysis.summary.SummaryModule;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.suggestions.SuggestionModule;
 import com.energyxxer.enxlex.report.Notice;
@@ -13,6 +14,7 @@ public abstract class Lexer {
     protected ArrayList<Notice> notices = new ArrayList<>();
 
     protected SuggestionModule suggestionModule = null;
+    protected SummaryModule summaryModule = null;
 
     public TokenStream getStream() {
         return stream;
@@ -28,5 +30,13 @@ public abstract class Lexer {
 
     public void setSuggestionModule(SuggestionModule suggestionModule) {
         this.suggestionModule = suggestionModule;
+    }
+
+    public SummaryModule getSummaryModule() {
+        return summaryModule;
+    }
+
+    public void setSummaryModule(SummaryModule summaryModule) {
+        this.summaryModule = summaryModule;
     }
 }

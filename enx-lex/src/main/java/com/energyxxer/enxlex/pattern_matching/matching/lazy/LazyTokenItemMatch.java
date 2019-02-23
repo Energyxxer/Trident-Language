@@ -7,8 +7,6 @@ import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
 import com.energyxxer.enxlex.suggestions.ComplexSuggestion;
 import com.energyxxer.enxlex.suggestions.LiteralSuggestion;
-import com.energyxxer.enxlex.suggestions.SuggestionModule;
-import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.util.MethodInvocation;
 import com.energyxxer.util.Stack;
 
@@ -54,36 +52,7 @@ public class LazyTokenItemMatch extends LazyTokenPatternMatch {
         }
         st.push(thisInvoc);
 
-        int popSuggestionStatus = 0;
-
-        if(lexer.getSuggestionModule() != null) {
-
-            if(tags.contains(SuggestionTags.ENABLED)) {
-                lexer.getSuggestionModule().pushStatus(SuggestionModule.SuggestionStatus.ENABLED);
-                popSuggestionStatus++;
-            } else if(tags.contains(SuggestionTags.DISABLED)) {
-                lexer.getSuggestionModule().pushStatus(SuggestionModule.SuggestionStatus.DISABLED);
-                popSuggestionStatus++;
-            }
-
-            if(lexer.getSuggestionModule().isAtFocusedIndex(index)) {
-                if(tags.contains(SuggestionTags.ENABLED_INDEX)) {
-                    lexer.getSuggestionModule().pushStatus(SuggestionModule.SuggestionStatus.ENABLED);
-                    popSuggestionStatus++;
-                } else if(tags.contains(SuggestionTags.DISABLED_INDEX)) {
-                    lexer.getSuggestionModule().pushStatus(SuggestionModule.SuggestionStatus.DISABLED);
-                    popSuggestionStatus++;
-                }
-            }
-
-            if(lexer.getSuggestionModule().isAtFocusedIndex(index) && lexer.getSuggestionModule().shouldSuggest()) {
-                for(String tag : tags) {
-                    if(tag.startsWith("csk:")) {
-                        lexer.getSuggestionModule().addSuggestion(new ComplexSuggestion(tag.substring("csk:".length())));
-                    }
-                }
-            }
-        }
+        int popSuggestionStatus = handleSuggestionTags(lexer, index);
 
         boolean matched;
         Token faultyToken = null;
@@ -116,6 +85,7 @@ public class LazyTokenItemMatch extends LazyTokenPatternMatch {
         while(--popSuggestionStatus >= 0) {
             lexer.getSuggestionModule().popStatus();
         }
+        if(matched) invokeProcessors(item, lexer);
         return new TokenMatchResponse(matched, faultyToken, length, (matched) ? null : this, item);
     }
 
