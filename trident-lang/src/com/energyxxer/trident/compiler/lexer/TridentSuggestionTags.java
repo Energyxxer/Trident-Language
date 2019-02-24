@@ -6,6 +6,8 @@ public class TridentSuggestionTags {
     public static final String IDENTIFIER_EXISTING = "csk:suggestion.trident.identifier.existing";
     public static final String IDENTIFIER_MEMBER = "suggestion.trident.identifier.member";
 
+    public static final String OBJECTIVE_EXISTING = "csk:suggestion.trident.objective.existing";
+
     public static final String BLOCK = "csk:suggestion.trident.block";
     public static final String ITEM = "csk:suggestion.trident.item";
     public static final String ENTITY_TYPE = "csk:suggestion.trident.entity_type";
@@ -18,4 +20,5 @@ public class TridentSuggestionTags {
     public static final String TAG_CUSTOM_ENTITY = "cst:custom_entity";
     public static final String TAG_ENTITY_FEATURE = "cst:entity_feature";
     public static final String TAG_CUSTOM_ITEM = "cst:custom_item";
+    public static final String TAG_OBJECTIVE = "cst:objective";
 }

@@ -10,6 +10,8 @@ import java.util.function.Function;
 public class TridentSummaryModule extends SummaryModule {
     private SummaryBlock fileBlock = new SummaryBlock();
 
+    private ArrayList<SummarySymbol> objectives = new ArrayList<>();
+
     private Stack<SummaryBlock> contextStack = new Stack<>();
 
     public TridentSummaryModule() {
@@ -24,6 +26,10 @@ public class TridentSummaryModule extends SummaryModule {
         contextStack.push(block);
     }
 
+    public void addObjective(SummarySymbol sym) {
+        objectives.add(sym);
+    }
+
     public SummaryBlock pop() {
         return contextStack.pop();
     }
@@ -35,6 +41,10 @@ public class TridentSummaryModule extends SummaryModule {
 
     public SummaryBlock peek() {
         return contextStack.peek();
+    }
+
+    public Collection<SummarySymbol> getObjectives() {
+        return objectives;
     }
 
     public Collection<SummarySymbol> getSymbolsVisibleAt(int index) {

@@ -706,7 +706,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "trigger"),
-                    group(identifierA()).setName("OBJECTIVE_NAME"),
+                    objectiveName(),
                     optional(choice("add", "set"), integer()).setName("INNER")
             ));
         }
@@ -770,20 +770,20 @@ public class TridentProductions {
                             group(literal("objectives"), choice(
                                     group(literal("add"), group(identifierA()).setName("OBJECTIVE_NAME"), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT)).setName("ADD"),
                                     literal("list").setName("LIST"),
-                                    group(literal("modify"), group(identifierA()).setName("OBJECTIVE"), choice(
+                                    group(literal("modify"), objectiveName(), choice(
                                             group(literal("displayname"), TEXT_COMPONENT).setName("DISPLAYNAME"),
                                             group(literal("rendertype"), choice("integer", "hearts")).setName("RENDERTYPE")
                                     )).setName("MODIFY"),
-                                    group(literal("remove"), group(identifierA()).setName("OBJECTIVE")).setName("REMOVE"),
-                                    group(literal("setdisplay"), group(identifierA()).setName("DISPLAY_SLOT"), optional(sameLine(), group(identifierA()).setName("OBJECTIVE")).setName("OBJECTIVE_CLAUSE")).setName("SETDISPLAY")
+                                    group(literal("remove"), objectiveName()).setName("REMOVE"),
+                                    group(literal("setdisplay"), group(identifierA()).setName("DISPLAY_SLOT"), optional(sameLine(), objectiveName()).setName("OBJECTIVE_CLAUSE")).setName("SETDISPLAY")
                             )).setName("OBJECTIVES"),
                             group(literal("players"), choice(
-                                    group(choice("add", "remove", "set"), ENTITY, group(identifierA()).setName("OBJECTIVE"), integer()).setName("CHANGE"),
-                                    group(literal("enable"), ENTITY, group(identifierA()).setName("OBJECTIVE")).setName("ENABLE"),
-                                    group(literal("get"), ENTITY, group(identifierA()).setName("OBJECTIVE")).setName("GET"),
+                                    group(choice("add", "remove", "set"), ENTITY, objectiveName(), integer()).setName("CHANGE"),
+                                    group(literal("enable"), ENTITY, objectiveName()).setName("ENABLE"),
+                                    group(literal("get"), ENTITY, objectiveName()).setName("GET"),
                                     group(literal("list"), optional(sameLine(), ENTITY)).setName("LIST"),
-                                    group(literal("operation"), group(ENTITY).setName("TARGET"), group(identifierA()).setName("TARGET_OBJECTIVE"), ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), group(ENTITY).setName("SOURCE"), group(identifierA()).setName("SOURCE_OBJECTIVE")).setName("OPERATION"),
-                                    group(literal("reset"), choice(ENTITY, symbol("*")).setName("TARGET"), optional(sameLine(), group(identifierA()).setName("OBJECTIVE")).setName("OBJECTIVE_CLAUSE")).setName("RESET")
+                                    group(literal("operation"), group(ENTITY).setName("TARGET"), objectiveName().setName("TARGET_OBJECTIVE"), ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), group(ENTITY).setName("SOURCE"), objectiveName().setName("SOURCE_OBJECTIVE")).setName("OPERATION"),
+                                    group(literal("reset"), choice(ENTITY, symbol("*")).setName("TARGET"), optional(sameLine(), objectiveName()).setName("OBJECTIVE_CLAUSE")).setName("RESET")
                             )).setName("PLAYERS")
                     )
             ));
@@ -959,9 +959,9 @@ public class TridentProductions {
                     choice(
                             group(literal("entity"), ENTITY).setName("ENTITY_CONDITION"),
                             group(literal("block"), COORDINATE_SET, BLOCK_TAGGED).setName("BLOCK_CONDITION"),
-                            group(literal("score"), ENTITY, group(identifierA()).setName("OBJECTIVE"), choice(
+                            group(literal("score"), ENTITY, objectiveName(), choice(
                                     matchItem(TridentTokens.CUSTOM_COMMAND_KEYWORD, "isset").setName("ISSET"),
-                                    group(choice(symbol("<"), symbol("<="), symbol("="), symbol(">="), symbol(">")).setName("OPERATOR"), ENTITY, group(identifierA()).setName("OBJECTIVE")).setName("COMPARISON"),
+                                    group(choice(symbol("<"), symbol("<="), symbol("="), symbol(">="), symbol(">")).setName("OPERATOR"), ENTITY, objectiveName()).setName("COMPARISON"),
                                     group(literal("matches"), INTEGER_NUMBER_RANGE).setName("MATCHES"))
                             ).setName("SCORE_CONDITION"),
                             group(literal("blocks"),
@@ -1012,7 +1012,7 @@ public class TridentProductions {
                             group(literal("block"), COORDINATE_SET, NBT_PATH, ofType(NUMERIC_DATA_TYPE).setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_BLOCK"),
                             group(literal("bossbar"), RESOURCE_LOCATION_S, choice("max", "value").setName("BOSSBAR_VARIABLE")).setName("STORE_BOSSBAR"),
                             group(literal("entity"), ENTITY, NBT_PATH, ofType(NUMERIC_DATA_TYPE).setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_ENTITY"),
-                            group(literal("score"), ENTITY, group(identifierA()).setName("OBJECTIVE")).setName("STORE_SCORE")
+                            group(literal("score"), ENTITY, objectiveName()).setName("STORE_SCORE")
                     )
             ));
         }
@@ -1390,7 +1390,7 @@ public class TridentProductions {
             LazyTokenPatternMatch scoreArgumentBlock = group(
                     brace("{"),
                     list(group(
-                            group(identifierA()).setName("OBJECTIVE_NAME"),
+                            objectiveName(),
                             equals(),
                             choice(matchItem(CUSTOM_COMMAND_KEYWORD, "isset").setName("ISSET"), INTEGER_NUMBER_RANGE).setName("SCORE_VALUE")
                     ).setName("SCORE_ENTRY"), comma()).setOptional().setName("SCORE_LIST"),
@@ -1653,7 +1653,7 @@ public class TridentProductions {
         LazyTokenPatternMatch scale = group(symbol("*"), real()).setOptional().setName("SCALE");
         LazyTokenPatternMatch typeCast = group(brace("("), ofType(NUMERIC_DATA_TYPE).setName("NUMERIC_DATA_TYPE"), brace(")")).setOptional().setName("TYPE_CAST");
 
-        LazyTokenGroupMatch scoreHead = group(ofType(ARROW), group(identifierA()).setName("OBJECTIVE"), scale).setName("SCORE_POINTER_HEAD");
+        LazyTokenGroupMatch scoreHead = group(ofType(ARROW), objectiveName(), scale).setName("SCORE_POINTER_HEAD");
         LazyTokenGroupMatch nbtHead = group(dot(), NBT_PATH, scale, typeCast).setName("NBT_POINTER_HEAD");
 
         LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead).setName("POINTER_HEAD");
@@ -1715,7 +1715,12 @@ public class TridentProductions {
             INSTRUCTION.add(
                     group(keyword("define").setName("INSTRUCTION_KEYWORD"),
                             choice(
-                                    group(literal("objective"), group(identifierA()).setName("OBJECTIVE_NAME"), optional(sameLine(), group(identifierB()).setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE"),
+                                    group(literal("objective"), group(identifierA()).setName("OBJECTIVE_NAME"), optional(sameLine(), group(identifierB()).setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE")
+                                            .addProcessor((p, l) -> {
+                                                if(l.getSummaryModule() != null) {
+                                                    ((TridentSummaryModule) l.getSummaryModule()).addObjective(new SummarySymbol(p.find("OBJECTIVE_NAME").flatten(false), p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_OBJECTIVE));
+                                                }
+                                            }),
                                     group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("entity"), choice(
                                             group(choice(identifierX(), literal("default")).setName("ENTITY_NAME"), choice(symbol("*"), ENTITY_ID_TAGGED).setName("ENTITY_BASE")).setName("CONCRETE_ENTITY_DECLARATION"),
                                             group(literal("feature"), group(identifierX()).setName("ENTITY_NAME")).setName("ABSTRACT_ENTITY_DECLARATION")
@@ -1724,11 +1729,23 @@ public class TridentProductions {
                                                 if(l.getSummaryModule() != null) {
                                                     String name = p.find("ENTITY_DECLARATION_HEADER.ENTITY_NAME").flatten(false);
                                                     if(!name.equals("default")) {
-                                                        ((TridentSummaryModule) l.getSummaryModule()).addElement(new SummarySymbol(name, p.getStringLocation().index).addTag(p.find("ENTITY_DECLARATION_HEADER.LITERAL_FEATURE") != null ? TridentSuggestionTags.TAG_ENTITY_FEATURE : TridentSuggestionTags.TAG_CUSTOM_ENTITY));
+                                                        SummarySymbol sym = new SummarySymbol(name, p.getStringLocation().index);
+                                                        sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
+                                                        sym.addTag(TridentSuggestionTags.TAG_CUSTOM_ENTITY);
+                                                        if(p.find("ENTITY_DECLARATION_HEADER.LITERAL_FEATURE") != null) sym.addTag(TridentSuggestionTags.TAG_ENTITY_FEATURE);
+                                                        ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                                     }
                                                 }
                                             }),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("item"), choice(identifierX(), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM"),
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("item"), choice(identifierX(), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM")
+                                            .addProcessor((p, l) -> {
+                                                if(l.getSummaryModule() != null) {
+                                                    String name = p.find("ITEM_NAME").flatten(false);
+                                                    if(!name.equals("default")) {
+                                                        ((TridentSummaryModule) l.getSummaryModule()).addElement(new SummarySymbol(name, p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_VARIABLE).addTag(TridentSuggestionTags.TAG_CUSTOM_ITEM));
+                                                    }
+                                                }
+                                            }),
                                     group(literal("function"), INNER_FUNCTION).setName("DEFINE_FUNCTION")
                             )
                     )
@@ -1749,7 +1766,7 @@ public class TridentProductions {
                             ).setName("VARIABLE_INITIALIZATION")
                     ).addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
-                            ((TridentSummaryModule) l.getSummaryModule()).addElement(new SummarySymbol(p.find("VARIABLE_NAME").flatten(false), p.getStringLocation().index));
+                            ((TridentSummaryModule) l.getSummaryModule()).addElement(new SummarySymbol(p.find("VARIABLE_NAME").flatten(false), p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_VARIABLE));
                         }
                     })
             );
@@ -1904,6 +1921,10 @@ public class TridentProductions {
         LazyTokenItemMatch item = ofType(DOT);
         item.addTags(SuggestionTags.DISABLED);
         return item;
+    }
+
+    LazyTokenPatternMatch objectiveName() {
+        return group(identifierA()).setName("OBJECTIVE_NAME").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.OBJECTIVE_EXISTING);
     }
 
     static LazyTokenItemMatch equals() {

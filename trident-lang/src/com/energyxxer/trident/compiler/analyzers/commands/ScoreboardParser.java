@@ -53,7 +53,7 @@ public class ScoreboardParser implements SimpleCommandParser {
                 return new ObjectivesListCommand();
             }
             case "MODIFY": {
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), ctx);
+                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE_NAME"), ctx);
                 TokenPattern<?> sub = ((TokenStructure)inner.find("CHOICE")).getContents();
                 switch(sub.getName()) {
                     case "DISPLAYNAME": {
@@ -68,7 +68,7 @@ public class ScoreboardParser implements SimpleCommandParser {
                 }
             }
             case "REMOVE": {
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), ctx);
+                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE_NAME"), ctx);
                 return new ObjectivesRemoveCommand(objective);
             }
             case "SETDISPLAY": {
@@ -76,7 +76,7 @@ public class ScoreboardParser implements SimpleCommandParser {
                 TokenPattern<?> objectiveClause = inner.find("OBJECTIVE_CLAUSE");
                 if(objectiveClause != null) {
                     return new SetObjectiveDisplayCommand(
-                            CommonParsers.parseObjective(objectiveClause.find("OBJECTIVE"), ctx),
+                            CommonParsers.parseObjective(objectiveClause.find("OBJECTIVE_NAME"), ctx),
                             displaySlot
                     );
                 }
@@ -93,7 +93,7 @@ public class ScoreboardParser implements SimpleCommandParser {
         switch(inner.getName()) {
             case "CHANGE": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), ctx);
+                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE_NAME"), ctx);
                 int amount = CommonParsers.parseInt(inner.find("INTEGER"), ctx);
 
                 if(inner.find("CHOICE.LITERAL_SET") != null) return new ScoreSet(new LocalScore(entity, objective), amount);
@@ -102,20 +102,20 @@ public class ScoreboardParser implements SimpleCommandParser {
             }
             case "ENABLE": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), ctx);
+                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE_NAME"), ctx);
                 try {
                     return new TriggerEnable(entity, objective);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, inner, ctx)
                             .map(CommodoreException.Source.ENTITY_ERROR, inner.find("ENTITY"))
-                            .map(CommodoreException.Source.TYPE_ERROR, inner.find("OBJECTIVE"))
+                            .map(CommodoreException.Source.TYPE_ERROR, inner.find("OBJECTIVE_NAME"))
                             .invokeThrow();
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
                 }
             }
             case "GET": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), ctx);
+                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE_NAME"), ctx);
                 try {
                     return new ScoreGet(new LocalScore(entity, objective));
                 } catch(CommodoreException x) {
@@ -151,7 +151,7 @@ public class ScoreboardParser implements SimpleCommandParser {
                 Entity entity = EntityParser.parseEntity(inner.find("TARGET.ENTITY"), ctx);
                 TokenPattern<?> objectiveClause = inner.find("OBJECTIVE_CLAUSE");
                 if(objectiveClause != null) {
-                    Objective objective = CommonParsers.parseObjective(objectiveClause.find("OBJECTIVE"), ctx);
+                    Objective objective = CommonParsers.parseObjective(objectiveClause.find("OBJECTIVE_NAME"), ctx);
                     if(entity != null) {
                         return new ScoreReset(entity, objective);
                     } else {

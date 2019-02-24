@@ -56,7 +56,7 @@ public class StoreParser implements SimpleModifierParser {
             }
             case "STORE_SCORE": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE"), ctx);
+                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE_NAME"), ctx);
                 return new ExecuteStoreScore(new LocalScore(entity, objective));
             }
             default: {

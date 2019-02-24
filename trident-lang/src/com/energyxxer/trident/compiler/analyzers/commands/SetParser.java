@@ -100,7 +100,7 @@ public class SetParser implements SimpleCommandParser {
                 if(pattern.find("SCALE") != null) {
                     scale = CommonParsers.parseDouble(pattern.find("SCALE.REAL"), ctx);
                 }
-                return new PointerHead.ScorePointerHead(CommonParsers.parseObjective(pattern.find("OBJECTIVE"), ctx), scale);
+                return new PointerHead.ScorePointerHead(CommonParsers.parseObjective(pattern.find("OBJECTIVE_NAME"), ctx), scale);
             case "NBT_POINTER_HEAD":
                 if(pattern.find("SCALE") != null) {
                     scale = CommonParsers.parseDouble(pattern.find("SCALE.REAL"), ctx);

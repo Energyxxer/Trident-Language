@@ -39,13 +39,13 @@ public class ConditionalParser implements SimpleModifierParser {
                 return new ExecuteConditionBlock(conditionType, CoordinateParser.parse(subject.find("COORDINATE_SET"), ctx), CommonParsers.parseBlock(subject.find("BLOCK_TAGGED"), ctx));
             }
             case "SCORE_CONDITION": {
-                LocalScore scoreA = new LocalScore(CommonParsers.parseObjective(subject.find("OBJECTIVE"), ctx), EntityParser.parseEntity(subject.find("ENTITY"), ctx));
+                LocalScore scoreA = new LocalScore(CommonParsers.parseObjective(subject.find("OBJECTIVE_NAME"), ctx), EntityParser.parseEntity(subject.find("ENTITY"), ctx));
                 TokenStructure choice = (TokenStructure) subject.find("CHOICE");
                 String branchName = choice.getContents().getName();
                 try {
                     switch(branchName) {
                         case "COMPARISON": {
-                            LocalScore scoreB = new LocalScore(CommonParsers.parseObjective(choice.find("OBJECTIVE"), ctx), EntityParser.parseEntity(choice.find("ENTITY"), ctx));
+                            LocalScore scoreB = new LocalScore(CommonParsers.parseObjective(choice.find("OBJECTIVE_NAME"), ctx), EntityParser.parseEntity(choice.find("ENTITY"), ctx));
                             String rawOp = choice.find("OPERATOR").flatten(false);
                             return new ExecuteConditionScoreComparison(conditionType, scoreA, ScoreComparison.getValueForSymbol(rawOp), scoreB);
                         }
