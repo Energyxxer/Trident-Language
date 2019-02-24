@@ -13,10 +13,10 @@ public class TeamArgumentParser implements SimpleSelectorArgumentParser {
     @Override
     public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> rawValue = pattern.find("IDENTIFIER_A");
-        String str = "";
+        TeamReference team = null;
         if(rawValue != null) {
-            str = CommonParsers.parseIdentifierA(rawValue, ctx);
+            team = new TeamReference(CommonParsers.parseIdentifierA(rawValue, ctx));
         }
-        return new TeamArgument(new TeamReference(str), pattern.find("NEGATED") != null);
+        return new TeamArgument(team, pattern.find("NEGATED") != null);
     }
 }
