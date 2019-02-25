@@ -16,6 +16,10 @@ public class TridentSuggestionTags {
     public static final String RESOURCE = "csk:suggestion.trident.resource";
     public static final String FUNCTION = "csk:suggestion.trident.function";
 
+    public static final String TAG_COMMAND = "cst:command";
+    public static final String TAG_MODIFIER = "cst:modifier";
+    public static final String TAG_INSTRUCTION = "cst:instruction";
+
     public static final String TAG_VARIABLE = "cst:variable";
     public static final String TAG_CUSTOM_ENTITY = "cst:custom_entity";
     public static final String TAG_ENTITY_FEATURE = "cst:entity_feature";

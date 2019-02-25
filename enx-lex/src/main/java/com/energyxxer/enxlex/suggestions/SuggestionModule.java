@@ -16,14 +16,16 @@ public class SuggestionModule {
     }
 
     private LazyLexer lexer;
-    private int focusedIndex;
+    private int suggestionIndex;
+    private int caretIndex;
 
     private Stack<SuggestionStatus> statusStack = new Stack<>();
 
     private Set<Suggestion> suggestions = new HashSet<>();
 
-    public SuggestionModule(int focusedIndex) {
-        this.focusedIndex = focusedIndex;
+    public SuggestionModule(int suggestionIndex, int caretIndex) {
+        this.suggestionIndex = suggestionIndex;
+        this.caretIndex = caretIndex;
     }
 
     public void addSuggestion(Suggestion prediction) {
@@ -34,8 +36,12 @@ public class SuggestionModule {
         return suggestions;
     }
 
-    public int getFocusedIndex() {
-        return focusedIndex;
+    public int getSuggestionIndex() {
+        return suggestionIndex;
+    }
+
+    public int getCaretIndex() {
+        return caretIndex;
     }
 
     public Lexer getLexer() {
@@ -46,8 +52,8 @@ public class SuggestionModule {
         this.lexer = lexer;
     }
 
-    public boolean isAtFocusedIndex(int index) {
-        return focusedIndex >= index && focusedIndex <= lexer.getLookingIndexTrimmed();
+    public boolean isAtSuggestionIndex(int index) {
+        return suggestionIndex >= index && suggestionIndex <= lexer.getLookingIndexTrimmed();
     }
 
     public boolean shouldSuggest() {

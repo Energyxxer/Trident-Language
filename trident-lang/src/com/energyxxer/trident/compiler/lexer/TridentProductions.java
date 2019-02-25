@@ -1713,7 +1713,7 @@ public class TridentProductions {
             ).setOptional().setName("ITEM_DECLARATION_BODY");
 
             INSTRUCTION.add(
-                    group(keyword("define").setName("INSTRUCTION_KEYWORD"),
+                    group(instructionKeyword("define"),
                             choice(
                                     group(literal("objective"), group(identifierA()).setName("OBJECTIVE_NAME"), optional(sameLine(), group(identifierB()).setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE")
                                             .addProcessor((p, l) -> {
@@ -1759,7 +1759,7 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), keyword("var").setName("INSTRUCTION_KEYWORD"),
+                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), instructionKeyword("var"),
                             identifierX().setName("VARIABLE_NAME"),
                             choice(
                                     group(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))
@@ -1774,7 +1774,7 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(literal("within").setName("INSTRUCTION_KEYWORD"),
+                    group(instructionKeyword("within"),
                             identifierX().setName("VARIABLE_NAME"),
                             group(COORDINATE_SET).setName("FROM"), group(COORDINATE_SET).setName("TO"), optional(literal("step"), real()).setName("STEP"), ANONYMOUS_INNER_FUNCTION
                     )
@@ -1783,7 +1783,7 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(literal("using").setName("INSTRUCTION_KEYWORD"),
+                    group(instructionKeyword("using"),
                             choice(
                                     group(literal("tag"), group(identifierA()).setName("USING_TAG_NAME"), ENTITY, list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_TAG"),
                                     group(literal("summon"), ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("FEATURE_LIST"), brace("]")).setName("IMPLEMENTED_FEATURES"), optional(COORDINATE_SET, optional(NBT_COMPOUND)), literal("with"), group(identifierA()).setName("USING_SUMMON_TAG_NAME"), list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_SUMMON")
@@ -1797,7 +1797,7 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(literal("eval").setName("INSTRUCTION_KEYWORD"), LINE_SAFE_INTERPOLATION_VALUE)
+                    group(instructionKeyword("eval"), LINE_SAFE_INTERPOLATION_VALUE)
             );
         }
 
@@ -1808,7 +1808,7 @@ public class TridentProductions {
             ).setName("LOOP_HEADER");
 
             INSTRUCTION.add(
-                    group(blockLabel, keyword("for").setName("INSTRUCTION_KEYWORD"), brace("("), FOR_HEADER, brace(")"), ANONYMOUS_INNER_FUNCTION)
+                    group(blockLabel, instructionKeyword("for"), brace("("), FOR_HEADER, brace(")"), ANONYMOUS_INNER_FUNCTION)
             );
         }
 
@@ -1818,19 +1818,19 @@ public class TridentProductions {
             ).setName("LOOP_HEADER");
 
             INSTRUCTION.add(
-                    group(blockLabel, keyword("while").setName("INSTRUCTION_KEYWORD"), brace("("), WHILE_HEADER, brace(")"), ANONYMOUS_INNER_FUNCTION)
+                    group(blockLabel, instructionKeyword("while"), brace("("), WHILE_HEADER, brace(")"), ANONYMOUS_INNER_FUNCTION)
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(keyword("do"), keyword("if").setName("INSTRUCTION_KEYWORD"), brace("("), group(INTERPOLATION_VALUE).setName("CONDITION"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), optional(keyword("else"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("ELSE_CLAUSE"))
+                    group(keyword("do"), instructionKeyword("if"), brace("("), group(INTERPOLATION_VALUE).setName("CONDITION"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), optional(keyword("else"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("ELSE_CLAUSE"))
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(blockLabel, keyword("switch").setName("INSTRUCTION_KEYWORD"), brace("("), group(INTERPOLATION_VALUE).setName("SWITCH_VALUE"), brace(")"),
+                    group(blockLabel, instructionKeyword("switch"), brace("("), group(INTERPOLATION_VALUE).setName("SWITCH_VALUE"), brace(")"),
                             brace("{"),
                             list(
                                     group(
@@ -1845,37 +1845,37 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(keyword("try").setName("INSTRUCTION_KEYWORD"), literal("recovering").setOptional(), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), group(keyword("catch"), brace("("), identifierX().setName("EXCEPTION_VARIABLE"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("CATCH_CLAUSE"))
+                    group(instructionKeyword("try"), literal("recovering").setOptional(), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), group(instructionKeyword("catch"), brace("("), identifierX().setName("EXCEPTION_VARIABLE"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("CATCH_CLAUSE"))
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(literal("throw").setName("INSTRUCTION_KEYWORD"), LINE_SAFE_INTERPOLATION_VALUE)
+                    group(instructionKeyword("throw"), LINE_SAFE_INTERPOLATION_VALUE)
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(literal("log").setName("INSTRUCTION_KEYWORD"), choice("info", "warning", "error").setName("NOTICE_GROUP"), LINE_SAFE_INTERPOLATION_VALUE)
+                    group(instructionKeyword("log"), choice("info", "warning", "error").setName("NOTICE_GROUP"), LINE_SAFE_INTERPOLATION_VALUE)
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(literal("return").setName("INSTRUCTION_KEYWORD"), optional(LINE_SAFE_INTERPOLATION_VALUE).setName("RETURN_VALUE"))
+                    group(instructionKeyword("return"), optional(LINE_SAFE_INTERPOLATION_VALUE).setName("RETURN_VALUE"))
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(literal("break").setName("INSTRUCTION_KEYWORD"), identifierX().setName("BREAK_LABEL").setOptional())
+                    group(instructionKeyword("break"), identifierX().setName("BREAK_LABEL").setOptional())
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(literal("continue").setName("INSTRUCTION_KEYWORD"), identifierX().setName("CONTINUE_LABEL").setOptional())
+                    group(instructionKeyword("continue"), identifierX().setName("CONTINUE_LABEL").setOptional())
             );
         }
         //endregion
@@ -1897,8 +1897,20 @@ public class TridentProductions {
         return matchItem(KEYWORD, text).setName("KEYWORD_" + text.toUpperCase());
     }
 
+    static LazyTokenItemMatch instructionKeyword(String text) {
+        LazyTokenItemMatch item = keyword(text).setName("INSTRUCTION_KEYWORD");
+        item.addTags(TridentSuggestionTags.TAG_INSTRUCTION);
+        return item;
+    }
+
     static LazyTokenItemMatch matchItem(TokenType type, String text) {
-        return new LazyTokenItemMatch(type, text).setName("ITEM_MATCH");
+        LazyTokenItemMatch item = new LazyTokenItemMatch(type, text).setName("ITEM_MATCH");
+        if(type == COMMAND_HEADER) {
+            item.addTags(TridentSuggestionTags.TAG_COMMAND);
+        } else if(type == MODIFIER_HEADER) {
+            item.addTags(TridentSuggestionTags.TAG_MODIFIER);
+        }
+        return item;
     }
 
     static LazyTokenItemMatch brace(String brace) {

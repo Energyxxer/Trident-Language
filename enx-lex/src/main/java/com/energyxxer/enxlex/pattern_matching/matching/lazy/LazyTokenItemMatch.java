@@ -57,9 +57,15 @@ public class LazyTokenItemMatch extends LazyTokenPatternMatch {
         boolean matched;
         Token faultyToken = null;
 
-        if(lexer.getSuggestionModule() != null && lexer.getSuggestionModule().shouldSuggest() && lexer.getSuggestionModule().isAtFocusedIndex(index)) {
+        if(lexer.getSuggestionModule() != null && lexer.getSuggestionModule().shouldSuggest() && lexer.getSuggestionModule().isAtSuggestionIndex(index)) {
             if(this.stringMatch != null) {
-                lexer.getSuggestionModule().addSuggestion(new LiteralSuggestion(this.stringMatch));
+                LiteralSuggestion suggestion = new LiteralSuggestion(this.stringMatch);
+                lexer.getSuggestionModule().addSuggestion(suggestion);
+                for(String tag : this.tags) {
+                    if(tag.startsWith("cst:")) {
+                        suggestion.addTag(tag);
+                    }
+                }
             } else {
                 lexer.getSuggestionModule().addSuggestion(new ComplexSuggestion(this.type.toString()));
             }

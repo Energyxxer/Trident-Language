@@ -59,7 +59,7 @@ public abstract class LazyTokenPatternMatch extends GeneralTokenPatternMatch {
                 popSuggestionStatus++;
             }
 
-            if(lexer.getSuggestionModule().isAtFocusedIndex(index)) {
+            if(lexer.getSuggestionModule().isAtSuggestionIndex(index) && lexer.getSuggestionModule().getCaretIndex() == lexer.getSuggestionModule().getSuggestionIndex()) {
                 if(tags.contains(SuggestionTags.ENABLED_INDEX)) {
                     lexer.getSuggestionModule().pushStatus(SuggestionModule.SuggestionStatus.ENABLED);
                     popSuggestionStatus++;
@@ -69,7 +69,7 @@ public abstract class LazyTokenPatternMatch extends GeneralTokenPatternMatch {
                 }
             }
 
-            if(lexer.getSuggestionModule().isAtFocusedIndex(index) && lexer.getSuggestionModule().shouldSuggest()) {
+            if(lexer.getSuggestionModule().isAtSuggestionIndex(index) && lexer.getSuggestionModule().shouldSuggest()) {
                 ComplexSuggestion complexSuggestion = null;
                 for(String tag : tags) {
                     if(tag.startsWith("csk:")) {
