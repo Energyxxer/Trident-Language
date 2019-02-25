@@ -18,6 +18,7 @@ public class ObjectiveCreationFile extends SpecialFile {
     protected void compile() {
         parent.getCompiler().getModule().getObjectiveManager().setCreationFunction(this.function);
         Tag loadTag = parent.getCompiler().getModule().minecraft.tags.functionTags.create("load");
+        loadTag.setExport(true);
         loadTag.addValue(new FunctionReference(this.function));
     }
 }

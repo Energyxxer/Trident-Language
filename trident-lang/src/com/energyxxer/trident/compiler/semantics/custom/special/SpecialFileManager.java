@@ -3,6 +3,7 @@ package com.energyxxer.trident.compiler.semantics.custom.special;
 import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.module.Namespace;
+import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
@@ -33,7 +34,9 @@ public class SpecialFileManager {
 
         tickFunction = new Lazy<>(() -> {
             Function function = getNamespace().functions.create("trident/tick");
-            compiler.getModule().minecraft.tags.functionTags.create("tick").addValue(new FunctionReference(function));
+            Tag tag = compiler.getModule().minecraft.tags.functionTags.create("tick");
+            tag.setExport(true);
+            tag.addValue(new FunctionReference(function));
             return function;
         });
     }

@@ -382,6 +382,7 @@ public class TridentCompiler {
         for(TagGroup<?> group : namespace.tags.getGroups()) {
             if(group.getDirectoryName().equals(tagDir)) {
                 Tag tag = group.create(tagName);
+                tag.setExport(true);
                 Debug.log("Created tag " + tag);
                 tag.setExport(true);
 
@@ -400,6 +401,7 @@ public class TridentCompiler {
 
                     if(isTag) {
                         Tag created = module.createNamespace(loc.namespace).getTagManager().getGroup(group.getCategory()).create(loc.body);
+                        created.setExport(true);
                         tag.addValue(created);
                     } else {
                         Type created;

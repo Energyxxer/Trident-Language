@@ -211,7 +211,11 @@ public class TridentFile extends SymbolContext {
         if(!valid) return;
         if(entriesResolved) return;
 
-        if(function != null) tags.forEach(l -> module.createNamespace(l.namespace).tags.functionTags.create(l.body).addValue(new FunctionReference(this.function)));
+        if(function != null) tags.forEach(l -> {
+            Tag tag = module.createNamespace(l.namespace).tags.functionTags.create(l.body);
+            tag.setExport(true);
+            tag.addValue(new FunctionReference(this.function));
+        });
 
         resolveEntries((TokenList) this.pattern.find(".ENTRIES"), this, function, compileOnly);
     }
@@ -280,6 +284,7 @@ public class TridentFile extends SymbolContext {
 
         if(creating) {
             Tag tickTag = compiler.getModule().minecraft.tags.functionTags.create("tick");
+            tickTag.setExport(true);
             tickTag.addValue(new FunctionReference(tickFunction));
         }
         return tickFunction;
