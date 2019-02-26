@@ -3,10 +3,7 @@ package com.energyxxer.enxlex.suggestions;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 public class SuggestionModule {
 
@@ -21,7 +18,7 @@ public class SuggestionModule {
 
     private Stack<SuggestionStatus> statusStack = new Stack<>();
 
-    private Set<Suggestion> suggestions = new HashSet<>();
+    private ArrayList<Suggestion> suggestions = new ArrayList<>();
 
     public SuggestionModule(int suggestionIndex, int caretIndex) {
         this.suggestionIndex = suggestionIndex;
@@ -29,10 +26,10 @@ public class SuggestionModule {
     }
 
     public void addSuggestion(Suggestion prediction) {
-        suggestions.add(prediction);
+        if(!suggestions.contains(prediction)) suggestions.add(prediction);
     }
 
-    public Collection<Suggestion> getSuggestions() {
+    public List<Suggestion> getSuggestions() {
         return suggestions;
     }
 

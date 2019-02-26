@@ -69,12 +69,12 @@ public abstract class LazyTokenPatternMatch extends GeneralTokenPatternMatch {
                 }
             }
 
-            if(lexer.getSuggestionModule().isAtSuggestionIndex(index) && lexer.getSuggestionModule().shouldSuggest()) {
+            if(lexer.getSuggestionModule().isAtSuggestionIndex(index)) {
                 ComplexSuggestion complexSuggestion = null;
                 for(String tag : tags) {
-                    if(tag.startsWith("csk:")) {
+                    if((tag.startsWith("csk:") && lexer.getSuggestionModule().shouldSuggest()) || tag.startsWith("ctx:")) {
                         lexer.getSuggestionModule().addSuggestion(complexSuggestion = new ComplexSuggestion(tag));
-                    } else if(tag.startsWith("cst:") && complexSuggestion != null) {
+                    } else if(tag.startsWith("cst:") && complexSuggestion != null && lexer.getSuggestionModule().shouldSuggest()) {
                         complexSuggestion.addTag(tag);
                     }
                 }

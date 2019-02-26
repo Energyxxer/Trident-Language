@@ -111,9 +111,12 @@ public class TridentProductions {
         ENTRY = new LazyTokenStructureMatch("ENTRY");
         ENTRY.addTags(SuggestionTags.ENABLED);
         ENTRY.addTags(SuggestionTags.DISABLED_INDEX);
+        ENTRY.addTags(TridentSuggestionTags.CONTEXT_ENTRY);
         COMMAND = new LazyTokenStructureMatch("COMMAND");
+        COMMAND.addTags(TridentSuggestionTags.CONTEXT_COMMAND);
         INSTRUCTION = new LazyTokenStructureMatch("INSTRUCTION");
         MODIFIER = new LazyTokenStructureMatch("MODIFIER");
+        MODIFIER.addTags(TridentSuggestionTags.CONTEXT_MODIFIER);
         TEXT_COMPONENT = new LazyTokenStructureMatch("TEXT_COMPONENT");
         SELECTOR = new LazyTokenStructureMatch("SELECTOR");
         SELECTOR_ARGUMENT = new LazyTokenStructureMatch("SELECTOR_ARGUMENT");
@@ -135,6 +138,7 @@ public class TridentProductions {
             INTERPOLATION_BLOCK.addTags(SuggestionTags.DISABLED);
 
             INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
+            INTERPOLATION_VALUE.addTags(TridentSuggestionTags.CONTEXT_INTERPOLATION_VALUE);
             ROOT_INTERPOLATION_VALUE = new LazyTokenStructureMatch("ROOT_INTERPOLATION_VALUE");
             LINE_SAFE_INTERPOLATION_VALUE = new LazyTokenStructureMatch("LINE_SAFE_INTERPOLATION_VALUE");
 
@@ -1684,6 +1688,7 @@ public class TridentProductions {
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(choice(group(literal("ticking"), list(MODIFIER).setOptional().setName("TICKING_MODIFIERS")).setName("TICKING_ENTITY_FUNCTION")).setOptional().setName("ENTITY_FUNCTION_MODIFIER"), literal("function"), OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_INNER_FUNCTION")
             );
+            entityBodyEntry.addTags(TridentSuggestionTags.CONTEXT_ENTITY_BODY);
 
             LazyTokenPatternMatch entityBody = group(
                     brace("{"),
@@ -1705,6 +1710,7 @@ public class TridentProductions {
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(literal("default"), literal("lore"), brace("["), list(TEXT_COMPONENT, comma()).setOptional().setName("LORE_LIST"), brace("]")).setName("DEFAULT_LORE")
             );
+            itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_ITEM_BODY);
 
             LazyTokenPatternMatch itemBody = group(
                     brace("{"),

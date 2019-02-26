@@ -3,9 +3,15 @@ package com.energyxxer.enxlex.suggestions;
 import java.util.Objects;
 
 public class LiteralSuggestion extends Suggestion {
+    private String preview;
     private String literal;
 
     public LiteralSuggestion(String literal) {
+        this(literal, literal);
+    }
+
+    public LiteralSuggestion(String preview, String literal) {
+        this.preview = preview;
         this.literal = literal;
     }
 
@@ -29,5 +35,9 @@ public class LiteralSuggestion extends Suggestion {
 
     public String getLiteral() {
         return literal;
+    }
+
+    public String getPreview() {
+        return preview;
     }
 }

@@ -16,6 +16,16 @@ public class TridentSuggestionTags {
     public static final String RESOURCE = "csk:suggestion.trident.resource";
     public static final String FUNCTION = "csk:suggestion.trident.function";
 
+
+    public static final String CONTEXT_ENTRY = "ctx:trident.entry";
+    public static final String CONTEXT_COMMAND = "ctx:trident.command";
+    public static final String CONTEXT_MODIFIER = "ctx:trident.modifier";
+    public static final String CONTEXT_ENTITY_BODY = "ctx:trident.entity_body";
+    public static final String CONTEXT_ITEM_BODY = "ctx:trident.item_body";
+    public static final String CONTEXT_INTERPOLATION_VALUE = "ctx:trident.interpolation_value";
+
+
+
     public static final String TAG_COMMAND = "cst:command";
     public static final String TAG_MODIFIER = "cst:modifier";
     public static final String TAG_INSTRUCTION = "cst:instruction";
