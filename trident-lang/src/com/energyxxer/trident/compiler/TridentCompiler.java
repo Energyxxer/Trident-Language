@@ -525,7 +525,7 @@ public class TridentCompiler {
         return outResourceCache;
     }
 
-    public void setResourceCache(HashMap<File, ParsingSignature> cache) {
+    public void setSourceCache(HashMap<File, ParsingSignature> cache) {
         if(cache != null)
         this.filePatterns = cache;
     }
