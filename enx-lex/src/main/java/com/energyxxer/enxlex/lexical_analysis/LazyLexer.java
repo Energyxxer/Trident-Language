@@ -39,6 +39,8 @@ public class LazyLexer extends Lexer {
         this.fileContents = str;
         this.profile = profile;
 
+        if(getSummaryModule() != null) getSummaryModule().onStart();
+
         lineCache.setText(fileContents);
         lineCache.prepopulate();
 
@@ -67,6 +69,8 @@ public class LazyLexer extends Lexer {
             Token eof = new Token("", TokenType.END_OF_FILE, file, lineCache.getLocationForOffset(fileContents.length()));
             stream.write(eof);
         }
+
+        if(getSummaryModule() != null) getSummaryModule().onEnd();
     }
 
     public int getCurrentIndex() {

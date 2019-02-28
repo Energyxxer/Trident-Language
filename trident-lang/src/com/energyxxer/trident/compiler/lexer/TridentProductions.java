@@ -7,13 +7,17 @@ import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.*;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.lexer.summaries.SummarySymbol;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.AliasType;
+import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.logger.Debug;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
@@ -135,35 +139,37 @@ public class TridentProductions {
             INTERPOLATION_BLOCK = choice(
                     group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
             ).setName("INTERPOLATION_BLOCK");
-            INTERPOLATION_BLOCK.addTags(SuggestionTags.DISABLED);
+            INTERPOLATION_BLOCK.addTags(SuggestionTags.DISABLED_INDEX);
 
             INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
+            INTERPOLATION_VALUE.addTags(SuggestionTags.ENABLED);
             INTERPOLATION_VALUE.addTags(TridentSuggestionTags.CONTEXT_INTERPOLATION_VALUE);
             ROOT_INTERPOLATION_VALUE = new LazyTokenStructureMatch("ROOT_INTERPOLATION_VALUE");
+            ROOT_INTERPOLATION_VALUE.addTags(SuggestionTags.DISABLED_INDEX);
             LINE_SAFE_INTERPOLATION_VALUE = new LazyTokenStructureMatch("LINE_SAFE_INTERPOLATION_VALUE");
 
-            ROOT_INTERPOLATION_VALUE.add(identifierX().setName("VARIABLE_NAME").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE));
+            ROOT_INTERPOLATION_VALUE.add(identifierX().setName("VARIABLE_NAME").addTags(TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE));
             ROOT_INTERPOLATION_VALUE.add(ofType(REAL_NUMBER).setName("RAW_REAL"));
             ROOT_INTERPOLATION_VALUE.add(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"));
             ROOT_INTERPOLATION_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
             ROOT_INTERPOLATION_VALUE.add(ofType(STRING_LITERAL).setName("STRING_LITERAL"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("entity").addTags(SuggestionTags.DISABLED_INDEX), brace("<"), ENTITY, brace(">")).setName("WRAPPED_ENTITY"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("block").addTags(SuggestionTags.DISABLED_INDEX), brace("<"), BLOCK_TAGGED, brace(">")).setName("WRAPPED_BLOCK"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("item").addTags(SuggestionTags.DISABLED_INDEX), brace("<"), ITEM_TAGGED, brace(">")).setName("WRAPPED_ITEM"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("text_component").addTags(SuggestionTags.DISABLED_INDEX), brace("<"), TEXT_COMPONENT, brace(">")).setName("WRAPPED_TEXT_COMPONENT"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt").addTags(SuggestionTags.DISABLED_INDEX), brace("<"), NBT_COMPOUND, brace(">")).setName("WRAPPED_NBT"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_value").addTags(SuggestionTags.DISABLED_INDEX), brace("<"), NBT_VALUE, brace(">")).setName("WRAPPED_NBT_VALUE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_path").addTags(SuggestionTags.DISABLED_INDEX), brace("<"), NBT_PATH, brace(">")).setName("WRAPPED_NBT_PATH"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("coordinates").addTags(SuggestionTags.DISABLED_INDEX), brace("<"), COORDINATE_SET, brace(">")).setName("WRAPPED_COORDINATE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("int_range").addTags(SuggestionTags.DISABLED_INDEX), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("real_range").addTags(SuggestionTags.DISABLED_INDEX), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("resource").addTags(SuggestionTags.DISABLED_INDEX), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("entity"), brace("<"), ENTITY, brace(">")).setName("WRAPPED_ENTITY"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("block"), brace("<"), BLOCK_TAGGED, brace(">")).setName("WRAPPED_BLOCK"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("item"), brace("<"), ITEM_TAGGED, brace(">")).setName("WRAPPED_ITEM"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("text_component"), brace("<"), TEXT_COMPONENT, brace(">")).setName("WRAPPED_TEXT_COMPONENT"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt"), brace("<"), NBT_COMPOUND, brace(">")).setName("WRAPPED_NBT"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_value"), brace("<"), NBT_VALUE, brace(">")).setName("WRAPPED_NBT_VALUE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_path"), brace("<"), NBT_PATH, brace(">")).setName("WRAPPED_NBT_PATH"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("coordinates"), brace("<"), COORDINATE_SET, brace(">")).setName("WRAPPED_COORDINATE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("int_range"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("real_range"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("resource"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
             ROOT_INTERPOLATION_VALUE.add(DICTIONARY);
             ROOT_INTERPOLATION_VALUE.add(LIST);
             ROOT_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
             ROOT_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("function").addTags(SuggestionTags.DISABLED_INDEX), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("new").addTags(SuggestionTags.DISABLED_INDEX), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("function"), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("new"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
             LazyTokenStructureMatch MEMBER_ACCESS = choice(
                     group(dot(), identifierX().setName("MEMBER_NAME").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.IDENTIFIER_MEMBER)).setName("MEMBER_KEY"),
@@ -229,10 +235,26 @@ public class TridentProductions {
             LazyTokenStructureMatch directiveBody = new LazyTokenStructureMatch("DIRECTIVE_BODY");
 
             DIRECTIVE = group(ofType(DIRECTIVE_HEADER), directiveBody).setName("DIRECTIVE");
+            DIRECTIVE.addTags(SuggestionTags.ENABLED);
 
-            directiveBody.add(group(literal("on").setName("DIRECTIVE_LABEL"), ofType(DIRECTIVE_ON_KEYWORD)).setName("ON_DIRECTIVE"));
-            directiveBody.add(group(literal("tag").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION)).setName("TAG_DIRECTIVE"));
-            directiveBody.add(group(literal("require").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION)).setName("REQUIRE_DIRECTIVE"));
+            directiveBody.add(group(literal("on").setName("DIRECTIVE_LABEL"), literal("compile")
+                    .addProcessor((p, l) -> {
+                        if(l.getSummaryModule() != null) {
+                            ((TridentSummaryModule) l.getSummaryModule()).setCompileOnly();
+                        }
+                    })).setName("ON_DIRECTIVE"));
+            directiveBody.add(group(literal("tag").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION)
+                    .addProcessor((p, l) -> {
+                        if(l.getSummaryModule() != null) {
+                            ((TridentSummaryModule) l.getSummaryModule()).addFunctionTag(new TridentUtil.ResourceLocation(p.flatten(false)));
+                        }
+                    })).setName("TAG_DIRECTIVE"));
+            directiveBody.add(group(literal("require").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION)
+                    .addProcessor((p, l) -> {
+                        if(l.getSummaryModule() != null) {
+                            ((TridentSummaryModule) l.getSummaryModule()).addRequires(new TridentUtil.ResourceLocation(p.flatten(false)));
+                        }
+                    })).setName("REQUIRE_DIRECTIVE"));
             directiveBody.add(group(literal("priority").setName("DIRECTIVE_LABEL"), real()).setName("PRIORITY_DIRECTIVE"));
             directiveBody.add(group(literal("language_level").setName("DIRECTIVE_LABEL"), integer()).setName("LANGUAGE_LEVEL_DIRECTIVE"));
             directiveBody.add(group(literal("metadata").setName("DIRECTIVE_LABEL"), DICTIONARY).setName("METADATA_DIRECTIVE"));
@@ -240,7 +262,12 @@ public class TridentProductions {
 
         {
             LazyTokenListMatch l = new LazyTokenListMatch(optional(ENTRY, ofType(TokenType.NEWLINE).setOptional().setName("LINE_PADDING")), true).setName("ENTRIES");
-            FILE_INNER.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l).addProcessor(
+            FILE_INNER.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES"))
+                    .addProcessor((p, lx) -> {
+                        if(lx.getSummaryModule() != null) {
+                            ((TridentSummaryModule) lx.getSummaryModule()).lockDirectives();
+                        }
+                    }), ofType(NO_TOKEN).setName("FILE_START_MARKER"), l).addProcessor(
                     (p, lx) -> {
                         if(lx.getSummaryModule() != null) {
                             StringBounds bounds = p.getStringBounds();
@@ -1647,7 +1674,7 @@ public class TridentProductions {
             }
 
         } catch (Exception x) {
-            Debug.log("Error in loading standard definition pack for Minecraft Java Edition 1.13: " + x.getMessage(), Debug.MessageType.ERROR);
+            Debug.log("Error in loading standard definition pack for Minecraft Java Edition 1.14: " + x.getClass() + ": " + x.getMessage() + "\n" + Arrays.toString(x.getStackTrace()), Debug.MessageType.ERROR);
         }
         //endregion
 
@@ -1724,7 +1751,7 @@ public class TridentProductions {
                                     group(literal("objective"), group(identifierA()).setName("OBJECTIVE_NAME"), optional(sameLine(), group(identifierB()).setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
-                                                    ((TridentSummaryModule) l.getSummaryModule()).addObjective(new SummarySymbol(p.find("OBJECTIVE_NAME").flatten(false), p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_OBJECTIVE));
+                                                    ((TridentSummaryModule) l.getSummaryModule()).addObjective(new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.find("OBJECTIVE_NAME").flatten(false), p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_OBJECTIVE));
                                                 }
                                             }),
                                     group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("entity"), choice(
@@ -1735,9 +1762,10 @@ public class TridentProductions {
                                                 if(l.getSummaryModule() != null) {
                                                     String name = p.find("ENTITY_DECLARATION_HEADER.ENTITY_NAME").flatten(false);
                                                     if(!name.equals("default")) {
-                                                        SummarySymbol sym = new SummarySymbol(name, p.getStringLocation().index);
+                                                        SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), name, p.getStringLocation().index);
                                                         sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
                                                         sym.addTag(TridentSuggestionTags.TAG_CUSTOM_ENTITY);
+                                                        sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.GLOBAL));
                                                         if(p.find("ENTITY_DECLARATION_HEADER.LITERAL_FEATURE") != null) sym.addTag(TridentSuggestionTags.TAG_ENTITY_FEATURE);
                                                         ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                                     }
@@ -1748,7 +1776,10 @@ public class TridentProductions {
                                                 if(l.getSummaryModule() != null) {
                                                     String name = p.find("ITEM_NAME").flatten(false);
                                                     if(!name.equals("default")) {
-                                                        ((TridentSummaryModule) l.getSummaryModule()).addElement(new SummarySymbol(name, p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_VARIABLE).addTag(TridentSuggestionTags.TAG_CUSTOM_ITEM));
+                                                        SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), name, p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_VARIABLE);
+                                                        sym.addTag(TridentSuggestionTags.TAG_CUSTOM_ITEM);
+                                                        sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.GLOBAL));
+                                                        ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                                     }
                                                 }
                                             }),
@@ -1772,7 +1803,10 @@ public class TridentProductions {
                             ).setName("VARIABLE_INITIALIZATION")
                     ).addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
-                            ((TridentSummaryModule) l.getSummaryModule()).addElement(new SummarySymbol(p.find("VARIABLE_NAME").flatten(false), p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_VARIABLE));
+                            SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.find("VARIABLE_NAME").flatten(false), p.getStringLocation().index);
+                            sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
+                            sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.LOCAL));
+                            ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                         }
                     })
             );
@@ -1783,7 +1817,14 @@ public class TridentProductions {
                     group(instructionKeyword("within"),
                             identifierX().setName("VARIABLE_NAME"),
                             group(COORDINATE_SET).setName("FROM"), group(COORDINATE_SET).setName("TO"), optional(literal("step"), real()).setName("STEP"), ANONYMOUS_INNER_FUNCTION
-                    )
+                    ).addProcessor((p, l) -> {
+                        if(l.getSummaryModule() != null) {
+                            SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.find("VARIABLE_NAME").flatten(false), p.find("ANONYMOUS_INNER_FUNCTION.FILE_INNER.FILE_START_MARKER").getStringLocation().index);
+                            sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
+                            sym.setVisibility(Symbol.SymbolVisibility.LOCAL);
+                            ((TridentSummaryModule) l.getSummaryModule()).peek().putLateElement(sym);
+                        }
+                    })
             );
         }
 
@@ -1815,6 +1856,17 @@ public class TridentProductions {
 
             INSTRUCTION.add(
                     group(blockLabel, instructionKeyword("for"), brace("("), FOR_HEADER, brace(")"), ANONYMOUS_INNER_FUNCTION)
+                    .addProcessor((p, l) -> {
+                        if(l.getSummaryModule() != null) {
+                            TokenPattern<?> iteratorName = p.find("LOOP_HEADER.VARIABLE_NAME");
+                            if(iteratorName != null) {
+                                SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), iteratorName.flatten(false), p.find("ANONYMOUS_INNER_FUNCTION").getStringLocation().index);
+                                sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
+                                sym.setVisibility(Symbol.SymbolVisibility.LOCAL);
+                                ((TridentSummaryModule) l.getSummaryModule()).peek().putLateElement(sym);
+                            }
+                        }
+                    })
             );
         }
 
@@ -2052,5 +2104,15 @@ public class TridentProductions {
 
     LazyTokenItemMatch identifierX() {
         return ofType(IDENTIFIER_TYPE_X).setName("IDENTIFIER");
+    }
+
+    static Symbol.SymbolVisibility parseVisibility(TokenPattern<?> pattern, Symbol.SymbolVisibility defaultValue) {
+        if(pattern == null) return defaultValue;
+        switch(pattern.flatten(false)) {
+            case "global": return Symbol.SymbolVisibility.GLOBAL;
+            case "local": return Symbol.SymbolVisibility.LOCAL;
+            case "private": return Symbol.SymbolVisibility.PRIVATE;
+            default: return defaultValue;
+        }
     }
 }

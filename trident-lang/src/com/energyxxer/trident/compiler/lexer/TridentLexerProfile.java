@@ -467,7 +467,6 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
-        contexts.add(new StringMatchLexerContext(DIRECTIVE_ON_KEYWORD, "compile"));
         contexts.add(new StringMatchLexerContext(KEYWORD, "var", "define", "do", "while", "within", "using", "eval", "as", "append", "for", "in", "switch", "function", "if", "else", "try", "catch", "throw", "tdndebug", "switch", "case", "default", "implements", "log", "break", "return", "continue"));
         contexts.add(new StringMatchLexerContext(CUSTOM_COMMAND_KEYWORD, "isset", "update"));
         contexts.add(new StringMatchLexerContext(BOOLEAN, "true", "false"));
@@ -488,6 +487,22 @@ public class TridentLexerProfile extends LexerProfile {
 
         contexts.add(new StringMatchLexerContext(NULL, "null"));
 
+        contexts.add(new LexerContext() {
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                return new ScannerContextResponse(true, "", NO_TOKEN);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(NO_TOKEN);
+            }
+        });
     }
 
     @Override

@@ -1,0 +1,96 @@
+package com.energyxxer.util.processes;
+
+import java.util.ArrayList;
+
+public abstract class AbstractProcess {
+    private String name;
+    private String status;
+    private float progress = -1;
+
+    private Thread thread;
+
+    private ArrayList<ProgressListener> progressListeners = new ArrayList<>();
+    private ArrayList<CompletionListener> completionListeners = new ArrayList<>();
+
+    public AbstractProcess(String name) {
+        this.name = name;
+    }
+
+    protected void initializeThread(Runnable runnable) {
+        this.thread = new Thread(runnable, this.name);
+    }
+
+    public boolean isRunning() {
+        return thread != null && thread.isAlive();
+    }
+
+    public void start() {
+        thread.start();
+    }
+
+    public void terminate() {
+        thread.stop();
+        finalizeProcess(false);
+    }
+
+    protected void updateStatus(String status) {
+        this.status = status;
+        invokeProgressUpdate();
+    }
+
+    protected void updateProgress(float progress) {
+        this.progress = progress;
+    }
+
+    protected void updateStatusAndProgress(String status, float progress) {
+        this.status = status;
+        this.progress = progress;
+        invokeProgressUpdate();
+    }
+
+    protected void invokeProgressUpdate() {
+        for(ProgressListener progressListener : progressListeners) {
+            progressListener.onProgress(this);
+        }
+    }
+
+    protected void finalizeProcess(boolean success) {
+        for(CompletionListener completionListener : completionListeners) {
+            completionListener.onCompletion(this, success);
+        }
+        progressListeners.clear();
+        completionListeners.clear();
+    }
+
+    public void addProgressListener(ProgressListener listener) {
+        progressListeners.add(listener);
+    }
+
+    public void removeProgressListener(ProgressListener listener) {
+        progressListeners.remove(listener);
+    }
+
+    public void addCompletionListener(CompletionListener listener) {
+        completionListeners.add(listener);
+    }
+
+    public void removeCompletionListener(CompletionListener listener) {
+        completionListeners.remove(listener);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public float getProgress() {
+        return progress;
+    }
+
+    public Thread getThread() {
+        return thread;
+    }
+}

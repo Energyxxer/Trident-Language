@@ -20,7 +20,6 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
-import com.energyxxer.trident.compiler.interfaces.ProgressListener;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
 import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
@@ -30,6 +29,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.GlobalSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.util.Lazy;
 import com.energyxxer.util.logger.Debug;
+import com.energyxxer.util.processes.AbstractProcess;
 import com.google.gson.*;
 
 import java.io.*;
@@ -42,7 +42,7 @@ import java.util.*;
 import static com.energyxxer.trident.extensions.EJsonElement.getAsStringOrNull;
 import static com.energyxxer.trident.extensions.EJsonObject.getAsBoolean;
 
-public class TridentCompiler {
+public class TridentCompiler extends AbstractProcess {
 
     public static final String PROJECT_FILE_NAME = ".tdnproj";
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
@@ -67,10 +67,7 @@ public class TridentCompiler {
     private String defaultNamespace = null;
 
     //Caller Feedback
-    private ArrayList<ProgressListener> progressListeners = new ArrayList<>();
-    private ArrayList<Runnable> completionListeners = new ArrayList<>();
     private CompilerReport report = null;
-    private Thread thread;
 
     //File Structure Tracking
     private HashMap<File, ParsingSignature> filePatterns = new HashMap<>();
@@ -90,7 +87,10 @@ public class TridentCompiler {
     private HashMap<Integer, Integer> outResourceCache = new HashMap<>();
 
     public TridentCompiler(File rootDir) {
+        super("Trident-Compiler[" + rootDir.getName() + "]");
         this.rootDir = rootDir;
+        initializeThread(this::runCompilation);
+        report = new CompilerReport();
 
         specialFileManager = new SpecialFileManager(this);
 
@@ -99,44 +99,6 @@ public class TridentCompiler {
         this.gson = gsonBuilder.create();
         globalObjective = new Lazy<>(() -> this.getModule().getObjectiveManager().create("trident_global", true));
     }
-
-    public void compile() {
-        this.thread = new Thread(this::runCompilation,"Trident-Compiler[" + rootDir.getName() + "]");
-        report = new CompilerReport();
-        thread.start();
-    }
-
-    public static CommandModule createModuleForProject(String name, File rootDir, DefinitionPack definitionPack) throws IOException {
-        JsonObject properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
-        return createModuleForProject(name, properties, definitionPack);
-    }
-
-    public static CommandModule createModuleForProject(String name, JsonObject properties, DefinitionPack definitionPack) throws IOException {
-        CommandModule module = new CommandModule(name, "Command Module created with Trident", null);
-        module.getOptionManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
-        module.importDefinitions(definitionPack);
-
-        if(properties.has("aliases") && properties.get("aliases").isJsonObject()) {
-            for(Map.Entry<String, JsonElement> categoryEntry : properties.getAsJsonObject("aliases").entrySet()) {
-                String category = categoryEntry.getKey();
-
-                if(categoryEntry.getValue().isJsonObject()) {
-                    for(Map.Entry<String, JsonElement> entry : categoryEntry.getValue().getAsJsonObject().entrySet()) {
-                        TridentUtil.ResourceLocation alias = TridentUtil.ResourceLocation.createStrict(entry.getKey());
-                        TridentUtil.ResourceLocation real = TridentUtil.ResourceLocation.createStrict(entry.getValue().getAsString());
-                        if(alias == null) continue;
-                        if(real == null) continue;
-
-                        module.createNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasType(c, ns, n, module.createNamespace(real.namespace), real.body), alias.body);
-                        //Debug.log("Created alias '" + alias + "' for '" + real + "'");
-                    }
-                }
-            }
-        }
-        return module;
-    }
-
-    public float progress = -1;
 
     private void runCompilation() {
 
@@ -198,7 +160,7 @@ public class TridentCompiler {
         report.addNotices(lex.getNotices());
         report.addNotices(typeMap.getNotices());
         if(report.getTotal() > 0) {
-            finalizeCompilation();
+            finalizeProcess(false);
             return;
         }
 
@@ -217,7 +179,7 @@ public class TridentCompiler {
         files.values().forEach(TridentFile::checkCircularRequires);
 
         if(report.hasErrors()) {
-            finalizeCompilation();
+            finalizeProcess(false);
             return;
         }
 
@@ -227,7 +189,7 @@ public class TridentCompiler {
 
         sortedFiles.sort((a,b) -> (a.isCompileOnly() != b.isCompileOnly()) ? a.isCompileOnly() ? -2 : 2 : (int) Math.signum((b.getPriority() - a.getPriority()) * 1000));
 
-        progress = 0;
+        updateProgress(0);
         float delta = 1f / sortedFiles.size();
         for(TridentFile file : sortedFiles) {
             this.setProgress("Analyzing " + file.getResourceLocation());
@@ -240,22 +202,23 @@ public class TridentCompiler {
             } catch(ContinueException c) {
                 report.addNotice(new Notice(NoticeType.ERROR, "Continue instruction outside loop", c.getPattern()));
             }
-            progress += delta;
+            updateProgress(getProgress()+delta);
         }
 
         if(report.hasErrors()) {
-            finalizeCompilation();
+            finalizeProcess(false);
             return;
         }
 
         specialFileManager.compile();
 
         if(report.hasErrors()) {
-            finalizeCompilation();
+            finalizeProcess(false);
             return;
         }
 
-        progress = -1;
+
+        updateProgress(-1);
         this.setProgress("Generating data pack");
         {
             if(properties.has("datapack-output") && properties.get("datapack-output").isJsonPrimitive() && properties.get("datapack-output").getAsJsonPrimitive().isString()) {
@@ -263,25 +226,24 @@ public class TridentCompiler {
                     module.compile(new File(properties.get("datapack-output").getAsString()));
                 } catch(IOException x) {
                     logException(x);
-                    finalizeCompilation();
                 }
             } else {
                 this.report.addNotice(new Notice(NoticeType.ERROR, "Datapack output directory not specified"));
             }
         }
 
-        progress = 0;
+
+        updateProgress(0);
         this.setProgress("Generating resource pack");
         {
             try {
                 resourcePack.generate();
             } catch(IOException x) {
                 logException(x);
-                finalizeCompilation();
             }
         }
 
-        finalizeCompilation();
+        finalizeProcess(true);
     }
 
     private Collection<TridentUtil.ResourceLocation> getAllRequires(TridentFile file) {
@@ -311,7 +273,7 @@ public class TridentCompiler {
                                 lex.tokenizeParse(file, str, new TridentLexerProfile(module));
 
                                 if (lex.getMatchResponse().matched) {
-                                    filePatterns.put(file, new ParsingSignature(hashCode, lex.getMatchResponse().pattern));
+                                    filePatterns.put(file, new ParsingSignature(hashCode, lex.getMatchResponse().pattern, lex.getSummaryModule()));
                                 }
                             }
                         } catch (IOException x) {
@@ -419,24 +381,19 @@ public class TridentCompiler {
         }
     }
 
+    @Override
+    public void updateProgress(float progress) {
+        super.updateProgress(progress);
+    }
+
     private void logException(Throwable x) {
         this.report.addNotice(new Notice(NoticeType.ERROR, x.getMessage()));
-        finalizeCompilation();
+        finalizeProcess(false);
     }
 
-    private void finalizeCompilation() {
+    protected void finalizeProcess(boolean success) {
         this.setProgress("Compilation " + (report.getErrors().isEmpty() ? "completed" : "interrupted") + " with " + report.getTotalsString(), false);
-        completionListeners.forEach(Runnable::run);
-        progressListeners.clear();
-        completionListeners.clear();
-    }
-
-    public void addProgressListener(ProgressListener l) {
-        progressListeners.add(l);
-    }
-
-    private void removeProgressListener(ProgressListener l) {
-        progressListeners.remove(l);
+        super.finalizeProcess(report.getErrors().isEmpty());
     }
 
     public void setProgress(String message) {
@@ -444,7 +401,7 @@ public class TridentCompiler {
     }
 
     private void setProgress(String message, boolean includeProjectName) {
-        progressListeners.forEach(l -> l.onProgress(message + (includeProjectName ? ("... [" + rootDir.getName() + "]") : ""), progress));
+        updateStatus(message + (includeProjectName ? ("... [" + rootDir.getName() + "]") : ""));
     }
 
     public CompilerReport getReport() {
@@ -457,14 +414,6 @@ public class TridentCompiler {
 
     public void setReport(CompilerReport report) {
         this.report = report;
-    }
-
-    public void addCompletionListener(Runnable r) {
-        completionListeners.add(r);
-    }
-
-    public void removeCompletionListener(Runnable r) {
-        completionListeners.remove(r);
     }
 
     public JsonObject getProperties() {
@@ -570,7 +519,38 @@ public class TridentCompiler {
         return files.values();
     }
 
+    public static CommandModule createModuleForProject(String name, File rootDir, DefinitionPack definitionPack) throws IOException {
+        JsonObject properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
+        return createModuleForProject(name, properties, definitionPack);
+    }
+
+    public static CommandModule createModuleForProject(String name, JsonObject properties, DefinitionPack definitionPack) throws IOException {
+        CommandModule module = new CommandModule(name, "Command Module created with Trident", null);
+        module.getOptionManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
+        module.importDefinitions(definitionPack);
+
+        if(properties.has("aliases") && properties.get("aliases").isJsonObject()) {
+            for(Map.Entry<String, JsonElement> categoryEntry : properties.getAsJsonObject("aliases").entrySet()) {
+                String category = categoryEntry.getKey();
+
+                if(categoryEntry.getValue().isJsonObject()) {
+                    for(Map.Entry<String, JsonElement> entry : categoryEntry.getValue().getAsJsonObject().entrySet()) {
+                        TridentUtil.ResourceLocation alias = TridentUtil.ResourceLocation.createStrict(entry.getKey());
+                        TridentUtil.ResourceLocation real = TridentUtil.ResourceLocation.createStrict(entry.getValue().getAsString());
+                        if(alias == null) continue;
+                        if(real == null) continue;
+
+                        module.createNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasType(c, ns, n, module.createNamespace(real.namespace), real.body), alias.body);
+                        //Debug.log("Created alias '" + alias + "' for '" + real + "'");
+                    }
+                }
+            }
+        }
+        return module;
+    }
+
     private static class Resources {
+
         public static final HashMap<String, String> defaults = new HashMap<>();
 
         static {

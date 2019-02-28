@@ -1,16 +1,30 @@
 package com.energyxxer.trident.compiler.lexer.summaries;
 
+import com.energyxxer.enxlex.lexical_analysis.summary.SummaryModule;
+import com.energyxxer.trident.compiler.semantics.Symbol;
+
 import java.util.ArrayList;
 import java.util.function.Function;
 
 public class SummarySymbol implements SummaryElement {
+    private TridentSummaryModule parentSummary;
     private String name;
     private int declarationIndex;
+    private Symbol.SymbolVisibility visibility = Symbol.SymbolVisibility.LOCAL;
     private ArrayList<String> suggestionTags = new ArrayList<>();
 
-    public SummarySymbol(String name, int declarationIndex) {
+    public SummarySymbol(TridentSummaryModule parentSummary, String name, int declarationIndex) {
+        this.parentSummary = parentSummary;
         this.name = name;
         this.declarationIndex = declarationIndex;
+    }
+
+    public Symbol.SymbolVisibility getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(Symbol.SymbolVisibility visibility) {
+        this.visibility = visibility;
     }
 
     @Override
@@ -35,7 +49,7 @@ public class SummarySymbol implements SummaryElement {
 
     @Override
     public String toString() {
-        return "Symbol{name=" + name + ",index=" + declarationIndex + "}";
+        return "(" + visibility.toString().toLowerCase() + ") " + name + "@" + declarationIndex;
     }
 
     @Override
@@ -50,5 +64,10 @@ public class SummarySymbol implements SummaryElement {
 
     public ArrayList<String> getSuggestionTags() {
         return suggestionTags;
+    }
+
+    @Override
+    public SummaryModule getParentFileSummary() {
+        return parentSummary;
     }
 }

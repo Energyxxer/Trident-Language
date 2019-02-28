@@ -31,10 +31,10 @@ public class Main {
 
         TridentCompiler c = new TridentCompiler(rootDir);
 
-        c.addProgressListener((message, progress) -> {
-            StringBuilder line = new StringBuilder(message);
-            if(progress != -1) {
-                line.append(" | ").append(100 * progress).append("%");
+        c.addProgressListener((process) -> {
+            StringBuilder line = new StringBuilder(process.getStatus());
+            if(process.getProgress() != -1) {
+                line.append(" | ").append(100 * process.getProgress()).append("%");
             }
             final int thisLength = line.length();
             for(int i = line.length(); i < previousProgress; i++) {
@@ -45,7 +45,7 @@ public class Main {
             System.out.print("\r" + line);
         });
 
-        c.addCompletionListener(() -> {
+        c.addCompletionListener((process, success) -> {
             System.out.println("\n");
             for(Map.Entry<String, ArrayList<Notice>> group : c.getReport().group().entrySet()) {
                 System.out.println("In file " + group.getKey() + ":");
@@ -57,6 +57,6 @@ public class Main {
                 System.out.println();
             }
         });
-        c.compile();
+        c.start();
     }
 }

@@ -30,6 +30,7 @@ import static com.energyxxer.trident.compiler.TridentCompiler.DEFAULT_CHARSET;
 
 public class ProjectSummarizer {
     private File rootDir;
+    private Path dataPath;
     private Thread thread;
     private CommandModule module;
     private HashMap<File, ParsingSignature> filePatterns = new HashMap<>();
@@ -39,6 +40,7 @@ public class ProjectSummarizer {
 
     public ProjectSummarizer(File rootDir) {
         this.rootDir = rootDir;
+        this.dataPath = rootDir.toPath().resolve("datapack").resolve("data");
     }
 
     private JsonObject properties;
@@ -84,36 +86,38 @@ public class ProjectSummarizer {
         File[] files = dir.listFiles();
         if(files == null) return;
         for (File file : files) {
+            Path relPath = dataPath.relativize(file.toPath());
             String name = file.getName();
             if (file.isDirectory() && (!file.getParentFile().equals(rootDir) || Arrays.asList("datapack", "resources", "internal").contains(file.getName()))) {
                 recursivelyParse(lex, file);
             } else {
                 if(file.toPath().startsWith(rootDir.toPath().resolve("datapack"))) {
-                    if(name.endsWith(".tdn")) {
+                    if(name.endsWith(".tdn") && relPath.getNameCount() >= 2 && relPath.getName(1).startsWith("functions")) {
                         try {
                             String str = new String(Files.readAllBytes(Paths.get(file.getPath())), DEFAULT_CHARSET);
                             int hashCode = str.hashCode();
 
-                            if(!filePatterns.containsKey(file) || filePatterns.get(file).getHashCode() != hashCode) {
-                                lex.setSummaryModule(new TridentSummaryModule());
+                            if(!filePatterns.containsKey(file) || (filePatterns.get(file).getHashCode() != hashCode || filePatterns.get(file).getSummary() == null)) {
+                                TridentSummaryModule fileSummary = new TridentSummaryModule(summary);
+                                fileSummary.setFileLocation(new TridentUtil.ResourceLocation(relPath.getName(0) + ":" + relPath.subpath(2, relPath.getNameCount()).toString().replace(File.separator, "/").replaceAll(".tdn$","")));
+                                lex.setSummaryModule(fileSummary);
                                 lex.tokenizeParse(file, str, new TridentLexerProfile(module));
-                                summary.store(file, ((TridentSummaryModule) lex.getSummaryModule()));
+                                this.summary.store(file, fileSummary);
 
                                 if (lex.getMatchResponse().matched) {
-                                    filePatterns.put(file, new ParsingSignature(hashCode, lex.getMatchResponse().pattern));
+                                    filePatterns.put(file, new ParsingSignature(hashCode, lex.getMatchResponse().pattern, lex.getSummaryModule()));
                                 }
-
+                            } else if(filePatterns.containsKey(file)) {
+                                this.summary.store(file, ((TridentSummaryModule) filePatterns.get(file).getSummary()));
                             }
                         } catch (IOException x) {
                             logException(x);
                         }
                     } else {
-                        Path dataPath = rootDir.toPath().resolve("datapack").resolve("data");
-                        if (name.endsWith(".json") && file.toPath().startsWith(dataPath) && dataPath.relativize(file.toPath()).getName(1).startsWith("tags")) {
+                        if (name.endsWith(".json") && file.toPath().startsWith(dataPath) && relPath.getName(1).startsWith("tags")) {
 
-                            String namespaceName = dataPath.relativize(file.toPath()).getName(0).toString();
+                            String namespaceName = relPath.getName(0).toString();
 
-                            Path relPath = dataPath.relativize(file.toPath());
                             relPath = relPath.subpath(2, relPath.getNameCount());
                             String tagDir = relPath.getName(0).toString();
                             relPath = relPath.subpath(1, relPath.getNameCount());

@@ -82,7 +82,7 @@ public class ResourcePackGenerator {
 
     private void createFile(@Nullable String path, @Nullable byte[] contents) throws IOException {
         if(path == null || contents == null) return;
-        compiler.progress += progressDelta;
+        compiler.updateProgress(compiler.getProgress() + progressDelta);
         compiler.setProgress("Generating resource pack: " + path);
         if(outputType == ZIP) {
             ZipEntry e = new ZipEntry(path);
