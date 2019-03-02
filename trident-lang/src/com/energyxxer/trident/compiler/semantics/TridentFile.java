@@ -94,7 +94,7 @@ public class TridentFile extends SymbolContext {
                         String on = ((TokenItem) (directiveBody.getContents()[1])).getContents().value;
                         if(on.equals("compile")) {
                             if(!tags.isEmpty()) {
-                                getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-ony function may not have any tags", directiveList));
+                                getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have any tags", directiveList));
                             }
                             compileOnly = true;
                         }
@@ -103,7 +103,7 @@ public class TridentFile extends SymbolContext {
                     case "TAG_DIRECTIVE": {
                         TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents());
                         if(compileOnly) {
-                            getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-ony function may not have any tags", directiveList));
+                            getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have any tags", directiveList));
                         }
                         tags.add(loc);
                         break;

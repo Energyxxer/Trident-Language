@@ -107,7 +107,7 @@ $EXPLOSION: {
 
 $ENCHANTMENT: {
     id: String (type(enchantment)),
-    lvl: Int
+    lvl: Short
 }
 
 $EFFECT: {

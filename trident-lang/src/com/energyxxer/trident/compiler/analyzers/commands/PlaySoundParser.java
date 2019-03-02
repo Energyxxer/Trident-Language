@@ -20,7 +20,7 @@ import java.util.List;
 public class PlaySoundParser implements SimpleCommandParser {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        TridentUtil.ResourceLocation soundEvent = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), ctx);
+        TridentUtil.ResourceLocation soundEvent = CommonParsers.parseResourceLocation(pattern.find("SOUND_EVENT.RESOURCE_LOCATION"), ctx);
         soundEvent.assertStandalone(pattern, ctx);
         PlaySoundCommand.Source channel = PlaySoundCommand.Source.valueOf(pattern.find("CHANNEL").flatten(false).toUpperCase());
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);

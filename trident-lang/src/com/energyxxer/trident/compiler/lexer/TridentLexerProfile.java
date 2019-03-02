@@ -502,6 +502,11 @@ public class TridentLexerProfile extends LexerProfile {
             public Collection<TokenType> getHandledTypes() {
                 return Collections.singletonList(NO_TOKEN);
             }
+
+            @Override
+            public boolean ignoreLeadingWhitespace() {
+                return false;
+            }
         });
     }
 

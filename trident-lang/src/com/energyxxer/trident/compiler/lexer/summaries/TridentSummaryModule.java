@@ -58,6 +58,18 @@ public class TridentSummaryModule extends SummaryModule {
         return objectives;
     }
 
+    public Collection<String> getAllObjectives() {
+        ArrayList<String> objectives = new ArrayList<>();
+        if(parentSummary != null) {
+            objectives.addAll(parentSummary.getObjectives());
+        }
+        for(SummarySymbol obj : this.objectives) {
+            objectives.remove(obj.getName());
+            objectives.add(obj.getName());
+        }
+        return objectives;
+    }
+
     public void addRequires(TridentUtil.ResourceLocation loc) {
         if(!directivesLocked) requires.add(loc);
     }

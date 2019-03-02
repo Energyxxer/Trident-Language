@@ -7,15 +7,16 @@ import java.util.*;
 
 public class SuggestionModule {
 
+
+
     public enum SuggestionStatus {
         ENABLED,
-        DISABLED
+        DISABLED;
     }
-
     private LazyLexer lexer;
+
     private int suggestionIndex;
     private int caretIndex;
-
     private Stack<SuggestionStatus> statusStack = new Stack<>();
 
     private ArrayList<Suggestion> suggestions = new ArrayList<>();
@@ -37,8 +38,16 @@ public class SuggestionModule {
         return suggestionIndex;
     }
 
+    public void setSuggestionIndex(int index) {
+        this.suggestionIndex = index;
+    }
+
     public int getCaretIndex() {
         return caretIndex;
+    }
+
+    public void setCaretIndex(int caretIndex) {
+        this.caretIndex = caretIndex;
     }
 
     public Lexer getLexer() {

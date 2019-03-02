@@ -6,24 +6,81 @@ import java.lang.reflect.Field;
 
 public class TridentTokens {
     public static TokenType
-            COMMENT, DIRECTIVE_HEADER, DIRECTIVE_ON_KEYWORD,
+            // #...
+            COMMENT,
+            // @
+            DIRECTIVE_HEADER,
+            // . , : -> = # !
             DOT, COMMA, COLON, ARROW, EQUALS, HASH, NOT,
+            // ( ) { } [ ]
             BRACE,
-            STRING_LITERAL, BOOLEAN,
+            // "string literal"
+            STRING_LITERAL,
+            // true, false
+            BOOLEAN,
+            // ~ ^
             TILDE, CARET,
+            // 0, 0.1, .1, 0.1f, 5t
             INTEGER_NUMBER, REAL_NUMBER, SHORT_REAL_NUMBER, TYPED_NUMBER, TIME,
-            VERBATIM_COMMAND, VERBATIM_COMMAND_HEADER,
-            KEYWORD, NULL,
-            SYMBOL, SCOREBOARD_OPERATOR, COMPILER_OPERATOR, COMPILER_PREFIX_OPERATOR, COMPILER_POSTFIX_OPERATOR,
+            // literally anything with or without spaces that doesn't begin with a $
+            VERBATIM_COMMAND,
+            // /
+            VERBATIM_COMMAND_HEADER,
+            // do, if, else, for, switch, case, throw, return, entity, item...
+            KEYWORD,
+            // null
+            NULL,
+            // * $
+            SYMBOL,
+            // += -= *= /= %=
+            SCOREBOARD_OPERATOR,
+            // + - * / %
+            COMPILER_OPERATOR,
+            // + - ++ -- ! ~
+            COMPILER_PREFIX_OPERATOR,
+            // ++ --
+            COMPILER_POSTFIX_OPERATOR,
+            // xyz
             SWIZZLE,
+            // give, clear, say, setblock, fill, execute...
             COMMAND_HEADER,
+            // as, at, align, positioned...
             MODIFIER_HEADER,
+            // @p, @e, @a, @r, @s
             SELECTOR_HEADER,
+            // literally anything
             TRAILING_STRING,
+            // isset, update
             CUSTOM_COMMAND_KEYWORD,
-            SORTING, NUMERIC_DATA_TYPE, SOUND_CHANNEL, ANCHOR,
-            IDENTIFIER_TYPE_A, IDENTIFIER_TYPE_B, IDENTIFIER_TYPE_C, IDENTIFIER_TYPE_D, IDENTIFIER_TYPE_X, IDENTIFIER_TYPE_Y, RESOURCE_LOCATION,
-            GLUE, LINE_GLUE, NO_TOKEN
+            // nearest, farthest, arbitrary, random...
+            SORTING,
+            // int, float, short, double, long
+            NUMERIC_DATA_TYPE,
+            // master, player, neutral, hostile, voice...
+            SOUND_CHANNEL,
+            // eyes, feet
+            ANCHOR,
+            //Objective names, tags, etc.:
+            IDENTIFIER_TYPE_A,
+            //Player names (cannot begin with @ nor $) (very greedy string):
+            IDENTIFIER_TYPE_B,
+            //advancement criteria (very greedy string):
+            IDENTIFIER_TYPE_C,
+            //NBT path keys (same as A except doesn't allow dots):
+            IDENTIFIER_TYPE_D,
+            //Pretty much Java identifiers, without using reserved keywords
+            IDENTIFIER_TYPE_X,
+            //Java identifiers but only for constructor names (data type names)
+            IDENTIFIER_TYPE_Y,
+            //minecraft:trident/resource_locations
+            RESOURCE_LOCATION,
+            //Control tokens (zero-width):
+            //Returns true if there is no whitespace ahead
+            GLUE,
+            //Returns true if the next non-whitespace character is in the same line as the previous
+            LINE_GLUE,
+            //Returns true, always. Use whenever post-processing requires the location of a token that may or may not exist
+            NO_TOKEN
     ;
 
     static {

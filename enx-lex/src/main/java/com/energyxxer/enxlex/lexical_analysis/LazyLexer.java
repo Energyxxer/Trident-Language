@@ -73,6 +73,10 @@ public class LazyLexer extends Lexer {
         if(getSummaryModule() != null) getSummaryModule().onEnd();
     }
 
+    public String getCurrentReadingString() {
+        return fileContents;
+    }
+
     public int getCurrentIndex() {
         return currentIndex;
     }

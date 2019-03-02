@@ -36,7 +36,7 @@ public class StopSoundParser implements SimpleCommandParser {
                     }
                 }
                 case "STOP_BY_EVENT": {
-                    TokenPattern<?> rawResource = inner.find("RESOURCE_LOCATION");
+                    TokenPattern<?> rawResource = inner.find("SOUND_RESOURCE.RESOURCE_LOCATION");
                     TridentUtil.ResourceLocation soundResource = CommonParsers.parseResourceLocation(rawResource, ctx);
                     soundResource.assertStandalone(rawResource, ctx);
                     return new StopSoundCommand(entity, rawResource.toString());

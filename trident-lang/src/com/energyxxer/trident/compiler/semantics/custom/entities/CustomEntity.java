@@ -186,7 +186,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
             }
             entityDecl = new CustomEntity(entityName, defaultType);
             entityDecl.superEntity = superEntity;
-            ctx.getContextForVisibility(visibility).put(new Symbol(entityName, visibility, entityDecl));
+            ctx.putInContextForVisibility(visibility, new Symbol(entityName, visibility, entityDecl));
 
             if(superEntity != null) {
                 entityDecl.mergeNBT(superEntity.getDefaultNBT());

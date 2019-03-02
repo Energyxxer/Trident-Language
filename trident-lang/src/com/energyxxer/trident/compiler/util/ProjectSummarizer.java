@@ -86,12 +86,12 @@ public class ProjectSummarizer {
         File[] files = dir.listFiles();
         if(files == null) return;
         for (File file : files) {
-            Path relPath = dataPath.relativize(file.toPath());
             String name = file.getName();
             if (file.isDirectory() && (!file.getParentFile().equals(rootDir) || Arrays.asList("datapack", "resources", "internal").contains(file.getName()))) {
                 recursivelyParse(lex, file);
             } else {
-                if(file.toPath().startsWith(rootDir.toPath().resolve("datapack"))) {
+                if(file.toPath().startsWith(dataPath)) {
+                    Path relPath = dataPath.relativize(file.toPath());
                     if(name.endsWith(".tdn") && relPath.getNameCount() >= 2 && relPath.getName(1).startsWith("functions")) {
                         try {
                             String str = new String(Files.readAllBytes(Paths.get(file.getPath())), DEFAULT_CHARSET);
@@ -114,7 +114,7 @@ public class ProjectSummarizer {
                             logException(x);
                         }
                     } else {
-                        if (name.endsWith(".json") && file.toPath().startsWith(dataPath) && relPath.getName(1).startsWith("tags")) {
+                        if (name.endsWith(".json") && relPath.getName(1).startsWith("tags")) {
 
                             String namespaceName = relPath.getName(0).toString();
 
@@ -130,6 +130,20 @@ public class ProjectSummarizer {
                                 summary.addTag(category.getCategory(), new TridentUtil.ResourceLocation("#" + namespaceName + ":" + tagName));
                             } else {
                                 Debug.log("Unknown tag directory name: " + tagDir);
+                            }
+                        }
+                    }
+                } else if(file.toPath().startsWith(rootDir.toPath().resolve("resources"))) {
+                    Path relPath = rootDir.toPath().resolve("resources").resolve("assets").relativize(file.toPath());
+                    if(relPath.getNameCount() >= 2) {
+                        if(relPath.getNameCount() == 2 && file.getName().equals("sounds.json")) {
+                            String namespace = relPath.getName(0).toString();
+                            try {
+                                JsonObject soundsjson = new Gson().fromJson(new FileReader(file), JsonObject.class);
+                                for(String body : soundsjson.keySet()) {
+                                    summary.addSoundEvent(new TridentUtil.ResourceLocation(namespace + ":" + body));
+                                }
+                            } catch(JsonSyntaxException | ClassCastException | IOException ignored) {
                             }
                         }
                     }

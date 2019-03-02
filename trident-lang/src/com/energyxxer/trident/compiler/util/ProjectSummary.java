@@ -8,10 +8,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ProjectSummary {
     private HashMap<File, TridentSummaryModule> fileSummaries = new HashMap<>();
-    private HashMap<String, ArrayList<String>> tags = new HashMap<>();
+    private HashMap<String, ArrayList<TridentUtil.ResourceLocation>> tags = new HashMap<>();
+    private ArrayList<TridentUtil.ResourceLocation> soundEvents = new ArrayList<>();
     private ArrayList<String> objectives = new ArrayList<>();
     private ArrayList<SummarySymbol> globalSymbols = new ArrayList<>();
 
@@ -27,7 +30,7 @@ public class ProjectSummary {
 
     public void addTag(String category, TridentUtil.ResourceLocation tagLoc) {
         if(!tags.containsKey(category)) tags.put(category, new ArrayList<>());
-        tags.get(category).add(tagLoc.toString());
+        tags.get(category).add(tagLoc);
     }
 
     public TridentSummaryModule getSummaryForLocation(TridentUtil.ResourceLocation loc) {
@@ -44,5 +47,29 @@ public class ProjectSummary {
     @Override
     public String toString() {
         return "Project Summary:\nFiles: " + fileSummaries + " files\nTags: " + tags + "\nObjectives: " + objectives;
+    }
+
+    public Collection<String> getObjectives() {
+        return objectives;
+    }
+
+    public Collection<TridentUtil.ResourceLocation> getFunctionResources(boolean filterOutCompileOnly) {
+        Stream<TridentSummaryModule> stream = fileSummaries.values().stream();
+        if(filterOutCompileOnly) {
+            stream = stream.filter(s -> !s.isCompileOnly());
+        }
+        return stream.map(TridentSummaryModule::getFileLocation).collect(Collectors.toList());
+    }
+
+    public void addSoundEvent(TridentUtil.ResourceLocation loc) {
+        soundEvents.add(loc);
+    }
+
+    public HashMap<String, ArrayList<TridentUtil.ResourceLocation>> getTags() {
+        return tags;
+    }
+
+    public ArrayList<TridentUtil.ResourceLocation> getSoundEvents() {
+        return soundEvents;
     }
 }

@@ -5,6 +5,7 @@ import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.*;
+import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -105,6 +106,36 @@ public class TridentProductions {
     public final LazyTokenStructureMatch ROOT_INTERPOLATION_VALUE;
     public final LazyTokenStructureMatch LINE_SAFE_INTERPOLATION_VALUE;
     public final LazyTokenStructureMatch POINTER;
+    private final LazyTokenPatternMatch resourceLocationFixer = ofType(NO_TOKEN).addProcessor((p, l) -> {
+        if(l.getSuggestionModule() != null) {
+            if(p.getStringBounds().start.index <= l.getSuggestionModule().getSuggestionIndex()+1) {
+                int targetIndex = ((LazyLexer) l).getLookingIndexTrimmed();
+                String str = ((LazyLexer) l).getCurrentReadingString();
+                int index = l.getSuggestionModule().getSuggestionIndex();
+
+                if(index > 0) {
+                    while (true) {
+                        char c = str.charAt(index-1);
+                        if (!(Character.isJavaIdentifierPart(c) || ":/.".contains(c+"")) || --index <= 1)
+                            break;
+                    }
+                }
+
+                if(index == targetIndex) {
+                    /*Debug.log("Fixed suggestion index: changed from " + l.getSuggestionModule().getSuggestionIndex() + " to " + index);
+                    Debug.log("Now reads: '" + str.substring(index, Math.min(index+8, str.length())) + "'");
+                    /*if(l.getSuggestionModule().getSuggestionIndex() == l.getSuggestionModule().getCaretIndex()) {
+                        l.getSuggestionModule().setCaretIndex(index);
+                    }*/
+                    l.getSuggestionModule().setSuggestionIndex(index);
+                }/* else {
+                    index = l.getSuggestionModule().getSuggestionIndex();
+                    Debug.log("No change. " + index);
+                    Debug.log("Reads: '" + str.substring(index, Math.min(index+8, str.length())) + "'");
+                }*/
+            }
+        }
+    });
 
     public TridentProductions(CommandModule module) {
         FILE = new LazyTokenStructureMatch("FILE");
@@ -137,9 +168,8 @@ public class TridentProductions {
 
         {
             INTERPOLATION_BLOCK = choice(
-                    group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
+                    group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED), glue(), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
             ).setName("INTERPOLATION_BLOCK");
-            INTERPOLATION_BLOCK.addTags(SuggestionTags.DISABLED_INDEX);
 
             INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
             INTERPOLATION_VALUE.addTags(SuggestionTags.ENABLED);
@@ -214,7 +244,7 @@ public class TridentProductions {
             INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR)).setName("EXPRESSION"));
             LINE_SAFE_INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, group(sameLine(), ofType(COMPILER_OPERATOR))).setName("EXPRESSION"));
 
-            INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER"), glue(), brace("{").setName("INTERPOLATION_BRACE"), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE")).setName("INTERPOLATION_WRAPPER"));
+            INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED), glue(), brace("{").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED)).setName("INTERPOLATION_WRAPPER"));
 
             DICTIONARY.add(group(brace("{"), list(group(choice(identifierX(), ofType(STRING_LITERAL)).setName("DICTIONARY_KEY"), colon(), INTERPOLATION_VALUE).setName("DICTIONARY_ENTRY"), comma()).setOptional().setName("DICTIONARY_ENTRY_LIST"), brace("}")));
             LIST.add(group(brace("["), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")));
@@ -243,13 +273,13 @@ public class TridentProductions {
                             ((TridentSummaryModule) l.getSummaryModule()).setCompileOnly();
                         }
                     })).setName("ON_DIRECTIVE"));
-            directiveBody.add(group(literal("tag").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION)
+            directiveBody.add(group(literal("tag").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION).addTags(TridentSuggestionTags.RESOURCE)
                     .addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
                             ((TridentSummaryModule) l.getSummaryModule()).addFunctionTag(new TridentUtil.ResourceLocation(p.flatten(false)));
                         }
                     })).setName("TAG_DIRECTIVE"));
-            directiveBody.add(group(literal("require").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION)
+            directiveBody.add(group(literal("require").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION).addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.TRIDENT_FUNCTION)
                     .addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
                             ((TridentSummaryModule) l.getSummaryModule()).addRequires(new TridentUtil.ResourceLocation(p.flatten(false)));
@@ -424,8 +454,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "function"),
-                    sameLine(),
-                    choice(RESOURCE_LOCATION_TAGGED, ANONYMOUS_INNER_FUNCTION)
+                    choice(group(resourceLocationFixer, group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE_WRAPPER").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION)).setName("FUNCTION_REFERENCE"), ANONYMOUS_INNER_FUNCTION).addTags(SuggestionTags.ENABLED)
             ));
         }
         //endregion
@@ -504,7 +533,8 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "playsound"),
-                    RESOURCE_LOCATION_S,
+                    resourceLocationFixer,
+                    group(RESOURCE_LOCATION_S).setName("SOUND_EVENT").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE),
                     ofType(SOUND_CHANNEL).setName("CHANNEL"),
                     ENTITY,
                     optional(
@@ -606,8 +636,8 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "schedule"),
                     literal("function"),
-                    ofType(LINE_GLUE),
-                    RESOURCE_LOCATION_TAGGED,
+                    resourceLocationFixer,
+                    group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION),
                     ofType(TIME).setName("TIME")
             ));
         }
@@ -660,8 +690,8 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "stopsound"),
                     ENTITY,
                     choice(
-                            group(ofType(SOUND_CHANNEL).setName("CHANNEL"), optional(sameLine(), RESOURCE_LOCATION_S).setName("SOUND_RESOURCE")).setName("STOP_BY_CHANNEL"),
-                            group(matchItem(SYMBOL, "*"), sameLine(), RESOURCE_LOCATION_S).setName("STOP_BY_EVENT")
+                            group(ofType(SOUND_CHANNEL).setName("CHANNEL"), resourceLocationFixer, optional(sameLine(), RESOURCE_LOCATION_S).setName("SOUND_RESOURCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE)).setName("STOP_BY_CHANNEL"),
+                            group(matchItem(SYMBOL, "*"), sameLine(), resourceLocationFixer, group(RESOURCE_LOCATION_S).setName("SOUND_RESOURCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE)).setName("STOP_BY_EVENT")
                     ).setOptional()
             ));
         }

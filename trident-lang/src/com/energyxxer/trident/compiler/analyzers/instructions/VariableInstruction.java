@@ -15,7 +15,7 @@ public class VariableInstruction implements Instruction {
 
         Object value = CommonParsers.parseAnything((TokenPattern<?>) ((pattern.find("VARIABLE_INITIALIZATION.VARIABLE_VALUE")).getContents()), ctx);
 
-        ctx.getContextForVisibility(visibility).put(symbol);
+        ctx.putInContextForVisibility(visibility, symbol);
         symbol.setValue(value);
     }
 }

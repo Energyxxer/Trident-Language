@@ -16,8 +16,8 @@ public class FunctionParser implements SimpleCommandParser {
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> choice = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(choice.getName()) {
-            case "RESOURCE_LOCATION_TAGGED": {
-                return new FunctionCommand(CommonParsers.parseFunctionTag((TokenStructure) choice, ctx));
+            case "FUNCTION_REFERENCE": {
+                return new FunctionCommand(CommonParsers.parseFunctionTag((TokenStructure) choice.find("FUNCTION_REFERENCE_WRAPPER.RESOURCE_LOCATION_TAGGED"), ctx));
             }
             case "ANONYMOUS_INNER_FUNCTION": {
                 TridentFile inner = TridentFile.createInnerFile(choice, ctx);

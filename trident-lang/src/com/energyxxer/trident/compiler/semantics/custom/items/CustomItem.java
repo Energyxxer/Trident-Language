@@ -166,7 +166,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
             itemDecl = new CustomItem(entityName, defaultType);
             if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, ctx));
 
-            ctx.getContextForVisibility(visibility).put(new Symbol(entityName, visibility, itemDecl));
+            ctx.putInContextForVisibility(visibility, new Symbol(entityName, visibility, itemDecl));
         } else if(rawCustomModelData != null) {
             throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default items don't support custom model data specifiers", rawCustomModelData, ctx);
         }

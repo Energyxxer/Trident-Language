@@ -33,6 +33,11 @@ public interface ISymbolContext {
         return this;
     }
 
+    default void putInContextForVisibility(Symbol.SymbolVisibility visibility, Symbol symbol) {
+        this.put(symbol);
+        if(visibility == Symbol.SymbolVisibility.GLOBAL) getGlobalContext().put(symbol);
+    }
+
     default void assertLanguageLevel(int minLevel, String featureDesc, TokenPattern<?> pattern) {
         assertLanguageLevel(minLevel, featureDesc, pattern, null);
     }

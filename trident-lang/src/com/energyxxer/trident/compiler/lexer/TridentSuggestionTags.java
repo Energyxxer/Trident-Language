@@ -14,7 +14,9 @@ public class TridentSuggestionTags {
     public static final String TYPE = "csk:suggestion.trident.type";
 
     public static final String RESOURCE = "csk:suggestion.trident.resource";
+    public static final String TRIDENT_FUNCTION = "csk:suggestion.trident.trident_function";
     public static final String FUNCTION = "csk:suggestion.trident.function";
+    public static final String SOUND_RESOURCE = "csk:suggestion.trident.sound_resource";
 
 
     public static final String CONTEXT_ENTRY = "ctx:trident.entry";
