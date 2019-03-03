@@ -120,7 +120,7 @@ public class TridentProductions {
                 if(index > 0) {
                     while (true) {
                         char c = str.charAt(index-1);
-                        if (!(Character.isJavaIdentifierPart(c) || ":/.".contains(c+"")) || --index <= 1)
+                        if (!(Character.isJavaIdentifierPart(c) || "#:/.".contains(c+"")) || --index <= 1)
                             break;
                     }
                 }
@@ -159,6 +159,7 @@ public class TridentProductions {
         TEXT_COMPONENT = new LazyTokenStructureMatch("TEXT_COMPONENT");
         SELECTOR = new LazyTokenStructureMatch("SELECTOR");
         SELECTOR_ARGUMENT = new LazyTokenStructureMatch("SELECTOR_ARGUMENT");
+        SELECTOR_ARGUMENT.addTags(SuggestionTags.ENABLED);
         PLAYER_NAME = struct("PLAYER_NAME");
 
         RESOURCE_LOCATION_S = struct("RESOURCE_LOCATION");
@@ -275,7 +276,7 @@ public class TridentProductions {
         RESOURCE_LOCATION_S.add(ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION"));
         RESOURCE_LOCATION_S.add(INTERPOLATION_BLOCK);
 
-        RESOURCE_LOCATION_TAGGED.add(group(optional(hash().setName("TAG_HEADER"), ofType(GLUE)), ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION")).setName("RAW_RESOURCE_LOCATION_TAGGED"));
+        RESOURCE_LOCATION_TAGGED.add(group(resourceLocationFixer, optional(hash().setName("TAG_HEADER"), ofType(GLUE)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.FUNCTION_TAG), ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION")).setName("RAW_RESOURCE_LOCATION_TAGGED"));
         RESOURCE_LOCATION_TAGGED.add(INTERPOLATION_BLOCK);
 
         {
@@ -1137,7 +1138,8 @@ public class TridentProductions {
 
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
-            g.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(RESOURCE_LOCATION_S).setName("RESOURCE_NAME"));
+            g.append(resourceLocationFixer);
+            g.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BLOCK_TAG)).append(ofType(GLUE)).append(RESOURCE_LOCATION_S).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE).setName("BLOCKSTATE_CLAUSE"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND).setName("NBT_CLAUSE"));
             BLOCK_TAGGED.add(g);
@@ -1155,7 +1157,8 @@ public class TridentProductions {
 
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
-            g.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(RESOURCE_LOCATION_S).setName("RESOURCE_NAME"));
+            g.append(resourceLocationFixer);
+            g.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ITEM_TAG)).append(ofType(GLUE)).append(RESOURCE_LOCATION_S).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM_TAGGED.add(g);
         }
@@ -1713,7 +1716,8 @@ public class TridentProductions {
             {
                 ENTITY_ID_TAGGED.add(ENTITY_ID);
                 LazyTokenGroupMatch g2 = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
-                g2.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER")).append(ofType(GLUE)).append(RESOURCE_LOCATION_S).setName("RESOURCE_NAME"));
+                g2.append(resourceLocationFixer);
+                g2.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ENTITY_TYPE_TAG)).append(ofType(GLUE)).append(RESOURCE_LOCATION_S).setName("RESOURCE_NAME"));
                 g2.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
                 ENTITY_ID_TAGGED.add(g2);
 

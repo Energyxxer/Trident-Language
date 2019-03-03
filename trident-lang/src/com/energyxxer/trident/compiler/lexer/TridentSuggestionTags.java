@@ -18,6 +18,10 @@ public class TridentSuggestionTags {
     public static final String FUNCTION = "csk:suggestion.trident.function";
     public static final String SOUND_RESOURCE = "csk:suggestion.trident.sound_resource";
 
+    public static final String BLOCK_TAG = "csk:suggestion.trident.block_tag";
+    public static final String ITEM_TAG = "csk:suggestion.trident.item_tag";
+    public static final String ENTITY_TYPE_TAG = "csk:suggestion.trident.entity_type_tag";
+    public static final String FUNCTION_TAG = "csk:suggestion.trident.function_tag";
 
     public static final String CONTEXT_ENTRY = "ctx:trident.entry";
     public static final String CONTEXT_COMMAND = "ctx:trident.command";

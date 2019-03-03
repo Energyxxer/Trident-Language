@@ -110,7 +110,7 @@ public class CommonParsers {
 
         if(type == null) {
             if(isTag) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such " + category + " tag exists: #" + typeLoc, id, ctx);
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such " + category + " tag exists: " + typeLoc, id, ctx);
             } else {
                 throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such " + category + " type exists: " + typeLoc, id, ctx);
             }
@@ -162,11 +162,11 @@ public class CommonParsers {
             type = new FunctionReference(ns.functions.get(typeLoc.body));
         }
 
-        if(typeLoc.equals(new TridentUtil.ResourceLocation(ctx.getWritingFile().getResourceLocation().toString() + "/"))) return new FunctionReference(ctx.getWritingFile().getFunction());
+        if(typeLoc.equals(new TridentUtil.ResourceLocation("#" + ctx.getWritingFile().getResourceLocation().toString() + "/"))) return new FunctionReference(ctx.getWritingFile().getFunction());
 
         if(type == null) {
             if(typeLoc.isTag) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such function tag exists: #" + typeLoc, inner, ctx);
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such function tag exists: " + typeLoc, inner, ctx);
             } else {
                 throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such function exists: " + typeLoc, inner, ctx);
             }
@@ -178,7 +178,7 @@ public class CommonParsers {
         TridentUtil.ResourceLocation tagLoc = new TridentUtil.ResourceLocation(id.flattenTokens().get(0).value);
         ItemTag returned = ctx.getCompiler().getModule().getNamespace(tagLoc.namespace).tags.itemTags.get(tagLoc.body);
         if(returned == null) {
-            throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such item tag exists: #" + tagLoc, id, ctx);
+            throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such item tag exists: " + tagLoc, id, ctx);
         }
         return returned;
     }
@@ -187,7 +187,7 @@ public class CommonParsers {
         TridentUtil.ResourceLocation tagLoc = new TridentUtil.ResourceLocation(id.flattenTokens().get(0).value);
         BlockTag returned = ctx.getCompiler().getModule().getNamespace(tagLoc.namespace).tags.blockTags.get(tagLoc.body);
         if(returned == null) {
-            throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such block tag exists: #" + tagLoc, id, ctx);
+            throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such block tag exists: " + tagLoc, id, ctx);
         }
         return returned;
     }

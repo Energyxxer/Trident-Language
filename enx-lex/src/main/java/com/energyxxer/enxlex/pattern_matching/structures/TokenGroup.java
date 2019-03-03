@@ -97,8 +97,9 @@ public class TokenGroup extends TokenPattern<TokenPattern<?>[]> {
 	public String flatten(boolean separate) {
 		StringBuilder sb = new StringBuilder();
 		for(int i = 0; i < patterns.size(); i++) {
-			sb.append(patterns.get(i).flatten(separate));
-			if(i < patterns.size()-1 && separate) sb.append(" ");
+			String str = patterns.get(i).flatten(separate);
+			sb.append(str);
+			if(!str.isEmpty() && i < patterns.size()-1 && separate) sb.append(" ");
 		}
 		return sb.toString();
 	}

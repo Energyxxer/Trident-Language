@@ -78,7 +78,7 @@ public class TridentUtil {
 
         @Override
         public String toString() {
-            return namespace + ":" + body;
+            return (isTag ? "#" : "") + namespace + ":" + body;
         }
 
         public void assertStandalone(TokenPattern<?> pattern, ISymbolContext ctx) {

@@ -1,7 +1,9 @@
 package com.energyxxer.trident.compiler.util;
 
 import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
+import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.tags.TagGroup;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
@@ -64,6 +66,16 @@ public class ProjectSummarizer {
         } catch(IOException x) {
             logException(x);
             return;
+        }
+
+        // Add default minecraft tags:
+        for(Namespace ns : module.getAllNamespaces()) {
+            for(TagGroup<?> group : ns.tags.getGroups()) {
+                String category = group.getCategory();
+                for(Tag tag : group.getAll()) {
+                    summary.addTag(category, new TridentUtil.ResourceLocation(tag.toString()));
+                }
+            }
         }
 
         TokenStream ts = new TokenStream();
