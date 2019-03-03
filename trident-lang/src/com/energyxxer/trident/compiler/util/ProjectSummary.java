@@ -17,6 +17,7 @@ public class ProjectSummary {
     private ArrayList<TridentUtil.ResourceLocation> soundEvents = new ArrayList<>();
     private ArrayList<String> objectives = new ArrayList<>();
     private ArrayList<SummarySymbol> globalSymbols = new ArrayList<>();
+    private ArrayList<Todo> todos = new ArrayList<>();
 
     public void store(File file, TridentSummaryModule summaryModule) {
         fileSummaries.put(file, summaryModule);
@@ -25,6 +26,7 @@ public class ProjectSummary {
                 objectives.add(objective.getName());
             }
         }
+        this.todos.addAll(summaryModule.getTodos());
         globalSymbols.addAll(summaryModule.getGlobalSymbols());
     }
 
@@ -71,5 +73,9 @@ public class ProjectSummary {
 
     public ArrayList<TridentUtil.ResourceLocation> getSoundEvents() {
         return soundEvents;
+    }
+
+    public ArrayList<Todo> getTodos() {
+        return todos;
     }
 }

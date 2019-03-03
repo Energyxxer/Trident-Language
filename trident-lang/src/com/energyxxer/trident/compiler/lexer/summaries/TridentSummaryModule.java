@@ -1,13 +1,12 @@
 package com.energyxxer.trident.compiler.lexer.summaries;
 
 import com.energyxxer.enxlex.lexical_analysis.summary.SummaryModule;
+import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.util.ProjectSummary;
+import com.energyxxer.trident.compiler.util.Todo;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -18,6 +17,7 @@ public class TridentSummaryModule extends SummaryModule {
     private ArrayList<SummarySymbol> objectives = new ArrayList<>();
     private ArrayList<TridentUtil.ResourceLocation> requires = new ArrayList<>();
     private ArrayList<TridentUtil.ResourceLocation> functionTags = new ArrayList<>();
+    private ArrayList<Todo> todos = new ArrayList<>();
     private boolean compileOnly = false;
     private boolean directivesLocked = false;
 
@@ -84,6 +84,10 @@ public class TridentSummaryModule extends SummaryModule {
 
     public List<TridentUtil.ResourceLocation> getFunctionTags() {
         return functionTags;
+    }
+
+    public ArrayList<Todo> getTodos() {
+        return todos;
     }
 
     public Collection<SummarySymbol> getSymbolsVisibleAt(int index) {
@@ -163,5 +167,9 @@ public class TridentSummaryModule extends SummaryModule {
                 "    Function Tags: " + functionTags + "\n" +
                 "    Objectives: " + objectives.stream().map(SummarySymbol::getName).collect(Collectors.joining(", ")) + "\n" +
                 "    Scopes: " + fileBlock.toString() + "\n";
+    }
+
+    public void addTodo(Token token, String text) {
+        todos.add(new Todo(token, text));
     }
 }

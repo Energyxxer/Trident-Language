@@ -6,8 +6,11 @@ import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.*;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
+import com.energyxxer.enxlex.lexical_analysis.token.Token;
+import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.trident.compiler.TridentUtil;
@@ -20,6 +23,7 @@ import com.energyxxer.util.logger.Debug;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
@@ -160,7 +164,20 @@ public class TridentProductions {
         RESOURCE_LOCATION_S = struct("RESOURCE_LOCATION");
         RESOURCE_LOCATION_TAGGED = struct("RESOURCE_LOCATION_TAGGED");
 
-        COMMENT_S = new LazyTokenItemMatch(COMMENT).setName("COMMENT");
+        COMMENT_S = ((LazyTokenItemMatch) new LazyTokenItemMatch(COMMENT).setName("COMMENT").addProcessor(
+                (p, l) -> {
+                    if (l.getSummaryModule() != null) {
+                        Token token = ((TokenItem) p).getContents();
+                        if(token.getSubSections() != null) {
+                            for (Map.Entry<TokenSection, String> entry : token.getSubSections().entrySet()) {
+                                if(entry.getValue().equals("comment.todo")) {
+                                    ((TridentSummaryModule) l.getSummaryModule()).addTodo(token, token.value.substring(entry.getKey().start, entry.getKey().start + entry.getKey().length));
+                                }
+                            }
+                        }
+                    }
+                }
+        ));
 
         ENTRY.add(COMMENT_S);
         ENTRY.add(group(list(MODIFIER).setOptional().setName("MODIFIERS"), literal("run").setOptional(), COMMAND).setName("COMMAND_WRAPPER"));
