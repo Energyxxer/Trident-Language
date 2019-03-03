@@ -276,7 +276,7 @@ public class TridentProductions {
         RESOURCE_LOCATION_S.add(ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION"));
         RESOURCE_LOCATION_S.add(INTERPOLATION_BLOCK);
 
-        RESOURCE_LOCATION_TAGGED.add(group(resourceLocationFixer, optional(hash().setName("TAG_HEADER"), ofType(GLUE)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.FUNCTION_TAG), ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION")).setName("RAW_RESOURCE_LOCATION_TAGGED"));
+        RESOURCE_LOCATION_TAGGED.add(group(resourceLocationFixer, optional(hash().setName("TAG_HEADER"), ofType(GLUE)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.FUNCTION_TAG).setName("TAG_HEADER_WRAPPER"), ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION")).setName("RAW_RESOURCE_LOCATION_TAGGED"));
         RESOURCE_LOCATION_TAGGED.add(INTERPOLATION_BLOCK);
 
         {

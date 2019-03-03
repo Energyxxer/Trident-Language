@@ -142,7 +142,7 @@ public class CommonParsers {
             case "RAW_RESOURCE_LOCATION_TAGGED": {
                 String flat = parseFunctionPath(inner, ctx);
                 typeLoc = new TridentUtil.ResourceLocation(flat);
-                typeLoc.isTag = inner.find("") != null;
+                typeLoc.isTag = inner.find("TAG_HEADER_WRAPPER") != null;
                 break;
             }
             case "INTERPOLATION_BLOCK": {
@@ -162,7 +162,7 @@ public class CommonParsers {
             type = new FunctionReference(ns.functions.get(typeLoc.body));
         }
 
-        if(typeLoc.equals(new TridentUtil.ResourceLocation("#" + ctx.getWritingFile().getResourceLocation().toString() + "/"))) return new FunctionReference(ctx.getWritingFile().getFunction());
+        if(typeLoc.equals(new TridentUtil.ResourceLocation(ctx.getWritingFile().getResourceLocation().toString() + "/"))) return new FunctionReference(ctx.getWritingFile().getFunction());
 
         if(type == null) {
             if(typeLoc.isTag) {
