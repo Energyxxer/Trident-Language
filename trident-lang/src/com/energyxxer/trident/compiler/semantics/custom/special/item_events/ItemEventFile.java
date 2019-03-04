@@ -20,16 +20,14 @@ import com.energyxxer.trident.compiler.semantics.custom.special.item_events.crit
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.criteria.ScoreEventCriteriaHandler;
 import com.energyxxer.util.Lazy;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.ALL_PLAYERS;
 import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.SENDER;
 
 public class ItemEventFile extends SpecialFile {
-    private final HashMap<ItemEvent.ItemScoreEventType, HashMap<Type, HashMap<CustomItem, ArrayList<ItemEvent>>>> definedItems = new HashMap<>();
+    private final EnumMap<ItemEvent.ItemScoreEventType, HashMap<Type, HashMap<CustomItem, ArrayList<ItemEvent>>>> definedItems = new EnumMap<>(ItemEvent.ItemScoreEventType.class);
 
     private Lazy<ItemEventObjectives> objectives;
 
