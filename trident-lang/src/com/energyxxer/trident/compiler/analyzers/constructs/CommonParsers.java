@@ -64,14 +64,9 @@ public class CommonParsers {
     public static NumberRange<Integer> SAMPLE_INT_RANGE = new NumberRange<>(1, 2);
     public static NumberRange<Double> SAMPLE_REAL_RANGE = new NumberRange<>(1.0, 2.0);
 
-
-    public static Type parseEntityType(TokenPattern<?> id, ISymbolContext ctx) {
-        if(id.getName().equals("ENTITY_ID_TAGGED")) return parseEntityType((TokenPattern<?>) (id.getContents()), ctx);
-        if(id.getName().equals("ABSTRACT_RESOURCE")) return parseTag(id, ctx, EntityType.CATEGORY, g -> g.entity, g -> g.entityTypeTags);
-        return parseType(id, ctx, m -> m.entity);
-    }
     public static Object parseEntityReference(TokenPattern<?> id, ISymbolContext ctx) {
-        if(id.getName().equals("ENTITY_ID_TAGGED")) return parseEntityReference((TokenPattern<?>) (id.getContents()), ctx);
+        if(id.getName().equals("ENTITY_ID_TAGGED")) return parseEntityReference(((TokenStructure)id).getContents(), ctx);
+        if(id.getName().equals("ENTITY_ID_WRAPPER")) return parseEntityReference(id.find("ENTITY_ID"), ctx);
         if(id.getName().equals("ABSTRACT_RESOURCE")) return parseTag(id, ctx, EntityType.CATEGORY, g -> g.entity, g -> g.entityTypeTags);
         if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("INTERPOLATION_BLOCK")) {
             return InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, Type.class, CustomEntity.class);

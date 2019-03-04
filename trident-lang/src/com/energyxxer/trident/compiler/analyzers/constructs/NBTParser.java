@@ -16,13 +16,13 @@ import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
 import com.energyxxer.nbtmapper.tags.FlatType;
 import com.energyxxer.nbtmapper.tags.TypeFlags;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class NBTParser {
@@ -136,9 +136,7 @@ public class NBTParser {
                 case "NBT_NUMBER": {
                     String flat = pattern.flattenTokens().get(0).value;
 
-                    final Pattern regex = Pattern.compile("([+-]?\\d+(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
-
-                    Matcher matcher = regex.matcher(flat);
+                    Matcher matcher = TridentLexerProfile.NUMBER_REGEX.matcher(flat);
                     matcher.lookingAt(); //must be true
 
                     String numberPart = matcher.group(1);

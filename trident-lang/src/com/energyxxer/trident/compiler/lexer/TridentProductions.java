@@ -12,6 +12,7 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.lexer.summaries.SummarySymbol;
@@ -190,13 +191,12 @@ public class TridentProductions {
             ).setName("INTERPOLATION_BLOCK");
 
             INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
-            INTERPOLATION_VALUE.addTags(SuggestionTags.ENABLED);
+            INTERPOLATION_VALUE.addTags(SuggestionTags.ENABLED, SuggestionTags.DISABLED_INDEX);
             INTERPOLATION_VALUE.addTags(TridentSuggestionTags.CONTEXT_INTERPOLATION_VALUE);
             ROOT_INTERPOLATION_VALUE = new LazyTokenStructureMatch("ROOT_INTERPOLATION_VALUE");
-            ROOT_INTERPOLATION_VALUE.addTags(SuggestionTags.DISABLED_INDEX);
             LINE_SAFE_INTERPOLATION_VALUE = new LazyTokenStructureMatch("LINE_SAFE_INTERPOLATION_VALUE");
 
-            ROOT_INTERPOLATION_VALUE.add(identifierX().setName("VARIABLE_NAME").addTags(TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE));
+            ROOT_INTERPOLATION_VALUE.add(identifierX().setName("VARIABLE_NAME").addTags(SuggestionTags.ENABLED_INDEX, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE));
             ROOT_INTERPOLATION_VALUE.add(ofType(REAL_NUMBER).setName("RAW_REAL"));
             ROOT_INTERPOLATION_VALUE.add(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"));
             ROOT_INTERPOLATION_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
@@ -718,6 +718,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "summon"),
+                    resourceLocationFixer,
                     ENTITY_ID,
                     optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("FEATURE_LIST"), brace("]")).setName("IMPLEMENTED_FEATURES"),
                     optional(
@@ -1127,8 +1128,8 @@ public class TridentProductions {
         //endregion
         //region Block
         {
-            LazyTokenGroupMatch g = (LazyTokenGroupMatch) new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BLOCK);
-            g.append(new LazyTokenGroupMatch().append(BLOCK_ID).setName("RESOURCE_NAME"));
+            LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE");
+            g.append(new LazyTokenGroupMatch().append(resourceLocationFixer).append(BLOCK_ID).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(BLOCKSTATE).setName("BLOCKSTATE_CLAUSE"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND).setName("NBT_CLAUSE"));
             BLOCK.add(g);
@@ -1148,7 +1149,7 @@ public class TridentProductions {
         //region Item
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE");
-            g.append(new LazyTokenGroupMatch().append(ITEM_ID).setName("RESOURCE_NAME"));
+            g.append(new LazyTokenGroupMatch().append(resourceLocationFixer).append(ITEM_ID).setName("RESOURCE_NAME"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM.add(g);
             ITEM.add(group(INTERPOLATION_BLOCK, optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("ITEM_VARIABLE"));
@@ -1575,12 +1576,14 @@ public class TridentProductions {
             DIFFICULTY.add(categoryMap.get(DifficultyType.CATEGORY));
             GAMEMODE.add(categoryMap.get(GamemodeType.CATEGORY));
             DIMENSION_ID.add(categoryMap.get(DimensionType.CATEGORY));
-            BLOCK_ID.add(categoryMap.get(BlockType.CATEGORY));
-            ITEM_ID.add(categoryMap.get(ItemType.CATEGORY));
-            ENTITY_ID.add(categoryMap.get(EntityType.CATEGORY));
+            BLOCK_ID.add(categoryMap.get(BlockType.CATEGORY).addTags(SuggestionTags.DISABLED));
+            BLOCK_ID.addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BLOCK);
+            ITEM_ID.add(categoryMap.get(ItemType.CATEGORY).addTags(SuggestionTags.DISABLED));
+            ITEM_ID.addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ITEM);
+            ENTITY_ID.add(categoryMap.get(EntityType.CATEGORY).addTags(SuggestionTags.DISABLED));
+            ENTITY_ID.addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ENTITY_TYPE);
             EFFECT_ID.add(categoryMap.get(EffectType.CATEGORY));
             ENCHANTMENT_ID.add(categoryMap.get(EnchantmentType.CATEGORY));
-
 
             LazyTokenGroupMatch COLOR = new LazyTokenGroupMatch().setName("COLOR")
                     .append(real().setName("RED_COMPONENT"))
@@ -1714,7 +1717,7 @@ public class TridentProductions {
                 }
             }
             {
-                ENTITY_ID_TAGGED.add(ENTITY_ID);
+                ENTITY_ID_TAGGED.add(group(resourceLocationFixer, ENTITY_ID).setName("ENTITY_ID_WRAPPER"));
                 LazyTokenGroupMatch g2 = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
                 g2.append(resourceLocationFixer);
                 g2.append(new LazyTokenGroupMatch().append(hash().setName("TAG_HEADER").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ENTITY_TYPE_TAG)).append(ofType(GLUE)).append(RESOURCE_LOCATION_S).setName("RESOURCE_NAME"));
@@ -1761,7 +1764,7 @@ public class TridentProductions {
         {
             LazyTokenStructureMatch entityBodyEntry = choice(
                     group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT"),
-                    group(literal("default"), literal("passengers"), brace("["), list(group(ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("FEATURE_LIST"), brace("]")).setName("IMPLEMENTED_FEATURES"), optional(NBT_COMPOUND).setName("PASSENGER_NBT")).setName("PASSENGER"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
+                    group(literal("default"), literal("passengers"), brace("["), list(group(resourceLocationFixer, ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("FEATURE_LIST"), brace("]")).setName("IMPLEMENTED_FEATURES"), optional(NBT_COMPOUND).setName("PASSENGER_NBT")).setName("PASSENGER"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
                     group(literal("default"), literal("health"), real().setName("HEALTH")).setName("DEFAULT_HEALTH"),
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(choice(group(literal("ticking"), list(MODIFIER).setOptional().setName("TICKING_MODIFIERS")).setName("TICKING_ENTITY_FUNCTION")).setOptional().setName("ENTITY_FUNCTION_MODIFIER"), literal("function"), OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_INNER_FUNCTION")
@@ -1856,6 +1859,23 @@ public class TridentProductions {
                         if(l.getSummaryModule() != null) {
                             SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.find("VARIABLE_NAME").flatten(false), p.getStringLocation().index);
                             sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
+                            TokenStructure root = ((TokenStructure) p.find("VARIABLE_INITIALIZATION.VARIABLE_VALUE.LINE_SAFE_INTERPOLATION_VALUE.EXPRESSION.MID_INTERPOLATION_VALUE.SURROUNDED_INTERPOLATION_VALUE.INTERPOLATION_CHAIN.ROOT_INTERPOLATION_VALUE"));
+                            if(root != null) {
+                                switch(root.getContents().getName()) {
+                                    case "WRAPPED_ENTITY": {
+                                        sym.addTag(TridentSuggestionTags.TAG_ENTITY);
+                                        break;
+                                    }
+                                    case "WRAPPED_ITEM": {
+                                        sym.addTag(TridentSuggestionTags.TAG_ITEM);
+                                        break;
+                                    }
+                                    case "WRAPPED_COORDINATE": {
+                                        sym.addTag(TridentSuggestionTags.TAG_COORDINATE);
+                                        break;
+                                    }
+                                }
+                            }
                             sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.LOCAL));
                             ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                         }
@@ -1884,7 +1904,7 @@ public class TridentProductions {
                     group(instructionKeyword("using"),
                             choice(
                                     group(literal("tag"), group(identifierA()).setName("USING_TAG_NAME"), ENTITY, list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_TAG"),
-                                    group(literal("summon"), ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("FEATURE_LIST"), brace("]")).setName("IMPLEMENTED_FEATURES"), optional(COORDINATE_SET, optional(NBT_COMPOUND)), literal("with"), group(identifierA()).setName("USING_SUMMON_TAG_NAME"), list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_SUMMON")
+                                    group(literal("summon"), resourceLocationFixer, ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("FEATURE_LIST"), brace("]")).setName("IMPLEMENTED_FEATURES"), optional(COORDINATE_SET, optional(NBT_COMPOUND)), literal("with"), group(identifierA()).setName("USING_SUMMON_TAG_NAME"), list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_SUMMON")
                             ).setName("USING_CASE"),
                             ANONYMOUS_INNER_FUNCTION
                     )

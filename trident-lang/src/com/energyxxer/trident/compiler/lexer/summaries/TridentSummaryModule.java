@@ -92,7 +92,13 @@ public class TridentSummaryModule extends SummaryModule {
 
     public Collection<SummarySymbol> getSymbolsVisibleAt(int index) {
         ArrayList<SummarySymbol> list = new ArrayList<>();
-        if(parentSummary != null) list.addAll(parentSummary.getGlobalSymbols());
+        if(parentSummary != null) {
+            for(SummarySymbol globalSymbol : parentSummary.getGlobalSymbols()) {
+                if(!Objects.equals(((TridentSummaryModule) globalSymbol.getParentFileSummary()).getFileLocation(), this.getFileLocation())) {
+                    list.add(globalSymbol);
+                }
+            }
+        }
         collectSymbolsVisibleAt(index, list, true);
         return list;
     }

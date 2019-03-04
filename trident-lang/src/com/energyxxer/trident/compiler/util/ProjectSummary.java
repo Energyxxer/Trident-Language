@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 public class ProjectSummary {
     private HashMap<File, TridentSummaryModule> fileSummaries = new HashMap<>();
+    private HashMap<String, ArrayList<TridentUtil.ResourceLocation>> types = new HashMap<>();
     private HashMap<String, ArrayList<TridentUtil.ResourceLocation>> tags = new HashMap<>();
     private ArrayList<TridentUtil.ResourceLocation> soundEvents = new ArrayList<>();
     private ArrayList<String> objectives = new ArrayList<>();
@@ -33,6 +34,11 @@ public class ProjectSummary {
     public void addTag(String category, TridentUtil.ResourceLocation tagLoc) {
         if(!tags.containsKey(category)) tags.put(category, new ArrayList<>());
         tags.get(category).add(tagLoc);
+    }
+
+    public void addType(String category, TridentUtil.ResourceLocation typeLoc) {
+        if(!types.containsKey(category)) types.put(category, new ArrayList<>());
+        types.get(category).add(typeLoc);
     }
 
     public TridentSummaryModule getSummaryForLocation(TridentUtil.ResourceLocation loc) {
@@ -67,6 +73,10 @@ public class ProjectSummary {
         soundEvents.add(loc);
     }
 
+    public HashMap<String, ArrayList<TridentUtil.ResourceLocation>> getTypes() {
+        return types;
+    }
+
     public HashMap<String, ArrayList<TridentUtil.ResourceLocation>> getTags() {
         return tags;
     }
@@ -77,5 +87,14 @@ public class ProjectSummary {
 
     public ArrayList<Todo> getTodos() {
         return todos;
+    }
+
+    public TridentSummaryModule getSummaryForFile(File file) {
+        return fileSummaries.get(file);
+    }
+
+    public TridentUtil.ResourceLocation getLocationForFile(File file) {
+        TridentSummaryModule summary = getSummaryForFile(file);
+        return summary != null ? summary.getFileLocation() : null;
     }
 }

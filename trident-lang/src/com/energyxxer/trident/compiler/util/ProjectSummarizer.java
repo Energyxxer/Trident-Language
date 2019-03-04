@@ -5,6 +5,8 @@ import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.tags.TagGroup;
+import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.ParsingSignature;
@@ -13,6 +15,7 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
+import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -68,8 +71,18 @@ public class ProjectSummarizer {
             return;
         }
 
-        // Add default minecraft tags:
+        // Add default minecraft types and tags:
         for(Namespace ns : module.getAllNamespaces()) {
+            for(TypeDictionary typeDict : ns.types.getAllDictionaries()) {
+                String category = typeDict.getCategory();
+                for(Type type : typeDict.list()) {
+                    if(type instanceof AliasType) {
+                        summary.addType(category, new TridentUtil.ResourceLocation(((AliasType) type).getAliasNamespace().getName() + ":" + ((AliasType) type).getAliasName()));
+                    } else {
+                        summary.addType(category, new TridentUtil.ResourceLocation(type.toString()));
+                    }
+                }
+            }
             for(TagGroup<?> group : ns.tags.getGroups()) {
                 String category = group.getCategory();
                 for(Tag tag : group.getAll()) {

@@ -25,6 +25,10 @@ public class TridentLexerProfile extends LexerProfile {
     public static final String IDENTIFIER_C_REGEX = "\\S+";
     public static final String IDENTIFIER_D_REGEX = "[a-zA-Z0-9_\\-+]+";
 
+    public static final Pattern NUMBER_REGEX = Pattern.compile("([+-]?\\d+(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
+    public static final Pattern SHORT_NUMBER_REGEX = Pattern.compile("[+-]?\\d*(\\.\\d+)?", Pattern.CASE_INSENSITIVE);
+    public static final Pattern TIME_REGEX = Pattern.compile("(\\d+(\\.\\d+)?[tsd]?)");
+
     static {
         usefulContexts.put(RESOURCE_LOCATION, new ResourceLocationContext("[a-z0-9_\\.-]","[a-z0-9_/\\.-]", RESOURCE_LOCATION));
     }
@@ -47,11 +51,9 @@ public class TridentLexerProfile extends LexerProfile {
         //Numbers
         contexts.add(new LexerContext() {
 
-            private Pattern regex = Pattern.compile("([+-]?\\d+(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
-
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
-                Matcher matcher = regex.matcher(str);
+                Matcher matcher = NUMBER_REGEX.matcher(str);
 
                 if(matcher.lookingAt()) {
                     int length = matcher.end();
@@ -61,7 +63,7 @@ public class TridentLexerProfile extends LexerProfile {
 
             @Override
             public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
-                Matcher matcher = regex.matcher(str);
+                Matcher matcher = NUMBER_REGEX.matcher(str);
 
                 if(matcher.lookingAt()) {
                     int length = matcher.end();
@@ -91,8 +93,6 @@ public class TridentLexerProfile extends LexerProfile {
         //Short numbers ('.0', '.5' ...)
         contexts.add(new LexerContext() {
 
-            private Pattern regex = Pattern.compile("[+-]?\\d*(\\.\\d+)?", Pattern.CASE_INSENSITIVE);
-
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
                 return new ScannerContextResponse(false);
@@ -100,7 +100,7 @@ public class TridentLexerProfile extends LexerProfile {
 
             @Override
             public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
-                Matcher matcher = regex.matcher(str);
+                Matcher matcher = SHORT_NUMBER_REGEX.matcher(str);
 
                 if(matcher.lookingAt() && matcher.end() > 0) {
                     int length = matcher.end();
@@ -117,11 +117,9 @@ public class TridentLexerProfile extends LexerProfile {
         //Time literal
         contexts.add(new LexerContext() {
 
-            private Pattern regex = Pattern.compile("(\\d+(\\.\\d+)?[tsd]?)");
-
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
-                Matcher matcher = regex.matcher(str);
+                Matcher matcher = TIME_REGEX.matcher(str);
 
                 if(matcher.lookingAt()) {
                     int length = matcher.end();
