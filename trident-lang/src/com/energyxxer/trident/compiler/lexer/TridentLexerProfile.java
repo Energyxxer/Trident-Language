@@ -249,7 +249,7 @@ public class TridentLexerProfile extends LexerProfile {
         //String literals
         contexts.add(new LexerContext() {
 
-            String delimiters = "\"";
+            String delimiters = "\"'";
 
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
