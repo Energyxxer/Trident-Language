@@ -164,6 +164,8 @@ public class TridentProductions {
         SELECTOR_ARGUMENT.addTags(SuggestionTags.ENABLED);
         PLAYER_NAME = struct("PLAYER_NAME");
 
+        LazyTokenPatternMatch SOUND_CHANNEL = choice("ambient", "block", "hostile", "master", "music", "neutral", "player", "record", "voice", "weather").setName("CHANNEL").addTags(SuggestionTags.ENABLED);
+
         POINTER = struct("POINTER");
 
         RESOURCE_LOCATION_S = struct("RESOURCE_LOCATION");
@@ -204,24 +206,24 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"));
             ROOT_INTERPOLATION_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
             ROOT_INTERPOLATION_VALUE.add(ofType(STRING_LITERAL).setName("STRING_LITERAL"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("entity"), brace("<"), ENTITY, brace(">")).setName("WRAPPED_ENTITY"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("block"), brace("<"), BLOCK_TAGGED, brace(">")).setName("WRAPPED_BLOCK"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("item"), brace("<"), ITEM_TAGGED, brace(">")).setName("WRAPPED_ITEM"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("text_component"), brace("<"), TEXT_COMPONENT, brace(">")).setName("WRAPPED_TEXT_COMPONENT"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt"), brace("<"), NBT_COMPOUND, brace(">")).setName("WRAPPED_NBT"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_value"), brace("<"), NBT_VALUE, brace(">")).setName("WRAPPED_NBT_VALUE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_path"), brace("<"), NBT_PATH, brace(">")).setName("WRAPPED_NBT_PATH"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("coordinates"), brace("<"), COORDINATE_SET, brace(">")).setName("WRAPPED_COORDINATE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("int_range"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("real_range"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("resource"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("pointer"), brace("<"), POINTER, brace(">")).setName("WRAPPED_POINTER"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("entity").setName("VALUE_WRAPPER_KEY"), brace("<"), ENTITY, brace(">")).setName("WRAPPED_ENTITY"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("block").setName("VALUE_WRAPPER_KEY"), brace("<"), BLOCK_TAGGED, brace(">")).setName("WRAPPED_BLOCK"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("item").setName("VALUE_WRAPPER_KEY"), brace("<"), ITEM_TAGGED, brace(">")).setName("WRAPPED_ITEM"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("text_component").setName("VALUE_WRAPPER_KEY"), brace("<"), TEXT_COMPONENT, brace(">")).setName("WRAPPED_TEXT_COMPONENT"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt").setName("VALUE_WRAPPER_KEY"), brace("<"), NBT_COMPOUND, brace(">")).setName("WRAPPED_NBT"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_value").setName("VALUE_WRAPPER_KEY"), brace("<"), NBT_VALUE, brace(">")).setName("WRAPPED_NBT_VALUE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_path").setName("VALUE_WRAPPER_KEY"), brace("<"), NBT_PATH, brace(">")).setName("WRAPPED_NBT_PATH"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("coordinates").setName("VALUE_WRAPPER_KEY"), brace("<"), COORDINATE_SET, brace(">")).setName("WRAPPED_COORDINATE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("int_range").setName("VALUE_WRAPPER_KEY"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("real_range").setName("VALUE_WRAPPER_KEY"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("resource").setName("VALUE_WRAPPER_KEY"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("pointer").setName("VALUE_WRAPPER_KEY"), brace("<"), POINTER, brace(">")).setName("WRAPPED_POINTER"));
             ROOT_INTERPOLATION_VALUE.add(DICTIONARY);
             ROOT_INTERPOLATION_VALUE.add(LIST);
             ROOT_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
             ROOT_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("function"), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("new"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("function").setName("VALUE_WRAPPER_KEY"), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("new").setName("VALUE_WRAPPER_KEY"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
             LazyTokenStructureMatch MEMBER_ACCESS = choice(
                     group(dot(), identifierX().setName("MEMBER_NAME").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.IDENTIFIER_MEMBER)).setName("MEMBER_KEY"),
@@ -558,7 +560,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "playsound"),
                     resourceLocationFixer,
                     group(RESOURCE_LOCATION_S).setName("SOUND_EVENT").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE),
-                    ofType(SOUND_CHANNEL).setName("CHANNEL"),
+                    SOUND_CHANNEL,
                     ENTITY,
                     optional(
                             COORDINATE_SET,
@@ -713,7 +715,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "stopsound"),
                     ENTITY,
                     choice(
-                            group(ofType(SOUND_CHANNEL).setName("CHANNEL"), resourceLocationFixer, optional(sameLine(), RESOURCE_LOCATION_S).setName("SOUND_RESOURCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE)).setName("STOP_BY_CHANNEL"),
+                            group(SOUND_CHANNEL, resourceLocationFixer, optional(sameLine(), RESOURCE_LOCATION_S).setName("SOUND_RESOURCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE)).setName("STOP_BY_CHANNEL"),
                             group(matchItem(SYMBOL, "*"), sameLine(), resourceLocationFixer, group(RESOURCE_LOCATION_S).setName("SOUND_RESOURCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE)).setName("STOP_BY_EVENT")
                     ).setOptional()
             ));
@@ -749,7 +751,7 @@ public class TridentProductions {
                                                                     literal("facing"),
                                                                     choice(
                                                                             COORDINATE_SET,
-                                                                            group(literal("entity"), ENTITY, ofType(ANCHOR).setOptional().setName("ANCHOR"))
+                                                                            group(literal("entity"), ENTITY, anchor().setOptional())
                                                                     )
                                                             ).setName("FACING_CLAUSE"),
                                                             TWO_COORDINATE_SET
@@ -998,7 +1000,7 @@ public class TridentProductions {
         {
             MODIFIER.add(group(
                     matchItem(MODIFIER_HEADER, "anchored"),
-                    ofType(ANCHOR)
+                    anchor()
             ));
         }
         //endregion
@@ -1023,7 +1025,7 @@ public class TridentProductions {
             MODIFIER.add(group(
                     matchItem(MODIFIER_HEADER, "facing"),
                     choice(
-                            group(literal("entity").setOptional(), ENTITY, ofType(ANCHOR).setOptional()).setName("ENTITY_BRANCH"),
+                            group(literal("entity").setOptional(), ENTITY, anchor().setOptional()).setName("ENTITY_BRANCH"),
                             group(COORDINATE_SET).setName("BLOCK_BRANCH")
                     )
             ));
@@ -1094,9 +1096,9 @@ public class TridentProductions {
                     matchItem(MODIFIER_HEADER, "store"),
                     choice("result", "success").setName("STORE_VALUE"),
                     choice(
-                            group(literal("block"), COORDINATE_SET, NBT_PATH, ofType(NUMERIC_DATA_TYPE).setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_BLOCK"),
+                            group(literal("block"), COORDINATE_SET, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_BLOCK"),
                             group(literal("bossbar"), RESOURCE_LOCATION_S, choice("max", "value").setName("BOSSBAR_VARIABLE")).setName("STORE_BOSSBAR"),
-                            group(literal("entity"), ENTITY, NBT_PATH, ofType(NUMERIC_DATA_TYPE).setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_ENTITY"),
+                            group(literal("entity"), ENTITY, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_ENTITY"),
                             group(literal("score"), score()).setName("STORE_SCORE")
                     )
             ));
@@ -1440,7 +1442,7 @@ public class TridentProductions {
             SELECTOR_ARGUMENT.add(group(
                     choice("sort").setName("SELECTOR_ARGUMENT_KEY"),
                     equals(),
-                    choice(ofType(SORTING)).setName("SELECTOR_ARGUMENT_VALUE")
+                    choice("nearest", "farthest", "arbitrary", "random").setName("SELECTOR_ARGUMENT_VALUE")
             ));
         }
 
@@ -1741,7 +1743,7 @@ public class TridentProductions {
 
 
         LazyTokenPatternMatch scale = group(symbol("*"), real()).setOptional().setName("SCALE");
-        LazyTokenPatternMatch typeCast = group(brace("("), ofType(NUMERIC_DATA_TYPE).setName("NUMERIC_DATA_TYPE"), brace(")")).setOptional().setName("TYPE_CAST");
+        LazyTokenPatternMatch typeCast = group(brace("("), numericDataType().setName("NUMERIC_DATA_TYPE"), brace(")")).setOptional().setName("TYPE_CAST");
 
         LazyTokenGroupMatch scoreHead = group(ofType(ARROW), objectiveName(), scale).setName("SCORE_POINTER_HEAD");
         LazyTokenGroupMatch nbtHead = group(dot(), NBT_PATH, scale, typeCast).setName("NBT_POINTER_HEAD");
@@ -2023,6 +2025,14 @@ public class TridentProductions {
 
     private static LazyTokenItemMatch literal(String text) {
         return new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase());
+    }
+
+    private LazyTokenStructureMatch numericDataType() {
+        return choice("byte", "double", "float", "int", "long", "short");
+    }
+
+    private LazyTokenPatternMatch anchor() {
+        return choice("feet", "eyes").setName("ANCHOR").addTags(SuggestionTags.ENABLED);
     }
 
     private static LazyTokenItemMatch symbol(String text) {

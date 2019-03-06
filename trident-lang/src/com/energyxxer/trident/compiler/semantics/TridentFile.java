@@ -101,7 +101,7 @@ public class TridentFile extends SymbolContext {
                         break;
                     }
                     case "TAG_DIRECTIVE": {
-                        TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents());
+                        TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents().value);
                         if(compileOnly) {
                             getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have any tags", directiveList));
                         }
@@ -109,7 +109,7 @@ public class TridentFile extends SymbolContext {
                         break;
                     }
                     case "REQUIRE_DIRECTIVE": {
-                        TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents());
+                        TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents().value);
                         requires.put(directiveBody, loc);
                         break;
                     }

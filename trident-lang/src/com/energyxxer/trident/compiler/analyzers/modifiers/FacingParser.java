@@ -5,17 +5,13 @@ import com.energyxxer.commodore.functionlogic.commands.execute.EntityAnchor;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteFacingBlock;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteFacingEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
-import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.lexer.TridentTokens;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-
-import java.util.List;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "facing")
 public class FacingParser implements SimpleModifierParser {
@@ -24,9 +20,9 @@ public class FacingParser implements SimpleModifierParser {
         TokenPattern<?> branch = ((TokenStructure) pattern.find("CHOICE")).getContents();
         switch(branch.getName()) {
             case "ENTITY_BRANCH": {
-                List<Token> anchorToken = branch.search(TridentTokens.ANCHOR);
+                TokenPattern<?> anchorToken = branch.find("ANCHOR");
                 try {
-                    return new ExecuteFacingEntity(EntityParser.parseEntity(branch.find("ENTITY"), ctx), (!anchorToken.isEmpty() && anchorToken.get(0).value.equals("eyes")) ? EntityAnchor.EYES : EntityAnchor.FEET);
+                    return new ExecuteFacingEntity(EntityParser.parseEntity(branch.find("ENTITY"), ctx), (anchorToken != null && anchorToken.flatten(false).equals("eyes")) ? EntityAnchor.EYES : EntityAnchor.FEET);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
                             .map(CommodoreException.Source.ENTITY_ERROR, branch.find(".ENTITY"))

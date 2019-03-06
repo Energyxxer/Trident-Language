@@ -52,14 +52,6 @@ public class TridentTokens {
             TRAILING_STRING,
             // isset, update
             CUSTOM_COMMAND_KEYWORD,
-            // nearest, farthest, arbitrary, random...
-            SORTING,
-            // int, float, short, double, long
-            NUMERIC_DATA_TYPE,
-            // master, player, neutral, hostile, voice...
-            SOUND_CHANNEL,
-            // eyes, feet
-            ANCHOR,
             //Objective names, tags, etc.:
             IDENTIFIER_TYPE_A,
             //Player names (cannot begin with @ nor $) (very greedy string):

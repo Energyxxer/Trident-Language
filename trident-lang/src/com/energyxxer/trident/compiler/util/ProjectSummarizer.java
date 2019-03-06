@@ -90,6 +90,12 @@ public class ProjectSummarizer {
                 }
             }
         }
+        JsonObject defaultSounds = ((JsonObject) module.getResource("sounds.json"));
+        if(defaultSounds != null) {
+            for(String key : defaultSounds.keySet()) {
+                summary.addSoundEvent(new TridentUtil.ResourceLocation("minecraft:" + key));
+            }
+        }
 
         TokenStream ts = new TokenStream();
         LazyLexer lex = new LazyLexer(ts, new TridentProductions(module).FILE);

@@ -3,7 +3,6 @@ package com.energyxxer.trident.compiler;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
-import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentTokens;
@@ -34,10 +33,6 @@ public class TridentUtil {
             TokenPattern<?> namespacePattern = typeGroup.find("NAMESPACE");
             namespace = namespacePattern != null ? namespacePattern.flattenTokens().get(0).value : "minecraft";
             body = typeGroup.find("TYPE_NAME").flatten(true);
-        }
-
-        public ResourceLocation(Token token) {
-            this(token.value);
         }
 
         public ResourceLocation(String str) {

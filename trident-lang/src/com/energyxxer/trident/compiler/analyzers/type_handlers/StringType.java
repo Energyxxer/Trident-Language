@@ -8,6 +8,7 @@ import com.energyxxer.commodore.textcomponents.StringTextComponent;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -93,10 +94,7 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
             }
         }
         if(targetType == TridentUtil.ResourceLocation.class) {
-            TridentUtil.ResourceLocation loc = TridentUtil.ResourceLocation.createStrict(object);
-            if(loc == null) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Illegal resource location path: " + object, pattern, ctx);
-            }
+            TridentUtil.ResourceLocation loc = CommonParsers.parseResourceLocation(object, pattern, ctx);
             return (F) loc;
         }
         if(targetType == TextComponent.class) {

@@ -129,6 +129,25 @@ public class CommonParsers {
         return flat;
     }
 
+    public static TridentUtil.ResourceLocation parseResourceLocation(String str, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(str.equals("/")) {
+            return ctx.getWritingFile().getResourceLocation();
+        }
+        TridentUtil.ResourceLocation loc;
+
+        if(str.startsWith("/")) {
+            str = ctx.getWritingFile().getResourceLocation() + str;
+        }
+
+        loc = TridentUtil.ResourceLocation.createStrict(str);
+
+        if(loc != null) {
+            return loc;
+        } else {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal resource location: '" + str + "'", pattern, ctx);
+        }
+    }
+
     public static Type parseFunctionTag(TokenStructure pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
 
@@ -533,25 +552,18 @@ public class CommonParsers {
 
         TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
 
-        TridentUtil.ResourceLocation typeLoc;
-
         switch(inner.getName()) {
             case "RAW_RESOURCE_LOCATION":
             case "RAW_RESOURCE_LOCATION_TAGGED": {
-                typeLoc = new TridentUtil.ResourceLocation(inner.flatten(false));
-                break;
+                return parseResourceLocation(inner.flatten(false), pattern, ctx);
             }
             case "INTERPOLATION_BLOCK": {
-                typeLoc = InterpolationManager.parse(inner, ctx, TridentUtil.ResourceLocation.class);
-                EObject.assertNotNull(typeLoc, inner, ctx);
-                break;
+                return InterpolationManager.parse(inner, ctx, TridentUtil.ResourceLocation.class);
             }
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
             }
         }
-
-        return typeLoc;
     }
 
     public static String parseStringLiteral(TokenPattern<?> pattern, ISymbolContext ctx) {
