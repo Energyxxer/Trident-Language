@@ -7,7 +7,6 @@ import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
-import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.types.defaults.BossbarReference;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -17,8 +16,8 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "store")
 public class StoreParser implements SimpleModifierParser {
@@ -55,9 +54,8 @@ public class StoreParser implements SimpleModifierParser {
                 }
             }
             case "STORE_SCORE": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE_NAME"), ctx);
-                return new ExecuteStoreScore(new LocalScore(entity, objective));
+                LocalScore score = CommonParsers.parseScore(inner.find("SCORE"), ctx);
+                return new ExecuteStoreScore(score);
             }
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);

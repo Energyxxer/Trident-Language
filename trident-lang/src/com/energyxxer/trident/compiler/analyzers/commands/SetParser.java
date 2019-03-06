@@ -22,11 +22,13 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.analyzers.constructs.*;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.modifiers.StoreParser;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerType;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.util.Lazy;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 @AnalyzerMember(key = "set")
 public class SetParser implements SimpleCommandParser {
@@ -62,32 +64,58 @@ public class SetParser implements SimpleCommandParser {
                 head = parsePointerHead(entity, pattern.find("POINTER_HEAD"), ctx);
                 return new PointerDecorator.EntityPointer(entity, head);
             case "VARIABLE_POINTER":
-                Object symbol = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class, CoordinateSet.class);
-                if(symbol == null) {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unexpected null value at pointer", pattern.find("INTERPOLATION_BLOCK"), ctx);
-                }
-                head = parsePointerHead(symbol, pattern.find("POINTER_HEAD"), ctx);
-                if(symbol instanceof Entity) {
-                    return new PointerDecorator.EntityPointer((Entity) symbol, head);
-                } else if(symbol instanceof CoordinateSet) {
-                    if(!head.isNBT()) {
-                        throw new TridentException(TridentException.Source.COMMAND_ERROR, "This pointer subject only accepts NBT pointer heads", pattern, ctx);
+                if(pattern.find("POINTER_HEAD_WRAPPER") != null) {
+                    Object symbol = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class, CoordinateSet.class);
+                    if (symbol == null) {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null value at pointer", pattern.find("INTERPOLATION_BLOCK"), ctx);
                     }
-                    return new PointerDecorator.BlockPointer((CoordinateSet) symbol, head);
+                    head = parsePointerHead(symbol, pattern.find("POINTER_HEAD_WRAPPER.POINTER_HEAD"), ctx);
+                    if (symbol instanceof Entity) {
+                        return new PointerDecorator.EntityPointer((Entity) symbol, head);
+                    } else if (symbol instanceof CoordinateSet) {
+                        if (!head.isNBT()) {
+                            throw new TridentException(TridentException.Source.TYPE_ERROR, "This pointer subject only accepts NBT pointer heads", pattern, ctx);
+                        }
+                        return new PointerDecorator.BlockPointer((CoordinateSet) symbol, head);
+                    } else {
+                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown CommonParsers#retrieveSymbol return type: " + symbol.getClass(), pattern, ctx);
+                    }
                 } else {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown CommonParsers#retrieveSymbol return type: " + symbol.getClass(), pattern, ctx);
+                    return convertValueToDecorator(InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerType.class), pattern.find("INTERPOLATION_BLOCK"), ctx);
                 }
             case "NBT_VALUE":
                 return new PointerDecorator.ValuePointer(NBTParser.parseValue(pattern, ctx));
             case "INTERPOLATION_BLOCK":
                 Object value = InterpolationManager.parse(pattern, ctx, NBTTag.class, Integer.class);
                 if(value == null) {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unexpected null value at pointer", pattern, ctx);
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null value at pointer", pattern, ctx);
                 }
                 if(value instanceof Integer) value = new TagInt((int) value);
                 return new PointerDecorator.ValuePointer((NBTTag) value);
             default:
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+        }
+    }
+
+    private PointerDecorator convertValueToDecorator(PointerType pointer, TokenPattern<?> pattern, ISymbolContext ctx) {
+        pointer.validate(pattern, ctx);
+        Lazy<NumericNBTType> lazyTypeInstantiator = new Lazy<>(() -> NumericNBTType.valueOf(pointer.getNumericType().toUpperCase(Locale.ENGLISH)));
+        if(pointer.getTarget() instanceof Entity) {
+            PointerHead head;
+            if(pointer.getMember() instanceof String) {
+                String objectiveName = (String) pointer.getMember();
+                if(!ctx.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) {
+                    head = new PointerHead.ScorePointerHead(ctx.getCompiler().getModule().getObjectiveManager().create(objectiveName), pointer.getScale());
+                } else {
+                    head = new PointerHead.ScorePointerHead(ctx.getCompiler().getModule().getObjectiveManager().get(objectiveName), pointer.getScale());
+                }
+            } else {
+                head = new PointerHead.NBTPointerHead((NBTPath) pointer.getMember(), pointer.getScale(), lazyTypeInstantiator);
+            }
+            return new PointerDecorator.EntityPointer((Entity) pointer.getTarget(), head);
+        } else {
+            PointerHead.NBTPointerHead head = new PointerHead.NBTPointerHead((NBTPath) pointer.getMember(), pointer.getScale(), lazyTypeInstantiator);
+            return new PointerDecorator.BlockPointer((CoordinateSet) pointer.getTarget(), head);
         }
     }
 
@@ -110,7 +138,7 @@ public class SetParser implements SimpleCommandParser {
 
                 return new PointerHead.NBTPointerHead(path, scale, new Lazy<>(() -> StoreParser.parseNumericType(pattern.find("TYPE_CAST.NUMERIC_DATA_TYPE"), body, path, ctx, pattern, true)));
             default:
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
         }
     }
 

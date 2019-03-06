@@ -92,35 +92,33 @@ public class ScoreboardParser implements SimpleCommandParser {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "CHANGE": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE_NAME"), ctx);
+                LocalScore score = CommonParsers.parseScore(inner.find("SCORE"), ctx);
                 int amount = CommonParsers.parseInt(inner.find("INTEGER"), ctx);
 
-                if(inner.find("CHOICE.LITERAL_SET") != null) return new ScoreSet(new LocalScore(entity, objective), amount);
+                if(inner.find("CHOICE.LITERAL_SET") != null) return new ScoreSet(score, amount);
                 if(inner.find("CHOICE.LITERAL_REMOVE") != null) amount *= -1;
-                return new ScoreAdd(new LocalScore(entity, objective), amount);
+                return new ScoreAdd(score, amount);
             }
             case "ENABLE": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE_NAME"), ctx);
+                LocalScore score = CommonParsers.parseScore(inner.find("SCORE"), ctx);
                 try {
-                    return new TriggerEnable(entity, objective);
+                    //noinspection ConstantConditions
+                    return new TriggerEnable(score.getHolder(), score.getObjective());
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, inner, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find("ENTITY"))
-                            .map(CommodoreException.Source.TYPE_ERROR, inner.find("OBJECTIVE_NAME"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find("SCORE"))
+                            .map(CommodoreException.Source.TYPE_ERROR, inner.find("SCORE"))
                             .invokeThrow();
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
                 }
             }
             case "GET": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
-                Objective objective = CommonParsers.parseObjective(inner.find("OBJECTIVE_NAME"), ctx);
+                LocalScore score = CommonParsers.parseScore(inner.find("SCORE"), ctx);
                 try {
-                    return new ScoreGet(new LocalScore(entity, objective));
+                    return new ScoreGet(score);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, inner, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find("ENTITY"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find("SCORE"))
                             .invokeThrow();
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
                 }
@@ -136,31 +134,14 @@ public class ScoreboardParser implements SimpleCommandParser {
                 }
             }
             case "OPERATION": {
-                LocalScore target = new LocalScore(
-                        EntityParser.parseEntity(inner.find("TARGET.ENTITY"), ctx),
-                        CommonParsers.parseObjective(inner.find("TARGET_OBJECTIVE"), ctx)
-                );
-                LocalScore source = new LocalScore(
-                        EntityParser.parseEntity(inner.find("SOURCE.ENTITY"), ctx),
-                        CommonParsers.parseObjective(inner.find("SOURCE_OBJECTIVE"), ctx)
-                );
+                LocalScore target = CommonParsers.parseScore(inner.find("TARGET_SCORE.SCORE"), ctx);
+                LocalScore source = CommonParsers.parseScore(inner.find("SOURCE_SCORE.SCORE"), ctx);
                 String rawOperator = inner.find("OPERATOR").flatten(false);
                 return new ScorePlayersOperation(target, ScorePlayersOperation.Operation.getOperationForSymbol(rawOperator), source);
             }
             case "RESET": {
-                Entity entity = EntityParser.parseEntity(inner.find("TARGET.ENTITY"), ctx);
-                TokenPattern<?> objectiveClause = inner.find("OBJECTIVE_CLAUSE");
-                if(objectiveClause != null) {
-                    Objective objective = CommonParsers.parseObjective(objectiveClause.find("OBJECTIVE_NAME"), ctx);
-                    if(entity != null) {
-                        return new ScoreReset(entity, objective);
-                    } else {
-                        return new ScoreReset(objective);
-                    }
-                }
-
-                if(entity != null) return new ScoreReset(entity);
-                else return new ScoreReset();
+                LocalScore score = CommonParsers.parseScore(inner.find("SCORE"), ctx);
+                return new ScoreReset(score);
             }
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);

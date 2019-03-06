@@ -20,8 +20,8 @@ public class TridentLexerProfile extends LexerProfile {
 
     public static final HashMap<TokenType, LexerContext> usefulContexts = new HashMap<>();
 
-    public static final String IDENTIFIER_A_REGEX = "[a-zA-Z0-9._\\-+]+";
-    public static final String IDENTIFIER_B_REGEX = "[^@\\s]\\S*";
+    public static final Pattern IDENTIFIER_A_REGEX = Pattern.compile("[a-zA-Z0-9._\\-+]+");
+    public static final Pattern IDENTIFIER_B_REGEX = Pattern.compile("[^@\\s]\\S*");
     public static final String IDENTIFIER_C_REGEX = "\\S+";
     public static final String IDENTIFIER_D_REGEX = "[a-zA-Z0-9_\\-+]+";
 
@@ -416,7 +416,7 @@ public class TridentLexerProfile extends LexerProfile {
 
         contexts.add(new LexerContext() {
 
-            private List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinate", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "global", "case", "switch", "default", "feature", "implements");
+            private List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinate", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "global", "case", "switch", "default", "feature", "implements", "pointer");
 
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {

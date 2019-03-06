@@ -127,6 +127,9 @@ public class InterpolationManager {
             case "WRAPPED_RESOURCE": {
                 return CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION_TAGGED"), ctx);
             }
+            case "WRAPPED_POINTER": {
+                return CommonParsers.parsePointer(pattern.find("POINTER"), ctx);
+            }
             case "DICTIONARY": {
                 DictionaryObject dict = new DictionaryObject();
 

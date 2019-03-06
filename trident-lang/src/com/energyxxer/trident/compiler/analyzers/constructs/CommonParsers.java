@@ -5,12 +5,14 @@ import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
+import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
 import com.energyxxer.commodore.functionlogic.nbt.NumericNBTTag;
 import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
+import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
@@ -41,6 +43,7 @@ import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerType;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -575,7 +578,7 @@ public class CommonParsers {
             case "RAW_IDENTIFIER_A": return pattern.flatten(false);
             case "STRING": {
                 String result = parseStringLiteral(pattern, ctx);
-                if(result.matches(TridentLexerProfile.IDENTIFIER_A_REGEX)) {
+                if(TridentLexerProfile.IDENTIFIER_A_REGEX.matcher(result).matches()) {
                     return result;
                 } else {
                     throw new TridentException(TridentException.Source.COMMAND_ERROR, "The string '" + result + "' is not a valid argument here", pattern, ctx);
@@ -594,7 +597,7 @@ public class CommonParsers {
             case "RAW_IDENTIFIER_B": return pattern.flatten(false);
             case "STRING": {
                 String result = parseStringLiteral(pattern, ctx);
-                if(result.matches(TridentLexerProfile.IDENTIFIER_B_REGEX)) {
+                if(TridentLexerProfile.IDENTIFIER_B_REGEX.matcher(result).matches()) {
                     return result;
                 } else {
                     throw new TridentException(TridentException.Source.COMMAND_ERROR, "The string '" + result + "' is not a valid argument here", pattern, ctx);
@@ -638,6 +641,126 @@ public class CommonParsers {
             }
         }
         return modifiers;
+    }
+
+    //Must always return a VALID pointer
+    public static PointerType parsePointer(TokenPattern<?> pattern, ISymbolContext ctx) {
+        switch(pattern.getName()) {
+            case "POINTER": return parsePointer(((TokenStructure) pattern).getContents(), ctx);
+            case "VARIABLE_POINTER": {
+                if(pattern.find("POINTER_HEAD_WRAPPER") != null) {
+                    Object target = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class, CoordinateSet.class);
+                    PointerType pointer = new PointerType(target, null);
+                    parsePointerHead(pointer, pattern.find("POINTER_HEAD_WRAPPER.POINTER_HEAD"), ctx);
+
+                    return pointer.validate(pattern, ctx);
+                } else {
+                    return InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerType.class).validate(pattern, ctx);
+                }
+            }
+            case "ENTITY_POINTER": {
+                Object target = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
+                PointerType pointer = new PointerType(target, null);
+                parsePointerHead(pointer, pattern.find("POINTER_HEAD"), ctx);
+
+                return pointer.validate(pattern, ctx);
+            }
+            case "BLOCK_POINTER": {
+                Object target = CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx);
+                PointerType pointer = new PointerType(target, null);
+                parsePointerHead(pointer, pattern.find("NBT_POINTER_HEAD"), ctx);
+
+                return pointer.validate(pattern, ctx);
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+            }
+        }
+    }
+
+    public static LocalScore parseScore(TokenPattern<?> pattern, ISymbolContext ctx) {
+        switch(pattern.getName()) {
+            case "SCORE": return parseScore(((TokenStructure) pattern).getContents(), ctx);
+            case "POINTER_WRAPPER": {
+                PointerType pointer = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerType.class);
+                if(!(pointer.getMember() instanceof String)) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
+                }
+                return new LocalScore((Entity) pointer.getTarget(), ctx.getCompiler().getModule().getObjectiveManager().get((String) pointer.getMember()));
+            }
+            case "EXPLICIT_SCORE": {
+                Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
+                Objective objective = parseObjective(pattern.find("OBJECTIVE_NAME"), ctx);
+                return new LocalScore(entity, objective);
+            }
+            case "VAR_SCORE": {
+                Objective objective = parseObjective(pattern.find("OBJECTIVE_NAME"), ctx);
+                Entity entity;
+                if(objective != null) {
+                    entity = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class);
+                } else {
+                    PointerType pointer = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerType.class);
+                    if(!(pointer.getMember() instanceof String)) {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
+                    }
+                    objective = ctx.getCompiler().getModule().getObjectiveManager().get((String) pointer.getMember());
+                    entity = (Entity) pointer.getTarget();
+                }
+
+                return new LocalScore(entity, objective);
+            }
+            case "SCORE_OPTIONAL_OBJECTIVE": {
+                TokenPattern<?> entityClause = ((TokenStructure) pattern.find("TARGET_ENTITY")).getContents();
+
+                Entity entity = entityClause.getName().equals("ENTITY") ? EntityParser.parseEntity(entityClause, ctx) : null;
+
+                Objective objective = null;
+
+                TokenPattern<?> objectiveClause = ((TokenStructure) pattern.find("OBJECTIVE_CLAUSE")).getContents();
+                if(objectiveClause != null && objectiveClause.getName().equals("OBJECTIVE_NAME")) {
+                    objective = parseObjective(objectiveClause, ctx);
+                }
+
+                return new LocalScore(entity, objective);
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+            }
+        }
+    }
+
+    private static void parsePointerHead(PointerType pointer, TokenPattern<?> pattern, ISymbolContext ctx) {
+        switch (pattern.getName()) {
+            case "POINTER_HEAD": {
+                parsePointerHead(pointer, ((TokenStructure) pattern).getContents(), ctx);
+                break;
+            }
+            case "SCORE_POINTER_HEAD": {
+                String objectiveName = parseObjective(pattern.find("OBJECTIVE_NAME"), ctx).getName();
+                pointer.setMember(objectiveName);
+                TokenPattern<?> scalePattern = pattern.find("SCALE.REAL");
+                if(scalePattern != null) {
+                    pointer.setScale(parseDouble(scalePattern, ctx));
+                }
+                break;
+            }
+            case "NBT_POINTER_HEAD": {
+                NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"), ctx);
+                pointer.setMember(path);
+                TokenPattern<?> scalePattern = pattern.find("SCALE.REAL");
+                if(scalePattern != null) {
+                    pointer.setScale(parseDouble(scalePattern, ctx));
+                }
+                TokenPattern<?> numTypePattern = pattern.find("TYPE_CAST.NUMERIC_DATA_TYPE");
+                if(numTypePattern != null) {
+                    pointer.setNumericType(numTypePattern.flatten(false));
+                }
+                break;
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+            }
+        }
     }
 
     public interface TypeGroupPicker {

@@ -28,90 +28,91 @@ import java.util.Map;
 
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
+@SuppressWarnings("FieldCanBeLocal")
 public class TridentProductions {
 
 
     public final LazyTokenStructureMatch FILE;
-    public final LazyTokenStructureMatch FILE_INNER;
-    public final LazyTokenStructureMatch INNER_FUNCTION;
-    public final LazyTokenStructureMatch ANONYMOUS_INNER_FUNCTION;
-    public final LazyTokenStructureMatch OPTIONAL_NAME_INNER_FUNCTION;
-    public final LazyTokenStructureMatch ENTRY;
+    private final LazyTokenStructureMatch FILE_INNER;
+    private final LazyTokenStructureMatch INNER_FUNCTION;
+    private final LazyTokenStructureMatch ANONYMOUS_INNER_FUNCTION;
+    private final LazyTokenStructureMatch OPTIONAL_NAME_INNER_FUNCTION;
+    private final LazyTokenStructureMatch ENTRY;
 
-    public final LazyTokenItemMatch COMMENT_S;
-    public final LazyTokenGroupMatch DIRECTIVE;
-    public final LazyTokenStructureMatch INSTRUCTION;
-    public final LazyTokenStructureMatch COMMAND;
-    public final LazyTokenStructureMatch MODIFIER;
+    private final LazyTokenItemMatch COMMENT_S;
+    private final LazyTokenGroupMatch DIRECTIVE;
+    private final LazyTokenStructureMatch INSTRUCTION;
+    private final LazyTokenStructureMatch COMMAND;
+    private final LazyTokenStructureMatch MODIFIER;
 
-    public final LazyTokenStructureMatch RESOURCE_LOCATION_S;
-    public final LazyTokenStructureMatch RESOURCE_LOCATION_TAGGED;
+    private final LazyTokenStructureMatch RESOURCE_LOCATION_S;
+    private final LazyTokenStructureMatch RESOURCE_LOCATION_TAGGED;
 
-    public final LazyTokenStructureMatch SELECTOR;
-    public final LazyTokenStructureMatch SELECTOR_ARGUMENT;
+    private final LazyTokenStructureMatch SELECTOR;
+    private final LazyTokenStructureMatch SELECTOR_ARGUMENT;
     public final LazyTokenStructureMatch TEXT_COMPONENT;
 
-    public final LazyTokenStructureMatch PLAYER_NAME;
+    private final LazyTokenStructureMatch PLAYER_NAME;
 
-    public final LazyTokenStructureMatch TEXT_COLOR;
+    private final LazyTokenStructureMatch TEXT_COLOR;
 
-    public final LazyTokenStructureMatch INTEGER_NUMBER_RANGE = new LazyTokenStructureMatch("INTEGER_NUMBER_RANGE");
-    public final LazyTokenStructureMatch REAL_NUMBER_RANGE = new LazyTokenStructureMatch("REAL_NUMBER_RANGE");
+    private final LazyTokenStructureMatch INTEGER_NUMBER_RANGE = new LazyTokenStructureMatch("INTEGER_NUMBER_RANGE");
+    private final LazyTokenStructureMatch REAL_NUMBER_RANGE = new LazyTokenStructureMatch("REAL_NUMBER_RANGE");
 
     public final LazyTokenStructureMatch NBT_COMPOUND = new LazyTokenStructureMatch("NBT_COMPOUND");
-    public final LazyTokenStructureMatch NBT_LIST = new LazyTokenStructureMatch("NBT_LIST");
-    public final LazyTokenStructureMatch NBT_VALUE = new LazyTokenStructureMatch("NBT_VALUE");
+    private final LazyTokenStructureMatch NBT_LIST = new LazyTokenStructureMatch("NBT_LIST");
+    private final LazyTokenStructureMatch NBT_VALUE = new LazyTokenStructureMatch("NBT_VALUE");
 
-    public final LazyTokenStructureMatch NBT_PATH = new LazyTokenStructureMatch("NBT_PATH");
+    private final LazyTokenStructureMatch NBT_PATH = new LazyTokenStructureMatch("NBT_PATH");
     
-    public final LazyTokenStructureMatch SINGLE_COORDINATE = new LazyTokenStructureMatch("SINGLE_COORDINATE");
-    public final LazyTokenStructureMatch ABSOLUTE_COORDINATE = new LazyTokenStructureMatch("ABSOLUTE_COORDINATE");
-    public final LazyTokenStructureMatch RELATIVE_COORDINATE = new LazyTokenStructureMatch("RELATIVE_COORDINATE");
-    public final LazyTokenStructureMatch LOCAL_COORDINATE = new LazyTokenStructureMatch("LOCAL_COORDINATE");
-    public final LazyTokenStructureMatch MIXABLE_COORDINATE = new LazyTokenStructureMatch("MIXABLE_COORDINATE");
-    public final LazyTokenStructureMatch COORDINATE_SET = new LazyTokenStructureMatch("COORDINATE_SET");
-    public final LazyTokenStructureMatch TWO_COORDINATE_SET = new LazyTokenStructureMatch("TWO_COORDINATE_SET");
+    private final LazyTokenStructureMatch SINGLE_COORDINATE = new LazyTokenStructureMatch("SINGLE_COORDINATE");
+    private final LazyTokenStructureMatch ABSOLUTE_COORDINATE = new LazyTokenStructureMatch("ABSOLUTE_COORDINATE");
+    private final LazyTokenStructureMatch RELATIVE_COORDINATE = new LazyTokenStructureMatch("RELATIVE_COORDINATE");
+    private final LazyTokenStructureMatch LOCAL_COORDINATE = new LazyTokenStructureMatch("LOCAL_COORDINATE");
+    private final LazyTokenStructureMatch MIXABLE_COORDINATE = new LazyTokenStructureMatch("MIXABLE_COORDINATE");
+    private final LazyTokenStructureMatch COORDINATE_SET = new LazyTokenStructureMatch("COORDINATE_SET");
+    private final LazyTokenStructureMatch TWO_COORDINATE_SET = new LazyTokenStructureMatch("TWO_COORDINATE_SET");
 
-    public final LazyTokenStructureMatch BLOCKSTATE = new LazyTokenStructureMatch("BLOCKSTATE");
-    public final LazyTokenStructureMatch BLOCK = new LazyTokenStructureMatch("BLOCK");
-    public final LazyTokenStructureMatch BLOCK_TAGGED = new LazyTokenStructureMatch("BLOCK_TAGGED");
-    public final LazyTokenStructureMatch ITEM = new LazyTokenStructureMatch("ITEM");
-    public final LazyTokenStructureMatch ITEM_TAGGED = new LazyTokenStructureMatch("ITEM_TAGGED");
+    private final LazyTokenStructureMatch BLOCKSTATE = new LazyTokenStructureMatch("BLOCKSTATE");
+    private final LazyTokenStructureMatch BLOCK = new LazyTokenStructureMatch("BLOCK");
+    private final LazyTokenStructureMatch BLOCK_TAGGED = new LazyTokenStructureMatch("BLOCK_TAGGED");
+    private final LazyTokenStructureMatch ITEM = new LazyTokenStructureMatch("ITEM");
+    private final LazyTokenStructureMatch ITEM_TAGGED = new LazyTokenStructureMatch("ITEM_TAGGED");
 
-    public final LazyTokenStructureMatch PARTICLE = new LazyTokenStructureMatch("PARTICLE");
+    private final LazyTokenStructureMatch PARTICLE = new LazyTokenStructureMatch("PARTICLE");
 
-    public final LazyTokenStructureMatch BLOCK_ID = new LazyTokenStructureMatch("BLOCK_ID");
-    public final LazyTokenStructureMatch ITEM_ID = new LazyTokenStructureMatch("ITEM_ID");
-    public final LazyTokenStructureMatch ENTITY_ID = new LazyTokenStructureMatch("ENTITY_ID");
-    public final LazyTokenStructureMatch ENTITY_ID_TAGGED = new LazyTokenStructureMatch("ENTITY_ID_TAGGED");
-    public final LazyTokenStructureMatch EFFECT_ID = new LazyTokenStructureMatch("EFFECT_ID");
-    public final LazyTokenStructureMatch PARTICLE_ID = new LazyTokenStructureMatch("PARTICLE_ID");
-    public final LazyTokenStructureMatch ENCHANTMENT_ID = new LazyTokenStructureMatch("ENCHANTMENT_ID");
-    public final LazyTokenStructureMatch DIMENSION_ID = new LazyTokenStructureMatch("DIMENSION_ID");
-    public final LazyTokenStructureMatch SLOT_ID = new LazyTokenStructureMatch("SLOT_ID");
+    private final LazyTokenStructureMatch BLOCK_ID = new LazyTokenStructureMatch("BLOCK_ID");
+    private final LazyTokenStructureMatch ITEM_ID = new LazyTokenStructureMatch("ITEM_ID");
+    private final LazyTokenStructureMatch ENTITY_ID = new LazyTokenStructureMatch("ENTITY_ID");
+    private final LazyTokenStructureMatch ENTITY_ID_TAGGED = new LazyTokenStructureMatch("ENTITY_ID_TAGGED");
+    private final LazyTokenStructureMatch EFFECT_ID = new LazyTokenStructureMatch("EFFECT_ID");
+    private final LazyTokenStructureMatch PARTICLE_ID = new LazyTokenStructureMatch("PARTICLE_ID");
+    private final LazyTokenStructureMatch ENCHANTMENT_ID = new LazyTokenStructureMatch("ENCHANTMENT_ID");
+    private final LazyTokenStructureMatch DIMENSION_ID = new LazyTokenStructureMatch("DIMENSION_ID");
+    private final LazyTokenStructureMatch SLOT_ID = new LazyTokenStructureMatch("SLOT_ID");
 
-    public final LazyTokenStructureMatch GAMEMODE = new LazyTokenStructureMatch("GAMEMODE");
-    public final LazyTokenStructureMatch GAMERULE = new LazyTokenStructureMatch("GAMERULE");
-    public final LazyTokenStructureMatch GAMERULE_SETTER = new LazyTokenStructureMatch("GAMERULE_SETTER");
-    public final LazyTokenStructureMatch STRUCTURE = new LazyTokenStructureMatch("STRUCTURE");
-    public final LazyTokenStructureMatch DIFFICULTY = new LazyTokenStructureMatch("DIFFICULTY");
+    private final LazyTokenStructureMatch GAMEMODE = new LazyTokenStructureMatch("GAMEMODE");
+    private final LazyTokenStructureMatch GAMERULE = new LazyTokenStructureMatch("GAMERULE");
+    private final LazyTokenStructureMatch GAMERULE_SETTER = new LazyTokenStructureMatch("GAMERULE_SETTER");
+    private final LazyTokenStructureMatch STRUCTURE = new LazyTokenStructureMatch("STRUCTURE");
+    private final LazyTokenStructureMatch DIFFICULTY = new LazyTokenStructureMatch("DIFFICULTY");
 
-    public final LazyTokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_A = new LazyTokenStructureMatch("STRING_LITERAL_OR_IDENTIFIER_A");
+    private final LazyTokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_A = new LazyTokenStructureMatch("STRING_LITERAL_OR_IDENTIFIER_A");
 
 
 
-    public final LazyTokenStructureMatch DICTIONARY = new LazyTokenStructureMatch("DICTIONARY");
-    public final LazyTokenStructureMatch LIST = new LazyTokenStructureMatch("LIST");
+    private final LazyTokenStructureMatch DICTIONARY = new LazyTokenStructureMatch("DICTIONARY");
+    private final LazyTokenStructureMatch LIST = new LazyTokenStructureMatch("LIST");
 
 
     //grouped arguments
     public final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
     public final LazyTokenStructureMatch INTERPOLATION_BLOCK;
-    public final LazyTokenStructureMatch INTERPOLATION_VALUE;
-    public final LazyTokenStructureMatch ROOT_INTERPOLATION_VALUE;
-    public final LazyTokenStructureMatch LINE_SAFE_INTERPOLATION_VALUE;
-    public final LazyTokenStructureMatch POINTER;
-    private final LazyTokenPatternMatch resourceLocationFixer = ofType(NO_TOKEN).addProcessor((p, l) -> {
+    private final LazyTokenStructureMatch INTERPOLATION_VALUE;
+    private final LazyTokenStructureMatch ROOT_INTERPOLATION_VALUE;
+    private final LazyTokenStructureMatch LINE_SAFE_INTERPOLATION_VALUE;
+    private final LazyTokenStructureMatch POINTER;
+    private final LazyTokenPatternMatch resourceLocationFixer = ofType(NO_TOKEN).setName("_RLCF").addProcessor((p, l) -> {
         if(l.getSuggestionModule() != null) {
             if(p.getStringBounds().start.index <= l.getSuggestionModule().getSuggestionIndex()+1) {
                 int targetIndex = ((LazyLexer) l).getLookingIndexTrimmed();
@@ -163,6 +164,8 @@ public class TridentProductions {
         SELECTOR_ARGUMENT.addTags(SuggestionTags.ENABLED);
         PLAYER_NAME = struct("PLAYER_NAME");
 
+        POINTER = struct("POINTER");
+
         RESOURCE_LOCATION_S = struct("RESOURCE_LOCATION");
         RESOURCE_LOCATION_TAGGED = struct("RESOURCE_LOCATION_TAGGED");
 
@@ -212,6 +215,7 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(group(literal("int_range"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("real_range"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("resource"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("pointer"), brace("<"), POINTER, brace(">")).setName("WRAPPED_POINTER"));
             ROOT_INTERPOLATION_VALUE.add(DICTIONARY);
             ROOT_INTERPOLATION_VALUE.add(LIST);
             ROOT_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
@@ -256,7 +260,8 @@ public class TridentProductions {
                     "coordinates",
                     "int_range",
                     "real_range",
-                    "resource"
+                    "resource",
+                    "pointer"
             ).setName("TARGET_TYPE"), brace(")"), MID_INTERPOLATION_VALUE).setName("CAST"));
 
             INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR)).setName("EXPRESSION"));
@@ -858,12 +863,12 @@ public class TridentProductions {
                                     group(literal("setdisplay"), group(identifierA()).setName("DISPLAY_SLOT"), optional(sameLine(), objectiveName()).setName("OBJECTIVE_CLAUSE")).setName("SETDISPLAY")
                             )).setName("OBJECTIVES"),
                             group(literal("players"), choice(
-                                    group(choice("add", "remove", "set"), ENTITY, objectiveName(), integer()).setName("CHANGE"),
-                                    group(literal("enable"), ENTITY, objectiveName()).setName("ENABLE"),
-                                    group(literal("get"), ENTITY, objectiveName()).setName("GET"),
+                                    group(choice("add", "remove", "set"), score(), integer()).setName("CHANGE"),
+                                    group(literal("enable"), score()).setName("ENABLE"),
+                                    group(literal("get"), score()).setName("GET"),
                                     group(literal("list"), optional(sameLine(), ENTITY)).setName("LIST"),
-                                    group(literal("operation"), group(ENTITY).setName("TARGET"), objectiveName().setName("TARGET_OBJECTIVE"), ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), group(ENTITY).setName("SOURCE"), objectiveName().setName("SOURCE_OBJECTIVE")).setName("OPERATION"),
-                                    group(literal("reset"), choice(ENTITY, symbol("*")).setName("TARGET"), optional(sameLine(), objectiveName()).setName("OBJECTIVE_CLAUSE")).setName("RESET")
+                                    group(literal("operation"), group(score()).setName("TARGET_SCORE"), ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), group(score()).setName("SOURCE_SCORE")).setName("OPERATION"),
+                                    group(literal("reset"), scoreOptionalObjective()).setName("RESET")
                             )).setName("PLAYERS")
                     )
             ));
@@ -1039,9 +1044,9 @@ public class TridentProductions {
                     choice(
                             group(literal("entity"), ENTITY).setName("ENTITY_CONDITION"),
                             group(literal("block"), COORDINATE_SET, BLOCK_TAGGED).setName("BLOCK_CONDITION"),
-                            group(literal("score"), ENTITY, objectiveName(), choice(
+                            group(literal("score"), score(), choice(
                                     matchItem(TridentTokens.CUSTOM_COMMAND_KEYWORD, "isset").setName("ISSET"),
-                                    group(choice(symbol("<"), symbol("<="), symbol("="), symbol(">="), symbol(">")).setName("OPERATOR"), ENTITY, objectiveName()).setName("COMPARISON"),
+                                    group(choice(symbol("<"), symbol("<="), symbol("="), symbol(">="), symbol(">")).setName("OPERATOR"), score()).setName("COMPARISON"),
                                     group(literal("matches"), INTEGER_NUMBER_RANGE).setName("MATCHES"))
                             ).setName("SCORE_CONDITION"),
                             group(literal("blocks"),
@@ -1092,7 +1097,7 @@ public class TridentProductions {
                             group(literal("block"), COORDINATE_SET, NBT_PATH, ofType(NUMERIC_DATA_TYPE).setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_BLOCK"),
                             group(literal("bossbar"), RESOURCE_LOCATION_S, choice("max", "value").setName("BOSSBAR_VARIABLE")).setName("STORE_BOSSBAR"),
                             group(literal("entity"), ENTITY, NBT_PATH, ofType(NUMERIC_DATA_TYPE).setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_ENTITY"),
-                            group(literal("score"), ENTITY, objectiveName()).setName("STORE_SCORE")
+                            group(literal("score"), score()).setName("STORE_SCORE")
                     )
             ));
         }
@@ -1743,13 +1748,15 @@ public class TridentProductions {
 
         LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead).setName("POINTER_HEAD");
 
-        LazyTokenGroupMatch varPointer = group(INTERPOLATION_BLOCK, anyHead).setName("VARIABLE_POINTER");
+        LazyTokenGroupMatch varPointer = group(INTERPOLATION_BLOCK, optional(anyHead).setName("ANY_HEAD_WRAPPER")).setName("VARIABLE_POINTER");
         LazyTokenGroupMatch entityPointer = group(ENTITY, anyHead).setName("ENTITY_POINTER");
         LazyTokenGroupMatch blockPointer = group(brace("("), COORDINATE_SET, brace(")"), nbtHead).setName("BLOCK_POINTER");
 
-        LazyTokenGroupMatch nbtPointer = group(choice(ENTITY, group(brace("("), COORDINATE_SET, brace(")"))), nbtHead);
+        //LazyTokenGroupMatch nbtPointer = group(choice(ENTITY, group(brace("("), COORDINATE_SET, brace(")"))), nbtHead);
 
-        POINTER = choice(varPointer, entityPointer, blockPointer).setName("POINTER");
+        POINTER.add(entityPointer);
+        POINTER.add(varPointer);
+        POINTER.add(blockPointer);
 
         COMMAND.add(
                 group(matchItem(COMMAND_HEADER, "set"), POINTER, equals(), choice(POINTER, NBT_VALUE, INTERPOLATION_BLOCK).setName("VALUE"))
@@ -2014,25 +2021,25 @@ public class TridentProductions {
 
     }
 
-    static LazyTokenItemMatch literal(String text) {
+    private static LazyTokenItemMatch literal(String text) {
         return new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase());
     }
 
-    static LazyTokenItemMatch symbol(String text) {
+    private static LazyTokenItemMatch symbol(String text) {
         return new LazyTokenItemMatch(SYMBOL, text).setName("SYMBOL");
     }
 
-    static LazyTokenItemMatch keyword(String text) {
+    private static LazyTokenItemMatch keyword(String text) {
         return matchItem(KEYWORD, text).setName("KEYWORD_" + text.toUpperCase());
     }
 
-    static LazyTokenItemMatch instructionKeyword(String text) {
+    private static LazyTokenItemMatch instructionKeyword(String text) {
         LazyTokenItemMatch item = keyword(text).setName("INSTRUCTION_KEYWORD");
         item.addTags(TridentSuggestionTags.TAG_INSTRUCTION);
         return item;
     }
 
-    static LazyTokenItemMatch matchItem(TokenType type, String text) {
+    private static LazyTokenItemMatch matchItem(TokenType type, String text) {
         LazyTokenItemMatch item = new LazyTokenItemMatch(type, text).setName("ITEM_MATCH");
         if(type == COMMAND_HEADER) {
             item.addTags(TridentSuggestionTags.TAG_COMMAND);
@@ -2042,93 +2049,109 @@ public class TridentProductions {
         return item;
     }
 
-    static LazyTokenItemMatch brace(String brace) {
+    private static LazyTokenItemMatch brace(String brace) {
         LazyTokenItemMatch item = matchItem(BRACE, brace);
         item.addTags(SuggestionTags.DISABLED);
         return item;
     }
 
-    static LazyTokenItemMatch colon() {
+    private static LazyTokenItemMatch colon() {
         return ofType(COLON);
     }
 
-    static LazyTokenItemMatch comma() {
+    private static LazyTokenItemMatch comma() {
         LazyTokenItemMatch item = ofType(COMMA).setName("COMMA");
         item.addTags(SuggestionTags.DISABLED);
         return item;
     }
 
-    static LazyTokenItemMatch dot() {
+    private static LazyTokenItemMatch dot() {
         LazyTokenItemMatch item = ofType(DOT);
         item.addTags(SuggestionTags.DISABLED);
         return item;
     }
 
-    LazyTokenPatternMatch objectiveName() {
+    private LazyTokenPatternMatch objectiveName() {
         return group(identifierA()).setName("OBJECTIVE_NAME").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.OBJECTIVE_EXISTING);
     }
 
-    static LazyTokenItemMatch equals() {
+    private LazyTokenPatternMatch score() {
+        return choice(group(ENTITY, objectiveName()).setName("EXPLICIT_SCORE"), group(literal("deref"), sameLine(), INTERPOLATION_BLOCK).setName("POINTER_WRAPPER")).setName("SCORE");
+    }
+
+    private LazyTokenStructureMatch scoreOptionalObjective() {
+        return choice(group(choice(ENTITY, symbol("*")).setName("TARGET_ENTITY"), sameLine(), choice(symbol("*"), objectiveName()).setOptional().setName("OBJECTIVE_CLAUSE")).setName("SCORE_OPTIONAL_OBJECTIVE"), POINTER).setName("SCORE");
+    }
+
+    private LazyTokenStructureMatch entityNBT() {
+        return choice(group(ENTITY, NBT_PATH).setName("EXPLICIT_ENTITY_NBT"), POINTER).setName("ENTITY_NBT");
+    }
+
+    private LazyTokenStructureMatch blockNBT() {
+        return choice(group(COORDINATE_SET, NBT_PATH).setName("EXPLICIT_BLOCK_NBT"), POINTER).setName("BLOCK_NBT");
+    }
+
+    private static LazyTokenItemMatch equals() {
         return ofType(EQUALS);
     }
 
-    static LazyTokenItemMatch caret() {
+    private static LazyTokenItemMatch caret() {
         return ofType(CARET);
     }
 
-    static LazyTokenItemMatch tilde() {
+    private static LazyTokenItemMatch tilde() {
         return ofType(TILDE);
     }
 
-    static LazyTokenItemMatch not() {
+    private static LazyTokenItemMatch not() {
         return ofType(NOT).setName("NEGATED");
     }
 
-    static LazyTokenItemMatch hash() {
+    private static LazyTokenItemMatch hash() {
         return ofType(HASH).setName("HASH");
     }
 
-    LazyTokenStructureMatch string() {
+    private LazyTokenStructureMatch string() {
         return choice(ofType(STRING_LITERAL).setName("STRING_LITERAL"), INTERPOLATION_BLOCK).setName("STRING");
     }
 
-    LazyTokenStructureMatch integer() {
+    private LazyTokenStructureMatch integer() {
         return choice(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"), INTERPOLATION_BLOCK).setName("INTEGER");
     }
 
-    LazyTokenStructureMatch real() {
+    private LazyTokenStructureMatch real() {
         return choice(ofType(REAL_NUMBER).setName("RAW_REAL"), INTERPOLATION_BLOCK).setName("REAL");
     }
 
-    static LazyTokenItemMatch glue() {
+    private static LazyTokenItemMatch glue() {
         return ofType(GLUE).setName("GLUE");
     }
 
-    static LazyTokenItemMatch sameLine() {
+    private static LazyTokenItemMatch sameLine() {
         return ofType(LINE_GLUE).setName("LINE_GLUE");
     }
 
-    LazyTokenStructureMatch identifierA() {
+    private LazyTokenStructureMatch identifierA() {
         return choice(string(), ofType(IDENTIFIER_TYPE_A).setName("RAW_IDENTIFIER_A")).setName("IDENTIFIER_A");
     }
 
-    LazyTokenStructureMatch identifierB() {
+    private LazyTokenStructureMatch identifierB() {
         return choice(string(), ofType(IDENTIFIER_TYPE_B).setName("RAW_IDENTIFIER_B")).setName("IDENTIFIER_B");
     }
 
-    static LazyTokenPatternMatch identifierC() {
+    private static LazyTokenPatternMatch identifierC() {
         return ofType(IDENTIFIER_TYPE_C).setName("IDENTIFIER_C");
     }
 
-    static LazyTokenItemMatch ofType(TokenType type) {
+    private static LazyTokenItemMatch ofType(TokenType type) {
         return new LazyTokenItemMatch(type);
     }
 
-    static LazyTokenStructureMatch struct(String name) {
+    private static LazyTokenStructureMatch struct(String name) {
         return new LazyTokenStructureMatch(name);
     }
 
-    static LazyTokenStructureMatch choice(LazyTokenPatternMatch... options) {
+    private static LazyTokenStructureMatch choice(LazyTokenPatternMatch... options) {
         if(options.length == 0) throw new IllegalArgumentException("Need one or more options for choice");
         LazyTokenStructureMatch s = struct("CHOICE");
         for(LazyTokenPatternMatch option : options) {
@@ -2137,7 +2160,7 @@ public class TridentProductions {
         return s;
     }
 
-    static LazyTokenStructureMatch choice(String... options) {
+    private static LazyTokenStructureMatch choice(String... options) {
         if(options.length == 0) throw new IllegalArgumentException("Need one or more options for choice");
         LazyTokenStructureMatch s = struct("CHOICE");
         for(String option : options) {
@@ -2146,11 +2169,11 @@ public class TridentProductions {
         return s;
     }
 
-    static LazyTokenGroupMatch optional() {
+    private static LazyTokenGroupMatch optional() {
         return new LazyTokenGroupMatch(true);
     }
 
-    static LazyTokenGroupMatch group(LazyTokenPatternMatch... items) {
+    private static LazyTokenGroupMatch group(LazyTokenPatternMatch... items) {
         LazyTokenGroupMatch g = new LazyTokenGroupMatch();
         for(LazyTokenPatternMatch item : items) {
             g.append(item);
@@ -2158,26 +2181,26 @@ public class TridentProductions {
         return g;
     }
 
-    static LazyTokenListMatch list(LazyTokenPatternMatch pattern) {
+    private static LazyTokenListMatch list(LazyTokenPatternMatch pattern) {
         return list(pattern, null);
     }
 
-    static LazyTokenListMatch list(LazyTokenPatternMatch pattern, LazyTokenPatternMatch separator) {
+    private static LazyTokenListMatch list(LazyTokenPatternMatch pattern, LazyTokenPatternMatch separator) {
         return new LazyTokenListMatch(pattern, separator);
     }
 
-    static LazyTokenGroupMatch optional(LazyTokenPatternMatch... items) {
+    private static LazyTokenGroupMatch optional(LazyTokenPatternMatch... items) {
         LazyTokenGroupMatch g = group(items);
         g.setOptional();
         return g;
     }
 
 
-    LazyTokenItemMatch identifierX() {
+    private LazyTokenItemMatch identifierX() {
         return ofType(IDENTIFIER_TYPE_X).setName("IDENTIFIER");
     }
 
-    static Symbol.SymbolVisibility parseVisibility(TokenPattern<?> pattern, Symbol.SymbolVisibility defaultValue) {
+    private static Symbol.SymbolVisibility parseVisibility(TokenPattern<?> pattern, Symbol.SymbolVisibility defaultValue) {
         if(pattern == null) return defaultValue;
         switch(pattern.flatten(false)) {
             case "global": return Symbol.SymbolVisibility.GLOBAL;
