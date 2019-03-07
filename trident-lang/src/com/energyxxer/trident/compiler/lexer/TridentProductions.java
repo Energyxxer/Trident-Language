@@ -1750,7 +1750,7 @@ public class TridentProductions {
 
         LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead).setName("POINTER_HEAD");
 
-        LazyTokenGroupMatch varPointer = group(INTERPOLATION_BLOCK, optional(anyHead).setName("ANY_HEAD_WRAPPER")).setName("VARIABLE_POINTER");
+        LazyTokenGroupMatch varPointer = group(INTERPOLATION_BLOCK, optional(anyHead).setName("POINTER_HEAD_WRAPPER")).setName("VARIABLE_POINTER");
         LazyTokenGroupMatch entityPointer = group(ENTITY, anyHead).setName("ENTITY_POINTER");
         LazyTokenGroupMatch blockPointer = group(brace("("), COORDINATE_SET, brace(")"), nbtHead).setName("BLOCK_POINTER");
 
