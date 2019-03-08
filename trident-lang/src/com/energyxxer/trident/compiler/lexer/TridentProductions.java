@@ -402,6 +402,16 @@ public class TridentProductions {
             COMMAND.add(g);
         }
         //endregion
+        //region tag
+        {
+            LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+            g.append(matchItem(COMMAND_HEADER, "feature"));
+            g.append(ENTITY);
+            g.append(choice("add", "remove").setName("FEATURE_ACTION"));
+            g.append(LINE_SAFE_INTERPOLATION_VALUE);
+            COMMAND.add(g);
+        }
+        //endregion
         //region experience
         {
             LazyTokenPatternMatch unit = choice("points", "levels").setName("UNIT").setOptional();
@@ -1404,6 +1414,17 @@ public class TridentProductions {
                     equals(),
                     choice(
                             group(not().setOptional(), identifierA().setOptional())
+                    ).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
+        }
+
+        {
+            //Identifier Arguments
+            SELECTOR_ARGUMENT.add(group(
+                    choice("feature").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(
+                            group(not().setOptional(), INTERPOLATION_VALUE)
                     ).setName("SELECTOR_ARGUMENT_VALUE")
             ));
         }
