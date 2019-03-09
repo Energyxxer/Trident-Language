@@ -195,7 +195,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                             break;
                         }
                         case "ITEM_INNER_FUNCTION": {
-                            TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx);
+                            TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx, itemDecl != null ? itemDecl.id : defaultType != null ? "default_" + defaultType.getName() : "default_all_entities");
                             TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
                             if(itemDecl != null && namePattern != null) {
                                 itemDecl.members.put(namePattern.flatten(false), innerFile.getResourceLocation());

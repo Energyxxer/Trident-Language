@@ -416,7 +416,7 @@ public class TridentLexerProfile extends LexerProfile {
 
         contexts.add(new LexerContext() {
 
-            private List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinate", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "global", "case", "switch", "default", "feature", "implements", "pointer");
+            private List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinate", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "global", "case", "switch", "default", "component", "implements", "pointer");
 
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {

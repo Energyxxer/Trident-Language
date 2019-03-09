@@ -29,7 +29,7 @@ public class SummonParser implements SimpleCommandParser {
                 pattern.find("ENTITY_ID"),
                 pattern.find(".COORDINATE_SET"),
                 pattern.find("..NBT_COMPOUND"),
-                ((TokenList) pattern.find("IMPLEMENTED_FEATURES.FEATURE_LIST")));
+                ((TokenList) pattern.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST")));
         try {
             return data.constructSummon();
         } catch(CommodoreException x) {
@@ -44,18 +44,18 @@ public class SummonParser implements SimpleCommandParser {
         public Type type;
         public CoordinateSet pos;
         public TagCompound nbt;
-        public ArrayList<CustomEntity> features = new ArrayList<>();
+        public ArrayList<CustomEntity> components = new ArrayList<>();
         public Object reference;
 
-        public SummonData(Type type, CoordinateSet pos, TagCompound nbt, ArrayList<CustomEntity> features, Object reference) {
+        public SummonData(Type type, CoordinateSet pos, TagCompound nbt, ArrayList<CustomEntity> components, Object reference) {
             this.type = type;
             this.pos = pos;
             this.nbt = nbt;
-            this.features = features;
+            this.components = components;
             this.reference = reference;
         }
 
-        public SummonData(TokenPattern<?> pattern, ISymbolContext ctx, TokenPattern<?> idPattern, TokenPattern<?> posPattern, TokenPattern<?> nbtPattern, TokenList featureList) {
+        public SummonData(TokenPattern<?> pattern, ISymbolContext ctx, TokenPattern<?> idPattern, TokenPattern<?> posPattern, TokenPattern<?> nbtPattern, TokenList componentList) {
             this.pos = CoordinateParser.parse(posPattern, ctx);
             this.nbt = NBTParser.parseCompound(nbtPattern, ctx);
             this.reference = CommonParsers.parseEntityReference(idPattern, ctx);
@@ -67,7 +67,7 @@ public class SummonParser implements SimpleCommandParser {
                 type = ce.getDefaultType();
 
                 if(type == null) {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot summon an entity feature: " + ce.getId(), idPattern, ctx);
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot summon an entity component: " + ce.getId(), idPattern, ctx);
                 }
 
                 if(nbt == null) nbt = new TagCompound();
@@ -80,14 +80,14 @@ public class SummonParser implements SimpleCommandParser {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), idPattern, ctx);
             }
 
-            if(featureList != null) {
+            if(componentList != null) {
                 if (nbt == null) nbt = new TagCompound();
-                for (TokenPattern<?> rawFeature : featureList.searchByName("INTERPOLATION_VALUE")) {
-                    CustomEntity feature = InterpolationManager.parse(rawFeature, ctx, CustomEntity.class);
-                    if (feature.isFeature()) {
-                        nbt = feature.getDefaultNBT().merge(nbt);
+                for (TokenPattern<?> rawComponent : componentList.searchByName("INTERPOLATION_VALUE")) {
+                    CustomEntity component = InterpolationManager.parse(rawComponent, ctx, CustomEntity.class);
+                    if (component.isComponent()) {
+                        nbt = component.getDefaultNBT().merge(nbt);
                     } else {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity feature here, instead got an entity", rawFeature, ctx);
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity component here, instead got an entity", rawComponent, ctx);
                     }
                 }
             }

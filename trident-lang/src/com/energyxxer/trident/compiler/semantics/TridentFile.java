@@ -158,9 +158,17 @@ public class TridentFile extends SymbolContext {
 
     //Sub context automatically created
     public static TridentFile createInnerFile(TokenPattern<?> pattern, ISymbolContext parent) {
+        return createInnerFile(pattern, parent, null);
+    }
+
+    //Sub context automatically created
+    public static TridentFile createInnerFile(TokenPattern<?> pattern, ISymbolContext parent, String subPath) {
         TokenPattern<?> namePattern = pattern.find("INNER_FUNCTION_NAME.RESOURCE_LOCATION");
         String innerFilePathRaw = parent.getStaticParentFile().getPath().toString();
         innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
+        if(subPath != null) {
+            innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(subPath).toString();
+        }
 
         if(namePattern != null) {
             TridentUtil.ResourceLocation suggestedLoc = CommonParsers.parseResourceLocation(namePattern, parent);

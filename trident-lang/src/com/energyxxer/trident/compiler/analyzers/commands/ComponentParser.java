@@ -14,19 +14,19 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import java.util.Collection;
 import java.util.Collections;
 
-@AnalyzerMember(key = "feature")
-public class FeatureParser implements CommandParser {
+@AnalyzerMember(key = "component")
+public class ComponentParser implements CommandParser {
     @Override
     public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx) {
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
 
-        TagCommand.Action action = pattern.find("FEATURE_ACTION.LITERAL_REMOVE") != null ? TagCommand.Action.REMOVE : TagCommand.Action.ADD;
+        TagCommand.Action action = pattern.find("COMPONENT_ACTION.LITERAL_REMOVE") != null ? TagCommand.Action.REMOVE : TagCommand.Action.ADD;
 
-        CustomEntity feature = InterpolationManager.parse(pattern.find("LINE_SAFE_INTERPOLATION_VALUE"), ctx, CustomEntity.class);
-        if(!feature.isFeature()) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected entity feature, instead got custom entity", pattern, ctx);
+        CustomEntity component = InterpolationManager.parse(pattern.find("LINE_SAFE_INTERPOLATION_VALUE"), ctx, CustomEntity.class);
+        if(!component.isComponent()) {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected entity component, instead got custom entity", pattern, ctx);
         }
 
-        return Collections.singletonList(new TagCommand(action, entity, feature.getIdTag()));
+        return Collections.singletonList(new TagCommand(action, entity, component.getIdTag()));
     }
 }

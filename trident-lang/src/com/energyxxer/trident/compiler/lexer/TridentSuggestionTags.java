@@ -41,7 +41,7 @@ public class TridentSuggestionTags {
     public static final String TAG_ENTITY = "cst:entity";
     public static final String TAG_COORDINATE = "cst:coordinate";
     public static final String TAG_CUSTOM_ENTITY = "cst:custom_entity";
-    public static final String TAG_ENTITY_FEATURE = "cst:entity_feature";
+    public static final String TAG_ENTITY_COMPONENT = "cst:entity_component";
     public static final String TAG_CUSTOM_ITEM = "cst:custom_item";
     public static final String TAG_OBJECTIVE = "cst:objective";
 }

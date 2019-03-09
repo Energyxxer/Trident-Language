@@ -9,14 +9,14 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-@AnalyzerMember(key = "feature")
-public class FeatureArgumentParser implements SimpleSelectorArgumentParser {
+@AnalyzerMember(key = "component")
+public class ComponentArgumentParser implements SimpleSelectorArgumentParser {
     @Override
     public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
-        CustomEntity feature = InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), ctx, CustomEntity.class);
-        if(!feature.isFeature()) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected entity feature, instead got custom entity", pattern, ctx);
+        CustomEntity component = InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), ctx, CustomEntity.class);
+        if(!component.isComponent()) {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected entity component, instead got custom entity", pattern, ctx);
         }
-        return new TagArgument(feature.getIdTag(), pattern.find("NEGATED") != null);
+        return new TagArgument(component.getIdTag(), pattern.find("NEGATED") != null);
     }
 }

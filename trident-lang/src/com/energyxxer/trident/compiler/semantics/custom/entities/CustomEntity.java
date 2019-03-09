@@ -55,7 +55,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     public CustomEntity(String id, @Nullable Type defaultType) {
         this.id = id;
         this.defaultType = defaultType;
-        this.idTag = "trident-" + (defaultType == null ? "feature" : "entity") + "." + id.replace(':', '.').replace('/','.');
+        this.idTag = "trident-" + (defaultType == null ? "component" : "entity") + "." + id.replace(':', '.').replace('/','.');
         this.defaultNBT = getBaseNBT();
     }
 
@@ -148,7 +148,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                         defaultType = ((Type) referencedType);
                     } else if(referencedType instanceof CustomEntity) {
                         superEntity = ((CustomEntity) referencedType);
-                        if(!superEntity.isFeature()) {
+                        if(!superEntity.isComponent()) {
                             defaultType = superEntity.defaultType;
                         }
                     } else {
@@ -167,14 +167,14 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         }
 
         ArrayList<CustomEntity> implemented = new ArrayList<>();
-        TokenList rawFeatureList = ((TokenList) pattern.find("IMPLEMENTED_FEATURES.FEATURE_LIST"));
-        if(rawFeatureList != null) {
-            for(TokenPattern<?> rawFeature : rawFeatureList.searchByName("INTERPOLATION_VALUE")) {
-                CustomEntity feature = InterpolationManager.parse(rawFeature, ctx, CustomEntity.class);
-                if(feature.isFeature()) {
-                    implemented.add(feature);
+        TokenList rawComponentList = ((TokenList) pattern.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST"));
+        if(rawComponentList != null) {
+            for(TokenPattern<?> rawComponent : rawComponentList.searchByName("INTERPOLATION_VALUE")) {
+                CustomEntity component = InterpolationManager.parse(rawComponent, ctx, CustomEntity.class);
+                if(component.isComponent()) {
+                    implemented.add(component);
                 } else {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity feature here, instead got an entity", rawFeature, ctx);
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity component here, instead got an entity", rawComponent, ctx);
                 }
             }
         }
@@ -192,9 +192,9 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                 entityDecl.mergeNBT(superEntity.getDefaultNBT());
                 entityDecl.members.putAll(superEntity.members);
             }
-            for(CustomEntity feature : implemented) {
-                entityDecl.mergeNBT(feature.getDefaultNBT());
-                entityDecl.members.putAll(feature.members);
+            for(CustomEntity component : implemented) {
+                entityDecl.mergeNBT(component.getDefaultNBT());
+                entityDecl.members.putAll(component.members);
             }
         } else {
             if(superEntity != null) {
@@ -244,7 +244,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                             rawPassenger.find("ENTITY_ID"),
                                             null,
                                             rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND"),
-                                            ((TokenList) rawPassenger.find("IMPLEMENTED_FEATURES.FEATURE_LIST"))
+                                            ((TokenList) rawPassenger.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST"))
                                     );
 
                                     passengerData.fillDefaults();
@@ -287,7 +287,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                             break;
                         }
                         case "ENTITY_INNER_FUNCTION": {
-                            TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx);
+                            TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx, entityDecl != null ? entityDecl.id : defaultType != null ? "default_" + defaultType.getName() : null);
                             TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
                             if(entityDecl != null && namePattern != null) {
                                 entityDecl.members.put(namePattern.flatten(false), innerFile.getResourceLocation());
@@ -331,7 +331,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         }
     }
 
-    public boolean isFeature() {
+    public boolean isComponent() {
         return defaultType == null;
     }
 

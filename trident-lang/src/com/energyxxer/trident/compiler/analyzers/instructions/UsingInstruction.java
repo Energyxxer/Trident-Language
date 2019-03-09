@@ -84,7 +84,7 @@ public class UsingInstruction implements Instruction {
                 pattern.find("ENTITY_ID"),
                 pattern.find(".COORDINATE_SET"),
                 pattern.find("..NBT_COMPOUND"),
-                ((TokenList) pattern.find("IMPLEMENTED_FEATURES.FEATURE_LIST")));
+                ((TokenList) pattern.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST")));
 
         ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) pattern.find("MODIFIER_LIST")), ctx);
 
@@ -115,8 +115,8 @@ public class UsingInstruction implements Instruction {
             CustomEntity ce = ((CustomEntity) data.reference);
             summoned.addArgument(new TagArgument(ce.getIdTag()));
         }
-        for(CustomEntity feature : data.features) {
-            summoned.addArguments(new TagArgument(feature.getIdTag()));
+        for(CustomEntity component : data.components) {
+            summoned.addArguments(new TagArgument(component.getIdTag()));
         }
         summoned.addArguments(new TagArgument(tag));
         summoned.addArguments(new LimitArgument(1));
