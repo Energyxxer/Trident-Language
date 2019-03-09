@@ -9,8 +9,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
-import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
@@ -23,10 +23,12 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 
 import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
 public class CustomItem implements VariableTypeHandler<CustomItem> {
@@ -36,7 +38,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
     private boolean useModelData = false;
     private int customModelData = 0;
     private boolean fullyDeclared = false;
-    private HashMap<String, TridentUtil.ResourceLocation> members = new HashMap<>();
+    private HashMap<String, Symbol> members = new HashMap<>();
 
     public CustomItem(String id, Type defaultType) {
         this.id = id;
@@ -98,7 +100,10 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
 
     @Override
     public Object getMember(CustomItem object, String member, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
-        if(members.containsKey(member)) return members.get(member);
+        if(members.containsKey(member)) {
+            Symbol sym = members.get(member);
+            return keepSymbol ? sym : sym.getValue();
+        }
         if(member.equals("getSettingNBT")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
                 TagCompound nbt = new TagCompound(
@@ -121,11 +126,18 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
     }
 
     @Override
-    public Object getIndexer(CustomItem object, Object index, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
-        throw new MemberNotFoundException();
+    public Object getIndexer(CustomItem object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        String indexStr = assertOfType(index, pattern, ctx, String.class);
+        if(members.containsKey(indexStr)) {
+            Symbol sym = members.get(indexStr);
+            return keepSymbol ? sym : sym.getValue();
+        } else if(keepSymbol) {
+            Symbol sym;
+            members.put(indexStr, sym = new Symbol(indexStr, Symbol.SymbolVisibility.LOCAL, null));
+            return sym;
+        } else return null;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <F> F cast(CustomItem object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext file) {
         throw new ClassCastException();
@@ -171,7 +183,8 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
             throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default items don't support custom model data specifiers", rawCustomModelData, ctx);
         }
 
-
+        ctx = new SymbolContext(ctx);
+        if(itemDecl != null) ctx.put(new Symbol("this", Symbol.SymbolVisibility.LOCAL, itemDecl));
 
         ExceptionCollector collector = new ExceptionCollector(ctx);
         collector.begin();
@@ -198,7 +211,8 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                             TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx, itemDecl != null ? itemDecl.id : defaultType != null ? "default_" + defaultType.getName() : "default_all_entities");
                             TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
                             if(itemDecl != null && namePattern != null) {
-                                itemDecl.members.put(namePattern.flatten(false), innerFile.getResourceLocation());
+                                String name = namePattern.flatten(false);
+                                itemDecl.members.put(name, new Symbol(name, Symbol.SymbolVisibility.LOCAL, innerFile.getResourceLocation()));
                             }
 
                             TokenPattern<?> rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
@@ -259,6 +273,19 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                             }
 
                             itemDecl.defaultNBT = itemDecl.defaultNBT.merge(newNBT);
+                            break;
+                        }
+                        case "ITEM_FIELD": {
+                            String fieldName = entry.find("FIELD_NAME").flatten(false);
+                            Object value = InterpolationManager.parse(((TokenStructure) entry.find("FIELD_VALUE")).getContents(), ctx);
+                            Symbol sym = new Symbol(fieldName, Symbol.SymbolVisibility.LOCAL, value);
+                            if(itemDecl != null) {
+                                itemDecl.members.put(fieldName, sym);
+                            } else {
+                                ctx.put(sym);
+                            }
+                        }
+                        case "COMMENT": {
                             break;
                         }
                         default: {
