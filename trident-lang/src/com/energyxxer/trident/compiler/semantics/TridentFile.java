@@ -63,7 +63,7 @@ public class TridentFile extends SymbolContext {
         super(compiler);
         this.parentScope = parentContext;
         this.module = compiler.getModule();
-        this.namespace = module.createNamespace(relSourcePath.getName(0).toString());
+        this.namespace = module.getNamespace(relSourcePath.getName(0).toString());
         this.pattern = filePattern;
         this.relSourcePath = relSourcePath;
 
@@ -153,7 +153,7 @@ public class TridentFile extends SymbolContext {
         String functionPath = relSourcePath.subpath(2, relSourcePath.getNameCount()).toString();
         functionPath = functionPath.substring(0, functionPath.length()-".tdn".length()).replaceAll(Pattern.quote(File.separator), "/");
 
-        return parent.getCompiler().getModule().createNamespace(relSourcePath.getName(0).toString()).functions.get(functionPath);
+        return parent.getCompiler().getModule().getNamespace(relSourcePath.getName(0).toString()).functions.get(functionPath);
     }
 
     //Sub context automatically created
@@ -220,7 +220,7 @@ public class TridentFile extends SymbolContext {
         if(entriesResolved) return;
 
         if(function != null) tags.forEach(l -> {
-            Tag tag = module.createNamespace(l.namespace).tags.functionTags.create(l.body);
+            Tag tag = module.getNamespace(l.namespace).tags.functionTags.create(l.body);
             tag.setExport(true);
             tag.addValue(new FunctionReference(this.function));
         });

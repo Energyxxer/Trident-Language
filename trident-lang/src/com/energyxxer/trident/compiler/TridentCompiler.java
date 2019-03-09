@@ -331,7 +331,7 @@ public class TridentCompiler extends AbstractProcess {
         Path dataPath = rootDir.toPath().resolve("datapack").resolve("data");
 
         String namespaceName = dataPath.relativize(file.toPath()).getName(0).toString();
-        Namespace namespace = module.createNamespace(namespaceName);
+        Namespace namespace = module.getNamespace(namespaceName);
 
         Path relPath = dataPath.relativize(file.toPath());
         relPath = relPath.subpath(2, relPath.getNameCount());
@@ -362,15 +362,15 @@ public class TridentCompiler extends AbstractProcess {
                     TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(value);
 
                     if(isTag) {
-                        Tag created = module.createNamespace(loc.namespace).getTagManager().getGroup(group.getCategory()).create(loc.body);
+                        Tag created = module.getNamespace(loc.namespace).getTagManager().getGroup(group.getCategory()).create(loc.body);
                         created.setExport(true);
                         tag.addValue(created);
                     } else {
                         Type created;
                         if(group.getCategory().equals(FunctionReference.CATEGORY)) {
-                            created = new FunctionReference(module.createNamespace(loc.namespace), loc.body);
+                            created = new FunctionReference(module.getNamespace(loc.namespace), loc.body);
                         } else {
-                            created = module.createNamespace(loc.namespace).getTypeManager().createDictionary(group.getCategory(), true).create(loc.body);
+                            created = module.getNamespace(loc.namespace).getTypeManager().createDictionary(group.getCategory(), true).create(loc.body);
                         }
                         tag.addValue(created);
                     }
@@ -445,7 +445,7 @@ public class TridentCompiler extends AbstractProcess {
                 givenDefaultNamespaceNotice = true;
             }
         }
-        return module.createNamespace(defaultNamespace);
+        return module.getNamespace(defaultNamespace);
     }
 
     public SpecialFileManager getSpecialFileManager() {
@@ -540,7 +540,7 @@ public class TridentCompiler extends AbstractProcess {
                         if(alias == null) continue;
                         if(real == null) continue;
 
-                        module.createNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasType(c, ns, n, module.createNamespace(real.namespace), real.body), alias.body);
+                        module.getNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasType(c, ns, n, module.getNamespace(real.namespace), real.body), alias.body);
                         //Debug.log("Created alias '" + alias + "' for '" + real + "'");
                     }
                 }

@@ -301,9 +301,14 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                         case "ENTITY_INNER_FUNCTION": {
                             TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx, entityDecl != null ? entityDecl.id : defaultType != null ? "default_" + defaultType.getName() : null);
                             TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
-                            if(entityDecl != null && namePattern != null) {
+                            if(namePattern != null) {
                                 String name = namePattern.flatten(false);
-                                entityDecl.members.put(name, new Symbol(name, Symbol.SymbolVisibility.LOCAL, innerFile.getResourceLocation()));
+                                Symbol sym = new Symbol(name, Symbol.SymbolVisibility.LOCAL, innerFile.getResourceLocation());
+                                if(entityDecl != null) {
+                                    entityDecl.members.put(name, sym);
+                                } else {
+                                    ctx.put(sym);
+                                }
                             }
 
                             TokenPattern<?> functionModifier = entry.find("ENTITY_FUNCTION_MODIFIER");
