@@ -140,26 +140,40 @@ public class NBTParser {
                     matcher.lookingAt(); //must be true
 
                     String numberPart = matcher.group(1);
-                    switch(matcher.group(3).toLowerCase()) {
-                        case "": {
-                            return (numberPart.contains(".")) ?
-                                    new TagDouble(Double.parseDouble(numberPart)) :
-                                    new TagInt(Integer.parseInt(numberPart));
+                    try {
+                        switch (matcher.group(3).toLowerCase()) {
+                            case "": {
+                                return (numberPart.contains(".")) ?
+                                        new TagDouble(Double.parseDouble(numberPart)) :
+                                        new TagInt(Integer.parseInt(numberPart));
+                            }
+                            case "b": {
+                                return new TagByte(Integer.parseInt(numberPart));
+                            }
+                            case "d": {
+                                return new TagDouble(Double.parseDouble(numberPart));
+                            }
+                            case "f": {
+                                return new TagFloat(Float.parseFloat(numberPart));
+                            }
+                            case "s": {
+                                return new TagShort(Short.parseShort(numberPart));
+                            }
+                            case "l": {
+                                return new TagLong(Long.parseLong(numberPart));
+                            }
                         }
-                        case "b": {
-                            return new TagByte(Integer.parseInt(numberPart));
-                        }
-                        case "d": {
-                            return new TagDouble(Double.parseDouble(numberPart));
-                        }
-                        case "f": {
-                            return new TagFloat(Float.parseFloat(numberPart));
-                        }
-                        case "s": {
-                            return new TagShort(Short.parseShort(numberPart));
-                        }
-                        case "l": {
-                            return new TagLong(Long.parseLong(numberPart));
+                    } catch(NumberFormatException x) {
+                        NumericNBTType expectedType = matcher.group(3).length() == 0 && numberPart.contains(".") ? NumericNBTType.DOUBLE : NumericNBTType.getTypeForSuffix(matcher.group(3));
+                        String baseError = "Numeric value out of range: " + numberPart + " for a number of type " + expectedType.toString().toLowerCase() + ".";
+                        if(ctx.getCompiler().getProperties().has("strict-nbt") &&
+                                ctx.getCompiler().getProperties().get("strict-nbt").isJsonPrimitive() &&
+                                ctx.getCompiler().getProperties().get("strict-nbt").getAsJsonPrimitive().isBoolean() &&
+                                ctx.getCompiler().getProperties().get("strict-nbt").getAsBoolean()) {
+                            throw new TridentException(TridentException.Source.TYPE_ERROR, baseError, pattern, ctx);
+                        } else {
+                            ctx.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, baseError + " Interpreting as String: \"" + flat + "\"", pattern));
+                            return new TagString(flat);
                         }
                     }
                 }

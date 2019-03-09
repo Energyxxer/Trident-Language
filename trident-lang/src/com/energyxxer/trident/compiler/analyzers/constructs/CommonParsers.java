@@ -479,7 +479,13 @@ public class CommonParsers {
     public static int parseInt(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
         switch(inner.getName()) {
-            case "RAW_INTEGER": return Integer.parseInt(inner.flatten(false));
+            case "RAW_INTEGER": {
+                try {
+                    return Integer.parseInt(inner.flatten(false));
+                } catch(NumberFormatException x) {
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Integer out of range", pattern, ctx);
+                }
+            }
             case "INTERPOLATION_BLOCK": {
                 Integer result = InterpolationManager.parse(inner, ctx, Integer.class);
                 EObject.assertNotNull(result, inner, ctx);

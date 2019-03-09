@@ -83,7 +83,11 @@ public class InterpolationManager {
                 return keepSymbol ? symbol : sanitizeObject(symbol.getValue());
             }
             case "RAW_INTEGER": {
-                return Integer.parseInt(pattern.flatten(false));
+                try {
+                    return Integer.parseInt(pattern.flatten(false));
+                } catch(NumberFormatException x) {
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Integer out of range", pattern, ctx);
+                }
             }
             case "RAW_REAL": {
                 return Double.parseDouble(pattern.flatten(false));
