@@ -147,17 +147,17 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
         TokenPattern<?> headerDeclaration = ((TokenStructure) pattern.find("ENTITY_DECLARATION_HEADER")).getContents();
 
-        switch(headerDeclaration.getName()) {
+        switch (headerDeclaration.getName()) {
             case "CONCRETE_ENTITY_DECLARATION": {
                 entityName = headerDeclaration.find("ENTITY_NAME").flatten(false);
 
                 if (headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED") != null) {
                     Object referencedType = CommonParsers.parseEntityReference(headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
-                    if(referencedType instanceof Type) {
+                    if (referencedType instanceof Type) {
                         defaultType = ((Type) referencedType);
-                    } else if(referencedType instanceof CustomEntity) {
+                    } else if (referencedType instanceof CustomEntity) {
                         superEntity = ((CustomEntity) referencedType);
-                        if(!superEntity.isComponent()) {
+                        if (!superEntity.isComponent()) {
                             defaultType = superEntity.defaultType;
                         }
                     } else {
@@ -177,10 +177,10 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
         ArrayList<CustomEntity> implemented = new ArrayList<>();
         TokenList rawComponentList = ((TokenList) pattern.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST"));
-        if(rawComponentList != null) {
-            for(TokenPattern<?> rawComponent : rawComponentList.searchByName("INTERPOLATION_VALUE")) {
+        if (rawComponentList != null) {
+            for (TokenPattern<?> rawComponent : rawComponentList.searchByName("INTERPOLATION_VALUE")) {
                 CustomEntity component = InterpolationManager.parse(rawComponent, ctx, CustomEntity.class);
-                if(component.isComponent()) {
+                if (component.isComponent()) {
                     implemented.add(component);
                 } else {
                     throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity component here, instead got an entity", rawComponent, ctx);
@@ -197,165 +197,167 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
             entityDecl.superEntity = superEntity;
             ctx.putInContextForVisibility(visibility, new Symbol(entityName, visibility, entityDecl));
 
-            if(superEntity != null) {
+            if (superEntity != null) {
                 entityDecl.mergeNBT(superEntity.getDefaultNBT());
                 entityDecl.members.putAll(superEntity.members);
             }
-            for(CustomEntity component : implemented) {
+            for (CustomEntity component : implemented) {
                 entityDecl.mergeNBT(component.getDefaultNBT());
                 entityDecl.members.putAll(component.members);
             }
         } else {
-            if(superEntity != null) {
+            if (superEntity != null) {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default entities may not inherit from custom entities", pattern.find("ENTITY_DECLARATION_HEADER.ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
             }
         }
 
         ctx = new SymbolContext(ctx);
-        if(entityDecl != null) ctx.put(new Symbol("this", Symbol.SymbolVisibility.LOCAL, entityDecl));
+        if (entityDecl != null) ctx.put(new Symbol("this", Symbol.SymbolVisibility.LOCAL, entityDecl));
 
         ExceptionCollector collector = new ExceptionCollector(ctx);
         collector.begin();
 
-        try {
-            TokenList bodyEntries = (TokenList) pattern.find("ENTITY_DECLARATION_BODY.ENTITY_BODY_ENTRIES");
+        TokenList bodyEntries = (TokenList) pattern.find("ENTITY_DECLARATION_BODY.ENTITY_BODY_ENTRIES");
 
+        try {
             if (bodyEntries != null) {
                 for (TokenPattern<?> rawEntry : bodyEntries.getContents()) {
-                    TokenPattern<?> entry = ((TokenStructure) rawEntry).getContents();
-                    switch (entry.getName()) {
-                        case "DEFAULT_NBT": {
-                            if (entityDecl == null) {
-                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default entities", entry, ctx));
-                                break;
-                            }
-
-                            TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), ctx);
-                            if (newNBT != null) {
-                                PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
-                                NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), ctx);
-                            }
-
-                            entityDecl.mergeNBT(newNBT);
-                            break;
-                        }
-                        case "DEFAULT_PASSENGERS": {
-                            if (entityDecl == null) {
-                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default passengers aren't allowed for default entities", entry, ctx));
-                                break;
-                            }
-
-                            TagList passengersTag = new TagList("Passengers");
-
-                            for (TokenPattern<?> rawPassenger : ((TokenList) entry.find("PASSENGER_LIST")).getContents()) {
-                                if (rawPassenger.getName().equals("PASSENGER")) {
-
-                                    TagCompound passengerCompound;
-
-                                    SummonParser.SummonData passengerData = new SummonParser.SummonData(rawPassenger, ctx,
-                                            rawPassenger.find("ENTITY_ID"),
-                                            null,
-                                            rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND"),
-                                            ((TokenList) rawPassenger.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST"))
-                                    );
-
-                                    passengerData.fillDefaults();
-
-                                    passengerCompound = passengerData.nbt.merge(new TagCompound(new TagString("id", passengerData.type.toString())));
-
-                                    passengersTag.add(passengerCompound);
+                    try {
+                        TokenPattern<?> entry = ((TokenStructure) rawEntry).getContents();
+                        switch (entry.getName()) {
+                            case "DEFAULT_NBT": {
+                                if (entityDecl == null) {
+                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default entities", entry, ctx));
+                                    break;
                                 }
-                            }
 
-                            entityDecl.mergeNBT(new TagCompound(passengersTag));
-                            break;
-                        }
-                        case "DEFAULT_HEALTH": {
-                            if (entityDecl == null) {
-                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default health isn't allowed for default entities", entry, ctx));
+                                TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), ctx);
+                                if (newNBT != null) {
+                                    PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
+                                    NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), ctx);
+                                }
+
+                                entityDecl.mergeNBT(newNBT);
                                 break;
                             }
+                            case "DEFAULT_PASSENGERS": {
+                                if (entityDecl == null) {
+                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default passengers aren't allowed for default entities", entry, ctx));
+                                    break;
+                                }
 
-                            double health = CommonParsers.parseDouble(entry.find("HEALTH"), ctx);
-                            if (health < 0) {
-                                collector.log(new TridentException(TridentException.Source.COMMAND_ERROR, "Health must be non-negative", entry.find("HEALTH"), ctx));
+                                TagList passengersTag = new TagList("Passengers");
+
+                                for (TokenPattern<?> rawPassenger : ((TokenList) entry.find("PASSENGER_LIST")).getContents()) {
+                                    if (rawPassenger.getName().equals("PASSENGER")) {
+
+                                        TagCompound passengerCompound;
+
+                                        SummonParser.SummonData passengerData = new SummonParser.SummonData(rawPassenger, ctx,
+                                                rawPassenger.find("ENTITY_ID"),
+                                                null,
+                                                rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND"),
+                                                ((TokenList) rawPassenger.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST"))
+                                        );
+
+                                        passengerData.fillDefaults();
+
+                                        passengerCompound = passengerData.nbt.merge(new TagCompound(new TagString("id", passengerData.type.toString())));
+
+                                        passengersTag.add(passengerCompound);
+                                    }
+                                }
+
+                                entityDecl.mergeNBT(new TagCompound(passengersTag));
                                 break;
                             }
+                            case "DEFAULT_HEALTH": {
+                                if (entityDecl == null) {
+                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default health isn't allowed for default entities", entry, ctx));
+                                    break;
+                                }
 
-                            TagCompound healthNBT = new TagCompound();
-                            healthNBT.add(new TagFloat("Health", (float) health));
-                            healthNBT.add(new TagList("Attributes", new TagCompound(new TagString("Name", Attribute.MAX_HEALTH), new TagDouble("Base", health))));
+                                double health = CommonParsers.parseDouble(entry.find("HEALTH"), ctx);
+                                if (health < 0) {
+                                    collector.log(new TridentException(TridentException.Source.COMMAND_ERROR, "Health must be non-negative", entry.find("HEALTH"), ctx));
+                                    break;
+                                }
 
-                            entityDecl.mergeNBT(healthNBT);
-                            break;
-                        }
-                        case "DEFAULT_NAME": {
-                            if (entityDecl == null) {
-                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default entities", entry, ctx));
+                                TagCompound healthNBT = new TagCompound();
+                                healthNBT.add(new TagFloat("Health", (float) health));
+                                healthNBT.add(new TagList("Attributes", new TagCompound(new TagString("Name", Attribute.MAX_HEALTH), new TagDouble("Base", health))));
+
+                                entityDecl.mergeNBT(healthNBT);
                                 break;
                             }
+                            case "DEFAULT_NAME": {
+                                if (entityDecl == null) {
+                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default entities", entry, ctx));
+                                    break;
+                                }
 
-                            entityDecl.defaultNBT = entityDecl.defaultNBT.merge(new TagCompound(new TagString("CustomName", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), ctx).toString())));
-                            break;
-                        }
-                        case "ENTITY_INNER_FUNCTION": {
-                            TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx, entityDecl != null ? entityDecl.id : defaultType != null ? "default_" + defaultType.getName() : null);
-                            TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
-                            if(namePattern != null) {
-                                String name = namePattern.flatten(false);
-                                Symbol sym = new Symbol(name, Symbol.SymbolVisibility.LOCAL, innerFile.getResourceLocation());
-                                if(entityDecl != null) {
-                                    entityDecl.members.put(name, sym);
+                                entityDecl.defaultNBT = entityDecl.defaultNBT.merge(new TagCompound(new TagString("CustomName", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), ctx).toString())));
+                                break;
+                            }
+                            case "ENTITY_INNER_FUNCTION": {
+                                TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx, entityDecl != null ? entityDecl.id : defaultType != null ? "default_" + defaultType.getName() : null);
+                                TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
+                                if (namePattern != null) {
+                                    String name = namePattern.flatten(false);
+                                    Symbol sym = new Symbol(name, Symbol.SymbolVisibility.LOCAL, innerFile.getResourceLocation());
+                                    if (entityDecl != null) {
+                                        entityDecl.members.put(name, sym);
+                                    } else {
+                                        ctx.put(sym);
+                                    }
+                                }
+
+                                TokenPattern<?> functionModifier = entry.find("ENTITY_FUNCTION_MODIFIER");
+                                if (functionModifier != null) {
+                                    functionModifier = ((TokenStructure) functionModifier).getContents();
+                                    switch (functionModifier.getName()) {
+                                        case "TICKING_ENTITY_FUNCTION": {
+
+                                            ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) functionModifier.find("TICKING_MODIFIERS")), ctx, collector);
+
+                                            Entity selector = entityDecl != null ?
+                                                    TypeArgumentParser.getSelectorForCustomEntity(entityDecl) :
+                                                    defaultType != null ?
+                                                            new Selector(ALL_ENTITIES, new TypeArgument(defaultType)) :
+                                                            new Selector(ALL_ENTITIES);
+
+                                            modifiers.add(0, new ExecuteAsEntity(selector));
+                                            modifiers.add(1, new ExecuteAtEntity(new Selector(SENDER)));
+
+                                            ctx.getWritingFile().getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                            case "ENTITY_FIELD": {
+                                String fieldName = entry.find("FIELD_NAME").flatten(false);
+                                Object value = InterpolationManager.parse(((TokenStructure) entry.find("FIELD_VALUE")).getContents(), ctx);
+                                Symbol sym = new Symbol(fieldName, Symbol.SymbolVisibility.LOCAL, value);
+                                if (entityDecl != null) {
+                                    entityDecl.members.put(fieldName, sym);
                                 } else {
                                     ctx.put(sym);
                                 }
                             }
-
-                            TokenPattern<?> functionModifier = entry.find("ENTITY_FUNCTION_MODIFIER");
-                            if(functionModifier != null) {
-                                functionModifier = ((TokenStructure) functionModifier).getContents();
-                                switch(functionModifier.getName()) {
-                                    case "TICKING_ENTITY_FUNCTION": {
-
-                                        ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) functionModifier.find("TICKING_MODIFIERS")), ctx, collector);
-
-                                        Entity selector = entityDecl != null ?
-                                                TypeArgumentParser.getSelectorForCustomEntity(entityDecl) :
-                                                defaultType != null ?
-                                                        new Selector(ALL_ENTITIES, new TypeArgument(defaultType)) :
-                                                        new Selector(ALL_ENTITIES);
-
-                                        modifiers.add(0, new ExecuteAsEntity(selector));
-                                        modifiers.add(1, new ExecuteAtEntity(new Selector(SENDER)));
-
-                                        ctx.getWritingFile().getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
-                                    }
-                                }
+                            case "COMMENT": {
+                                break;
                             }
-                            break;
-                        }
-                        case "ENTITY_FIELD": {
-                            String fieldName = entry.find("FIELD_NAME").flatten(false);
-                            Object value = InterpolationManager.parse(((TokenStructure) entry.find("FIELD_VALUE")).getContents(), ctx);
-                            Symbol sym = new Symbol(fieldName, Symbol.SymbolVisibility.LOCAL, value);
-                            if(entityDecl != null) {
-                                entityDecl.members.put(fieldName, sym);
-                            } else {
-                                ctx.put(sym);
+                            default: {
+                                collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, ctx));
+                                break;
                             }
                         }
-                        case "COMMENT": {
-                            break;
-                        }
-                        default: {
-                            collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, ctx));
-                            break;
-                        }
+                    } catch (TridentException | TridentException.Grouped x) {
+                        collector.log(x);
                     }
                 }
             }
-        } catch(TridentException | TridentException.Grouped x) {
-            collector.log(x);
         } finally {
             collector.end();
             if (entityDecl != null) entityDecl.endDeclaration();

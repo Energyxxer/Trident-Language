@@ -348,6 +348,8 @@ public class TridentFile extends SymbolContext {
                             } else if(compiler.getTryStack().isBreaking()) {
                                 throw x;
                             }
+                        } catch(TridentException.Grouped gx) {
+                            queuedExceptions.addAll(gx.getExceptions());
                         }
                     }
                 }

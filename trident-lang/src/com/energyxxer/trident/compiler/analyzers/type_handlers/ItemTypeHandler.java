@@ -1,13 +1,15 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
+import com.energyxxer.commodore.functionlogic.nbt.TagByte;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
+import com.energyxxer.commodore.functionlogic.nbt.TagString;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.item.Item")
 public class ItemTypeHandler implements VariableTypeHandler<Item> {
@@ -26,6 +28,19 @@ public class ItemTypeHandler implements VariableTypeHandler<Item> {
         if(member.equals("itemTag")) {
             AutoPropertySymbol property = new AutoPropertySymbol<>("itemTag", TagCompound.class, object::getNBT, object::setNbt);
             return keepSymbol ? property : property.getValue();
+        }
+        if(member.equals("getSettingNBT")) {
+            return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                TagCompound nbt = new TagCompound(
+                        new TagString("id", object.getItemType().toString()),
+                        new TagByte("Count", 1));
+                if(object.getNBT() != null) {
+                    TagCompound tag = object.getNBT().clone();
+                    tag.setName("tag");
+                    nbt = new TagCompound(tag).merge(nbt);
+                }
+                return nbt;
+            };
         }
         throw new MemberNotFoundException();
     }
