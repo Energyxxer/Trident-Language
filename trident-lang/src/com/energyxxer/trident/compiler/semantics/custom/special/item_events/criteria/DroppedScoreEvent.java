@@ -15,7 +15,7 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.NBTArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.ScoreArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TagArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
-import com.energyxxer.commodore.util.NumberRange;
+import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
@@ -41,7 +41,7 @@ public class DroppedScoreEvent implements ScoreEventCriteriaHandler {
     @Override
     public void mid(ItemEventFile itemEventFile, ScoreEventCriteriaData data) {
         ScoreArgument scores = new ScoreArgument();
-        scores.put(data.itemCriteriaObjective, new NumberRange<>(1, null));
+        scores.put(data.itemCriteriaObjective, new IntegerRange(1, null));
 
         Selector initialSelector = new Selector(Selector.BaseSelector.SENDER, scores);
 
@@ -58,7 +58,7 @@ public class DroppedScoreEvent implements ScoreEventCriteriaHandler {
 
         for(ItemEvent event : data.events) {
             ArrayList<ExecuteModifier> innerModifiers = new ArrayList<>(modifiers);
-            if(event.pure) innerModifiers.add(new ExecuteConditionScoreMatch(IF, new LocalScore(new PlayerName("#CUSTOM_CONSUMED"), itemEventFile.getParent().getGlobalObjective()), new NumberRange<>(0)));
+            if(event.pure) innerModifiers.add(new ExecuteConditionScoreMatch(IF, new LocalScore(new PlayerName("#CUSTOM_CONSUMED"), itemEventFile.getParent().getGlobalObjective()), new IntegerRange(0)));
             data.function.append(new ExecuteCommand(new FunctionCommand(event.toCall), innerModifiers));
         }
     }

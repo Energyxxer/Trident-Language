@@ -10,7 +10,7 @@ import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.ScoreArgument;
 import com.energyxxer.commodore.textcomponents.StringTextComponent;
 import com.energyxxer.commodore.types.Type;
-import com.energyxxer.commodore.util.NumberRange;
+import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
@@ -20,7 +20,10 @@ import com.energyxxer.trident.compiler.semantics.custom.special.item_events.crit
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.criteria.ScoreEventCriteriaHandler;
 import com.energyxxer.util.Lazy;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.ALL_PLAYERS;
@@ -70,7 +73,7 @@ public class ItemEventFile extends SpecialFile {
                 Objective objective = compiler.getModule().getObjectiveManager().create(eventType.name().toLowerCase().charAt(0) + "item." + Integer.toString(new TridentUtil.ResourceLocation(itemType.toString()).toString().hashCode(), 16), criteria, new StringTextComponent(eventType.name().toLowerCase() + " item " + itemType), true);
 
                 ScoreArgument scores = new ScoreArgument();
-                scores.put(objective, new NumberRange<>(1, null));
+                scores.put(objective, new IntegerRange(1, null));
 
                 for(Map.Entry<CustomItem, ArrayList<ItemEvent>> itemEntry : typeEntry.getValue().entrySet().stream().sorted((a, b) -> a.getKey() == null ? b.getKey() != null ? 1 : 0 : -1).collect(Collectors.toList())) {
                     ScoreEventCriteriaData data = new ScoreEventCriteriaData(compiler, itemType, objective, function, itemEntry.getKey(), itemEntry.getValue());

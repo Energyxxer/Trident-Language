@@ -1,17 +1,17 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
-import com.energyxxer.commodore.util.NumberRange;
+import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
-@AnalyzerMember(key = "com.energyxxer.commodore.util.NumberRange<Integer>")
-public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
+@AnalyzerMember(key = "com.energyxxer.commodore.util.IntegerRange")
+public class IntRangeType implements VariableTypeHandler<IntegerRange> {
     @Override
-    public Object getMember(NumberRange<Integer> object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+    public Object getMember(IntegerRange object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(member.equals("min")) {
             return object.getMin();
         }
@@ -27,9 +27,9 @@ public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMin' requires 1 parameter, instead found " + params.length, pattern, ctx);
                 }
 
-                int newMin = assertOfType(params[0], patterns[0], ctx, Integer.class);
+                Integer newMin = params[0] != null ? assertOfType(params[0], patterns[0], ctx, Integer.class) : null;
 
-                return new NumberRange<>(newMin, object.getMax());
+                return new IntegerRange(newMin, object.getMax());
             };
         }
         if(member.equals("deriveMax")) {
@@ -38,32 +38,32 @@ public class IntRangeType implements VariableTypeHandler<NumberRange<Integer>> {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMax' requires 1 parameter, instead found " + params.length, pattern, ctx);
                 }
 
-                int newMax = assertOfType(params[0], patterns[0], ctx, Integer.class);
+                Integer newMax = params[0] != null ? assertOfType(params[0], patterns[0], ctx, Integer.class) : null;
 
-                return new NumberRange<>(object.getMin(), newMax);
+                return new IntegerRange(object.getMin(), newMax);
             };
         }
         throw new MemberNotFoundException();
     }
 
     @Override
-    public Object getIndexer(NumberRange<Integer> object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+    public Object getIndexer(IntegerRange object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
     }
 
-    private int getMin(NumberRange<Integer> range) {
+    private int getMin(IntegerRange range) {
         if(range.getMin() != null) return range.getMin();
         else return Integer.MIN_VALUE;
     }
 
-    private int getMax(NumberRange<Integer> range) {
+    private int getMax(IntegerRange range) {
         if(range.getMax() != null) return range.getMax();
         else return Integer.MAX_VALUE;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(NumberRange<Integer> range, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public <F> F cast(IntegerRange range, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 }

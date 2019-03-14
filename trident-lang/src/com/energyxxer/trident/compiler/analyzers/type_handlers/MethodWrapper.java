@@ -89,7 +89,9 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
                 try {
                     Object[] actualParams = new Object[paramTypes.length];
                     for (i = 0; i < paramTypes.length; i++) {
-                        actualParams[i] = params[i];
+                        if(i < params.length) {
+                            actualParams[i] = params[i];
+                        }
                     }
                     return invoker.invoke(instance, actualParams);
                 } catch(TridentException | TridentException.Grouped x) {

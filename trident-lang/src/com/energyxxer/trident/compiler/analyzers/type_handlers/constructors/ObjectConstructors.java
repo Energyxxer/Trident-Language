@@ -10,15 +10,16 @@ import com.energyxxer.commodore.textcomponents.StringTextComponent;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.commodore.textcomponents.TextComponentContext;
 import com.energyxxer.commodore.types.Type;
-import com.energyxxer.commodore.util.NumberRange;
+import com.energyxxer.commodore.util.DoubleRange;
+import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.default_libs.JsonLib;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
 import com.google.gson.JsonElement;
 
@@ -32,21 +33,11 @@ public class ObjectConstructors {
 
     static {
         constructors.put("int_range",
-                new MethodWrapper<>("new int_range", ((instance, params) -> {
-                    if(params[0] == null && params[1] == null) {
-                        throw new IllegalArgumentException("Both min and max bounds cannot be null");
-                    }
-                    return new NumberRange<>((Integer)params[0], (Integer)params[1]);
-                }), Integer.class, Integer.class).setNullable(0).setNullable(1)
+                new MethodWrapper<>("new int_range", ((instance, params) -> new IntegerRange((Integer)params[0], (Integer)params[1])), Integer.class, Integer.class).setNullable(0).setNullable(1)
                         .createForInstance(null));
 
         constructors.put("real_range",
-                new MethodWrapper<>("new real_range", ((instance, params) -> {
-                    if(params[0] == null && params[1] == null) {
-                        throw new IllegalArgumentException("Both min and max bounds cannot be null");
-                    }
-                    return new NumberRange<>((Double)params[0], (Double)params[1]);
-                }), Double.class, Double.class).setNullable(0).setNullable(1)
+                new MethodWrapper<>("new real_range", ((instance, params) -> new DoubleRange((Double)params[0], (Double)params[1])), Double.class, Double.class).setNullable(0).setNullable(1)
                         .createForInstance(null));
 
         constructors.put("block",ObjectConstructors::constructBlock);

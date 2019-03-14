@@ -38,7 +38,7 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
         for(int i = 0; i < formalParameters.size(); i++) {
             innerFrame.put(new Symbol(formalParameters.get(i), Symbol.SymbolVisibility.PRIVATE, i < params.length ? params[i] : null));
         }
-        innerFrame.put(new Symbol("this", Symbol.SymbolVisibility.PRIVATE, thisObject));
+        if(thisObject != null) innerFrame.put(new Symbol("this", Symbol.SymbolVisibility.PRIVATE, thisObject));
 
         try {
             TridentFile.resolveInnerFileIntoSection(functionPattern, innerFrame, ctx.getWritingFile().getFunction());

@@ -15,7 +15,7 @@ import com.energyxxer.commodore.functionlogic.inspection.ExecutionVariable;
 import com.energyxxer.commodore.functionlogic.inspection.ExecutionVariableMap;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.*;
-import com.energyxxer.commodore.util.NumberRange;
+import com.energyxxer.commodore.util.DoubleRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -139,7 +139,7 @@ public class UsingInstruction implements Instruction {
             }
             double distance = Math.sqrt(xDist*xDist + yDist*yDist + zDist*zDist);
             double epsilon = 0.01;
-            summoned.addArguments(new DistanceArgument(new NumberRange<>(Math.max(distance-epsilon, 0), distance+epsilon)));
+            summoned.addArguments(new DistanceArgument(new DoubleRange(Math.max(distance-epsilon, 0), distance+epsilon)));
         }
 
         Command tagRemoveCommand = new TagCommand(TagCommand.Action.REMOVE, new Selector(Selector.BaseSelector.SENDER), tag);

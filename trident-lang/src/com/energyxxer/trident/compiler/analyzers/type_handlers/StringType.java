@@ -24,35 +24,27 @@ public class StringType implements VariableTypeHandler<java.lang.String> {
     private static HashMap<String, MemberWrapper<String>> members = new HashMap<>();
 
     static {
-        members.put("substring", instance -> (VariableMethod) (params, patterns, pattern, file) -> {
-            if(params.length < 1 || params.length > 2) {
-                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'substring' requires 1 or 2 parameters, instead found " + params.length, pattern, file);
-            }
-
-            int start = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], file, Integer.class);
-            int end = params.length >= 2 ? VariableMethod.HelperMethods.assertOfType(params[1], patterns[1], file, Integer.class) : instance.length();
-
-            try {
-                return instance.substring(start, end);
-            } catch(IndexOutOfBoundsException x) {
-                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.getMessage(), pattern, file);
-            }
-        });
-
         try {
+            members.put("substring", new MethodWrapper<String>("substring", (instance, params) -> instance.substring((int)params[0], params[1] != null ? (int)params[1] : instance.length()), Integer.class, Integer.class).setNullable(1));
             members.put("indexOf", new MethodWrapper<>(String.class.getMethod("indexOf", String.class)));
             members.put("lastIndexOf", new MethodWrapper<>(String.class.getMethod("lastIndexOf", String.class)));
-            members.put("split", new MethodWrapper<>("split", (instance, params) -> instance.split(Pattern.quote((String)params[0])), String.class));
+            members.put("split", new MethodWrapper<String>("split", (instance, params) -> instance.split(Pattern.quote((String) params[0]), params[1] != null ? (int)params[1] : 0), String.class, Integer.class).setNullable(1));
+            members.put("splitRegex", new MethodWrapper<String>("splitRegex", (instance, params) -> instance.split(((String) params[0]), params[1] != null ? (int)params[1] : 0), String.class, Integer.class).setNullable(1));
             members.put("replace", new MethodWrapper<>(String.class.getMethod("replace", CharSequence.class, CharSequence.class)));
             members.put("replaceRegex", new MethodWrapper<>(String.class.getMethod("replaceAll", String.class, String.class)));
-            members.put("replaceFirst", new MethodWrapper<>("replaceFirst", (instance, params) -> instance.replaceFirst(Pattern.quote((String)params[0]), (String)params[1]), String.class, String.class));
-            members.put("toUpperCase", new MethodWrapper<>("toUpperCase", (instance, params) -> instance.toUpperCase(Locale.ENGLISH)));
+            members.put("replaceFirst", new MethodWrapper<>("replaceFirst", (instance, params) -> instance.replaceFirst((String)params[0], (String)params[1]), String.class, String.class));
             members.put("toLowerCase", new MethodWrapper<>("toLowerCase", (instance, params) -> instance.toLowerCase(Locale.ENGLISH)));
+            members.put("toUpperCase", new MethodWrapper<>("toUpperCase", (instance, params) -> instance.toUpperCase(Locale.ENGLISH)));
             members.put("trim", new MethodWrapper<>(String.class.getMethod("trim")));
             members.put("startsWith", new MethodWrapper<>(String.class.getMethod("startsWith", String.class)));
             members.put("endsWith", new MethodWrapper<>(String.class.getMethod("endsWith", String.class)));
             members.put("contains", new MethodWrapper<>(String.class.getMethod("contains", CharSequence.class)));
             members.put("matches", new MethodWrapper<>(String.class.getMethod("matches", String.class)));
+            members.put("isEmpty", new MethodWrapper<>(String.class.getMethod("isEmpty")));
+            members.put("isWhitespace", new MethodWrapper<>("isWhitespace", (instance, params) -> Character.isWhitespace(instance.charAt(0))));
+            members.put("isDigit", new MethodWrapper<>("isDigit", (instance, params) -> Character.isDigit(instance.charAt(0))));
+            members.put("isLetter", new MethodWrapper<>("isLetter", (instance, params) -> Character.isLetter(instance.charAt(0))));
+            members.put("isLetterOrDigit", new MethodWrapper<>("isLetterOrDigit", (instance, params) -> Character.isLetterOrDigit(instance.charAt(0))));
 
             members.put("length", new FieldWrapper<>(String::length));
         } catch (NoSuchMethodException e) {

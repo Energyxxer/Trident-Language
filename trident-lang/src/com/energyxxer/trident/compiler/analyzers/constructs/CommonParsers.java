@@ -29,7 +29,8 @@ import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.EntityType;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.commodore.types.defaults.TypeManager;
-import com.energyxxer.commodore.util.NumberRange;
+import com.energyxxer.commodore.util.DoubleRange;
+import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.commodore.util.TimeSpan;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -64,9 +65,6 @@ import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
 public class CommonParsers {
-    public static NumberRange<Integer> SAMPLE_INT_RANGE = new NumberRange<>(1, 2);
-    public static NumberRange<Double> SAMPLE_REAL_RANGE = new NumberRange<>(1.0, 2.0);
-
     public static Object parseEntityReference(TokenPattern<?> id, ISymbolContext ctx) {
         if(id.getName().equals("ENTITY_ID_TAGGED")) return parseEntityReference(((TokenStructure)id).getContents(), ctx);
         if(id.getName().equals("ENTITY_ID_WRAPPER")) return parseEntityReference(id.find("ENTITY_ID"), ctx);
@@ -330,16 +328,16 @@ public class CommonParsers {
     }
 
     @SuppressWarnings("unchecked")
-    public static NumberRange<Integer> parseIntRange(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static IntegerRange parseIntRange(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
             if(variable != null) {
-                Object value = InterpolationManager.parse(variable, ctx, Integer.class, SAMPLE_INT_RANGE.getClass());
-                if(value instanceof Integer) value = new NumberRange<>((int) value);
-                return (NumberRange<Integer>) value;
+                Object value = InterpolationManager.parse(variable, ctx, Integer.class, IntegerRange.class);
+                if(value instanceof Integer) value = new IntegerRange((int) value);
+                return ((IntegerRange) value);
             }
             TokenPattern<?> exact = pattern.find("EXACT");
-            if(exact != null) return new NumberRange<>(parseInt(exact, ctx));
+            if(exact != null) return new IntegerRange(parseInt(exact, ctx));
             List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
             List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
             Integer min = null;
@@ -350,7 +348,7 @@ public class CommonParsers {
             if(!maxRaw.isEmpty()) {
                 max = Integer.parseInt(maxRaw.get(0).flatten(false));
             }
-            return new NumberRange<>(min, max);
+            return new IntegerRange(min, max);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
                     .invokeThrow();
@@ -359,16 +357,16 @@ public class CommonParsers {
     }
 
     @SuppressWarnings("unchecked")
-    public static NumberRange<Double> parseRealRange(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static DoubleRange parseRealRange(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
             if(variable != null) {
-                Object value = InterpolationManager.parse(variable, ctx, Double.class, SAMPLE_REAL_RANGE.getClass());
-                if(value instanceof Double) value = new NumberRange<>((double) value);
-                return (NumberRange<Double>) value;
+                Object value = InterpolationManager.parse(variable, ctx, Double.class, DoubleRange.class);
+                if(value instanceof Double) value = new DoubleRange((double) value);
+                return (DoubleRange) value;
             }
             TokenPattern<?> exact = pattern.find("EXACT");
-            if(exact != null) return new NumberRange<>(parseDouble(exact, ctx));
+            if(exact != null) return new DoubleRange(parseDouble(exact, ctx));
             List<TokenPattern<?>> minRaw = pattern.searchByName("MIN");
             List<TokenPattern<?>> maxRaw = pattern.deepSearchByName("MAX");
             Double min = null;
@@ -379,7 +377,7 @@ public class CommonParsers {
             if(!maxRaw.isEmpty()) {
                 max = CommonParsers.parseDouble(maxRaw.get(0), ctx);
             }
-            return new NumberRange<>(min, max);
+            return new DoubleRange(min, max);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
                     .invokeThrow();

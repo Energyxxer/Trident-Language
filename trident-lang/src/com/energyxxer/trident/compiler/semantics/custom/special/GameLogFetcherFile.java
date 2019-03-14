@@ -29,7 +29,7 @@ import com.energyxxer.commodore.textcomponents.TextColor;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.commodore.textcomponents.TextStyle;
 import com.energyxxer.commodore.types.Type;
-import com.energyxxer.commodore.util.NumberRange;
+import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.google.gson.JsonObject;
@@ -219,7 +219,7 @@ public class GameLogFetcherFile extends SpecialFile {
 
     public TellrawCommand getTellrawCommandFor(String key, TextComponent message, TokenPattern<?> pattern, ISymbolContext ctx) {
         ScoreArgument scores = new ScoreArgument();
-        scores.put(logLevelObjective, new NumberRange<>(levelOrder.indexOf(key)+1, null));
+        scores.put(logLevelObjective, new IntegerRange(levelOrder.indexOf(key)+1, null));
         return new TellrawCommand(new Selector(Selector.BaseSelector.ALL_PLAYERS, scores), getComponentFor(key, message, pattern, ctx));
     }
 

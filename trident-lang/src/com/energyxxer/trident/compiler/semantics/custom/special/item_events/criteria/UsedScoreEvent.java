@@ -5,7 +5,7 @@ import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.ScoreArgument;
-import com.energyxxer.commodore.util.NumberRange;
+import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
@@ -34,7 +34,7 @@ public class UsedScoreEvent implements ScoreEventCriteriaHandler {
     @Override
     public void mid(ItemEventFile itemEventFile, ScoreEventCriteriaData data) {
         ScoreArgument scores = new ScoreArgument();
-        scores.put(data.itemCriteriaObjective, new NumberRange<>(1, null));
+        scores.put(data.itemCriteriaObjective, new IntegerRange(1, null));
 
         Selector initialSelector = new Selector(Selector.BaseSelector.SENDER, scores);
 
@@ -42,12 +42,12 @@ public class UsedScoreEvent implements ScoreEventCriteriaHandler {
         modifiers.add(new ExecuteConditionEntity(IF, initialSelector));
 
         if(data.customItem != null) {
-            scores.put(itemEventFile.getObjectives().oldHeld, new NumberRange<>(data.customItem.getItemIdHash()));
+            scores.put(itemEventFile.getObjectives().oldHeld, new IntegerRange(data.customItem.getItemIdHash()));
         }
 
         for(ItemEvent event : data.events) {
             ArrayList<ExecuteModifier> eventModifiers = new ArrayList<>(modifiers);
-            if(data.customItem == null && event.pure) eventModifiers.add(new ExecuteConditionScoreMatch(ExecuteCondition.ConditionType.IF, new LocalScore(new Selector(SENDER), itemEventFile.getObjectives().oldHeld), new NumberRange<>(0)));
+            if(data.customItem == null && event.pure) eventModifiers.add(new ExecuteConditionScoreMatch(ExecuteCondition.ConditionType.IF, new LocalScore(new Selector(SENDER), itemEventFile.getObjectives().oldHeld), new IntegerRange(0)));
             data.function.append(new ExecuteCommand(new FunctionCommand(event.toCall), eventModifiers));
         }
     }

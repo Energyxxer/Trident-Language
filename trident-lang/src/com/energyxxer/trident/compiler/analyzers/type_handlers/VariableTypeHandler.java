@@ -7,13 +7,13 @@ import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.textcomponents.TextComponent;
-import com.energyxxer.commodore.util.NumberRange;
+import com.energyxxer.commodore.util.DoubleRange;
+import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -45,8 +45,6 @@ public interface VariableTypeHandler<T> {
             if(TextComponent.class.isAssignableFrom(cls)) {
                 return TextComponent.class.getName();
             }
-            if(cls.isInstance(CommonParsers.SAMPLE_INT_RANGE)) return cls.getName() + "<Integer>";
-            if(cls.isInstance(CommonParsers.SAMPLE_REAL_RANGE)) return cls.getName() + "<Double>";
             return cls.getName();
         }
 
@@ -56,8 +54,8 @@ public interface VariableTypeHandler<T> {
         static {
             shorthands.put("int", Integer.class);
             shorthands.put("real", Double.class);
-            shorthands.put("int_range", CommonParsers.SAMPLE_INT_RANGE.getClass());
-            shorthands.put("real_range", CommonParsers.SAMPLE_REAL_RANGE.getClass());
+            shorthands.put("int_range", IntegerRange.class);
+            shorthands.put("real_range", DoubleRange.class);
             shorthands.put("boolean", Boolean.class);
             shorthands.put("string", String.class);
             shorthands.put("entity", Entity.class);
@@ -95,13 +93,6 @@ public interface VariableTypeHandler<T> {
         }
 
         public static String getShorthandForObject(Object obj) {
-            if(obj instanceof NumberRange) {
-                if(((NumberRange) obj).getNumberClass() == Double.class) {
-                    return "real_range";
-                } else {
-                    return "int_range";
-                }
-            }
             return shorthands.entrySet().stream().filter(e -> e.getValue().isInstance(obj) && !superclasses.contains(e.getValue())).max(Comparator.comparingInt(a -> a.getKey().length())).map(Map.Entry::getKey).orElse(null);
         }
 
