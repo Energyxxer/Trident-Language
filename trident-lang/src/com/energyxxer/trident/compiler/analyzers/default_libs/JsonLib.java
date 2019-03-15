@@ -3,13 +3,10 @@ package com.energyxxer.trident.compiler.analyzers.default_libs;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ListType;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.google.gson.*;
 
 import java.util.Map;
@@ -24,22 +21,26 @@ public class JsonLib implements DefaultLibraryProvider {
         block.put("parse",
                 new MethodWrapper<>("parse", ((instance, params) -> parseJson(new Gson().fromJson((String) params[0], JsonElement.class))), String.class).createForInstance(null));
         block.put("stringify",
-                (VariableMethod) (params, patterns, pattern, file) -> {
+                (VariableMethod) (params, patterns, pattern, ctx) -> {
                     if(params.length < 1) {
-                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'stringify' requires 1 parameter, instead found " + params.length, pattern, file);
+                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'stringify' requires 1 parameter, instead found " + params.length, pattern, ctx);
                     }
                     boolean prettyPrinting = false;
 
                     if(params.length >= 2) {
-                        prettyPrinting = VariableMethod.HelperMethods.assertOfType(params[1], patterns[1], file, Boolean.class);
+                        prettyPrinting = VariableMethod.HelperMethods.assertOfType(params[1], patterns[1], ctx, Boolean.class);
                     }
 
-                    Object param = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], file, String.class, Number.class, Boolean.class, ListType.class, DictionaryObject.class);
+                    Object param = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], ctx, String.class, Number.class, Boolean.class, ListType.class, DictionaryObject.class);
 
                     GsonBuilder gb = new GsonBuilder();
                     if(prettyPrinting) gb.setPrettyPrinting();
 
-                    return gb.create().toJson(toJson(param));
+                    try {
+                        return gb.create().toJson(toJson(param, null, true));
+                    } catch(IllegalArgumentException x) {
+                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.getMessage(), pattern, ctx);
+                    }
                 });
         globalCtx.put(new Symbol("JSON", Symbol.SymbolVisibility.GLOBAL, block));
     }
@@ -77,17 +78,17 @@ public class JsonLib implements DefaultLibraryProvider {
     }
 
     public static JsonElement toJson(Object obj) {
-        return toJson(obj, null);
+        return toJson(obj, null, false);
     }
 
-    public static JsonElement toJson(Object obj, Function<Object, JsonElement> filter) {
+    public static JsonElement toJson(Object obj, Function<Object, JsonElement> filter, boolean skipUnknownTypes) {
         if(obj instanceof String || obj instanceof TridentUtil.ResourceLocation) return new JsonPrimitive(obj.toString());
         if(obj instanceof Number) return new JsonPrimitive(((Number) obj));
         if(obj instanceof Boolean) return new JsonPrimitive((Boolean) obj);
         if(obj instanceof ListType) {
             JsonArray arr = new JsonArray();
             for(Object elem : ((ListType) obj)) {
-                JsonElement result = toJson(elem, filter);
+                JsonElement result = toJson(elem, filter, skipUnknownTypes);
                 if(result != null) arr.add(result);
             }
             return arr;
@@ -95,12 +96,14 @@ public class JsonLib implements DefaultLibraryProvider {
         if(obj instanceof DictionaryObject) {
             JsonObject jObj = new JsonObject();
             for(Map.Entry<String, Symbol> elem : ((DictionaryObject) obj).entrySet()) {
-                JsonElement result = toJson(elem.getValue().getValue(), filter);
+                JsonElement result = toJson(elem.getValue().getValue(), filter, skipUnknownTypes);
                 if(result != null) jObj.add(elem.getKey(), result);
             }
             return jObj;
         }
-        return filter != null ? filter.apply(obj) : null;
+        JsonElement applied = filter != null ? filter.apply(obj) : null;
+        if(applied == null && !skipUnknownTypes) throw new IllegalArgumentException("Cannot convert object of type '" + VariableTypeHandler.Static.getShorthandForObject(obj) + "' to a JSON element");
+        return applied;
     }
 
     public static class WrapperJsonElement<T> extends JsonElement {

@@ -130,7 +130,7 @@ public class TextParser {
                 }).otherwise(v -> delegate.report("Expected object in 'nbt'", obj.get("nbt")));
             }
             if(component[0] == null) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know how to turn this into a text component", pattern, ctx);
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know how to turn this into a text component: " + elem, pattern, ctx);
             }
 
             TextStyle style = new TextStyle(0);
@@ -242,7 +242,7 @@ public class TextParser {
 
             return component[0];
         } else {
-            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know how to turn this into a text component", pattern, ctx);
+            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know how to turn this into a text component: " + elem, pattern, ctx);
         }
     }
 

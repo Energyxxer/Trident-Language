@@ -19,6 +19,14 @@ public class JsonParser {
     public static JsonElement parseJson(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenList entries;
         switch(pattern.getName()) {
+            case "INTERPOLATION_BLOCK": {
+                Object object = InterpolationManager.parse(pattern, ctx, Double.class, Integer.class, Boolean.class, String.class);
+                if(object instanceof Double) return new JsonPrimitive((Double) object);
+                if(object instanceof Integer) return new JsonPrimitive((Integer) object);
+                if(object instanceof Boolean) return new JsonPrimitive((Boolean) object);
+                if(object instanceof String) return new JsonPrimitive((String) object);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
+            }
             case "JSON_ROOT":
             case "JSON_ELEMENT":
                 return parseJson(((TokenStructure) pattern).getContents(), ctx);
@@ -55,7 +63,7 @@ public class JsonParser {
                 patternCache.put(string, pattern);
                 return string;
             case "NUMBER":
-                JsonPrimitive number = new JsonPrimitive(Double.parseDouble(pattern.flattenTokens().get(0).value));
+                JsonPrimitive number = new JsonPrimitive(CommonParsers.parseDouble(pattern, ctx));
                 patternCache.put(number, pattern);
                 return number;
             case "BOOLEAN":

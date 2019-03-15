@@ -1212,6 +1212,7 @@ public class TridentProductions {
             JSON_ELEMENT.add(string());
             JSON_ROOT.add(string());
             JSON_ELEMENT.add(real().setName("NUMBER"));
+            JSON_ELEMENT.add(INTERPOLATION_BLOCK);
             JSON_ELEMENT.add(ofType(BOOLEAN).setName("BOOLEAN"));
 
             TEXT_COMPONENT.add(JSON_ROOT);
