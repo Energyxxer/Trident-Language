@@ -17,7 +17,6 @@ public class TextComponentHandler implements VariableTypeHandler<TextComponent> 
         throw new MemberNotFoundException();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <F> F cast(TextComponent object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();

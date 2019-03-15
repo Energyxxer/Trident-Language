@@ -50,8 +50,9 @@ public class TridentUtil {
         }
 
         public static ResourceLocation createStrict(String str) {
-            ScannerContextResponse valueResult = TridentLexerProfile.usefulContexts.get(TridentTokens.RESOURCE_LOCATION).analyzeExpectingType(str, null, null);
-            if(valueResult.success && valueResult.endLocation.index == str.length()) {
+            boolean isTag = str.startsWith("#");
+            ScannerContextResponse valueResult = TridentLexerProfile.usefulContexts.get(TridentTokens.RESOURCE_LOCATION).analyzeExpectingType(str.substring(isTag ? 1 : 0), null, null);
+            if(valueResult.success && valueResult.endLocation.index == str.length() - (isTag ? 1 : 0)) {
                 return new TridentUtil.ResourceLocation(str);
             } else return null;
         }

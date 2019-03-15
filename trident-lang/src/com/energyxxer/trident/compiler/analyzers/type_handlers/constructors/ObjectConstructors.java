@@ -66,6 +66,8 @@ public class ObjectConstructors {
             type = ns.types.block.get(loc.body);
         }
 
+        if(type == null) throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Resource location " + params[0] + " is not a valid block type", patterns[0], ctx);
+
         return new Block(type);
     }
 
@@ -82,6 +84,8 @@ public class ObjectConstructors {
         } else {
             type = ns.types.item.get(loc.body);
         }
+
+        if(type == null) throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Resource location " + params[0] + " is not a valid item type", patterns[0], ctx);
 
         return new Item(type);
     }
