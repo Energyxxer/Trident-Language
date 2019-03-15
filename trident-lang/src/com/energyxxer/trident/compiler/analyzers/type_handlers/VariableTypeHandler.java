@@ -13,6 +13,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
+import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.ArrayList;
@@ -82,6 +84,8 @@ public interface VariableTypeHandler<T> {
             shorthands.put("pointer", PointerType.class);
             shorthands.put("dictionary", DictionaryObject.class);
             shorthands.put("list", ListType.class);
+            shorthands.put("custom_entity", CustomEntity.class);
+            shorthands.put("custom_item", CustomItem.class);
             shorthands.put("function", VariableMethod.class);
             shorthands.put("exception", TridentException.class);
 

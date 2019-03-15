@@ -29,7 +29,7 @@ public class ItemTypeHandler implements VariableTypeHandler<Item> {
             AutoPropertySymbol property = new AutoPropertySymbol<>("itemTag", TagCompound.class, object::getNBT, object::setNbt);
             return keepSymbol ? property : property.getValue();
         }
-        if(member.equals("getSettingNBT")) {
+        if(member.equals("getSlotNBT")) {
             return (VariableMethod) (params, patterns, pattern1, file1) -> {
                 TagCompound nbt = new TagCompound(
                         new TagString("id", object.getItemType().toString()),
