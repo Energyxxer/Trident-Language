@@ -2,7 +2,7 @@ package com.energyxxer.trident.compiler.analyzers.instructions;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ListType;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -20,7 +20,7 @@ public class TryInstruction implements Instruction {
         } catch(TridentException x) { //blocking
             variable = x;
         } catch(TridentException.Grouped gx) {
-            variable = new ListType(gx.getExceptions());
+            variable = new ListObject(gx.getExceptions());
         } finally {
             ctx.getCompiler().getTryStack().pop();
         }

@@ -6,7 +6,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ListType;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -22,10 +22,10 @@ public class RawParser implements ModifierParser {
         TokenPattern<?> inner = ((TokenStructure) pattern.find("RAW_MODIFIER_VALUE")).getContents();
         Object obj = inner.getName().equals("STRING") ?
                 CommonParsers.parseStringLiteral(inner, ctx) :
-                InterpolationManager.parse(inner, ctx, String.class, ListType.class);
+                InterpolationManager.parse(inner, ctx, String.class, ListObject.class);
         if(obj instanceof String) return Collections.singletonList(new RawExecuteModifier(((String) obj)));
         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
-        ListType list = ((ListType) obj);
+        ListObject list = ((ListObject) obj);
         for(Object elem : list) {
             if(elem instanceof String) {
                 modifiers.add(new RawExecuteModifier(((String) elem)));

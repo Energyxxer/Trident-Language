@@ -1,9 +1,11 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.trident.compiler.semantics.CallStack;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
 import java.lang.annotation.*;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class MethodWrapper<T> implements MemberWrapper<T> {
@@ -97,7 +99,15 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
                 } catch(TridentException | TridentException.Grouped x) {
                     throw x;
                 } catch (Exception x) {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.toString(), pattern, file);
+                    if(x instanceof InvocationTargetException) {
+                        if(((InvocationTargetException) x).getTargetException() instanceof CommodoreException) {
+                            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, ((InvocationTargetException) x).getTargetException().getMessage(), pattern, file);
+                        } else {
+                            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, ((InvocationTargetException) x).getTargetException().toString(), pattern, file);
+                        }
+                    } else {
+                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.toString(), pattern, file);
+                    }
                 }
             } finally {
                 file.getCompiler().getCallStack().pop();

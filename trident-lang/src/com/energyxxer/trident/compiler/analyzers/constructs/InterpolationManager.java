@@ -3,6 +3,7 @@ package com.energyxxer.trident.compiler.analyzers.constructs;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.constructors.ObjectConstructors;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.NullTypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperationOrder;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.Operator;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperatorHandler;
@@ -157,7 +158,7 @@ public class InterpolationManager {
                 return dict;
             }
             case "LIST": {
-                ListType list = new ListType();
+                ListObject list = new ListObject();
 
                 TokenList entryList = (TokenList) pattern.find("LIST_ENTRIES");
 
@@ -455,7 +456,7 @@ public class InterpolationManager {
     @NotNull
     public static VariableTypeHandler getHandlerForObject(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(value instanceof VariableTypeHandler) return ((VariableTypeHandler) value);
-        if(value == null) return new NullType();
+        if(value == null) return new NullTypeHandler();
         VariableTypeHandler handler = AnalyzerManager.getAnalyzer(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(value.getClass()));
         if(handler == null) {
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Couldn't find handler for type " + value.getClass().getName(), pattern, ctx);
@@ -466,7 +467,7 @@ public class InterpolationManager {
     public static Object sanitizeObject(Object obj) {
         if(obj == null) return null;
         if(obj.getClass().isArray()) {
-            return new ListType((Object[]) obj);
+            return new ListObject((Object[]) obj);
         }
         return obj;
     }

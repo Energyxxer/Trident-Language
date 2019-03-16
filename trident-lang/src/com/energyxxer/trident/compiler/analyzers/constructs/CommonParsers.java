@@ -44,7 +44,7 @@ import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerType;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -660,30 +660,30 @@ public class CommonParsers {
     }
 
     //Must always return a VALID pointer
-    public static PointerType parsePointer(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static PointerObject parsePointer(TokenPattern<?> pattern, ISymbolContext ctx) {
         switch(pattern.getName()) {
             case "POINTER": return parsePointer(((TokenStructure) pattern).getContents(), ctx);
             case "VARIABLE_POINTER": {
                 if(pattern.find("POINTER_HEAD_WRAPPER") != null) {
                     Object target = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class, CoordinateSet.class);
-                    PointerType pointer = new PointerType(target, null);
+                    PointerObject pointer = new PointerObject(target, null);
                     parsePointerHead(pointer, pattern.find("POINTER_HEAD_WRAPPER.POINTER_HEAD"), ctx);
 
                     return pointer.validate(pattern, ctx);
                 } else {
-                    return InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerType.class).validate(pattern, ctx);
+                    return InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerObject.class).validate(pattern, ctx);
                 }
             }
             case "ENTITY_POINTER": {
                 Object target = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
-                PointerType pointer = new PointerType(target, null);
+                PointerObject pointer = new PointerObject(target, null);
                 parsePointerHead(pointer, pattern.find("POINTER_HEAD"), ctx);
 
                 return pointer.validate(pattern, ctx);
             }
             case "BLOCK_POINTER": {
                 Object target = CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx);
-                PointerType pointer = new PointerType(target, null);
+                PointerObject pointer = new PointerObject(target, null);
                 parsePointerHead(pointer, pattern.find("NBT_POINTER_HEAD"), ctx);
 
                 return pointer.validate(pattern, ctx);
@@ -698,7 +698,7 @@ public class CommonParsers {
         switch(pattern.getName()) {
             case "SCORE": return parseScore(((TokenStructure) pattern).getContents(), ctx);
             case "POINTER_WRAPPER": {
-                PointerType pointer = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerType.class);
+                PointerObject pointer = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerObject.class);
                 if(!(pointer.getMember() instanceof String)) {
                     throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
                 }
@@ -715,7 +715,7 @@ public class CommonParsers {
                 if(objective != null) {
                     entity = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class);
                 } else {
-                    PointerType pointer = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerType.class);
+                    PointerObject pointer = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerObject.class);
                     if(!(pointer.getMember() instanceof String)) {
                         throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
                     }
@@ -745,7 +745,7 @@ public class CommonParsers {
         }
     }
 
-    private static void parsePointerHead(PointerType pointer, TokenPattern<?> pattern, ISymbolContext ctx) {
+    private static void parsePointerHead(PointerObject pointer, TokenPattern<?> pattern, ISymbolContext ctx) {
         switch (pattern.getName()) {
             case "POINTER_HEAD": {
                 parsePointerHead(pointer, ((TokenStructure) pattern).getContents(), ctx);

@@ -55,7 +55,7 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
 
     @Override
     public Object getMember(FunctionMethod object, String member, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
-        if(member.equals("formalParameters")) return new ListType(formalParameters);
+        if(member.equals("formalParameters")) return new ListObject(formalParameters);
         if(member.equals("definingFile")) return declaringContext.getStaticParentFile().getResourceLocation();
         throw new MemberNotFoundException();
     }

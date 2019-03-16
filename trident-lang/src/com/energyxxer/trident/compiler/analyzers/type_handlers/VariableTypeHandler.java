@@ -81,9 +81,9 @@ public interface VariableTypeHandler<T> {
             shorthands.put("nbt_path", NBTPath.class);
             shorthands.put("coordinates", CoordinateSet.class);
             shorthands.put("resource", TridentUtil.ResourceLocation.class);
-            shorthands.put("pointer", PointerType.class);
+            shorthands.put("pointer", PointerObject.class);
             shorthands.put("dictionary", DictionaryObject.class);
-            shorthands.put("list", ListType.class);
+            shorthands.put("list", ListObject.class);
             shorthands.put("custom_entity", CustomEntity.class);
             shorthands.put("custom_item", CustomItem.class);
             shorthands.put("function", VariableMethod.class);

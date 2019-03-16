@@ -10,7 +10,7 @@ import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ListType;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.semantics.custom.special.GameLogFetcherFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -51,10 +51,10 @@ public class GameLogParser implements CommandParser {
             return new StringTextComponent(((String) obj));
         } else if(obj instanceof Entity) {
             return new SelectorTextComponent(((Entity) obj));
-        } else if(obj instanceof ListType) {
+        } else if(obj instanceof ListObject) {
             toStringRecursion.push(obj);
             ListTextComponent list = new ListTextComponent();
-            for(Object inner : ((ListType) obj)) {
+            for(Object inner : ((ListObject) obj)) {
                 list.append(objectToTextComponent(inner));
             }
             return list;

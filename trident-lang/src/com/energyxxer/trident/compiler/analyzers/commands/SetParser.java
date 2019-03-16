@@ -22,7 +22,7 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.analyzers.constructs.*;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.modifiers.StoreParser;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerType;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.util.Lazy;
@@ -81,7 +81,7 @@ public class SetParser implements SimpleCommandParser {
                         throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown CommonParsers#retrieveSymbol return type: " + symbol.getClass(), pattern, ctx);
                     }
                 } else {
-                    return convertValueToDecorator(InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerType.class), pattern.find("INTERPOLATION_BLOCK"), ctx);
+                    return convertValueToDecorator(InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerObject.class), pattern.find("INTERPOLATION_BLOCK"), ctx);
                 }
             case "NBT_VALUE":
                 return new PointerDecorator.ValuePointer(NBTParser.parseValue(pattern, ctx));
@@ -97,7 +97,7 @@ public class SetParser implements SimpleCommandParser {
         }
     }
 
-    private PointerDecorator convertValueToDecorator(PointerType pointer, TokenPattern<?> pattern, ISymbolContext ctx) {
+    private PointerDecorator convertValueToDecorator(PointerObject pointer, TokenPattern<?> pattern, ISymbolContext ctx) {
         pointer.validate(pattern, ctx);
         Lazy<NumericNBTType> lazyTypeInstantiator = new Lazy<>(() -> NumericNBTType.valueOf(pointer.getNumericType().toUpperCase(Locale.ENGLISH)));
         if(pointer.getTarget() instanceof Entity) {

@@ -54,6 +54,29 @@ public class ObjectConstructors {
 
         constructors.put("text_component", ObjectConstructors::constructTextComponent);
         constructors.put("nbt", ObjectConstructors::constructNBT);
+
+        constructors.put("tag_byte",
+                new MethodWrapper<>("new tag_byte", ((instance, params) -> new TagByte(params[0] == null ? 0 : (int)params[0])), Integer.class).setNullable(0)
+                        .createForInstance(null));
+        constructors.put("tag_short",
+                new MethodWrapper<>("new tag_short", ((instance, params) -> new TagShort(params[0] == null ? 0 : (int)params[0])), Integer.class).setNullable(0)
+                        .createForInstance(null));
+        constructors.put("tag_int",
+                new MethodWrapper<>("new tag_int", ((instance, params) -> new TagInt(params[0] == null ? 0 : (int)params[0])), Integer.class).setNullable(0)
+                        .createForInstance(null));
+        constructors.put("tag_float",
+                new MethodWrapper<>("new tag_float", ((instance, params) -> new TagFloat(params[0] == null ? 0 : (float)(double)params[0])), Double.class).setNullable(0)
+                        .createForInstance(null));
+        constructors.put("tag_double",
+                new MethodWrapper<>("new tag_double", ((instance, params) -> new TagDouble(params[0] == null ? 0 : (double)params[0])), Double.class).setNullable(0)
+                        .createForInstance(null));
+        constructors.put("tag_long", ObjectConstructors::constructTagLong);
+        constructors.put("tag_string",
+                new MethodWrapper<>("new tag_string", ((instance, params) -> new TagString(params[0] == null ? "" : (String)params[0])), String.class).setNullable(0)
+                        .createForInstance(null));
+        constructors.put("tag_byte_array", ObjectConstructors::constructTagByteArray);
+        constructors.put("tag_int_array", ObjectConstructors::constructTagIntArray);
+        constructors.put("tag_long_array", ObjectConstructors::constructTagLongArray);
     }
 
     private static Block constructBlock(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
@@ -127,10 +150,10 @@ public class ObjectConstructors {
             }
 
             return compound;
-        } if(params[0] instanceof ListType) {
+        } if(params[0] instanceof ListObject) {
             TagList list = new TagList();
 
-            for(Object obj : ((ListType) params[0])) {
+            for(Object obj : ((ListObject) params[0])) {
                 NBTTag content = constructNBT(new Object[] {obj, skipIncompatibleTypes}, new TokenPattern[] {patterns[0], pattern}, pattern, ctx);
                 if(content != null) {
                     try {
@@ -167,10 +190,10 @@ public class ObjectConstructors {
                 if(e instanceof TridentUtil.ResourceLocation
                     || e instanceof Entity
                     || e instanceof CoordinateSet) return new JsonPrimitive(e.toString());
-                if(e instanceof PointerType) {
-                    ((PointerType) e).validate(pattern, ctx);
-                    Object target = ((PointerType) e).getTarget();
-                    Object member = ((PointerType) e).getMember();
+                if(e instanceof PointerObject) {
+                    ((PointerObject) e).validate(pattern, ctx);
+                    Object target = ((PointerObject) e).getTarget();
+                    Object member = ((PointerObject) e).getMember();
                     JsonObject inner = new JsonObject();
                     if(member instanceof String) {
                         //is score
@@ -196,5 +219,61 @@ public class ObjectConstructors {
         } catch(IllegalArgumentException x) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.getMessage(), pattern, ctx);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static TagLong constructTagLong(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(params.length == 0 || params[0] == null) return new TagLong(0L);
+        Object param = assertOfType(params[0], patterns[0], ctx, Integer.class, Double.class, String.class);
+        if(param instanceof String) {
+            try {
+                return new TagLong(Long.parseLong((String) param));
+            } catch(NumberFormatException x) {
+                throw new TridentException(TridentException.Source.TYPE_ERROR, x.getMessage(), pattern, ctx);
+            }
+        } else if(param instanceof Double) {
+            return new TagLong((long)(double) param);
+        } else {
+            return new TagLong((long)(int) param);
+        }
+    }
+
+    private static TagByteArray constructTagByteArray(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(params.length == 0 || params[0] == null) return new TagByteArray();
+        ListObject list = assertOfType(params[0], patterns[0], ctx, ListObject.class);
+
+        TagByteArray arr = new TagByteArray();
+
+        for(Object obj : list) {
+            arr.add(new TagByte(assertOfType(obj, patterns[0], ctx, Integer.class)));
+        }
+
+        return arr;
+    }
+
+    private static TagIntArray constructTagIntArray(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(params.length == 0 || params[0] == null) return new TagIntArray();
+        ListObject list = assertOfType(params[0], patterns[0], ctx, ListObject.class);
+
+        TagIntArray arr = new TagIntArray();
+
+        for(Object obj : list) {
+            arr.add(new TagInt(assertOfType(obj, patterns[0], ctx, Integer.class)));
+        }
+
+        return arr;
+    }
+
+    private static TagIntArray constructTagLongArray(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(params.length == 0 || params[0] == null) return new TagIntArray();
+        ListObject list = assertOfType(params[0], patterns[0], ctx, ListObject.class);
+
+        TagIntArray arr = new TagIntArray();
+
+        for(Object obj : list) {
+            arr.add(constructTagLong(new Object[] {obj}, patterns, pattern, ctx));
+        }
+
+        return arr;
     }
 }

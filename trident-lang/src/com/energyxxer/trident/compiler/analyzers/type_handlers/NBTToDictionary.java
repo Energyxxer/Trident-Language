@@ -43,7 +43,7 @@ public class NBTToDictionary {
             case "TAG_Byte_Array":
             case "TAG_Int_Array":
             case "TAG_Long_Array": {
-                ListType list = new ListType();
+                ListObject list = new ListObject();
                 ComplexNBTTag compound = (ComplexNBTTag) tag;
 
                 for(NBTTag inner : compound.getAllTags()) {

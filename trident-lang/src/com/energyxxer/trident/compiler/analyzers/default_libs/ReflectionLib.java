@@ -5,7 +5,7 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ListType;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -64,10 +64,10 @@ public class ReflectionLib implements DefaultLibraryProvider {
         }
     }
 
-    private ListType getFilesWithTag(TridentUtil.ResourceLocation tag, TridentCompiler compiler) {
+    private ListObject getFilesWithTag(TridentUtil.ResourceLocation tag, TridentCompiler compiler) {
         tag = new TridentUtil.ResourceLocation(tag.toString());
         tag.isTag = false;
-        ListType list = new ListType();
+        ListObject list = new ListObject();
         for(TridentFile file : compiler.getAllFiles()) {
             if(file.getTags().contains(tag)) {
                 list.add(file.getResourceLocation());

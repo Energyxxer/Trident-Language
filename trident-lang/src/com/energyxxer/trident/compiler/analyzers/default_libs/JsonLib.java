@@ -31,7 +31,7 @@ public class JsonLib implements DefaultLibraryProvider {
                         prettyPrinting = VariableMethod.HelperMethods.assertOfType(params[1], patterns[1], ctx, Boolean.class);
                     }
 
-                    Object param = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], ctx, String.class, Number.class, Boolean.class, ListType.class, DictionaryObject.class);
+                    Object param = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], ctx, String.class, Number.class, Boolean.class, ListObject.class, DictionaryObject.class);
 
                     GsonBuilder gb = new GsonBuilder();
                     if(prettyPrinting) gb.setPrettyPrinting();
@@ -69,7 +69,7 @@ public class JsonLib implements DefaultLibraryProvider {
             return dict;
         } else if(elem.isJsonArray()) {
             JsonArray arr = elem.getAsJsonArray();
-            ListType list = new ListType();
+            ListObject list = new ListObject();
             for(JsonElement entry : arr) {
                 list.add(parseJson(entry));
             }
@@ -85,9 +85,9 @@ public class JsonLib implements DefaultLibraryProvider {
         if(obj instanceof String || obj instanceof TridentUtil.ResourceLocation) return new JsonPrimitive(obj.toString());
         if(obj instanceof Number) return new JsonPrimitive(((Number) obj));
         if(obj instanceof Boolean) return new JsonPrimitive((Boolean) obj);
-        if(obj instanceof ListType) {
+        if(obj instanceof ListObject) {
             JsonArray arr = new JsonArray();
-            for(Object elem : ((ListType) obj)) {
+            for(Object elem : ((ListObject) obj)) {
                 JsonElement result = toJson(elem, filter, skipUnknownTypes);
                 if(result != null) arr.add(result);
             }
