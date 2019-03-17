@@ -62,5 +62,13 @@ public abstract class TokenPattern<T> {
 		return this;
 	}
 
+	public List<String> getTags() {
+    	return tags;
+	}
+
+	public boolean hasTag(String tag) {
+    	return tags.contains(tag);
+	}
+
 	public abstract void validate();
 }

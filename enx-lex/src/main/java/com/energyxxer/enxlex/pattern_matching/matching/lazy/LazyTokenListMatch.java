@@ -3,9 +3,11 @@ package com.energyxxer.enxlex.pattern_matching.matching.lazy;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
+import com.energyxxer.enxlex.pattern_matching.StandardTags;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.matching.GeneralTokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.util.MethodInvocation;
 import com.energyxxer.util.Stack;
 
@@ -135,6 +137,9 @@ public class LazyTokenListMatch extends LazyTokenPatternMatch {
                             length += itemMatch.length;
                             if(itemMatch.pattern != null) list.add(itemMatch.pattern);
                             expectSeparator = true;
+                            if(itemMatch.pattern instanceof TokenStructure && ((TokenStructure) itemMatch.pattern).getContents().hasTag(StandardTags.LIST_TERMINATOR)) {
+                                break;
+                            }
                         }
                     }
                 } else {
@@ -161,6 +166,9 @@ public class LazyTokenListMatch extends LazyTokenPatternMatch {
                         case COMPLETE_MATCH: {
                             i += itemMatch.length;
                             if(itemMatch.pattern != null) list.add(itemMatch.pattern);
+                            if(itemMatch.pattern instanceof TokenStructure && ((TokenStructure) itemMatch.pattern).getContents().hasTag(StandardTags.LIST_TERMINATOR)) {
+                                break;
+                            }
                         }
                     }
                 }

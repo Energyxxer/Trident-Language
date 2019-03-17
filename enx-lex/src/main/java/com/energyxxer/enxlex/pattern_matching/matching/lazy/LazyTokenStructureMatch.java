@@ -10,6 +10,17 @@ import java.util.ArrayList;
 
 public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
     private ArrayList<LazyTokenPatternMatch> entries = new ArrayList<>();
+    /**
+     * When greedy: false
+     * The structure will always try to return a positive match, even if there are longer negative matches.
+     *
+     * When greedy: true
+     * The structure will always return the longest match, regardless of whether it's positive or not.
+     *
+     * Use greedy structures whenever the first few tokens of the entries overlap, so error messages point to the
+     * point where the match failed, rather than some point far before it failed.
+     * */
+    private boolean greedy = false;
 
     public LazyTokenStructureMatch(String name) {
         this.name = name;
@@ -53,7 +64,7 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
             if (longestMatch == null) {
                 longestMatch = itemMatch;
             } else if(itemMatch.length >= longestMatch.length) {
-                if (!longestMatch.matched || itemMatch.matched) {
+                if (!longestMatch.matched || itemMatch.matched || (greedy && itemMatch.length > longestMatch.length)) {
                     longestMatch = itemMatch;
                 }
             }
@@ -107,5 +118,13 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
             }
         }
         return newStruct;
+    }
+
+    public void setGreedy(boolean greedy) {
+        this.greedy = greedy;
+    }
+
+    public boolean getGreedy() {
+        return greedy;
     }
 }

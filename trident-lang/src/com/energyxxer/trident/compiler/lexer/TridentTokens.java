@@ -54,11 +54,11 @@ public class TridentTokens {
             CUSTOM_COMMAND_KEYWORD,
             //Objective names, tags, etc.:
             IDENTIFIER_TYPE_A,
-            //Player names (cannot begin with @ nor $) (very greedy string):
+            //Player names (cannot begin with @ nor $, nor contain <>) (very greedy string):
             IDENTIFIER_TYPE_B,
             //advancement criteria (very greedy string):
             IDENTIFIER_TYPE_C,
-            //NBT path keys (same as A except doesn't allow dots):
+            //NBT path keys (same as B except doesn't allow dots, double quotes, square braces, curly braces nor angle braces):
             IDENTIFIER_TYPE_D,
             //Pretty much Java identifiers, without using reserved keywords
             IDENTIFIER_TYPE_X,

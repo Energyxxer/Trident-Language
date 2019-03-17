@@ -194,61 +194,73 @@ public class NBTParser {
     private NBTParser() {
     }
 
-    public static NBTPath parsePath(TokenPattern<?> pattern, ISymbolContext file) {
+    public static NBTPath parsePath(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
-        if((((TokenStructure)pattern).getContents()).getName().equals("INTERPOLATION_BLOCK")) {
-            NBTPath result = InterpolationManager.parse(((TokenStructure) pattern).getContents(), file, NBTPath.class);
-            EObject.assertNotNull(result, pattern, file);
-            return result;
-        }
-        NBTPathNode start = parsePathNode(pattern.find("NBT_PATH_NODE"), file);
-        ArrayList<NBTPathNode> nodes = new ArrayList<>();
-        nodes.add(start);
-
-        TokenList otherNodes = (TokenList) pattern.find("OTHER_NODES");
-        if(otherNodes != null) {
-            for(TokenPattern<?> node : otherNodes.getContents()) {
-                nodes.add(parsePathNode(node.find("NBT_PATH_NODE"), file));
-            }
-        }
-
-        return new NBTPath(nodes.toArray(new NBTPathNode[0]));
-    }
-
-    private static NBTPathNode parsePathNode(TokenPattern<?> pattern, ISymbolContext file) {
         switch(pattern.getName()) {
-            case "NBT_PATH_NODE": {
-                return parsePathNode(((TokenStructure) pattern).getContents(), file);
+            case "NBT_PATH": {
+                return parsePath(((TokenStructure) pattern).getContents(), ctx);
             }
-            case "NBT_PATH_KEY": {
-                return new NBTPathKey(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("NBT_PATH_KEY_LABEL.STRING_LITERAL_OR_IDENTIFIER_D"), file));
+            case "INTERPOLATION_BLOCK": {
+                return InterpolationManager.parse(((TokenStructure) pattern).getContents(), ctx, NBTPath.class);
             }
-            case "NBT_PATH_LIST_ALL": {
-                return new NBTListMatch();
-            }
-            case "NBT_PATH_INDEX": {
-                return new NBTPathIndex(CommonParsers.parseInt(pattern.find("INTEGER"), file));
-            }
-            case "NBT_PATH_LIST_MATCH": {
-                return new NBTListMatch(parseCompound(pattern.find("NBT_COMPOUND"), file));
-            }
-            case "NBT_PATH_LIST_UNKNOWN": {
-                Object val = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), file, Integer.class, TagCompound.class);
-                if(val == null) {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null at path", pattern, file);
-                } else if(val instanceof Integer) {
-                    return new NBTPathIndex((int) val);
-                } else if(val instanceof TagCompound){
-                    return new NBTListMatch((TagCompound) val);
-                } else {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown symbol return type: " + val.getClass().getSimpleName(), pattern, file);
+            case "NBT_PATH_ROOT_WRAPPER": {
+                NBTPathNode root = parsePathNode(pattern.find("NBT_PATH_ROOT"), ctx);
+                ArrayList<NBTPathNode> nodes = new ArrayList<>();
+                nodes.add(root);
+
+                TokenList otherNodes = (TokenList) pattern.find("NBT_PATH_NODE_SEQUENCE");
+                if(otherNodes != null) {
+                    for(TokenPattern<?> rawNode : otherNodes.getContents()) {
+                        NBTPathNode node = parsePathNode(rawNode, ctx);
+                        if(node != null) nodes.add(node);
+                    }
                 }
-            }
-            case "NBT_PATH_COMPOUND_MATCH": {
-                return new NBTObjectMatch(parseCompound(pattern.find("NBT_COMPOUND"), file));
+
+                return new NBTPath(nodes.toArray(new NBTPathNode[0]));
             }
             default: {
-                throw new IllegalArgumentException("Unknown NBT path grammar pattern name '" + pattern.getName() + "'");
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+            }
+        }
+    }
+
+    private static NBTPathNode parsePathNode(TokenPattern<?> pattern, ISymbolContext ctx) {
+        switch(pattern.getName()) {
+            case "NBT_PATH_ROOT":
+            case "NBT_PATH_NODE": {
+                return parsePathNode(((TokenStructure) pattern).getContents(), ctx);
+            }
+            case "NBT_PATH_TRAILING_DOT": {
+                return null;
+            }
+            case "NBT_PATH_COMPOUND_ROOT": {
+                return new NBTPathCompoundRoot(parseCompound(pattern.find("NBT_COMPOUND"), ctx));
+            }
+            case "NBT_PATH_KEY": {
+                TagCompound compoundMatch = NBTParser.parseCompound(pattern.find("NBT_PATH_COMPOUND_MATCH.NBT_COMPOUND"), ctx);
+                return new NBTPathKey(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("NBT_PATH_KEY_LABEL.STRING_LITERAL_OR_IDENTIFIER_D"), ctx), compoundMatch);
+            }
+            case "NBT_PATH_LIST_ACCESS": {
+                TokenStructure content = ((TokenStructure) pattern.find("NBT_PATH_LIST_CONTENT"));
+                if(content == null) return new NBTListMatch();
+                TokenPattern<?> contentInner = content.getContents();
+                switch(contentInner.getName()) {
+                    case "INTEGER": return new NBTPathIndex(CommonParsers.parseInt(contentInner, ctx));
+                    case "NBT_COMPOUND": return new NBTListMatch(parseCompound(contentInner, ctx));
+                    case "INTERPOLATION_BLOCK": {
+                        Object val = InterpolationManager.parse(contentInner, ctx, Integer.class, TagCompound.class);
+                        if(val instanceof Integer) {
+                            return new NBTPathIndex((int) val);
+                        } else if(val instanceof TagCompound){
+                            return new NBTListMatch((TagCompound) val);
+                        } else {
+                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown symbol return type: " + val.getClass().getSimpleName(), pattern, ctx);
+                        }
+                    }
+                }
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
             }
         }
     }

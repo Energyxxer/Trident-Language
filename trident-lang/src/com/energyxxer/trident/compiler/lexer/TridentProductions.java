@@ -9,6 +9,7 @@ import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
+import com.energyxxer.enxlex.pattern_matching.StandardTags;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -1281,31 +1282,108 @@ public class TridentProductions {
             NBT_VALUE.add(INTERPOLATION_BLOCK);
         }
 
+        /*{
+            LazyTokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_D = choice(string(), ofType(IDENTIFIER_TYPE_D).setName("IDENTIFIER_D")).setName("STRING_LITERAL_OR_IDENTIFIER_D");
+
+            LazyTokenStructureMatch DOT_CONNECTOR = struct("DOT_CONNECTOR");
+            DOT_CONNECTOR.setOptional();
+            LazyTokenStructureMatch DOTLESS_CONNECTOR = struct("DOTLESS_CONNECTOR");
+            DOTLESS_CONNECTOR.setGreedy(true);
+            DOTLESS_CONNECTOR.setOptional();
+
+            LazyTokenStructureMatch POST_DOT_NBT_PATH_NODE = struct("POST_DOT_NBT_PATH_NODE");
+            LazyTokenStructureMatch POST_DOTLESS_NBT_PATH_NODE = struct("POST_DOTLESS_NBT_PATH_NODE");
+
+            DOT_CONNECTOR.add(group(dot(), glue(), optional(POST_DOTLESS_NBT_PATH_NODE)));
+            DOTLESS_CONNECTOR.add(dot());
+            DOTLESS_CONNECTOR.add(POST_DOT_NBT_PATH_NODE);
+
+            {
+                //keys
+                POST_DOT_NBT_PATH_NODE.add(
+                        group(
+                                glue(),
+                                group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL"),
+                                optional(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH"),
+                                optional(dot(), optional(POST_DOT_NBT_PATH_NODE))
+                        )
+                );
+                POST_DOTLESS_NBT_PATH_NODE.add(
+                        group(
+                                group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL"),
+                                optional(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH"),
+                                DOTLESS_CONNECTOR
+                        )
+                );
+            }
+            {
+                //lists
+                POST_DOT_NBT_PATH_NODE.add(
+                        group(
+                                glue(),
+                                brace("["),
+                                choice(integer(), NBT_COMPOUND, INTERPOLATION_BLOCK).setOptional().setName("NBT_PATH_LIST_CONTENT"),
+                                brace("]"),
+                                choice(DOT_CONNECTOR, POST_DOTLESS_NBT_PATH_NODE)
+                        )
+                );
+                POST_DOTLESS_NBT_PATH_NODE.add(
+                        group(
+                                glue(),
+                                brace("["),
+                                choice(integer(), NBT_COMPOUND, INTERPOLATION_BLOCK).setOptional().setName("NBT_PATH_LIST_CONTENT"),
+                                brace("]"),
+                                DOT_CONNECTOR
+                        )
+                );
+            }
+
+            NBT_PATH.add(POST_DOTLESS_NBT_PATH_NODE);
+            NBT_PATH.add(INTERPOLATION_BLOCK);
+
+        }*/
+
         {
             LazyTokenStructureMatch NBT_PATH_NODE = new LazyTokenStructureMatch("NBT_PATH_NODE");
+            NBT_PATH_NODE.setGreedy(true);
 
             LazyTokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_D = choice(string(), ofType(IDENTIFIER_TYPE_D).setName("IDENTIFIER_D")).setName("STRING_LITERAL_OR_IDENTIFIER_D");
+
+            NBT_PATH_NODE.add(
+                    dot().addTags(StandardTags.LIST_TERMINATOR).setName("NBT_PATH_TRAILING_DOT")
+            );
 
             NBT_PATH_NODE.add(
                     group(
                             dot().setName("NBT_PATH_SEPARATOR"),
                             glue(),
-                            group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL")
+                            group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL"),
+                            optional(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH")
                     ).setName("NBT_PATH_KEY"));
 
-            NBT_PATH_NODE.add(group(brace("["), brace("]")).setName("NBT_PATH_LIST_ALL"));
+            NBT_PATH_NODE.add(
+                    group(
+                            dot().setOptional(),
+                            glue(),
+                            brace("["),
+                            choice(integer(), NBT_COMPOUND, INTERPOLATION_BLOCK).setOptional().setName("NBT_PATH_LIST_CONTENT"),
+                            brace("]")
+                    ).setName("NBT_PATH_LIST_ACCESS")
+            );
 
-            NBT_PATH_NODE.add(group(brace("["), integer(), brace("]")).setName("NBT_PATH_INDEX"));
+            NBT_PATH.add(
+                    group(
+                            choice(
+                                    group(
+                                            group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL"),
+                                            optional(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH")
+                                    ).setName("NBT_PATH_KEY"),
+                                    group(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_ROOT")
+                            ).setName("NBT_PATH_ROOT"),
+                            list(NBT_PATH_NODE).setOptional().setName("NBT_PATH_NODE_SEQUENCE")
+                    ).setName("NBT_PATH_ROOT_WRAPPER")
+            );
 
-            NBT_PATH_NODE.add(group(brace("["), NBT_COMPOUND, brace("]")).setName("NBT_PATH_LIST_MATCH"));
-
-            NBT_PATH_NODE.add(group(brace("["), INTERPOLATION_BLOCK, brace("]")).setName("NBT_PATH_LIST_UNKNOWN"));
-
-            NBT_PATH_NODE.add(group(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH"));
-
-            NBT_PATH.add(group(
-                    choice(group(group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL")).setName("NBT_PATH_KEY")).setName("NBT_PATH_NODE"),
-                    list(group(glue(), NBT_PATH_NODE)).setOptional().setName("OTHER_NODES")).setName("RAW_NBT_PATH"));
             NBT_PATH.add(INTERPOLATION_BLOCK);
         }
         //endregion

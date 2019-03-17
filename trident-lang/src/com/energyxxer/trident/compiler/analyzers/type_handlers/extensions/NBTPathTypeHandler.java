@@ -18,14 +18,14 @@ public class NBTPathTypeHandler implements VariableTypeHandler<NBTPath> {
     private static HashMap<String, MemberWrapper<NBTPath>> members = new HashMap<>();
 
     static {
-        members.put("resolveKey", new MethodWrapper<>("resolveKey", (instance, params) -> {
+        members.put("resolveKey", new MethodWrapper<NBTPath>("resolveKey", (instance, params) -> {
             ArrayList<NBTPathNode> nodes = new ArrayList<>();
             for (NBTPath subPath : instance) {
                 nodes.add(subPath.getNode());
             }
-            nodes.add(new NBTPathKey((String) params[0]));
+            nodes.add(new NBTPathKey((String) params[0], (TagCompound) params[1]));
             return new NBTPath(nodes.toArray(new NBTPathNode[0]));
-        }, String.class));
+        }, String.class, TagCompound.class).setNullable(1));
         members.put("resolveIndex", new MethodWrapper<>("resolveIndex", (instance, params) -> {
             ArrayList<NBTPathNode> nodes = new ArrayList<>();
             for (NBTPath subPath : instance) {
@@ -40,14 +40,6 @@ public class NBTPathTypeHandler implements VariableTypeHandler<NBTPath> {
                 nodes.add(subPath.getNode());
             }
             nodes.add(new NBTListMatch((TagCompound) params[0]));
-            return new NBTPath(nodes.toArray(new NBTPathNode[0]));
-        }, TagCompound.class));
-        members.put("resolveCompoundMatch", new MethodWrapper<>("resolveCompoundMatch", (instance, params) -> {
-            ArrayList<NBTPathNode> nodes = new ArrayList<>();
-            for (NBTPath subPath : instance) {
-                nodes.add(subPath.getNode());
-            }
-            nodes.add(new NBTObjectMatch((TagCompound) params[0]));
             return new NBTPath(nodes.toArray(new NBTPathNode[0]));
         }, TagCompound.class));
     }
