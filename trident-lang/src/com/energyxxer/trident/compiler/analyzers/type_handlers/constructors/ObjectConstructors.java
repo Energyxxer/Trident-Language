@@ -5,6 +5,7 @@ import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.functionlogic.nbt.path.*;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
@@ -54,6 +55,7 @@ public class ObjectConstructors {
 
         constructors.put("text_component", ObjectConstructors::constructTextComponent);
         constructors.put("nbt", ObjectConstructors::constructNBT);
+        constructors.put("nbt_path", ObjectConstructors::constructNBTPath);
 
         constructors.put("tag_byte",
                 new MethodWrapper<>("new tag_byte", ((instance, params) -> new TagByte(params[0] == null ? 0 : (int)params[0])), Integer.class).setNullable(0)
@@ -170,8 +172,27 @@ public class ObjectConstructors {
         } else return null;
     }
 
-    public static VariableMethod getConstructor(String name) {
-        return constructors.get(name);
+    private static NBTPath constructNBTPath(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(params.length == 0 || params[0] == null) return new NBTPath(new NBTListMatch());
+
+        Object obj = assertOfType(params[0], patterns[0], ctx, String.class, Integer.class, TagCompound.class);
+        if(obj instanceof TagCompound) {
+            boolean wrapInList = params.length >= 2 && params[1] instanceof Boolean && ((Boolean) params[1]);
+            if(wrapInList) {
+                return new NBTPath(new NBTListMatch((TagCompound) obj));
+            } else {
+                return new NBTPath(new NBTPathCompoundRoot((TagCompound) obj));
+            }
+        }
+        if(obj instanceof String) {
+            TagCompound compoundMatch = null;
+            if(params.length >= 2 && params[1] != null) {
+                compoundMatch = assertOfType(params[1], patterns[1], ctx, TagCompound.class);
+            }
+            return new NBTPath(new NBTPathKey((String) obj, compoundMatch));
+        }
+        if(obj instanceof Integer) return new NBTPath(new NBTPathIndex((int) obj));
+        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
     }
 
     private static TextComponent constructTextComponent(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
@@ -275,5 +296,9 @@ public class ObjectConstructors {
         }
 
         return arr;
+    }
+
+    public static VariableMethod getConstructor(String name) {
+        return constructors.get(name);
     }
 }

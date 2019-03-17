@@ -34,14 +34,14 @@ public class NBTPathTypeHandler implements VariableTypeHandler<NBTPath> {
             nodes.add(new NBTPathIndex((int) params[0]));
             return new NBTPath(nodes.toArray(new NBTPathNode[0]));
         }, Integer.class));
-        members.put("resolveListMatch", new MethodWrapper<>("resolveListMatch", (instance, params) -> {
+        members.put("resolveListMatch", new MethodWrapper<NBTPath>("resolveListMatch", (instance, params) -> {
             ArrayList<NBTPathNode> nodes = new ArrayList<>();
             for (NBTPath subPath : instance) {
                 nodes.add(subPath.getNode());
             }
             nodes.add(new NBTListMatch((TagCompound) params[0]));
             return new NBTPath(nodes.toArray(new NBTPathNode[0]));
-        }, TagCompound.class));
+        }, TagCompound.class).setNullable(0));
     }
 
     @Override
