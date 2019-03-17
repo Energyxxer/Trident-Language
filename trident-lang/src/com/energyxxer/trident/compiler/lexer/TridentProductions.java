@@ -2250,7 +2250,7 @@ public class TridentProductions {
     }
 
     private LazyTokenStructureMatch identifierB() {
-        return choice(string(), ofType(IDENTIFIER_TYPE_B).setName("RAW_IDENTIFIER_B")).setName("IDENTIFIER_B");
+        return choice(ofType(IDENTIFIER_TYPE_B).setName("RAW_IDENTIFIER_B"), string()).setName("IDENTIFIER_B");
     }
 
     private static LazyTokenPatternMatch identifierC() {

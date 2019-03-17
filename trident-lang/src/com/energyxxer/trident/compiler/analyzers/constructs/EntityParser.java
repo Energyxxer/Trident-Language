@@ -10,6 +10,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.selectors.SelectorArgumentParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
+import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
@@ -66,6 +67,9 @@ public class EntityParser {
             case "PLAYER_NAME": return new PlayerName(CommonParsers.parseIdentifierB(inner.find("IDENTIFIER_B"), ctx));
             case "ENTITY_VARIABLE": {
                 Object symbol = InterpolationManager.parse(inner.find("INTERPOLATION_BLOCK"), ctx, Entity.class, String.class);
+                if(symbol instanceof String && !TridentLexerProfile.IDENTIFIER_B_REGEX.matcher((String) symbol).matches()) {
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "The string '" + symbol + "' is not a valid argument here", pattern, ctx);
+                }
                 Entity entity = symbol instanceof Entity ? (Entity) symbol : new PlayerName(((String) symbol));
                 EObject.assertNotNull(entity, inner.find("INTERPOLATION_BLOCK"), ctx);
                 if(inner.find("APPENDED_ARGUMENTS") != null) {
