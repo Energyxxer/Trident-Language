@@ -704,6 +704,13 @@ public class CommonParsers {
                 }
                 return new LocalScore((Entity) pointer.getTarget(), ctx.getCompiler().getModule().getObjectiveManager().get((String) pointer.getMember()));
             }
+            case "POINTER": {
+                PointerObject pointer = parsePointer(pattern, ctx);
+                if(!(pointer.getMember() instanceof String)) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
+                }
+                return new LocalScore((Entity) pointer.getTarget(), ctx.getCompiler().getModule().getObjectiveManager().get((String) pointer.getMember()));
+            }
             case "EXPLICIT_SCORE": {
                 Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
                 Objective objective = parseObjective(pattern.find("OBJECTIVE_NAME"), ctx);
@@ -732,7 +739,10 @@ public class CommonParsers {
 
                 Objective objective = null;
 
-                TokenPattern<?> objectiveClause = ((TokenStructure) pattern.find("OBJECTIVE_CLAUSE")).getContents();
+                TokenPattern<?> objectiveClause = (pattern.find("OBJECTIVE_CLAUSE.OBJECTIVE_NAME_WRAPPER"));
+                if(objectiveClause != null) {
+                    objectiveClause = ((TokenStructure) objectiveClause).getContents();
+                }
                 if(objectiveClause != null && objectiveClause.getName().equals("OBJECTIVE_NAME")) {
                     objective = parseObjective(objectiveClause, ctx);
                 }

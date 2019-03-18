@@ -2194,7 +2194,7 @@ public class TridentProductions {
     }
 
     private LazyTokenStructureMatch scoreOptionalObjective() {
-        return choice(group(choice(ENTITY, symbol("*")).setName("TARGET_ENTITY"), sameLine(), choice(symbol("*"), objectiveName()).setOptional().setName("OBJECTIVE_CLAUSE")).setName("SCORE_OPTIONAL_OBJECTIVE"), POINTER).setName("SCORE");
+        return choice(group(choice(ENTITY, symbol("*")).setName("TARGET_ENTITY"), group(sameLine(), choice(symbol("*"), objectiveName()).setName("OBJECTIVE_NAME_WRAPPER")).setOptional().setName("OBJECTIVE_CLAUSE")).setName("SCORE_OPTIONAL_OBJECTIVE"), POINTER).setName("SCORE");
     }
 
     private LazyTokenStructureMatch entityNBT() {
