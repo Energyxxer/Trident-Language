@@ -8,6 +8,7 @@ import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
 public class LoopInstruction implements Instruction {
@@ -117,11 +118,15 @@ public class LoopInstruction implements Instruction {
 
                         @Override
                         public boolean condition() {
-                            boolean hasNext = it.hasNext();
-                            if(hasNext) {
-                                ctx.search(varName, ctx).setValue(it.next());
+                            try {
+                                boolean hasNext = it.hasNext();
+                                if (hasNext) {
+                                    ctx.search(varName, ctx).setValue(it.next());
+                                }
+                                return hasNext;
+                            } catch(ConcurrentModificationException x) {
+                                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
                             }
-                            return hasNext;
                         }
 
                         @Override
