@@ -43,8 +43,12 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
 
                     DictionaryObject newDict = new DictionaryObject();
 
-                    for (Map.Entry<String, Symbol> entry : dict.entrySet()) {
-                        newDict.put(entry.getKey(), func.safeCall(new Object[]{entry.getKey(), entry.getValue().getValue()}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
+                    try {
+                        for (Map.Entry<String, Symbol> entry : dict.entrySet()) {
+                            newDict.put(entry.getKey(), func.safeCall(new Object[]{entry.getKey(), entry.getValue().getValue()}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
+                        }
+                    } catch(ConcurrentModificationException x) {
+                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
                     }
 
                     return newDict;

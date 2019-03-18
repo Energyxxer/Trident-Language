@@ -3,8 +3,8 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -18,9 +18,9 @@ public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Obj
     static {
         try {
             members.put("add", new MethodWrapper<>(ListObject.class.getMethod("add", Object.class)));
-            members.put("insert", new MethodWrapper<>(ListObject.class.getMethod("insert", Object.class, int.class)));
+            members.put("insert", new MethodWrapper<>(ListObject.class.getMethod("insert", Object.class, Integer.class)));
+            members.put("remove", new MethodWrapper<>(ListObject.class.getMethod("remove", Integer.class)));
             members.put("contains", new MethodWrapper<>(ListObject.class.getMethod("contains", Object.class)));
-            members.put("remove", new MethodWrapper<>(ListObject.class.getMethod("remove", int.class)));
             members.put("indexOf", new MethodWrapper<>(ListObject.class.getMethod("indexOf", Object.class)));
             members.put("lastIndexOf", new MethodWrapper<>(ListObject.class.getMethod("lastIndexOf", Object.class)));
             members.put("isEmpty", new MethodWrapper<>(ListObject.class.getMethod("isEmpty")));
@@ -60,8 +60,39 @@ public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Obj
 
                 ListObject newList = new ListObject();
 
-                for(Symbol sym : content) {
-                    newList.add(func.safeCall(new Object[] {sym.getValue()}, new TokenPattern[] {pattern1}, pattern1, file1));
+                try {
+                    int i = 0;
+                    for (Symbol sym : content) {
+                        newList.add(func.safeCall(new Object[]{sym.getValue(), i}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
+                        i++;
+                    }
+                } catch(ConcurrentModificationException x) {
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
+                }
+
+                return newList;
+            };
+        }
+        if(member.equals("filter")) {
+            return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                if(params.length < 1) {
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'filter' requires at least 1 parameter, instead found " + params.length, pattern, ctx);
+                }
+                FunctionMethod func = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
+
+                ListObject newList = new ListObject();
+
+                try {
+                    int i = 0;
+                    for (Symbol sym : content) {
+                        Object obj = func.safeCall(new Object[]{sym.getValue(), i}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1);
+                        if(Boolean.TRUE.equals(obj)) {
+                            newList.add(sym.getValue());
+                        }
+                        i++;
+                    }
+                } catch(ConcurrentModificationException x) {
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
                 }
 
                 return newList;
@@ -112,7 +143,7 @@ public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Obj
         content.add(new Symbol(content.size() + "", Symbol.SymbolVisibility.GLOBAL, object));
     }
 
-    public void insert(@MethodWrapper.TridentNullable Object object, int index) {
+    public void insert(@MethodWrapper.TridentNullable Object object, Integer index) {
         content.add(index, new Symbol(content.size() + "", Symbol.SymbolVisibility.GLOBAL, object));
     }
 
@@ -143,11 +174,11 @@ public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Obj
         content.clear();
     }
 
-    public Symbol remove(int index) {
+    public Symbol remove(Integer index) {
         for(int i = index+1; i < size(); i++) {
             content.get(i).setName((index - 1) + "");
         }
-        return content.remove(index);
+        return content.remove((int) index);
     }
 
     @NotNull
