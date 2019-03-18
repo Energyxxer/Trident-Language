@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.data.*;
 import com.energyxxer.commodore.functionlogic.commands.execute.*;
@@ -8,10 +9,7 @@ import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScorePlayersOp
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreSet;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
-import com.energyxxer.commodore.functionlogic.nbt.NumericNBTTag;
-import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
-import com.energyxxer.commodore.functionlogic.nbt.TagInt;
+import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
@@ -38,7 +36,14 @@ public class SetParser implements SimpleCommandParser {
         PointerDecorator target = parsePointer(pattern.find("POINTER"), ctx);
         PointerDecorator source = parsePointer(pattern.find("VALUE"), ctx);
 
-        return target.setFrom(source, pattern, ctx);
+        try {
+            return target.setFrom(source, pattern, ctx);
+        } catch(CommodoreException x) {
+            TridentException.handleCommodoreException(x, pattern, ctx)
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern)
+                    .invokeThrow();
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
+        }
 
         //* SCORE = SCORE > scoreboard players operation ...
         //* SCORE = NBT > execute store result score ... data get ...
@@ -53,17 +58,22 @@ public class SetParser implements SimpleCommandParser {
         PointerHead head;
         switch(pattern.getName()) {
             case "VALUE":
+                return parsePointer(((TokenStructure) pattern).getContents(), ctx);
             case "POINTER":
+                if(true) return convertValueToDecorator(CommonParsers.parsePointer(pattern, ctx), pattern, ctx);
                 return parsePointer(((TokenStructure) pattern).getContents(), ctx);
             case "BLOCK_POINTER":
+                if(true) return convertValueToDecorator(CommonParsers.parsePointer(pattern, ctx), pattern, ctx);
                 CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx);
                 head = parsePointerHead(pos, pattern.find("NBT_POINTER_HEAD"), ctx);
                 return new PointerDecorator.BlockPointer(pos, head);
             case "ENTITY_POINTER":
+                if(true) return convertValueToDecorator(CommonParsers.parsePointer(pattern, ctx), pattern, ctx);
                 Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
                 head = parsePointerHead(entity, pattern.find("POINTER_HEAD"), ctx);
                 return new PointerDecorator.EntityPointer(entity, head);
             case "VARIABLE_POINTER":
+                if(true) return convertValueToDecorator(CommonParsers.parsePointer(pattern, ctx), pattern, ctx);
                 if(pattern.find("POINTER_HEAD_WRAPPER") != null) {
                     Object symbol = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class, CoordinateSet.class);
                     if (symbol == null) {
@@ -86,11 +96,13 @@ public class SetParser implements SimpleCommandParser {
             case "NBT_VALUE":
                 return new PointerDecorator.ValuePointer(NBTParser.parseValue(pattern, ctx));
             case "INTERPOLATION_BLOCK":
-                Object value = InterpolationManager.parse(pattern, ctx, NBTTag.class, Integer.class);
+                Object value = InterpolationManager.parse(pattern, ctx, NBTTag.class, Integer.class, Double.class, PointerObject.class);
                 if(value == null) {
                     throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null value at pointer", pattern, ctx);
                 }
+                if(value instanceof PointerObject) return convertValueToDecorator(((PointerObject) value), pattern, ctx);
                 if(value instanceof Integer) value = new TagInt((int) value);
+                else if(value instanceof Double) value = new TagDouble((double) value);
                 return new PointerDecorator.ValuePointer((NBTTag) value);
             default:
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);

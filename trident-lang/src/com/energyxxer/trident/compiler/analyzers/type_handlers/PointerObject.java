@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
+import java.util.Objects;
 
 public class PointerObject implements VariableTypeHandler<PointerObject> {
 
@@ -27,7 +28,6 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
     private Symbol target;  // Should contain either: Entity or CoordinateSet
     @NotNull
     private Symbol member;  // Should contain either: NBTPath or String (Identifier A)
-    @NotNull
     private double scale;
     @Nullable
     private String numericType = null;
@@ -179,5 +179,21 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
             case ILLEGAL_TYPE_COMBINATION: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer type combination: Coordinate and Objective", pattern, ctx);
         }
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PointerObject that = (PointerObject) o;
+        return Double.compare(that.scale, scale) == 0 &&
+                Objects.equals(target.getValue(), that.target.getValue()) &&
+                Objects.equals(member.getValue(), that.member.getValue()) &&
+                Objects.equals(numericType, that.numericType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(target.getValue(), member.getValue(), scale, numericType);
     }
 }

@@ -2,6 +2,8 @@ package com.energyxxer.trident.compiler.semantics;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class Symbol {
 
     public enum SymbolVisibility {
@@ -44,5 +46,20 @@ public class Symbol {
 
     public void setValue(Object value) {
         this.value = value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Symbol symbol = (Symbol) o;
+        return Objects.equals(name, symbol.name) &&
+                visibility == symbol.visibility &&
+                Objects.equals(value, symbol.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, visibility, value);
     }
 }
