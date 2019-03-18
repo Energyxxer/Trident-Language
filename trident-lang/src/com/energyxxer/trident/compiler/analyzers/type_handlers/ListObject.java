@@ -91,6 +91,11 @@ public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Obj
         throw new ClassCastException();
     }
 
+    @Override
+    public Iterator<?> getIterator(ListObject list) {
+        return list.iterator();
+    }
+
     public int size() {
         return content.size();
     }

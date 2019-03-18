@@ -17,10 +17,7 @@ import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @AnalyzerGroup
 public interface VariableTypeHandler<T> {
@@ -33,6 +30,10 @@ public interface VariableTypeHandler<T> {
 
     default Object coerce(T object, Class targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
+    }
+
+    default Iterator<?> getIterator(T object) {
+        return null;
     }
 
     class Static {
@@ -54,40 +55,40 @@ public interface VariableTypeHandler<T> {
         private static ArrayList<Class> superclasses = new ArrayList<>();
 
         static {
-            shorthands.put("int", Integer.class);
-            shorthands.put("real", Double.class);
-            shorthands.put("int_range", IntegerRange.class);
-            shorthands.put("real_range", DoubleRange.class);
-            shorthands.put("boolean", Boolean.class);
-            shorthands.put("string", String.class);
-            shorthands.put("entity", Entity.class);
-            shorthands.put("block", Block.class);
-            shorthands.put("item", Item.class);
-            shorthands.put("text_component", TextComponent.class);
-            shorthands.put("nbt", TagCompound.class);
-            shorthands.put("tag_compound", TagCompound.class);
-            shorthands.put("tag_list", TagList.class);
-            shorthands.put("tag_byte", TagByte.class);
-            shorthands.put("tag_short", TagShort.class);
-            shorthands.put("tag_int", TagInt.class);
-            shorthands.put("tag_float", TagFloat.class);
-            shorthands.put("tag_double", TagDouble.class);
-            shorthands.put("tag_long", TagLong.class);
-            shorthands.put("tag_string", TagString.class);
-            shorthands.put("tag_byte_array", TagByteArray.class);
-            shorthands.put("tag_int_array", TagIntArray.class);
-            shorthands.put("tag_long_array", TagLongArray.class);
-            shorthands.put("nbt_value", NBTTag.class);
-            shorthands.put("nbt_path", NBTPath.class);
-            shorthands.put("coordinates", CoordinateSet.class);
-            shorthands.put("resource", TridentUtil.ResourceLocation.class);
-            shorthands.put("pointer", PointerObject.class);
-            shorthands.put("dictionary", DictionaryObject.class);
-            shorthands.put("list", ListObject.class);
-            shorthands.put("custom_entity", CustomEntity.class);
-            shorthands.put("custom_item", CustomItem.class);
-            shorthands.put("function", VariableMethod.class);
-            shorthands.put("exception", TridentException.class);
+            shorthands.put("int",               Integer.class);
+            shorthands.put("real",              Double.class);
+            shorthands.put("int_range",         IntegerRange.class);
+            shorthands.put("real_range",        DoubleRange.class);
+            shorthands.put("boolean",           Boolean.class);
+            shorthands.put("string",            String.class);
+            shorthands.put("entity",            Entity.class);
+            shorthands.put("block",             Block.class);
+            shorthands.put("item",              Item.class);
+            shorthands.put("text_component",    TextComponent.class);
+            shorthands.put("nbt",               TagCompound.class);
+            shorthands.put("tag_compound",      TagCompound.class);
+            shorthands.put("tag_list",          TagList.class);
+            shorthands.put("tag_byte",          TagByte.class);
+            shorthands.put("tag_short",         TagShort.class);
+            shorthands.put("tag_int",           TagInt.class);
+            shorthands.put("tag_float",         TagFloat.class);
+            shorthands.put("tag_double",        TagDouble.class);
+            shorthands.put("tag_long",          TagLong.class);
+            shorthands.put("tag_string",        TagString.class);
+            shorthands.put("tag_byte_array",    TagByteArray.class);
+            shorthands.put("tag_int_array",     TagIntArray.class);
+            shorthands.put("tag_long_array",    TagLongArray.class);
+            shorthands.put("nbt_value",         NBTTag.class);
+            shorthands.put("nbt_path",          NBTPath.class);
+            shorthands.put("coordinates",       CoordinateSet.class);
+            shorthands.put("resource",          TridentUtil.ResourceLocation.class);
+            shorthands.put("pointer",           PointerObject.class);
+            shorthands.put("dictionary",        DictionaryObject.class);
+            shorthands.put("list",              ListObject.class);
+            shorthands.put("custom_entity",     CustomEntity.class);
+            shorthands.put("custom_item",       CustomItem.class);
+            shorthands.put("function",          VariableMethod.class);
+            shorthands.put("exception",         TridentException.class);
 
             superclasses.add(NBTTag.class);
         }

@@ -4,6 +4,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
@@ -75,6 +76,7 @@ public class LoopInstruction implements Instruction {
         return labelPattern != null ? labelPattern.flatten(false) : null;
     }
 
+    @SuppressWarnings("unchecked")
     private LoopHeader parseHeader(TokenPattern<?> pattern, ISymbolContext ctx) {
         switch(pattern.getName()) {
             case "LOOP_HEADER":
@@ -107,8 +109,9 @@ public class LoopInstruction implements Instruction {
             case "ITERATOR_FOR": {
                 String varName = pattern.find("VARIABLE_NAME").flatten(false);
                 Object iterable = InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), ctx);
-                if(iterable instanceof Iterable) {
-                    Iterator it = ((Iterable) iterable).iterator();
+                VariableTypeHandler handler = InterpolationManager.getHandlerForObject(iterable, pattern, ctx, true);
+                Iterator it;
+                if(handler != null && (it = handler.getIterator(iterable)) != null) {
                     if(!it.hasNext()) return null;
                     return new LoopHeader() {
                         @Override

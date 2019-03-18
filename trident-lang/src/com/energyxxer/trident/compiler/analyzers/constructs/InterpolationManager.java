@@ -1,25 +1,24 @@
 package com.energyxxer.trident.compiler.analyzers.constructs;
 
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.constructors.ObjectConstructors;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.NullTypeHandler;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperationOrder;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.Operator;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperatorHandler;
-import com.energyxxer.trident.compiler.semantics.LazyValue;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.extensions.EObject;
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.constructors.ObjectConstructors;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.NullTypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperandType;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperationOrder;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.Operator;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperatorHandler;
+import com.energyxxer.trident.compiler.semantics.LazyValue;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
-import org.jetbrains.annotations.NotNull;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.extensions.EObject;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -453,13 +452,16 @@ public class InterpolationManager {
         }
     }
 
-    @NotNull
     public static VariableTypeHandler getHandlerForObject(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
+        return getHandlerForObject(value, pattern, ctx, false);
+    }
+
+    public static VariableTypeHandler getHandlerForObject(Object value, TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable) {
         if(value instanceof VariableTypeHandler) return ((VariableTypeHandler) value);
         if(value == null) return new NullTypeHandler();
         VariableTypeHandler handler = AnalyzerManager.getAnalyzer(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(value.getClass()));
-        if(handler == null) {
-            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Couldn't find handler for type " + value.getClass().getName(), pattern, ctx);
+        if(handler == null && !nullable) {
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Couldn't find handler for type " + value.getClass().getName(), pattern, ctx);
         }
         return handler;
     }

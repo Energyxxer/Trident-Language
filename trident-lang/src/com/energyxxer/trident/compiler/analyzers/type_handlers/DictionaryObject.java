@@ -72,6 +72,11 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
         throw new ClassCastException();
     }
 
+    @Override
+    public Iterator<?> getIterator(DictionaryObject dict) {
+        return dict.iterator();
+    }
+
     public int size() {
         return map.size();
     }

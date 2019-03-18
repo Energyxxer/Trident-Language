@@ -14,7 +14,9 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -94,5 +96,26 @@ public class StringTypeHandler implements VariableTypeHandler<String> {
             return (F) new StringTextComponent(object);
         }
         throw new ClassCastException();
+    }
+
+    @Override
+    public Iterator<?> getIterator(String str) {
+        return new Iterator<Object>() {
+
+            int expectedLength = str.length();
+            int i = 0;
+
+            @Override
+            public boolean hasNext() {
+                return i < str.length()-1;
+            }
+
+            @Override
+            public Object next() {
+                if(str.length() != expectedLength) throw new ConcurrentModificationException();
+                if(!hasNext()) return null;
+                return "" + str.charAt(i++);
+            }
+        };
     }
 }
