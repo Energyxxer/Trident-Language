@@ -11,10 +11,9 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
@@ -101,8 +100,6 @@ public class StringTypeHandler implements VariableTypeHandler<String> {
     @Override
     public Iterator<?> getIterator(String str) {
         return new Iterator<Object>() {
-
-            int expectedLength = str.length();
             int i = 0;
 
             @Override
@@ -112,7 +109,6 @@ public class StringTypeHandler implements VariableTypeHandler<String> {
 
             @Override
             public Object next() {
-                if(str.length() != expectedLength) throw new ConcurrentModificationException();
                 if(!hasNext()) return null;
                 return "" + str.charAt(i++);
             }
