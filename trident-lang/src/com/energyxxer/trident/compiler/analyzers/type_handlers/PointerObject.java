@@ -12,6 +12,7 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
@@ -28,14 +29,14 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
     private Symbol member;  // Should contain either: NBTPath or String (Identifier A)
     @NotNull
     private double scale;
-    @NotNull
-    private String numericType;
+    @Nullable
+    private String numericType = null;
 
     public PointerObject(Object target, Object member) {
-        this(target, member, 1, "int");
+        this(target, member, 1, null);
     }
 
-    public PointerObject(Object target, Object member, double scale, @NotNull String numericType) {
+    public PointerObject(Object target, Object member, double scale, @Nullable String numericType) {
         this.target = new Symbol("target", Symbol.SymbolVisibility.LOCAL, target);
         this.member = new Symbol("member", Symbol.SymbolVisibility.LOCAL, member);
         this.scale = scale;
@@ -70,6 +71,8 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
                         if (v != null) {
                             NumericNBTType.valueOf(v.toUpperCase(Locale.ENGLISH));
                             numericType = v.toLowerCase(Locale.ENGLISH);
+                        } else {
+                            numericType = null;
                         }
                     } catch(IllegalArgumentException ignore) {
                     }
@@ -77,8 +80,8 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
                 valid = true;
                 break;
             }
-            case "legal": {
-                return this.isLegal();
+            case "isLegal": {
+                return new MethodWrapper<>("isLegal", (instance, params) -> isLegal());
             }
         }
         if(valid && !keepSymbol) {
@@ -127,11 +130,11 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
         return scale;
     }
 
-    public void setNumericType(@NotNull String newNumericType) {
+    public void setNumericType(@Nullable String newNumericType) {
         numericType = newNumericType;
     }
 
-    @NotNull
+    @Nullable
     public String getNumericType() {
         return numericType;
     }

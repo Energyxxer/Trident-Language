@@ -99,17 +99,21 @@ public class SetParser implements SimpleCommandParser {
 
     private PointerDecorator convertValueToDecorator(PointerObject pointer, TokenPattern<?> pattern, ISymbolContext ctx) {
         pointer.validate(pattern, ctx);
-        Lazy<NumericNBTType> lazyTypeInstantiator = new Lazy<>(() -> NumericNBTType.valueOf(pointer.getNumericType().toUpperCase(Locale.ENGLISH)));
+        Lazy<NumericNBTType> lazyTypeInstantiator = new Lazy<>(
+                () -> pointer.getNumericType() != null ?
+                        NumericNBTType.valueOf(pointer.getNumericType().toUpperCase(Locale.ENGLISH)) :
+                        CommonParsers.getNumericType(pointer.getTarget(), ((NBTPath) pointer.getMember()), ctx, pattern, true)
+        );
         if(pointer.getTarget() instanceof Entity) {
             PointerHead head;
-            if(pointer.getMember() instanceof String) {
+            if(pointer.getMember() instanceof String) { //is score
                 String objectiveName = (String) pointer.getMember();
                 if(!ctx.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) {
                     head = new PointerHead.ScorePointerHead(ctx.getCompiler().getModule().getObjectiveManager().create(objectiveName), pointer.getScale());
                 } else {
                     head = new PointerHead.ScorePointerHead(ctx.getCompiler().getModule().getObjectiveManager().get(objectiveName), pointer.getScale());
                 }
-            } else {
+            } else { //is nbt
                 head = new PointerHead.NBTPointerHead((NBTPath) pointer.getMember(), pointer.getScale(), lazyTypeInstantiator);
             }
             return new PointerDecorator.EntityPointer((Entity) pointer.getTarget(), head);
