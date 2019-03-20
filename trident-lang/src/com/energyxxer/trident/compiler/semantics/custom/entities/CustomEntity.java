@@ -15,6 +15,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.commands.SummonParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
@@ -44,7 +45,7 @@ import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMe
 public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     private final String id;
     @Nullable
-    private final Type defaultType;
+    private final Type baseType;
     @NotNull
     private TagCompound defaultNBT;
     private CustomEntity superEntity = null;
@@ -52,10 +53,10 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     private boolean fullyDeclared = false;
     private HashMap<String, Symbol> members = new HashMap<>();
 
-    public CustomEntity(String id, @Nullable Type defaultType) {
+    public CustomEntity(String id, @Nullable Type baseType, ISymbolContext ctx) {
         this.id = id;
-        this.defaultType = defaultType;
-        this.idTag = "trident-" + (defaultType == null ? "component" : "entity") + "." + id.replace(':', '.').replace('/','.');
+        this.baseType = baseType;
+        this.idTag = "trident-" + (baseType == null ? "component" : "entity") + "." + ctx.getStaticParentFile().getNamespace().getName() + "." + id;
         this.defaultNBT = getBaseNBT();
     }
 
@@ -64,8 +65,8 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     }
 
     @Nullable
-    public Type getDefaultType() {
-        return defaultType;
+    public Type getBaseType() {
+        return baseType;
     }
 
     @NotNull
@@ -104,18 +105,22 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
             Symbol sym = members.get(member);
             return keepSymbol ? sym : sym.getValue();
         }
-        if(member.equals("getSettingNBT")) {
-            return (VariableMethod) (params, patterns, pattern1, file1) -> {
-                TagCompound nbt = new TagCompound();
-                if(this.getDefaultType() != null) {
-                    nbt.add(new TagString("id", this.getDefaultType().toString()));
-                }
-                nbt = this.getDefaultNBT().merge(nbt);
-                return nbt;
-            };
-        }
-        else if(member.equals("getMatchingNBT")) {
-            return (VariableMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagList("Tags", new TagString(idTag)));
+        switch (member) {
+            case "getSettingNBT":
+                return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                    TagCompound nbt = new TagCompound();
+                    if (this.getBaseType() != null) {
+                        nbt.add(new TagString("id", this.getBaseType().toString()));
+                    }
+                    nbt = this.getDefaultNBT().merge(nbt);
+                    return nbt;
+                };
+            case "getMatchingNBT":
+                return (VariableMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagList("Tags", new TagString(idTag)));
+            case "idTag":
+                return idTag;
+            case "baseType":
+                return baseType != null ? new TridentUtil.ResourceLocation(baseType.toString()) : null;
         }
         throw new MemberNotFoundException();
     }
@@ -158,11 +163,13 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                     } else if (referencedType instanceof CustomEntity) {
                         superEntity = ((CustomEntity) referencedType);
                         if (!superEntity.isComponent()) {
-                            defaultType = superEntity.defaultType;
+                            defaultType = superEntity.baseType;
                         }
                     } else {
                         throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", headerDeclaration, ctx);
                     }
+                } else if(!entityName.equals("default")) {
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The wildcard entity base may only be used on default entities, found name '" + entityName + "'", headerDeclaration, ctx);
                 }
                 break;
             }
@@ -193,7 +200,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
             if (defaultType != null && !defaultType.isStandalone()) {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot create a non-default entity with this type: " + defaultType, pattern.find("ENTITY_DECLARATION_HEADER.ENTITY_BASE"), ctx);
             }
-            entityDecl = new CustomEntity(entityName, defaultType);
+            entityDecl = new CustomEntity(entityName, defaultType, ctx);
             entityDecl.superEntity = superEntity;
             ctx.putInContextForVisibility(visibility, new Symbol(entityName, visibility, entityDecl));
 
@@ -300,7 +307,17 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                 break;
                             }
                             case "ENTITY_INNER_FUNCTION": {
-                                TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx, entityDecl != null ? entityDecl.id : defaultType != null ? "default_" + defaultType.getName() : null);
+                                TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx,
+                                        entityDecl != null ?
+                                                ctx.getParent() instanceof TridentFile &&
+                                                        ((TridentFile) ctx.getParent()).getPath().endsWith(entityDecl.id + ".tdn") ?
+                                                        null :
+                                                        entityDecl.id
+                                                :
+                                                defaultType != null ?
+                                                        "default_" + defaultType.getName() :
+                                                        null
+                                );
                                 TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
                                 if (namePattern != null) {
                                     String name = namePattern.flatten(false);
@@ -365,7 +382,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     }
 
     public boolean isComponent() {
-        return defaultType == null;
+        return baseType == null;
     }
 
     @Override

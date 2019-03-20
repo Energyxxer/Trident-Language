@@ -64,7 +64,7 @@ public class SummonParser implements SimpleCommandParser {
                 type = (Type) reference;
             } else if(reference instanceof CustomEntity) {
                 CustomEntity ce = (CustomEntity) reference;
-                type = ce.getDefaultType();
+                type = ce.getBaseType();
 
                 if(type == null) {
                     throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot summon an entity component: " + ce.getId(), idPattern, ctx);

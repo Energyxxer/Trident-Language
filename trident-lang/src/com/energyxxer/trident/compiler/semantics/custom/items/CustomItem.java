@@ -9,6 +9,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
@@ -33,16 +34,18 @@ import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SET
 
 public class CustomItem implements VariableTypeHandler<CustomItem> {
     private final String id;
-    private final Type defaultType;
+    private final String namespace;
+    private final Type baseType;
     private TagCompound defaultNBT;
     private boolean useModelData = false;
     private int customModelData = 0;
     private boolean fullyDeclared = false;
     private HashMap<String, Symbol> members = new HashMap<>();
 
-    public CustomItem(String id, Type defaultType) {
+    public CustomItem(String id, Type baseType, ISymbolContext ctx) {
         this.id = id;
-        this.defaultType = defaultType;
+        this.namespace = ctx.getStaticParentFile().getNamespace().getName();
+        this.baseType = baseType;
         this.defaultNBT = new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
     }
 
@@ -50,8 +53,8 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
         return id;
     }
 
-    public Type getDefaultType() {
-        return defaultType;
+    public Type getBaseType() {
+        return baseType;
     }
 
     public TagCompound getDefaultNBT() {
@@ -89,7 +92,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
     }
 
     public Item constructItem(NBTMode mode) {
-        return mode == SETTING ? new Item(defaultType, getDefaultNBT()) : new Item(defaultType, new TagCompound(new TagInt("TridentCustomItem", getItemIdHash())));
+        return mode == SETTING ? new Item(baseType, getDefaultNBT()) : new Item(baseType, new TagCompound(new TagInt("TridentCustomItem", getItemIdHash())));
     }
 
 
@@ -104,23 +107,34 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
             Symbol sym = members.get(member);
             return keepSymbol ? sym : sym.getValue();
         }
-        if(member.equals("getSettingNBT")) {
-            return (VariableMethod) (params, patterns, pattern1, file1) -> {
-                TagCompound nbt = new TagCompound(
-                        new TagString("id", ((CustomItem) this).getDefaultType().toString()),
-                        new TagByte("Count", 1));
-                if(((CustomItem) this).getDefaultNBT() != null) {
-                    TagCompound tag = ((CustomItem) this).getDefaultNBT().clone();
-                    tag.setName("tag");
-                    nbt = new TagCompound(tag).merge(nbt);
-                }
-                return nbt;
-            };
-        }
-        else if(member.equals("getMatchingNBT")) {
-            return (VariableMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
-        } else if(member.equals("getItem")) {
-            return (VariableMethod) (params, patterns, pattern1, file1) -> new Item(defaultType, defaultNBT);
+        switch (member) {
+            case "getSlotNBT":
+                return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                    TagCompound nbt = new TagCompound(
+                            new TagString("id", ((CustomItem) this).getBaseType().toString()),
+                            new TagByte("Count", 1));
+                    if (((CustomItem) this).getDefaultNBT() != null) {
+                        TagCompound tag = ((CustomItem) this).getDefaultNBT().clone();
+                        tag.setName("tag");
+                        nbt = new TagCompound(tag).merge(nbt);
+                    }
+                    return nbt;
+                };
+            case "getItemTag":
+                return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                    if (((CustomItem) this).getDefaultNBT() != null) {
+                        return ((CustomItem) this).getDefaultNBT().clone();
+                    }
+                    return new TagCompound();
+                };
+            case "getMatchingNBT":
+                return (VariableMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
+            case "getItem":
+                return (VariableMethod) (params, patterns, pattern1, file1) -> new Item(baseType, defaultNBT);
+            case "baseType":
+                return baseType != null ? new TridentUtil.ResourceLocation(baseType.toString()) : null;
+            case "itemCode":
+                return getItemIdHash();
         }
         throw new MemberNotFoundException();
     }
@@ -175,7 +189,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
         TokenPattern<?> rawCustomModelData = pattern.find("CUSTOM_MODEL_DATA.INTEGER");
 
         if(!entityName.equals("default")) {
-            itemDecl = new CustomItem(entityName, defaultType);
+            itemDecl = new CustomItem(entityName, defaultType, ctx);
             if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, ctx));
 
             ctx.putInContextForVisibility(visibility, new Symbol(entityName, visibility, itemDecl));
@@ -208,7 +222,17 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                             break;
                         }
                         case "ITEM_INNER_FUNCTION": {
-                            TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx, itemDecl != null ? itemDecl.id : defaultType != null ? "default_" + defaultType.getName() : "default_all_entities");
+                            TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx,
+                                    itemDecl != null ?
+                                            ctx.getParent() instanceof TridentFile &&
+                                                    ((TridentFile) ctx.getParent()).getPath().endsWith(itemDecl.id + ".tdn") ?
+                                                    null :
+                                                    itemDecl.id
+                                            :
+                                            defaultType != null ?
+                                                    "default_" + defaultType.getName() :
+                                                    null
+                            );
                             TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
                             if(namePattern != null) {
                                 String name = namePattern.flatten(false);
@@ -309,6 +333,6 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
     }
 
     public int getItemIdHash() {
-        return id.hashCode();
+        return (namespace + ":" + id).hashCode();
     }
 }
