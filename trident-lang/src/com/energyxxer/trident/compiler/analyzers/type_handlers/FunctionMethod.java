@@ -7,9 +7,8 @@ import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
-public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, VariableMethod {
+public class FunctionMethod implements VariableMethod {
     private TokenPattern<?> functionPattern;
     private ISymbolContext declaringContext;
     private ArrayList<String> formalParameters = new ArrayList<>();
@@ -30,9 +29,6 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
         SymbolContext innerFrame = new SymbolContext(declaringContext);
 
 
-
-        //SymbolTable innerFrame = new SymbolTable(declaringContext);
-        //ctx.getCompiler().getSymbolStack().push(innerFrame);
         ctx.getCompiler().getCallStack().push(new CallStack.Call(functionName, functionPattern, declaringContext.getStaticParentFile(), pattern));
 
         for(int i = 0; i < formalParameters.size(); i++) {
@@ -47,32 +43,20 @@ public class FunctionMethod implements VariableTypeHandler<FunctionMethod>, Vari
         } catch(ReturnException x) {
             return x.getValue();
         } finally {
-            //ctx.getCompiler().getSymbolStack().pop();
             ctx.getCompiler().getCallStack().pop();
         }
         return null;
     }
 
     @Override
-    public Object getMember(FunctionMethod object, String member, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
+    public Object getMember(VariableMethod object, String member, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
         if(member.equals("formalParameters")) return new ListObject(formalParameters);
-        if(member.equals("definingFile")) return declaringContext.getStaticParentFile().getResourceLocation();
+        if(member.equals("declaringFile")) return declaringContext.getStaticParentFile().getResourceLocation();
         throw new MemberNotFoundException();
-    }
-
-    @Override
-    public Object getIndexer(FunctionMethod object, Object index, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
-        throw new MemberNotFoundException();
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <F> F cast(FunctionMethod object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext file) {
-        throw new ClassCastException();
     }
 
     @Override
     public String toString() {
-        return "<function(" + formalParameters.stream().collect(Collectors.joining(", ")) + ")>";
+        return "<function(" + String.join(", ", formalParameters) + ")>";
     }
 }

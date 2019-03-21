@@ -19,6 +19,7 @@ public class TridentException extends RuntimeException implements VariableTypeHa
 
     public enum Source {
         TYPE_ERROR("Type Error"),
+        ARITHMETIC_ERROR("Arithmetic Error"),
         COMMAND_ERROR("Command Error"),
         INTERNAL_EXCEPTION("Internal Exception"),
         USER_EXCEPTION("User Exception"),
@@ -124,7 +125,7 @@ public class TridentException extends RuntimeException implements VariableTypeHa
 
     @Override
     public String toString() {
-        return notice.getMessage();
+        return source.getHumanReadableName() + ": " + notice.getExtendedMessage();
     }
 
     public static class Grouped extends RuntimeException implements Iterable<TridentException> {

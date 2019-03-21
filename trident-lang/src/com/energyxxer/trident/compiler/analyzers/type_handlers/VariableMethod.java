@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import static com.energyxxer.trident.extensions.EObject.assertNotNull;
 
-public interface VariableMethod {
+public interface VariableMethod extends VariableTypeHandler<VariableMethod> {
     Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx);
 
     default Object safeCall(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
@@ -22,6 +22,23 @@ public interface VariableMethod {
         } catch (Exception x) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.toString(), pattern, ctx);
         }
+    }
+
+    @Override
+    default Object getMember(VariableMethod object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(member.equals("formalParameters")) return new ListObject();
+        if(member.equals("declaringFile")) return null;
+        throw new MemberNotFoundException();
+    }
+
+    @Override
+    default Object getIndexer(VariableMethod object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        throw new MemberNotFoundException();
+    }
+
+    @Override
+    default <F> F cast(VariableMethod object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        throw new ClassCastException();
     }
 
     class HelperMethods {

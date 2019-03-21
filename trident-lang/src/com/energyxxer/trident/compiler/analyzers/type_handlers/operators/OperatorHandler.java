@@ -90,15 +90,63 @@ public interface OperatorHandler<A, B> {
             handlers.put("java.lang.Integer * java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a * b);
             handlers.put("java.lang.Double * java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a * b);
 
-            handlers.put("java.lang.Integer / java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a / b);
-            handlers.put("java.lang.Double / java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a / b);
-            handlers.put("java.lang.Integer / java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a / b);
-            handlers.put("java.lang.Double / java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a / b);
+            handlers.put("java.lang.Integer / java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                try {
+                    return a / b;
+                } catch(ArithmeticException ex) {
+                    throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
+                }
+            });
+            handlers.put("java.lang.Double / java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                try {
+                    return a / b;
+                } catch(ArithmeticException ex) {
+                    throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
+                }
+            });
+            handlers.put("java.lang.Integer / java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                try {
+                    return a / b;
+                } catch(ArithmeticException ex) {
+                    throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
+                }
+            });
+            handlers.put("java.lang.Double / java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                try {
+                    return a / b;
+                } catch(ArithmeticException ex) {
+                    throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
+                }
+            });
 
-            handlers.put("java.lang.Integer % java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a % b);
-            handlers.put("java.lang.Double % java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a % b);
-            handlers.put("java.lang.Integer % java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a % b);
-            handlers.put("java.lang.Double % java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a % b);
+            handlers.put("java.lang.Integer % java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                try {
+                    return a % b;
+                } catch(ArithmeticException ex) {
+                    throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
+                }
+            });
+            handlers.put("java.lang.Double % java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                try {
+                    return a % b;
+                } catch(ArithmeticException ex) {
+                    throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
+                }
+            });
+            handlers.put("java.lang.Integer % java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                try {
+                    return a % b;
+                } catch(ArithmeticException ex) {
+                    throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
+                }
+            });
+            handlers.put("java.lang.Double % java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                try {
+                    return a % b;
+                } catch(ArithmeticException ex) {
+                    throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
+                }
+            });
 
             handlers.put("java.lang.Integer > java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a > b);
             handlers.put("java.lang.Double > java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a > b);
