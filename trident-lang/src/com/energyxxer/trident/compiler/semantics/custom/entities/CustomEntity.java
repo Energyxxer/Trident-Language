@@ -185,13 +185,17 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         ArrayList<CustomEntity> implemented = new ArrayList<>();
         TokenList rawComponentList = ((TokenList) pattern.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST"));
         if (rawComponentList != null) {
-            for (TokenPattern<?> rawComponent : rawComponentList.searchByName("INTERPOLATION_VALUE")) {
-                CustomEntity component = InterpolationManager.parse(rawComponent, ctx, CustomEntity.class);
-                if (component.isComponent()) {
-                    implemented.add(component);
-                } else {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity component here, instead got an entity", rawComponent, ctx);
+            if(!entityName.equals("default")) {
+                for (TokenPattern<?> rawComponent : rawComponentList.searchByName("INTERPOLATION_VALUE")) {
+                    CustomEntity component = InterpolationManager.parse(rawComponent, ctx, CustomEntity.class);
+                    if (component.isComponent()) {
+                        implemented.add(component);
+                    } else {
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity component here, instead got an entity", rawComponent, ctx);
+                    }
                 }
+            } else {
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default entities may not implement components", rawComponentList, ctx);
             }
         }
 
