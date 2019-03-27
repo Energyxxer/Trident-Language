@@ -1,6 +1,9 @@
 package com.energyxxer.trident.compiler.semantics.custom.special.item_events;
 
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
+
+import java.util.ArrayList;
 
 public class ItemEvent {
 
@@ -10,13 +13,11 @@ public class ItemEvent {
 
     public FunctionReference toCall;
     public boolean pure = false;
+    public ArrayList<ExecuteModifier> modifiers;
 
-    public ItemEvent(FunctionReference toCall) {
-        this(toCall, false);
-    }
-
-    public ItemEvent(FunctionReference toCall, boolean pure) {
+    public ItemEvent(FunctionReference toCall, boolean pure, ArrayList<ExecuteModifier> modifiers) {
         this.toCall = toCall;
         this.pure = pure;
+        this.modifiers = modifiers;
     }
 }

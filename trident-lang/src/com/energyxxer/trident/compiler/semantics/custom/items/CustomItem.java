@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.semantics.custom.items;
 
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.item.Item;
@@ -26,6 +27,7 @@ import com.energyxxer.trident.compiler.semantics.custom.special.item_events.Item
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
@@ -261,11 +263,17 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                                             }
                                         }
 
+                                        ArrayList<ExecuteModifier> eventModifiers = CommonParsers.parseModifierList((TokenList) modifiers.find("EVENT_MODIFIERS"), ctx);
+
                                         if (onWhat.getName().equals("ITEM_CRITERIA")) {
                                             ctx.assertLanguageLevel(3, "Custom non-default item events are", entry, collector);
 
-                                            ((ItemEventFile) ctx.getCompiler().getSpecialFileManager().get("item_events")).addCustomItem(ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()), defaultType, itemDecl, new ItemEvent(new FunctionReference(innerFile.getFunction()), pure));
-
+                                            ((ItemEventFile) ctx.getCompiler().getSpecialFileManager().get("item_events")).addCustomItem(
+                                                    ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()),
+                                                    defaultType,
+                                                    itemDecl,
+                                                    new ItemEvent(new FunctionReference(innerFile.getFunction()), pure, eventModifiers)
+                                            );
                                         }
                                     }
                                 }

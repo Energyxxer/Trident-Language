@@ -48,6 +48,7 @@ public class UsedScoreEvent implements ScoreEventCriteriaHandler {
         for(ItemEvent event : data.events) {
             ArrayList<ExecuteModifier> eventModifiers = new ArrayList<>(modifiers);
             if(data.customItem == null && event.pure) eventModifiers.add(new ExecuteConditionScoreMatch(ExecuteCondition.ConditionType.IF, new LocalScore(new Selector(SENDER), itemEventFile.getObjectives().oldHeld), new IntegerRange(0)));
+            if(event.modifiers != null) eventModifiers.addAll(event.modifiers);
             data.function.append(new ExecuteCommand(new FunctionCommand(event.toCall), eventModifiers));
         }
     }

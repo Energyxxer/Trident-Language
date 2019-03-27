@@ -59,16 +59,19 @@ public class BrokenScoreEvent implements ScoreEventCriteriaHandler {
                     modifiers));
 
             for(ItemEvent event : data.events) {
-                data.function.append(new ExecuteCommand(new FunctionCommand(event.toCall), modifiers));
+                ArrayList<ExecuteModifier> eventModifiers = new ArrayList<>(modifiers);
+                if(event.modifiers != null) eventModifiers.addAll(event.modifiers);
+                data.function.append(new ExecuteCommand(new FunctionCommand(event.toCall), eventModifiers));
             }
 
             data.function.append(new ExecuteCommand(new ClearCommand(new Selector(Selector.BaseSelector.SENDER),data.customItem.constructItem(NBTMode.TESTING), 0), new ExecuteStoreScore(new LocalScore(new Selector(Selector.BaseSelector.SENDER), objective))));
 
         } else {
             for(ItemEvent event : data.events) {
-                ArrayList<ExecuteModifier> innerModifiers = new ArrayList<>(modifiers);
-                if(event.pure) innerModifiers.add(new ExecuteConditionScoreMatch(IF, new LocalScore(new PlayerName("#CUSTOM_CONSUMED"), itemEventFile.getParent().getGlobalObjective()), new IntegerRange(0)));
-                data.function.append(new ExecuteCommand(new FunctionCommand(event.toCall), innerModifiers));
+                ArrayList<ExecuteModifier> eventModifiers = new ArrayList<>(modifiers);
+                if(event.pure) eventModifiers.add(new ExecuteConditionScoreMatch(IF, new LocalScore(new PlayerName("#CUSTOM_CONSUMED"), itemEventFile.getParent().getGlobalObjective()), new IntegerRange(0)));
+                if(event.modifiers != null) eventModifiers.addAll(event.modifiers);
+                data.function.append(new ExecuteCommand(new FunctionCommand(event.toCall), eventModifiers));
             }
         }
     }
