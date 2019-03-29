@@ -40,7 +40,7 @@ public class EntityParser {
                     try {
                         Collection<SelectorArgument> arg = parser.parse(((TokenStructure)((TokenStructure) rawArg).getContents().find("SELECTOR_ARGUMENT_VALUE")).getContents(), ctx);
                         if(arg != null && !arg.isEmpty()) {
-                            selector.addArguments(arg);
+                            selector.addArgumentsMerging(arg);
                         }
                     } catch(CommodoreException x) {
                         TridentException.handleCommodoreException(x, rawArg, ctx).invokeThrow();

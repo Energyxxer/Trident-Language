@@ -7,10 +7,7 @@ import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
-import com.energyxxer.commodore.functionlogic.nbt.NumericNBTTag;
-import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
-import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
+import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
@@ -224,6 +221,18 @@ public class CommonParsers {
                 throw new TridentException(TridentException.Source.TYPE_ERROR, "Unknown item reference return type: " + reference.getClass().getSimpleName(), pattern, ctx);
             }
 
+            TokenPattern<?> appendedModelData = pattern.find("APPENDED_MODEL_DATA.INTEGER");
+            if(appendedModelData != null) {
+                int modelData = parseInt(appendedModelData, ctx);
+
+                TagCompound nbt = item.getNBT();
+                if(nbt == null) nbt = new TagCompound();
+
+                TagCompound mergedNBT = nbt.merge(new TagCompound(new TagInt("CustomModelData", modelData)));
+
+                item = new Item(item.getItemType(), mergedNBT);
+            }
+
             TokenPattern<?> appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
             if(appendedNBT != null) {
                 TagCompound nbt = item.getNBT();
@@ -249,10 +258,24 @@ public class CommonParsers {
             type = parseItemTag(pattern.find("RESOURCE_NAME.RESOURCE_LOCATION"), ctx);
         }
 
-        TagCompound tag = NBTParser.parseCompound(pattern.find(".NBT_COMPOUND"), ctx);
+        TagCompound tag = null;
+
+        TokenPattern<?> appendedModelData = pattern.find("APPENDED_MODEL_DATA.INTEGER");
+        if(appendedModelData != null) {
+            int modelData = parseInt(appendedModelData, ctx);
+            tag = new TagCompound(new TagInt("CustomModelData", modelData));
+        }
+
+        TokenPattern<?> appendedNBT = pattern.find(".NBT_COMPOUND");
+        if(appendedNBT != null) {
+            if(tag == null) tag = new TagCompound();
+
+            tag = tag.merge(NBTParser.parseCompound(appendedNBT, ctx));
+        }
+
         if(tag != null) {
             PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
-            NBTParser.analyzeTag(tag, context, pattern.find(".NBT_COMPOUND"), ctx);
+            NBTParser.analyzeTag(tag, context, pattern, ctx);
         }
         return new Item(type, tag);
     }

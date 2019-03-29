@@ -266,7 +266,7 @@ public class NBTParser {
     }
 
     public static void analyzeTag(TagCompound compound, PathContext context, TokenPattern<?> pattern, ISymbolContext file) {
-        if(pattern == null) throw new RuntimeException();
+        if(pattern == null) throw new NullPointerException();
 
         ReportDelegate delegate = new ReportDelegate(file, file.getCompiler().getProperties().has("strict-nbt") &&
                 file.getCompiler().getProperties().get("strict-nbt").isJsonPrimitive() &&
