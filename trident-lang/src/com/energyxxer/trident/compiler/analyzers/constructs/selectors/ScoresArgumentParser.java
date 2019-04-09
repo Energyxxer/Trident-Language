@@ -32,7 +32,7 @@ public class ScoresArgumentParser implements SimpleSelectorArgumentParser {
                             range = CommonParsers.parseIntRange(valueInner, ctx);
                             break;
                         case "ISSET":
-                            range = new IntegerRange(Integer.MIN_VALUE, null);
+                            range = new IntegerRange(null, null);
                             break;
                         default: {
                             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + valueInner.getName() + "'", valueInner, ctx);

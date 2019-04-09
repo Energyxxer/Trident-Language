@@ -22,7 +22,9 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.commands.SummonParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
+import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -80,11 +82,13 @@ public class UsingInstruction implements Instruction {
 
         String tag = CommonParsers.parseIdentifierA(pattern.find("USING_SUMMON_TAG_NAME.IDENTIFIER_A"), ctx);
 
-        SummonParser.SummonData data = new SummonParser.SummonData(pattern, ctx,
-                pattern.find("ENTITY_ID"),
-                pattern.find(".COORDINATE_SET"),
-                pattern.find("..NBT_COMPOUND"),
-                ((TokenList) pattern.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST")));
+        SummonParser.SummonData data = SummonParser.parseNewEntityLiteral(pattern.find("NEW_ENTITY_LITERAL"), ctx);
+        data.pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"), ctx);
+        data.mergeNBT(NBTParser.parseCompound(pattern.find("..NBT_COMPOUND"), ctx));
+        data.analyzeNBT(pattern, ctx);
+        function.append(data.constructSummon());
+
+        data.fillDefaults();
 
         ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) pattern.find("MODIFIER_LIST")), ctx);
 

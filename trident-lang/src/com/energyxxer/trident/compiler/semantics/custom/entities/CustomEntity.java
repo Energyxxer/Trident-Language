@@ -260,16 +260,11 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                 TagList passengersTag = new TagList("Passengers");
 
                                 for (TokenPattern<?> rawPassenger : ((TokenList) entry.find("PASSENGER_LIST")).getContents()) {
-                                    if (rawPassenger.getName().equals("PASSENGER")) {
+                                    if (rawPassenger.getName().equals("NEW_ENTITY_LITERAL")) {
 
                                         TagCompound passengerCompound;
 
-                                        SummonParser.SummonData passengerData = new SummonParser.SummonData(rawPassenger, ctx,
-                                                rawPassenger.find("ENTITY_ID"),
-                                                null,
-                                                rawPassenger.find("PASSENGER_NBT.NBT_COMPOUND"),
-                                                ((TokenList) rawPassenger.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST"))
-                                        );
+                                        SummonParser.SummonData passengerData = SummonParser.parseNewEntityLiteral(rawPassenger, ctx);
 
                                         passengerData.fillDefaults();
 

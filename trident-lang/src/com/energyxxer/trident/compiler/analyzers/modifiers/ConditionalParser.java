@@ -54,7 +54,7 @@ public class ConditionalParser implements SimpleModifierParser {
                             return new ExecuteConditionScoreMatch(conditionType, scoreA, range);
                         }
                         case "ISSET": {
-                            return new ExecuteConditionScoreMatch(conditionType, scoreA, new IntegerRange(Integer.MIN_VALUE, null));
+                            return new ExecuteConditionScoreMatch(conditionType, scoreA, new IntegerRange(null, null));
                         }
                         default: {
                             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + branchName + "'", choice, ctx);

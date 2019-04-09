@@ -82,6 +82,8 @@ public class TridentProductions {
 
     private final LazyTokenStructureMatch PARTICLE = new LazyTokenStructureMatch("PARTICLE");
 
+    private final LazyTokenGroupMatch NEW_ENTITY_LITERAL;
+
     private final LazyTokenStructureMatch BLOCK_ID = new LazyTokenStructureMatch("BLOCK_ID");
     private final LazyTokenStructureMatch ITEM_ID = new LazyTokenStructureMatch("ITEM_ID");
     private final LazyTokenStructureMatch ENTITY_ID = new LazyTokenStructureMatch("ENTITY_ID");
@@ -341,6 +343,8 @@ public class TridentProductions {
         ENTITY.add(PLAYER_NAME);
         ENTITY.add(SELECTOR);
         ENTITY.add(group(INTERPOLATION_BLOCK, optional(glue(), brace("["), list(SELECTOR_ARGUMENT, comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST"), brace("]")).setName("APPENDED_ARGUMENTS")).setName("ENTITY_VARIABLE"));
+
+        NEW_ENTITY_LITERAL = group(resourceLocationFixer, ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST"), brace("]")).setName("IMPLEMENTED_COMPONENTS"), optional(NBT_COMPOUND).setName("NEW_ENTITY_NBT")).setName("NEW_ENTITY_LITERAL");
 
         INNER_FUNCTION.add(group(group(RESOURCE_LOCATION_S).setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")));
         ANONYMOUS_INNER_FUNCTION.add(group(brace("{"), FILE_INNER, brace("}")));
@@ -736,9 +740,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "summon"),
-                    resourceLocationFixer,
-                    ENTITY_ID,
-                    optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST"), brace("]")).setName("IMPLEMENTED_COMPONENTS"),
+                    NEW_ENTITY_LITERAL,
                     optional(
                             COORDINATE_SET,
                             optional(NBT_COMPOUND)
@@ -1874,7 +1876,7 @@ public class TridentProductions {
         {
             LazyTokenStructureMatch entityBodyEntry = choice(
                     group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT"),
-                    group(literal("default"), literal("passengers"), brace("["), list(group(resourceLocationFixer, ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST"), brace("]")).setName("IMPLEMENTED_COMPONENTS"), optional(NBT_COMPOUND).setName("PASSENGER_NBT")).setName("PASSENGER"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
+                    group(literal("default"), literal("passengers"), brace("["), list(NEW_ENTITY_LITERAL, comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
                     group(literal("default"), literal("health"), real().setName("HEALTH")).setName("DEFAULT_HEALTH"),
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(literal("var"), identifierX().setName("FIELD_NAME"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ENTITY_FIELD"),
@@ -2018,7 +2020,7 @@ public class TridentProductions {
                     group(instructionKeyword("using"),
                             choice(
                                     group(literal("tag"), group(identifierA()).setName("USING_TAG_NAME"), ENTITY, list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_TAG"),
-                                    group(literal("summon"), resourceLocationFixer, ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST"), brace("]")).setName("IMPLEMENTED_COMPONENTS"), optional(COORDINATE_SET, optional(NBT_COMPOUND)), literal("with"), group(identifierA()).setName("USING_SUMMON_TAG_NAME"), list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_SUMMON")
+                                    group(literal("summon"), NEW_ENTITY_LITERAL, optional(COORDINATE_SET, optional(NBT_COMPOUND)), literal("with"), group(identifierA()).setName("USING_SUMMON_TAG_NAME"), list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_SUMMON")
                             ).setName("USING_CASE"),
                             ANONYMOUS_INNER_FUNCTION
                     )

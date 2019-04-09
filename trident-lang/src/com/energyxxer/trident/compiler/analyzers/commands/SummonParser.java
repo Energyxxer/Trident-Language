@@ -25,11 +25,11 @@ import java.util.ArrayList;
 public class SummonParser implements SimpleCommandParser {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        SummonData data = new SummonData(pattern, ctx,
-                pattern.find("ENTITY_ID"),
-                pattern.find(".COORDINATE_SET"),
-                pattern.find("..NBT_COMPOUND"),
-                ((TokenList) pattern.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST")));
+        SummonData data = parseNewEntityLiteral(pattern.find("NEW_ENTITY_LITERAL"), ctx);
+        data.pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"), ctx);
+        data.mergeNBT(NBTParser.parseCompound(pattern.find("..NBT_COMPOUND"), ctx));
+        data.analyzeNBT(pattern, ctx);
+
         try {
             return data.constructSummon();
         } catch(CommodoreException x) {
@@ -38,6 +38,49 @@ public class SummonParser implements SimpleCommandParser {
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }
+    }
+
+    public static SummonData parseNewEntityLiteral(TokenPattern<?> pattern, ISymbolContext ctx) {
+        TagCompound nbt = NBTParser.parseCompound(pattern.find("NEW_ENTITY_NBT.NBT_COMPOUND"), ctx);
+        Type type;
+        Object reference = CommonParsers.parseEntityReference(pattern.find("ENTITY_ID"), ctx);
+
+        if(reference instanceof Type) {
+            type = (Type) reference;
+        } else if(reference instanceof CustomEntity) {
+            CustomEntity ce = (CustomEntity) reference;
+            type = ce.getBaseType();
+
+            if(type == null) {
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot summon an entity component: " + ce.getId(), pattern.find("ENTITY_ID"), ctx);
+            }
+
+            if(nbt == null) nbt = new TagCompound();
+            try {
+                nbt = ce.getDefaultNBT().merge(nbt);
+            } catch(CommodoreException x) {
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Error while merging given NBT with custom entity's NBT: " + x.getMessage(), pattern, ctx);
+            }
+        } else {
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID"), ctx);
+        }
+
+        TokenList componentList = ((TokenList) pattern.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST"));
+        ArrayList<CustomEntity> components = new ArrayList<>();
+        if(componentList != null) {
+            if (nbt == null) nbt = new TagCompound();
+            for (TokenPattern<?> rawComponent : componentList.searchByName("INTERPOLATION_VALUE")) {
+                CustomEntity component = InterpolationManager.parse(rawComponent, ctx, CustomEntity.class);
+                if (component.isComponent()) {
+                    nbt = component.getDefaultNBT().merge(nbt);
+                    components.add(component);
+                } else {
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity component here, instead got an entity", rawComponent, ctx);
+                }
+            }
+        }
+
+        return new SummonData(type, null, nbt, components, reference);
     }
 
     public static class SummonData {
@@ -55,59 +98,27 @@ public class SummonParser implements SimpleCommandParser {
             this.reference = reference;
         }
 
-        public SummonData(TokenPattern<?> pattern, ISymbolContext ctx, TokenPattern<?> idPattern, TokenPattern<?> posPattern, TokenPattern<?> nbtPattern, TokenList componentList) {
-            this.pos = CoordinateParser.parse(posPattern, ctx);
-            this.nbt = NBTParser.parseCompound(nbtPattern, ctx);
-            this.reference = CommonParsers.parseEntityReference(idPattern, ctx);
-
-            if(reference instanceof Type) {
-                type = (Type) reference;
-            } else if(reference instanceof CustomEntity) {
-                CustomEntity ce = (CustomEntity) reference;
-                type = ce.getBaseType();
-
-                if(type == null) {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot summon an entity component: " + ce.getId(), idPattern, ctx);
-                }
-
-                if(nbt == null) nbt = new TagCompound();
-                try {
-                    nbt = ce.getDefaultNBT().merge(nbt);
-                } catch(CommodoreException x) {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Error while merging given NBT with custom entity's NBT: " + x.getMessage(), pattern, ctx);
-                }
-            } else {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), idPattern, ctx);
-            }
-
-            if(componentList != null) {
-                if (nbt == null) nbt = new TagCompound();
-                for (TokenPattern<?> rawComponent : componentList.searchByName("INTERPOLATION_VALUE")) {
-                    CustomEntity component = InterpolationManager.parse(rawComponent, ctx, CustomEntity.class);
-                    if (component.isComponent()) {
-                        nbt = component.getDefaultNBT().merge(nbt);
-                    } else {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity component here, instead got an entity", rawComponent, ctx);
-                    }
-                }
-            }
-
+        public void analyzeNBT(TokenPattern<?> pattern, ISymbolContext ctx) {
             if(nbt != null) {
                 PathContext context = new PathContext().setIsSetting(true).setProtocol(PathProtocol.ENTITY, type);
-                if(nbtPattern == null) nbtPattern = idPattern;
-                NBTParser.analyzeTag(nbt, context, nbtPattern, ctx);
+                NBTParser.analyzeTag(nbt, context, pattern, ctx);
             }
-
-            if(pos == null && nbt != null) pos = new CoordinateSet();
         }
 
         public Command constructSummon() {
+            if(pos == null && nbt != null) pos = new CoordinateSet();
             return new SummonCommand(type, pos, nbt);
         }
 
         public void fillDefaults() {
             if(pos == null) pos = new CoordinateSet();
             if(nbt == null) nbt = new TagCompound();
+        }
+
+        public void mergeNBT(TagCompound nbt) {
+            if(nbt == null) return;
+            if(this.nbt == null) this.nbt = nbt;
+            else this.nbt = this.nbt.merge(nbt);
         }
     }
 }

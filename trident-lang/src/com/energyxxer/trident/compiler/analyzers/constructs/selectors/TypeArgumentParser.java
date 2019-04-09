@@ -31,7 +31,7 @@ public class TypeArgumentParser implements SelectorArgumentParser {
             args.add(new TypeArgument((Type) reference, negated));
         } else if(reference instanceof CustomEntity) {
             CustomEntity ce = (CustomEntity) reference;
-            if(ce.getBaseType() != null) args.add(new TypeArgument(ce.getBaseType(), negated));
+            if(ce.getBaseType() != null && !negated) args.add(new TypeArgument(ce.getBaseType()));
 
             args.add(new TagArgument(ce.getIdTag(), negated));
         } else {
