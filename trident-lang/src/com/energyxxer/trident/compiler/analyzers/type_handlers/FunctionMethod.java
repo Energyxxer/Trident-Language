@@ -28,7 +28,6 @@ public class FunctionMethod implements VariableMethod {
 
         SymbolContext innerFrame = new SymbolContext(declaringContext);
 
-
         ctx.getCompiler().getCallStack().push(new CallStack.Call(functionName, functionPattern, declaringContext.getStaticParentFile(), pattern));
 
         for(int i = 0; i < formalParameters.size(); i++) {

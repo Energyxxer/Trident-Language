@@ -325,6 +325,7 @@ public class TridentFile extends SymbolContext {
             compiler.pushWritingFile(parentFile);
             popCall = true;
         }
+        parentFile.entriesResolved = true;
         ArrayList<TridentException> queuedExceptions = new ArrayList<>();
 
         try {
@@ -362,7 +363,6 @@ public class TridentFile extends SymbolContext {
                 compiler.getCallStack().pop();
                 compiler.popWritingFile();
             }
-            parentFile.entriesResolved = true;
         }
     }
 

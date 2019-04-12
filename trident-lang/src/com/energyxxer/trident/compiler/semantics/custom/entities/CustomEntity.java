@@ -345,7 +345,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                             modifiers.add(0, new ExecuteAsEntity(selector));
                                             modifiers.add(1, new ExecuteAtEntity(new Selector(SENDER)));
 
-                                            ctx.getWritingFile().getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
+                                            ctx.getStaticParentFile().getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
                                         }
                                     }
                                 }
