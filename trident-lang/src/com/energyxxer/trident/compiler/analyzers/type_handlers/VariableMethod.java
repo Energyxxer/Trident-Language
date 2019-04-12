@@ -45,6 +45,7 @@ public interface VariableMethod extends VariableTypeHandler<VariableMethod> {
 
         @SuppressWarnings("unchecked")
         public static <T> T assertOfType(Object param, TokenPattern<?> pattern, ISymbolContext ctx, Class<T> expected) {
+            expected = sanitizeClass(expected);
             if(expected.isInstance(param)) return (T) param;
             assertNotNull(param, pattern, ctx);
             VariableTypeHandler handler = param instanceof VariableTypeHandler ? (VariableTypeHandler) param : AnalyzerManager.getAnalyzer(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(param.getClass()));
@@ -55,15 +56,23 @@ public interface VariableMethod extends VariableTypeHandler<VariableMethod> {
             } else {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown variable handler for '" + VariableTypeHandler.Static.getIdentifierForClass(param.getClass()) + "'", pattern, ctx);
             }
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of type " + expected.getSimpleName(), pattern, ctx);
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of type " + VariableTypeHandler.Static.getIdentifierForClass(expected), pattern, ctx);
         }
 
         @SuppressWarnings("unchecked")
         public static <T> T assertOfType(Object param, TokenPattern<?> pattern, ISymbolContext ctx, Class<? extends T>... expected) {
             for(Class cls : expected) {
+                cls = sanitizeClass(cls);
                 if(cls.isInstance(param)) return (T) param;
             }
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of one of the following types: " + Arrays.stream(expected).map((Function<Class, String>) Class::getSimpleName).collect(Collectors.joining(", ")), pattern, ctx);
+        }
+
+        //Java amirite
+        private static Class sanitizeClass(Class cls) {
+            if(cls == double.class) return Double.class;
+            if(cls == int.class) return Integer.class;
+            return cls;
         }
     }
 }
