@@ -59,7 +59,7 @@ public class GameLogFetcherFile extends SpecialFile {
 
     private static HashMap<String, TextColor> colors = new HashMap<>();
     private static HashMap<String, String> shorthands = new HashMap<>();
-    private static List<String> levelOrder = Arrays.asList("info, debug, warning, error, fatal".split(", "));
+    private static List<String> levelOrder = Arrays.asList("fatal, error, warning, info, debug".split(", "));
 
     private Objective logLevelObjective;
     private static final String logObjectiveName = "trident_logger";
@@ -219,7 +219,7 @@ public class GameLogFetcherFile extends SpecialFile {
 
     public TellrawCommand getTellrawCommandFor(String key, TextComponent message, TokenPattern<?> pattern, ISymbolContext ctx) {
         ScoreArgument scores = new ScoreArgument();
-        scores.put(logLevelObjective, new IntegerRange(levelOrder.indexOf(key)+1, null));
+        scores.put(logLevelObjective, !key.equals("debug") ? new IntegerRange(levelOrder.indexOf(key)+1, 5) : new IntegerRange(5, 6));
         return new TellrawCommand(new Selector(Selector.BaseSelector.ALL_PLAYERS, scores), getComponentFor(key, message, pattern, ctx));
     }
 

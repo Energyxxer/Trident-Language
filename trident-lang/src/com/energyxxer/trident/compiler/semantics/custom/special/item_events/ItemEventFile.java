@@ -70,7 +70,7 @@ public class ItemEventFile extends SpecialFile {
                 Type itemType = typeEntry.getKey();
 
                 String criteria = "minecraft." + eventType.name().toLowerCase() + ":" + itemType.toString().replace(':','.');
-                Objective objective = compiler.getModule().getObjectiveManager().create(eventType.name().toLowerCase().charAt(0) + "item." + Integer.toString(new TridentUtil.ResourceLocation(itemType.toString()).toString().hashCode(), 16), criteria, new StringTextComponent(eventType.name().toLowerCase() + " item " + itemType), true);
+                Objective objective = compiler.getModule().getObjectiveManager().create(eventType.name().toLowerCase().charAt(0) + "item." + Integer.toString((this.getParent().getNamespace().getName() + ":" + new TridentUtil.ResourceLocation(itemType.toString())).hashCode(), 16), criteria, new StringTextComponent(eventType.name().toLowerCase() + " item " + itemType), true);
 
                 ScoreArgument scores = new ScoreArgument();
                 scores.put(objective, new IntegerRange(1, null));
