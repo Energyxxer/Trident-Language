@@ -56,7 +56,7 @@ public interface VariableMethod extends VariableTypeHandler<VariableMethod> {
             } else {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown variable handler for '" + VariableTypeHandler.Static.getIdentifierForClass(param.getClass()) + "'", pattern, ctx);
             }
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of type " + VariableTypeHandler.Static.getIdentifierForClass(expected), pattern, ctx);
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of type " + VariableTypeHandler.Static.getShorthandForClass(expected), pattern, ctx);
         }
 
         @SuppressWarnings("unchecked")
@@ -65,7 +65,7 @@ public interface VariableMethod extends VariableTypeHandler<VariableMethod> {
                 cls = sanitizeClass(cls);
                 if(cls.isInstance(param)) return (T) param;
             }
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of one of the following types: " + Arrays.stream(expected).map((Function<Class, String>) Class::getSimpleName).collect(Collectors.joining(", ")), pattern, ctx);
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of one of the following types: " + Arrays.stream(expected).map((Function<Class, String>) VariableTypeHandler.Static::getShorthandForClass).collect(Collectors.joining(", ")), pattern, ctx);
         }
 
         //Java amirite

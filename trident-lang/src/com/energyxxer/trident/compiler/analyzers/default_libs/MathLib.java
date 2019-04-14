@@ -26,10 +26,7 @@ public class MathLib implements DefaultLibraryProvider {
             Number base = assertOfType(params[0], patterns[0], file, Double.class, Integer.class);
             Number exponent = assertOfType(params[1], patterns[1], file, Double.class, Integer.class);
 
-            double result = Math.pow(base.doubleValue(), exponent.doubleValue());
-
-            if(params[0] instanceof Double || params[1] instanceof Double) return result;
-            else return (int) result;
+            return Math.pow(base.doubleValue(), exponent.doubleValue());
         });
         math.put("min", (VariableMethod) (params, patterns, pattern, file) -> {
             if(params.length < 2) {
@@ -72,10 +69,10 @@ public class MathLib implements DefaultLibraryProvider {
         try {
             math.put("floor", new MethodWrapper<>(Math.class.getMethod("floor", double.class)).createForInstance(null));
             math.put("ceil", new MethodWrapper<>(Math.class.getMethod("ceil", double.class)).createForInstance(null));
-            math.put("round", new MethodWrapper<>(Math.class.getMethod("round", double.class)).createForInstance(null));
+            math.put("round", new MethodWrapper<>("round", (instance, params) -> (double)Math.round((double)params[0]), double.class).createForInstance(null));
             math.put("floorMod", new MethodWrapper<>(Math.class.getMethod("floorMod", int.class, int.class)).createForInstance(null));
             math.put("floorDiv", new MethodWrapper<>(Math.class.getMethod("floorDiv", int.class, int.class)).createForInstance(null));
-            math.put("signum", new MethodWrapper<>("signum", (instance, params) -> (int)Math.signum((double)params[0]), double.class).createForInstance(null));
+            math.put("signum", new MethodWrapper<>(Math.class.getMethod("signum", double.class)).createForInstance(null));
             math.put("sin", new MethodWrapper<>(Math.class.getMethod("sin", double.class)).createForInstance(null));
             math.put("cos", new MethodWrapper<>(Math.class.getMethod("cos", double.class)).createForInstance(null));
             math.put("tan", new MethodWrapper<>(Math.class.getMethod("tan", double.class)).createForInstance(null));
@@ -102,5 +99,42 @@ public class MathLib implements DefaultLibraryProvider {
             e.printStackTrace();
         }
         globalCtx.put(new Symbol("Math", Symbol.SymbolVisibility.GLOBAL, math));
+
+        DictionaryObject integer = new DictionaryObject();
+        integer.put("MIN_VALUE", Integer.MIN_VALUE);
+        integer.put("MAX_VALUE", Integer.MAX_VALUE);
+        integer.put("parseInt", new MethodWrapper<>("parseInt", (instance, params) -> {
+            if (params[1] == null) {
+                return Integer.parseInt(((String) params[0]));
+            } else {
+                return Integer.parseInt(((String) params[0]), ((int) params[1]));
+            }
+        }, String.class, int.class).setNullable(1).createForInstance(null));
+        integer.put("toString", new MethodWrapper<>("toString", (instance, params) -> {
+            if (params[1] == null) {
+                return Integer.toString(((int) params[0]));
+            } else {
+                return Integer.toString(((int) params[0]), ((int) params[1]));
+            }
+        }, int.class, int.class).setNullable(1).createForInstance(null));
+        globalCtx.put(new Symbol("Integer", Symbol.SymbolVisibility.GLOBAL, integer));
+
+        DictionaryObject real = new DictionaryObject();
+        real.put("MIN_VALUE", -Double.MAX_VALUE);
+        real.put("MAX_VALUE", Double.MAX_VALUE);
+        real.put("MIN_POSITIVE_VALUE", Double.MIN_VALUE);
+        real.put("Infinity", Double.POSITIVE_INFINITY);
+        real.put("NaN", Double.NaN);
+        try {
+            real.put("parseReal", new MethodWrapper<>(Double.class.getMethod("parseDouble", String.class)).createForInstance(null));
+            real.put("isFinite", new MethodWrapper<>(Double.class.getMethod("isFinite", double.class)).createForInstance(null));
+            real.put("isInfinite", new MethodWrapper<>(Double.class.getMethod("isInfinite", double.class)).createForInstance(null));
+            real.put("isNaN", new MethodWrapper<>(Double.class.getMethod("isNaN", double.class)).createForInstance(null));
+            real.put("toString", new MethodWrapper<>(Double.class.getMethod("toString", double.class)).createForInstance(null));
+        } catch(NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        globalCtx.put(new Symbol("Real", Symbol.SymbolVisibility.GLOBAL, real));
+
     }
 }
