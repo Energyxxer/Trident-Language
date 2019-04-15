@@ -13,6 +13,9 @@ import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.functionlogic.functions.FunctionSection;
 import com.energyxxer.commodore.functionlogic.inspection.ExecutionVariable;
 import com.energyxxer.commodore.functionlogic.inspection.ExecutionVariableMap;
+import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
+import com.energyxxer.commodore.functionlogic.nbt.TagList;
+import com.energyxxer.commodore.functionlogic.nbt.TagString;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.*;
 import com.energyxxer.commodore.util.DoubleRange;
@@ -86,6 +89,7 @@ public class UsingInstruction implements Instruction {
         data.pos = CoordinateParser.parse(pattern.find(".COORDINATE_SET"), ctx);
         data.mergeNBT(NBTParser.parseCompound(pattern.find("..NBT_COMPOUND"), ctx));
         data.analyzeNBT(pattern, ctx);
+        data.mergeNBT(new TagCompound(new TagList("Tags", new TagString(tag))));
         function.append(data.constructSummon());
 
         data.fillDefaults();
