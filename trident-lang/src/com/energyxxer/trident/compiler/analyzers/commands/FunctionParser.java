@@ -19,7 +19,7 @@ public class FunctionParser implements SimpleCommandParser {
             case "FUNCTION_REFERENCE": {
                 return new FunctionCommand(CommonParsers.parseFunctionTag((TokenStructure) choice.find("FUNCTION_REFERENCE_WRAPPER.RESOURCE_LOCATION_TAGGED"), ctx));
             }
-            case "ANONYMOUS_INNER_FUNCTION": {
+            case "OPTIONAL_NAME_INNER_FUNCTION": {
                 TridentFile inner = TridentFile.createInnerFile(choice, ctx);
                 return new FunctionCommand(inner.getFunction());
             }
