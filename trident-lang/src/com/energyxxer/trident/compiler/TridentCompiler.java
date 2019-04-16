@@ -13,6 +13,7 @@ import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeNotFoundException;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
+import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.ParsingSignature;
 import com.energyxxer.enxlex.report.Notice;
@@ -28,6 +29,7 @@ import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManag
 import com.energyxxer.trident.compiler.semantics.symbols.GlobalSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.util.Lazy;
+import com.energyxxer.util.StringLocation;
 import com.energyxxer.util.logger.Debug;
 import com.energyxxer.util.processes.AbstractProcess;
 import com.google.gson.*;
@@ -370,7 +372,12 @@ public class TridentCompiler extends AbstractProcess {
                         if(group.getCategory().equals(FunctionReference.CATEGORY)) {
                             created = new FunctionReference(module.getNamespace(loc.namespace), loc.body);
                         } else {
-                            created = module.getNamespace(loc.namespace).getTypeManager().createDictionary(group.getCategory(), true).create(loc.body);
+                            try {
+                                created = module.getNamespace(loc.namespace).getTypeManager().createDictionary(group.getCategory(), true).get(loc.body);
+                            } catch(TypeNotFoundException x) {
+                                report.addNotice(new Notice(NoticeType.WARNING, "Invalid value in " + group.getCategory().toLowerCase() + " tag '" + tag + "': " + loc + " is not a valid " + group.getCategory().toLowerCase() + " type", new Token("", file, new StringLocation(0))));
+                                continue;
+                            }
                         }
                         tag.addValue(created);
                     }

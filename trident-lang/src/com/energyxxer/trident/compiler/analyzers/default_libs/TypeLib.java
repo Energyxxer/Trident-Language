@@ -1,12 +1,12 @@
 package com.energyxxer.trident.compiler.analyzers.default_libs;
 
+import com.energyxxer.commodore.module.Namespace;
+import com.energyxxer.commodore.types.Type;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
+import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -18,11 +18,45 @@ public class TypeLib implements DefaultLibraryProvider {
 
         block.put("exists",
                 new MethodWrapper<>("exists", ((instance, params) -> {
-                    TridentUtil.ResourceLocation loc = TridentUtil.ResourceLocation.createStrict((String)params[0]);
+                    TridentUtil.ResourceLocation loc = (TridentUtil.ResourceLocation)params[0];
                     if(loc == null) return false;
                     return compiler.getModule().namespaceExists(loc.namespace) && compiler.getModule().getNamespace(loc.namespace).types.block.exists(loc.body);
-                }), String.class).createForInstance(null));
+                }), TridentUtil.ResourceLocation.class).createForInstance(null));
+        block.put("getAll",
+                new MethodWrapper<>("getAll", ((instance, params) -> {
+                    ListObject all = new ListObject();
+                    for(Namespace ns : compiler.getModule().getAllNamespaces()) {
+                        for(Type type : ns.types.block.list()) {
+                            if(!(type instanceof AliasType)) {
+                                all.add(new TridentUtil.ResourceLocation(type.toString()));
+                            }
+                        }
+                    }
+                    return all;
+                })).createForInstance(null));
         globalCtx.put(new Symbol("Block", Symbol.SymbolVisibility.GLOBAL, block));
+
+        DictionaryObject item = new DictionaryObject();
+
+        item.put("exists",
+                new MethodWrapper<>("exists", ((instance, params) -> {
+                    TridentUtil.ResourceLocation loc = (TridentUtil.ResourceLocation) params[0];
+                    if(loc == null) return false;
+                    return compiler.getModule().namespaceExists(loc.namespace) && compiler.getModule().getNamespace(loc.namespace).types.item.exists(loc.body);
+                }), TridentUtil.ResourceLocation.class).createForInstance(null));
+        item.put("getAll",
+                new MethodWrapper<>("getAll", ((instance, params) -> {
+                    ListObject all = new ListObject();
+                    for(Namespace ns : compiler.getModule().getAllNamespaces()) {
+                        for(Type type : ns.types.item.list()) {
+                            if(!(type instanceof AliasType)) {
+                                all.add(new TridentUtil.ResourceLocation(type.toString()));
+                            }
+                        }
+                    }
+                    return all;
+                })).createForInstance(null));
+        globalCtx.put(new Symbol("Item", Symbol.SymbolVisibility.GLOBAL, item));
 
 
         globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (VariableMethod) (params, patterns, pattern, file) ->
