@@ -35,7 +35,8 @@ public class StoreParser implements SimpleModifierParser {
                 return new ExecuteStoreBlock(storeValue, pos, path, type, scale);
             }
             case "STORE_BOSSBAR": {
-                TridentUtil.ResourceLocation bossbarLoc = new TridentUtil.ResourceLocation(inner.find("RESOURCE_LOCATION").flatten(false));
+                TridentUtil.ResourceLocation bossbarLoc = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), ctx);
+                bossbarLoc.assertStandalone(inner.find("RESOURCE_LOCATION"), ctx);
                 BossbarReference bossbar = new BossbarReference(ctx.getCompiler().getModule().getNamespace(bossbarLoc.namespace), bossbarLoc.body);
                 ExecuteStoreBossbar.BossbarVariable bossbarVariable = ExecuteStoreBossbar.BossbarVariable.valueOf(inner.find("BOSSBAR_VARIABLE").flatten(false).toUpperCase());
                 return new ExecuteStoreBossbar(storeValue, bossbar, bossbarVariable);
