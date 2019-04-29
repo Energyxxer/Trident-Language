@@ -14,9 +14,9 @@ public class CoordinatesLib implements DefaultLibraryProvider {
     public static final String COORDINATE_TYPE_RELATIVE =   "Coordinates.RELATIVE";
     public static final String COORDINATE_TYPE_LOCAL =      "Coordinates.LOCAL";
 
-    public static final String AXIS_X = "Axis.X";
-    public static final String AXIS_Y = "Axis.Y";
-    public static final String AXIS_Z = "Axis.Z";
+    public static final int AXIS_X = 0;
+    public static final int AXIS_Y = 1;
+    public static final int AXIS_Z = 2;
 
 
     @Override

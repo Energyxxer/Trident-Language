@@ -19,7 +19,7 @@ public class CoordinateTypeHandler implements VariableTypeHandler<CoordinateSet>
 
     static {
         members.put("getMagnitude", new MethodWrapper<>("getMagnitude", (instance, params) -> {
-            switch((String)params[0]) {
+            switch((int)params[0]) {
                 case CoordinatesLib.AXIS_X: {
                     return instance.getX().getCoord();
                 }
@@ -33,9 +33,9 @@ public class CoordinateTypeHandler implements VariableTypeHandler<CoordinateSet>
                     throw new IllegalArgumentException("Invalid axis argument '" + params[0] + "'. Use constants Axis.X, Axis.Y and Axis.Z to specify an axis.");
                 }
             }
-        }, String.class));
+        }, Integer.class));
         members.put("getCoordinateType", new MethodWrapper<>("getCoordinateType", (instance, params) -> {
-            switch((String)params[0]) {
+            switch((int)params[0]) {
                 case CoordinatesLib.AXIS_X: {
                     return CoordinatesLib.coordTypeToConstant(instance.getX().getType());
                 }
@@ -49,7 +49,7 @@ public class CoordinateTypeHandler implements VariableTypeHandler<CoordinateSet>
                     throw new IllegalArgumentException("Invalid axis argument '" + params[0] + "'. Use constants Axis.X, Axis.Y and Axis.Z to specify an axis.");
                 }
             }
-        }, String.class));
+        }, Integer.class));
         members.put("deriveMagnitude", new MethodWrapper<CoordinateSet>("deriveMagnitude", (instance, params) -> {
             double magnitude = ((double) params[0]);
             if(params[1] == null) {
@@ -59,7 +59,7 @@ public class CoordinateTypeHandler implements VariableTypeHandler<CoordinateSet>
                         new Coordinate(instance.getZ().getType(), magnitude)
                 );
             }
-            switch((String)params[1]) {
+            switch((int)params[1]) {
                 case CoordinatesLib.AXIS_X: {
                     return new CoordinateSet(new Coordinate(instance.getX().getType(), magnitude), instance.getY(), instance.getZ());
                 }
@@ -73,7 +73,7 @@ public class CoordinateTypeHandler implements VariableTypeHandler<CoordinateSet>
                     throw new IllegalArgumentException("Invalid axis argument '" + params[0] + "'. Use constants Axis.X, Axis.Y and Axis.Z to specify an axis.");
                 }
             }
-        }, Double.class, String.class).setNullable(1));
+        }, Double.class, Integer.class).setNullable(1));
         members.put("deriveCoordinateType", new MethodWrapper<CoordinateSet>("deriveCoordinateType", (instance, params) -> {
             Coordinate.Type type = CoordinatesLib.constantToCoordType((String) params[0]);
             if(params[1] == null || type == Coordinate.Type.LOCAL || instance.getX().getType() == Coordinate.Type.LOCAL) {
@@ -83,7 +83,7 @@ public class CoordinateTypeHandler implements VariableTypeHandler<CoordinateSet>
                         new Coordinate(type, instance.getZ().getCoord())
                 );
             }
-            switch((String)params[1]) {
+            switch((int)params[1]) {
                 case CoordinatesLib.AXIS_X: {
                     return new CoordinateSet(new Coordinate(type, instance.getX().getCoord()), instance.getY(), instance.getZ());
                 }
@@ -97,7 +97,7 @@ public class CoordinateTypeHandler implements VariableTypeHandler<CoordinateSet>
                     throw new IllegalArgumentException("Invalid axis argument '" + params[0] + "'. Use constants Axis.X, Axis.Y and Axis.Z to specify an axis.");
                 }
             }
-        }, String.class, String.class).setNullable(1));
+        }, String.class, Integer.class).setNullable(1));
     }
 
     @Override
