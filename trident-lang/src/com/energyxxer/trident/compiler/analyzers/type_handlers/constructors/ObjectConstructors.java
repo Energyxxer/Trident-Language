@@ -51,6 +51,34 @@ public class ObjectConstructors {
 
 
 
+        constructors.put("resource", new MethodWrapper<>("new resource", ((instance, params) -> {
+            if(params[1] == null) {
+                TridentUtil.ResourceLocation result = TridentUtil.ResourceLocation.createStrict(((String) params[0]));
+                if(result != null) return result;
+                else throw new IllegalArgumentException("The string '" + params[0] + "' cannot be used as a resource location");
+            }
+            StringBuilder body = new StringBuilder((String)params[0]);
+            body.append(":");
+            String delimiter = params[2] != null ? ((String) params[2]) : "/";
+            int i = 0;
+            for(Object part : ((ListObject) params[1])) {
+                if(part instanceof String) {
+                    body.append(part);
+                } else if(part instanceof TridentUtil.ResourceLocation) {
+                    body.append(((TridentUtil.ResourceLocation) part).body);
+                } else {
+                    throw new IllegalArgumentException("Expected string or resource_location in the list, instead got: " + part + " at index " + i);
+                }
+                if(i < ((ListObject) params[1]).size()-1) {
+                    body.append(delimiter);
+                }
+                i++;
+            }
+
+            TridentUtil.ResourceLocation result = TridentUtil.ResourceLocation.createStrict(body.toString());
+            if(result != null) return result;
+            else throw new IllegalArgumentException("The string '" + body.toString() + "' cannot be used as a resource location");
+        }), String.class, ListObject.class, String.class).setNullable(1).setNullable(2).createForInstance(null));
 
 
         constructors.put("text_component", ObjectConstructors::constructTextComponent);

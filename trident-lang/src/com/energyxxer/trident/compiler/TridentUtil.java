@@ -8,6 +8,7 @@ import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentTokens;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.util.Lazy;
 
 import java.util.Objects;
 
@@ -27,6 +28,19 @@ public class TridentUtil {
         public boolean isTag;
         public String namespace;
         public String body;
+
+        private Lazy<String[]> parts = new Lazy<>(() -> this.body.split("/", -1));
+        private Lazy<ResourceLocation> parent = new Lazy<>(() -> {
+            ResourceLocation loc = new ResourceLocation("a:b");
+            loc.namespace = this.namespace;
+            loc.isTag = this.isTag;
+            if(this.body.contains("/")) {
+                loc.body = this.body.substring(0, this.body.lastIndexOf("/"));
+                return loc;
+            } else {
+                return null;
+            }
+        });
 
         public ResourceLocation(TokenPattern<?> typeGroup) {
             if(typeGroup.find("") != null) isTag = true;
@@ -65,6 +79,14 @@ public class TridentUtil {
             return isTag == location.isTag &&
                     Objects.equals(namespace, location.namespace) &&
                     Objects.equals(body, location.body);
+        }
+
+        public String[] getParts() {
+            return parts.getValue();
+        }
+
+        public ResourceLocation getParent() {
+            return parent.getValue();
         }
 
         @Override

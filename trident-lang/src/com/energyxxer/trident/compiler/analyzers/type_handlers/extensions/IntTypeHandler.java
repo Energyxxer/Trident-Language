@@ -41,6 +41,6 @@ public class IntTypeHandler implements VariableTypeHandler<Integer> {
         if(targetType == TagFloat.class) return new TagFloat(object);
         if(targetType == TagDouble.class) return new TagDouble(object);
         if(targetType == TagLong.class) return new TagLong(object);
-        throw new ClassCastException();
+        return null;
     }
 }

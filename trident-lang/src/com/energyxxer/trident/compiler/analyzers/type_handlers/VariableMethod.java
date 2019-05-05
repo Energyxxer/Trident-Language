@@ -49,14 +49,16 @@ public interface VariableMethod extends VariableTypeHandler<VariableMethod> {
             if(expected.isInstance(param)) return (T) param;
             assertNotNull(param, pattern, ctx);
             VariableTypeHandler handler = param instanceof VariableTypeHandler ? (VariableTypeHandler) param : AnalyzerManager.getAnalyzer(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(param.getClass()));
-            if(handler != null) try {
-                return (T) handler.coerce(param, expected, pattern, ctx);
-            } catch(ClassCastException x) {
-                //could not coerce
+            if(handler != null) {
+                T coerced = (T) handler.coerce(param, expected, pattern, ctx);
+                if(coerced != null) {
+                    return coerced;
+                } else {
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of type " + VariableTypeHandler.Static.getShorthandForClass(expected), pattern, ctx);
+                }
             } else {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown variable handler for '" + VariableTypeHandler.Static.getIdentifierForClass(param.getClass()) + "'", pattern, ctx);
             }
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of type " + VariableTypeHandler.Static.getShorthandForClass(expected), pattern, ctx);
         }
 
         @SuppressWarnings("unchecked")

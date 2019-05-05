@@ -1,8 +1,7 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
-import com.energyxxer.commodore.functionlogic.nbt.TagString;
+import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.commodore.textcomponents.StringTextComponent;
 import com.energyxxer.commodore.textcomponents.TextComponent;
@@ -95,6 +94,13 @@ public class StringTypeHandler implements VariableTypeHandler<String> {
             return (F) new StringTextComponent(object);
         }
         throw new ClassCastException();
+    }
+
+    @Override
+    public Object coerce(String object, Class targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(targetType == TagString.class) return new TagString(object);
+        if(targetType == TextComponent.class) return new StringTextComponent(object);
+        return null;
     }
 
     @Override

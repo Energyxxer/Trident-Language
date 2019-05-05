@@ -3,6 +3,7 @@ package com.energyxxer.util;
 import java.util.function.Consumer;
 
 public class Lazy<T> {
+    private boolean hasValue = false;
     private T value = null;
     private final Factory<T> instantiator;
     private final Consumer<T> accessor;
@@ -17,7 +18,10 @@ public class Lazy<T> {
     }
 
     public T getValue() {
-        if(value == null) value = instantiator.createInstance();
+        if(!hasValue) {
+            value = instantiator.createInstance();
+            hasValue = true;
+        }
         if(accessor != null) accessor.accept(value);
         return value;
     }

@@ -32,6 +32,6 @@ public class RealTypeHandler implements VariableTypeHandler<Double> {
     public Object coerce(Double object, Class targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(targetType == NBTTag.class || targetType == TagDouble.class) return new TagDouble(object);
         if(targetType == TagFloat.class) return new TagFloat(object.floatValue());
-        throw new ClassCastException();
+        return null;
     }
 }

@@ -34,7 +34,7 @@ public interface OperatorHandler<A, B> {
                 if (handler == null) handler = handlers.get("* " + operator.getSymbol() + " *");
 
                 if (handler == null) {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "The operator " + operator.getSymbol() + " is not defined for types " + idA.replace("*", "null") + " and " + idB.replace("*", "null"), pattern, ctx);
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, operator.getUndefinedMessage(idA.replace("*", "null"), idB.replace("*", "null")), pattern, ctx);
                 }
                 return handler.perform(a, b, pattern, ctx);
             } else if(operatorType == OperatorType.UNARY_ANY || operatorType == OperatorType.UNARY_LEFT || operatorType == OperatorType.UNARY_RIGHT) {
@@ -66,7 +66,7 @@ public interface OperatorHandler<A, B> {
                 String errorType = idA.replace("*",idB).replace("*", "null");
 
                 if (handler == null) {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "The operator " + operator.getSymbol() + " is not defined for type " + errorType, pattern, ctx);
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, operator.getUndefinedMessage(errorType, ""), pattern, ctx);
                 }
                 return handler.perform(a, b, pattern, ctx);
             } else {

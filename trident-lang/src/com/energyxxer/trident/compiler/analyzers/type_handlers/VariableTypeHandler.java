@@ -29,7 +29,7 @@ public interface VariableTypeHandler<T> {
     <F> F cast(T object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx);
 
     default Object coerce(T object, Class targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     default Iterator<?> getIterator(T object) {

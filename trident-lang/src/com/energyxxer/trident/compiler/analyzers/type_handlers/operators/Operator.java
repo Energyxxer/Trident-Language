@@ -94,6 +94,18 @@ public enum Operator {
         return (op.name().endsWith("_THEN_ASSIGN")) ? valueOf(op.name().substring(0, op.name().indexOf("_THEN_ASSIGN"))) : null;
     }
 
+    public String getUndefinedMessage(String leftType, String rightType) {
+        if(operatorType == BINARY) {
+            if(leftOperandType == VALUE) {
+                return "The operator " + this.getSymbol() + " is not defined for types " + leftType + " and " + rightType;
+            } else {
+                return "Invalid left-hand side in assignment";
+            }
+        } else {
+            return "The operator " + this.getSymbol() + " is not defined for type " + leftType;
+        }
+    }
+
     @Override
     public String toString() {
         return "Operator{" +
