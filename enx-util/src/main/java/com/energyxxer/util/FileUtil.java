@@ -34,6 +34,14 @@ public class FileUtil {
 				+ str.indexOf("\"") + str.indexOf("<") + str.indexOf(">") + str.indexOf("|") == -9;
 	}
 
+	/**
+	 * Returns whether or not the given string is a valid file path.
+	 */
+	public static boolean validatePath(String str) {
+		return str.indexOf(":") + str.indexOf("*") + str.indexOf("?")
+				+ str.indexOf("\"") + str.indexOf("<") + str.indexOf(">") + str.indexOf("|") == -7;
+	}
+
 	public static String getRelativePath(File file, File root) {
 		String result = (file.getAbsolutePath() + File.separator).replaceFirst(Pattern.quote(root.getAbsolutePath() + File.separator),"");
 		if(result.endsWith(File.separator)) result = result.substring(0, result.length()-1);

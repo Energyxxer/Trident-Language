@@ -61,7 +61,7 @@ public class BinaryExpression implements ILazyValue {
         } else if(obj instanceof TokenPattern<?>) {
             return new LazyValue(((TokenPattern) obj), ctx);
         } else {
-            throw new RuntimeException("no");
+            throw new RuntimeException("report this plz");
         }
     }
 

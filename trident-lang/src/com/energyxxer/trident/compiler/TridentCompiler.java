@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler;
 
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.defpacks.DefinitionPack;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.module.CommandModule;
@@ -171,7 +172,12 @@ public class TridentCompiler extends AbstractProcess {
         for(Map.Entry<File, ParsingSignature> entry : filePatterns.entrySet()) {
             Path relativePath = dataRoot.relativize(entry.getKey().toPath());
             if("functions".equals(relativePath.getName(1).toString())) {
-                files.put(entry.getKey(), new TridentFile(this, relativePath, entry.getValue().getPattern()));
+                try {
+                    files.put(entry.getKey(), new TridentFile(this, relativePath, entry.getValue().getPattern()));
+                } catch(CommodoreException ex) {
+                    report.addNotice(new Notice(NoticeType.ERROR, ex.getMessage(), entry.getValue().getPattern()));
+                    break;
+                }
             }
             else {
                 report.addNotice(new Notice(NoticeType.WARNING, "Found .tdn file outside of a function folder, ignoring: " + relativePath, entry.getValue().getPattern()));

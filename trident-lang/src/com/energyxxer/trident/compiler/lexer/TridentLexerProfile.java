@@ -1,6 +1,8 @@
 package com.energyxxer.trident.compiler.lexer;
 
+import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.enxlex.lexical_analysis.profiles.*;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
@@ -30,7 +32,7 @@ public class TridentLexerProfile extends LexerProfile {
     public static final Pattern TIME_REGEX = Pattern.compile("(\\d+(\\.\\d+)?[tsd]?)");
 
     static {
-        usefulContexts.put(RESOURCE_LOCATION, new ResourceLocationContext("[a-z0-9_\\.-]","[a-z0-9_/\\.-]", RESOURCE_LOCATION));
+        usefulContexts.put(RESOURCE_LOCATION, new ResourceLocationContext(Namespace.ALLOWED_NAMESPACE_REGEX.replace("+",""), Function.ALLOWED_PATH_REGEX.replace("+",""), RESOURCE_LOCATION));
     }
 
     public TridentLexerProfile() {
