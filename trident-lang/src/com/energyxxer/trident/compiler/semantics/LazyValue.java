@@ -6,12 +6,18 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
-public class LazyValue {
+public class LazyValue implements ILazyValue {
     private TokenPattern<?> pattern;
     private final ISymbolContext ctx;
     private boolean keepSymbol;
     private Object value = null;
     private boolean evaluated = false;
+
+    public LazyValue(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
+        this(pattern, ctx);
+        this.value = value;
+        this.evaluated = true;
+    }
 
     public LazyValue(TokenPattern<?> pattern, ISymbolContext ctx) {
         this(pattern, ctx, false);

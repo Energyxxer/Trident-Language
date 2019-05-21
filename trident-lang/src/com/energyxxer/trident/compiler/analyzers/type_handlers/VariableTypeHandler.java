@@ -12,6 +12,7 @@ import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
+import com.energyxxer.trident.compiler.semantics.ILazyValue;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
@@ -47,6 +48,9 @@ public interface VariableTypeHandler<T> {
             }
             if(TextComponent.class.isAssignableFrom(cls)) {
                 return TextComponent.class.getName();
+            }
+            if(ILazyValue.class.isAssignableFrom(cls)) {
+                return ILazyValue.class.getName();
             }
             return cls.getName();
         }

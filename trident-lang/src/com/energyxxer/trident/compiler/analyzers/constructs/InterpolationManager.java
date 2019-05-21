@@ -12,7 +12,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.Operand
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperationOrder;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.Operator;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperatorHandler;
-import com.energyxxer.trident.compiler.semantics.LazyValue;
+import com.energyxxer.trident.compiler.semantics.BinaryExpression;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -355,28 +355,28 @@ public class InterpolationManager {
                         flatValues.remove(index);
                         flatValues.remove(index);
 
-                        if(a instanceof TokenPattern<?>) {
+                        /*if(a instanceof TokenPattern<?>) {
                             if(topOperator.isShortCircuiting()) {
-                                a = new LazyValue(((TokenPattern) a), ctx, topOperator.getLeftOperandType() == OperandType.VARIABLE);
+                                a = new ILazyValue(((TokenPattern) a), ctx, topOperator.getLeftOperandType() == OperandType.VARIABLE);
                             } else {
                                 a = parse(((TokenPattern) a), ctx, topOperator.getLeftOperandType() == OperandType.VARIABLE);
                             }
                         }
                         if(b instanceof TokenPattern<?>) {
                             if(topOperator.isShortCircuiting()) {
-                                b = new LazyValue(((TokenPattern) b), ctx);
+                                b = new ILazyValue(((TokenPattern) b), ctx);
                             } else {
                                 b = parse(((TokenPattern) b), ctx);
                             }
                         }
 
-                        Object result = OperatorHandler.Static.perform(a, topOperator, b, pattern, ctx);
+                        Object result = OperatorHandler.Static.perform(a, topOperator, b, pattern, ctx);*/
 
-                        flatValues.add(index, result);
+                        flatValues.add(index, new BinaryExpression(a, topOperator, b, pattern, ctx));
                         flatOperators.remove(index);
                     }
 
-                    return flatValues.get(0);
+                    return ((BinaryExpression) flatValues.get(0)).evaluate();
                 }
                 //endregion
             }

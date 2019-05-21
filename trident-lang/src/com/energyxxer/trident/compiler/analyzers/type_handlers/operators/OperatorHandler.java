@@ -3,7 +3,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.operators;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
-import com.energyxxer.trident.compiler.semantics.LazyValue;
+import com.energyxxer.trident.compiler.semantics.ILazyValue;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -175,12 +175,12 @@ public interface OperatorHandler<A, B> {
             //handlers.put("java.lang.Boolean && java.lang.Boolean", (Boolean a, Boolean b, TokenPattern<?> pattern, ISymbolContext ctx) -> a && b);
             //handlers.put("java.lang.Boolean || java.lang.Boolean", (Boolean a, Boolean b, TokenPattern<?> pattern, ISymbolContext ctx) -> a || b);
 
-            handlers.put("com.energyxxer.trident.compiler.semantics.LazyValue && com.energyxxer.trident.compiler.semantics.LazyValue", (LazyValue a, LazyValue b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("com.energyxxer.trident.compiler.semantics.ILazyValue && com.energyxxer.trident.compiler.semantics.ILazyValue", (ILazyValue a, ILazyValue b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 Boolean realA = a.getValue(Boolean.class);
                 if(!realA) return false;
                 return b.getValue(Boolean.class);
             });
-            handlers.put("com.energyxxer.trident.compiler.semantics.LazyValue || com.energyxxer.trident.compiler.semantics.LazyValue", (LazyValue a, LazyValue b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("com.energyxxer.trident.compiler.semantics.ILazyValue || com.energyxxer.trident.compiler.semantics.ILazyValue", (ILazyValue a, ILazyValue b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 Boolean realA = a.getValue(Boolean.class);
                 if(realA) return true;
                 return b.getValue(Boolean.class);
