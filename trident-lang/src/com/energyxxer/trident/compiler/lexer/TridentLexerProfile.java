@@ -27,9 +27,9 @@ public class TridentLexerProfile extends LexerProfile {
     public static final String IDENTIFIER_C_REGEX = "\\S+";
     public static final String IDENTIFIER_D_REGEX = "[a-zA-Z0-9_\\-+]+";
 
-    public static final Pattern NUMBER_REGEX = Pattern.compile("([+-]?\\d+(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
+    public static final Pattern NUMBER_REGEX = Pattern.compile("([+-]?\\d*(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
     public static final Pattern SHORT_NUMBER_REGEX = Pattern.compile("[+-]?\\d*(\\.\\d+)?", Pattern.CASE_INSENSITIVE);
-    public static final Pattern TIME_REGEX = Pattern.compile("(\\d+(\\.\\d+)?[tsd]?)");
+    public static final Pattern TIME_REGEX = Pattern.compile("(\\d*(\\.\\d+)?[tsd]?)");
 
     static {
         usefulContexts.put(RESOURCE_LOCATION, new ResourceLocationContext(Namespace.ALLOWED_NAMESPACE_REGEX.replace("+",""), Function.ALLOWED_PATH_REGEX.replace("+",""), RESOURCE_LOCATION));
@@ -59,6 +59,7 @@ public class TridentLexerProfile extends LexerProfile {
 
                 if(matcher.lookingAt()) {
                     int length = matcher.end();
+                    if(length <= 0) return new ScannerContextResponse(false);
                     return new ScannerContextResponse(true, str.substring(0,length), (Character.isLetter(str.charAt(length-1)) ? TridentTokens.TYPED_NUMBER : ((str.substring(0, length).contains(".")) ? TridentTokens.REAL_NUMBER : TridentTokens.INTEGER_NUMBER)));
                 } else return new ScannerContextResponse(false);
             }
@@ -69,6 +70,7 @@ public class TridentLexerProfile extends LexerProfile {
 
                 if(matcher.lookingAt()) {
                     int length = matcher.end();
+                    if(length <= 0) return new ScannerContextResponse(false);
 
                     TokenType obtainedType = Character.isLetter(str.charAt(length-1)) ? TridentTokens.TYPED_NUMBER : ((str.substring(0, length).contains(".")) ? TridentTokens.REAL_NUMBER : TridentTokens.INTEGER_NUMBER);
 
