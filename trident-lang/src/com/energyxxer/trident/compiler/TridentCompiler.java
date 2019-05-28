@@ -113,7 +113,7 @@ public class TridentCompiler extends AbstractProcess {
         try {
             properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
         } catch(JsonSyntaxException | IOException x) {
-            logException(x);
+            logException(x, "Error while reading project settings: ");
             return;
         }
 
@@ -137,7 +137,7 @@ public class TridentCompiler extends AbstractProcess {
         try {
             module = createModuleForProject(rootDir.getName(), properties, definitionPack);
         } catch(IOException x) {
-            logException(x);
+            logException(x, "Error while importing vanilla definitions: ");
             return;
         }
 
@@ -175,7 +175,7 @@ public class TridentCompiler extends AbstractProcess {
                 try {
                     files.put(entry.getKey(), new TridentFile(this, relativePath, entry.getValue().getPattern()));
                 } catch(CommodoreException ex) {
-                    report.addNotice(new Notice(NoticeType.ERROR, ex.getMessage(), entry.getValue().getPattern()));
+                    report.addNotice(new Notice(NoticeType.ERROR, ex.toString(), entry.getValue().getPattern()));
                     break;
                 }
             }
@@ -233,7 +233,7 @@ public class TridentCompiler extends AbstractProcess {
                 try {
                     module.compile(new File(properties.get("datapack-output").getAsString()));
                 } catch(IOException x) {
-                    logException(x);
+                    logException(x, "Error while generating output data pack: ");
                 }
             } else {
                 this.report.addNotice(new Notice(NoticeType.ERROR, "Datapack output directory not specified"));
@@ -247,7 +247,7 @@ public class TridentCompiler extends AbstractProcess {
             try {
                 resourcePack.generate();
             } catch(IOException x) {
-                logException(x);
+                logException(x, "Error while generating output resource pack: ");
             }
         }
 
@@ -400,7 +400,11 @@ public class TridentCompiler extends AbstractProcess {
     }
 
     private void logException(Throwable x) {
-        this.report.addNotice(new Notice(NoticeType.ERROR, x.getMessage()));
+        logException(x, "");
+    }
+
+    private void logException(Throwable x, String prefix) {
+        this.report.addNotice(new Notice(NoticeType.ERROR, prefix+x.toString()));
         finalizeProcess(false);
     }
 
@@ -539,7 +543,7 @@ public class TridentCompiler extends AbstractProcess {
 
     public static CommandModule createModuleForProject(String name, JsonObject properties, DefinitionPack definitionPack) throws IOException {
         CommandModule module = new CommandModule(name, "Command Module created with Trident", null);
-        module.getOptionManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
+        module.getSettingsManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
         module.importDefinitions(definitionPack);
 
         if(properties.has("aliases") && properties.get("aliases").isJsonObject()) {

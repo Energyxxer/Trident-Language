@@ -366,10 +366,10 @@ public class CommonParsers {
             Integer min = null;
             Integer max = null;
             if(!minRaw.isEmpty()) {
-                min = Integer.parseInt(minRaw.get(0).flatten(false));
+                min = CommonParsers.parseInt(minRaw.get(0), ctx);
             }
             if(!maxRaw.isEmpty()) {
-                max = Integer.parseInt(maxRaw.get(0).flatten(false));
+                max = CommonParsers.parseInt(maxRaw.get(0), ctx);
             }
             return new IntegerRange(min, max);
         } catch(CommodoreException x) {
