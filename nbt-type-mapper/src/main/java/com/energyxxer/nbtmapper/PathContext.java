@@ -40,4 +40,9 @@ public class PathContext {
         this.protocolMetadata = protocolMetadata;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "{Protocol: " + protocol + "; Metadata: " + (protocolMetadata != null ? protocolMetadata : "none")+ "; " + (setting ? "Setting Mode" : "Getting Mode")+ "}";
+    }
 }

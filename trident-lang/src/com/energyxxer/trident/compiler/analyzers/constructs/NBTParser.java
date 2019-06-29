@@ -355,7 +355,7 @@ public class NBTParser {
                 }
             } else {
                 if(delegate.strict) {
-                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown data type for path '" + next.getPath() + "'. Consider adding it to the type map", pattern));
+                    file.getCompiler().getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown data type for path '" + next.getPath() + "'. Path context: " + context + ". Consider adding it to the type map", pattern));
                 }
             }
         }
