@@ -81,6 +81,28 @@ $ENTITY_MINECRAFT_CHICKEN: {
     EggLayTime: Int
 }
 
+$ENTITY_FISHLIKE: {
+    FromBucket: Byte (boolean)
+}
+
+#cod
+$ENTITY_MINECRAFT_COD: $ENTITY_FISHLIKE
+
+#pufferfish
+$ENTITY_MINECRAFT_PUFFERFISH: {
+    PuffState: Int
+}
+$ENTITY_MINECRAFT_PUFFERFISH: $ENTITY_FISHLIKE
+
+#salmon
+$ENTITY_MINECRAFT_SALMON: $ENTITY_FISHLIKE
+
+#tropical_fish
+$ENTITY_MINECRAFT_TROPICAL_FISH: {
+    Variant: Int
+}
+$ENTITY_MINECRAFT_TROPICAL_FISH: $ENTITY_FISHLIKE
+
 #cow
 #empty
 
@@ -164,6 +186,15 @@ $ENTITY_MINECRAFT_EVOKER: {
 }
 $ENTITY_MINECRAFT_EVOKER: $ENTITY_ILLAGER
 
+#fox
+$ENTITY_MINECRAFT_FOX: {
+    TrustedUUIDs: [{L: Long, M: Long}],
+    Sleeping: Byte (boolean),
+    Type: String (one_of("red", "snow")),
+    Sitting: Byte (boolean),
+    Crouching: Byte (boolean)
+}
+
 #ghast
 $ENTITY_MINECRAFT_GHAST: {
     ExplosionPower: Int
@@ -181,13 +212,13 @@ $ENTITY_MINECRAFT_HORSE: $ENTITY_HORSELIKE
 #husk
 $ENTITY_MINECRAFT_HUSK: $ENTITY_ZOMBIELIKE
 
-#illager_beast
-$ENTITY_MINECRAFT_ILLAGER_BEAST: {
+#ravager
+$ENTITY_MINECRAFT_RAVAGER: {
     AttackTick: Int,
     RoarTick: Int,
     StunTick: Int
 }
-$ENTITY_MINECRAFT_ILLAGER_BEAST: $ENTITY_ILLAGER
+$ENTITY_MINECRAFT_RAVAGER: $ENTITY_ILLAGER
 
 #illusioner
 $ENTITY_MINECRAFT_ILLUSIONER: {
@@ -207,6 +238,14 @@ $ENTITY_MINECRAFT_LLAMA: {
 }
 $ENTITY_MINECRAFT_LLAMA: $ENTITY_HORSELIKE
 
+#trader_llama
+$ENTITY_MINECRAFT_TRADER_LLAMA: {
+    Strength: Int,
+    DecorItem: $ITEM,
+    DespawnDelay: Int
+}
+$ENTITY_MINECRAFT_TRADER_LLAMA: $ENTITY_HORSELIKE
+
 $ENTITY_SLIMELIKE: {
     Size: Int,
     wasOnGround: Byte (boolean)
@@ -216,7 +255,11 @@ $ENTITY_SLIMELIKE: {
 $ENTITY_MINECRAFT_MAGMA_CUBE: $ENTITY_SLIMELIKE
 
 #mooshroom
-#empty
+$ENTITY_MINECRAFT_MOOSHROOM: {
+    Type: String (one_of("red", "brown")),
+    EffectId: Byte (effect_id),
+    EffectDuration: Int
+}
 
 #mule
 $ENTITY_MINECRAFT_MULE: $ENTITY_HORSELIKE
@@ -228,8 +271,8 @@ $ENTITY_MINECRAFT_OCELOT: {
 
 #panda
 $ENTITY_MINECRAFT_PANDA: {
-    MainGene: String,
-    HiddenGene: String
+    MainGene: String (one_of("normal", "aggressive", "lazy", "worried", "playful", "weak", "brown")),
+    HiddenGene: String (one_of("normal", "aggressive", "lazy", "worried", "playful", "weak", "brown"))
 }
 
 #parrot
@@ -332,10 +375,25 @@ $ENTITY_MINECRAFT_VEX: {
 
 #villager
 $ENTITY_MINECRAFT_VILLAGER: {
-    Riches: Int,
     Willing: Byte (boolean),
     VillagerData: $VILLAGER_DATA,
+    Gossips: [$VILLAGER_GOSSIP],
+    LastRestock: Long,
+    LastGossipDecay: Long,
+    RestocksToday: Int,
+    Xp: Int,
     Inventory: [$ITEM],
+    Offers: $VILLAGER_OFFERS
+}
+
+#wandering_trader
+$ENTITY_MINECRAFT_WANDERING_TRADER: {
+    DespawnDelay: Int,
+    WanderTarget: {
+        X: Int,
+        Y: Int,
+        Z: Int
+    },
     Offers: $VILLAGER_OFFERS
 }
 
@@ -403,6 +461,8 @@ $ENTITY_MINECRAFT_ARROW: {
     crit: Byte (boolean),
     ShotFromCrossbow: Byte (boolean),
     PierceLevel: Byte,
+    OwnerUUIDMost: Long,
+    OwnerUUIDLeast: Long,
     SoundEvent: String,
     
     CustomPotionEffects: [$EFFECT],
@@ -514,6 +574,8 @@ $ENTITY_MINECRAFT_SPECTRAL_ARROW: {
     crit: Byte (boolean),
     ShotFromCrossbow: Byte (boolean),
     PierceLevel: Byte,
+    OwnerUUIDMost: Long,
+    OwnerUUIDLeast: Long,
     SoundEvent: String,
     Duration: Int
 }
@@ -528,6 +590,8 @@ $ENTITY_MINECRAFT_TRIDENT: {
     crit: Byte (boolean),
     ShotFromCrossbow: Byte (boolean),
     PierceLevel: Byte,
+    OwnerUUIDMost: Long,
+    OwnerUUIDLeast: Long,
     SoundEvent: String,
     Trident: $ITEM
 }
@@ -563,7 +627,7 @@ $ENTITY_MINECRAFT_ITEM: {
 #vehicles
 
 $ENTITY_MINECRAFT_BOAT: {
-    Type: String
+    Type: String (one_of("oak", "spruce", "birch", "jungle", "acacia", "dark_oak"))
 }
 
 $ENTITY_MINECART: {
@@ -598,7 +662,7 @@ $ENTITY_MINECRAFT_FURNACE_MINECART: {
 }
 
 #hopper_minecart
-$ENTITY_MINECRAFT_CHEST_MINECART: {
+$ENTITY_MINECRAFT_HOPPER_MINECART: {
     Items: [$ITEM],
     TransferCooldown: Int,
     Enabled: Byte (boolean),

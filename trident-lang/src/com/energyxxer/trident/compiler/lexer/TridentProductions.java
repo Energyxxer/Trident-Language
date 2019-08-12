@@ -1718,7 +1718,7 @@ public class TridentProductions {
                         LazyTokenGroupMatch argsGroup = new LazyTokenGroupMatch().setName("PARTICLE_ARGUMENTS");
 
                         String allArgs = type.getProperty("argument");
-                        if (!allArgs.equals("none")) {
+                        if (allArgs != null && !allArgs.equals("none")) {
                             String[] args = allArgs.split("-");
                             for (String arg : args) {
                                 switch (arg) {

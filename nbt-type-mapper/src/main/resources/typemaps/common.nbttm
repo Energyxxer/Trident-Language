@@ -158,6 +158,13 @@ $VILLAGER_DATA: {
     type: String (type(villager_type))
 }
 
+$VILLAGER_GOSSIP: {
+    Type: String (one_of("major_negative", "minor_negative", "major_positive", "minor_positive", "trading")),
+    Value: Int,
+    TargetMost: Long,
+    TargetLeast: Long
+}
+
 $VILLAGER_OFFERS: {
     Recipes: [
         {

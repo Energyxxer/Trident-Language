@@ -15,6 +15,14 @@ $BLOCK_ENTITY_MINECRAFT_BANNER: {
     ]
 }
 
+$BLOCK_ENTITY_MINECRAFT_BARREL: {
+    CustomName: String (text_component),
+    Lock: String,
+    Items: [$ITEM],
+    LootTable: String,
+    LootTableSeed: Long
+}
+
 $BLOCK_ENTITY_MINECRAFT_BEACON: {
     Lock: String,
     Levels: Int,
@@ -30,12 +38,46 @@ $BLOCK_ENTITY_MINECRAFT_CAULDRON: {
     isMovable: Byte (boolean)
 }
 
+$BLOCK_ENTITY_SMELTER: {
+    CustomName: String (text_component),
+    Lock: String,
+    Items: [$ITEM],
+    BurnTime: Short,
+    CookTime: Short,
+    CookTimeTotal: Short,
+    RecipeLocation0: String (resource_location),
+    RecipeAmount0: Int,
+    RecipeLocation1: String (resource_location),
+    RecipeAmount1: Int,
+    RecipeLocation2: String (resource_location),
+    RecipeAmount2: Int,
+    RecipeLocation3: String (resource_location),
+    RecipeAmount3: Int,
+    RecipeLocation4: String (resource_location),
+    RecipeAmount4: Int,
+    RecipeLocation5: String (resource_location),
+    RecipeAmount5: Int,
+    RecipeLocation6: String (resource_location),
+    RecipeAmount6: Int,
+    RecipeLocation7: String (resource_location),
+    RecipeAmount7: Int,
+    RecipeUsedSize: Short
+}
+
+$BLOCK_ENTITY_MINECRAFT_BLAST_FURNACE: $BLOCK_ENTITY_SMELTER
+
 $BLOCK_ENTITY_MINECRAFT_BREWING_STAND: {
     CustomName: String (text_component),
     Lock: String,
     Items: [$ITEM],
     BrewTime: Int,
     Fuel: Byte
+}
+
+$BLOCK_ENTITY_MINECRAFT_CAMPFIRE: {
+    Items: [$ITEM],
+    CookingTimes: [I;],
+    CookingTotalTimes: [I;]
 }
 
 $BLOCK_ENTITY_MINECRAFT_CHEST: {
@@ -93,31 +135,7 @@ $BLOCK_ENTITY_MINECRAFT_END_GATEWAY: {
     }
 }
 
-$BLOCK_ENTITY_MINECRAFT_FURNACE: {
-    CustomName: String (text_component),
-    Lock: String,
-    Items: [$ITEM],
-    BurnTime: Short,
-    CookTime: Short,
-    CookTimeTotal: Short,
-    RecipeLocation0: String (resource_location),
-    RecipeAmount0: Int,
-    RecipeLocation1: String (resource_location),
-    RecipeAmount1: Int,
-    RecipeLocation2: String (resource_location),
-    RecipeAmount2: Int,
-    RecipeLocation3: String (resource_location),
-    RecipeAmount3: Int,
-    RecipeLocation4: String (resource_location),
-    RecipeAmount4: Int,
-    RecipeLocation5: String (resource_location),
-    RecipeAmount5: Int,
-    RecipeLocation6: String (resource_location),
-    RecipeAmount6: Int,
-    RecipeLocation7: String (resource_location),
-    RecipeAmount7: Int,
-    RecipeUsedSize: Short
-}
+$BLOCK_ENTITY_MINECRAFT_FURNACE: $BLOCK_ENTITY_SMELTER
 
 $BLOCK_ENTITY_MINECRAFT_HOPPER: {
     CustomName: String (text_component),
@@ -128,8 +146,19 @@ $BLOCK_ENTITY_MINECRAFT_HOPPER: {
     LootTableSeed: Long
 }
 
+$BLOCK_ENTITY_MINECRAFT_JIGSAW: {
+    target_pool: String (resource_location),
+    final_state: String (resource_location),
+    attachement_type: String (resource_location)
+}
+
 $BLOCK_ENTITY_MINECRAFT_JUKEBOX: {
     RecordItem: $ITEM
+}
+
+$BLOCK_ENTITY_MINECRAFT_LECTERN: {
+    Book: $ITEM,
+    Page: Int
 }
 
 $BLOCK_ENTITY_MINECRAFT_SPAWNER: $SPAWNER
@@ -162,6 +191,8 @@ $BLOCK_ENTITY_MINECRAFT_SKULL: {
     Owner: $SKULL_OWNER
 }
 
+$BLOCK_ENTITY_MINECRAFT_SMOKER: $BLOCK_ENTITY_SMELTER
+
 $BLOCK_ENTITY_MINECRAFT_STRUCTURE_BLOCK: {
     name: String,
     author: String,
@@ -177,10 +208,4 @@ $BLOCK_ENTITY_MINECRAFT_STRUCTURE_BLOCK: {
     mirror: String (one_of("NONE", "LEFT_RIGHT", "FRONT_BACK")),
     mode: String (one_of("SAVE", "LOAD", "CORNER", "DATA")),
     ignoreEntities: Byte (boolean)
-}
-
-$BLOCK_ENTITY_MINECRAFT_CAMPFIRE: {
-    Items: [$ITEM],
-    CookingTimes: [I;],
-    CookingTotalTimes: [I;]
 }
