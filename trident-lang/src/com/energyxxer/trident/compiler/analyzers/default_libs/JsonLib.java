@@ -45,7 +45,7 @@ public class JsonLib implements DefaultLibraryProvider {
         globalCtx.put(new Symbol("JSON", Symbol.SymbolVisibility.GLOBAL, block));
     }
 
-    private Object parseJson(JsonElement elem) {
+    public static Object parseJson(JsonElement elem) {
         if(elem.isJsonPrimitive()) {
             JsonPrimitive prim = elem.getAsJsonPrimitive();
             if(prim.isString()) {

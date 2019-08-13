@@ -13,6 +13,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
 import com.energyxxer.trident.compiler.semantics.ILazyValue;
+import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
@@ -51,6 +52,9 @@ public interface VariableTypeHandler<T> {
             }
             if(ILazyValue.class.isAssignableFrom(cls)) {
                 return ILazyValue.class.getName();
+            }
+            if(Symbol.class.isAssignableFrom(cls)) {
+                return Symbol.class.getName();
             }
             return cls.getName();
         }

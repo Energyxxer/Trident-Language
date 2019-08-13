@@ -46,7 +46,9 @@ public class BlockTypeHandler implements VariableTypeHandler<Block> {
             }, value -> {
                 Blockstate newState = new Blockstate();
                 for (Map.Entry<String, Symbol> a : value.entrySet()) {
-                    newState.put(a.getKey(), InterpolationManager.cast(a.getValue(), String.class, pattern, ctx));
+                    if(a.getValue().getValue() != null) {
+                        newState.put(a.getKey(), InterpolationManager.cast(a.getValue().getValue(), String.class, pattern, ctx));
+                    }
                 }
                 object.setBlockstate(newState);
             });

@@ -9,6 +9,14 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.extensions.EJsonObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.sun.org.apache.bcel.internal.generic.RETURN;
+
+import java.util.Collection;
+import java.util.Map;
 
 @AnalyzerMember(key = "Types")
 public class TypeLib implements DefaultLibraryProvider {
@@ -58,6 +66,21 @@ public class TypeLib implements DefaultLibraryProvider {
                 })).createForInstance(null));
         globalCtx.put(new Symbol("Item", Symbol.SymbolVisibility.GLOBAL, item));
 
+        DictionaryObject type = new DictionaryObject();
+        type.put("getDefinitionsForCategory", new MethodWrapper<>("getDefinitionsForCategory", ((instance, params) -> {
+            Collection<Type> types = compiler.getRootCompiler().getModule().minecraft.types.getDictionary((String) params[0]).list();
+            DictionaryObject obj = new DictionaryObject();
+            for(Type t : types) {
+                DictionaryObject inner = new DictionaryObject();
+                for(Map.Entry<String, String> prop : t.getProperties().entrySet()) {
+                    inner.put(prop.getKey(), prop.getValue());
+                }
+                obj.put(t.toString(), inner);
+            }
+
+            return obj;
+        }), String.class).createForInstance(null));
+        globalCtx.put(new Symbol("MinecraftTypes", Symbol.SymbolVisibility.GLOBAL, type));
 
         globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (VariableMethod) (params, patterns, pattern, file) ->
                 (params.length >= 1 && params[0] != null) ? VariableTypeHandler.Static.getShorthandForObject(params[0]) : "null"
