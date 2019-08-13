@@ -7,7 +7,10 @@ public abstract class AbstractProcess {
     private String status;
     private float progress = -1;
 
-    private Thread thread;
+    protected Thread thread;
+
+    private boolean complete = false;
+    private boolean successful = false;
 
     private ArrayList<ProgressListener> progressListeners = new ArrayList<>();
     private ArrayList<CompletionListener> completionListeners = new ArrayList<>();
@@ -18,6 +21,9 @@ public abstract class AbstractProcess {
 
     protected void initializeThread(Runnable runnable) {
         this.thread = new Thread(runnable, this.name);
+        thread.setUncaughtExceptionHandler((th, ex) -> {
+            finalizeProcess(false);
+        });
     }
 
     public boolean isRunning() {
@@ -55,6 +61,8 @@ public abstract class AbstractProcess {
     }
 
     protected void finalizeProcess(boolean success) {
+        this.complete = true;
+        this.successful = success;
         for(CompletionListener completionListener : completionListeners) {
             completionListener.onCompletion(this, success);
         }
@@ -92,5 +100,13 @@ public abstract class AbstractProcess {
 
     public Thread getThread() {
         return thread;
+    }
+
+    public boolean isComplete() {
+        return complete;
+    }
+
+    public boolean isSuccessful() {
+        return successful;
     }
 }

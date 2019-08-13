@@ -97,4 +97,12 @@ public class ProjectSummary {
         TridentSummaryModule summary = getSummaryForFile(file);
         return summary != null ? summary.getFileLocation() : null;
     }
+
+    public void join(ProjectSummary other) {
+        this.types.putAll(other.types);
+        this.tags.putAll(other.tags);
+        this.soundEvents.addAll(other.soundEvents);
+        this.objectives.addAll(other.objectives);
+        this.globalSymbols.addAll(other.globalSymbols);
+    }
 }

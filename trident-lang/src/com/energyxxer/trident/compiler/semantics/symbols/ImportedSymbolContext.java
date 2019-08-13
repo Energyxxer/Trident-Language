@@ -33,7 +33,7 @@ public class ImportedSymbolContext implements ISymbolContext {
 
     @Override
     public @NotNull TridentCompiler getCompiler() {
-        return compiler;
+        return compiler.getRootCompiler();
     }
 
     @Override

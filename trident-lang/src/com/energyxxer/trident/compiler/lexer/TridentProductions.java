@@ -157,9 +157,11 @@ public class TridentProductions {
         ENTRY.addTags(SuggestionTags.DISABLED_INDEX);
         ENTRY.addTags(TridentSuggestionTags.CONTEXT_ENTRY);
         COMMAND = new LazyTokenStructureMatch("COMMAND");
+        COMMAND.addTags(SuggestionTags.ENABLED);
         COMMAND.addTags(TridentSuggestionTags.CONTEXT_COMMAND);
         INSTRUCTION = new LazyTokenStructureMatch("INSTRUCTION");
         MODIFIER = new LazyTokenStructureMatch("MODIFIER");
+        MODIFIER.addTags(SuggestionTags.ENABLED);
         MODIFIER.addTags(TridentSuggestionTags.CONTEXT_MODIFIER);
         TEXT_COMPONENT = new LazyTokenStructureMatch("TEXT_COMPONENT");
         SELECTOR = new LazyTokenStructureMatch("SELECTOR");

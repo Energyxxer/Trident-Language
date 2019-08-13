@@ -22,9 +22,9 @@ public class ReflectionLib implements DefaultLibraryProvider {
         DictionaryObject reflect = new DictionaryObject();
 
         reflect.put("getFilesWithTag",
-                new MethodWrapper<>("getFilesWithTag", ((instance, params) -> getFilesWithTag(((TridentUtil.ResourceLocation) params[0]), compiler)), TridentUtil.ResourceLocation.class).createForInstance(null));
+                new MethodWrapper<>("getFilesWithTag", ((instance, params) -> getFilesWithTag(((TridentUtil.ResourceLocation) params[0]), compiler.getRootCompiler())), TridentUtil.ResourceLocation.class).createForInstance(null));
         reflect.put("getMetadata",
-                new MethodWrapper<>("getMetadata", ((instance, params) -> getMetadata(((TridentUtil.ResourceLocation) params[0]), compiler)), TridentUtil.ResourceLocation.class).createForInstance(null));
+                new MethodWrapper<>("getMetadata", ((instance, params) -> getMetadata(((TridentUtil.ResourceLocation) params[0]), compiler.getRootCompiler())), TridentUtil.ResourceLocation.class).createForInstance(null));
         reflect.put("getCurrentFile", (VariableMethod) (params, patterns, pattern, ctx) -> ctx.getStaticParentFile().getResourceLocation());
         reflect.put("getWritingFile", (VariableMethod) (params, patterns, pattern, ctx) -> ctx.getWritingFile().getResourceLocation());
         reflect.put("insertToFile", (VariableMethod) this::insertToFile);

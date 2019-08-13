@@ -18,6 +18,7 @@ import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
@@ -57,6 +58,17 @@ public class ProjectSummarizer {
     }
 
     private void runSummary() {
+
+        if(parentSummarizer != null) {
+            ProjectSummarizer next = parentSummarizer;
+            while(next != null) {
+                if(next.rootDir.equals(this.rootDir)) {
+                    return;
+                }
+                next = next.parentSummarizer;
+            }
+        }
+
         try {
             properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + TridentCompiler.PROJECT_FILE_NAME)), JsonObject.class);
         } catch(JsonSyntaxException | IOException x) {
@@ -69,6 +81,34 @@ public class ProjectSummarizer {
         } catch(IOException x) {
             logException(x);
             return;
+        }
+
+        ArrayList<ProjectSummarizer> dependencies = new ArrayList<>();
+
+        if(properties.has("dependencies") && properties.get("dependencies").isJsonArray()) {
+            for(JsonElement rawElem : properties.get("dependencies").getAsJsonArray()) {
+                if(rawElem.isJsonObject()) {
+                    JsonObject obj = rawElem.getAsJsonObject();
+                    if(obj.has("path") && obj.get("path").isJsonPrimitive() && obj.get("path").getAsJsonPrimitive().isString()) {
+                        String dependencyPath = obj.get("path").getAsString();
+
+                        dependencies.add(new ProjectSummarizer(TridentCompiler.newFileObject(dependencyPath, rootDir)));
+                    }
+                }
+            }
+        }
+
+        for(ProjectSummarizer dependency : dependencies) {
+            dependency.setParentSummarizer(this);
+            dependency.setSourceCache(this.getSourceCache());
+            try {
+                dependency.runSummary();
+            } catch(Exception ex) {
+                logException(ex);
+                return;
+            }
+            this.setSourceCache(dependency.getSourceCache());
+            this.summary.join(dependency.summary);
         }
 
         // Add default minecraft types and tags:
@@ -111,6 +151,16 @@ public class ProjectSummarizer {
         for(java.lang.Runnable r : completionListeners) {
             r.run();
         }
+    }
+
+    private ProjectSummarizer parentSummarizer = null;
+
+    public ProjectSummarizer getParentSummarizer() {
+        return parentSummarizer;
+    }
+
+    public void setParentSummarizer(ProjectSummarizer parentSummarizer) {
+        this.parentSummarizer = parentSummarizer;
     }
 
     private void recursivelyParse(LazyLexer lex, File dir) {

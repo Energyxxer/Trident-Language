@@ -60,7 +60,7 @@ public class SpecialFileManager {
     }
 
     public TridentCompiler getCompiler() {
-        return compiler;
+        return compiler.getRootCompiler();
     }
 
     public void put(SpecialFile file) {

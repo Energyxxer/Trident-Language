@@ -80,7 +80,7 @@ public class TridentCompiler extends AbstractProcess {
     private Gson gson;
 
     //Stacks
-    private ISymbolContext global = new GlobalSymbolContext(this);
+    private GlobalSymbolContext global = new GlobalSymbolContext(this);
     private CallStack callStack = new CallStack();
     private TryStack tryStack = new TryStack();
     private Stack<TridentFile> writingStack = new Stack<>();
@@ -88,11 +88,15 @@ public class TridentCompiler extends AbstractProcess {
     //Caches
     private HashMap<Integer, Integer> inResourceCache = new HashMap<>();
     private HashMap<Integer, Integer> outResourceCache = new HashMap<>();
+    private Dependency.Mode dependencyMode;
 
     public TridentCompiler(File rootDir) {
         super("Trident-Compiler[" + rootDir.getName() + "]");
         this.rootDir = rootDir;
         initializeThread(this::runCompilation);
+        this.thread.setUncaughtExceptionHandler((th, ex) -> {
+            logException(ex);
+        });
         report = new CompilerReport();
 
         specialFileManager = new SpecialFileManager(this);
@@ -104,6 +108,18 @@ public class TridentCompiler extends AbstractProcess {
     }
 
     private void runCompilation() {
+
+        if(parentCompiler != null) {
+            TridentCompiler next = parentCompiler;
+            while(next != null) {
+                if(next.rootDir.equals(this.rootDir)) {
+                    Debug.log("Stopping circular dependencies");
+                    finalizeProcess(false);
+                    return;
+                }
+                next = next.parentCompiler;
+            }
+        }
 
         this.setProgress("Initializing analyzers");
 
@@ -130,7 +146,7 @@ public class TridentCompiler extends AbstractProcess {
         }
 
         if(properties.has("resources-output") && properties.get("resources-output").isJsonPrimitive() && properties.get("resources-output").getAsJsonPrimitive().isString()) {
-            resourcePack = new ResourcePackGenerator(this, new File(properties.get("resources-output").getAsString()));
+            resourcePack = new ResourcePackGenerator(this, newFileObject(properties.get("resources-output").getAsString()));
         }
 
         this.setProgress("Importing vanilla definitions");
@@ -167,6 +183,61 @@ public class TridentCompiler extends AbstractProcess {
             return;
         }
 
+        this.setProgress("Resolving dependencies");
+        ArrayList<Dependency> dependencies = new ArrayList<>();
+
+        if(properties.has("dependencies") && properties.get("dependencies").isJsonArray()) {
+            for(JsonElement rawElem : properties.get("dependencies").getAsJsonArray()) {
+                if(rawElem.isJsonObject()) {
+                    JsonObject obj = rawElem.getAsJsonObject();
+                    if(obj.has("path") && obj.get("path").isJsonPrimitive() && obj.get("path").getAsJsonPrimitive().isString()) {
+                        String dependencyPath = obj.get("path").getAsString();
+                        Dependency dependency = new Dependency(new TridentCompiler(newFileObject(dependencyPath)));
+                        if(obj.has("export") && obj.get("export").isJsonPrimitive() && obj.get("export").getAsJsonPrimitive().isBoolean()) {
+                            dependency.doExport = obj.get("export").getAsBoolean();
+                        }
+                        if(obj.has("mode") && obj.get("mode").isJsonPrimitive() && obj.get("mode").getAsJsonPrimitive().isString()) {
+                            switch(obj.get("mode").getAsString()) {
+                                case "precompile": {
+                                    dependency.mode = Dependency.Mode.PRECOMPILE;
+                                    break;
+                                }
+                                case "combine": {
+                                    dependency.mode = Dependency.Mode.COMBINE;
+                                    break;
+                                }
+                            }
+                        }
+
+                        dependencies.add(dependency);
+                    }
+                }
+            }
+        }
+
+        for(Dependency dependency : dependencies) {
+            dependency.compiler.setParentCompiler(this);
+            dependency.compiler.setDependencyMode(dependency.mode);
+            dependency.compiler.addProgressListener((process) -> this.updateStatus(process.getStatus()));
+            try {
+                dependency.compiler.runCompilation();
+            } catch(Exception ex) {
+                logException(ex);
+                return;
+            }
+            report.addNotices(dependency.compiler.getReport().getAllNotices());
+            if(!dependency.compiler.isSuccessful()) {
+                finalizeProcess(false);
+            } else {
+                files.putAll(dependency.compiler.files);
+                if(!dependency.doExport) dependency.compiler.module.propagateExport(false);
+                module.join(dependency.compiler.module);
+                global.join(dependency.compiler.global);
+
+                dependency.compiler.setRerouteRoot(true);
+            }
+        }
+
         Path dataRoot = new File(rootDir, "datapack" + File.separator + "data").toPath();
 
         for(Map.Entry<File, ParsingSignature> entry : filePatterns.entrySet()) {
@@ -179,9 +250,11 @@ public class TridentCompiler extends AbstractProcess {
                     break;
                 }
             }
-            else {
-                report.addNotice(new Notice(NoticeType.WARNING, "Found .tdn file outside of a function folder, ignoring: " + relativePath, entry.getValue().getPattern()));
-            }
+        }
+
+        if(parentCompiler != null && dependencyMode == Dependency.Mode.COMBINE) {
+            finalizeProcess(true);
+            return;
         }
 
         files.values().forEach(TridentFile::checkCircularRequires);
@@ -226,29 +299,30 @@ public class TridentCompiler extends AbstractProcess {
         }
 
 
+        if(parentCompiler != null && dependencyMode == Dependency.Mode.PRECOMPILE) {
+            finalizeProcess(true);
+            return;
+        }
+
         updateProgress(-1);
         this.setProgress("Generating data pack");
-        {
-            if(properties.has("datapack-output") && properties.get("datapack-output").isJsonPrimitive() && properties.get("datapack-output").getAsJsonPrimitive().isString()) {
-                try {
-                    module.compile(new File(properties.get("datapack-output").getAsString()));
-                } catch(IOException x) {
-                    logException(x, "Error while generating output data pack: ");
-                }
-            } else {
-                this.report.addNotice(new Notice(NoticeType.ERROR, "Datapack output directory not specified"));
+        if(properties.has("datapack-output") && properties.get("datapack-output").isJsonPrimitive() && properties.get("datapack-output").getAsJsonPrimitive().isString()) {
+            try {
+                module.compile(newFileObject(properties.get("datapack-output").getAsString()));
+            } catch(IOException x) {
+                logException(x, "Error while generating output data pack: ");
             }
+        } else {
+            this.report.addNotice(new Notice(NoticeType.ERROR, "Datapack output directory not specified"));
         }
 
 
         updateProgress(0);
         this.setProgress("Generating resource pack");
-        {
-            try {
-                resourcePack.generate();
-            } catch(IOException x) {
-                logException(x, "Error while generating output resource pack: ");
-            }
+        try {
+            resourcePack.generate();
+        } catch(IOException x) {
+            logException(x, "Error while generating output resource pack: ");
         }
 
         finalizeProcess(true);
@@ -394,6 +468,21 @@ public class TridentCompiler extends AbstractProcess {
         }
     }
 
+    private boolean rerouteRoot = false;
+
+    private TridentCompiler parentCompiler = null;
+    public TridentCompiler getRootCompiler() {
+        return parentCompiler != null && rerouteRoot ? parentCompiler.getRootCompiler() : this;
+    }
+
+    public void setParentCompiler(TridentCompiler parentCompiler) {
+        this.parentCompiler = parentCompiler;
+    }
+
+    private void setRerouteRoot(boolean rerouteRoot) {
+        this.rerouteRoot = rerouteRoot;
+    }
+
     @Override
     public void updateProgress(float progress) {
         super.updateProgress(progress);
@@ -404,13 +493,14 @@ public class TridentCompiler extends AbstractProcess {
     }
 
     private void logException(Throwable x, String prefix) {
-        this.report.addNotice(new Notice(NoticeType.ERROR, prefix+x.toString()));
+        this.report.addNotice(new Notice(NoticeType.ERROR, prefix+x.toString() + " ; See console for details"));
+        x.printStackTrace();
         finalizeProcess(false);
     }
 
     protected void finalizeProcess(boolean success) {
-        this.setProgress("Compilation " + (report.getErrors().isEmpty() ? "completed" : "interrupted") + " with " + report.getTotalsString(), false);
-        super.finalizeProcess(report.getErrors().isEmpty());
+        this.setProgress("Compilation " + (success ? "completed" : "interrupted") + " with " + report.getTotalsString(), false);
+        super.finalizeProcess(success);
     }
 
     public void setProgress(String message) {
@@ -435,6 +525,15 @@ public class TridentCompiler extends AbstractProcess {
 
     public JsonObject getProperties() {
         return properties;
+    }
+
+    private File newFileObject(String path) {
+        return newFileObject(path, rootDir);
+    }
+
+    public static File newFileObject(String path, File rootDir) {
+        path = Paths.get(path.replace("$PROJECT_DIR$", rootDir.getAbsolutePath())).normalize().toString();
+        return new File(path);
     }
 
     public TridentFile getFile(TridentUtil.ResourceLocation loc) {
@@ -566,6 +665,14 @@ public class TridentCompiler extends AbstractProcess {
         return module;
     }
 
+    public void setDependencyMode(Dependency.Mode dependencyMode) {
+        this.dependencyMode = dependencyMode;
+    }
+
+    public Dependency.Mode getDependencyMode() {
+        return dependencyMode;
+    }
+
     private static class Resources {
 
         public static final HashMap<String, String> defaults = new HashMap<>();
@@ -592,6 +699,20 @@ public class TridentCompiler extends AbstractProcess {
                 Debug.log("Unable to access file: " + file, Debug.MessageType.ERROR);
             }
             return "";
+        }
+    }
+
+    private static class Dependency {
+        private enum Mode {
+            PRECOMPILE, COMBINE
+        }
+
+        TridentCompiler compiler;
+        boolean doExport = false;
+        Mode mode = Mode.PRECOMPILE;
+
+        public Dependency(TridentCompiler compiler) {
+            this.compiler = compiler;
         }
     }
 }

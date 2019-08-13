@@ -28,8 +28,8 @@ public class FileLib implements DefaultLibraryProvider {
                     while(rawPath.startsWith("/")) {
                         rawPath = rawPath.substring(1);
                     }
-                    Path path = compiler.getRootDir().toPath().resolve(Paths.get(rawPath).normalize());
-                    if(!path.startsWith(compiler.getRootDir().toPath())) {
+                    Path path = compiler.getRootCompiler().getRootDir().toPath().resolve(Paths.get(rawPath).normalize());
+                    if(!path.startsWith(compiler.getRootCompiler().getRootDir().toPath())) {
                         throw new IllegalArgumentException("Cannot read files outside of the current project: " + path);
                     }
                     if(Files.exists(path)) {
@@ -52,7 +52,7 @@ public class FileLib implements DefaultLibraryProvider {
             if(path.startsWith(Paths.get("../"))) {
                 throw new IllegalArgumentException("Cannot write files outside the resource pack: " + path);
             }
-            ResourcePackGenerator resourcePack = compiler.getResourcePackGenerator();
+            ResourcePackGenerator resourcePack = compiler.getRootCompiler().getResourcePackGenerator();
             if(resourcePack != null) {
                 resourcePack.exportables.add(new RawExportable(path.toString(), ((String) params[1]).getBytes(TridentCompiler.DEFAULT_CHARSET)));
             }
@@ -68,7 +68,7 @@ public class FileLib implements DefaultLibraryProvider {
             if(path.startsWith(Paths.get("../"))) {
                 throw new IllegalArgumentException("Cannot write files outside the data pack: " + path);
             }
-            compiler.getModule().exportables.add(new RawExportable(path.toString(), ((String) params[1]).getBytes(TridentCompiler.DEFAULT_CHARSET)));
+            compiler.getRootCompiler().getModule().exportables.add(new RawExportable(path.toString(), ((String) params[1]).getBytes(TridentCompiler.DEFAULT_CHARSET)));
             return null;
         }), String.class, String.class).createForInstance(null));
     }

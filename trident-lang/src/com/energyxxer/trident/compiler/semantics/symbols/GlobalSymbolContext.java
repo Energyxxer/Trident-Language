@@ -27,7 +27,7 @@ public class GlobalSymbolContext implements ISymbolContext {
 
     @Override
     public @NotNull TridentCompiler getCompiler() {
-        return compiler;
+        return compiler.getRootCompiler();
     }
 
     @Override
@@ -38,5 +38,9 @@ public class GlobalSymbolContext implements ISymbolContext {
     @Override
     public void put(Symbol symbol) {
         map.put(symbol.getName(), symbol);
+    }
+
+    public void join(GlobalSymbolContext other) {
+        map.putAll(other.map);
     }
 }

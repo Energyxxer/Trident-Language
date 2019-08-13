@@ -20,12 +20,12 @@ public class TypeLib implements DefaultLibraryProvider {
                 new MethodWrapper<>("exists", ((instance, params) -> {
                     TridentUtil.ResourceLocation loc = (TridentUtil.ResourceLocation)params[0];
                     if(loc == null) return false;
-                    return compiler.getModule().namespaceExists(loc.namespace) && compiler.getModule().getNamespace(loc.namespace).types.block.exists(loc.body);
+                    return compiler.getRootCompiler().getModule().namespaceExists(loc.namespace) && compiler.getRootCompiler().getModule().getNamespace(loc.namespace).types.block.exists(loc.body);
                 }), TridentUtil.ResourceLocation.class).createForInstance(null));
         block.put("getAll",
                 new MethodWrapper<>("getAll", ((instance, params) -> {
                     ListObject all = new ListObject();
-                    for(Namespace ns : compiler.getModule().getAllNamespaces()) {
+                    for(Namespace ns : compiler.getRootCompiler().getModule().getAllNamespaces()) {
                         for(Type type : ns.types.block.list()) {
                             if(!(type instanceof AliasType)) {
                                 all.add(new TridentUtil.ResourceLocation(type.toString()));
@@ -42,12 +42,12 @@ public class TypeLib implements DefaultLibraryProvider {
                 new MethodWrapper<>("exists", ((instance, params) -> {
                     TridentUtil.ResourceLocation loc = (TridentUtil.ResourceLocation) params[0];
                     if(loc == null) return false;
-                    return compiler.getModule().namespaceExists(loc.namespace) && compiler.getModule().getNamespace(loc.namespace).types.item.exists(loc.body);
+                    return compiler.getRootCompiler().getModule().namespaceExists(loc.namespace) && compiler.getRootCompiler().getModule().getNamespace(loc.namespace).types.item.exists(loc.body);
                 }), TridentUtil.ResourceLocation.class).createForInstance(null));
         item.put("getAll",
                 new MethodWrapper<>("getAll", ((instance, params) -> {
                     ListObject all = new ListObject();
-                    for(Namespace ns : compiler.getModule().getAllNamespaces()) {
+                    for(Namespace ns : compiler.getRootCompiler().getModule().getAllNamespaces()) {
                         for(Type type : ns.types.item.list()) {
                             if(!(type instanceof AliasType)) {
                                 all.add(new TridentUtil.ResourceLocation(type.toString()));

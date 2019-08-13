@@ -35,7 +35,7 @@ public class SymbolContext implements ISymbolContext {
     }
 
     public @NotNull TridentCompiler getCompiler() {
-        return compiler;
+        return compiler.getRootCompiler();
     }
 
     public TridentFile getStaticParentFile() {
