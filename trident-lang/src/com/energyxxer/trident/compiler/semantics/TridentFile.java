@@ -7,7 +7,6 @@ import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.functionlogic.functions.FunctionComment;
 import com.energyxxer.commodore.functionlogic.functions.FunctionSection;
-import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
@@ -34,8 +33,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class TridentFile extends SymbolContext {
-    private final CommandModule module;
-    private final Namespace namespace;
+    private String namespace;
     private TokenPattern<?> pattern;
     private final HashMap<TokenPattern<?>, TridentUtil.ResourceLocation> requires = new HashMap<>();
     private ArrayList<TridentUtil.ResourceLocation> cascadingRequires = null;
@@ -62,8 +60,7 @@ public class TridentFile extends SymbolContext {
     private TridentFile(TridentCompiler compiler, ISymbolContext parentContext, Path relSourcePath, TokenPattern<?> filePattern, int languageLevel) {
         super(compiler);
         this.parentScope = parentContext;
-        this.module = compiler.getModule();
-        this.namespace = module.getNamespace(relSourcePath.getName(0).toString());
+        this.namespace = relSourcePath.getName(0).toString();
         this.pattern = filePattern;
         this.relSourcePath = relSourcePath;
 
@@ -71,15 +68,15 @@ public class TridentFile extends SymbolContext {
 
         String functionPath = relSourcePath.subpath(2, relSourcePath.getNameCount()).toString();
         functionPath = functionPath.substring(0, functionPath.length()-".tdn".length()).replaceAll(Pattern.quote(File.separator), "/");
-        this.location = new TridentUtil.ResourceLocation(this.namespace.getName() + ":" + functionPath);
+        this.location = new TridentUtil.ResourceLocation(this.namespace + ":" + functionPath);
 
         resolveDirectives();
-        if(!compileOnly && namespace.functions.contains(functionPath)) {
-            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "A function by the name '" + namespace.getName() + ":" + functionPath + "' already exists", pattern));
+        if(!compileOnly && getNamespace().functions.contains(functionPath)) {
+            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "A function by the name '" + namespace + ":" + functionPath + "' already exists", pattern));
             valid = false;
         }
 
-        this.function = compileOnly ? null : namespace.functions.get(functionPath);
+        this.function = compileOnly ? null : getNamespace().functions.get(functionPath);
     }
 
     private void resolveDirectives() {
@@ -116,7 +113,7 @@ public class TridentFile extends SymbolContext {
                     case "LANGUAGE_LEVEL_DIRECTIVE": {
                         int level = CommonParsers.parseInt(directiveBody.find("INTEGER"), this);
                         if(level < 1 || level > 3) {
-                            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Invalid language level: " + level, directiveBody.find("INTEGER")));
+                            getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Invalid language level: " + level, directiveBody.find("INTEGER")));
                         } else this.languageLevel = level;
                         break;
                     }
@@ -133,7 +130,7 @@ public class TridentFile extends SymbolContext {
                         break;
                     }
                     default: {
-                        compiler.getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown directive type '" + directiveBody.getName() + "'", directiveBody));
+                        getCompiler().getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown directive type '" + directiveBody.getName() + "'", directiveBody));
                     }
                 }
             }
@@ -220,7 +217,7 @@ public class TridentFile extends SymbolContext {
         if(entriesResolved) return;
 
         if(function != null) tags.forEach(l -> {
-            Tag tag = module.getNamespace(l.namespace).tags.functionTags.create(l.body);
+            Tag tag = getCompiler().getModule().getNamespace(l.namespace).tags.functionTags.create(l.body);
             tag.setExport(true);
             tag.addValue(new FunctionReference(this.function));
         });
@@ -267,7 +264,7 @@ public class TridentFile extends SymbolContext {
     }
 
     public Namespace getNamespace() {
-        return namespace;
+        return getCompiler().getModule().getNamespace(namespace);
     }
 
     public Path getPath() {
@@ -287,11 +284,11 @@ public class TridentFile extends SymbolContext {
     }
 
     public Function getTickFunction() {
-        boolean creating = !namespace.functions.contains("trident_tick");
-        Function tickFunction = namespace.functions.get("trident_tick");
+        boolean creating = !getNamespace().functions.contains("trident_tick");
+        Function tickFunction = getNamespace().functions.get("trident_tick");
 
         if(creating) {
-            Tag tickTag = compiler.getModule().minecraft.tags.functionTags.create("tick");
+            Tag tickTag = getCompiler().getModule().minecraft.tags.functionTags.create("tick");
             tickTag.setExport(true);
             tickTag.addValue(new FunctionReference(tickFunction));
         }
