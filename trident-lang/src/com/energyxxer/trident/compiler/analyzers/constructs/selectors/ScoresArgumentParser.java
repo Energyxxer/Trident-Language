@@ -7,6 +7,7 @@ import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -15,7 +16,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 @AnalyzerMember(key = "scores")
 public class ScoresArgumentParser implements SimpleSelectorArgumentParser {
     @Override
-    public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx, PathContext pathContext) {
         TokenList scoreList = (TokenList) pattern.find("SCORE_LIST");
 
         ScoreArgument scores = new ScoreArgument();

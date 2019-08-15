@@ -9,15 +9,12 @@ import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
-
 @AnalyzerMember(key = "nbt")
 public class NBTArgumentParser implements SimpleSelectorArgumentParser {
     @Override
-    public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx, PathContext pathContext) {
         TagCompound nbt = NBTParser.parseCompound(pattern.find("NBT_COMPOUND"), ctx);
-        PathContext context = new PathContext().setIsSetting(false).setProtocol(ENTITY);
-        NBTParser.analyzeTag(nbt, context, pattern.find("NBT_COMPOUND"), ctx);
+        NBTParser.analyzeTag(nbt, pathContext, pattern.find("NBT_COMPOUND"), ctx);
         return new NBTArgument(nbt, pattern.find("NEGATED") != null);
     }
 }

@@ -8,6 +8,7 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.advancement.Adv
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
@@ -17,7 +18,7 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 @AnalyzerMember(key = "advancements")
 public class AdvancementArgumentParser implements SimpleSelectorArgumentParser, SelectorArgumentParser {
     @Override
-    public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx, PathContext pathContext) {
         TokenList advancementList = (TokenList) pattern.find("ADVANCEMENT_LIST");
 
         AdvancementArgument advancements = new AdvancementArgument();

@@ -20,6 +20,7 @@ import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
+import com.energyxxer.util.logger.Debug;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -283,8 +284,18 @@ public class NBTParser {
             DataTypeQueryResponse response = file.getCompiler().getTypeMap().collectTypeInformation(next.getPath(), context);
 
             if(!response.isEmpty()) {
+                ArrayList<DataType> filteredPossibleTypes = new ArrayList<>(response.getPossibleTypes());
+                filteredPossibleTypes.removeIf(t -> t.getCorrespondingTagType() != value.getClass());
+
+                if(filteredPossibleTypes.size() > 1) {
+                    Debug.log("Ambiguity between possible types, skipping it");
+                    Debug.log(filteredPossibleTypes);
+                    //Ambiguity between possible types, give it a free pass
+                    continue;
+                }
+
                 boolean matchesType = false;
-                for(DataType type : response.getPossibleTypes()) {
+                for(DataType type : filteredPossibleTypes) {
                     if(type.getCorrespondingTagType() == value.getClass()) {
                         matchesType = true;
 

@@ -7,6 +7,7 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.TagArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -21,7 +22,7 @@ import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelec
 @AnalyzerMember(key = "type")
 public class TypeArgumentParser implements SelectorArgumentParser {
     @Override
-    public Collection<SelectorArgument> parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Collection<SelectorArgument> parse(TokenPattern<?> pattern, ISymbolContext ctx, PathContext pathContext) {
         boolean negated = pattern.find("NEGATED") != null;
         ArrayList<SelectorArgument> args = new ArrayList<>();
 

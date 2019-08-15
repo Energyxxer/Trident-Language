@@ -5,9 +5,13 @@ import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgument;
+import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
+import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.nbtmapper.tags.PathProtocol;
 import com.energyxxer.trident.compiler.analyzers.constructs.selectors.SelectorArgumentParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
@@ -33,14 +37,23 @@ public class EntityParser {
     }
 
     private static void parseSelectorArguments(TokenList list, Selector selector, TokenPattern<?> pattern, ISymbolContext ctx) {
+        PathContext pathContext = new PathContext().setIsSetting(false).setProtocol(PathProtocol.ENTITY);
         for(TokenPattern<?> rawArg : list.getContents()) {
             if(rawArg.getName().equals("SELECTOR_ARGUMENT")) {
                 SelectorArgumentParser parser = AnalyzerManager.getAnalyzer(SelectorArgumentParser.class, rawArg.flattenTokens().get(0).value);
                 if(parser != null) {
                     try {
-                        Collection<SelectorArgument> arg = parser.parse(((TokenStructure)((TokenStructure) rawArg).getContents().find("SELECTOR_ARGUMENT_VALUE")).getContents(), ctx);
-                        if(arg != null && !arg.isEmpty()) {
-                            selector.addArgumentsMerging(arg);
+                        Collection<SelectorArgument> args = parser.parse(((TokenStructure)((TokenStructure) rawArg).getContents().find("SELECTOR_ARGUMENT_VALUE")).getContents(), ctx, pathContext);
+                        if(args != null && !args.isEmpty()) {
+                            selector.addArgumentsMerging(args);
+                            for(SelectorArgument arg : args) {
+                                if(arg instanceof TypeArgument && !((TypeArgument) arg).isNegated()) {
+                                    Type entityType = ((TypeArgument) arg).getType();
+                                    if(entityType.isStandalone()) {
+                                        pathContext.setProtocolMetadata(entityType);
+                                    }
+                                }
+                            }
                         }
                     } catch(CommodoreException x) {
                         TridentException.handleCommodoreException(x, rawArg, ctx).invokeThrow();
