@@ -24,6 +24,8 @@ public class TridentLexerProfile extends LexerProfile {
 
     public static final Pattern IDENTIFIER_A_REGEX = Pattern.compile("[a-zA-Z0-9._\\-+]+");
     public static final Pattern IDENTIFIER_B_REGEX = Pattern.compile("[^@\\s]\\S*");
+    public static final Pattern IDENTIFIER_B_TOKEN_REGEX = Pattern.compile("[^@$\\s][^\\s]*");
+    public static final Pattern IDENTIFIER_B_LIMITED_TOKEN_REGEX = Pattern.compile("[^@$\\s]((?!->)[^\\s>])*");
     public static final String IDENTIFIER_C_REGEX = "\\S+";
     public static final String IDENTIFIER_D_REGEX = "[a-zA-Z0-9_\\-+]+";
 
@@ -412,7 +414,58 @@ public class TridentLexerProfile extends LexerProfile {
         });
 
         contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_A, "[a-zA-Z0-9._\\-+]"));
-        contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_B, "[^\\s<>-]", "[^@\\$\\s<>-]"));
+
+        contexts.add(new LexerContext() {
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                Matcher matcher = IDENTIFIER_B_TOKEN_REGEX.matcher(str);
+
+                if(matcher.lookingAt()) {
+                    int length = matcher.end();
+                    if(length <= 0) return new ScannerContextResponse(false);
+                    return new ScannerContextResponse(true, str.substring(0,length), IDENTIFIER_TYPE_B);
+                } else return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ContextCondition getCondition() {
+                return ContextCondition.LEADING_WHITESPACE;
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(IDENTIFIER_TYPE_B);
+            }
+        });
+
+        contexts.add(new LexerContext() {
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                Matcher matcher = IDENTIFIER_B_LIMITED_TOKEN_REGEX.matcher(str);
+
+                if(matcher.lookingAt()) {
+                    int length = matcher.end();
+                    if(length <= 0) return new ScannerContextResponse(false);
+                    return new ScannerContextResponse(true, str.substring(0,length), IDENTIFIER_TYPE_B_LIMITED);
+                } else return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ContextCondition getCondition() {
+                return ContextCondition.LEADING_WHITESPACE;
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(IDENTIFIER_TYPE_B_LIMITED);
+            }
+        });
+
+
+
+
         contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_C, "\\S"));
         contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_D, "[^\\s\\[\\].{}\"<>]"));
 

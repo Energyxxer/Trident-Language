@@ -108,8 +108,8 @@ public class TridentProductions {
     private final LazyTokenStructureMatch LIST = new LazyTokenStructureMatch("LIST");
 
 
-    //grouped arguments
     public final LazyTokenStructureMatch ENTITY = new LazyTokenStructureMatch("ENTITY");
+    public final LazyTokenStructureMatch LIMITED_ENTITY = new LazyTokenStructureMatch("ENTITY");
     public final LazyTokenStructureMatch INTERPOLATION_BLOCK;
     private final LazyTokenStructureMatch INTERPOLATION_VALUE;
     private final LazyTokenStructureMatch ROOT_INTERPOLATION_VALUE;
@@ -211,7 +211,7 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"));
             ROOT_INTERPOLATION_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
             ROOT_INTERPOLATION_VALUE.add(ofType(STRING_LITERAL).setName("STRING_LITERAL"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("entity").setName("VALUE_WRAPPER_KEY"), brace("<"), ENTITY, brace(">")).setName("WRAPPED_ENTITY"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("entity").setName("VALUE_WRAPPER_KEY"), brace("<"), LIMITED_ENTITY, brace(">")).setName("WRAPPED_ENTITY"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("block").setName("VALUE_WRAPPER_KEY"), brace("<"), BLOCK_TAGGED, brace(">")).setName("WRAPPED_BLOCK"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("item").setName("VALUE_WRAPPER_KEY"), brace("<"), ITEM_TAGGED, brace(">")).setName("WRAPPED_ITEM"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("text_component").setName("VALUE_WRAPPER_KEY"), brace("<"), TEXT_COMPONENT, brace(">")).setName("WRAPPED_TEXT_COMPONENT"));
@@ -345,6 +345,10 @@ public class TridentProductions {
         ENTITY.add(PLAYER_NAME);
         ENTITY.add(SELECTOR);
         ENTITY.add(group(INTERPOLATION_BLOCK, optional(glue(), brace("["), list(SELECTOR_ARGUMENT, comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST"), brace("]")).setName("APPENDED_ARGUMENTS")).setName("ENTITY_VARIABLE"));
+
+        LIMITED_ENTITY.add(struct("PLAYER_NAME").add(identifierBLimited()));
+        LIMITED_ENTITY.add(SELECTOR);
+        LIMITED_ENTITY.add(group(INTERPOLATION_BLOCK, optional(glue(), brace("["), list(SELECTOR_ARGUMENT, comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST"), brace("]")).setName("APPENDED_ARGUMENTS")).setName("ENTITY_VARIABLE"));
 
         NEW_ENTITY_LITERAL = group(resourceLocationFixer, ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST"), brace("]")).setName("IMPLEMENTED_COMPONENTS"), optional(NBT_COMPOUND).setName("NEW_ENTITY_NBT")).setName("NEW_ENTITY_LITERAL");
 
@@ -1856,7 +1860,7 @@ public class TridentProductions {
         LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead).setName("POINTER_HEAD");
 
         LazyTokenGroupMatch varPointer = group(INTERPOLATION_BLOCK, optional(anyHead).setName("POINTER_HEAD_WRAPPER")).setName("VARIABLE_POINTER");
-        LazyTokenGroupMatch entityPointer = group(ENTITY, anyHead).setName("ENTITY_POINTER");
+        LazyTokenGroupMatch entityPointer = group(LIMITED_ENTITY, anyHead).setName("ENTITY_POINTER");
         LazyTokenGroupMatch blockPointer = group(brace("("), COORDINATE_SET, brace(")"), nbtHead).setName("BLOCK_POINTER");
 
         //LazyTokenGroupMatch nbtPointer = group(choice(ENTITY, group(brace("("), COORDINATE_SET, brace(")"))), nbtHead);
@@ -2256,6 +2260,10 @@ public class TridentProductions {
 
     private LazyTokenStructureMatch identifierB() {
         return choice(ofType(IDENTIFIER_TYPE_B).setName("RAW_IDENTIFIER_B"), string()).setName("IDENTIFIER_B");
+    }
+
+    private LazyTokenStructureMatch identifierBLimited() {
+        return choice(ofType(IDENTIFIER_TYPE_B_LIMITED).setName("RAW_IDENTIFIER_B"), string()).setName("IDENTIFIER_B");
     }
 
     private static LazyTokenPatternMatch identifierC() {
