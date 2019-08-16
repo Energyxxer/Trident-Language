@@ -1176,10 +1176,10 @@ public class TridentProductions {
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE");
             g.append(new LazyTokenGroupMatch().append(resourceLocationFixer).append(ITEM_ID).setName("RESOURCE_NAME"));
-            g.append(optional(hash(), integer()).setName("APPENDED_MODEL_DATA"));
+            g.append(optional(glue(), hash(), integer()).setName("APPENDED_MODEL_DATA"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM.add(g);
-            ITEM.add(group(INTERPOLATION_BLOCK, optional(hash(), integer()).setName("APPENDED_MODEL_DATA"), optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("ITEM_VARIABLE"));
+            ITEM.add(group(INTERPOLATION_BLOCK, optional(glue(), hash(), integer()).setName("APPENDED_MODEL_DATA"), optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("ITEM_VARIABLE"));
             ITEM_TAGGED.add(ITEM);
         }
 
