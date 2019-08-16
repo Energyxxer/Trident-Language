@@ -39,7 +39,7 @@ public class StopSoundParser implements SimpleCommandParser {
                     TokenPattern<?> rawResource = inner.find("SOUND_RESOURCE.RESOURCE_LOCATION");
                     TridentUtil.ResourceLocation soundResource = CommonParsers.parseResourceLocation(rawResource, ctx);
                     soundResource.assertStandalone(rawResource, ctx);
-                    return new StopSoundCommand(entity, rawResource.toString());
+                    return new StopSoundCommand(entity, soundResource.toString());
                 }
                 default: {
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
