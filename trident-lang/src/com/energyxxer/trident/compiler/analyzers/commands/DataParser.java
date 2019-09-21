@@ -3,8 +3,6 @@ package com.energyxxer.trident.compiler.analyzers.commands;
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.data.*;
-import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
-import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -15,8 +13,8 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.BLOCK_ENTITY;
 import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
@@ -38,15 +36,11 @@ public class DataParser implements SimpleCommandParser {
     }
 
     private Command parseRemove(TokenPattern<?> inner, ISymbolContext ctx) {
-        Object target = parseTarget(inner.find("DATA_TARGET"), ctx);
+        DataHolder target = parseTarget(inner.find("DATA_TARGET"), ctx);
         NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"), ctx);
 
         try {
-            if(target instanceof CoordinateSet) {
-                return new DataRemoveCommand((CoordinateSet) target, path);
-            } else {
-                return new DataRemoveCommand((Entity) target, path);
-            }
+            return new DataRemoveCommand(target, path);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, inner, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, inner.find("DATA_TARGET.ENTITY"))
@@ -56,7 +50,7 @@ public class DataParser implements SimpleCommandParser {
     }
 
     private Command parseModify(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Object target = parseTarget(pattern.find("DATA_TARGET"), ctx);
+        DataHolder target = parseTarget(pattern.find("DATA_TARGET"), ctx);
         NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"), ctx);
         DataModifyCommand.ModifyOperation operation;
 
@@ -92,11 +86,7 @@ public class DataParser implements SimpleCommandParser {
         DataModifyCommand.ModifySource source = parseSource(inner.find("DATA_SOURCE"), ctx);
 
         try {
-            if(target instanceof CoordinateSet) {
-                return new DataModifyCommand((CoordinateSet) target, path, operation, source);
-            } else {
-                return new DataModifyCommand((Entity) target, path, operation, source);
-            }
+            return new DataModifyCommand(target, path, operation, source);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("DATA_TARGET.ENTITY"))
@@ -106,19 +96,18 @@ public class DataParser implements SimpleCommandParser {
     }
 
     private Command parseMerge(TokenPattern<?> inner, ISymbolContext ctx) {
-        Object target = parseTarget(inner.find("DATA_TARGET"), ctx);
+        DataHolder target = parseTarget(inner.find("DATA_TARGET"), ctx);
         TagCompound nbt = NBTParser.parseCompound(inner.find("NBT_COMPOUND"), ctx);
 
         try {
-            if(target instanceof CoordinateSet) {
+            if(target instanceof DataHolderBlock) {
                 PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
                 NBTParser.analyzeTag(nbt, context, inner.find("NBT_COMPOUND"), ctx);
-                return new DataMergeCommand((CoordinateSet) target, nbt);
-            } else {
+            } else if(target instanceof DataHolderEntity) {
                 PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
                 NBTParser.analyzeTag(nbt, context, inner.find("NBT_COMPOUND"), ctx);
-                return new DataMergeCommand((Entity) target, nbt);
             }
+            return new DataMergeCommand(target, nbt);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, inner, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, inner.find("DATA_TARGET.ENTITY"))
@@ -128,7 +117,7 @@ public class DataParser implements SimpleCommandParser {
     }
 
     private Command parseGet(TokenPattern<?> inner, ISymbolContext ctx) {
-        Object target = parseTarget(inner.find("DATA_TARGET"), ctx);
+        DataHolder target = parseTarget(inner.find("DATA_TARGET"), ctx);
 
         try {
             TokenPattern<?> pathClause = inner.find("PATH_CLAUSE");
@@ -139,18 +128,10 @@ public class DataParser implements SimpleCommandParser {
                 if(scalePattern != null) {
                     scale = CommonParsers.parseDouble(scalePattern, ctx);
                 }
-                if(target instanceof CoordinateSet) {
-                    return new DataGetCommand((CoordinateSet) target, path, scale);
-                } else {
-                    return new DataGetCommand((Entity) target, path, scale);
-                }
+                return new DataGetCommand(target, path, scale);
             }
 
-            if(target instanceof CoordinateSet) {
-                return new DataGetCommand((CoordinateSet) target);
-            } else {
-                return new DataGetCommand((Entity) target);
-            }
+            return new DataGetCommand(target);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, inner, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, inner.find("DATA_TARGET.ENTITY"))
@@ -159,10 +140,21 @@ public class DataParser implements SimpleCommandParser {
         }
     }
 
-    private Object parseTarget(TokenPattern<?> pattern, ISymbolContext ctx) {
-        TokenPattern<?> rawCoords = pattern.find("COORDINATE_SET");
-        if(rawCoords != null) return CoordinateParser.parse(rawCoords, ctx);
-        else return EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
+    private DataHolder parseTarget(TokenPattern<?> pattern, ISymbolContext ctx) {
+        switch(((TokenPattern<?>)pattern.getContents()).getName()) {
+            case "BLOCK_TARGET": {
+                return new DataHolderBlock(CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx));
+            }
+            case "ENTITY_TARGET": {
+                return new DataHolderEntity(EntityParser.parseEntity(pattern.find("ENTITY"), ctx));
+            }
+            case "STORAGE_TARGET": {
+                return DataHolder.STORAGE;
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + ((TokenPattern<?>)pattern.getContents()).getName() + "'", pattern, ctx);
+            }
+        }
     }
 
     private DataModifyCommand.ModifySource parseSource(TokenPattern<?> pattern, ISymbolContext ctx) {
@@ -172,14 +164,10 @@ public class DataParser implements SimpleCommandParser {
                 return new ModifySourceValue(NBTParser.parseValue(inner.find("NBT_VALUE"), ctx));
             }
             case "TARGET_SOURCE": {
-                Object target = parseTarget(inner.find("DATA_TARGET"), ctx);
+                DataHolder target = parseTarget(inner.find("DATA_TARGET"), ctx);
                 NBTPath path = NBTParser.parsePath(inner.find("PATH_CLAUSE.NBT_PATH"), ctx);
 
-                if(target instanceof CoordinateSet) {
-                    return new ModifySourceFromBlock((CoordinateSet) target, path);
-                } else {
-                    return new ModifySourceFromEntity((Entity) target, path);
-                }
+                return new ModifySourceFromHolder(target, path);
             }
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);

@@ -1,17 +1,17 @@
 package com.energyxxer.trident.compiler.lexer.summaries;
 
 import com.energyxxer.enxlex.lexical_analysis.summary.SummaryModule;
+import com.energyxxer.enxlex.lexical_analysis.summary.Todo;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.util.ProjectSummary;
-import com.energyxxer.trident.compiler.util.Todo;
+import com.energyxxer.trident.compiler.util.TridentProjectSummary;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class TridentSummaryModule extends SummaryModule {
-    private ProjectSummary parentSummary;
+    private TridentProjectSummary parentSummary;
     private TridentUtil.ResourceLocation fileLocation = null;
     private SummaryBlock fileBlock = new SummaryBlock(this);
     private ArrayList<SummarySymbol> objectives = new ArrayList<>();
@@ -29,7 +29,7 @@ public class TridentSummaryModule extends SummaryModule {
         this(null);
     }
 
-    public TridentSummaryModule(ProjectSummary parentSummary) {
+    public TridentSummaryModule(TridentProjectSummary parentSummary) {
         this.parentSummary = parentSummary;
         contextStack.push(fileBlock);
     }
@@ -152,11 +152,11 @@ public class TridentSummaryModule extends SummaryModule {
         return fileLocation;
     }
 
-    public ProjectSummary getParentSummary() {
+    public TridentProjectSummary getParentSummary() {
         return parentSummary;
     }
 
-    public void setParentSummary(ProjectSummary parentSummary) {
+    public void setParentSummary(TridentProjectSummary parentSummary) {
         this.parentSummary = parentSummary;
     }
 

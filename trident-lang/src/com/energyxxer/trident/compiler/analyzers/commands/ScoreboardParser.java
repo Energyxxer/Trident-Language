@@ -7,14 +7,15 @@ import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.textcomponents.TextComponent;
+import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "scoreboard")
 public class ScoreboardParser implements SimpleCommandParser {
@@ -39,7 +40,7 @@ public class ScoreboardParser implements SimpleCommandParser {
         switch(inner.getName()) {
             case "ADD": {
                 String objectiveName = CommonParsers.parseIdentifierA(inner.find("OBJECTIVE_NAME.IDENTIFIER_A"), ctx);
-                String criteria = inner.find("CRITERIA").flatten(false);
+                String criteria = CommonParsers.parseIdentifierB(inner.find("CRITERIA"), ctx);
                 TextComponent displayName = TextParser.parseTextComponent(inner.find(".TEXT_COMPONENT"), ctx);
                 Objective objective;
                 if(ctx.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) {
@@ -72,7 +73,7 @@ public class ScoreboardParser implements SimpleCommandParser {
                 return new ObjectivesRemoveCommand(objective);
             }
             case "SETDISPLAY": {
-                SetObjectiveDisplayCommand.ScoreDisplay displaySlot = SetObjectiveDisplayCommand.ScoreDisplay.getValueForKey(inner.find("DISPLAY_SLOT").flatten(false));
+                Type displaySlot = ctx.getCompiler().getModule().minecraft.types.scoreDisplay.get(CommonParsers.parseIdentifierA(inner.find("DISPLAY_SLOT.IDENTIFIER_A"), ctx));
                 TokenPattern<?> objectiveClause = inner.find("OBJECTIVE_CLAUSE");
                 if(objectiveClause != null) {
                     return new SetObjectiveDisplayCommand(

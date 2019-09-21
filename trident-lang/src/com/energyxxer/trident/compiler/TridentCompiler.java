@@ -13,6 +13,7 @@ import com.energyxxer.commodore.tags.TagGroup;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeNotFoundException;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
+import com.energyxxer.commodore.versioning.JavaEditionVersion;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
@@ -73,8 +74,8 @@ public class TridentCompiler extends AbstractProcess {
     private CompilerReport report = null;
 
     //File Structure Tracking
-    private HashMap<File, ParsingSignature> filePatterns = new HashMap<>();
-    private HashMap<File, TridentFile> files = new HashMap<>();
+    private HashMap<String, ParsingSignature> filePatterns = new HashMap<>();
+    private HashMap<String, TridentFile> files = new HashMap<>();
 
     //idk why we need a gson object but here it is
     private Gson gson;
@@ -86,8 +87,8 @@ public class TridentCompiler extends AbstractProcess {
     private Stack<TridentFile> writingStack = new Stack<>();
 
     //Caches
-    private HashMap<Integer, Integer> inResourceCache = new HashMap<>();
-    private HashMap<Integer, Integer> outResourceCache = new HashMap<>();
+    private HashMap<String, ParsingSignature> inResourceCache = new HashMap<>();
+    private HashMap<String, ParsingSignature> outResourceCache = new HashMap<>();
     private Dependency.Mode dependencyMode;
 
     public TridentCompiler(File rootDir) {
@@ -238,10 +239,8 @@ public class TridentCompiler extends AbstractProcess {
             }
         }
 
-        Path dataRoot = new File(rootDir, "datapack" + File.separator + "data").toPath();
-
-        for(Map.Entry<File, ParsingSignature> entry : filePatterns.entrySet()) {
-            Path relativePath = dataRoot.relativize(entry.getKey().toPath());
+        for(Map.Entry<String, ParsingSignature> entry : filePatterns.entrySet()) {
+            Path relativePath = Paths.get(entry.getKey());
             if("functions".equals(relativePath.getName(1).toString())) {
                 try {
                     files.put(entry.getKey(), new TridentFile(this, relativePath, entry.getValue().getPattern()));
@@ -336,7 +335,14 @@ public class TridentCompiler extends AbstractProcess {
         return file.getCascadingRequires();
     }
 
+    private String toSourceCacheKey(File file) {
+        Path dataRoot = rootDir.toPath().resolve("datapack").resolve("data");
+
+        return dataRoot.relativize(file.toPath()).toString().replace(File.separator, "/");
+    }
+
     private void recursivelyParse(LazyLexer lex, File dir) {
+
         File[] files = dir.listFiles();
         if(files == null) return;
         for (File file : files) {
@@ -351,11 +357,11 @@ public class TridentCompiler extends AbstractProcess {
                             String str = new String(Files.readAllBytes(Paths.get(file.getPath())), DEFAULT_CHARSET);
                             int hashCode = str.hashCode();
 
-                            if(!filePatterns.containsKey(file) || filePatterns.get(file).getHashCode() != hashCode) {
+                            if(!filePatterns.containsKey(toSourceCacheKey(file)) || filePatterns.get(toSourceCacheKey(file)).getHashCode() != hashCode) {
                                 lex.tokenizeParse(file, str, new TridentLexerProfile(module));
 
                                 if (lex.getMatchResponse().matched) {
-                                    filePatterns.put(file, new ParsingSignature(hashCode, lex.getMatchResponse().pattern, lex.getSummaryModule()));
+                                    filePatterns.put(toSourceCacheKey(file), new ParsingSignature(hashCode, lex.getMatchResponse().pattern, lex.getSummaryModule()));
                                 }
                             }
                         } catch (IOException x) {
@@ -380,15 +386,15 @@ public class TridentCompiler extends AbstractProcess {
                     this.setProgress("Parsing file: " + rootDir.toPath().relativize(file.toPath()));
 
                     try {
-                        Path relPath = rootDir.toPath().resolve("resources").relativize(file.toPath());
+                        String relPath = rootDir.toPath().resolve("resources").relativize(file.toPath()).toString().replace(File.separator, "/");
                         byte[] data = Files.readAllBytes(file.toPath());
                         int hashCode = Arrays.hashCode(data);
 
-                        outResourceCache.put(relPath.hashCode(), hashCode);
+                        outResourceCache.put(relPath, new ParsingSignature(hashCode));
 
                         if(resourcePack.getOutputType() == ModulePackGenerator.OutputType.ZIP
-                                || !Objects.equals(inResourceCache.get(relPath.hashCode()), hashCode)) {
-                            resourcePack.exportables.add(new RawExportable(relPath.toString().replace(File.separator, "/"), data));
+                                || !Objects.equals(inResourceCache.get(relPath), new ParsingSignature(hashCode))) {
+                            resourcePack.exportables.add(new RawExportable(relPath, data));
                         }
                     } catch (IOException x) {
                         logException(x);
@@ -581,21 +587,21 @@ public class TridentCompiler extends AbstractProcess {
         }
     }
 
-    public void setInResourceCache(HashMap<Integer, Integer> inResourceCache) {
+    public void setInResourceCache(HashMap<String, ParsingSignature> inResourceCache) {
         if(inResourceCache != null)
         this.inResourceCache = inResourceCache;
     }
 
-    public HashMap<Integer, Integer> getOutResourceCache() {
+    public HashMap<String, ParsingSignature> getOutResourceCache() {
         return outResourceCache;
     }
 
-    public void setSourceCache(HashMap<File, ParsingSignature> cache) {
+    public void setSourceCache(HashMap<String, ParsingSignature> cache) {
         if(cache != null)
         this.filePatterns = cache;
     }
 
-    public HashMap<File, ParsingSignature> getSourceCache() {
+    public HashMap<String, ParsingSignature> getSourceCache() {
         return filePatterns;
     }
 
@@ -643,6 +649,7 @@ public class TridentCompiler extends AbstractProcess {
     public static CommandModule createModuleForProject(String name, JsonObject properties, DefinitionPack definitionPack) throws IOException {
         CommandModule module = new CommandModule(name, "Command Module created with Trident", null);
         module.getSettingsManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
+        module.getSettingsManager().setTargetVersion(new JavaEditionVersion(1, 15, 0));
         module.importDefinitions(definitionPack);
 
         if(properties.has("aliases") && properties.get("aliases").isJsonObject()) {

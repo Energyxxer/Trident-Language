@@ -350,7 +350,7 @@ public class TridentProductions {
         LIMITED_ENTITY.add(SELECTOR);
         LIMITED_ENTITY.add(group(INTERPOLATION_BLOCK, optional(glue(), brace("["), list(SELECTOR_ARGUMENT, comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST"), brace("]")).setName("APPENDED_ARGUMENTS")).setName("ENTITY_VARIABLE"));
 
-        NEW_ENTITY_LITERAL = group(resourceLocationFixer, ENTITY_ID, optional(brace("["), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST"), brace("]")).setName("IMPLEMENTED_COMPONENTS"), optional(NBT_COMPOUND).setName("NEW_ENTITY_NBT")).setName("NEW_ENTITY_LITERAL");
+        NEW_ENTITY_LITERAL = group(resourceLocationFixer, ENTITY_ID, optional(glue(), brace("["), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST"), brace("]")).setName("IMPLEMENTED_COMPONENTS"), optional(glue(), NBT_COMPOUND).setName("NEW_ENTITY_NBT")).setName("NEW_ENTITY_LITERAL");
 
         INNER_FUNCTION.add(group(group(RESOURCE_LOCATION_S).setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")));
         ANONYMOUS_INNER_FUNCTION.add(group(brace("{"), FILE_INNER, brace("}")));
@@ -844,7 +844,7 @@ public class TridentProductions {
         {
             LazyTokenStructureMatch teamOptions = choice(
                     group(literal("collisionRule"), choice("always", "never", "pushOtherTeams", "pushOwnTeam")).setName("TEAM_COMPARISON_ARG"),
-                    group(literal("color"), choice(TEXT_COLOR, literal("reset")).setName("TEAM_COLOR")).setName("COLOR_ARG"),
+                    group(literal("color"), choice(TEXT_COLOR).setName("TEAM_COLOR")).setName("COLOR_ARG"),
                     group(literal("deathMessageVisibility"), choice("always", "hideForOtherTeams", "hideForOwnTeam", "never")).setName("TEAM_COMPARISON_ARG"),
                     group(literal("displayName"), TEXT_COMPONENT).setName("TEXT_COMPONENT_ARG"),
                     group(literal("friendlyFire"), ofType(BOOLEAN).setName("BOOLEAN")).setName("BOOLEAN_ARG"),
@@ -936,7 +936,8 @@ public class TridentProductions {
 
             LazyTokenStructureMatch target = choice(
                     group(literal("block"), COORDINATE_SET).setName("BLOCK_TARGET"),
-                    group(literal("entity"), ENTITY).setName("ENTITY_TARGET")
+                    group(literal("entity"), ENTITY).setName("ENTITY_TARGET"),
+                    group(literal("storage")).setName("STORAGE_TARGET")
             ).setName("DATA_TARGET");
 
             LazyTokenStructureMatch source = choice(
