@@ -531,6 +531,14 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //region kick
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "kick"),
+                    optional(ENTITY)
+            ));
+        }
+        //endregion
         //region list
         {
             COMMAND.add(group(
@@ -558,8 +566,16 @@ public class TridentProductions {
         //region msg
         {
             COMMAND.add(group(
-                    choice(matchItem(COMMAND_HEADER, "msg"), matchItem(COMMAND_HEADER, "w")),
+                    choice(matchItem(COMMAND_HEADER, "msg"), matchItem(COMMAND_HEADER, "tell"), matchItem(COMMAND_HEADER, "w")),
                     ENTITY,
+                    ofType(TRAILING_STRING)
+            ));
+        }
+        //endregion
+        //region teammsg
+        {
+            COMMAND.add(group(
+                    choice(matchItem(COMMAND_HEADER, "teammsg"), matchItem(COMMAND_HEADER, "tm")),
                     ofType(TRAILING_STRING)
             ));
         }
@@ -840,6 +856,18 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //region forceload
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "forceload"),
+                    choice(
+                            group(literal("add"), TWO_COORDINATE_SET, optional(TWO_COORDINATE_SET).setName("CHUNK_TO")).setName("FORCELOAD_ADD"),
+                            group(literal("query"), optional(TWO_COORDINATE_SET).setName("FORCELOAD_QUERY_COLUMN")).setName("FORCELOAD_QUERY"),
+                            group(literal("remove"), choice(group(TWO_COORDINATE_SET, optional(TWO_COORDINATE_SET).setName("CHUNK_TO")).setName("FORCELOAD_REMOVE_ONE"), group(literal("all")).setName("FORCELOAD_REMOVE_ALL"))).setName("FORCELOAD_REMOVE")
+                    )
+            ));
+        }
+        //endregion
         //region team
         {
             LazyTokenStructureMatch teamOptions = choice(
@@ -959,6 +987,62 @@ public class TridentProductions {
                             )).setName("MODIFY"),
                             group(literal("remove"), target, NBT_PATH).setName("REMOVE")
                     )
+            ));
+        }
+        //endregion
+        //region reload
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "reload")
+            ));
+        }
+        //endregion
+        //region stop
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "stop")
+            ));
+        }
+        //endregion
+        //region ban
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "ban"),
+                    ENTITY,
+                    ofType(TRAILING_STRING).setOptional().setName("REASON")
+            ));
+        }
+        //endregion
+        //region ban-ip
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "ban-ip"),
+                    identifierA(),
+                    ofType(TRAILING_STRING).setOptional().setName("REASON")
+            ));
+        }
+        //endregion
+        //region pardon
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "pardon"),
+                    ENTITY
+            ));
+        }
+        //endregion
+        //region pardon-ip
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "pardon-ip"),
+                    identifierA()
+            ));
+        }
+        //endregion
+        //region banlist
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "banlist"),
+                    choice("players", "ips").setOptional().setName("BANLIST_QUERY_TYPE")
             ));
         }
         //endregion
