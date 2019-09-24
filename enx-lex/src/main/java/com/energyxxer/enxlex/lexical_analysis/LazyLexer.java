@@ -154,7 +154,7 @@ public class LazyLexer extends Lexer {
                             getLookingAtTrimmed() :
                             getLookingAt(),
                     profile);
-            if (response.success) {
+            if (response.success && !response.value.isEmpty()) {
                 Token token = new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(
                         context.ignoreLeadingWhitespace() ?
                                 getLookingIndexTrimmed() :

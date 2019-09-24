@@ -697,10 +697,20 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "schedule"),
-                    literal("function"),
-                    resourceLocationFixer,
-                    group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION),
-                    ofType(TIME).setName("TIME")
+                    choice(
+                            group(
+                                    literal("clear"),
+                                    resourceLocationFixer,
+                                    group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION)
+                            ).setName("SCHEDULE_CLEAR"),
+                            group(
+                                    literal("function"),
+                                    resourceLocationFixer,
+                                    group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION),
+                                    ofType(TIME).setName("TIME"),
+                                    choice("append", "replace").setOptional().setName("SCHEDULE_MODE")
+                            ).setName("SCHEDULE_FUNCTION")
+                    )
             ));
         }
         //endregion
@@ -990,6 +1000,23 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //region datapack
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "datapack"),
+                    choice(
+                            group(literal("list"), choice("available", "enabled").setOptional().setName("DATAPACK_FILTER")).setName("DATAPACK_LIST"),
+                            group(literal("enable"), STRING_LITERAL_OR_IDENTIFIER_A, choice(
+                                    group(literal("first")).setName("DATAPACK_ENABLE_FIRST"),
+                                    group(literal("last")).setName("DATAPACK_ENABLE_LAST"),
+                                    group(literal("before"), STRING_LITERAL_OR_IDENTIFIER_A).setName("DATAPACK_ENABLE_BEFORE"),
+                                    group(literal("after"), STRING_LITERAL_OR_IDENTIFIER_A).setName("DATAPACK_ENABLE_AFTER")
+                            ).setOptional()).setName("DATAPACK_ENABLE"),
+                            group(literal("disable"), STRING_LITERAL_OR_IDENTIFIER_A, choice("available", "enabled").setOptional().setName("DATAPACK_FILTER")).setName("DATAPACK_DISABLE")
+                    )
+            ));
+        }
+        //endregion
         //region reload
         {
             COMMAND.add(group(
@@ -1004,12 +1031,50 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //region save-all
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "save-all"),
+                    literal("flush").setOptional().setName("SAVE_ALL_FLUSH")
+            ));
+        }
+        //endregion
+        //region save-on
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "save-on")
+            ));
+        }
+        //endregion
+        //region save-off
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "save-off")
+            ));
+        }
+        //endregion
+        //region op
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "op"),
+                    ENTITY
+            ));
+        }
+        //endregion
+        //region deop
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "deop"),
+                    ENTITY
+            ));
+        }
+        //endregion
         //region ban
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "ban"),
                     ENTITY,
-                    ofType(TRAILING_STRING).setOptional().setName("REASON")
+                    group(sameLine(), ofType(TRAILING_STRING)).setOptional().setName("REASON")
             ));
         }
         //endregion
@@ -1018,7 +1083,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "ban-ip"),
                     identifierA(),
-                    ofType(TRAILING_STRING).setOptional().setName("REASON")
+                    group(sameLine(), ofType(TRAILING_STRING)).setOptional().setName("REASON")
             ));
         }
         //endregion
@@ -1043,6 +1108,21 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "banlist"),
                     choice("players", "ips").setOptional().setName("BANLIST_QUERY_TYPE")
+            ));
+        }
+        //endregion
+        //region whitelist
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "whitelist"),
+                    choice(
+                            group(literal("on")).setName("WHITELIST_ON"),
+                            group(literal("off")).setName("WHITELIST_OFF"),
+                            group(literal("list")).setName("WHITELIST_LIST"),
+                            group(literal("reload")).setName("WHITELIST_LIST"),
+                            group(literal("add"), ENTITY).setName("WHITELIST_ADD"),
+                            group(literal("remove"), ENTITY).setName("WHITELIST_REMOVE")
+                    )
             ));
         }
         //endregion
@@ -1636,7 +1716,7 @@ public class TridentProductions {
             SELECTOR_ARGUMENT.add(group(
                     choice("sort").setName("SELECTOR_ARGUMENT_KEY"),
                     equals(),
-                    choice("nearest", "farthest", "arbitrary", "random").setName("SELECTOR_ARGUMENT_VALUE")
+                    choice("nearest", "furthest", "arbitrary", "random").setName("SELECTOR_ARGUMENT_VALUE")
             ));
         }
 

@@ -31,7 +31,7 @@ public class TridentLexerProfile extends LexerProfile {
 
     public static final Pattern NUMBER_REGEX = Pattern.compile("([+-]?\\d*(\\.\\d+)?)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
     public static final Pattern SHORT_NUMBER_REGEX = Pattern.compile("[+-]?\\d*(\\.\\d+)?", Pattern.CASE_INSENSITIVE);
-    public static final Pattern TIME_REGEX = Pattern.compile("(\\d*(\\.\\d+)?[tsd]?)");
+    public static final Pattern TIME_REGEX = Pattern.compile("((\\d*(\\.\\d+)|\\d+)[tsd]?)");
 
     static {
         usefulContexts.put(RESOURCE_LOCATION, new ResourceLocationContext(Namespace.ALLOWED_NAMESPACE_REGEX.replace("+",""), Function.ALLOWED_PATH_REGEX.replace("+",""), RESOURCE_LOCATION));
