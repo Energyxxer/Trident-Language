@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.analyzers.modifiers;
 
 import com.energyxxer.commodore.CommodoreException;
+import com.energyxxer.commodore.functionlogic.commands.data.DataHolder;
 import com.energyxxer.commodore.functionlogic.commands.execute.*;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
@@ -27,6 +28,12 @@ public class StoreParser implements SimpleModifierParser {
 
         TokenPattern<?> inner = ((TokenStructure) pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
+            case "STORE_STORAGE": {
+                NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"), ctx);
+                NumericNBTType type = parseNumericType(inner.find("NUMERIC_TYPE"), null, path, ctx, inner, true);
+                double scale = CommonParsers.parseDouble(inner.find("SCALE"), ctx);
+                return new ExecuteStoreDataHolder(storeValue, DataHolder.STORAGE, path, type, scale);
+            }
             case "STORE_BLOCK": {
                 CoordinateSet pos = CoordinateParser.parse(inner.find("COORDINATE_SET"), ctx);
                 NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"), ctx);

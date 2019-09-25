@@ -1,14 +1,17 @@
 package com.energyxxer.trident.compiler.analyzers.modifiers;
 
 import com.energyxxer.commodore.CommodoreException;
+import com.energyxxer.commodore.functionlogic.commands.data.DataHolder;
 import com.energyxxer.commodore.functionlogic.commands.execute.*;
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreComparison;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
+import com.energyxxer.commodore.types.defaults.PredicateReference;
 import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
@@ -32,6 +35,11 @@ public class ConditionalParser implements SimpleModifierParser {
 
         TokenPattern<?> subject = ((TokenStructure) pattern.find("SUBJECT")).getContents();
         switch(subject.getName()) {
+            case "PREDICATE_CONDITION": {
+                TridentUtil.ResourceLocation loc = CommonParsers.parseResourceLocation(subject.find("RESOURCE_LOCATION"), ctx);
+                loc.assertStandalone(subject.find("RESOURCE_LOCATION"), ctx);
+                return new ExecuteConditionPredicate(conditionType, new PredicateReference(ctx.getCompiler().getModule().getNamespace(loc.namespace), loc.body));
+            }
             case "ENTITY_CONDITION": {
                 return new ExecuteConditionEntity(conditionType, EntityParser.parseEntity(subject.find("ENTITY"), ctx));
             }
@@ -81,6 +89,7 @@ public class ConditionalParser implements SimpleModifierParser {
                 try {
                     switch(dataSubject.getName()) {
                         case "BLOCK_SUBJECT": return new ExecuteConditionDataBlock(conditionType, CoordinateParser.parse(dataSubject.find("COORDINATE_SET"), ctx), path);
+                        case "STORAGE_SUBJECT": return new ExecuteConditionDataHolder(conditionType, DataHolder.STORAGE, path);
                         case "ENTITY_SUBJECT": return new ExecuteConditionDataEntity(conditionType, EntityParser.parseEntity(dataSubject.find("ENTITY"), ctx), path);
                         default: {
                             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + dataSubject.getName() + "'", dataSubject, ctx);

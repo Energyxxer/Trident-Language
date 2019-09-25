@@ -1229,6 +1229,7 @@ public class TridentProductions {
                     choice(matchItem(MODIFIER_HEADER, "if"), matchItem(MODIFIER_HEADER, "unless")).setName("HEADER"),
                     choice(
                             group(literal("entity"), ENTITY).setName("ENTITY_CONDITION"),
+                            group(literal("predicate"), RESOURCE_LOCATION_S).setName("PREDICATE_CONDITION"),
                             group(literal("block"), COORDINATE_SET, BLOCK_TAGGED).setName("BLOCK_CONDITION"),
                             group(literal("score"), score(), choice(
                                     matchItem(TridentTokens.CUSTOM_COMMAND_KEYWORD, "isset").setName("ISSET"),
@@ -1244,6 +1245,7 @@ public class TridentProductions {
                             group(literal("data"),
                                     choice(
                                             group(literal("block"), COORDINATE_SET).setName("BLOCK_SUBJECT"),
+                                            group(literal("storage")).setName("STORAGE_SUBJECT"),
                                             group(literal("entity"), ENTITY).setName("ENTITY_SUBJECT")
                                     ),
                                     NBT_PATH
@@ -1280,6 +1282,7 @@ public class TridentProductions {
                     matchItem(MODIFIER_HEADER, "store"),
                     choice("result", "success").setName("STORE_VALUE"),
                     choice(
+                            group(literal("storage"), NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_STORAGE"),
                             group(literal("block"), COORDINATE_SET, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_BLOCK"),
                             group(literal("bossbar"), RESOURCE_LOCATION_S, choice("max", "value").setName("BOSSBAR_VARIABLE")).setName("STORE_BOSSBAR"),
                             group(literal("entity"), ENTITY, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_ENTITY"),
@@ -1708,6 +1711,15 @@ public class TridentProductions {
                     choice("type").setName("SELECTOR_ARGUMENT_KEY"),
                     equals(),
                     choice(group(not().setOptional(), ENTITY_ID_TAGGED)).setName("SELECTOR_ARGUMENT_VALUE")
+            ));
+        }
+
+        {
+            //Predicate argument
+            SELECTOR_ARGUMENT.add(group(
+                    choice("predicate").setName("SELECTOR_ARGUMENT_KEY"),
+                    equals(),
+                    choice(group(not().setOptional(), RESOURCE_LOCATION_S)).setName("SELECTOR_ARGUMENT_VALUE")
             ));
         }
 

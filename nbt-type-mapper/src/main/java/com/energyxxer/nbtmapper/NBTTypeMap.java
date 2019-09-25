@@ -56,6 +56,8 @@ public class NBTTypeMap {
 
     private static final String BLOCK_ENTITY_ROOT = "BLOCK_ENTITY";
 
+    private static final String STORAGE_ROOT = "STORAGE";
+
     private String getRootForEntity(Type type) {
         return "ENTITY_" + type.toString().toUpperCase().replace(':','_');
     }
@@ -98,6 +100,8 @@ public class NBTTypeMap {
             } else {
                 module.getAllNamespaces().forEach(n -> n.types.blockEntity.list().forEach(e -> rootsToCheck.add(0, getRootForBlockEntity(e))));
             }
+        } else if(protocol == PathProtocol.STORAGE) {
+            rootsToCheck.add(STORAGE_ROOT);
         } else { //DEFAULT
             if(metadata instanceof String) {
                 rootsToCheck.add((String)metadata);

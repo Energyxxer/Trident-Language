@@ -57,8 +57,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.energyxxer.nbtmapper.tags.PathProtocol.BLOCK_ENTITY;
-import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
+import static com.energyxxer.nbtmapper.tags.PathProtocol.*;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
 public class CommonParsers {
@@ -546,7 +545,7 @@ public class CommonParsers {
 
     public static NumericNBTType getNumericType(Object body, NBTPath path, ISymbolContext ctx, TokenPattern<?> pattern, boolean strict) {
 
-        PathContext context = new PathContext().setIsSetting(true).setProtocol(body instanceof Entity ? PathProtocol.ENTITY : PathProtocol.BLOCK_ENTITY, body instanceof Entity ? guessEntityType((Entity) body, ctx) : null);
+        PathContext context = new PathContext().setIsSetting(true).setProtocol(body instanceof Entity ? PathProtocol.ENTITY : body instanceof CoordinateSet ? PathProtocol.BLOCK_ENTITY : STORAGE, body instanceof Entity ? guessEntityType((Entity) body, ctx) : null);
 
         DataTypeQueryResponse response = ctx.getCompiler().getTypeMap().collectTypeInformation(path, context);
         //Debug.log(response.getPossibleTypes());

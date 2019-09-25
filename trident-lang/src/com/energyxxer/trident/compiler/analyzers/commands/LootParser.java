@@ -12,9 +12,9 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "loot")
 public class LootParser implements SimpleCommandParser {
@@ -60,7 +60,8 @@ public class LootParser implements SimpleCommandParser {
         pattern = ((TokenStructure) pattern).getContents();
         switch(pattern.getName()) {
             case "FISH": {
-                TridentUtil.ResourceLocation table = new TridentUtil.ResourceLocation(pattern.find("RESOURCE_LOCATION").flatten(false));
+                TridentUtil.ResourceLocation table = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), ctx);
+                table.assertStandalone(pattern.find("RESOURCE_LOCATION"), ctx);
                 CoordinateSet pos = CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx);
                 ToolOrHand tool = parseTool(pattern.find("TOOL"), ctx);
                 return new LootFromFish(table.toString(), pos, tool);
@@ -75,7 +76,8 @@ public class LootParser implements SimpleCommandParser {
                 }
             }
             case "LOOT": {
-                TridentUtil.ResourceLocation table = new TridentUtil.ResourceLocation(pattern.find("RESOURCE_LOCATION").flatten(false));
+                TridentUtil.ResourceLocation table = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), ctx);
+                table.assertStandalone(pattern.find("RESOURCE_LOCATION"), ctx);
                 return new LootFromLoot(table.toString());
             }
             case "MINE": {
