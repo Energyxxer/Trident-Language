@@ -1111,6 +1111,14 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //region debug
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "debug"),
+                    choice("report", "start", "stop")
+            ));
+        }
+        //endregion
         //region whitelist
         {
             COMMAND.add(group(
