@@ -31,7 +31,7 @@ public class JsonLib implements DefaultLibraryProvider {
                         prettyPrinting = VariableMethod.HelperMethods.assertOfType(params[1], patterns[1], ctx, Boolean.class);
                     }
 
-                    Object param = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], ctx, String.class, Number.class, Boolean.class, ListObject.class, DictionaryObject.class);
+                    Object param = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], ctx, String.class, Integer.class, Double.class, Boolean.class, ListObject.class, DictionaryObject.class);
 
                     GsonBuilder gb = new GsonBuilder();
                     if(prettyPrinting) gb.setPrettyPrinting();

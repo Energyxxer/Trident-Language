@@ -178,14 +178,14 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
             } else {
                 if(file.toPath().startsWith(dataPath)) {
                     Path relPath = dataPath.relativize(file.toPath());
-                    if(name.endsWith(".cbw") && relPath.getNameCount() >= 2 && relPath.getName(1).startsWith("functions")) {
+                    if(name.endsWith(".tdn") && relPath.getNameCount() >= 2 && relPath.getName(1).startsWith("functions")) {
                         try {
                             String str = new String(Files.readAllBytes(Paths.get(file.getPath())), DEFAULT_CHARSET);
                             int hashCode = str.hashCode();
 
                             if(!filePatterns.containsKey(toSourceCacheKey(file)) || (filePatterns.get(toSourceCacheKey(file)).getHashCode() != hashCode || filePatterns.get(toSourceCacheKey(file)).getSummary() == null)) {
                                 TridentSummaryModule fileSummary = new TridentSummaryModule(summary);
-                                fileSummary.setFileLocation(new TridentUtil.ResourceLocation(relPath.getName(0) + ":" + relPath.subpath(2, relPath.getNameCount()).toString().replace(File.separator, "/").replaceAll(".cbw$","")));
+                                fileSummary.setFileLocation(new TridentUtil.ResourceLocation(relPath.getName(0) + ":" + relPath.subpath(2, relPath.getNameCount()).toString().replace(File.separator, "/").replaceAll(".tdn$","")));
                                 lex.setSummaryModule(fileSummary);
                                 lex.tokenizeParse(file, str, new TridentLexerProfile(module));
                                 this.summary.store(file, fileSummary);

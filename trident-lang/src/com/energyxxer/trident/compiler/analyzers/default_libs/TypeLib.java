@@ -8,15 +8,13 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-import com.energyxxer.trident.extensions.EJsonObject;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.sun.org.apache.bcel.internal.generic.RETURN;
 
 import java.util.Collection;
 import java.util.Map;
+
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
 @AnalyzerMember(key = "Types")
 public class TypeLib implements DefaultLibraryProvider {
@@ -80,6 +78,26 @@ public class TypeLib implements DefaultLibraryProvider {
 
             return obj;
         }), String.class).createForInstance(null));
+        type.put("exists", (VariableMethod) (params, patterns, pattern, file) -> {
+            if(params.length < 2) {
+                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'exists' requires 2 parameters, instead found " + params.length, pattern, file);
+            }
+
+            String category = assertOfType(params[0], patterns[0], file, String.class);
+            Object rawLoc = assertOfType(params[1], patterns[1], file, TridentUtil.ResourceLocation.class, String.class);
+
+            if(rawLoc instanceof String) {
+                rawLoc = new TridentUtil.ResourceLocation((String) rawLoc);
+            }
+
+            TridentUtil.ResourceLocation loc = ((TridentUtil.ResourceLocation) rawLoc);
+
+            if(loc.isTag) {
+                return compiler.getRootCompiler().getModule().getNamespace(loc.namespace).tags.getGroup(category).exists(loc.body);
+            } else {
+                return compiler.getRootCompiler().getModule().getNamespace(loc.namespace).types.getDictionary(category).exists(loc.body);
+            }
+        });
         globalCtx.put(new Symbol("MinecraftTypes", Symbol.SymbolVisibility.GLOBAL, type));
 
         globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (VariableMethod) (params, patterns, pattern, file) ->

@@ -64,7 +64,7 @@ public class CommonParsers {
     public static Object parseEntityReference(TokenPattern<?> id, ISymbolContext ctx) {
         if(id.getName().equals("ENTITY_ID_TAGGED")) return parseEntityReference(((TokenStructure)id).getContents(), ctx);
         if(id.getName().equals("ENTITY_ID_WRAPPER")) return parseEntityReference(id.find("ENTITY_ID"), ctx);
-        if(id.getName().equals("ABSTRACT_RESOURCE")) return parseTag(id, ctx, EntityType.CATEGORY, g -> g.entity, g -> g.entityTypeTags);
+        if(id.getName().equals("ABSTRACT_RESOURCE")) return parseTag(id.find("RESOURCE_NAME"), ctx, EntityType.CATEGORY, g -> g.entity, g -> g.entityTypeTags);
         if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("INTERPOLATION_BLOCK")) {
             return InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, Type.class, CustomEntity.class);
         } else return parseType(id, ctx, m -> m.entity);
