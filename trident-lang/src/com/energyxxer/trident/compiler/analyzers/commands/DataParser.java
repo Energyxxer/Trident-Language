@@ -3,11 +3,13 @@ package com.energyxxer.trident.compiler.analyzers.commands;
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.data.*;
-import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
+import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
+import com.energyxxer.commodore.types.defaults.StorageTarget;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
@@ -149,7 +151,8 @@ public class DataParser implements SimpleCommandParser {
                 return new DataHolderEntity(EntityParser.parseEntity(pattern.find("ENTITY"), ctx));
             }
             case "STORAGE_TARGET": {
-                return DataHolder.STORAGE;
+                TridentUtil.ResourceLocation loc = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), ctx);
+                return new DataHolderStorage(new StorageTarget(ctx.getCompiler().getModule().getNamespace(loc.namespace), loc.body));
             }
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + ((TokenPattern<?>)pattern.getContents()).getName() + "'", pattern, ctx);

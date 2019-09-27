@@ -120,12 +120,14 @@ public class TextParser {
                     Boolean rawInterpret = getAsBooleanOrNull(obj.get("interpret"));
                     boolean interpret = rawInterpret != null && rawInterpret;
 
-                    using(getAsStringOrNull(obj.get("entity"))).notIfNull().run(e ->
-                            component[0] = new RawNBTTextComponent(s, "entity", e, interpret))
+                    using(getAsStringOrNull(obj.get("entity"))).notIfNull()
+                            .run(e -> component[0] = new RawNBTTextComponent(s, "entity", e, interpret))
                             .otherwise(
                                     v -> using(getAsStringOrNull(obj.get("block"))).notIfNull().run(b ->
                                             component[0] = new RawNBTTextComponent(s, "block", b, interpret))
-                                            .otherwise(w -> delegate.report("Expected either 'entity' or 'block' in nbt text component, got neither.", obj))
+                                            .otherwise(w -> using(getAsStringOrNull(obj.get("storage"))).notIfNull().run(b ->
+                                            component[0] = new RawNBTTextComponent(s, "storage", b, interpret)
+                                                    ).otherwise(x -> delegate.report("Expected either 'entity', 'block' or 'storage' in nbt text component, got neither.", obj)))
                     );
                 }).otherwise(v -> delegate.report("Expected object in 'nbt'", obj.get("nbt")));
             }

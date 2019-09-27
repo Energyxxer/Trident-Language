@@ -975,7 +975,7 @@ public class TridentProductions {
             LazyTokenStructureMatch target = choice(
                     group(literal("block"), COORDINATE_SET).setName("BLOCK_TARGET"),
                     group(literal("entity"), ENTITY).setName("ENTITY_TARGET"),
-                    group(literal("storage")).setName("STORAGE_TARGET")
+                    group(literal("storage"), RESOURCE_LOCATION_S).setName("STORAGE_TARGET")
             ).setName("DATA_TARGET");
 
             LazyTokenStructureMatch source = choice(
@@ -1253,7 +1253,7 @@ public class TridentProductions {
                             group(literal("data"),
                                     choice(
                                             group(literal("block"), COORDINATE_SET).setName("BLOCK_SUBJECT"),
-                                            group(literal("storage")).setName("STORAGE_SUBJECT"),
+                                            group(literal("storage"), RESOURCE_LOCATION_S).setName("STORAGE_SUBJECT"),
                                             group(literal("entity"), ENTITY).setName("ENTITY_SUBJECT")
                                     ),
                                     NBT_PATH
@@ -1290,7 +1290,7 @@ public class TridentProductions {
                     matchItem(MODIFIER_HEADER, "store"),
                     choice("result", "success").setName("STORE_VALUE"),
                     choice(
-                            group(literal("storage"), NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_STORAGE"),
+                            group(literal("storage"), RESOURCE_LOCATION_S, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_STORAGE"),
                             group(literal("block"), COORDINATE_SET, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_BLOCK"),
                             group(literal("bossbar"), RESOURCE_LOCATION_S, choice("max", "value").setName("BOSSBAR_VARIABLE")).setName("STORE_BOSSBAR"),
                             group(literal("entity"), ENTITY, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_ENTITY"),

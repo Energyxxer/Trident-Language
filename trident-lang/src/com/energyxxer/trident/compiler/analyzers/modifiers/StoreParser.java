@@ -1,14 +1,15 @@
 package com.energyxxer.trident.compiler.analyzers.modifiers;
 
 import com.energyxxer.commodore.CommodoreException;
-import com.energyxxer.commodore.functionlogic.commands.data.DataHolder;
 import com.energyxxer.commodore.functionlogic.commands.execute.*;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
+import com.energyxxer.commodore.functionlogic.nbt.DataHolderStorage;
 import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.types.defaults.BossbarReference;
+import com.energyxxer.commodore.types.defaults.StorageTarget;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.TridentUtil;
@@ -29,10 +30,11 @@ public class StoreParser implements SimpleModifierParser {
         TokenPattern<?> inner = ((TokenStructure) pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "STORE_STORAGE": {
+                TridentUtil.ResourceLocation loc = CommonParsers.parseResourceLocation(inner.find("RESOURCE_LOCATION"), ctx);
                 NBTPath path = NBTParser.parsePath(inner.find("NBT_PATH"), ctx);
                 NumericNBTType type = parseNumericType(inner.find("NUMERIC_TYPE"), null, path, ctx, inner, true);
                 double scale = CommonParsers.parseDouble(inner.find("SCALE"), ctx);
-                return new ExecuteStoreDataHolder(storeValue, DataHolder.STORAGE, path, type, scale);
+                return new ExecuteStoreDataHolder(storeValue, new DataHolderStorage(new StorageTarget(ctx.getCompiler().getModule().getNamespace(loc.namespace), loc.body)), path, type, scale);
             }
             case "STORE_BLOCK": {
                 CoordinateSet pos = CoordinateParser.parse(inner.find("COORDINATE_SET"), ctx);
