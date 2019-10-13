@@ -12,8 +12,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import static com.energyxxer.trident.compiler.util.Using.using;
 
@@ -24,8 +24,8 @@ public class EffectParser implements SimpleCommandParser {
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "CLEAR": {
-                Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
-                Type effect = CommonParsers.parseType(inner.find(".EFFECT_ID"), ctx, d->d.effect);
+                Entity entity = EntityParser.parseEntity(inner.find(".ENTITY"), ctx);
+                Type effect = CommonParsers.parseType(inner.find("..EFFECT_ID"), ctx, d->d.effect);
                 return new EffectClearCommand(entity, effect);
             }
             case "GIVE": {

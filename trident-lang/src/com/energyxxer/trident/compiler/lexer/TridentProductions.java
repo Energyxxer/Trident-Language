@@ -480,7 +480,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "effect"),
                     choice(
-                            group(literal("clear"), ENTITY, optional(EFFECT_ID)).setName("CLEAR"),
+                            group(literal("clear"), optional(sameLine(), ENTITY, optional(EFFECT_ID))).setName("CLEAR"),
                             group(literal("give"), ENTITY, EFFECT_ID, optional(integer().setName("DURATION"), optional(integer().setName("AMPLIFIER"), ofType(TridentTokens.BOOLEAN).setOptional().setName("HIDE_PARTICLES")))).setName("GIVE")
                     )
             ));
@@ -528,6 +528,14 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "kill"),
                     optional(ENTITY)
+            ));
+        }
+        //endregion
+        //region spectate
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "spectate"),
+                    optional(sameLine(), ENTITY, optional(sameLine(), ENTITY).setName("INNER")).setName("INNER")
             ));
         }
         //endregion

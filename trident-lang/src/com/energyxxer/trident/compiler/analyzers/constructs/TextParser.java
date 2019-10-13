@@ -199,7 +199,7 @@ public class TextParser {
                     if(!context.isHoverEnabled()) delegate.report("Hover events are not allowed in this context", "Hover events are not used in this context", e);
 
                     using(getAsStringOrNull(e.get("action"))).notIfNull()
-                            .except(IllegalArgumentException.class, (x, a) -> delegate.report("Illegal hover event action '$a'", "Unknown hover event action '$a'", e.get("action")))
+                            .except(IllegalArgumentException.class, (x, a) -> delegate.report("Illegal hover event action '" + a + "'", "Unknown hover event action '" + a + "'", e.get("action")))
                             .run(a -> {
                         HoverEvent.Action action = HoverEvent.Action.valueOf(a.toUpperCase());
                         using(e.get("value")).notIfNull().run(v -> {
@@ -219,7 +219,7 @@ public class TextParser {
                     if(!context.isClickEnabled()) delegate.report("Click events are not allowed in this context", "Click events are not used in this context", e);
 
                     using(getAsStringOrNull(e.get("action"))).notIfNull()
-                            .except(IllegalArgumentException.class, (x, a) -> delegate.report("Illegal click event action '$a'", "Unknown click event action '$a'", e.get("action")))
+                            .except(IllegalArgumentException.class, (x, a) -> delegate.report("Illegal click event action '" + a + "'", "Unknown click event action '" + a + "'", e.get("action")))
                             .run(a -> {
                                 ClickEvent.Action action = ClickEvent.Action.valueOf(a.toUpperCase());
                                 using(e.get("value")).notIfNull().run(v -> {
