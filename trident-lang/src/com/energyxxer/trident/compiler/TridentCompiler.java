@@ -13,7 +13,12 @@ import com.energyxxer.commodore.tags.TagGroup;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeNotFoundException;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
+import com.energyxxer.commodore.util.io.CompoundInput;
+import com.energyxxer.commodore.util.io.DirectoryCompoundInput;
+import com.energyxxer.commodore.util.io.ZipCompoundInput;
 import com.energyxxer.commodore.versioning.JavaEditionVersion;
+import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
+import com.energyxxer.commodore.versioning.compatibility.VersionFeatures;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
@@ -53,7 +58,9 @@ public class TridentCompiler extends AbstractProcess {
     public static final String TRIDENT_LANGUAGE_VERSION = "0.4.2-alpha";
 
     //Resources
-    private final DefinitionPack definitionPack = StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT;
+    private final DefinitionPack[] definitionPacks;
+    private Map<String, DefinitionPack> definitionPackAliases = null;
+    private final VersionFeatures featureMap;
     private NBTTypeMap typeMap;
 
     //Output objects
@@ -92,8 +99,14 @@ public class TridentCompiler extends AbstractProcess {
     private Dependency.Mode dependencyMode;
 
     public TridentCompiler(File rootDir) {
+        this(rootDir, null, null);
+    }
+
+    public TridentCompiler(File rootDir, DefinitionPack[] definitionPacks, VersionFeatures featureMap) {
         super("Trident-Compiler[" + rootDir.getName() + "]");
         this.rootDir = rootDir;
+        this.definitionPacks = definitionPacks;
+        this.featureMap = featureMap;
         initializeThread(this::runCompilation);
         this.thread.setUncaughtExceptionHandler((th, ex) -> {
             logException(ex);
@@ -150,9 +163,11 @@ public class TridentCompiler extends AbstractProcess {
             resourcePack = new ResourcePackGenerator(this, newFileObject(properties.get("resources-output").getAsString()));
         }
 
+        VersionFeatureManager.setActiveFeatureMap(featureMap);
+
         this.setProgress("Importing vanilla definitions");
         try {
-            module = createModuleForProject(rootDir.getName(), properties, definitionPack);
+            module = createModuleForProject(rootDir.getName(), rootDir, properties, definitionPacks, definitionPackAliases);
         } catch(IOException x) {
             logException(x, "Error while importing vanilla definitions: ");
             return;
@@ -315,7 +330,6 @@ public class TridentCompiler extends AbstractProcess {
             this.report.addNotice(new Notice(NoticeType.ERROR, "Datapack output directory not specified"));
         }
 
-
         updateProgress(0);
         this.setProgress("Generating resource pack");
         try {
@@ -342,7 +356,6 @@ public class TridentCompiler extends AbstractProcess {
     }
 
     private void recursivelyParse(LazyLexer lex, File dir) {
-
         File[] files = dir.listFiles();
         if(files == null) return;
         for (File file : files) {
@@ -587,6 +600,10 @@ public class TridentCompiler extends AbstractProcess {
         }
     }
 
+    public void setDefinitionPackAliases(Map<String, DefinitionPack> definitionPackAliases) {
+        this.definitionPackAliases = definitionPackAliases;
+    }
+
     public void setInResourceCache(HashMap<String, ParsingSignature> inResourceCache) {
         if(inResourceCache != null)
         this.inResourceCache = inResourceCache;
@@ -641,16 +658,83 @@ public class TridentCompiler extends AbstractProcess {
         return files.values();
     }
 
-    public static CommandModule createModuleForProject(String name, File rootDir, DefinitionPack definitionPack) throws IOException {
+    public static CommandModule createModuleForProject(String name, File rootDir, DefinitionPack[] definitionPacks) throws IOException {
         JsonObject properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
-        return createModuleForProject(name, properties, definitionPack);
+        return createModuleForProject(name, rootDir, properties, definitionPacks);
     }
 
-    public static CommandModule createModuleForProject(String name, JsonObject properties, DefinitionPack definitionPack) throws IOException {
+    public static CommandModule createModuleForProject(String name, File rootDir, JsonObject properties, DefinitionPack[] definitionPacks) throws IOException {
+        return createModuleForProject(name, rootDir, properties, definitionPacks, null);
+    }
+
+    public static CommandModule createModuleForProject(String name, File rootDir, DefinitionPack[] definitionPacks, Map<String, DefinitionPack> definitionPackAliases) throws IOException {
+        JsonObject properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
+        return createModuleForProject(name, rootDir, properties, definitionPacks, definitionPackAliases);
+    }
+
+    public static CommandModule createModuleForProject(String name, File rootDir, JsonObject properties, DefinitionPack[] definitionPacks, Map<String, DefinitionPack> definitionPackAliases) throws IOException {
         CommandModule module = new CommandModule(name, "Command Module created with Trident", null);
         module.getSettingsManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
-        module.getSettingsManager().setTargetVersion(new JavaEditionVersion(1, 15, 0));
-        module.importDefinitions(definitionPack);
+
+        if(definitionPacks == null) {
+            definitionPacks = new DefinitionPack[] {StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_RELEASE};
+        }
+
+        JavaEditionVersion targetVersion = new JavaEditionVersion(1, 14, 0);
+        if(properties.has("target-version") && properties.get("target-version").isJsonArray()) {
+            JsonArray rawTargetVersion = properties.get("target-version").getAsJsonArray();
+            try {
+                int major = rawTargetVersion.get(0).getAsInt();
+                int minor = rawTargetVersion.get(1).getAsInt();
+                int patch = rawTargetVersion.get(2).getAsInt();
+
+                targetVersion = new JavaEditionVersion(major, minor, patch);
+            } catch(IndexOutOfBoundsException x) {
+                throw new IOException("Invalid target version array: got less than 3 elements");
+            } catch(UnsupportedOperationException x) {
+                throw new IOException("Expected string in target version array");
+            }
+        }
+
+        module.getSettingsManager().setTargetVersion(targetVersion);
+
+        ArrayList<DefinitionPack> toImport = new ArrayList<>();
+
+        if(properties.has("use-definitions") && properties.get("use-definitions").isJsonArray()) {
+            for(JsonElement rawElement : properties.getAsJsonArray("use-definitions")) {
+                if(rawElement.isJsonPrimitive() && rawElement.getAsJsonPrimitive().isString()) {
+                    String element = rawElement.getAsString();
+                    if(element.equals("DEFAULT")) {
+                        toImport.addAll(Arrays.asList(definitionPacks));
+                    } else {
+                        File pathToPack = rootDir.toPath().resolve("defpacks").resolve(element).toFile();
+                        File pathToZip = new File(pathToPack.getPath() + ".zip");
+
+                        CompoundInput input = null;
+
+                        if(pathToZip.exists() && pathToZip.isFile()) {
+                            input = new ZipCompoundInput(pathToZip);
+                        } else if(pathToPack.exists() && pathToPack.isDirectory()) {
+                            input = new DirectoryCompoundInput(pathToPack);
+                        }
+
+                        if(input != null) {
+                            toImport.add(new DefinitionPack(input));
+                        } else if(definitionPackAliases != null && definitionPackAliases.containsKey(element)) {
+                            toImport.add(definitionPackAliases.get(element));
+                        } else {
+                            throw new FileNotFoundException("Could not find folder nor zip at path '" + pathToPack + "'");
+                        }
+                    }
+                }
+            }
+        } else {
+            toImport.addAll(Arrays.asList(definitionPacks));
+        }
+
+        for(DefinitionPack defpack : toImport) {
+            module.importDefinitions(defpack);
+        }
 
         if(properties.has("aliases") && properties.get("aliases").isJsonObject()) {
             for(Map.Entry<String, JsonElement> categoryEntry : properties.getAsJsonObject("aliases").entrySet()) {

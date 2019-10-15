@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.util;
 
+import com.energyxxer.commodore.defpacks.DefinitionPack;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
@@ -32,6 +33,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 import static com.energyxxer.trident.compiler.TridentCompiler.DEFAULT_CHARSET;
 
@@ -39,6 +41,8 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
     private File rootDir;
     private Path dataPath;
     private Thread thread;
+    private DefinitionPack[] definitionPacks;
+    private Map<String, DefinitionPack> definitionPackAliases = null;
     private CommandModule module;
     private HashMap<String, ParsingSignature> filePatterns = new HashMap<>();
 
@@ -46,8 +50,18 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
     private ArrayList<java.lang.Runnable> completionListeners = new ArrayList<>();
 
     public TridentProjectSummarizer(File rootDir) {
+        this(rootDir, new DefinitionPack[] {StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_RELEASE});
+    }
+
+    public TridentProjectSummarizer(File rootDir, DefinitionPack[] definitionPacks) {
+        this(rootDir, definitionPacks, null);
+    }
+
+    public TridentProjectSummarizer(File rootDir, DefinitionPack[] definitionPacks, Map<String, DefinitionPack> definitionPackAliases) {
         this.rootDir = rootDir;
         this.dataPath = rootDir.toPath().resolve("datapack").resolve("data");
+        this.definitionPacks = definitionPacks;
+        this.definitionPackAliases = definitionPackAliases;
     }
 
     private JsonObject properties;
@@ -78,7 +92,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
         }
 
         try {
-            module = TridentCompiler.createModuleForProject(rootDir.getName(), properties, StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_SNAPSHOT);
+            module = TridentCompiler.createModuleForProject(rootDir.getName(), rootDir, properties, definitionPacks, definitionPackAliases);
         } catch(IOException x) {
             logException(x);
             return;
@@ -255,6 +269,9 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
 
     private void logException(Exception x) {
         x.printStackTrace();
+        for(java.lang.Runnable r : completionListeners) {
+            r.run();
+        }
     }
 
     public void setSourceCache(HashMap<String, ParsingSignature> cache) {

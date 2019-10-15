@@ -1956,56 +1956,53 @@ public class TridentProductions {
             }
 
             {
-                for(Namespace namespace : module.getAllNamespaces()) {
-                    LazyTokenPatternMatch namespaceGroup = namespaces.get(namespace.getName());
-                    for(Type type : namespace.types.gamerule.list()) {
-                        LazyTokenGroupMatch g = group(namespaceGroup, literal(type.getName()).setName("TYPE_NAME")).setName("GAMERULE_ID");
+                for(Type type : module.minecraft.types.gamerule.list()) {
+                    LazyTokenGroupMatch g = group(literal(type.getName()).setName("TYPE_NAME")).setName("GAMERULE_ID");
 
-                        GAMERULE.add(g);
+                    GAMERULE.add(g);
 
-                        LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
+                    LazyTokenGroupMatch g2 = new LazyTokenGroupMatch();
 
-                        g2.append(g);
+                    g2.append(g);
 
-                        LazyTokenGroupMatch argsGroup = new LazyTokenGroupMatch().setName("GAMERULE_ARGUMENT");
+                    LazyTokenGroupMatch argsGroup = new LazyTokenGroupMatch().setName("GAMERULE_ARGUMENT");
 
-                        String arg = type.getProperty("argument");
+                    String arg = type.getProperty("argument");
 
-                        switch (arg) {
-                            case "boolean": {
-                                argsGroup.append(ofType(BOOLEAN).setName("BOOLEAN"));
-                                break;
-                            }
-                            case "int": {
-                                argsGroup.append(integer());
-                                break;
-                            }
-                            case "double": {
-                                argsGroup.append(real());
-                                break;
-                            }
-                            case "color": {
-                                argsGroup.append(COLOR);
-                                break;
-                            }
-                            case "block": {
-                                argsGroup.append(BLOCK);
-                                break;
-                            }
-                            case "item": {
-                                argsGroup.append(ITEM);
-                                break;
-                            }
-                            default: {
-                                Debug.log("Invalid gamerule argument type '" + arg + "', could not be added to .mcfunction gamerule setter production", Debug.MessageType.ERROR);
-                            }
+                    switch (arg) {
+                        case "boolean": {
+                            argsGroup.append(ofType(BOOLEAN).setName("BOOLEAN"));
+                            break;
                         }
-
-                        g2.append(sameLine());
-                        g2.append(argsGroup);
-
-                        GAMERULE_SETTER.add(g2);
+                        case "int": {
+                            argsGroup.append(integer());
+                            break;
+                        }
+                        case "double": {
+                            argsGroup.append(real());
+                            break;
+                        }
+                        case "color": {
+                            argsGroup.append(COLOR);
+                            break;
+                        }
+                        case "block": {
+                            argsGroup.append(BLOCK);
+                            break;
+                        }
+                        case "item": {
+                            argsGroup.append(ITEM);
+                            break;
+                        }
+                        default: {
+                            Debug.log("Invalid gamerule argument type '" + arg + "', could not be added to .mcfunction gamerule setter production", Debug.MessageType.ERROR);
+                        }
                     }
+
+                    g2.append(sameLine());
+                    g2.append(argsGroup);
+
+                    GAMERULE_SETTER.add(g2);
                 }
             }
 
