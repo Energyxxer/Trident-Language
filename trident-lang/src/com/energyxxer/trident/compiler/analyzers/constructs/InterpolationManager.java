@@ -60,7 +60,11 @@ public class InterpolationManager {
         if(pattern == null) return null;
         //TridentCompiler compiler = file.getCompiler();
         switch(pattern.getName()) {
-            case "INTERPOLATION_BLOCK": {
+            case "INTERPOLATION_BLOCK":
+            case "LINE_SAFE_INTERPOLATION_VALUE":
+            case "INTERPOLATION_VALUE":
+            case "MID_INTERPOLATION_VALUE":
+            case "ROOT_INTERPOLATION_VALUE": {
                 return parse(((TokenStructure) pattern).getContents(), ctx, keepSymbol);
             }
             case "VARIABLE": {
@@ -68,12 +72,6 @@ public class InterpolationManager {
             }
             case "INTERPOLATION_WRAPPER": {
                 return parse(pattern.find("INTERPOLATION_VALUE"), ctx, keepSymbol);
-            }
-            case "LINE_SAFE_INTERPOLATION_VALUE":
-            case "INTERPOLATION_VALUE":
-            case "MID_INTERPOLATION_VALUE":
-            case "ROOT_INTERPOLATION_VALUE": {
-                return parse(((TokenStructure) pattern).getContents(), ctx, keepSymbol);
             }
             case "VARIABLE_NAME": {
                 Symbol symbol = ctx.search(pattern.flatten(false), ctx);
