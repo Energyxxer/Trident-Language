@@ -21,7 +21,7 @@ $SKULL_TEXTURE: {
         SKIN: {
             url: String
         },
-        Cape: {
+        CAPE: {
             url: String
         }
     }
@@ -46,6 +46,9 @@ $ITEM_TAG: {
     CanDestroy: [String (resource_location)],
     CanPlaceOn: [String (resource_location)],
     BlockEntityTag: $BLOCK_ENTITY (protocol),
+    BlockStateTag: {
+        *: String
+    },
     Enchantments: [$ENCHANTMENT],
     StoredEnchantments: [$ENCHANTMENT],
     RepairCost: Int,
@@ -64,7 +67,7 @@ $ITEM_TAG: {
     generation: Int,
     author: String,
     title: String,
-    pages: [String],
+    pages: [String (text_component)],
     SkullOwner: String (volatile),
     SkullOwner: $SKULL_OWNER,
     Explosion: $EXPLOSION,
@@ -94,7 +97,9 @@ $ITEM_TAG: {
     ],
     DebugProperty: {
         *: String
-    }
+    },
+    ChargedProjectiles: [$ITEM],
+    Charged: Byte (boolean)
 }
 
 $EXPLOSION: {

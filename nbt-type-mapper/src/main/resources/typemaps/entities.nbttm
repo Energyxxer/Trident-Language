@@ -36,6 +36,25 @@ $ENTITY_MOB: {
     HurtByTimestamp: Int,
     DeathTime: Short,
     FallFlying: Byte (boolean),
+    SleepingX: Int,
+    SleepingY: Int,
+    SleepingZ: Int,
+    Brain: {
+        memories: {
+            "minecraft:meeting_point": {
+                pos: [I;],
+                dimension: String (type(dimension))
+            },
+            "minecraft:home": {
+                pos: [I;],
+                dimension: String (type(dimension))
+            },
+            "minecraft:job_site": {
+                pos: [I;],
+                dimension: String (type(dimension))
+            }
+        }
+    },
     Attributes: [$ATTRIBUTE],
     ActiveEffects: [$EFFECT],
     HandItems: [$ITEM],
@@ -438,6 +457,7 @@ $ENTITY_MINECRAFT_ZOMBIE_VILLAGER: {
     ConversionPlayerLeast: Long,
     ConversionPlayerMost: Long,
     VillagerData: $VILLAGER_DATA,
+    Gossips: [$VILLAGER_GOSSIP],
     Offers: $VILLAGER_OFFERS
 }
 $ENTITY_MINECRAFT_ZOMBIE_VILLAGER: $ENTITY_ZOMBIELIKE
@@ -461,10 +481,10 @@ $ENTITY_MINECRAFT_ARROW: {
     crit: Byte (boolean),
     ShotFromCrossbow: Byte (boolean),
     PierceLevel: Byte,
+    SoundEvent: String,
     OwnerUUIDMost: Long,
     OwnerUUIDLeast: Long,
-    SoundEvent: String,
-    
+    Color: Int,
     CustomPotionEffects: [$EFFECT],
     Potion: String (type(potion)),
     CustomPotionColor: Int
@@ -574,9 +594,9 @@ $ENTITY_MINECRAFT_SPECTRAL_ARROW: {
     crit: Byte (boolean),
     ShotFromCrossbow: Byte (boolean),
     PierceLevel: Byte,
+    SoundEvent: String,
     OwnerUUIDMost: Long,
     OwnerUUIDLeast: Long,
-    SoundEvent: String,
     Duration: Int
 }
 
@@ -590,9 +610,9 @@ $ENTITY_MINECRAFT_TRIDENT: {
     crit: Byte (boolean),
     ShotFromCrossbow: Byte (boolean),
     PierceLevel: Byte,
+    SoundEvent: String,
     OwnerUUIDMost: Long,
     OwnerUUIDLeast: Long,
-    SoundEvent: String,
     Trident: $ITEM
 }
 
@@ -613,7 +633,7 @@ $ENTITY_MINECRAFT_ITEM: {
     Age: Short,
     Health: Byte,
     PickupDelay: Short,
-    owner: {
+    Owner: {
         L: Long,
         M: Long
     },
@@ -715,6 +735,7 @@ $ENTITY_MINECRAFT_AREA_EFFECT_CLOUD: {
 
 #armor_stand
 $ENTITY_MINECRAFT_ARMOR_STAND: {
+    ActiveEffects: [$EFFECT],
     DisabledSlots: Int,
     HandItems: [$ITEM],
     ArmorItems: [$ITEM],
@@ -731,7 +752,10 @@ $ENTITY_MINECRAFT_ARMOR_STAND: {
         RightLeg: [Float]
     },
     ShowArms: Byte (boolean),
-    Small: Byte (boolean)
+    Small: Byte (boolean),
+    Brain: {
+        memories: {}
+    }
 }
 
 #end_crystal
@@ -814,7 +838,6 @@ $ENTITY_MINECRAFT_PLAYER: {
     SpawnY: Int,
     SpawnZ: Int,
     SpawnForced: Byte (boolean),
-    Sleeping: Byte (boolean),
     SleepTimer: Short,
     foodLevel: Int,
     foodExhaustionLevel: Float,
@@ -852,6 +875,8 @@ $ENTITY_MINECRAFT_PLAYER: {
         recipes: [String (resource_location)],
         toBeDisplayed: [String (resource_location)],
         isFilteringCraftable: Byte (boolean),
-        isGuiOpen: Byte (boolean)
+        isGuiOpen: Byte (boolean),
+        isFurnaceFilteringCraftable: Byte (boolean),
+        isFurnaceGuiOpen: Byte (boolean)
     }
 }

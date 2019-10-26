@@ -52,6 +52,8 @@ public class NBTTypeMap {
     private static final String ENTITY_ROOT = "ENTITY";
     private static final String ENTITY_BREEDABLE_ROOT = "ENTITY_BREEDABLE";
     private static final String ENTITY_TAMABLE_ROOT = "ENTITY_TAMABLE";
+    private static final String ENTITY_PROJECTILE_ROOT = "ENTITY_PROJECTILE";
+    private static final String ENTITY_MINECART_ROOT = "ENTITY_MINECART";
     private static final String ENTITY_MOB_ROOT = "ENTITY_MOB";
 
     private static final String BLOCK_ENTITY_ROOT = "BLOCK_ENTITY";
@@ -82,12 +84,16 @@ public class NBTTypeMap {
                     if("true".equals(suspectedType.getProperty("living"))) rootsToCheck.add(0, ENTITY_MOB_ROOT);
                     if("true".equals(suspectedType.getProperty("breedable"))) rootsToCheck.add(0, ENTITY_BREEDABLE_ROOT);
                     if("true".equals(suspectedType.getProperty("tamable"))) rootsToCheck.add(0, ENTITY_TAMABLE_ROOT);
+                    if("true".equals(suspectedType.getProperty("projectile"))) rootsToCheck.add(0, ENTITY_PROJECTILE_ROOT);
+                    if("true".equals(suspectedType.getProperty("minecart"))) rootsToCheck.add(0, ENTITY_MINECART_ROOT);
                     rootsToCheck.add(0, getRootForEntity(suspectedType));
                 }
             } else {
                 rootsToCheck.add(0, ENTITY_MOB_ROOT);
                 rootsToCheck.add(0, ENTITY_BREEDABLE_ROOT);
                 rootsToCheck.add(0, ENTITY_TAMABLE_ROOT);
+                rootsToCheck.add(0, ENTITY_PROJECTILE_ROOT);
+                rootsToCheck.add(0, ENTITY_MINECART_ROOT);
                 module.getAllNamespaces().forEach(n -> n.types.entity.list().forEach(e -> rootsToCheck.add(0, getRootForEntity(e))));
             }
         } else if(protocol == PathProtocol.BLOCK_ENTITY) {

@@ -5,8 +5,10 @@ import com.energyxxer.commodore.util.io.DirectoryCompoundInput;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
 import com.energyxxer.enxlex.report.Notice;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -19,8 +21,9 @@ public class Main {
         if(args.length == 0) {
             System.out.println("No arguments passed to the program.\nFirst argument should be the path to the root directory of the project to compile.");
             System.out.println("Second argument (optional) should be a list of folder paths referring to the definition packs to use, separated by the platform-specific path separator.");
-            System.out.println("Path separator detected for this platform: '" + File.pathSeparatorChar + "' (" + Character.getName(File.pathSeparatorChar) + ")");
             System.out.println("Third argument (optional) should be the path to the feature map to use for this module");
+            System.out.println("Fourth argument (optional) should be a list of file paths referring to the NBT type maps to use, separated by the platform-specific path separator.");
+            System.out.println("Path separator detected for this platform: '" + File.pathSeparatorChar + "' (" + Character.getName(File.pathSeparatorChar) + ")");
             return;
         }
 
@@ -39,6 +42,7 @@ public class Main {
 
         ArrayList<File> rawDefPacks = new ArrayList<>();
         File featMap = null;
+        ArrayList<File> rawTypeMapFiles = new ArrayList<>();
         if(args.length >= 2) {
             String[] paths = args[1].split(Matcher.quoteReplacement(File.pathSeparator));
             for(String path : paths) {
@@ -63,6 +67,22 @@ public class Main {
                 if(!featMap.isFile()) {
                     System.err.println("Given feature map is not a file: " + args[2]);
                     return;
+                }
+
+                if(args.length >= 4) {
+                    String[] typeMapPaths = args[3].split(Matcher.quoteReplacement(File.pathSeparator));
+                    for(String path : typeMapPaths) {
+                        File tmFile = new File(path);
+                        if(!tmFile.exists()) {
+                            System.err.println("Given type map file does not exist: " + path);
+                            return;
+                        }
+                        if(!tmFile.isFile()) {
+                            System.err.println("Given type map is not a file");
+                            return;
+                        }
+                        rawTypeMapFiles.add(tmFile);
+                    }
                 }
             }
         }
@@ -91,7 +111,32 @@ public class Main {
             }
         }
 
-        TridentCompiler c = new TridentCompiler(rootDir, definitionPacks, featMap != null ? VersionFeatureManager.parseFeatureMap(featMapReader) : null);
+        String[] rawTypeMaps = null;
+        if(!rawTypeMapFiles.isEmpty()) {
+            rawTypeMaps = new String[rawTypeMapFiles.size()];
+
+            int i = 0;
+            for(File file : rawTypeMapFiles) {
+                try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        sb.append(line);
+                    }
+                    rawTypeMaps[i] = sb.toString();
+                } catch (IOException e) {
+                    System.err.println("Exception while reading type map '" + file + "':");
+                    e.printStackTrace();
+                    return;
+                }
+                i++;
+            }
+        }
+
+        TridentCompiler c = new TridentCompiler(rootDir);
+        c.setStartingDefinitionPacks(definitionPacks);
+        c.setStartingFeatureMap(featMap != null ? VersionFeatureManager.parseFeatureMap(featMapReader) : null);
+        c.setStartingRawTypeMaps(rawTypeMaps);
 
         c.addProgressListener((process) -> {
             StringBuilder line = new StringBuilder(process.getStatus());

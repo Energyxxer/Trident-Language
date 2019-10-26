@@ -58,9 +58,10 @@ public class TridentCompiler extends AbstractProcess {
     public static final String TRIDENT_LANGUAGE_VERSION = "0.4.2-alpha";
 
     //Resources
-    private final DefinitionPack[] definitionPacks;
+    private DefinitionPack[] definitionPacks;
     private Map<String, DefinitionPack> definitionPackAliases = null;
-    private final VersionFeatures featureMap;
+    private VersionFeatures featureMap;
+    private String[] typeMapsRaw = null;
     private NBTTypeMap typeMap;
 
     //Output objects
@@ -99,14 +100,8 @@ public class TridentCompiler extends AbstractProcess {
     private Dependency.Mode dependencyMode;
 
     public TridentCompiler(File rootDir) {
-        this(rootDir, null, null);
-    }
-
-    public TridentCompiler(File rootDir, DefinitionPack[] definitionPacks, VersionFeatures featureMap) {
         super("Trident-Compiler[" + rootDir.getName() + "]");
         this.rootDir = rootDir;
-        this.definitionPacks = definitionPacks;
-        this.featureMap = featureMap;
         initializeThread(this::runCompilation);
         this.thread.setUncaughtExceptionHandler((th, ex) -> {
             logException(ex);
@@ -119,6 +114,18 @@ public class TridentCompiler extends AbstractProcess {
         gsonBuilder.setPrettyPrinting();
         this.gson = gsonBuilder.create();
         globalObjective = new Lazy<>(() -> this.getModule().getObjectiveManager().create("trident_global", true));
+    }
+
+    public void setStartingDefinitionPacks(DefinitionPack[] definitionPacks) {
+        this.definitionPacks = definitionPacks;
+    }
+
+    public void setStartingFeatureMap(VersionFeatures featureMap) {
+        this.featureMap = featureMap;
+    }
+
+    public void setStartingRawTypeMaps(String[] typeMapsRaw) {
+        this.typeMapsRaw = typeMapsRaw;
     }
 
     private void runCompilation() {
@@ -175,9 +182,15 @@ public class TridentCompiler extends AbstractProcess {
 
         typeMap = new NBTTypeMap(module);
 
-        typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("common.nbttm"));
-        typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("entities.nbttm"));
-        typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("block_entities.nbttm"));
+        if(typeMapsRaw != null) {
+            for(String rawContent : typeMapsRaw) {
+                typeMap.parsing.parseNBTTMFile(rootDir, rawContent);
+            }
+        } else {
+            typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("common.nbttm"));
+            typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("entities.nbttm"));
+            typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("block_entities.nbttm"));
+        }
 
         this.setProgress("Adding native methods");
 
