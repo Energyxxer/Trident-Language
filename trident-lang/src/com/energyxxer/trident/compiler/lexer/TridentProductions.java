@@ -191,8 +191,10 @@ public class TridentProductions {
                 }
         ));
 
+        LazyTokenPatternMatch COMMAND_WRAPPER = group(list(MODIFIER).setOptional().setName("MODIFIERS"), literal("run").setOptional(), COMMAND).setName("COMMAND_WRAPPER");
+
         ENTRY.add(COMMENT_S);
-        ENTRY.add(group(list(MODIFIER).setOptional().setName("MODIFIERS"), literal("run").setOptional(), COMMAND).setName("COMMAND_WRAPPER"));
+        ENTRY.add(COMMAND_WRAPPER);
         ENTRY.add(INSTRUCTION);
 
         {
@@ -369,6 +371,7 @@ public class TridentProductions {
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "say"));
+            g.append(sameLine());
             g.append(ofType(TRAILING_STRING));
             COMMAND.add(g);
         }
@@ -1170,6 +1173,18 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "loot"),
                     destination, source
+            ));
+        }
+        //endregion
+        //region expand
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "expand"),
+                    brace("{"),
+                    list(
+                            optional(choice(COMMAND_WRAPPER, COMMENT_S).setName("EXPAND_ENTRY"), ofType(TokenType.NEWLINE).setOptional().setName("LINE_PADDING"))
+                    ).setName("COMMANDS"),
+                    brace("}")
             ));
         }
         //endregion

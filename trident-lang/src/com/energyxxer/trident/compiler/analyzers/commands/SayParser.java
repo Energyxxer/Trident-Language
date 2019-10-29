@@ -10,6 +10,6 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 public class SayParser implements SimpleCommandParser {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return new SayCommand(pattern.flattenTokens().get(1).value);
+        return new SayCommand(pattern.flattenTokens().get(2).value);
     }
 }
