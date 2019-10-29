@@ -2,14 +2,14 @@ package com.energyxxer.trident.compiler.analyzers.commands;
 
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
-import com.energyxxer.commodore.functionlogic.commands.msg.MessageCommand;
+import com.energyxxer.commodore.functionlogic.commands.tell.TellCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.lexer.TridentTokens;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "msg")
 public class MsgParser implements SimpleCommandParser {
@@ -19,7 +19,7 @@ public class MsgParser implements SimpleCommandParser {
         String message = pattern.search(TridentTokens.TRAILING_STRING).get(0).value;
 
         try {
-            return new MessageCommand(entity, message);
+            return new TellCommand(entity, message);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))

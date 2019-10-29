@@ -58,6 +58,7 @@ public class TridentCompiler extends AbstractProcess {
     public static final String TRIDENT_LANGUAGE_VERSION = "0.4.2-alpha";
 
     //Resources
+    private DefinitionPack[] defaultDefinitionPacks;
     private DefinitionPack[] definitionPacks;
     private Map<String, DefinitionPack> definitionPackAliases = null;
     private VersionFeatures featureMap;
@@ -82,6 +83,7 @@ public class TridentCompiler extends AbstractProcess {
     private CompilerReport report = null;
 
     //File Structure Tracking
+    private ArrayList<String> ownFiles = new ArrayList<>();
     private HashMap<String, ParsingSignature> filePatterns = new HashMap<>();
     private HashMap<String, TridentFile> files = new HashMap<>();
 
@@ -113,7 +115,7 @@ public class TridentCompiler extends AbstractProcess {
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.setPrettyPrinting();
         this.gson = gsonBuilder.create();
-        globalObjective = new Lazy<>(() -> this.getModule().getObjectiveManager().create("trident_global", true));
+        globalObjective = new Lazy<>(() -> this.getModule().getObjectiveManager().create("trident_global"));
     }
 
     public void setStartingDefinitionPacks(DefinitionPack[] definitionPacks) {
@@ -174,7 +176,7 @@ public class TridentCompiler extends AbstractProcess {
 
         this.setProgress("Importing vanilla definitions");
         try {
-            module = createModuleForProject(rootDir.getName(), rootDir, properties, definitionPacks, definitionPackAliases);
+            module = createModuleForProject(rootDir.getName(), rootDir, properties, definitionPacks != null ? definitionPacks : defaultDefinitionPacks, definitionPackAliases);
         } catch(IOException x) {
             logException(x, "Error while importing vanilla definitions: ");
             return;
@@ -222,6 +224,9 @@ public class TridentCompiler extends AbstractProcess {
                     if(obj.has("path") && obj.get("path").isJsonPrimitive() && obj.get("path").getAsJsonPrimitive().isString()) {
                         String dependencyPath = obj.get("path").getAsString();
                         Dependency dependency = new Dependency(new TridentCompiler(newFileObject(dependencyPath)));
+                        dependency.compiler.setStartingRawTypeMaps(typeMapsRaw);
+                        dependency.compiler.setStartingFeatureMap(featureMap);
+                        dependency.compiler.setDefaultDefinitionPacks(definitionPacks != null ? definitionPacks : defaultDefinitionPacks);
                         if(obj.has("export") && obj.get("export").isJsonPrimitive() && obj.get("export").getAsJsonPrimitive().isBoolean()) {
                             dependency.doExport = obj.get("export").getAsBoolean();
                         }
@@ -259,7 +264,12 @@ public class TridentCompiler extends AbstractProcess {
                 finalizeProcess(false);
             } else {
                 files.putAll(dependency.compiler.files);
-                if(!dependency.doExport) dependency.compiler.module.propagateExport(false);
+                if(!dependency.doExport) {
+                    dependency.compiler.module.propagateExport(false);
+                    for(TridentFile file : dependency.compiler.files.values()) {
+                        file.setShouldExportFunction(false);
+                    }
+                }
                 module.join(dependency.compiler.module);
                 global.join(dependency.compiler.global);
 
@@ -267,13 +277,14 @@ public class TridentCompiler extends AbstractProcess {
             }
         }
 
-        for(Map.Entry<String, ParsingSignature> entry : filePatterns.entrySet()) {
-            Path relativePath = Paths.get(entry.getKey());
+        for(String key : ownFiles) {
+            ParsingSignature value = filePatterns.get(key);
+            Path relativePath = Paths.get(key);
             if("functions".equals(relativePath.getName(1).toString())) {
                 try {
-                    files.put(entry.getKey(), new TridentFile(this, relativePath, entry.getValue().getPattern()));
+                    files.put(key, new TridentFile(this, relativePath, value.getPattern()));
                 } catch(CommodoreException ex) {
-                    report.addNotice(new Notice(NoticeType.ERROR, ex.toString(), entry.getValue().getPattern()));
+                    report.addNotice(new Notice(NoticeType.ERROR, ex.toString(), value.getPattern()));
                     break;
                 }
             }
@@ -383,11 +394,14 @@ public class TridentCompiler extends AbstractProcess {
                             String str = new String(Files.readAllBytes(Paths.get(file.getPath())), DEFAULT_CHARSET);
                             int hashCode = str.hashCode();
 
-                            if(!filePatterns.containsKey(toSourceCacheKey(file)) || filePatterns.get(toSourceCacheKey(file)).getHashCode() != hashCode) {
+                            String cacheKey = toSourceCacheKey(file);
+                            ownFiles.add(cacheKey);
+
+                            if(!filePatterns.containsKey(cacheKey) || filePatterns.get(cacheKey).getHashCode() != hashCode) {
                                 lex.tokenizeParse(file, str, new TridentLexerProfile(module));
 
                                 if (lex.getMatchResponse().matched) {
-                                    filePatterns.put(toSourceCacheKey(file), new ParsingSignature(hashCode, lex.getMatchResponse().pattern, lex.getSummaryModule()));
+                                    filePatterns.put(cacheKey, new ParsingSignature(hashCode, lex.getMatchResponse().pattern, lex.getSummaryModule()));
                                 }
                             }
                         } catch (IOException x) {
@@ -457,7 +471,7 @@ public class TridentCompiler extends AbstractProcess {
 
         for(TagGroup<?> group : namespace.tags.getGroups()) {
             if(group.getDirectoryName().equals(tagDir)) {
-                Tag tag = group.create(tagName);
+                Tag tag = group.getOrCreate(tagName);
                 tag.setExport(true);
                 Debug.log("Created tag " + tag);
                 tag.setExport(true);
@@ -476,7 +490,7 @@ public class TridentCompiler extends AbstractProcess {
                     TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(value);
 
                     if(isTag) {
-                        Tag created = module.getNamespace(loc.namespace).getTagManager().getGroup(group.getCategory()).create(loc.body);
+                        Tag created = module.getNamespace(loc.namespace).getTagManager().getGroup(group.getCategory()).getOrCreate(loc.body);
                         created.setExport(true);
                         tag.addValue(created);
                     } else {
@@ -503,10 +517,10 @@ public class TridentCompiler extends AbstractProcess {
     private boolean rerouteRoot = false;
 
     private TridentCompiler parentCompiler = null;
+
     public TridentCompiler getRootCompiler() {
         return parentCompiler != null && rerouteRoot ? parentCompiler.getRootCompiler() : this;
     }
-
     public void setParentCompiler(TridentCompiler parentCompiler) {
         this.parentCompiler = parentCompiler;
     }
@@ -777,7 +791,12 @@ public class TridentCompiler extends AbstractProcess {
         return dependencyMode;
     }
 
+    private void setDefaultDefinitionPacks(DefinitionPack[] defaultDefinitionPacks) {
+        this.defaultDefinitionPacks = defaultDefinitionPacks;
+    }
+
     private static class Resources {
+
 
         public static final HashMap<String, String> defaults = new HashMap<>();
 
@@ -805,10 +824,11 @@ public class TridentCompiler extends AbstractProcess {
             return "";
         }
     }
-
     private static class Dependency {
+
+
         private enum Mode {
-            PRECOMPILE, COMBINE
+            PRECOMPILE, COMBINE;
         }
 
         TridentCompiler compiler;

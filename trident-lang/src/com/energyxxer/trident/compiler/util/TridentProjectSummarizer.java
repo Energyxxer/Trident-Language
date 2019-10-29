@@ -41,6 +41,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
     private File rootDir;
     private Path dataPath;
     private Thread thread;
+    private DefinitionPack[] defaultDefinitionPacks;
     private DefinitionPack[] definitionPacks;
     private Map<String, DefinitionPack> definitionPackAliases = null;
     private CommandModule module;
@@ -92,7 +93,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
         }
 
         try {
-            module = TridentCompiler.createModuleForProject(rootDir.getName(), rootDir, properties, definitionPacks, definitionPackAliases);
+            module = TridentCompiler.createModuleForProject(rootDir.getName(), rootDir, properties, definitionPacks != null ? definitionPacks : defaultDefinitionPacks, definitionPackAliases);
         } catch(IOException x) {
             logException(x);
             return;
@@ -116,6 +117,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
         for(TridentProjectSummarizer dependency : dependencies) {
             dependency.setParentSummarizer(this);
             dependency.setSourceCache(this.getSourceCache());
+            dependency.setDefaultDefinitionPacks(definitionPacks != null ? definitionPacks : defaultDefinitionPacks);
             try {
                 dependency.runSummary();
             } catch(Exception ex) {
@@ -285,5 +287,9 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
 
     public TridentProjectSummary getSummary() {
         return summary;
+    }
+
+    private void setDefaultDefinitionPacks(DefinitionPack[] defaultDefinitionPacks) {
+        this.defaultDefinitionPacks = defaultDefinitionPacks;
     }
 }

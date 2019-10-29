@@ -34,7 +34,7 @@ public class SpecialFileManager {
 
         tickFunction = new Lazy<>(() -> {
             Function function = getNamespace().functions.create("trident/tick");
-            Tag tag = compiler.getModule().minecraft.tags.functionTags.create("tick");
+            Tag tag = compiler.getModule().minecraft.tags.functionTags.getOrCreate("tick");
             tag.setExport(true);
             tag.addValue(new FunctionReference(function));
             return function;

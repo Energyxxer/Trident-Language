@@ -111,10 +111,7 @@ public class GameLogFetcherFile extends SpecialFile {
 
 
         Objective objective = parent.getGlobalObjective();
-        if(!parent.getCompiler().getModule().getObjectiveManager().contains(logObjectiveName)) {
-            parent.getCompiler().getModule().getObjectiveManager().create(logObjectiveName);
-        }
-        logLevelObjective = parent.getCompiler().getModule().getObjectiveManager().get(logObjectiveName);
+        logLevelObjective = parent.getCompiler().getModule().getObjectiveManager().getOrCreate(logObjectiveName);
 
         op = new LocalScore(new PlayerName("#OPERATION"), objective);
 

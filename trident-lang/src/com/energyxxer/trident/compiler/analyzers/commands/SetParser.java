@@ -2,7 +2,10 @@ package com.energyxxer.trident.compiler.analyzers.commands;
 
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
-import com.energyxxer.commodore.functionlogic.commands.data.*;
+import com.energyxxer.commodore.functionlogic.commands.data.DataGetCommand;
+import com.energyxxer.commodore.functionlogic.commands.data.DataModifyCommand;
+import com.energyxxer.commodore.functionlogic.commands.data.ModifySourceFromHolder;
+import com.energyxxer.commodore.functionlogic.commands.data.ModifySourceValue;
 import com.energyxxer.commodore.functionlogic.commands.execute.*;
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreGet;
 import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScorePlayersOperation;
@@ -120,11 +123,7 @@ public class SetParser implements SimpleCommandParser {
             PointerHead head;
             if(pointer.getMember() instanceof String) { //is score
                 String objectiveName = (String) pointer.getMember();
-                if(!ctx.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) {
-                    head = new PointerHead.ScorePointerHead(ctx.getCompiler().getModule().getObjectiveManager().create(objectiveName), pointer.getScale());
-                } else {
-                    head = new PointerHead.ScorePointerHead(ctx.getCompiler().getModule().getObjectiveManager().get(objectiveName), pointer.getScale());
-                }
+                head = new PointerHead.ScorePointerHead(ctx.getCompiler().getModule().getObjectiveManager().getOrCreate(objectiveName), pointer.getScale());
             } else { //is nbt
                 head = new PointerHead.NBTPointerHead((NBTPath) pointer.getMember(), pointer.getScale(), lazyTypeInstantiator);
             }
@@ -349,7 +348,7 @@ public class SetParser implements SimpleCommandParser {
                         return new ExecuteCommand(mainCommand, modifiers);
                     } else if(sourceHead instanceof NBTPointerHead) {
                         if(this.scale * ((NBTPointerHead) sourceHead).scale == 1) {
-                            return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromEntity(((PointerDecorator.EntityPointer) source).target, ((NBTPointerHead) sourceHead).path));
+                            return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromHolder(new DataHolderEntity(((PointerDecorator.EntityPointer) source).target), ((NBTPointerHead) sourceHead).path));
                         }
 
                         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
@@ -364,7 +363,7 @@ public class SetParser implements SimpleCommandParser {
                 } else if(source instanceof PointerDecorator.BlockPointer) {
                     NBTPointerHead sourceHead = (NBTPointerHead) ((PointerDecorator.BlockPointer) source).head;
                     if(this.scale * sourceHead.scale == 1) {
-                        return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromBlock(((PointerDecorator.BlockPointer) source).pos, sourceHead.path));
+                        return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromHolder(new DataHolderBlock(((PointerDecorator.BlockPointer) source).pos), sourceHead.path));
                     }
                     ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
 
@@ -405,7 +404,7 @@ public class SetParser implements SimpleCommandParser {
                     } else if(sourceHead instanceof NBTPointerHead) {
                         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
                         if(this.scale * ((NBTPointerHead) sourceHead).scale == 1) {
-                            return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromEntity(((PointerDecorator.EntityPointer) source).target, ((NBTPointerHead) sourceHead).path));
+                            return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromHolder(new DataHolderEntity(((PointerDecorator.EntityPointer) source).target), ((NBTPointerHead) sourceHead).path));
                         }
 
                         modifiers.add(new ExecuteStoreBlock(target, this.path, this.type.getValue(), this.scale));
@@ -415,7 +414,7 @@ public class SetParser implements SimpleCommandParser {
                 } else if(source instanceof PointerDecorator.BlockPointer) {
                     NBTPointerHead sourceHead = (NBTPointerHead) ((PointerDecorator.BlockPointer) source).head;
                     if(this.scale * sourceHead.scale == 1) {
-                        return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromBlock(((PointerDecorator.BlockPointer) source).pos, sourceHead.path));
+                        return new DataModifyCommand(target, this.path, DataModifyCommand.SET(), new ModifySourceFromHolder(new DataHolderBlock(((PointerDecorator.BlockPointer) source).pos), sourceHead.path));
                     }
                     ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
 

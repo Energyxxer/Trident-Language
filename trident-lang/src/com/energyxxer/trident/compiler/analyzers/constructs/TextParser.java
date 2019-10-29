@@ -102,11 +102,7 @@ public class TextParser {
                     String objectiveName = getAsStringOrNull(s.get("objective"));
                     if(objectiveName == null) delegate.report("Missing 'objective' string for 'score' text component", s);
                     if(name != null && objectiveName != null) {
-                        Objective objective;
-                        if (ctx.getCompiler().getModule().getObjectiveManager().contains(objectiveName))
-                            objective = ctx.getCompiler().getModule().getObjectiveManager().get(objectiveName);
-                        else
-                            objective = ctx.getCompiler().getModule().getObjectiveManager().create(objectiveName, true);
+                        Objective objective = ctx.getCompiler().getModule().getObjectiveManager().getOrCreate(objectiveName);
                         component[0] = new ScoreTextComponent(new LocalScore(objective, new PlayerName(name)));
                     }
                 }).otherwise(v -> delegate.report("Expected object in 'score'", obj.get("score")));

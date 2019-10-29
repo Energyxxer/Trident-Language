@@ -36,7 +36,7 @@ public class TagLib implements DefaultLibraryProvider {
 
             TagGroup tagGroup = ns.getTagManager().getGroup(category);
 
-            Tag tag = tagGroup.create(tagLoc.body);
+            Tag tag = tagGroup.getOrCreate(tagLoc.body);
 
             for(Object rawValue : values) {
                 if(rawValue instanceof TridentUtil.ResourceLocation) {

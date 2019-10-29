@@ -8,11 +8,11 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "define")
 public class DefineInstruction implements Instruction {
@@ -52,14 +52,14 @@ public class DefineInstruction implements Instruction {
             }
         }
 
-        if(ctx.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) {
+        if(ctx.getCompiler().getModule().getObjectiveManager().exists(objectiveName)) {
             if(!ctx.getCompiler().getModule().getObjectiveManager().get(objectiveName).getType().equals(criteria)) {
                 throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "An objective with the name '" + objectiveName + "' of a different type has already been defined", pattern, ctx);
             } else {
                 ctx.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "An objective with the name '" + objectiveName + "' has already been defined", pattern));
             }
         } else {
-            ctx.getCompiler().getModule().getObjectiveManager().create(objectiveName, criteria, displayName, true);
+            ctx.getCompiler().getModule().getObjectiveManager().create(objectiveName, criteria, displayName);
         }
     }
 }

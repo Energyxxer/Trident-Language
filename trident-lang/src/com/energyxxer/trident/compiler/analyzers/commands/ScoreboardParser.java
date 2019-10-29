@@ -43,10 +43,10 @@ public class ScoreboardParser implements SimpleCommandParser {
                 String criteria = CommonParsers.parseIdentifierB(inner.find("CRITERIA"), ctx);
                 TextComponent displayName = TextParser.parseTextComponent(inner.find(".TEXT_COMPONENT"), ctx);
                 Objective objective;
-                if(ctx.getCompiler().getModule().getObjectiveManager().contains(objectiveName)) {
+                if(ctx.getCompiler().getModule().getObjectiveManager().exists(objectiveName)) {
                     objective = ctx.getCompiler().getModule().getObjectiveManager().get(objectiveName);
                 } else {
-                    objective = ctx.getCompiler().getModule().getObjectiveManager().create(objectiveName, criteria, displayName, true);
+                    objective = ctx.getCompiler().getModule().getObjectiveManager().create(objectiveName, criteria, displayName);
                 }
                 return new ObjectivesAddCommand(objective);
             }

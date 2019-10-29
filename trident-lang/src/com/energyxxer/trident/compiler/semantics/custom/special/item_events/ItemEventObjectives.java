@@ -12,11 +12,11 @@ public class ItemEventObjectives {
     public final Objective oldHeld;
 
     public ItemEventObjectives(ObjectiveManager objMgr) {
-        mainhand = objMgr.contains("tdci_mainhand") ? objMgr.get("tdci_mainhand") : objMgr.create("tdci_mainhand", true);
-        offhand = objMgr.contains("tdci_offhand") ? objMgr.get("tdci_offhand") : objMgr.create("tdci_offhand", true);
-        held = objMgr.contains("tdci_held") ? objMgr.get("tdci_held") : objMgr.create("tdci_held", true);
-        oldMainhand = objMgr.contains("oldtdci_mainhand") ? objMgr.get("oldtdci_mainhand") : objMgr.create("oldtdci_mainhand", true);
-        oldOffhand = objMgr.contains("oldtdci_offhand") ? objMgr.get("oldtdci_offhand") : objMgr.create("oldtdci_offhand", true);
-        oldHeld = objMgr.contains("oldtdci_held") ? objMgr.get("oldtdci_held") : objMgr.create("oldtdci_held", true);
+        mainhand = objMgr.getOrCreate("tdci_mainhand");
+        offhand = objMgr.getOrCreate("tdci_offhand");
+        held = objMgr.getOrCreate("tdci_held");
+        oldMainhand = objMgr.getOrCreate("oldtdci_mainhand");
+        oldOffhand = objMgr.getOrCreate("oldtdci_offhand");
+        oldHeld = objMgr.getOrCreate("oldtdci_held");
     }
 }

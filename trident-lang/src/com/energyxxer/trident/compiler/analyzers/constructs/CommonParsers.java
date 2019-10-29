@@ -169,7 +169,7 @@ public class CommonParsers {
         Type type = null;
         if(typeLoc.isTag) {
             type = ns.tags.functionTags.get(typeLoc.body);
-        } else if(ns.functions.contains(typeLoc.body)) {
+        } else {
             type = new FunctionReference(ns.functions.get(typeLoc.body));
         }
 
@@ -412,11 +412,22 @@ public class CommonParsers {
         TokenPattern<?> inner = pattern.find("IDENTIFIER_A");
         if(inner == null) inner = pattern;
         String name = parseIdentifierA(inner, ctx);
-        if(!ctx.getCompiler().getModule().getObjectiveManager().contains(name)) {
+        if(!ctx.getCompiler().getModule().getObjectiveManager().exists(name)) {
             ctx.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Undefined objective name '" + name + "'", pattern));
-            return ctx.getCompiler().getModule().getObjectiveManager().create(name, true);
+            return ctx.getCompiler().getModule().getObjectiveManager().create(name);
         } else {
-            return ctx.getCompiler().getModule().getObjectiveManager().get(name);
+            return ctx.getCompiler().getModule().getObjectiveManager().getOrCreate(name);
+        }
+    }
+
+    public static Objective parseObjective(String objName, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(objName == null) return null;
+        validateIdentifierA(objName, pattern, ctx);
+        if(!ctx.getCompiler().getModule().getObjectiveManager().exists(objName)) {
+            ctx.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Undefined objective name '" + objName + "'", pattern));
+            return ctx.getCompiler().getModule().getObjectiveManager().create(objName);
+        } else {
+            return ctx.getCompiler().getModule().getObjectiveManager().getOrCreate(objName);
         }
     }
 
@@ -616,15 +627,18 @@ public class CommonParsers {
             case "RAW_IDENTIFIER_A": return pattern.flatten(false);
             case "STRING": {
                 String result = parseStringLiteral(pattern, ctx);
-                if(TridentLexerProfile.IDENTIFIER_A_REGEX.matcher(result).matches()) {
-                    return result;
-                } else {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "The string '" + result + "' is not a valid argument here", pattern, ctx);
-                }
+                validateIdentifierA(result, pattern, ctx);
+                return result;
             }
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
             }
+        }
+    }
+
+    public static void validateIdentifierA(String str, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(!TridentLexerProfile.IDENTIFIER_A_REGEX.matcher(str).matches()) {
+            throw new TridentException(TridentException.Source.COMMAND_ERROR, "The string '" + str + "' is not a valid argument here", pattern, ctx);
         }
     }
 
@@ -724,14 +738,14 @@ public class CommonParsers {
                 if(!(pointer.getMember() instanceof String)) {
                     throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
                 }
-                return new LocalScore((Entity) pointer.getTarget(), ctx.getCompiler().getModule().getObjectiveManager().get((String) pointer.getMember()));
+                return new LocalScore((Entity) pointer.getTarget(), parseObjective((String) pointer.getMember(), pattern, ctx));
             }
             case "POINTER": {
                 PointerObject pointer = parsePointer(pattern, ctx);
                 if(!(pointer.getMember() instanceof String)) {
                     throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
                 }
-                return new LocalScore((Entity) pointer.getTarget(), ctx.getCompiler().getModule().getObjectiveManager().get((String) pointer.getMember()));
+                return new LocalScore((Entity) pointer.getTarget(), parseObjective((String) pointer.getMember(), pattern, ctx));
             }
             case "EXPLICIT_SCORE": {
                 Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
@@ -748,7 +762,7 @@ public class CommonParsers {
                     if(!(pointer.getMember() instanceof String)) {
                         throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
                     }
-                    objective = ctx.getCompiler().getModule().getObjectiveManager().get((String) pointer.getMember());
+                    objective = parseObjective((String) pointer.getMember(), pattern, ctx);
                     entity = (Entity) pointer.getTarget();
                 }
 
