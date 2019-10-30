@@ -7,6 +7,7 @@ import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
+import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
@@ -51,8 +52,10 @@ import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
+import com.energyxxer.util.logger.Debug;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -117,6 +120,25 @@ public class CommonParsers {
         if(flat.startsWith("/")) {
             flat = ctx.getWritingFile().getFunction().getFullName() + flat;
         }
+        String prefix = flat.substring(0, flat.indexOf(":")+1);
+        flat = flat.substring(prefix.length());
+        ArrayList<String> splits = new ArrayList<>(Arrays.asList(flat.split("/",-1)));
+        for(int i = 0; i < splits.size()-1; i++) {
+            if("..".equals(splits.get(i+1))) {
+                splits.remove(i);
+                splits.remove(i);
+                i--;
+            }
+        }
+
+        flat = prefix + String.join("/", splits);
+
+        if("..".equals(splits.get(0))) {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal resource location: " + flat + " - path cannot go backwards any further", id, ctx);
+        }
+
+        Debug.log(flat);
+
         if(flat.isEmpty()) {
             return ctx.getWritingFile().getFunction().getPath();
         }
@@ -135,11 +157,29 @@ public class CommonParsers {
 
         loc = TridentUtil.ResourceLocation.createStrict(str);
 
-        if(loc != null) {
-            return loc;
-        } else {
+        if(loc == null) {
             throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal resource location: '" + str + "'", pattern, ctx);
         }
+
+        ArrayList<String> splits = new ArrayList<>(Arrays.asList(loc.body.split("/",-1)));
+        for(int i = 0; i < splits.size()-1; i++) {
+            if("..".equals(splits.get(i+1))) {
+                splits.remove(i);
+                splits.remove(i);
+                i--;
+            }
+        }
+
+        loc.body = String.join("/", splits);
+
+        if(splits.isEmpty()) {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal resource location: " + str + " - path cannot go backwards any further", pattern, ctx);
+        }
+        if("..".equals(splits.get(0))) {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal resource location: " + loc + " - path cannot go backwards any further", pattern, ctx);
+        }
+
+        return loc;
     }
 
     public static Type parseFunctionTag(TokenStructure pattern, ISymbolContext ctx) {
@@ -170,7 +210,8 @@ public class CommonParsers {
         if(typeLoc.isTag) {
             type = ns.tags.functionTags.get(typeLoc.body);
         } else {
-            type = new FunctionReference(ns.functions.get(typeLoc.body));
+            Function subjectFunction = ns.functions.get(typeLoc.body);
+            if(subjectFunction != null) type = new FunctionReference(subjectFunction);
         }
 
         if(typeLoc.equals(new TridentUtil.ResourceLocation(ctx.getWritingFile().getResourceLocation().toString() + "/"))) return new FunctionReference(ctx.getWritingFile().getFunction());

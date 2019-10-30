@@ -17,6 +17,7 @@ import com.energyxxer.commodore.util.DoubleRange;
 import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.default_libs.JsonLib;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
@@ -49,9 +50,47 @@ public class ObjectConstructors {
         constructors.put("item",ObjectConstructors::constructItem);
 
 
+        constructors.put("resource", (params, patterns, pattern, ctx) -> {
+            if (params.length < 1) {
+                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'new resource' requires at least 2 parameters, instead found " + params.length, pattern, ctx);
+            }
+
+            assertOfType(params[0], patterns[0], ctx, String.class);
+            if(params.length == 1) {
+                return CommonParsers.parseResourceLocation(((String) params[0]), patterns[0], ctx);
+            }
+
+            assertOfType(params[1], patterns[1], ctx, ListObject.class);
+            ListObject list = ((ListObject) params[1]);
+
+            String delimiter = "/";
+            if(params.length >= 3) {
+                assertOfType(params[2], patterns[2], ctx, String.class);
+                delimiter = (String) params[2];
+            }
+
+            StringBuilder body = new StringBuilder((String)params[0]);
+            body.append(":");
+            int i = 0;
+            for(Object part : list) {
+                if(part instanceof String) {
+                    body.append(part);
+                } else if(part instanceof TridentUtil.ResourceLocation) {
+                    body.append(((TridentUtil.ResourceLocation) part).body);
+                } else {
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected string or resource in the list, instead got: " + part + " at index " + i, patterns[1], ctx);
+                }
+                if(i < ((ListObject) params[1]).size()-1) {
+                    body.append(delimiter);
+                }
+                i++;
+            }
+
+            return CommonParsers.parseResourceLocation(body.toString(), pattern, ctx);
+        });
 
 
-        constructors.put("resource", new MethodWrapper<>("new resource", ((instance, params) -> {
+        /*constructors.put("resource", new MethodWrapper<>("new resource", ((instance, params) -> {
             if(params[1] == null) {
                 TridentUtil.ResourceLocation result = TridentUtil.ResourceLocation.createStrict(((String) params[0]));
                 if(result != null) return result;
@@ -78,7 +117,7 @@ public class ObjectConstructors {
             TridentUtil.ResourceLocation result = TridentUtil.ResourceLocation.createStrict(body.toString());
             if(result != null) return result;
             else throw new IllegalArgumentException("The string '" + body.toString() + "' cannot be used as a resource location");
-        }), String.class, ListObject.class, String.class).setNullable(1).setNullable(2).createForInstance(null));
+        }), String.class, ListObject.class, String.class).setNullable(1).setNullable(2).createForInstance(null));*/
 
 
         constructors.put("text_component", ObjectConstructors::constructTextComponent);
