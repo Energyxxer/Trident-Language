@@ -23,6 +23,7 @@ import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.ParsingSignature;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
@@ -276,6 +277,8 @@ public class TridentCompiler extends AbstractProcess {
                 dependency.compiler.setRerouteRoot(true);
             }
         }
+
+        Resources.populate(ownFiles, filePatterns);
 
         for(String key : ownFiles) {
             ParsingSignature value = filePatterns.get(key);
@@ -796,14 +799,39 @@ public class TridentCompiler extends AbstractProcess {
     }
 
     private static class Resources {
-
-
         public static final HashMap<String, String> defaults = new HashMap<>();
+        public static final ArrayList<Library> libraries = new ArrayList<>();
+        public static final CommandModule dummyModule = new CommandModule("Trident Dummy");
 
         static {
             defaults.put("common.nbttm", read("/typemaps/common.nbttm"));
             defaults.put("entities.nbttm", read("/typemaps/entities.nbttm"));
             defaults.put("block_entities.nbttm", read("/typemaps/block_entities.nbttm"));
+
+            dummyModule.minecraft.types.entity.create("player");
+            dummyModule.minecraft.types.block.create("air");
+            dummyModule.minecraft.types.item.create("air");
+            dummyModule.minecraft.types.particle.create("cloud");
+            dummyModule.minecraft.types.enchantment.create("protection");
+            dummyModule.minecraft.types.gamerule.getOrCreate("commandBlockOutput").putProperty("argument", "boolean");
+            dummyModule.minecraft.types.gamemode.create("survival");
+            dummyModule.minecraft.types.dimension.create("overworld");
+            dummyModule.minecraft.types.effect.create("speed");
+            dummyModule.minecraft.types.slot.create("weapon.mainhand");
+            dummyModule.minecraft.types.difficulty.create("normal");
+            dummyModule.minecraft.types.structure.create("Village");
+            dummyModule.minecraft.types.fluid.create("water");
+
+            libraries.add(new Library("trident-util/functions/type_checking.tdn", read("/trident_utils/datapack/data/trident-util/functions/type_checking.tdn")));
+            libraries.add(new Library("trident-util/functions/shared.tdn", read("/trident_utils/datapack/data/trident-util/functions/shared.tdn")));
+            libraries.add(new Library("trident-util/functions/predicate.tdn", read("/trident_utils/datapack/data/trident-util/functions/predicate.tdn")));
+        }
+
+        static void populate(ArrayList<String> ownFiles, HashMap<String, ParsingSignature> filePatterns) {
+            for(Library lib : libraries) {
+                ownFiles.add(lib.location);
+                filePatterns.put(lib.location, lib.signature);
+            }
         }
 
         private static String read(String file) {
@@ -822,6 +850,28 @@ public class TridentCompiler extends AbstractProcess {
                 Debug.log("Unable to access file: " + file, Debug.MessageType.ERROR);
             }
             return "";
+        }
+
+        private static class Library {
+            String location;
+            TokenPattern<?> pattern;
+            ParsingSignature signature;
+
+            public Library(String location, String content) {
+                this.location = location;
+
+                TokenStream ts = new TokenStream();
+                LazyLexer lex = new LazyLexer(ts, new TridentProductions(dummyModule).FILE);
+                lex.tokenizeParse(new File(System.getProperty("user.home")), content, new TridentLexerProfile());
+
+                if(!lex.getMatchResponse().matched) {
+                    throw new RuntimeException("Native lib threw an error on parse: " + lex.getMatchResponse().getErrorMessage());
+                }
+
+                this.pattern = lex.getMatchResponse().pattern;
+
+                this.signature = new ParsingSignature(content.hashCode(), pattern, null);
+            }
         }
     }
     private static class Dependency {

@@ -1,0 +1,408 @@
+@on compile
+@require trident-util:type_checking
+
+var SelfBuilder = function(obj) {
+    do if(obj._sb_buildData == null) eval obj._sb_buildData = {}
+    do if(obj._sb_buildLocation == null) eval obj._sb_buildLocation = function() {return obj}
+    do if(obj._sb_build == null) eval obj._sb_build = function() {
+        for(property in obj._sb_buildData) {
+            eval obj._sb_buildLocation(property.key)[property.key] = property.value
+            do if(isInstance(property.value, "dictionary") && isInstance(property.value._sb_build, "function")) {
+                eval property.value._sb_build()
+            }
+        }
+        eval obj._sb_buildData = null
+        eval obj._sb_buildLocation = null
+        eval obj._sb_build = null
+        return obj
+    }
+    return obj
+}
+
+var Shared = {
+    Entity: function() {
+        return SelfBuilder({
+            objectType: function() {return "Shared.Entity"},
+            type: function(type) {
+                eval assertType(type, "resource")
+                do if(!MinecraftTypes.exists("entity", type)) throw "Given type '" + type + "' does not exist as an entity type"
+                eval this._sb_buildData.type = type
+                return this
+            },
+            distance: function(obj) {
+                eval assertObjectType(obj, "Shared.Distance")
+                eval this._sb_buildData.distance = obj
+                return this
+            },
+            location: function(obj) {
+                eval assertObjectType(obj, "Shared.Location")
+                eval this._sb_buildData.location = obj
+                return this
+            },
+            effects: function(obj) {
+                eval assertObjectType(obj, "Shared.Effects")
+                eval this._sb_buildData.effects = obj
+                return this
+            },
+            _nbt: function(tag) {
+                eval assertType(tag, "nbt")
+                eval this._sb_buildData["nbt"] = (string)tag
+                return this
+            },
+            isOnFire: function(bool) {
+                eval assertType(bool, "boolean")
+                do if(this._sb_buildData.flags == null) eval this._sb_buildData.flags = {}
+                eval this._sb_buildData.flags.is_on_fire = bool
+                return this
+            },
+            isSneaking: function(bool) {
+                eval assertType(bool, "boolean")
+                do if(this._sb_buildData.flags == null) eval this._sb_buildData.flags = {}
+                eval this._sb_buildData.flags.is_sneaking = bool
+                return this
+            },
+            isSprinting: function(bool) {
+                eval assertType(bool, "boolean")
+                do if(this._sb_buildData.flags == null) eval this._sb_buildData.flags = {}
+                eval this._sb_buildData.flags.is_sprinting = bool
+                return this
+            },
+            isSwimming: function(bool) {
+                eval assertType(bool, "boolean")
+                do if(this._sb_buildData.flags == null) eval this._sb_buildData.flags = {}
+                eval this._sb_buildData.flags.is_swimming = bool
+                return this
+            },
+            isBaby: function(bool) {
+                eval assertType(bool, "boolean")
+                do if(this._sb_buildData.flags == null) eval this._sb_buildData.flags = {}
+                eval this._sb_buildData.flags.is_baby = bool
+                return this
+            },
+            equipment: function(slot, itm) {
+                do if(this._sb_buildData.equipment == null) eval this._sb_buildData.equipment = {
+                    _sb_build: function() {
+                        for(entry in this) {
+                            do if(isInstance(entry.value, "dictionary") && entry.value._sb_build != null) eval entry.value._sb_build()
+                        }
+                    }
+                }
+                do if(slot == null && itm == null) {
+                    return this
+                }
+                eval assertType(slot, "string")
+                eval assertOneOf(slot, ["mainhand", "offhand", "head", "chest", "legs", "feet"])
+                eval assertDualTypes(itm, "item", "dictionary")
+                
+                do if(isInstance(itm, "item")) {
+                    eval itm = Shared.Item(itm)
+                } else {
+                    eval assertObjectType(itm, "Shared.Item")
+                }
+                
+                eval this._sb_buildData.equipment[slot] = itm
+                return this
+            },
+            team: function(teamName) {
+                eval assertType(teamName, "string")
+                eval this._sb_buildData.team = teamName
+                return this
+            },
+            level: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.level = rangeToObj(value)
+                return this
+            },
+            gamemode: function(gamemode) {
+                eval assertType(gamemode, "string")
+                do if(!MinecraftTypes.exists("gamemode", gamemode)) throw "Given type '" + type + "' does not exist as a gamemode type"
+                eval this._sb_buildData.gamemode = gamemode
+                return this
+            },
+            matchStats: function(criteria, value) {
+                do if(this._sb_buildData.stats == null) eval this._sb_buildData.stats = {}
+                eval assertType(criteria, "string")
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.stats[criteria] = rangeToObj(value)
+                return this
+            },
+            matchRecipes: function(id, value) {
+                do if(this._sb_buildData.recipes == null) eval this._sb_buildData.recipes = {}
+                eval assertType(id, "string")
+                eval assertType(value, "boolean")
+                eval this._sb_buildData.recipes[id] = value
+                return this
+            },
+            catType: function(texture) {
+                eval assertType(texture, "resource")
+                eval this._sb_buildData.catType[slot] = texture
+                return this
+            }
+        })
+    },
+    Distance: function() {
+        return SelfBuilder({
+            objectType: function() {return "Shared.Distance"},
+            x: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval this._sb_buildData.x = rangeToObj(value)
+                return this
+            },
+            y: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval this._sb_buildData.y = rangeToObj(value)
+                return this
+            },
+            z: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval this._sb_buildData.z = rangeToObj(value)
+                return this
+            },
+            absolute: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval this._sb_buildData.absolute = rangeToObj(value)
+                return this
+            },
+            horizontal: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval this._sb_buildData.horizontal = rangeToObj(value)
+                return this
+            }
+        })
+    },
+    Location: function() {
+        return SelfBuilder({
+            objectType: function() {return "Shared.Location"},
+            biome: function(biome) {
+                eval assertType(biome, "resource")
+                do if(!MinecraftTypes.exists("biome", biome)) throw "Given type '" + biome + "' does not exist as a biome type"
+                eval this._sb_buildData.biome = biome
+                return this
+            },
+            light: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.light = {
+                    "light": rangeToObj(value)
+                }
+                return this
+            },
+            posX: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval value = rangeToObj(value)
+                do if(this._sb_buildData.position == null) eval this._sb_buildData.position = {}
+                eval this._sb_buildData.position.x = value
+                return this
+            },
+            posY: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval value = rangeToObj(value)
+                do if(this._sb_buildData.position == null) eval this._sb_buildData.position = {}
+                eval this._sb_buildData.position.y = value
+                return this
+            },
+            posZ: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval value = rangeToObj(value)
+                do if(this._sb_buildData.position == null) eval this._sb_buildData.position = {}
+                eval this._sb_buildData.position.z = value
+                return this
+            },
+            feature: function(feature) {
+                eval assertType(feature, "string")
+                eval feature = feature.toLowerCase()
+                var valid = false
+                for(def in MinecraftTypes.getDefinitionsForCategory("structure")) {
+                    do if(def.key.toLowerCase() == feature) {
+                        eval valid = true
+                        break
+                    }
+                }
+                do if(!valid) throw "Given type '" + feature + "' does not exist as a structure type"
+                eval this._sb_buildData.feature = feature.toLowerCase()
+                return this
+            },
+            dimension: function(dimension) {
+                eval assertType(dimension, "resource")
+                do if(!MinecraftTypes.exists("dimension", dimension)) throw "Given type '" + dimension + "' does not exist as a dimension type"
+                eval this._sb_buildData.dimension = dimension
+                return this
+            }
+        })
+    },
+    Effects: function(effects) {
+        var obj = SelfBuilder({
+            objectType: function() {return "Shared.Effects"}
+        })
+        do if(effects != null) {
+            eval assertType(effects, "list")
+            for(effect in effects) {
+                eval obj._sb_buildData[(string)effect.id] = effect
+                eval effect.id = null
+            }
+        }
+        return obj
+    },
+    Effect: function(type) {
+        eval assertType(type, "resource")
+        do if(!MinecraftTypes.exists("effect", type)) throw "Given type '" + type + "' does not exist as an effect type"
+        return SelfBuilder({
+            objectType: function() {return "Shared.Effect"},
+            id: type,
+            amplifier: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.amplifier = rangeToObj(value)
+                return this
+            },
+            duration: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.duration = rangeToObj(value)
+                return this
+            },
+            ambient: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.ambient = bool
+                return this
+            },
+            visible: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.visible = bool
+                return this
+            }
+        })
+    },
+    Item: function(base) {
+        var obj = SelfBuilder({
+            objectType: function() {return "Shared.Item"},
+            type: function(type) {
+                eval assertType(type, "resource")
+                do if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
+                do if(!MinecraftTypes.exists("item", type)) throw "Given type '" + type + "' does not exist as an item type"
+                eval this._sb_buildData.type = type
+                eval this._sb_buildData.tag = null
+                return this
+            },
+            tag: function(type) {
+                eval assertType(type, "resource")
+                do if(!type.isTag) throw "Given location '" + type + "' is a type, expected a tag"
+                do if(!MinecraftTypes.exists("item", type)) throw "Given tag '" + type + "' does not exist as an item tag"
+                eval this._sb_buildData.tag = ((string)type).substring(1)
+                eval this._sb_buildData.type = null
+                return this
+            },
+            durability: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.durability = rangeToObj(value)
+                return this
+            },
+            count: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.count = rangeToObj(value)
+                return this
+            },
+            potion: function(type) {
+                eval assertType(type, "resource")
+                do if(!MinecraftTypes.exists("potion", type)) throw "Given type '" + type + "' does not exist as a potion type"
+                eval this._sb_buildData.potion = type
+                return this
+            },
+            enchantments: function(enchantments) {
+                eval assertType(enchantments, "list")
+                for(enchantment in enchantments) {
+                    eval assertObjectType(enchantment, "Shared.Enchantment")
+                }
+                eval this._sb_buildData.enchantments = enchantments
+                return this
+            },
+            storedEnchantments: function(enchantments) {
+                eval assertType(enchantments, "list")
+                for(enchantment in enchantments) {
+                    eval assertObjectType(enchantment, "Shared.Enchantment")
+                }
+                eval this._sb_buildData.stored_enchantments = enchantments
+                return this
+            },
+            _nbt: function(tag) {
+                eval assertType(tag, "nbt")
+                eval this._sb_buildData["nbt"] = (string)tag
+                return this
+            }
+        })
+        do if(base != null) {
+            eval assertType(base, "item")
+            do if(base.itemType.isTag) {
+                eval obj = obj.tag(base.itemType)
+            } else {
+                eval obj = obj.type(base.itemType)
+            }
+            do if(base.itemTag != null) {
+                eval obj = obj._nbt(base.itemTag)
+            }
+        }
+        return obj
+    },
+    Enchantment: function() {
+        return SelfBuilder({
+            objectType: function() {return "Shared.Enchantment"},
+            id: function(type) {
+                eval assertType(type, "resource")
+                do if(!MinecraftTypes.exists("enchantment", type)) throw "Given type '" + type + "' does not exist as an enchantment type"
+                eval this._sb_buildData.enchantment = type
+                return this
+            },
+            levels: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.levels = rangeToObj(value)
+                return this
+            }
+        })
+    },
+    Block: function(base) {
+        var obj = SelfBuilder({
+            objectType: function() {return "Shared.Block"},
+            _block: function(type) {
+                eval assertType(type, "resource")
+                do if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
+                do if(!MinecraftTypes.exists("block", type)) throw "Given type '" + type + "' does not exist as a block type"
+                eval this._sb_buildData["block"] = type
+                return this
+            },
+            fluid: function(type) {
+                eval assertType(type, "resource")
+                do if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
+                do if(!MinecraftTypes.exists("fluid", type)) throw "Given type '" + type + "' does not exist as a fluid type"
+                eval this._sb_buildData["fluid"] = type
+                return this
+            },
+            tag: function(type) {
+                eval assertType(type, "resource")
+                do if(!type.isTag) throw "Given location '" + type + "' is a type, expected a tag"
+                do if(!MinecraftTypes.exists("block", type) && !MinecraftTypes.exists("fluid", type)) throw "Given tag '" + type + "' does not exist as a block nor fluid tag"
+                eval this._sb_buildData.tag = ((string)type).substring(1)
+                return this
+            },
+            state: function(key, value) {
+                do if(this._sb_buildData.state == null) eval this._sb_buildData.state = {}
+                eval assertType(key, "string")
+                do if(isInstance(value, "string") || isInstance(value, "boolean") || isInstance(value, "int") || isInstance(value, "int_range")) {
+                    eval this._sb_buildData.state[key] = rangeToObj(value)
+                } else {
+                    throw "Expected string, boolean, int or int_range, instead got " + typeOf(obj)
+                }
+                return this
+            },
+            _nbt: function(tag) {
+                eval assertType(tag, "nbt")
+                eval this._sb_buildData["nbt"] = (string)tag
+                return this
+            }
+        })
+        do if(base != null) {
+            eval assertType(base, "item")
+            eval obj = obj.type(base.itemType)
+            do if(base.itemTag != null) {
+                eval obj = obj._nbt(base.itemTag)
+            }
+        }
+        return obj
+    }
+}
