@@ -77,6 +77,14 @@ public class SummarySymbol implements SummaryElement {
         }
     }
 
+    @Override
+    public void collectGlobalSymbols(ArrayList<SummarySymbol> list) {
+        if(!isMember && getVisibility() == Symbol.SymbolVisibility.GLOBAL) {
+            list.removeIf(e -> e.getName().equals(this.getName()));
+            list.add(this);
+        }
+    }
+
     public SummarySymbol addTag(String tag) {
         suggestionTags.add(tag);
         return this;

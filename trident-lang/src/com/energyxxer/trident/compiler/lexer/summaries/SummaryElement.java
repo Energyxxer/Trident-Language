@@ -15,6 +15,8 @@ public interface SummaryElement {
 
     SummaryModule getParentFileSummary();
 
+    void collectGlobalSymbols(ArrayList<SummarySymbol> list);
+
     void updateIndices(Function<Integer, Integer> h);
 
     default void collectSymbolsVisibleAt(int index, ArrayList<SummarySymbol> list, boolean fromSameFile) {

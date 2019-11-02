@@ -134,16 +134,11 @@ public class SummaryBlock implements SummaryElement {
         }
     }
 
+    @Override
     public void collectGlobalSymbols(ArrayList<SummarySymbol> list) {
+        if(associatedSymbol != null) associatedSymbol.collectGlobalSymbols(list);
         for(SummaryElement elem : subElements) {
-            //TODO
-            if(elem instanceof SummaryBlock) ((SummaryBlock) elem).collectGlobalSymbols(list);
-            else if(elem instanceof SummarySymbol) {
-                if(elem.getVisibility() == Symbol.SymbolVisibility.GLOBAL) {
-                    list.removeIf(e -> e.getName().equals(elem.getName()));
-                    list.add((SummarySymbol) elem);
-                }
-            }
+            elem.collectGlobalSymbols(list);
         }
     }
 
@@ -166,5 +161,10 @@ public class SummaryBlock implements SummaryElement {
     @Override
     public SummaryModule getParentFileSummary() {
         return parentSummary;
+    }
+
+    @Override
+    public Symbol.SymbolVisibility getVisibility() {
+        return associatedSymbol != null ? associatedSymbol.getVisibility() : Symbol.SymbolVisibility.LOCAL;
     }
 }

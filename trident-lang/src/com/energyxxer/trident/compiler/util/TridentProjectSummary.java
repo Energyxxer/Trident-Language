@@ -7,41 +7,37 @@ import com.energyxxer.trident.compiler.lexer.summaries.SummarySymbol;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TridentProjectSummary implements ProjectSummary {
     private ArrayList<TridentSummaryModule> fileSummaries = new ArrayList<>();
     private HashMap<File, TridentSummaryModule> fileSummaryMap = new HashMap<>();
-    private HashMap<String, ArrayList<TridentUtil.ResourceLocation>> types = new HashMap<>();
-    private HashMap<String, ArrayList<TridentUtil.ResourceLocation>> tags = new HashMap<>();
-    private ArrayList<TridentUtil.ResourceLocation> soundEvents = new ArrayList<>();
-    private ArrayList<String> objectives = new ArrayList<>();
-    private ArrayList<SummarySymbol> globalSymbols = new ArrayList<>();
-    private ArrayList<Todo> todos = new ArrayList<>();
+    private HashMap<String, Set<TridentUtil.ResourceLocation>> types = new HashMap<>();
+    private HashMap<String, Set<TridentUtil.ResourceLocation>> tags = new HashMap<>();
+    private LinkedHashSet<TridentUtil.ResourceLocation> soundEvents = new LinkedHashSet<>();
+    private Set<String> objectives = new HashSet<>();
+    private Set<SummarySymbol> globalSymbols = new LinkedHashSet<>();
+    private Set<Todo> todos = new HashSet<>();
 
     public void store(File file, TridentSummaryModule summaryModule) {
         if(file != null) fileSummaryMap.put(file, summaryModule);
         fileSummaries.add(summaryModule);
         for(SummarySymbol objective : summaryModule.getObjectives()) {
-            if(!objectives.contains(objective.getName())) {
-                objectives.add(objective.getName());
-            }
+            objectives.add(objective.getName());
         }
         this.todos.addAll(summaryModule.getTodos());
         globalSymbols.addAll(summaryModule.getGlobalSymbols());
     }
 
     public void addTag(String category, TridentUtil.ResourceLocation tagLoc) {
-        if(!tags.containsKey(category)) tags.put(category, new ArrayList<>());
+        if(!tags.containsKey(category)) tags.put(category, new HashSet<>());
         tags.get(category).add(tagLoc);
     }
 
     public void addType(String category, TridentUtil.ResourceLocation typeLoc) {
-        if(!types.containsKey(category)) types.put(category, new ArrayList<>());
+        if(!types.containsKey(category)) types.put(category, new HashSet<>());
         types.get(category).add(typeLoc);
     }
 
@@ -77,19 +73,19 @@ public class TridentProjectSummary implements ProjectSummary {
         soundEvents.add(loc);
     }
 
-    public HashMap<String, ArrayList<TridentUtil.ResourceLocation>> getTypes() {
+    public HashMap<String, Set<TridentUtil.ResourceLocation>> getTypes() {
         return types;
     }
 
-    public HashMap<String, ArrayList<TridentUtil.ResourceLocation>> getTags() {
+    public HashMap<String, Set<TridentUtil.ResourceLocation>> getTags() {
         return tags;
     }
 
-    public ArrayList<TridentUtil.ResourceLocation> getSoundEvents() {
-        return soundEvents;
+    public Collection<TridentUtil.ResourceLocation> getSoundEvents() {
+        return new ArrayList<>(soundEvents);
     }
 
-    public ArrayList<Todo> getTodos() {
+    public Collection<Todo> getTodos() {
         return todos;
     }
 

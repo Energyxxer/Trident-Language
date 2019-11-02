@@ -828,6 +828,7 @@ public class TridentCompiler extends AbstractProcess {
             dummyModule.minecraft.types.structure.create("Village");
             dummyModule.minecraft.types.fluid.create("water");
 
+            libraries.add(new Library("trident-util/functions/native.tdn", read("/trident_utils/datapack/data/trident-util/functions/native.tdn"), true));
             libraries.add(new Library("trident-util/functions/type_checking.tdn", read("/trident_utils/datapack/data/trident-util/functions/type_checking.tdn")));
             libraries.add(new Library("trident-util/functions/shared.tdn", read("/trident_utils/datapack/data/trident-util/functions/shared.tdn")));
             libraries.add(new Library("trident-util/functions/predicate.tdn", read("/trident_utils/datapack/data/trident-util/functions/predicate.tdn")));
@@ -835,6 +836,7 @@ public class TridentCompiler extends AbstractProcess {
 
         static void populate(ArrayList<String> ownFiles, HashMap<String, ParsingSignature> filePatterns) {
             for(Library lib : libraries) {
+                if(lib.summaryOnly) continue;
                 ownFiles.add(lib.path);
                 filePatterns.put(lib.path, lib.signature);
             }
@@ -869,8 +871,13 @@ public class TridentCompiler extends AbstractProcess {
             TokenPattern<?> pattern;
             ParsingSignature signature;
             TridentSummaryModule fileSummary;
+            boolean summaryOnly;
 
             public Library(String path, String content) {
+                this(path, content, false);
+            }
+
+            public Library(String path, String content, boolean summaryOnly) {
                 this.path = path;
 
                 Path relPath = Paths.get(path);
@@ -890,6 +897,8 @@ public class TridentCompiler extends AbstractProcess {
                 this.pattern = lex.getMatchResponse().pattern;
 
                 this.signature = new ParsingSignature(content.hashCode(), pattern, null);
+
+                this.summaryOnly = summaryOnly;
             }
         }
     }
