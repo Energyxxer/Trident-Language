@@ -1,11 +1,10 @@
 package com.energyxxer.trident.compiler.semantics.custom.entities;
 
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAsEntity;
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAtEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCondition;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteConditionEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
-import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.ALL_ENTITIES;
 import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.SENDER;
 import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
@@ -336,16 +334,13 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
                                             ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) functionModifier.find("TICKING_MODIFIERS")), ctx, collector);
 
-                                            Entity selector = entityDecl != null ?
-                                                    TypeArgumentParser.getSelectorForCustomEntity(entityDecl) :
-                                                    defaultType != null ?
-                                                            new Selector(ALL_ENTITIES, new TypeArgument(defaultType)) :
-                                                            new Selector(ALL_ENTITIES);
+                                            if(entityDecl != null) {
+                                                modifiers.add(0, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, TypeArgumentParser.getFilterForCustomEntity(entityDecl)));
+                                            } else if(defaultType != null) {
+                                                modifiers.add(0, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, new Selector(SENDER, new TypeArgument(defaultType))));
+                                            }
 
-                                            modifiers.add(0, new ExecuteAsEntity(selector));
-                                            modifiers.add(1, new ExecuteAtEntity(new Selector(SENDER)));
-
-                                            ctx.getStaticParentFile().getTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
+                                            ctx.getStaticParentFile().getEntityTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
                                         }
                                     }
                                 }

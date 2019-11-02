@@ -10,14 +10,14 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.ALL_ENTITIES;
+import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.SENDER;
 
 @AnalyzerMember(key = "type")
 public class TypeArgumentParser implements SelectorArgumentParser {
@@ -42,12 +42,12 @@ public class TypeArgumentParser implements SelectorArgumentParser {
         return args;
     }
 
-    public static Entity getSelectorForCustomEntity(CustomEntity ce) {
-        return getSelectorForCustomEntity(ce, false);
+    public static Entity getFilterForCustomEntity(CustomEntity ce) {
+        return getFilterForCustomEntity(ce, false);
     }
 
-    public static Entity getSelectorForCustomEntity(CustomEntity ce, boolean negated) {
-        Selector sel = new Selector(ALL_ENTITIES);
+    public static Entity getFilterForCustomEntity(CustomEntity ce, boolean negated) {
+        Selector sel = new Selector(SENDER);
         if(ce.getBaseType() != null) {
             sel.addArgument(new TypeArgument(ce.getBaseType(), negated));
         }

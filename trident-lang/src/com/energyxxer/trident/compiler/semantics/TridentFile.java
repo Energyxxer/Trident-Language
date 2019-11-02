@@ -2,11 +2,15 @@ package com.energyxxer.trident.compiler.semantics;
 
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAsEntity;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAtEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
+import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
 import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.functionlogic.functions.FunctionComment;
 import com.energyxxer.commodore.functionlogic.functions.FunctionSection;
+import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
@@ -280,16 +284,19 @@ public class TridentFile extends SymbolContext {
         return priority;
     }
 
-    public Function getTickFunction() {
+    public Function getEntityTickFunction() {
         boolean creating = !getNamespace().functions.exists("trident_tick");
         Function tickFunction = getNamespace().functions.getOrCreate("trident_tick");
+
+        Function entityTickFunction = getNamespace().functions.getOrCreate("trident_tick/entity");
 
         if(creating) {
             Tag tickTag = getCompiler().getModule().minecraft.tags.functionTags.getOrCreate("tick");
             tickTag.setExport(true);
             tickTag.addValue(new FunctionReference(tickFunction));
+            tickFunction.append(new ExecuteCommand(new FunctionCommand(entityTickFunction), new ExecuteAsEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES)), new ExecuteAtEntity(new Selector(Selector.BaseSelector.SENDER))));
         }
-        return tickFunction;
+        return entityTickFunction;
     }
 
     @Override
