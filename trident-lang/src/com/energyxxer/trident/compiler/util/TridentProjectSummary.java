@@ -14,7 +14,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TridentProjectSummary implements ProjectSummary {
-    private HashMap<File, TridentSummaryModule> fileSummaries = new HashMap<>();
+    private ArrayList<TridentSummaryModule> fileSummaries = new ArrayList<>();
+    private HashMap<File, TridentSummaryModule> fileSummaryMap = new HashMap<>();
     private HashMap<String, ArrayList<TridentUtil.ResourceLocation>> types = new HashMap<>();
     private HashMap<String, ArrayList<TridentUtil.ResourceLocation>> tags = new HashMap<>();
     private ArrayList<TridentUtil.ResourceLocation> soundEvents = new ArrayList<>();
@@ -23,7 +24,8 @@ public class TridentProjectSummary implements ProjectSummary {
     private ArrayList<Todo> todos = new ArrayList<>();
 
     public void store(File file, TridentSummaryModule summaryModule) {
-        fileSummaries.put(file, summaryModule);
+        if(file != null) fileSummaryMap.put(file, summaryModule);
+        fileSummaries.add(summaryModule);
         for(SummarySymbol objective : summaryModule.getObjectives()) {
             if(!objectives.contains(objective.getName())) {
                 objectives.add(objective.getName());
@@ -44,7 +46,7 @@ public class TridentProjectSummary implements ProjectSummary {
     }
 
     public TridentSummaryModule getSummaryForLocation(TridentUtil.ResourceLocation loc) {
-        for(TridentSummaryModule summaryModule : fileSummaries.values()) {
+        for(TridentSummaryModule summaryModule : fileSummaries) {
             if(summaryModule.getFileLocation() != null && summaryModule.getFileLocation().equals(loc)) return summaryModule;
         }
         return null;
@@ -56,7 +58,7 @@ public class TridentProjectSummary implements ProjectSummary {
 
     @Override
     public String toString() {
-        return "Project Summary:\nFiles: " + fileSummaries + " files\nTags: " + tags + "\nObjectives: " + objectives;
+        return "Project Summary:\nFiles: " + fileSummaryMap + " files\nTags: " + tags + "\nObjectives: " + objectives;
     }
 
     public Collection<String> getObjectives() {
@@ -64,7 +66,7 @@ public class TridentProjectSummary implements ProjectSummary {
     }
 
     public Collection<TridentUtil.ResourceLocation> getFunctionResources(boolean filterOutCompileOnly) {
-        Stream<TridentSummaryModule> stream = fileSummaries.values().stream();
+        Stream<TridentSummaryModule> stream = fileSummaries.stream();
         if(filterOutCompileOnly) {
             stream = stream.filter(s -> !s.isCompileOnly());
         }
@@ -92,7 +94,7 @@ public class TridentProjectSummary implements ProjectSummary {
     }
 
     public TridentSummaryModule getSummaryForFile(File file) {
-        return fileSummaries.get(file);
+        return fileSummaryMap.get(file);
     }
 
     public TridentUtil.ResourceLocation getLocationForFile(File file) {

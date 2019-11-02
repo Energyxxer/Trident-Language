@@ -18,12 +18,16 @@ public class TridentSummaryModule extends SummaryModule {
     private ArrayList<TridentUtil.ResourceLocation> requires = new ArrayList<>();
     private ArrayList<TridentUtil.ResourceLocation> functionTags = new ArrayList<>();
     private ArrayList<Todo> todos = new ArrayList<>();
+
     private boolean compileOnly = false;
     private boolean directivesLocked = false;
 
     private boolean searchingSymbols = false;
 
     private Stack<SummaryBlock> contextStack = new Stack<>();
+
+    private ArrayList<String> tempMemberAccessList = new ArrayList<>();
+    private Stack<SummarySymbol> subSymbolStack = new Stack<>();
 
     public TridentSummaryModule() {
         this(null);
@@ -88,6 +92,21 @@ public class TridentSummaryModule extends SummaryModule {
 
     public ArrayList<Todo> getTodos() {
         return todos;
+    }
+
+    public Collection<SummarySymbol> getSymbolsVisibleAtIndexForPath(int index, String[] path) {
+        ArrayList<SummarySymbol> list = new ArrayList<>();
+        if(path.length == 0) return list;
+
+        Collection<SummarySymbol> rootSymbols = getSymbolsVisibleAt(index);
+
+        for(SummarySymbol sym : rootSymbols) {
+            if(sym.getName().equals(path[0])) {
+                sym.collectSubSymbolsForPath(path, 0, list);
+            }
+        }
+
+        return list;
     }
 
     public Collection<SummarySymbol> getSymbolsVisibleAt(int index) {
@@ -158,6 +177,34 @@ public class TridentSummaryModule extends SummaryModule {
 
     public void setParentSummary(TridentProjectSummary parentSummary) {
         this.parentSummary = parentSummary;
+    }
+
+    public void addTempMemberAccess(String name) {
+        tempMemberAccessList.add(name);
+    }
+
+    public void clearTempMemberAccessList() {
+        tempMemberAccessList.clear();
+    }
+
+    public ArrayList<String> getTempMemberAccessList() {
+        return tempMemberAccessList;
+    }
+
+    public boolean isSubSymbolStackEmpty() {
+        return subSymbolStack.isEmpty();
+    }
+
+    public SummarySymbol peekSubSymbol() {
+        return subSymbolStack.peek();
+    }
+
+    public SummarySymbol popSubSymbol() {
+        return subSymbolStack.pop();
+    }
+
+    public void pushSubSymbol(SummarySymbol sym) {
+        subSymbolStack.push(sym);
     }
 
     @Override

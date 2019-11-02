@@ -21,6 +21,7 @@ public class TridentLexerProfile extends LexerProfile {
     public static final Lazy<TridentLexerProfile> INSTANCE = new Lazy<>(TridentLexerProfile::new);
 
     public static final HashMap<TokenType, LexerContext> usefulContexts = new HashMap<>();
+    private static final List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinate", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "global", "case", "switch", "default", "component", "implements", "pointer", "true", "false");
 
     public static final Pattern IDENTIFIER_A_REGEX = Pattern.compile("[a-zA-Z0-9._\\-+]+");
     public static final Pattern IDENTIFIER_B_REGEX = Pattern.compile("[^@\\s]\\S*");
@@ -48,6 +49,10 @@ public class TridentLexerProfile extends LexerProfile {
         }));
 
         this.initialize();
+    }
+
+    public static boolean isValidIdentifier(String str) {
+        return str.matches("[a-zA-Z_][a-zA-Z0-9_]*") && !reservedWords.contains(str);
     }
 
     private void initialize() {
@@ -472,8 +477,6 @@ public class TridentLexerProfile extends LexerProfile {
         //contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_X, "[a-zA-Z0-9._]", "[a-zA-Z._]"));
 
         contexts.add(new LexerContext() {
-
-            private List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "nbt_path", "coordinate", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "global", "case", "switch", "default", "component", "implements", "pointer");
 
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {

@@ -1,11 +1,13 @@
 package com.energyxxer.trident.compiler.lexer;
 
+import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.*;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
+import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
@@ -14,6 +16,7 @@ import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.enxlex.suggestions.ComplexSuggestion;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.lexer.summaries.SummarySymbol;
@@ -23,9 +26,11 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.logger.Debug;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
@@ -197,6 +202,50 @@ public class TridentProductions {
         ENTRY.add(COMMAND_WRAPPER);
         ENTRY.add(INSTRUCTION);
 
+        BiConsumer<TokenPattern<?>, Lexer> clearMemberListProcessor = (p, l) -> {
+            if(l.getSummaryModule() != null) {
+                ((TridentSummaryModule) l.getSummaryModule()).clearTempMemberAccessList();
+            }
+        };
+
+        BiConsumer<TokenPattern<?>, Lexer> startComplexValue = (p, l) -> {
+            if(l.getSummaryModule() != null) {
+                TridentSummaryModule summaryModule = ((TridentSummaryModule) l.getSummaryModule());
+                SummarySymbol topSym = null;
+                if(!summaryModule.isSubSymbolStackEmpty()) {
+                    topSym = summaryModule.peekSubSymbol();
+                }
+                summaryModule.pushSubSymbol(topSym);
+            }
+        };
+
+        BiConsumer<TokenPattern<?>, Lexer> startClosure = (p, l) -> {
+            if(l.getSummaryModule() != null) {
+                TridentSummaryModule summaryModule = ((TridentSummaryModule) l.getSummaryModule());
+                summaryModule.pushSubSymbol(null);
+            }
+        };
+
+        BiConsumer<TokenPattern<?>, Lexer> endComplexValue = (p, l) -> {
+            if(l.getSummaryModule() != null) {
+                TridentSummaryModule summaryModule = ((TridentSummaryModule) l.getSummaryModule());
+                summaryModule.popSubSymbol();
+            }
+        };
+
+        BiConsumer<TokenPattern<?>, Lexer> claimTopSymbol = (p, l) -> {
+            if(l.getSummaryModule() != null) {
+                TridentSummaryModule summaryModule = ((TridentSummaryModule) l.getSummaryModule());
+                SummarySymbol topSym = null;
+                if(!summaryModule.isSubSymbolStackEmpty()) {
+                    topSym = summaryModule.peekSubSymbol();
+                }
+                if(topSym != null) {
+                    summaryModule.peek().surroundBlock(p.getStringBounds().start.index, p.getStringBounds().end.index, topSym);
+                }
+            }
+        };
+
         {
             INTERPOLATION_BLOCK = choice(
                     group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED), glue(), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
@@ -205,10 +254,20 @@ public class TridentProductions {
             INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
             INTERPOLATION_VALUE.addTags(SuggestionTags.ENABLED, SuggestionTags.DISABLED_INDEX);
             INTERPOLATION_VALUE.addTags(TridentSuggestionTags.CONTEXT_INTERPOLATION_VALUE);
+            INTERPOLATION_VALUE.addProcessor(clearMemberListProcessor);
             ROOT_INTERPOLATION_VALUE = new LazyTokenStructureMatch("ROOT_INTERPOLATION_VALUE");
             LINE_SAFE_INTERPOLATION_VALUE = new LazyTokenStructureMatch("LINE_SAFE_INTERPOLATION_VALUE");
+            LINE_SAFE_INTERPOLATION_VALUE.addProcessor(clearMemberListProcessor);
 
-            ROOT_INTERPOLATION_VALUE.add(identifierX().setName("VARIABLE_NAME").addTags(SuggestionTags.ENABLED_INDEX, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE));
+            ROOT_INTERPOLATION_VALUE.add(
+                    identifierX()
+                            .setName("VARIABLE_NAME")
+                            .addTags(SuggestionTags.ENABLED_INDEX, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE)
+                            .addProcessor((p, l) -> {
+                                if(l.getSummaryModule() != null) {
+                                    ((TridentSummaryModule) l.getSummaryModule()).addTempMemberAccess(p.flatten(false));
+                                }
+                            }));
             ROOT_INTERPOLATION_VALUE.add(ofType(REAL_NUMBER).setName("RAW_REAL"));
             ROOT_INTERPOLATION_VALUE.add(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"));
             ROOT_INTERPOLATION_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
@@ -229,13 +288,28 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(LIST);
             ROOT_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
             ROOT_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("function").setName("VALUE_WRAPPER_KEY"), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("function").setName("VALUE_WRAPPER_KEY").addProcessor(startClosure), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION").addProcessor(endComplexValue));
             ROOT_INTERPOLATION_VALUE.add(group(literal("new").setName("VALUE_WRAPPER_KEY"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
             LazyTokenStructureMatch MEMBER_ACCESS = choice(
-                    group(dot(), identifierX().setName("MEMBER_NAME").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.IDENTIFIER_MEMBER)).setName("MEMBER_KEY"),
-                    group(brace("["), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("MEMBER_INDEX"),
-                    group(brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL")
+                    group(dot().addProcessor((p, l) -> {
+                        if(l.getSuggestionModule() != null && l.getSuggestionModule().getSuggestionIndex() == p.getStringBounds().end.index) {
+                            if(l.getSummaryModule() != null) {
+                                ArrayList<String> memberPath = ((TridentSummaryModule) l.getSummaryModule()).getTempMemberAccessList();
+                                l.getSuggestionModule().setLookingAtMemberPath(memberPath.toArray(new String[0]));
+                                l.getSuggestionModule().addSuggestion(new ComplexSuggestion(TridentSuggestionTags.IDENTIFIER_MEMBER));
+                            }
+                        }
+                    }), identifierX()
+                            .setName("MEMBER_NAME")
+                            .addTags(SuggestionTags.ENABLED)
+                            .addProcessor((p, l) -> {
+                                if(l.getSummaryModule() != null) {
+                                    ((TridentSummaryModule) l.getSummaryModule()).addTempMemberAccess(p.flatten(false));
+                                }
+                            })).setName("MEMBER_KEY"),
+                    group(brace("[").addProcessor(clearMemberListProcessor), group(INTERPOLATION_VALUE).setName("INDEX"), brace("]")).setName("MEMBER_INDEX").addProcessor(clearMemberListProcessor),
+                    group(brace("(").addProcessor(clearMemberListProcessor).addProcessor(startClosure), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL").addProcessor(clearMemberListProcessor).addProcessor(endComplexValue)
             ).setName("MEMBER_ACCESS");
 
             LazyTokenGroupMatch INTERPOLATION_CHAIN = group(ROOT_INTERPOLATION_VALUE, list(MEMBER_ACCESS).setOptional().setName("MEMBER_ACCESSES")).setName("INTERPOLATION_CHAIN");
@@ -278,8 +352,37 @@ public class TridentProductions {
 
             INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED), glue(), brace("{").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED)).setName("INTERPOLATION_WRAPPER"));
 
-            DICTIONARY.add(group(brace("{"), list(group(choice(identifierX(), ofType(STRING_LITERAL)).setName("DICTIONARY_KEY"), colon(), INTERPOLATION_VALUE).setName("DICTIONARY_ENTRY"), comma()).setOptional().setName("DICTIONARY_ENTRY_LIST"), brace("}")));
-            LIST.add(group(brace("["), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")));
+            DICTIONARY.add(group(
+                    brace("{").addProcessor(startComplexValue),
+                    list(
+                            group(
+                                    choice(identifierX(), ofType(STRING_LITERAL))
+                                            .setName("DICTIONARY_KEY")
+                                            .addProcessor((p, l) -> {
+                                                if(l.getSummaryModule() != null) {
+                                                    String key = p.flatten(false);
+                                                    if(key.startsWith("\"")) {
+                                                        key = CommandUtils.parseQuotedString(key);
+                                                    }
+                                                    SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), key, p.getStringLocation().index);
+                                                    sym.setMember(true);
+                                                    ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
+                                                }
+                                            }),
+                                    colon(),
+                                    INTERPOLATION_VALUE
+                            ).setName("DICTIONARY_ENTRY").addProcessor((p, l) -> {
+                                if(l.getSummaryModule() != null) {
+                                    SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
+                                    if(!sym.hasSubBlock()) {
+                                        ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
+                                    }
+                                }
+                            }),
+                            comma()
+                    ).setOptional().setName("DICTIONARY_ENTRY_LIST"),
+                    brace("}"))).addProcessor(claimTopSymbol).addProcessor(endComplexValue);
+            LIST.add(group(brace("[").addProcessor(startClosure), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")).addProcessor(endComplexValue));
         }
 
         PLAYER_NAME.add(identifierB());
@@ -2178,13 +2281,16 @@ public class TridentProductions {
         {
             INSTRUCTION.add(
                     group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), instructionKeyword("var"),
-                            identifierX().setName("VARIABLE_NAME"),
-                            choice(
-                                    group(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))
-                            ).setName("VARIABLE_INITIALIZATION")
+                            identifierX().setName("VARIABLE_NAME").addProcessor((p, l) -> {
+                                if(l.getSummaryModule() != null) {
+                                    SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), p.getStringLocation().index);
+                                    ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
+                                }
+                            }),
+                            choice(group(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))).setName("VARIABLE_INITIALIZATION")
                     ).addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
-                            SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.find("VARIABLE_NAME").flatten(false), p.getStringLocation().index);
+                            SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
                             sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
                             TokenStructure root = ((TokenStructure) p.find("VARIABLE_INITIALIZATION.VARIABLE_VALUE.LINE_SAFE_INTERPOLATION_VALUE.EXPRESSION.MID_INTERPOLATION_VALUE.SURROUNDED_INTERPOLATION_VALUE.INTERPOLATION_CHAIN.ROOT_INTERPOLATION_VALUE"));
                             if(root != null) {
@@ -2204,7 +2310,9 @@ public class TridentProductions {
                                 }
                             }
                             sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.LOCAL));
-                            ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
+                            if(!sym.hasSubBlock()) {
+                                ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
+                            }
                         }
                     })
             );

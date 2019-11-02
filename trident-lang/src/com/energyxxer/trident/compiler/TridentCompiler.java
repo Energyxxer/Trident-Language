@@ -31,11 +31,13 @@ import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProv
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
+import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
 import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
 import com.energyxxer.trident.compiler.semantics.symbols.GlobalSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.compiler.util.TridentProjectSummary;
 import com.energyxxer.util.Lazy;
 import com.energyxxer.util.StringLocation;
 import com.energyxxer.util.logger.Debug;
@@ -798,6 +800,10 @@ public class TridentCompiler extends AbstractProcess {
         this.defaultDefinitionPacks = defaultDefinitionPacks;
     }
 
+    public static void summarizeLibraries(TridentProjectSummary summary) {
+        Resources.summarize(summary);
+    }
+
     private static class Resources {
         public static final HashMap<String, String> defaults = new HashMap<>();
         public static final ArrayList<Library> libraries = new ArrayList<>();
@@ -829,8 +835,14 @@ public class TridentCompiler extends AbstractProcess {
 
         static void populate(ArrayList<String> ownFiles, HashMap<String, ParsingSignature> filePatterns) {
             for(Library lib : libraries) {
-                ownFiles.add(lib.location);
-                filePatterns.put(lib.location, lib.signature);
+                ownFiles.add(lib.path);
+                filePatterns.put(lib.path, lib.signature);
+            }
+        }
+
+        static void summarize(TridentProjectSummary summary) {
+            for(Library lib : libraries) {
+                summary.store(null, lib.fileSummary);
             }
         }
 
@@ -853,15 +865,22 @@ public class TridentCompiler extends AbstractProcess {
         }
 
         private static class Library {
-            String location;
+            String path;
             TokenPattern<?> pattern;
             ParsingSignature signature;
+            TridentSummaryModule fileSummary;
 
-            public Library(String location, String content) {
-                this.location = location;
+            public Library(String path, String content) {
+                this.path = path;
+
+                Path relPath = Paths.get(path);
+
+                fileSummary = new TridentSummaryModule(null);
+                fileSummary.setFileLocation(new TridentUtil.ResourceLocation(relPath.getName(0) + ":" + relPath.subpath(2, relPath.getNameCount()).toString().replace(File.separator, "/").replaceAll(".tdn$","")));
 
                 TokenStream ts = new TokenStream();
                 LazyLexer lex = new LazyLexer(ts, new TridentProductions(dummyModule).FILE);
+                lex.setSummaryModule(fileSummary);
                 lex.tokenizeParse(new File(System.getProperty("user.home")), content, new TridentLexerProfile());
 
                 if(!lex.getMatchResponse().matched) {

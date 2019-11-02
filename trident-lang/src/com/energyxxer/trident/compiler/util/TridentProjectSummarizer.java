@@ -128,6 +128,8 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
             this.summary.join(dependency.summary);
         }
 
+        TridentCompiler.summarizeLibraries(summary);
+
         // Add default minecraft types and tags:
         for(Namespace ns : module.getAllNamespaces()) {
             for(TypeDictionary typeDict : ns.types.getAllDictionaries()) {

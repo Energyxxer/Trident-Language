@@ -1,9 +1,9 @@
 @on compile
 @require trident-util:shared
 
-local var generatedPredicates = {}
+private var generatedPredicates = {}
 
-local var newPredicate = function(obj) {
+private var newPredicate = function(obj) {
     eval SelfBuilder(obj)
     eval obj.objectType = function() {return "Predicate"}
     do if(obj.inverted == null) {
@@ -15,24 +15,24 @@ local var newPredicate = function(obj) {
         do if(loc == null) {
             var ns = Reflection.getWritingFile().namespace
             do if(generatedPredicates[ns] == null) eval generatedPredicates[ns] = 0
-            eval loc = new resource(ns, ["trident-generated", (string) generatedPredicates[ns]])
+            eval loc = new resource(ns, ["trident-generated", "predicate", (string) generatedPredicates[ns]])
             eval generatedPredicates[ns]++
         }
         eval assertType(loc, "resource")
-        
+
         eval obj._sb_build()
-        
+
         eval File.out.writeData(
             "data/" + loc.namespace + "/predicates/" + loc.body + ".json",
             JSON.stringify(obj, true)
         )
-        
+
         return loc
     }
     return obj
 }
 
-local var newEntityPredicate = function(obj) {
+private var newEntityPredicate = function(obj) {
     eval newPredicate(obj)
     eval obj.which = function(which) {
         eval assertType(which, "string")

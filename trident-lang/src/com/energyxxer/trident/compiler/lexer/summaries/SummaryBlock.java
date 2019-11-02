@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 public class SummaryBlock implements SummaryElement {
     private boolean fixed = false;
+    private SummarySymbol associatedSymbol = null;
     private TridentSummaryModule parentSummary;
     private int startIndex;
     private int endIndex;
@@ -19,14 +20,20 @@ public class SummaryBlock implements SummaryElement {
     }
 
     public SummaryBlock(TridentSummaryModule parentSummary, int startIndex, int endIndex) {
+        this(parentSummary, startIndex, endIndex, null);
+    }
+
+    public SummaryBlock(TridentSummaryModule parentSummary, int startIndex, int endIndex, SummarySymbol associatedSymbol) {
         this.startIndex = startIndex;
         this.endIndex = endIndex;
         this.parentSummary = parentSummary;
+        this.associatedSymbol = associatedSymbol;
+        if(associatedSymbol != null) associatedSymbol.setSubBlock(this);
     }
 
     @Override
     public String getName() {
-        return null;
+        return associatedSymbol != null ? associatedSymbol.getName() : null;
     }
 
     @Override
@@ -42,7 +49,7 @@ public class SummaryBlock implements SummaryElement {
 
     @Override
     public String toString() {
-        return subElements.toString();
+        return (associatedSymbol != null ? getName() + ": " : "") + subElements.toString();
     }
 
     @Override
@@ -58,13 +65,17 @@ public class SummaryBlock implements SummaryElement {
     void clearEmptyBlocks() {
         if(!subElements.isEmpty()) {
             SummaryElement last = subElements.get(subElements.size()-1);
-            if(last instanceof SummaryBlock && ((SummaryBlock) last).isEmpty()) {
+            if(last instanceof SummaryBlock && ((SummaryBlock) last).isEmpty() && ((SummaryBlock) last).associatedSymbol == null) {
                 subElements.remove(last);
             }
         }
     }
 
     public void surroundBlock(int start, int end) {
+        surroundBlock(start, end, null);
+    }
+
+    public void surroundBlock(int start, int end, SummarySymbol associatedSymbol) {
         clearEmptyBlocks();
         SummaryBlock sub = null;
         int i = 0;
@@ -72,12 +83,12 @@ public class SummaryBlock implements SummaryElement {
             SummaryElement elem = subElements.get(i);
             if(elem.getStartIndex() < start) continue;
             if(elem.getStartIndex() >= end) break;
-            if(sub == null) sub = new SummaryBlock(parentSummary, start, end);
+            if(sub == null) sub = new SummaryBlock(parentSummary, start, end, associatedSymbol);
             sub.putElement(elem);
             subElements.remove(i);
             i--;
         }
-        if(sub == null) sub = new SummaryBlock(parentSummary, start, end);
+        if(sub == null) sub = new SummaryBlock(parentSummary, start, end, associatedSymbol);
         subElements.add(i, sub);
     }
 
@@ -93,16 +104,31 @@ public class SummaryBlock implements SummaryElement {
         if(inserted) subElements.remove(elem);
     }
 
-    void collectSymbolsVisibleAt(int index, ArrayList<SummarySymbol> list, boolean fromSameFile) {
+    @Override
+    public void collectSymbolsVisibleAt(int index, ArrayList<SummarySymbol> list, boolean fromSameFile) {
         if(subElements.isEmpty()) return;
-        if(index < 0 || startIndex <= index && index <= endIndex) {
+        if(associatedSymbol != null) associatedSymbol.collectSymbolsVisibleAt(index, list, fromSameFile);
+        if((index < 0 && fixed) || (startIndex <= index && index <= endIndex)) {
             for(SummaryElement elem : subElements) {
-                if(elem instanceof SummaryBlock && index >= 0) ((SummaryBlock) elem).collectSymbolsVisibleAt(index, list, fromSameFile);
-                else if(elem instanceof SummarySymbol && (index < 0 || index >= elem.getStartIndex())) {
-                    if(fromSameFile || ((SummarySymbol) elem).getVisibility() != Symbol.SymbolVisibility.PRIVATE) {
-                        list.removeIf(e -> e.getName().equals(elem.getName()));
-                        list.add(((SummarySymbol) elem));
-                    }
+                elem.collectSymbolsVisibleAt(index, list, fromSameFile);
+            }
+        }
+    }
+
+    @Override
+    public void collectSubSymbolsForPath(String[] path, int pathStart, ArrayList<SummarySymbol> list) {
+        if(pathStart == path.length) {
+            if(associatedSymbol != null) {
+                list.add(associatedSymbol);
+            }
+        } else if(pathStart == path.length-1) {
+            for(SummaryElement elem : subElements) {
+                elem.collectSubSymbolsForPath(path, path.length, list);
+            }
+        } else {
+            for(SummaryElement elem : subElements) {
+                if(path[pathStart+1].equals(elem.getName())) {
+                    elem.collectSubSymbolsForPath(path, pathStart+1, list);
                 }
             }
         }
@@ -110,9 +136,10 @@ public class SummaryBlock implements SummaryElement {
 
     public void collectGlobalSymbols(ArrayList<SummarySymbol> list) {
         for(SummaryElement elem : subElements) {
+            //TODO
             if(elem instanceof SummaryBlock) ((SummaryBlock) elem).collectGlobalSymbols(list);
             else if(elem instanceof SummarySymbol) {
-                if(((SummarySymbol) elem).getVisibility() == Symbol.SymbolVisibility.GLOBAL) {
+                if(elem.getVisibility() == Symbol.SymbolVisibility.GLOBAL) {
                     list.removeIf(e -> e.getName().equals(elem.getName()));
                     list.add((SummarySymbol) elem);
                 }

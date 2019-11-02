@@ -3,11 +3,11 @@ package com.energyxxer.enxlex.suggestions;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 public class SuggestionModule {
-
-
 
     public enum SuggestionStatus {
         ENABLED,
@@ -20,6 +20,8 @@ public class SuggestionModule {
     private Stack<SuggestionStatus> statusStack = new Stack<>();
 
     private ArrayList<Suggestion> suggestions = new ArrayList<>();
+
+    private String[] lookingAtMemberPath = null;
 
     public SuggestionModule(int suggestionIndex, int caretIndex) {
         this.suggestionIndex = suggestionIndex;
@@ -72,5 +74,13 @@ public class SuggestionModule {
 
     public SuggestionStatus popStatus() {
         return statusStack.pop();
+    }
+
+    public void setLookingAtMemberPath(String[] lookingAtMemberPath) {
+        this.lookingAtMemberPath = lookingAtMemberPath;
+    }
+
+    public String[] getLookingAtMemberPath() {
+        return lookingAtMemberPath;
     }
 }

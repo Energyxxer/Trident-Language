@@ -12,6 +12,8 @@ public class SummarySymbol implements SummaryElement {
     private int declarationIndex;
     private Symbol.SymbolVisibility visibility = Symbol.SymbolVisibility.LOCAL;
     private ArrayList<String> suggestionTags = new ArrayList<>();
+    private SummaryBlock subBlock = null;
+    private boolean isMember = false;
 
     public SummarySymbol(TridentSummaryModule parentSummary, String name, int declarationIndex) {
         this.parentSummary = parentSummary;
@@ -57,6 +59,24 @@ public class SummarySymbol implements SummaryElement {
         declarationIndex = h.apply(declarationIndex);
     }
 
+    @Override
+    public void collectSymbolsVisibleAt(int index, ArrayList<SummarySymbol> list, boolean fromSameFile) {
+        if(!isMember && (index < 0 || index > getStartIndex()) && (fromSameFile || visibility != Symbol.SymbolVisibility.PRIVATE)) {
+            list.removeIf(e -> e.getName().equals(name));
+            list.add(this);
+        }
+    }
+
+    @Override
+    public void collectSubSymbolsForPath(String[] path, int pathStart, ArrayList<SummarySymbol> list) {
+        if(path.length == pathStart) {
+            list.add(this);
+        } else {
+            if(subBlock == null) return;
+            subBlock.collectSubSymbolsForPath(path, pathStart, list);
+        }
+    }
+
     public SummarySymbol addTag(String tag) {
         suggestionTags.add(tag);
         return this;
@@ -64,6 +84,22 @@ public class SummarySymbol implements SummaryElement {
 
     public ArrayList<String> getSuggestionTags() {
         return suggestionTags;
+    }
+
+    public boolean hasSubBlock() {
+        return subBlock != null;
+    }
+
+    public void setSubBlock(SummaryBlock subBlock) {
+        this.subBlock = subBlock;
+    }
+
+    public boolean isMember() {
+        return isMember;
+    }
+
+    public void setMember(boolean member) {
+        isMember = member;
     }
 
     @Override
