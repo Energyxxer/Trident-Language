@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.lexer;
 
 import com.energyxxer.commodore.CommandUtils;
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.types.Type;
@@ -362,7 +363,10 @@ public class TridentProductions {
                                                 if(l.getSummaryModule() != null) {
                                                     String key = p.flatten(false);
                                                     if(key.startsWith("\"")) {
-                                                        key = CommandUtils.parseQuotedString(key);
+                                                        try {
+                                                            key = CommandUtils.parseQuotedString(key);
+                                                        } catch(CommodoreException ignore) {
+                                                        }
                                                     }
                                                     SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), key, p.getStringLocation().index);
                                                     sym.setMember(true);
