@@ -269,6 +269,8 @@ public class TridentLexerProfile extends LexerProfile {
 
                 if(delimiters.contains(Character.toString(startingCharacter))) {
 
+                    String errorMessage = null;
+
                     StringBuilder token = new StringBuilder(Character.toString(startingCharacter));
                     StringLocation end = new StringLocation(1,0,1);
 
@@ -292,11 +294,23 @@ public class TridentLexerProfile extends LexerProfile {
                         }
                         token.append(c);
                         if(c == '\\') {
-                            token.append(str.charAt(i+1));
-                            escapedChars.put(new TokenSection(i,2), "string_literal.escape");
+                            if(i >= str.length()-1) {
+                                break; //Unexpected end of input
+                            }
+                            char escapedChar = str.charAt(i+1);
+                            if(!"bfnrt\\\"'".contains(escapedChar+"")) {
+                                errorMessage = "Illegal escape character in string literal";
+                            } else {
+                                escapedChars.put(new TokenSection(i,2), "string_literal.escape");
+                            }
+                            token.append(escapedChar);
                             i++;
                         } else if(c == startingCharacter) {
-                            return new ScannerContextResponse(true, token.toString(), end, TridentTokens.STRING_LITERAL, escapedChars);
+                            ScannerContextResponse response = new ScannerContextResponse(true, token.toString(), end, TridentTokens.STRING_LITERAL, escapedChars);
+                            if(errorMessage != null) {
+                                response.setError("Illegal escape character in string literal", 0, i+1);
+                            }
+                            return response;
                         }
                     }
                     //Unexpected end of input

@@ -1,6 +1,5 @@
 package com.energyxxer.trident.compiler.analyzers.constructs;
 
-import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -94,7 +93,7 @@ public class InterpolationManager {
                 return pattern.flatten(false).equals("true");
             }
             case "STRING_LITERAL": {
-                return CommandUtils.parseQuotedString(pattern.flatten(false));
+                return CommonParsers.parseQuotedString(pattern.flatten(false), pattern, ctx);
             }
             case "WRAPPED_ENTITY": {
                 return EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
@@ -141,7 +140,7 @@ public class InterpolationManager {
                     for(TokenPattern<?> entry : entryList.searchByName("DICTIONARY_ENTRY")) {
                         String key = entry.find("DICTIONARY_KEY").flatten(false);
                         if(key.startsWith("\"")) {
-                            key = CommandUtils.parseQuotedString(key);
+                            key = CommonParsers.parseQuotedString(key, pattern, ctx);
                         }
                         nextThis = dict;
                         nextFunctionName = key;

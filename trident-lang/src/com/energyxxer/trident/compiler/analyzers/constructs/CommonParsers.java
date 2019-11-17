@@ -525,7 +525,7 @@ public class CommonParsers {
             case "INTERPOLATION_VALUE": return InterpolationManager.parse(pattern, ctx);
             case "INTEGER": return parseInt(pattern, ctx);
             case "REAL": return parseDouble(pattern, ctx);
-            case "STRING_LITERAL": return CommandUtils.parseQuotedString(pattern.flatten(false));
+            case "STRING_LITERAL": return parseQuotedString(pattern.flatten(false), pattern, ctx);
             case "BOOLEAN": return pattern.flatten(false).equals("true");
             case "ENTITY": return EntityParser.parseEntity(pattern, ctx);
             case "BLOCK_TAGGED":
@@ -648,7 +648,7 @@ public class CommonParsers {
         if(pattern == null) return null;
         switch(pattern.getName()) {
             case "STRING": return parseStringLiteral(((TokenStructure) pattern).getContents(), ctx);
-            case "STRING_LITERAL": return CommandUtils.parseQuotedString(pattern.flatten(false));
+            case "STRING_LITERAL": return parseQuotedString(pattern.flatten(false), pattern, ctx);
             case "INTERPOLATION_BLOCK": {
                 String result = InterpolationManager.parse(pattern, ctx, String.class);
                 EObject.assertNotNull(result, pattern, ctx);
@@ -863,6 +863,14 @@ public class CommonParsers {
             default: {
                 throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
             }
+        }
+    }
+
+    public static String parseQuotedString(String str, TokenPattern<?> pattern, ISymbolContext ctx) {
+        try {
+            return CommandUtils.parseQuotedString(str);
+        } catch(CommodoreException x) {
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.getMessage(), pattern, ctx);
         }
     }
 
