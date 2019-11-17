@@ -103,13 +103,13 @@ public class TextParser {
                     if(objectiveName == null) delegate.report("Missing 'objective' string for 'score' text component", s);
                     if(name != null && objectiveName != null) {
                         Objective objective = ctx.getCompiler().getModule().getObjectiveManager().getOrCreate(objectiveName);
-                        component[0] = new ScoreTextComponent(new LocalScore(objective, new PlayerName(name)));
+                        component[0] = new ScoreTextComponent(new LocalScore(objective, new RawEntity(name)));
                     }
                 }).otherwise(v -> delegate.report("Expected object in 'score'", obj.get("score")));
             } else if(obj.has("selector")) {
                 using(getAsStringOrNull(obj.get("selector")))
                         .notIfNull()
-                        .run(t -> component[0] = new SelectorTextComponent(new PlayerName(t)))
+                        .run(t -> component[0] = new SelectorTextComponent(new RawEntity(t)))
                         .otherwise(t -> delegate.report("Expected string in 'selector'", obj.get("selector")));
             } else if(obj.has("nbt")) {
                 using(getAsStringOrNull(obj.get("nbt"))).notIfNull().run(s -> {
@@ -331,6 +331,52 @@ public class TextParser {
             } else {
                 compiler.getReport().addNotice(new Notice(NoticeType.WARNING, notStrict, pattern));
             }
+        }
+    }
+
+    static class RawEntity extends PlayerName {
+        public RawEntity(@NotNull String name) {
+            super(name);
+        }
+
+        @Override
+        public void assertPlayer() {
+
+        }
+
+        @Override
+        public void assertEntityFriendly() {
+
+        }
+
+        @Override
+        public void assertScoreHolderFriendly() {
+
+        }
+
+        @Override
+        public void assertPlayer(String causeKey) {
+
+        }
+
+        @Override
+        public void assertGameProfile() {
+
+        }
+
+        @Override
+        public void assertSingle() {
+
+        }
+
+        @Override
+        public void assertSingle(String causeKey) {
+
+        }
+
+        @Override
+        public void assertAvailable() {
+
         }
     }
 }
