@@ -197,7 +197,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
             }
         }
 
-        CustomEntity entityDecl = null;
+        final CustomEntity entityDecl;
         if (!entityName.equals("default")) {
             if (defaultType != null && !defaultType.isStandalone()) {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot create a non-default entity with this type: " + defaultType, pattern.find("ENTITY_DECLARATION_HEADER.ENTITY_BASE"), ctx);
@@ -218,9 +218,12 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
             if (superEntity != null) {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default entities may not inherit from custom entities", pattern.find("ENTITY_DECLARATION_HEADER.ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
             }
+            entityDecl = null;
         }
 
         ctx = new SymbolContext(ctx);
+        final ISymbolContext finalCtx = ctx;
+        final Type finalDefaultType = defaultType;
         if (entityDecl != null) ctx.put(new Symbol("this", Symbol.SymbolVisibility.LOCAL, entityDecl));
 
         ExceptionCollector collector = new ExceptionCollector(ctx);
@@ -314,7 +317,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                                 defaultType != null ?
                                                         "default_" + defaultType.getName() :
                                                         null
-                                );
+                                , false);
                                 TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
                                 if (namePattern != null) {
                                     String name = namePattern.flatten(false);
@@ -322,28 +325,32 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                     if (entityDecl != null) {
                                         entityDecl.members.put(name, sym);
                                     } else {
-                                        ctx.put(sym);
+                                        finalCtx.put(sym);
                                     }
                                 }
 
-                                TokenPattern<?> functionModifier = entry.find("ENTITY_FUNCTION_MODIFIER");
-                                if (functionModifier != null) {
-                                    functionModifier = ((TokenStructure) functionModifier).getContents();
-                                    switch (functionModifier.getName()) {
-                                        case "TICKING_ENTITY_FUNCTION": {
+                                ctx.getStaticParentFile().schedulePostResolutionAction(() -> {
+                                    innerFile.resolveEntries();
 
-                                            ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) functionModifier.find("TICKING_MODIFIERS")), ctx, collector);
+                                    TokenPattern<?> functionModifier = entry.find("ENTITY_FUNCTION_MODIFIER");
+                                    if (functionModifier != null) {
+                                        functionModifier = ((TokenStructure) functionModifier).getContents();
+                                        switch (functionModifier.getName()) {
+                                            case "TICKING_ENTITY_FUNCTION": {
 
-                                            if(entityDecl != null) {
-                                                modifiers.add(0, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, TypeArgumentParser.getFilterForCustomEntity(entityDecl)));
-                                            } else if(defaultType != null) {
-                                                modifiers.add(0, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, new Selector(SENDER, new TypeArgument(defaultType))));
+                                                ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) functionModifier.find("TICKING_MODIFIERS")), finalCtx, collector);
+
+                                                if(entityDecl != null) {
+                                                    modifiers.add(0, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, TypeArgumentParser.getFilterForCustomEntity(entityDecl)));
+                                                } else if(finalDefaultType != null) {
+                                                    modifiers.add(0, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, new Selector(SENDER, new TypeArgument(finalDefaultType))));
+                                                }
+
+                                                finalCtx.getStaticParentFile().getEntityTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
                                             }
-
-                                            ctx.getStaticParentFile().getEntityTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
                                         }
                                     }
-                                }
+                                });
                                 break;
                             }
                             case "ENTITY_FIELD": {

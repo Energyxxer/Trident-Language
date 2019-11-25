@@ -59,6 +59,8 @@ public class TridentFile extends SymbolContext {
 
     private boolean shouldExportFunction = true;
 
+    private ArrayList<Runnable> postProcessingActions = new ArrayList<>();
+
     public TridentFile(TridentCompiler compiler, Path relSourcePath, TokenPattern<?> filePattern) {
         this(compiler, null, relSourcePath, filePattern, compiler.getLanguageLevel());
     }
@@ -161,6 +163,11 @@ public class TridentFile extends SymbolContext {
 
     //Sub context automatically created
     public static TridentFile createInnerFile(TokenPattern<?> pattern, ISymbolContext parent, String subPath) {
+        return createInnerFile(pattern, parent, subPath, true);
+    }
+
+    //Sub context automatically created
+    public static TridentFile createInnerFile(TokenPattern<?> pattern, ISymbolContext parent, String subPath, boolean autoResolve) {
         TokenPattern<?> namePattern = pattern.find("INNER_FUNCTION_NAME.RESOURCE_LOCATION");
         String innerFilePathRaw = parent.getStaticParentFile().getPath().toString();
         innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
@@ -188,7 +195,7 @@ public class TridentFile extends SymbolContext {
         TokenPattern<?> innerFilePattern = pattern.find("FILE_INNER");
 
         TridentFile innerFile = new TridentFile(parent.getCompiler(), parent, Paths.get(innerFilePathRaw), innerFilePattern, parent.getCompiler().getLanguageLevel());
-        innerFile.resolveEntries();
+        if(autoResolve) innerFile.resolveEntries();
         return innerFile;
     }
 
@@ -355,6 +362,9 @@ public class TridentFile extends SymbolContext {
                         }
                     }
                 }
+                while(!parentFile.postProcessingActions.isEmpty()) {
+                    parentFile.postProcessingActions.remove(0).run();
+                }
             }
             if(!queuedExceptions.isEmpty()) {
                 throw new TridentException.Grouped(queuedExceptions);
@@ -438,5 +448,9 @@ public class TridentFile extends SymbolContext {
         if(this.function != null) {
             this.function.setExport(shouldExportFunction);
         }
+    }
+
+    public void schedulePostResolutionAction(Runnable r) {
+        postProcessingActions.add(r);
     }
 }

@@ -187,7 +187,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
         String entityName = pattern.find("ITEM_NAME").flatten(false);
         Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), ctx);
 
-        CustomItem itemDecl = null;
+        final CustomItem itemDecl;
         TokenPattern<?> rawCustomModelData = pattern.find("CUSTOM_MODEL_DATA.INTEGER");
 
         if(!entityName.equals("default")) {
@@ -197,9 +197,12 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
             ctx.putInContextForVisibility(visibility, new Symbol(entityName, visibility, itemDecl));
         } else if(rawCustomModelData != null) {
             throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default items don't support custom model data specifiers", rawCustomModelData, ctx);
+        } else {
+            itemDecl = null;
         }
 
         ctx = new SymbolContext(ctx);
+        final ISymbolContext finalCtx = ctx;
         if(itemDecl != null) ctx.put(new Symbol("this", Symbol.SymbolVisibility.LOCAL, itemDecl));
 
         ExceptionCollector collector = new ExceptionCollector(ctx);
@@ -234,7 +237,8 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                                             defaultType != null ?
                                                     "default_" + defaultType.getName() :
                                                     null
-                            );
+                            , false);
+
                             TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
                             if(namePattern != null) {
                                 String name = namePattern.flatten(false);
@@ -246,38 +250,41 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                                 }
                             }
 
-                            TokenPattern<?> rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
-                            if (rawFunctionModifiers != null) {
-                                TokenPattern<?> modifiers = ((TokenStructure) rawFunctionModifiers).getContents();
-                                switch (modifiers.getName()) {
-                                    case "FUNCTION_ON": {
+                            ctx.getStaticParentFile().schedulePostResolutionAction(() -> {
+                                innerFile.resolveEntries();
+                                TokenPattern<?> rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
+                                if (rawFunctionModifiers != null) {
+                                    TokenPattern<?> modifiers = ((TokenStructure) rawFunctionModifiers).getContents();
+                                    switch (modifiers.getName()) {
+                                        case "FUNCTION_ON": {
 
-                                        TokenPattern<?> onWhat = ((TokenStructure) modifiers.find("FUNCTION_ON_INNER")).getContents();
+                                            TokenPattern<?> onWhat = ((TokenStructure) modifiers.find("FUNCTION_ON_INNER")).getContents();
 
-                                        boolean pure = false;
-                                        if (modifiers.find("LITERAL_PURE") != null) {
-                                            if (itemDecl != null) {
-                                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The 'pure' modifier is only allowed for default items", modifiers.find("LITERAL_PURE"), ctx));
-                                            } else {
-                                                pure = true;
+                                            boolean pure = false;
+                                            if (modifiers.find("LITERAL_PURE") != null) {
+                                                if (itemDecl != null) {
+                                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The 'pure' modifier is only allowed for default items", modifiers.find("LITERAL_PURE"), finalCtx));
+                                                } else {
+                                                    pure = true;
+                                                }
                                             }
-                                        }
 
-                                        ArrayList<ExecuteModifier> eventModifiers = CommonParsers.parseModifierList((TokenList) modifiers.find("EVENT_MODIFIERS"), ctx);
+                                            ArrayList<ExecuteModifier> eventModifiers = CommonParsers.parseModifierList((TokenList) modifiers.find("EVENT_MODIFIERS"), finalCtx);
 
-                                        if (onWhat.getName().equals("ITEM_CRITERIA")) {
-                                            ctx.assertLanguageLevel(3, "Custom non-default item events are", entry, collector);
+                                            if (onWhat.getName().equals("ITEM_CRITERIA")) {
+                                                finalCtx.assertLanguageLevel(3, "Custom non-default item events are", entry, collector);
 
-                                            ((ItemEventFile) ctx.getCompiler().getSpecialFileManager().get("item_events")).addCustomItem(
-                                                    ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()),
-                                                    defaultType,
-                                                    itemDecl,
-                                                    new ItemEvent(new FunctionReference(innerFile.getFunction()), pure, eventModifiers)
-                                            );
+                                                ((ItemEventFile) finalCtx.getCompiler().getSpecialFileManager().get("item_events")).addCustomItem(
+                                                        ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()),
+                                                        defaultType,
+                                                        itemDecl,
+                                                        new ItemEvent(new FunctionReference(innerFile.getFunction()), pure, eventModifiers)
+                                                );
+                                            }
                                         }
                                     }
                                 }
-                            }
+                            });
 
                             break;
                         }
