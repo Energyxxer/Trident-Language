@@ -235,6 +235,14 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
                             } else {
                                 Debug.log("Unknown tag directory name: " + tagDir);
                             }
+                        } else {
+                            if(name.endsWith(".mcfunction") && relPath.getNameCount() >= 3 && "functions".equals(relPath.getName(1).toString())) {
+                                String functionName = relPath.subpath(2, relPath.getNameCount()).toString().replace(File.separator, "/");
+                                functionName = functionName.substring(0, functionName.length() - ".mcfunction".length());
+                                TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(relPath.getName(0).toString() + ":" + functionName);
+                                summary.addRawFunction(loc);
+                                Debug.log("Added: " + loc);
+                            }
                         }
                     }
                 } else if(file.toPath().startsWith(rootDir.toPath().resolve("resources"))) {

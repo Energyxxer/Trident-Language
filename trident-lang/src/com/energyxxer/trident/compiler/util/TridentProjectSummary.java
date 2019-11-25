@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 public class TridentProjectSummary implements ProjectSummary {
     private ArrayList<TridentSummaryModule> fileSummaries = new ArrayList<>();
+    private ArrayList<TridentUtil.ResourceLocation> rawFunctions = new ArrayList<>();
     private HashMap<File, TridentSummaryModule> fileSummaryMap = new HashMap<>();
     private HashMap<String, Set<TridentUtil.ResourceLocation>> types = new HashMap<>();
     private HashMap<String, Set<TridentUtil.ResourceLocation>> tags = new HashMap<>();
@@ -66,7 +67,9 @@ public class TridentProjectSummary implements ProjectSummary {
         if(filterOutCompileOnly) {
             stream = stream.filter(s -> !s.isCompileOnly());
         }
-        return stream.map(TridentSummaryModule::getFileLocation).collect(Collectors.toList());
+        LinkedHashSet<TridentUtil.ResourceLocation> returnValue = stream.map(TridentSummaryModule::getFileLocation).collect(Collectors.toCollection(LinkedHashSet::new));
+        returnValue.addAll(rawFunctions);
+        return returnValue;
     }
 
     public void addSoundEvent(TridentUtil.ResourceLocation loc) {
@@ -79,6 +82,10 @@ public class TridentProjectSummary implements ProjectSummary {
 
     public HashMap<String, Set<TridentUtil.ResourceLocation>> getTags() {
         return tags;
+    }
+
+    public void addRawFunction(TridentUtil.ResourceLocation loc) {
+        rawFunctions.add(loc);
     }
 
     public Collection<TridentUtil.ResourceLocation> getSoundEvents() {

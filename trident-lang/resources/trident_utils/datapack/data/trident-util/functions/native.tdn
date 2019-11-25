@@ -1,3 +1,5 @@
+@on compile
+
 global var typeOf = 0
 global var isInstance = 0
 

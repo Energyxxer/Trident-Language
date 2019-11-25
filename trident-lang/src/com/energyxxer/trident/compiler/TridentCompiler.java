@@ -421,6 +421,16 @@ public class TridentCompiler extends AbstractProcess {
                                 Path relPath = rootDir.toPath().resolve("datapack").relativize(file.toPath());
                                 byte[] data = Files.readAllBytes(file.toPath());
                                 module.exportables.add(new RawExportable(relPath.toString().replace(File.separator, "/"), data));
+
+
+                                if(name.endsWith(".mcfunction") && relPath.getNameCount() >= 4 && "data".equals(relPath.getName(0).toString()) && "functions".equals(relPath.getName(2).toString())) {
+                                    String functionName = relPath.subpath(3, relPath.getNameCount()).toString().replace(File.separator, "/");
+                                    functionName = functionName.substring(0, functionName.length() - ".mcfunction".length());
+                                    Namespace ns = module.getNamespace(relPath.getName(1).toString());
+                                    if(!ns.functions.exists(functionName)) {
+                                        ns.functions.create(functionName).setExport(false);
+                                    }
+                                }
                             }
                         } catch (IOException x) {
                             logException(x);
