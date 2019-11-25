@@ -257,6 +257,28 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
+        //Say string
+        contexts.add(new LexerContext() {
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false );
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                int endIndex = indexOf(str, "\n", "@p", "@e", "@a", "@r", "@s");
+                if(endIndex == 0) return new ScannerContextResponse(false);
+                if(endIndex == -1) return new ScannerContextResponse(true, str, SAY_STRING);
+                return new ScannerContextResponse(true, str.substring(0, endIndex), SAY_STRING);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(SAY_STRING);
+            }
+        });
+
         //String literals
         contexts.add(new LexerContext() {
 
@@ -602,6 +624,17 @@ public class TridentLexerProfile extends LexerProfile {
     public void putHeaderInfo(Token header) {
         header.attributes.put("TYPE","tdn");
         header.attributes.put("DESC","Trident Function File");
+    }
+
+    private static int indexOf(String base, String... substrings) {
+        int minIndex = -1;
+        for(String str : substrings) {
+            int index = base.indexOf(str);
+            if(minIndex == -1 || (index != -1 && index < minIndex)) {
+                minIndex = index;
+            }
+        }
+        return minIndex;
     }
 
     static class ResourceLocationContext implements LexerContext {
