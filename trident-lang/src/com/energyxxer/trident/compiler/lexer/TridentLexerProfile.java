@@ -350,17 +350,25 @@ public class TridentLexerProfile extends LexerProfile {
                                 break; //Unexpected end of input
                             }
                             char escapedChar = str.charAt(i+1);
-                            if(!"bfnrt\\\"'".contains(escapedChar+"")) {
+                            if(!"bfnrtu\\\"'".contains(escapedChar+"")) {
                                 errorMessage = "Illegal escape character in string literal";
                             } else {
-                                escapedChars.put(new TokenSection(i,2), "string_literal.escape");
+                                if(escapedChar == 'u') {
+                                    if(str.length() - i+2 < 4 || !str.substring(i+2, i+2+4).matches("[0-9A-Fa-f]{4}")) {
+                                        errorMessage = "Illegal escape character in string literal";
+                                    } else {
+                                        escapedChars.put(new TokenSection(i,6), "string_literal.escape");
+                                    }
+                                } else {
+                                    escapedChars.put(new TokenSection(i,2), "string_literal.escape");
+                                }
                             }
                             token.append(escapedChar);
                             i++;
                         } else if(c == startingCharacter) {
                             ScannerContextResponse response = new ScannerContextResponse(true, token.toString(), end, TridentTokens.STRING_LITERAL, escapedChars);
                             if(errorMessage != null) {
-                                response.setError("Illegal escape character in string literal", 0, i+1);
+                                response.setError(errorMessage, 0, i+1);
                             }
                             return response;
                         }
