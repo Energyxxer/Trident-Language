@@ -12,7 +12,7 @@ import java.util.Locale;
 public class Debug {
 
     public enum MessageType {
-        INFO, ERROR, WARN
+        INFO, ERROR, WARN, PLAIN
     }
 
     private static ArrayList<OutputStream> streams = new ArrayList<>();
@@ -50,7 +50,7 @@ public class Debug {
 
     public static void log(String message, MessageType type) {
         DateTimeFormatter format = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ENGLISH);
-        logRaw("[" + format.format(LocalDateTime.now()) + "] [" + getCallerClassName() + "/" + type + "] " + message + "\n");
+        logRaw(type != MessageType.PLAIN ? ("[" + format.format(LocalDateTime.now()) + "] [" + getCallerClassName() + "/" + type + "] " + message + "\n") : (message + "\n"));
     }
 
     public static void addStream(OutputStream stream) {
