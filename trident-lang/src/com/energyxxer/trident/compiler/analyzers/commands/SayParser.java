@@ -16,10 +16,10 @@ public class SayParser implements SimpleCommandParser {
         for(TokenPattern<?> part : ((TokenList) pattern.find("SAY_MESSAGE")).getContents()) {
             if(part.getName().equals("SAY_PART")) {
                 TokenPattern<?> partInner = (TokenPattern<?>) part.getContents();
-                if(partInner.getName().equals("SELECTOR")) {
-                    sb.append(EntityParser.parseSelector(partInner, ctx));
+                if(partInner.getName().equals("SAY_SELECTOR")) {
+                    sb.append(EntityParser.parseSelector(partInner.find("SELECTOR"), ctx));
                 } else {
-                    sb.append(partInner.flatten(false).substring(sb.length() == 0 ? 1 : 0));
+                    sb.append(partInner.flatten(false));
                 }
             }
         }

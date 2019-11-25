@@ -262,7 +262,7 @@ public class TridentLexerProfile extends LexerProfile {
 
             @Override
             public ScannerContextResponse analyze(String str, LexerProfile profile) {
-                return new ScannerContextResponse(false );
+                return new ScannerContextResponse(false);
             }
 
             @Override
@@ -276,6 +276,31 @@ public class TridentLexerProfile extends LexerProfile {
             @Override
             public Collection<TokenType> getHandledTypes() {
                 return Collections.singletonList(SAY_STRING);
+            }
+
+            @Override
+            public boolean ignoreLeadingWhitespace() {
+                return false;
+            }
+        });
+
+        //Whitespace
+        contexts.add(new LexerContext() {
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                if(!str.isEmpty() && str.charAt(0) == ' ') return new ScannerContextResponse(true, " ", WHITESPACE);
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(WHITESPACE);
             }
 
             @Override

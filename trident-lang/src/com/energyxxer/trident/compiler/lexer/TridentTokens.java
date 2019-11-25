@@ -49,7 +49,7 @@ public class TridentTokens {
             // @p, @e, @a, @r, @s
             SELECTOR_HEADER,
             // literally anything
-            TRAILING_STRING, SAY_STRING,
+            TRAILING_STRING, SAY_STRING, WHITESPACE,
             // isset, update
             CUSTOM_COMMAND_KEYWORD,
             //Objective names, tags, etc.:

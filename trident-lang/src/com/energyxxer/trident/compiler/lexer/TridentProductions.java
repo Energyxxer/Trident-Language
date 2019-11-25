@@ -478,8 +478,8 @@ public class TridentProductions {
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "say"));
-            g.append(sameLine());
-            g.append(list(choice(ofType(SAY_STRING), SELECTOR).setName("SAY_PART"), sameLine()).setName("SAY_MESSAGE"));
+            g.append(ofType(WHITESPACE));
+            g.append(list(choice(ofType(SAY_STRING), group(sameLine(), SELECTOR).setName("SAY_SELECTOR")).setName("SAY_PART")).setName("SAY_MESSAGE"));
             COMMAND.add(g);
         }
         //endregion
