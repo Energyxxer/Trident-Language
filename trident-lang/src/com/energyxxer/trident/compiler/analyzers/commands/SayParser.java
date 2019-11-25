@@ -19,7 +19,7 @@ public class SayParser implements SimpleCommandParser {
                 if(partInner.getName().equals("SELECTOR")) {
                     sb.append(EntityParser.parseSelector(partInner, ctx));
                 } else {
-                    sb.append(partInner.flatten(false));
+                    sb.append(partInner.flatten(false).substring(sb.length() == 0 ? 1 : 0));
                 }
             }
         }

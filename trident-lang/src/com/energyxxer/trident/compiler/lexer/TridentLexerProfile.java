@@ -277,6 +277,11 @@ public class TridentLexerProfile extends LexerProfile {
             public Collection<TokenType> getHandledTypes() {
                 return Collections.singletonList(SAY_STRING);
             }
+
+            @Override
+            public boolean ignoreLeadingWhitespace() {
+                return false;
+            }
         });
 
         //String literals
