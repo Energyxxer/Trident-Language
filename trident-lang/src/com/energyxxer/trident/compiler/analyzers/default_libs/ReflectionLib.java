@@ -23,6 +23,8 @@ public class ReflectionLib implements DefaultLibraryProvider {
 
         reflect.put("getFilesWithTag",
                 new MethodWrapper<>("getFilesWithTag", ((instance, params) -> getFilesWithTag(((TridentUtil.ResourceLocation) params[0]), compiler.getRootCompiler())), TridentUtil.ResourceLocation.class).createForInstance(null));
+        reflect.put("getFilesWithMetaTag",
+                new MethodWrapper<>("getFilesWithMetaTag", ((instance, params) -> getFilesWithMetaTag(((TridentUtil.ResourceLocation) params[0]), compiler.getRootCompiler())), TridentUtil.ResourceLocation.class).createForInstance(null));
         reflect.put("getMetadata",
                 new MethodWrapper<>("getMetadata", ((instance, params) -> getMetadata(((TridentUtil.ResourceLocation) params[0]), compiler.getRootCompiler())), TridentUtil.ResourceLocation.class).createForInstance(null));
         reflect.put("getCurrentFile", (VariableMethod) (params, patterns, pattern, ctx) -> ctx.getStaticParentFile().getResourceLocation());
@@ -70,6 +72,18 @@ public class ReflectionLib implements DefaultLibraryProvider {
         ListObject list = new ListObject();
         for(TridentFile file : compiler.getAllFiles()) {
             if(file.getTags().contains(tag)) {
+                list.add(file.getResourceLocation());
+            }
+        }
+        return list;
+    }
+
+    private ListObject getFilesWithMetaTag(TridentUtil.ResourceLocation tag, TridentCompiler compiler) {
+        tag = new TridentUtil.ResourceLocation(tag.toString());
+        tag.isTag = false;
+        ListObject list = new ListObject();
+        for(TridentFile file : compiler.getAllFiles()) {
+            if(file.getMetaTags().contains(tag)) {
                 list.add(file.getResourceLocation());
             }
         }

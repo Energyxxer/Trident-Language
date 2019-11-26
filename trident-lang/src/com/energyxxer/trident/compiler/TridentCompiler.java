@@ -842,6 +842,7 @@ public class TridentCompiler extends AbstractProcess {
             libraries.add(new Library("trident-util/functions/type_checking.tdn", read("/trident_utils/datapack/data/trident-util/functions/type_checking.tdn")));
             libraries.add(new Library("trident-util/functions/shared.tdn", read("/trident_utils/datapack/data/trident-util/functions/shared.tdn")));
             libraries.add(new Library("trident-util/functions/predicate.tdn", read("/trident_utils/datapack/data/trident-util/functions/predicate.tdn")));
+            libraries.add(new Library("trident-util/functions/advancement_triggers.tdn", read("/trident_utils/datapack/data/trident-util/functions/advancement_triggers.tdn")));
         }
 
         static void populate(ArrayList<String> ownFiles, HashMap<String, ParsingSignature> filePatterns) {

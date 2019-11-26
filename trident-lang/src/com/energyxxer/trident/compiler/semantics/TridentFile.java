@@ -42,6 +42,7 @@ public class TridentFile extends SymbolContext {
     private final HashMap<TokenPattern<?>, TridentUtil.ResourceLocation> requires = new HashMap<>();
     private ArrayList<TridentUtil.ResourceLocation> cascadingRequires = null;
     private final ArrayList<TridentUtil.ResourceLocation> tags = new ArrayList<>();
+    private final ArrayList<TridentUtil.ResourceLocation> metaTags = new ArrayList<>();
     private final Path relSourcePath;
 
     private Function function;
@@ -99,13 +100,24 @@ public class TridentFile extends SymbolContext {
                     case "ON_DIRECTIVE": {
                         String on = ((TokenItem) (directiveBody.getContents()[1])).getContents().value;
                         if(on.equals("compile")) {
+                            if(!tags.isEmpty()) {
+                                getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have any tags", directiveList));
+                            }
                             compileOnly = true;
                         }
                         break;
                     }
                     case "TAG_DIRECTIVE": {
                         TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents().value);
+                        if(compileOnly) {
+                            getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have any tags", directiveList));
+                        }
                         tags.add(loc);
+                        break;
+                    }
+                    case "META_TAG_DIRECTIVE": {
+                        TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents().value);
+                        metaTags.add(loc);
                         break;
                     }
                     case "REQUIRE_DIRECTIVE": {
@@ -437,6 +449,10 @@ public class TridentFile extends SymbolContext {
 
     public Collection<TridentUtil.ResourceLocation> getTags() {
         return tags;
+    }
+
+    public Collection<TridentUtil.ResourceLocation> getMetaTags() {
+        return metaTags;
     }
 
     public boolean shouldExportFunction() {

@@ -1,0 +1,55 @@
+@priority -1000
+@on compile
+
+private var rootAdvancement = resource<trident-generated:triggers/root>
+private var rootWritten = false
+
+private var indices = {}
+
+for(fileLoc in Reflection.getFilesWithMetaTag(resource<trident:advancement_reward>)) {
+    var triggers = Reflection.getMetadata(fileLoc).advancement_triggers
+    do if(triggers != null) {
+        do if(!rootWritten) {
+            eval File.out.writeData("data/trident-generated/advancements/triggers/root.json", JSON.stringify({"display": {"icon": {"item": "minecraft:command_block"},"title": {"translate": "Internal"},"description": {"translate": "Advancements used for game logic"},"frame": "task","show_toast": false,"announce_to_chat": false,"hidden": false,"background": "minecraft:textures/gui/advancements/backgrounds/husbandry.png"},"criteria": {"impossible": {"trigger": "minecraft:impossible"}},"requirements": [["impossible"]]}, true))
+            eval rootWritten = true
+        }
+        do if(indices[fileLoc.namespace] == null) eval indices[fileLoc.namespace] = 0
+
+        var advancementLoc = new resource(fileLoc.namespace, ["trident-generated", "triggers", (string) indices[fileLoc.namespace]])
+        var advancementPath = "data/" + advancementLoc.namespace + "/advancements/" + advancementLoc.body + ".json"
+
+        var obj = {
+            "parent": (string)rootAdvancement,
+            "rewards": {
+                "function": fileLoc
+            },
+            "criteria": {
+            },
+            "requirements": [
+            ]
+        }
+
+        var j = 0
+        for(orGroup in triggers) {
+            do if(isInstance(orGroup, "dictionary")) {
+                eval orGroup = [orGroup]
+            }
+            var orGroupList = []
+            eval obj.requirements.add(orGroupList)
+            for(trigger in orGroup) {
+                var criterionName = "criterion" + j
+                eval j++
+                eval obj.criteria[criterionName] = trigger
+                eval orGroupList.add(criterionName)
+            }
+        }
+
+        eval File.out.writeData(advancementPath, JSON.stringify(obj, true))
+
+        eval Reflection.insertToFile(fileLoc, function() {
+            advancement revoke @s only $advancementLoc
+        })
+
+        eval indices[fileLoc.namespace]++
+    }
+}
