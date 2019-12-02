@@ -48,6 +48,7 @@ public class LazyTokenItemMatch extends LazyTokenPatternMatch {
         MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[] {"int"}, new Object[] {index});
 
         if(st.find(thisInvoc)) {
+            invokeFailProcessors(0, lexer);
             return new TokenMatchResponse(false, null, 0, this, null);
         }
         st.push(thisInvoc);
@@ -74,6 +75,7 @@ public class LazyTokenItemMatch extends LazyTokenPatternMatch {
         Token retrieved = lexer.retrieveTokenOfType(this.type);
         if(retrieved == null) {
             st.pop();
+            invokeFailProcessors(0, lexer);
             return new TokenMatchResponse(false, lexer.retrieveAnyToken(), 0, this, null);
         }
 
@@ -92,6 +94,7 @@ public class LazyTokenItemMatch extends LazyTokenPatternMatch {
             lexer.getSuggestionModule().popStatus();
         }
         if(matched) invokeProcessors(item, lexer);
+        else invokeFailProcessors(0, lexer);
         return new TokenMatchResponse(matched, faultyToken, length, (matched) ? null : this, item);
     }
 

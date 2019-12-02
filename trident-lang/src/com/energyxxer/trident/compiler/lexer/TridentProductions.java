@@ -382,11 +382,11 @@ public class TridentProductions {
                                         ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                     }
                                 }
-                            }),
+                            }).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);}),
                             comma()
                     ).setOptional().setName("DICTIONARY_ENTRY_LIST"),
-                    brace("}"))).addProcessor(claimTopSymbol).addProcessor(endComplexValue);
-            LIST.add(group(brace("[").addProcessor(startClosure), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")).addProcessor(endComplexValue));
+                    brace("}"))).addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);});
+            LIST.add(group(brace("[").addProcessor(startClosure), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")).addProcessor(endComplexValue).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);}));
         }
 
         PLAYER_NAME.add(identifierB());
@@ -2276,11 +2276,6 @@ public class TridentProductions {
                             )
                     )
             );
-
-            INSTRUCTION.add(
-                    group(keyword("tdndebug").setName("INSTRUCTION_KEYWORD"),
-                            INTERPOLATION_BLOCK).setName("DEPRECATED_FOR_REMOVAL")
-            );
         }
 
         {
@@ -2296,6 +2291,7 @@ public class TridentProductions {
                     ).addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
                             SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
+
                             sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
                             TokenStructure root = ((TokenStructure) p.find("VARIABLE_INITIALIZATION.VARIABLE_VALUE.LINE_SAFE_INTERPOLATION_VALUE.EXPRESSION.MID_INTERPOLATION_VALUE.SURROUNDED_INTERPOLATION_VALUE.INTERPOLATION_CHAIN.ROOT_INTERPOLATION_VALUE"));
                             if(root != null) {

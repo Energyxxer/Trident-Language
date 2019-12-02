@@ -98,6 +98,8 @@ public class LazyTokenGroupMatch extends LazyTokenPatternMatch {
         TokenMatchResponse response = new TokenMatchResponse(hasMatched, faultyToken, length, expected, group);
         if(hasMatched) {
             invokeProcessors(group, lexer);
+        } else {
+            invokeFailProcessors(length, lexer);
         }
         return response;
     }

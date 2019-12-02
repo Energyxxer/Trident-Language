@@ -84,6 +84,7 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
                 return new TokenMatchResponse(true, null, 0, null);
             }
         } else {
+            invokeFailProcessors(longestMatch.length, lexer);
             if (longestMatch.length <= 0 && entries.size() > 1) {
                 return new TokenMatchResponse(false, longestMatch.faultyToken, longestMatch.length, this, null/*new TokenStructure(this.name, longestMatch.pattern).addTags(this.tags)*/);
             } else {

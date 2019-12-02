@@ -47,6 +47,12 @@ public abstract class LazyTokenPatternMatch extends GeneralTokenPatternMatch {
         return this;
     }
 
+    @Override
+    public LazyTokenPatternMatch addFailProcessor(BiConsumer<Integer, Lexer> failProcessor) {
+        super.addFailProcessor(failProcessor);
+        return this;
+    }
+
     protected int handleSuggestionTags(Lexer lexer, int index) {
         int popSuggestionStatus = 0;
         if(lexer.getSuggestionModule() != null) {

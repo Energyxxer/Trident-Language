@@ -13,6 +13,7 @@ public abstract class GeneralTokenPatternMatch {
     public boolean optional;
     public List<String> tags = new ArrayList<>();
     protected List<BiConsumer<TokenPattern<?>, Lexer>> processors = new ArrayList<>();
+    protected List<BiConsumer<Integer, Lexer>> failProcessors = new ArrayList<>();
 
     public GeneralTokenPatternMatch addTags(String... newTags) {
         tags.addAll(Arrays.asList(newTags));
@@ -29,11 +30,20 @@ public abstract class GeneralTokenPatternMatch {
         return this;
     }
 
+    public GeneralTokenPatternMatch addFailProcessor(BiConsumer<Integer, Lexer> failProcessor) {
+        failProcessors.add(failProcessor);
+        return this;
+    }
+
     public abstract String deepToString(int levels);
 
     public abstract String toTrimmedString();
 
     protected void invokeProcessors(TokenPattern<?> pattern, Lexer lexer) {
         processors.forEach(p -> p.accept(pattern, lexer));
+    }
+
+    protected void invokeFailProcessors(int matchLength, Lexer lexer) {
+        failProcessors.forEach(p -> p.accept(matchLength, lexer));
     }
 }
