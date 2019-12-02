@@ -489,7 +489,6 @@ public class TridentCompiler extends AbstractProcess {
                 Tag tag = group.getOrCreate(tagName);
                 tag.setExport(true);
                 Debug.log("Created tag " + tag);
-                tag.setExport(true);
 
                 JsonObject obj = gson.fromJson(new FileReader(file), JsonObject.class);
 

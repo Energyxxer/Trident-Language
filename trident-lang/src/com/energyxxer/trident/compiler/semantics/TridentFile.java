@@ -306,8 +306,10 @@ public class TridentFile extends SymbolContext {
     public Function getEntityTickFunction() {
         boolean creating = !getNamespace().functions.exists("trident_tick");
         Function tickFunction = getNamespace().functions.getOrCreate("trident_tick");
+        tickFunction.setExport(true);
 
         Function entityTickFunction = getNamespace().functions.getOrCreate("trident_tick/entity");
+        entityTickFunction.setExport(true);
 
         if(creating) {
             Tag tickTag = getCompiler().getModule().minecraft.tags.functionTags.getOrCreate("tick");
