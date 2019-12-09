@@ -18,15 +18,11 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgumen
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.module.Namespace;
-import com.energyxxer.commodore.tags.BlockTag;
-import com.energyxxer.commodore.tags.ItemTag;
-import com.energyxxer.commodore.tags.TagGroup;
-import com.energyxxer.commodore.tags.TagManager;
+import com.energyxxer.commodore.tags.*;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeDictionary;
-import com.energyxxer.commodore.types.defaults.EntityType;
-import com.energyxxer.commodore.types.defaults.FunctionReference;
-import com.energyxxer.commodore.types.defaults.TypeManager;
+import com.energyxxer.commodore.types.TypeNotFoundException;
+import com.energyxxer.commodore.types.defaults.*;
 import com.energyxxer.commodore.util.DoubleRange;
 import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.commodore.util.TimeSpan;
@@ -53,6 +49,7 @@ import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
 import com.energyxxer.util.logger.Debug;
+import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,24 +66,67 @@ public class CommonParsers {
         if(id.getName().equals("ENTITY_ID_WRAPPER")) return parseEntityReference(id.find("ENTITY_ID"), ctx);
         if(id.getName().equals("ABSTRACT_RESOURCE")) return parseTag(id.find("RESOURCE_NAME"), ctx, EntityType.CATEGORY, g -> g.entity, g -> g.entityTypeTags);
         if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("INTERPOLATION_BLOCK")) {
-            return InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, Type.class, CustomEntity.class);
-        } else return parseType(id, ctx, m -> m.entity);
+            Object result = InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, CustomEntity.class, TridentUtil.ResourceLocation.class, String.class);
+            if(result instanceof CustomEntity) return result;
+            return parseType(result, id, ctx, EntityType.CATEGORY);
+        } else return parseType(id, ctx, EntityType.CATEGORY);
     }
     public static Type parseItemType(TokenPattern<?> id, ISymbolContext ctx) {
-        return parseType(id, ctx, m -> m.item);
+        return parseType(id, ctx, ItemType.CATEGORY);
     }
     public static Type parseBlockType(TokenPattern<?> id, ISymbolContext ctx) {
-        return parseType(id, ctx, m -> m.block);
+        return parseType(id, ctx, BlockType.CATEGORY);
     }
-    public static Type parseType(TokenPattern<?> id, ISymbolContext ctx, TypeGroupPicker picker) {
-        if(id == null) return null;
-        if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("INTERPOLATION_BLOCK")) {
-            Type result = InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, Type.class);
-            EObject.assertNotNull(result, id, ctx);
-            return result;
+    public static Type parseType(Object obj, TokenPattern<?> pattern, ISymbolContext ctx, String category) {
+        String str;
+        TridentUtil.ResourceLocation loc;
+        if(obj instanceof String) {
+            str = (String) obj;
+            loc = new TridentUtil.ResourceLocation(str);
+        } else {
+            loc = ((TridentUtil.ResourceLocation) obj);
+            str = loc.toString();
         }
-        TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id);
-        return picker.pick(ctx.getCompiler().getModule().getNamespace(typeLoc.namespace).types).get(typeLoc.body);
+        if(!loc.isTag) {
+            try {
+                return ctx.getCompiler().getModule().getTypeManager(loc.namespace).getDictionary(category).get(loc.body);
+            } catch(TypeNotFoundException x) {
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such type '" + str + "' for category '" + category + "'", pattern, ctx);
+            }
+        } else {
+            TagGroup group = ctx.getCompiler().getModule().getTagManager(loc.namespace).getGroup(category);
+            if(group != null) {
+                Tag tag = group.get(loc.body);
+                if(tag != null) {
+                    return tag;
+                } else {
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such tag '" + loc + "' for category '" + category + "'", pattern, ctx);
+                }
+            } else {
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Type category '" + category + "' does not support tags or has none: '" + loc + "'", pattern, ctx);
+            }
+        }
+    }
+    @Contract("null, _, _ -> null")
+    public static Type parseType(TokenPattern<?> id, ISymbolContext ctx, String category) {
+        if(id == null) return null;
+        if(id.getName().endsWith("_ID") && id instanceof TokenStructure) {
+            return parseType(((TokenStructure) id).getContents(), ctx, category);
+        }
+        switch (id.getName()) {
+            case "INTERPOLATION_BLOCK":
+                Object result = InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, TridentUtil.ResourceLocation.class, String.class);
+                EObject.assertNotNull(result, id, ctx);
+                return parseType(result, id, ctx, category);
+            case "STRING_LITERAL":
+                return parseType(parseStringLiteral(id, ctx), id, ctx, category);
+            default:
+                if(id.getName().endsWith("_DEFAULT") || id.getName().endsWith("_ID")) {
+                    TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id);
+                    return ctx.getCompiler().getModule().getTypeManager(typeLoc.namespace).getDictionary(category).get(typeLoc.body);
+                }
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + id.getName() + "'", id, ctx);
+        }
     }
 
     public static Type parseTag(TokenPattern<?> id, ISymbolContext ctx, String category, TypeGroupPicker typePicker, TagGroupPicker tagPicker) {
@@ -249,7 +289,7 @@ public class CommonParsers {
         if(pattern.getName().equals("ITEM_TAGGED") || pattern.getName().equals("ITEM")) return parseItem(((TokenStructure) pattern).getContents(), ctx, mode);
 
         if(pattern.getName().equals("ITEM_VARIABLE")) {
-            Object reference = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Item.class, CustomItem.class);
+            Object reference = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Item.class, CustomItem.class, TridentUtil.ResourceLocation.class, String.class);
             Item item;
             if(reference == null) {
                 throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null value for item", pattern.find("INTERPOLATION_BLOCK"), ctx);
@@ -258,7 +298,7 @@ public class CommonParsers {
             } else if(reference instanceof CustomItem) {
                 item = ((CustomItem) reference).constructItem(mode);
             } else {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "Unknown item reference return type: " + reference.getClass().getSimpleName(), pattern, ctx);
+                item = new Item(parseType(reference, pattern, ctx, ItemType.CATEGORY));
             }
 
             TokenPattern<?> appendedModelData = pattern.find("APPENDED_MODEL_DATA.INTEGER");
@@ -324,14 +364,30 @@ public class CommonParsers {
         if(pattern == null) return null;
         if(pattern.getName().equals("BLOCK_TAGGED") || pattern.getName().equals("BLOCK")) return parseBlock(((TokenStructure) pattern).getContents(), ctx);
 
-        if(pattern.getName().equals("INTERPOLATION_BLOCK")) {
-            Block result = InterpolationManager.parse(pattern, ctx, Block.class);
-            EObject.assertNotNull(result, pattern, ctx);
-            return result;
-        }
         if(pattern.getName().equals("BLOCK_VARIABLE")) {
-            Block block = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Block.class);
-            EObject.assertNotNull(block, pattern.find("INTERPOLATION_BLOCK"), ctx);
+            Block block;
+            Object result = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Block.class, TridentUtil.ResourceLocation.class, String.class);
+            EObject.assertNotNull(result, pattern.find("INTERPOLATION_BLOCK"), ctx);
+            if(result instanceof Block) {
+                block = (Block) result;
+            } else {
+                if(result instanceof String) result = new TridentUtil.ResourceLocation((String) result);
+                try {
+                    if(!((TridentUtil.ResourceLocation) result).isTag) {
+                        block = new Block(ctx.getCompiler().getModule().getTypeManager(((TridentUtil.ResourceLocation) result).namespace).block.get(((TridentUtil.ResourceLocation) result).body));
+                    } else {
+
+                        Tag tag = ctx.getCompiler().getModule().getTagManager(((TridentUtil.ResourceLocation) result).namespace).blockTags.get(((TridentUtil.ResourceLocation) result).body);
+                        if(tag != null) {
+                            block = new Block(tag);
+                        } else {
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such tag '" + result + "' for category 'block'", pattern, ctx);
+                        }
+                    }
+                } catch(TypeNotFoundException x) {
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such type '" + result + "' for category 'block'", pattern, ctx);
+                }
+            }
             TokenPattern<?> appendedState = pattern.find("APPENDED_BLOCKSTATE.BLOCKSTATE");
             if(appendedState != null) {
                 Blockstate state = block.getBlockstate();
@@ -644,6 +700,7 @@ public class CommonParsers {
         }
     }
 
+    @Contract("null, _ -> null")
     public static String parseStringLiteral(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
         switch(pattern.getName()) {
@@ -661,6 +718,7 @@ public class CommonParsers {
         }
     }
 
+    @Contract("null, _ -> null")
     public static String parseIdentifierA(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
         switch(pattern.getName()) {
@@ -683,6 +741,7 @@ public class CommonParsers {
         }
     }
 
+    @Contract("null, _ -> null")
     public static String parseIdentifierB(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
         switch(pattern.getName()) {
@@ -702,6 +761,7 @@ public class CommonParsers {
         }
     }
 
+    @Contract("null, _, _ -> param3")
     public static Symbol.SymbolVisibility parseVisibility(TokenPattern<?> pattern, ISymbolContext ctx, Symbol.SymbolVisibility defaultValue) {
         if(pattern == null) return defaultValue;
         switch(pattern.flatten(false)) {

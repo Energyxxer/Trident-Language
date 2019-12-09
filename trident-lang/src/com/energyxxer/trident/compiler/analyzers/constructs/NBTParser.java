@@ -37,9 +37,7 @@ public class NBTParser {
     public static NBTTag parseValue(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             switch(pattern.getName()) {
-                case "NBT_VALUE": {
-                    return parseValue(((TokenStructure)pattern).getContents(), ctx);
-                }
+                case "NBT_VALUE":
                 case "NBT_COMPOUND": {
                     return parseValue(((TokenStructure)pattern).getContents(), ctx);
                 }

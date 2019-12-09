@@ -5,17 +5,19 @@ import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.gamemode.GamemodeCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.defaults.GamemodeType;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "gamemode")
 public class GamemodeParser implements SimpleCommandParser {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Type gamemode = ctx.getCompiler().getModule().minecraft.types.gamemode.get(pattern.find("GAMEMODE").flatten(false));
+        Type gamemode = CommonParsers.parseType(pattern.find("GAMEMODE.GAMEMODE_ID"), ctx, GamemodeType.CATEGORY);
         Entity entity = EntityParser.parseEntity(pattern.find("PLAYER.ENTITY"), ctx);
 
         try {

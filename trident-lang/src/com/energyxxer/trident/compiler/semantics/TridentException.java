@@ -45,15 +45,15 @@ public class TridentException extends RuntimeException implements VariableTypeHa
     private boolean breaking = false;
 
     @Deprecated
-    public TridentException(Source source, String message, TokenPattern<?> cause) {
+    public TridentException(Source source, String message, @NotNull TokenPattern<?> cause) {
         this(source, message, cause, (CallStack.StackTrace) null);
     }
 
-    public TridentException(Source source, String message, TokenPattern<?> cause, ISymbolContext ctx) {
+    public TridentException(Source source, String message, @NotNull TokenPattern<?> cause, ISymbolContext ctx) {
         this(source, message, cause, ctx.getCompiler().getCallStack().getView());
     }
 
-    public TridentException(Source source, String message, TokenPattern<?> cause, CallStack.StackTrace stackTrace) {
+    public TridentException(Source source, String message, @NotNull TokenPattern<?> cause, CallStack.StackTrace stackTrace) {
         this.source = source;
 
         if(source == Source.IMPOSSIBLE) {

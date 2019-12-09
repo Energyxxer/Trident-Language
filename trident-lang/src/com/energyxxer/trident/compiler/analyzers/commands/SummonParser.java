@@ -34,7 +34,7 @@ public class SummonParser implements SimpleCommandParser {
             return data.constructSummon();
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("ENTITY_ID"))
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("NEW_ENTITY_LITERAL"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }
@@ -87,7 +87,7 @@ public class SummonParser implements SimpleCommandParser {
         public Type type;
         public CoordinateSet pos;
         public TagCompound nbt;
-        public ArrayList<CustomEntity> components = new ArrayList<>();
+        public ArrayList<CustomEntity> components;
         public Object reference;
 
         public SummonData(Type type, CoordinateSet pos, TagCompound nbt, ArrayList<CustomEntity> components, Object reference) {

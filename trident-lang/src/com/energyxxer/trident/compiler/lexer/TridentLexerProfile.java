@@ -29,7 +29,7 @@ public class TridentLexerProfile extends LexerProfile {
     public static final String IDENTIFIER_C_REGEX = "\\S+";
     public static final String IDENTIFIER_D_REGEX = "[a-zA-Z0-9_\\-+]+";
 
-    public static final Pattern NUMBER_REGEX = Pattern.compile("([+-]?(\\d*(\\.\\d+)|\\d+)([bdfsL]?))", Pattern.CASE_INSENSITIVE);
+    public static final Pattern NUMBER_REGEX = Pattern.compile("[+-]?(\\d*(\\.\\d+)|\\d+)([bdfsL]?)", Pattern.CASE_INSENSITIVE);
     public static final Pattern SHORT_NUMBER_REGEX = Pattern.compile("[+-]?\\d*(\\.\\d+)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern TIME_REGEX = Pattern.compile("(\\d*(\\.\\d+)|\\d+)[tsd]?");
 
@@ -619,12 +619,34 @@ public class TridentLexerProfile extends LexerProfile {
 
             @Override
             public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
-                return new ScannerContextResponse(true, "", NO_TOKEN);
+                return new ScannerContextResponse(false);
             }
 
             @Override
             public Collection<TokenType> getHandledTypes() {
                 return Collections.singletonList(NO_TOKEN);
+            }
+
+            @Override
+            public boolean ignoreLeadingWhitespace() {
+                return false;
+            }
+        });
+
+        contexts.add(new LexerContext() {
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                return new ScannerContextResponse(true, "", EMPTY_TOKEN);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singletonList(EMPTY_TOKEN);
             }
 
             @Override

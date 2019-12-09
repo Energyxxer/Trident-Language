@@ -6,6 +6,7 @@ import com.energyxxer.commodore.functionlogic.commands.particle.ParticleCommand;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.defaults.ParticleType;
 import com.energyxxer.commodore.util.Delta;
 import com.energyxxer.commodore.util.Particle;
 import com.energyxxer.commodore.util.ParticleColor;
@@ -15,9 +16,9 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.ArrayList;
 
@@ -58,7 +59,7 @@ public class ParticleParser implements SimpleCommandParser {
     }
 
     private Particle parseParticle(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Type particleType = CommonParsers.parseType(pattern.find("PARTICLE_ID"), ctx, d -> d.particle);
+        Type particleType = CommonParsers.parseType(pattern.find("PARTICLE_ID"), ctx, ParticleType.CATEGORY);
         TokenGroup argsGroup = (TokenGroup) pattern.find("PARTICLE_ARGUMENTS");
         ArrayList<Object> arguments = new ArrayList<>();
         if(argsGroup != null) {

@@ -74,6 +74,8 @@ public class TridentTokens {
             //Returns true if the next non-whitespace character is in the same line as the previous
             LINE_GLUE,
             //Returns true, always. Use whenever post-processing requires the location of a token that may or may not exist
+            EMPTY_TOKEN,
+            //Returns false, always. Use whenever post-processing requires the location of a token that may or may not exist
             NO_TOKEN
     ;
 

@@ -5,6 +5,7 @@ import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.loot.*;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.defaults.ItemSlot;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.TridentUtil;
@@ -41,11 +42,21 @@ public class LootParser implements SimpleCommandParser {
                 return new LootInsertBlock(CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx));
             }
             case "REPLACE": {
-                Type slot = ctx.getCompiler().getModule().minecraft.types.slot.get(pattern.find("SLOT_ID").flatten(false));
+                Type slot = CommonParsers.parseType(pattern.find("SLOT_ID"), ctx, ItemSlot.CATEGORY);
+                int count = -1;
+                if(pattern.find("COUNT") != null) {
+                    count = CommonParsers.parseInt(pattern.find("COUNT"), ctx);
+                }
 
                 TokenPattern<?> rawCoord = pattern.find("CHOICE.COORDINATE_SET");
-                if(rawCoord != null) return new LootReplaceBlock(CoordinateParser.parse(rawCoord, ctx), slot);
-                else return new LootReplaceEntity(EntityParser.parseEntity(pattern.find("CHOICE.ENTITY"), ctx), slot);
+                try {
+                    if(rawCoord != null) return new LootReplaceBlock(CoordinateParser.parse(rawCoord, ctx), slot, count);
+                    else return new LootReplaceEntity(EntityParser.parseEntity(pattern.find("CHOICE.ENTITY"), ctx), slot, count);
+                } catch(CommodoreException x) {
+                    TridentException.handleCommodoreException(x, pattern, ctx)
+                            .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.find("COUNT"))
+                            .invokeThrow();
+                }
             }
             case "SPAWN": {
                 return new LootSpawn(CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx));

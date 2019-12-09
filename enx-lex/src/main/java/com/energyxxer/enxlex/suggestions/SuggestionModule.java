@@ -3,8 +3,10 @@ package com.energyxxer.enxlex.suggestions;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Stack;
 
 public class SuggestionModule {
@@ -29,7 +31,23 @@ public class SuggestionModule {
     }
 
     public void addSuggestion(Suggestion prediction) {
-        if(!suggestions.contains(prediction)) suggestions.add(prediction);
+        if(!suggestions.contains(prediction)) {
+            if(prediction instanceof LiteralSuggestion && prediction.tags.contains(SuggestionTags.LITERAL_SORT)) {
+                int insertionIndex = suggestions.size();
+                Suggestion previousSuggestion;
+                while(
+                        insertionIndex-1 >= 0 &&
+                        ((previousSuggestion = suggestions.get(insertionIndex-1)) instanceof LiteralSuggestion) &&
+                                Collator.getInstance(Locale.ENGLISH).compare(((LiteralSuggestion) previousSuggestion).getLiteral(), ((LiteralSuggestion) prediction).getLiteral()) > 0
+                ) {
+                    insertionIndex--;
+                }
+
+                suggestions.add(insertionIndex, prediction);
+            } else {
+                suggestions.add(prediction);
+            }
+        }
     }
 
     public List<Suggestion> getSuggestions() {

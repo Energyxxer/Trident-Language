@@ -69,7 +69,8 @@ public class InterpolationManager {
             case "VARIABLE": {
                 return parse(pattern.find("VARIABLE_NAME"), ctx, keepSymbol);
             }
-            case "INTERPOLATION_WRAPPER": {
+            case "INTERPOLATION_WRAPPER":
+            case "PARENTHESIZED_VALUE": {
                 return parse(pattern.find("INTERPOLATION_VALUE"), ctx, keepSymbol);
             }
             case "VARIABLE_NAME": {
@@ -246,9 +247,6 @@ public class InterpolationManager {
                 }
 
                 return sanitizeObject(constructor.safeCall(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), pattern, ctx));
-            }
-            case "PARENTHESIZED_VALUE": {
-                return parse(pattern.find("INTERPOLATION_VALUE"), ctx, keepSymbol);
             }
             case "CAST": {
                 Object parent = parse(pattern.find("MID_INTERPOLATION_VALUE"), ctx);

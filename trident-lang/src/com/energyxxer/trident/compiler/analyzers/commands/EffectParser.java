@@ -6,6 +6,7 @@ import com.energyxxer.commodore.functionlogic.commands.effect.EffectClearCommand
 import com.energyxxer.commodore.functionlogic.commands.effect.EffectGiveCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.defaults.EffectType;
 import com.energyxxer.commodore.util.StatusEffect;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -25,12 +26,12 @@ public class EffectParser implements SimpleCommandParser {
         switch(inner.getName()) {
             case "CLEAR": {
                 Entity entity = EntityParser.parseEntity(inner.find(".ENTITY"), ctx);
-                Type effect = CommonParsers.parseType(inner.find("..EFFECT_ID"), ctx, d->d.effect);
+                Type effect = CommonParsers.parseType(inner.find("..EFFECT_ID"), ctx, EffectType.CATEGORY);
                 return new EffectClearCommand(entity, effect);
             }
             case "GIVE": {
                 Entity entity = EntityParser.parseEntity(inner.find("ENTITY"), ctx);
-                StatusEffect effect = new StatusEffect(CommonParsers.parseType(inner.find("EFFECT_ID"), ctx, d->d.effect));
+                StatusEffect effect = new StatusEffect(CommonParsers.parseType(inner.find("EFFECT_ID"), ctx, EffectType.CATEGORY));
                 using(inner.find(".DURATION")).notIfNull()
                         .except(CommodoreException.class,
                                 (ex, obj) -> TridentException.handleCommodoreException((CommodoreException) ex, inner, ctx)

@@ -121,9 +121,9 @@ public class TridentProductions {
     private final LazyTokenStructureMatch ROOT_INTERPOLATION_VALUE;
     private final LazyTokenStructureMatch LINE_SAFE_INTERPOLATION_VALUE;
     private final LazyTokenStructureMatch POINTER;
-    private final LazyTokenPatternMatch resourceLocationFixer = ofType(NO_TOKEN).setName("_RLCF").addProcessor((p, l) -> {
+    private final LazyTokenPatternMatch resourceLocationFixer = ofType(NO_TOKEN).setName("_RLCF").setOptional().addFailProcessor((p, l) -> {
         if(l.getSuggestionModule() != null) {
-            if(p.getStringBounds().start.index <= l.getSuggestionModule().getSuggestionIndex()+1) {
+            if(((LazyLexer) l).getCurrentIndex() <= l.getSuggestionModule().getSuggestionIndex()+1) {
                 int targetIndex = ((LazyLexer) l).getLookingIndexTrimmed();
                 String str = ((LazyLexer) l).getCurrentReadingString();
                 int index = l.getSuggestionModule().getSuggestionIndex();
@@ -437,7 +437,7 @@ public class TridentProductions {
                         if(lx.getSummaryModule() != null) {
                             ((TridentSummaryModule) lx.getSummaryModule()).lockDirectives();
                         }
-                    }), ofType(NO_TOKEN).setName("FILE_START_MARKER"), l).addProcessor(
+                    }), ofType(EMPTY_TOKEN).setName("FILE_START_MARKER"), l).addProcessor(
                     (p, lx) -> {
                         if(lx.getSummaryModule() != null) {
                             StringBounds bounds = p.getStringBounds();
@@ -1266,7 +1266,8 @@ public class TridentProductions {
                                     group(literal("block"), COORDINATE_SET),
                                     group(literal("entity"), ENTITY)
                             ),
-                            SLOT_ID
+                            SLOT_ID,
+                            integer().setOptional().setName("COUNT")
                     ).setName("REPLACE"),
                     group(literal("spawn"), COORDINATE_SET).setName("SPAWN")
             ).setName("LOOT_DESTINATION");
@@ -1989,13 +1990,14 @@ public class TridentProductions {
                     String category = dict.getCategory();
                     if(!categoryMap.containsKey(category)) {
                         categoryMap.put(category, struct(category.toUpperCase() + "_ID"));
+                        categoryMap.get(category).add(INTERPOLATION_BLOCK).add(ofType(STRING_LITERAL).setName("STRING_LITERAL"));
                     }
                     for(Type type : dict.list()) {
                         String name = type.getName();
                         if(type instanceof AliasType) {
                             name = ((AliasType)type).getAliasName();
                         }
-                        typeName.add(literal(name));
+                        typeName.add(identifierA(name).addTags(SuggestionTags.LITERAL_SORT, (category.equals(BlockType.CATEGORY) || category.equals(ItemType.CATEGORY) || category.equals(EntityType.CATEGORY)) ? SuggestionTags.DISABLED : SuggestionTags.ENABLED));
                         usesNamespace = type.useNamespace();
                     }
                     if(usesNamespace != null) {
@@ -2004,18 +2006,18 @@ public class TridentProductions {
                 }
             }
 
-            STRUCTURE.add(categoryMap.get(StructureType.CATEGORY));
-            DIFFICULTY.add(categoryMap.get(DifficultyType.CATEGORY));
-            GAMEMODE.add(categoryMap.get(GamemodeType.CATEGORY));
-            DIMENSION_ID.add(categoryMap.get(DimensionType.CATEGORY));
-            BLOCK_ID.add(categoryMap.get(BlockType.CATEGORY).addTags(SuggestionTags.DISABLED));
-            BLOCK_ID.addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BLOCK);
-            ITEM_ID.add(categoryMap.get(ItemType.CATEGORY).addTags(SuggestionTags.DISABLED));
-            ITEM_ID.addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ITEM);
-            ENTITY_ID.add(categoryMap.get(EntityType.CATEGORY).addTags(SuggestionTags.DISABLED));
-            ENTITY_ID.addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ENTITY_TYPE);
-            EFFECT_ID.add(categoryMap.get(EffectType.CATEGORY));
-            ENCHANTMENT_ID.add(categoryMap.get(EnchantmentType.CATEGORY));
+            STRUCTURE.add(categoryMap.get(StructureType.CATEGORY)).addTags(SuggestionTags.ENABLED);
+            DIFFICULTY.add(categoryMap.get(DifficultyType.CATEGORY)).addTags(SuggestionTags.ENABLED);
+            GAMEMODE.add(categoryMap.get(GamemodeType.CATEGORY)).addTags(SuggestionTags.ENABLED);
+            DIMENSION_ID.add(categoryMap.get(DimensionType.CATEGORY)).addTags(SuggestionTags.ENABLED);
+
+            BLOCK_ID.add(categoryMap.get(BlockType.CATEGORY).addTags(SuggestionTags.DISABLED)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BLOCK);
+            ITEM_ID.add(categoryMap.get(ItemType.CATEGORY).addTags(SuggestionTags.DISABLED)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ITEM);
+            ENTITY_ID.add(categoryMap.get(EntityType.CATEGORY).addTags(SuggestionTags.DISABLED)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ENTITY_TYPE);
+
+            EFFECT_ID.add(categoryMap.get(EffectType.CATEGORY)).addTags(SuggestionTags.ENABLED);
+            ENCHANTMENT_ID.add(categoryMap.get(EnchantmentType.CATEGORY)).addTags(SuggestionTags.ENABLED);
+            SLOT_ID.add(categoryMap.get(ItemSlot.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags(SuggestionTags.ENABLED);
 
             LazyTokenGroupMatch COLOR = new LazyTokenGroupMatch().setName("COLOR")
                     .append(real().setName("RED_COMPONENT"))
@@ -2131,7 +2133,7 @@ public class TridentProductions {
 
             // DIMENSION_ID:{_ID_DEFAULT:( NAMESPACE:(<LITERAL_NAMESPACE: "<namespace>">,<SYMBOL:":">) TYPE_NAME:{<overworld>|<the_nether>|<the_end>} )}
 
-            for(Namespace namespace : module.getAllNamespaces()) {
+            /*for(Namespace namespace : module.getAllNamespaces()) {
                 for(Type type : namespace.types.slot.list()) {
                     String[] parts = type.getName().split("\\.");
 
@@ -2144,7 +2146,7 @@ public class TridentProductions {
 
                     SLOT_ID.add(g);
                 }
-            }
+            }*/
             {
                 ENTITY_ID_TAGGED.add(group(resourceLocationFixer, ENTITY_ID).setName("ENTITY_ID_WRAPPER"));
                 LazyTokenGroupMatch g2 = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
@@ -2451,7 +2453,7 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch literal(String text) {
-        return new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase());
+        return (LazyTokenItemMatch) new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase()).addTags(SuggestionTags.ENABLED);
     }
 
     private LazyTokenStructureMatch numericDataType() {
@@ -2570,6 +2572,10 @@ public class TridentProductions {
 
     private LazyTokenStructureMatch identifierA() {
         return choice(string(), ofType(IDENTIFIER_TYPE_A).setName("RAW_IDENTIFIER_A")).setName("IDENTIFIER_A");
+    }
+
+    private LazyTokenPatternMatch identifierA(String literal) {
+        return matchItem(IDENTIFIER_TYPE_A, literal).setName("RAW_IDENTIFIER_A");
     }
 
     private LazyTokenStructureMatch identifierB() {
