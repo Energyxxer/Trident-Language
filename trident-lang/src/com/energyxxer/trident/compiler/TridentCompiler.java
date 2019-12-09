@@ -403,7 +403,7 @@ public class TridentCompiler extends AbstractProcess {
                             ownFiles.add(cacheKey);
 
                             if(!filePatterns.containsKey(cacheKey) || filePatterns.get(cacheKey).getHashCode() != hashCode) {
-                                lex.tokenizeParse(file, str, new TridentLexerProfile(module));
+                                lex.tokenizeParse(file, str, new TridentLexerProfile());
 
                                 if (lex.getMatchResponse().matched) {
                                     filePatterns.put(cacheKey, new ParsingSignature(hashCode, lex.getMatchResponse().pattern, lex.getSummaryModule()));
@@ -714,7 +714,7 @@ public class TridentCompiler extends AbstractProcess {
     }
 
     public static CommandModule createModuleForProject(String name, File rootDir, JsonObject properties, DefinitionPack[] definitionPacks, Map<String, DefinitionPack> definitionPackAliases) throws IOException {
-        CommandModule module = new CommandModule(name, "Command Module created with Trident", null);
+        CommandModule module = new CommandModule(name, "Command Module created with Trident");
         module.getSettingsManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
 
         if(definitionPacks == null) {

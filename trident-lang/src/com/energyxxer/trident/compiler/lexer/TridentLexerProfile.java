@@ -1,7 +1,6 @@
 package com.energyxxer.trident.compiler.lexer;
 
 import com.energyxxer.commodore.functionlogic.functions.Function;
-import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.enxlex.lexical_analysis.profiles.*;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
@@ -39,15 +38,6 @@ public class TridentLexerProfile extends LexerProfile {
     }
 
     public TridentLexerProfile() {
-        this.initialize();
-    }
-
-    public TridentLexerProfile(CommandModule module) {
-        ArrayList<String> defcategories = new ArrayList<>();
-        module.getAllNamespaces().forEach(n -> n.getTypeManager().getAllDictionaries().forEach(d -> {
-            if(!defcategories.contains(d.getCategory())) defcategories.add(d.getCategory());
-        }));
-
         this.initialize();
     }
 
