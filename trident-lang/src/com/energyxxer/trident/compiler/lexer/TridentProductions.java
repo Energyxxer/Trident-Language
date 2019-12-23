@@ -272,7 +272,7 @@ public class TridentProductions {
                             }));
             ROOT_INTERPOLATION_VALUE.add(ofType(REAL_NUMBER).setName("RAW_REAL"));
             ROOT_INTERPOLATION_VALUE.add(ofType(INTEGER_NUMBER).setName("RAW_INTEGER"));
-            ROOT_INTERPOLATION_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
+            ROOT_INTERPOLATION_VALUE.add(rawBoolean().setName("BOOLEAN"));
             ROOT_INTERPOLATION_VALUE.add(ofType(STRING_LITERAL).setName("STRING_LITERAL"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("entity").setName("VALUE_WRAPPER_KEY"), brace("<"), LIMITED_ENTITY, brace(">")).setName("WRAPPED_ENTITY"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("block").setName("VALUE_WRAPPER_KEY"), brace("<"), BLOCK_TAGGED, brace(">")).setName("WRAPPED_BLOCK"));
@@ -598,7 +598,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "effect"),
                     choice(
                             group(literal("clear"), optional(sameLine(), ENTITY, optional(EFFECT_ID))).setName("CLEAR"),
-                            group(literal("give"), ENTITY, EFFECT_ID, optional(integer().setName("DURATION").addTags("cspn:Duration (seconds)"), optional(integer().setName("AMPLIFIER").addTags("cspn:Amplifier"), ofType(TridentTokens.BOOLEAN).setOptional().setName("HIDE_PARTICLES").addTags("cspn:Hide Particles?")))).setName("GIVE")
+                            group(literal("give"), ENTITY, EFFECT_ID, optional(integer().setName("DURATION").addTags("cspn:Duration (seconds)"), optional(integer().setName("AMPLIFIER").addTags("cspn:Amplifier"), rawBoolean().setOptional().setName("HIDE_PARTICLES").addTags("cspn:Hide Particles?")))).setName("GIVE")
                     )
             ));
         }
@@ -865,7 +865,7 @@ public class TridentProductions {
                     noToken().addTags("cspn:XZ Position"), TWO_COORDINATE_SET,
                     real().setName("SPREAD_DISTANCE").addTags("cspn:Spread Distance"),
                     real().setName("MAX_RANGE").addTags("cspn:Max Range"),
-                    ofType(BOOLEAN).setName("RESPECT_TEAMS").addTags("cspn:Respect Teams?"),
+                    rawBoolean().setName("RESPECT_TEAMS").addTags("cspn:Respect Teams?"),
                     ENTITY
             ));
         }
@@ -999,11 +999,11 @@ public class TridentProductions {
                     group(literal("color"), choice(TEXT_COLOR).setName("TEAM_COLOR")).setName("COLOR_ARG"),
                     group(literal("deathMessageVisibility"), choice("always", "hideForOtherTeams", "hideForOwnTeam", "never")).setName("TEAM_COMPARISON_ARG"),
                     group(literal("displayName"), TEXT_COMPONENT).setName("TEXT_COMPONENT_ARG"),
-                    group(literal("friendlyFire"), ofType(BOOLEAN).setName("BOOLEAN").addTags("cspn:Friendly Fire?")).setName("BOOLEAN_ARG"),
+                    group(literal("friendlyFire"), rawBoolean().setName("BOOLEAN").addTags("cspn:Friendly Fire?")).setName("BOOLEAN_ARG"),
                     group(literal("nametagVisibility"), choice("always", "hideForOtherTeams", "hideForOwnTeam", "never")).setName("TEAM_COMPARISON_ARG"),
                     group(literal("prefix"), TEXT_COMPONENT).setName("TEXT_COMPONENT_ARG"),
                     group(literal("suffix"), TEXT_COMPONENT).setName("TEXT_COMPONENT_ARG"),
-                    group(literal("seeFriendlyInvisibles"), ofType(BOOLEAN).setName("BOOLEAN").addTags("cspn:See Friendly Invisibles?")).setName("BOOLEAN_ARG")
+                    group(literal("seeFriendlyInvisibles"), rawBoolean().setName("BOOLEAN").addTags("cspn:See Friendly Invisibles?")).setName("BOOLEAN_ARG")
             ).setName("TEAM_OPTIONS");
 
             COMMAND.add(group(
@@ -1077,7 +1077,7 @@ public class TridentProductions {
                                     group(literal("players"), optional(sameLine(), ENTITY).setName("OPTIONAL_ENTITY")).setName("SET_PLAYERS"),
                                     group(literal("style"), choice("progress", "notched_6", "notched_10", "notched_12", "notched_20")).setName("SET_STYLE"),
                                     group(literal("value"), integer().addTags("cspn:Value")).setName("SET_VALUE"),
-                                    group(literal("visible"), ofType(BOOLEAN).addTags("cspn:Visible?")).setName("SET_VISIBLE")
+                                    group(literal("visible"), rawBoolean().addTags("cspn:Visible?")).setName("SET_VISIBLE")
                             )).setName("SET")
                     )
             ));
@@ -1486,7 +1486,7 @@ public class TridentProductions {
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch().setName("CONCRETE_RESOURCE");
             g.append(new LazyTokenGroupMatch().append(resourceLocationFixer).append(ITEM_ID).setName("RESOURCE_NAME"));
-            g.append(optional(glue(), hash(), integer()).setName("APPENDED_MODEL_DATA"));
+            g.append(optional(glue(), hash(), integer().addTags("cspn:Model Index")).setName("APPENDED_MODEL_DATA"));
             g.append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
             ITEM.add(g);
             ITEM.add(group(INTERPOLATION_BLOCK, optional(glue(), hash(), integer()).setName("APPENDED_MODEL_DATA"), optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("ITEM_VARIABLE"));
@@ -1536,7 +1536,7 @@ public class TridentProductions {
             JSON_ROOT.add(string());
             JSON_ELEMENT.add(real().setName("NUMBER"));
             JSON_ELEMENT.add(INTERPOLATION_BLOCK);
-            JSON_ELEMENT.add(ofType(BOOLEAN).setName("BOOLEAN"));
+            JSON_ELEMENT.add(rawBoolean().setName("BOOLEAN"));
 
             TEXT_COMPONENT.add(JSON_ROOT);
             TEXT_COMPONENT.add(INTERPOLATION_BLOCK);
@@ -1600,7 +1600,7 @@ public class TridentProductions {
             NBT_VALUE.add(string());
             NBT_VALUE.add(ofType(IDENTIFIER_TYPE_A).setName("RAW_STRING"));
             NBT_VALUE.add(ofType(TYPED_NUMBER).setName("NBT_NUMBER"));
-            NBT_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
+            NBT_VALUE.add(rawBoolean().setName("BOOLEAN"));
             NBT_VALUE.add(INTERPOLATION_BLOCK);
             NBT_VALUE.addTags("cspn:NBT Value");
         }
@@ -1832,10 +1832,10 @@ public class TridentProductions {
                             group(RESOURCE_LOCATION_S).setName("ADVANCEMENT_ENTRY_KEY"),
                             equals(),
                             choice(
-                                    ofType(BOOLEAN).setName("BOOLEAN"),
+                                    rawBoolean().setName("BOOLEAN"),
                                     group(
                                             brace("{"),
-                                            list(group(group(identifierA()).setName("CRITERION_NAME"), equals(), ofType(BOOLEAN).setName("BOOLEAN")).setName("CRITERION_ENTRY"), comma()).setOptional().setName("CRITERION_LIST"),
+                                            list(group(group(identifierA()).setName("CRITERION_NAME"), equals(), rawBoolean().setName("BOOLEAN")).setName("CRITERION_ENTRY"), comma()).setOptional().setName("CRITERION_LIST"),
                                             brace("}")
                                     ).setName("CRITERION_GROUP")
                             ).setName("ADVANCEMENT_ENTRY_VALUE")
@@ -1973,9 +1973,9 @@ public class TridentProductions {
             SLOT_ID.add(categoryMap.get(ItemSlot.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags(SuggestionTags.ENABLED).addTags("cspn:Item Slot");
 
             LazyTokenGroupMatch COLOR = new LazyTokenGroupMatch().setName("COLOR")
-                    .append(real().setName("RED_COMPONENT"))
-                    .append(real().setName("GREEN_COMPONENT"))
-                    .append(real().setName("BLUE_COMPONENT"));
+                    .append(real().setName("RED_COMPONENT").addTags("cspn:Red Component"))
+                    .append(real().setName("GREEN_COMPONENT").addTags("cspn:Green Component"))
+                    .append(real().setName("BLUE_COMPONENT").addTags("cspn:Blue Component"));
             COLOR.addTags("cspn:RGB Color");
 
 
@@ -2052,15 +2052,15 @@ public class TridentProductions {
 
                     switch (arg) {
                         case "boolean": {
-                            argsGroup.append(ofType(BOOLEAN).setName("BOOLEAN"));
+                            argsGroup.append(rawBoolean().setName("BOOLEAN").addTags("cspn:Boolean"));
                             break;
                         }
                         case "int": {
-                            argsGroup.append(integer());
+                            argsGroup.append(integer().addTags("cspn:Integer"));
                             break;
                         }
                         case "double": {
-                            argsGroup.append(real());
+                            argsGroup.append(real().addTags("cspn:Double"));
                             break;
                         }
                         case "color": {
@@ -2522,6 +2522,10 @@ public class TridentProductions {
 
     private LazyTokenStructureMatch real() {
         return choice(ofType(REAL_NUMBER).setName("RAW_REAL"), INTERPOLATION_BLOCK).setName("REAL");
+    }
+
+    private LazyTokenPatternMatch rawBoolean() {
+        return ofType(BOOLEAN).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BOOLEAN);
     }
 
     private static LazyTokenItemMatch glue() {

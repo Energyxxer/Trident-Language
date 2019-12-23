@@ -8,6 +8,8 @@ public class TridentSuggestionTags {
 
     public static final String OBJECTIVE_EXISTING = "csk:suggestion.trident.objective.existing";
 
+    public static final String BOOLEAN = "csk:suggestion.trident.boolean";
+
     public static final String BLOCK = "csk:suggestion.trident.block";
     public static final String ITEM = "csk:suggestion.trident.item";
     public static final String ENTITY_TYPE = "csk:suggestion.trident.entity_type";
