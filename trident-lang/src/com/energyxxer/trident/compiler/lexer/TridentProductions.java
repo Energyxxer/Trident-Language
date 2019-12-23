@@ -170,12 +170,13 @@ public class TridentProductions {
         MODIFIER.addTags(SuggestionTags.ENABLED);
         MODIFIER.addTags(TridentSuggestionTags.CONTEXT_MODIFIER);
         TEXT_COMPONENT = new LazyTokenStructureMatch("TEXT_COMPONENT");
+        TEXT_COMPONENT.addTags("cspn:Text Component");
         SELECTOR = new LazyTokenStructureMatch("SELECTOR");
         SELECTOR_ARGUMENT = new LazyTokenStructureMatch("SELECTOR_ARGUMENT");
         SELECTOR_ARGUMENT.addTags(SuggestionTags.ENABLED);
         PLAYER_NAME = struct("PLAYER_NAME");
 
-        LazyTokenPatternMatch SOUND_CHANNEL = choice("ambient", "block", "hostile", "master", "music", "neutral", "player", "record", "voice", "weather").setName("CHANNEL").addTags(SuggestionTags.ENABLED);
+        LazyTokenPatternMatch SOUND_CHANNEL = choice("ambient", "block", "hostile", "master", "music", "neutral", "player", "record", "voice", "weather").setName("CHANNEL").addTags(SuggestionTags.ENABLED).addTags("cspn:Sound Channel");
 
         POINTER = struct("POINTER");
 
@@ -249,7 +250,7 @@ public class TridentProductions {
 
         {
             INTERPOLATION_BLOCK = choice(
-                    group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED), glue(), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
+                    group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED), glue().addTags(SuggestionTags.ENABLED, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE).addTags("cspn:Variable"), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
             ).setName("INTERPOLATION_BLOCK");
 
             INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
@@ -451,16 +452,20 @@ public class TridentProductions {
         }
 
         TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white", "reset").setName("TEXT_COLOR");
+        TEXT_COLOR.addTags("cspn:Text Color");
 
         ENTITY.add(PLAYER_NAME);
         ENTITY.add(SELECTOR);
         ENTITY.add(group(INTERPOLATION_BLOCK, optional(glue(), brace("["), list(SELECTOR_ARGUMENT, comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST"), brace("]")).setName("APPENDED_ARGUMENTS")).setName("ENTITY_VARIABLE"));
+        ENTITY.addTags("cspn:Entity");
 
         LIMITED_ENTITY.add(struct("PLAYER_NAME").add(identifierBLimited()));
         LIMITED_ENTITY.add(SELECTOR);
         LIMITED_ENTITY.add(group(INTERPOLATION_BLOCK, optional(glue(), brace("["), list(SELECTOR_ARGUMENT, comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST"), brace("]")).setName("APPENDED_ARGUMENTS")).setName("ENTITY_VARIABLE"));
+        LIMITED_ENTITY.addTags("cspn:Entity");
 
         NEW_ENTITY_LITERAL = group(resourceLocationFixer, ENTITY_ID, optional(glue(), brace("["), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST"), brace("]")).setName("IMPLEMENTED_COMPONENTS"), optional(glue(), NBT_COMPOUND).setName("NEW_ENTITY_NBT")).setName("NEW_ENTITY_LITERAL");
+        NEW_ENTITY_LITERAL.addTags("cspn:New Entity");
 
         INNER_FUNCTION.add(group(group(RESOURCE_LOCATION_S).setName("INNER_FUNCTION_NAME"), brace("{"), FILE_INNER, brace("}")));
         ANONYMOUS_INNER_FUNCTION.add(group(brace("{"), FILE_INNER, brace("}")));
@@ -480,7 +485,7 @@ public class TridentProductions {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "say"));
             g.append(ofType(WHITESPACE));
-            g.append(list(choice(ofType(SAY_STRING), group(sameLine(), SELECTOR).setName("SAY_SELECTOR")).setName("SAY_PART")).setName("SAY_MESSAGE"));
+            g.append(list(choice(ofType(SAY_STRING), group(sameLine(), SELECTOR).setName("SAY_SELECTOR")).setName("SAY_PART")).setName("SAY_MESSAGE").addTags("cspn:Message"));
             COMMAND.add(g);
         }
         //endregion
@@ -517,19 +522,20 @@ public class TridentProductions {
             g.append(ENTITY);
             g.append(choice(
                     literal("list"),
-                    group(literal("add"), identifierA()),
-                    group(literal("remove"), identifierA()),
-                    group(matchItem(TridentTokens.CUSTOM_COMMAND_KEYWORD, "update"), identifierA())
+                    group(literal("add"), noToken().addTags("cspn:Tag"), identifierA()),
+                    group(literal("remove"), noToken().addTags("cspn:Tag"), identifierA()),
+                    group(matchItem(TridentTokens.CUSTOM_COMMAND_KEYWORD, "update"), noToken().addTags("cspn:Tag"), identifierA())
             ));
             COMMAND.add(g);
         }
         //endregion
-        //region tag
+        //region component
         {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
             g.append(matchItem(COMMAND_HEADER, "component"));
             g.append(ENTITY);
             g.append(choice("add", "remove").setName("COMPONENT_ACTION"));
+            g.append(noToken().addTags("cspn:Component"));
             g.append(LINE_SAFE_INTERPOLATION_VALUE);
             COMMAND.add(g);
         }
@@ -541,8 +547,8 @@ public class TridentProductions {
             LazyTokenGroupMatch g = new LazyTokenGroupMatch();
             g.append(choice(matchItem(COMMAND_HEADER, "experience"), matchItem(COMMAND_HEADER, "xp")));
             g.append(choice(
-                    group(literal("add"), ENTITY, integer(), unit).setName("ADD"),
-                    group(literal("set"), ENTITY, integer(), unit).setName("SET"),
+                    group(literal("add"), ENTITY, integer().addTags("cspn:Amount"), unit).setName("ADD"),
+                    group(literal("set"), ENTITY, integer().addTags("cspn:Amount"), unit).setName("SET"),
                     group(literal("query"), ENTITY, unit).setName("QUERY")
             ).setName("SUBCOMMAND"));
             COMMAND.add(g);
@@ -559,7 +565,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "give"),
                     ENTITY,
                     ITEM,
-                    integer().setOptional().setName("AMOUNT")
+                    integer().setOptional().setName("AMOUNT").addTags("cspn:Amount")
             ));
         }
         //endregion
@@ -572,7 +578,7 @@ public class TridentProductions {
                             group(
                                     ofType(LINE_GLUE),
                                     ITEM_TAGGED,
-                                    integer().setOptional().setName("AMOUNT")
+                                    integer().setOptional().setName("AMOUNT").addTags("cspn:Amount")
                             ).setOptional()
                     ).setOptional()
             ));
@@ -592,7 +598,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "effect"),
                     choice(
                             group(literal("clear"), optional(sameLine(), ENTITY, optional(EFFECT_ID))).setName("CLEAR"),
-                            group(literal("give"), ENTITY, EFFECT_ID, optional(integer().setName("DURATION"), optional(integer().setName("AMPLIFIER"), ofType(TridentTokens.BOOLEAN).setOptional().setName("HIDE_PARTICLES")))).setName("GIVE")
+                            group(literal("give"), ENTITY, EFFECT_ID, optional(integer().setName("DURATION").addTags("cspn:Duration (seconds)"), optional(integer().setName("AMPLIFIER").addTags("cspn:Amplifier"), ofType(TridentTokens.BOOLEAN).setOptional().setName("HIDE_PARTICLES").addTags("cspn:Hide Particles?")))).setName("GIVE")
                     )
             ));
         }
@@ -603,7 +609,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "enchant"),
                     ENTITY,
                     ENCHANTMENT_ID,
-                    integer().setOptional().setName("LEVEL")
+                    integer().setOptional().setName("LEVEL").addTags("cspn:Level")
             ));
         }
         //endregion
@@ -612,17 +618,6 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "function"),
                     choice(group(resourceLocationFixer, group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE_WRAPPER").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION)).setName("FUNCTION_REFERENCE"), OPTIONAL_NAME_INNER_FUNCTION).addTags(SuggestionTags.ENABLED)
-            ));
-        }
-        //endregion
-        //region gamerule
-        {
-            COMMAND.add(group(
-                    matchItem(COMMAND_HEADER, "gamerule"),
-                    choice(
-                            GAMERULE,
-                            GAMERULE_SETTER
-                    )
             ));
         }
         //endregion
@@ -646,7 +641,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "spectate"),
-                    optional(sameLine(), ENTITY, optional(sameLine(), ENTITY).setName("INNER")).setName("INNER")
+                    optional(sameLine(), noToken().addTags("cspn:Target"), ENTITY, optional(sameLine(), noToken().addTags("cspn:Spectator"), ENTITY).setName("INNER")).setName("INNER")
             ));
         }
         //endregion
@@ -678,7 +673,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "me"),
-                    ofType(TRAILING_STRING)
+                    ofType(TRAILING_STRING).addTags("cspn:Message")
             ));
         }
         //endregion
@@ -687,7 +682,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     choice(matchItem(COMMAND_HEADER, "msg"), matchItem(COMMAND_HEADER, "tell"), matchItem(COMMAND_HEADER, "w")),
                     ENTITY,
-                    ofType(TRAILING_STRING)
+                    ofType(TRAILING_STRING).addTags("cspn:Message")
             ));
         }
         //endregion
@@ -695,7 +690,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     choice(matchItem(COMMAND_HEADER, "teammsg"), matchItem(COMMAND_HEADER, "tm")),
-                    ofType(TRAILING_STRING)
+                    ofType(TRAILING_STRING).addTags("cspn:Message")
             ));
         }
         //endregion
@@ -715,27 +710,27 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "playsound"),
                     resourceLocationFixer,
-                    group(RESOURCE_LOCATION_S).setName("SOUND_EVENT").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE),
+                    group(RESOURCE_LOCATION_S).setName("SOUND_EVENT").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE).addTags("cspn:Sound"),
                     SOUND_CHANNEL,
                     ENTITY,
                     optional(
                             COORDINATE_SET,
-                            real().setOptional(),
-                            real().setOptional(),
-                            real().setOptional()
+                            real().setOptional().addTags("cspn:Min Volume"),
+                            real().setOptional().addTags("cspn:Pitch"),
+                            real().setOptional().addTags("cspn:Max Volume")
                     )
             ));
         }
         //endregion
         //region clone
         {
-            LazyTokenPatternMatch mode = choice("force", "move", "normal").setOptional().setName("CLONE_MODE");
+            LazyTokenPatternMatch mode = choice("force", "move", "normal").setOptional().setName("CLONE_MODE").addTags("cspn:Clone Mode");
 
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "clone"),
-                    group(COORDINATE_SET).setName("FROM"),
-                    group(COORDINATE_SET).setName("TO"),
-                    group(COORDINATE_SET).setName("DESTINATION"),
+                    group(COORDINATE_SET).setName("FROM").addTags("cspn:Source From"),
+                    group(COORDINATE_SET).setName("TO").addTags("cspn:To").addTags("cspn:Source To"),
+                    group(COORDINATE_SET).setName("DESTINATION").addTags("cspn:Destination"),
                     choice(
                             group(literal("filtered"), ofType(LINE_GLUE), BLOCK_TAGGED, mode).setName("FILTERED"),
                             group(literal("masked"), mode).setName("MASKED"),
@@ -748,8 +743,8 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "fill"),
-                    group(COORDINATE_SET).setName("FROM"),
-                    group(COORDINATE_SET).setName("TO"),
+                    group(COORDINATE_SET).setName("FROM").addTags("cspn:From"),
+                    group(COORDINATE_SET).setName("TO").addTags("cspn:To"),
                     BLOCK,
                     choice(
                             literal("destroy"),
@@ -770,15 +765,15 @@ public class TridentProductions {
                             COORDINATE_SET,
                             optional(
                                     group(
-                                            real().setName("DX"),
-                                            real().setName("DY"),
-                                            real().setName("DZ")
+                                            real().setName("DX").addTags("cspn:dx"),
+                                            real().setName("DY").addTags("cspn:dy"),
+                                            real().setName("DZ").addTags("cspn:dz")
                                     ).setName("DELTA"),
-                                    real().setName("SPEED"),
-                                    integer().setName("COUNT"),
+                                    real().setName("SPEED").addTags("cspn:Speed"),
+                                    integer().setName("COUNT").addTags("cspn:Count"),
                                     optional(
                                             choice("force", "normal"),
-                                            optional(sameLine(), ENTITY)
+                                            optional(sameLine(), ENTITY).addTags("cspn:Viewers")
                                     )
                             )
                     )
@@ -794,7 +789,7 @@ public class TridentProductions {
                     choice(
                             matchItem(SYMBOL, "*"),
                             RESOURCE_LOCATION_S
-                    )
+                    ).addTags("cspn:Recipe")
             ));
         }
         //endregion
@@ -808,7 +803,7 @@ public class TridentProductions {
                     ).setName("TARGET"),
                     SLOT_ID,
                     ITEM,
-                    integer().setOptional().setName("COUNT")
+                    integer().setOptional().setName("COUNT").addTags("cspn:Count")
             ));
         }
         //endregion
@@ -820,13 +815,13 @@ public class TridentProductions {
                             group(
                                     literal("clear"),
                                     resourceLocationFixer,
-                                    group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION)
+                                    group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION).addTags("cspn:Function")
                             ).setName("SCHEDULE_CLEAR"),
                             group(
                                     literal("function"),
                                     resourceLocationFixer,
-                                    group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION),
-                                    ofType(TIME).setName("TIME"),
+                                    group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION).addTags("cspn:Function"),
+                                    ofType(TIME).setName("TIME").addTags("cspn:Time"),
                                     choice("append", "replace").setOptional().setName("SCHEDULE_MODE")
                             ).setName("SCHEDULE_FUNCTION")
                     )
@@ -867,10 +862,10 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "spreadplayers"),
-                    TWO_COORDINATE_SET,
-                    real().setName("SPREAD_DISTANCE"),
-                    real().setName("MAX_RANGE"),
-                    ofType(BOOLEAN).setName("RESPECT_TEAMS"),
+                    noToken().addTags("cspn:XZ Position"), TWO_COORDINATE_SET,
+                    real().setName("SPREAD_DISTANCE").addTags("cspn:Spread Distance"),
+                    real().setName("MAX_RANGE").addTags("cspn:Max Range"),
+                    ofType(BOOLEAN).setName("RESPECT_TEAMS").addTags("cspn:Respect Teams?"),
                     ENTITY
             ));
         }
@@ -881,8 +876,8 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "stopsound"),
                     ENTITY,
                     choice(
-                            group(SOUND_CHANNEL, resourceLocationFixer, optional(sameLine(), RESOURCE_LOCATION_S).setName("SOUND_RESOURCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE)).setName("STOP_BY_CHANNEL"),
-                            group(matchItem(SYMBOL, "*"), sameLine(), resourceLocationFixer, group(RESOURCE_LOCATION_S).setName("SOUND_RESOURCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE)).setName("STOP_BY_EVENT")
+                            group(SOUND_CHANNEL, resourceLocationFixer, optional(sameLine(), RESOURCE_LOCATION_S).setName("SOUND_RESOURCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE).addTags("cspn:Sound")).setName("STOP_BY_CHANNEL"),
+                            group(matchItem(SYMBOL, "*"), sameLine(), resourceLocationFixer, group(RESOURCE_LOCATION_S).setName("SOUND_RESOURCE").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.SOUND_RESOURCE).addTags("cspn:Sound")).setName("STOP_BY_EVENT")
                     ).setOptional()
             ));
         }
@@ -894,7 +889,7 @@ public class TridentProductions {
                     NEW_ENTITY_LITERAL,
                     optional(
                             COORDINATE_SET,
-                            optional(NBT_COMPOUND)
+                            optional(NBT_COMPOUND).addTags("cspn:NBT")
                     )
             ));
         }
@@ -914,14 +909,14 @@ public class TridentProductions {
                                                             group(
                                                                     literal("facing"),
                                                                     choice(
-                                                                            COORDINATE_SET,
-                                                                            group(literal("entity"), ENTITY, anchor().setOptional())
+                                                                            noToken(), COORDINATE_SET,
+                                                                            group(noToken().addTags("cspn:Facing Entity"), literal("entity"), ENTITY, anchor().setOptional())
                                                                     )
                                                             ).setName("FACING_CLAUSE"),
                                                             TWO_COORDINATE_SET
-                                                    ).setOptional().setName("ROTATION_OPTION")
+                                                    ).setOptional().setName("ROTATION_OPTION").addTags("cspn:Rotation")
                                             )
-                                    ).setOptional()
+                                    ).setOptional().addTags("cspn:Destination")
                             ),
                             COORDINATE_SET
                     ).setName("SUBCOMMAND")
@@ -934,8 +929,8 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "time"),
                     choice(
                             group(literal("query"), choice("day", "daytime", "gametime")).setName("QUERY"),
-                            group(literal("set"), choice(ofType(TIME).setName("TIME"), choice("day", "midnight", "night", "noon"))).setName("SET"),
-                            group(literal("add"), ofType(TIME).setName("TIME")).setName("ADD")
+                            group(literal("set"), choice(ofType(TIME).setName("TIME").addTags("cspn:Time"), choice("day", "midnight", "night", "noon"))).setName("SET"),
+                            group(literal("add"), ofType(TIME).setName("TIME").addTags("cspn:Time")).setName("ADD")
                     )
             ));
         }
@@ -948,7 +943,7 @@ public class TridentProductions {
                     choice(
                             group(choice("title", "subtitle", "actionbar").setName("DISPLAY"), TEXT_COMPONENT).setName("SHOW"),
                             choice("clear", "reset").setName("CLEAR_RESET"),
-                            group(literal("times"), integer().setName("FADEIN"), integer().setName("STAY"), integer().setName("FADEOUT")).setName("TIMES")
+                            group(literal("times"), integer().setName("FADEIN").addTags("cspn:Fade In"), integer().setName("STAY").addTags("cspn:Stay"), integer().setName("FADEOUT").addTags("cspn:Fade Out")).setName("TIMES")
                     )
             ));
         }
@@ -967,7 +962,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "weather"),
                     choice("clear", "rain", "thunder"),
-                    integer().setOptional()
+                    integer().setOptional().addTags("cspn:Duration")
             ));
         }
         //endregion
@@ -977,10 +972,10 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "worldborder"),
                     choice(
                             literal("get").setName("GET"),
-                            group(choice("add", "set"), real().setName("DISTANCE"), integer().setOptional().setName("TIME")).setName("CHANGE"),
-                            group(literal("center"), TWO_COORDINATE_SET).setName("CENTER"),
-                            group(literal("damage"), choice("amount", "buffer"), real().setName("DAMAGE_OR_DISTANCE")).setName("DAMAGE"),
-                            group(literal("warning"), choice("distance", "time"), integer().setName("DISTANCE_OR_TIME")).setName("WARNING")
+                            group(choice("add", "set"), real().setName("DISTANCE").addTags("cspn:Distance"), integer().setOptional().setName("TIME").addTags("cspn:Transition time")).setName("CHANGE"),
+                            group(literal("center"), noToken().addTags("cspn:XZ Position"), TWO_COORDINATE_SET).setName("CENTER"),
+                            group(literal("damage"), choice("amount", "buffer"), real().setName("DAMAGE_OR_DISTANCE").addTags("cspn:Damage Per Block/Distance")).setName("DAMAGE"),
+                            group(literal("warning"), choice("distance", "time"), integer().setName("DISTANCE_OR_TIME").addTags("cspn:Distance/Time")).setName("WARNING")
                     )
             ));
         }
@@ -990,9 +985,9 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "forceload"),
                     choice(
-                            group(literal("add"), TWO_COORDINATE_SET, optional(TWO_COORDINATE_SET).setName("CHUNK_TO")).setName("FORCELOAD_ADD"),
-                            group(literal("query"), optional(TWO_COORDINATE_SET).setName("FORCELOAD_QUERY_COLUMN")).setName("FORCELOAD_QUERY"),
-                            group(literal("remove"), choice(group(TWO_COORDINATE_SET, optional(TWO_COORDINATE_SET).setName("CHUNK_TO")).setName("FORCELOAD_REMOVE_ONE"), group(literal("all")).setName("FORCELOAD_REMOVE_ALL"))).setName("FORCELOAD_REMOVE")
+                            group(literal("add"), noToken().addTags("cspn:XZ Position 1"), TWO_COORDINATE_SET, optional(TWO_COORDINATE_SET).setName("CHUNK_TO").addTags("cspn:XZ Position 2")).setName("FORCELOAD_ADD"),
+                            group(literal("query"), optional(TWO_COORDINATE_SET).setName("FORCELOAD_QUERY_COLUMN").addTags("cspn:XZ Position")).setName("FORCELOAD_QUERY"),
+                            group(literal("remove"), choice(group(noToken().addTags("cspn:XZ Position 1"), TWO_COORDINATE_SET, optional(TWO_COORDINATE_SET).setName("CHUNK_TO").addTags("cspn:XZ Position 2")).setName("FORCELOAD_REMOVE_ONE"), group(literal("all")).setName("FORCELOAD_REMOVE_ALL"))).setName("FORCELOAD_REMOVE")
                     )
             ));
         }
@@ -1004,23 +999,23 @@ public class TridentProductions {
                     group(literal("color"), choice(TEXT_COLOR).setName("TEAM_COLOR")).setName("COLOR_ARG"),
                     group(literal("deathMessageVisibility"), choice("always", "hideForOtherTeams", "hideForOwnTeam", "never")).setName("TEAM_COMPARISON_ARG"),
                     group(literal("displayName"), TEXT_COMPONENT).setName("TEXT_COMPONENT_ARG"),
-                    group(literal("friendlyFire"), ofType(BOOLEAN).setName("BOOLEAN")).setName("BOOLEAN_ARG"),
+                    group(literal("friendlyFire"), ofType(BOOLEAN).setName("BOOLEAN").addTags("cspn:Friendly Fire?")).setName("BOOLEAN_ARG"),
                     group(literal("nametagVisibility"), choice("always", "hideForOtherTeams", "hideForOwnTeam", "never")).setName("TEAM_COMPARISON_ARG"),
                     group(literal("prefix"), TEXT_COMPONENT).setName("TEXT_COMPONENT_ARG"),
                     group(literal("suffix"), TEXT_COMPONENT).setName("TEXT_COMPONENT_ARG"),
-                    group(literal("seeFriendlyInvisibles"), ofType(BOOLEAN).setName("BOOLEAN")).setName("BOOLEAN_ARG")
+                    group(literal("seeFriendlyInvisibles"), ofType(BOOLEAN).setName("BOOLEAN").addTags("cspn:See Friendly Invisibles?")).setName("BOOLEAN_ARG")
             ).setName("TEAM_OPTIONS");
 
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "team"),
                     choice(
-                            group(literal("add"), group(identifierA()).setName("TEAM"), optional(TEXT_COMPONENT).setName("DISPLAY_NAME")).setName("ADD"),
-                            group(literal("empty"), group(identifierA()).setName("TEAM")).setName("EMPTY"),
-                            group(literal("join"), group(identifierA()).setName("TEAM"), optional(sameLine(), ENTITY).setName("SUBJECT")).setName("JOIN"),
+                            group(literal("add"), group(identifierA()).setName("TEAM").addTags("cspn:Team"), optional(TEXT_COMPONENT).setName("DISPLAY_NAME").addTags("cspn:Display Name")).setName("ADD"),
+                            group(literal("empty"), group(identifierA()).setName("TEAM").addTags("cspn:Team")).setName("EMPTY"),
+                            group(literal("join"), group(identifierA()).setName("TEAM").addTags("cspn:Team"), optional(sameLine(), ENTITY).setName("SUBJECT")).setName("JOIN"),
                             group(literal("leave"), ENTITY).setName("LEAVE"),
-                            group(literal("list"), optional(sameLine(), group(identifierA()).setName("TEAM"))).setName("LIST"),
-                            group(literal("modify"), group(identifierA()).setName("TEAM"), teamOptions).setName("MODIFY"),
-                            group(literal("remove"), group(identifierA()).setName("TEAM")).setName("REMOVE")
+                            group(literal("list"), optional(sameLine(), group(identifierA()).setName("TEAM").addTags("cspn:Team"))).setName("LIST"),
+                            group(literal("modify"), group(identifierA()).setName("TEAM").addTags("cspn:Team"), teamOptions).setName("MODIFY"),
+                            group(literal("remove"), group(identifierA()).setName("TEAM").addTags("cspn:Team")).setName("REMOVE")
                     )
             ));
         }
@@ -1031,21 +1026,21 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "scoreboard"),
                     choice(
                             group(literal("objectives"), choice(
-                                    group(literal("add"), group(identifierA()).setName("OBJECTIVE_NAME"), identifierB().setName("CRITERIA"), optional(TEXT_COMPONENT)).setName("ADD"),
+                                    group(literal("add"), group(identifierA()).setName("OBJECTIVE_NAME").addTags("cspn:Objective"), identifierB().setName("CRITERIA").addTags("cspn:Criteria"), optional(TEXT_COMPONENT).addTags("cspn:Display Name")).setName("ADD"),
                                     literal("list").setName("LIST"),
                                     group(literal("modify"), objectiveName(), choice(
-                                            group(literal("displayname"), TEXT_COMPONENT).setName("DISPLAYNAME"),
+                                            group(literal("displayname"), noToken().addTags("cspn:Display Name"), TEXT_COMPONENT).setName("DISPLAYNAME"),
                                             group(literal("rendertype"), choice("integer", "hearts")).setName("RENDERTYPE")
                                     )).setName("MODIFY"),
                                     group(literal("remove"), objectiveName()).setName("REMOVE"),
-                                    group(literal("setdisplay"), group(identifierA()).setName("DISPLAY_SLOT"), optional(sameLine(), objectiveName()).setName("OBJECTIVE_CLAUSE")).setName("SETDISPLAY")
+                                    group(literal("setdisplay"), group(identifierA()).setName("DISPLAY_SLOT").addTags("cspn:Objective Display"), optional(sameLine(), objectiveName()).setName("OBJECTIVE_CLAUSE")).setName("SETDISPLAY")
                             )).setName("OBJECTIVES"),
                             group(literal("players"), choice(
-                                    group(choice("add", "remove", "set"), score(), integer()).setName("CHANGE"),
+                                    group(choice("add", "remove", "set"), score(), integer().addTags("cspn:Value")).setName("CHANGE"),
                                     group(literal("enable"), score()).setName("ENABLE"),
                                     group(literal("get"), score()).setName("GET"),
                                     group(literal("list"), optional(sameLine(), ENTITY)).setName("LIST"),
-                                    group(literal("operation"), group(score()).setName("TARGET_SCORE"), ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), group(score()).setName("SOURCE_SCORE")).setName("OPERATION"),
+                                    group(literal("operation"), group(score()).setName("TARGET_SCORE").addTags("cspn:Target"), ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), group(score()).setName("SOURCE_SCORE").addTags("cspn:Source")).setName("OPERATION"),
                                     group(literal("reset"), scoreOptionalObjective()).setName("RESET")
                             )).setName("PLAYERS")
                     )
@@ -1060,8 +1055,8 @@ public class TridentProductions {
                     ENTITY,
                     choice(
                             literal("everything").setName("EVERYTHING"),
-                            group(choice("from", "through", "until").setName("LIMIT"), RESOURCE_LOCATION_S).setName("FROM_THROUGH_UNTIL"),
-                            group(literal("only"), RESOURCE_LOCATION_S, group(sameLine(), list(identifierC(), sameLine()).setName("CRITERIA_LIST")).setOptional().setName("CRITERIA")).setName("ONLY")
+                            group(choice("from", "through", "until").setName("LIMIT"), noToken().addTags("cspn:Advancement"), RESOURCE_LOCATION_S).setName("FROM_THROUGH_UNTIL"),
+                            group(literal("only"), noToken().addTags("cspn:Advancement"), RESOURCE_LOCATION_S, group(sameLine(), list(identifierC().addTags("cspn:Criterion"), sameLine()).setName("CRITERIA_LIST")).setOptional().setName("CRITERIA")).setName("ONLY")
                     ).setName("INNER")
             ));
         }
@@ -1072,17 +1067,17 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "bossbar"),
                     choice(
                             literal("list").setName("LIST"),
-                            group(literal("add"), RESOURCE_LOCATION_S, TEXT_COMPONENT).setName("ADD"),
-                            group(literal("get"), RESOURCE_LOCATION_S, choice("max", "players", "value", "visible")).setName("GET"),
-                            group(literal("remove"), RESOURCE_LOCATION_S).setName("REMOVE"),
-                            group(literal("set"), RESOURCE_LOCATION_S, choice(
-                                    group(literal("color"), choice("blue", "green", "pink", "purple", "red", "white", "yellow")).setName("SET_COLOR"),
-                                    group(literal("max"), integer()).setName("SET_MAX"),
-                                    group(literal("name"), TEXT_COMPONENT).setName("SET_NAME"),
+                            group(literal("add"), noToken().addTags("cspn:Bossbar"), RESOURCE_LOCATION_S, TEXT_COMPONENT).setName("ADD"),
+                            group(literal("get"), noToken().addTags("cspn:Bossbar"), RESOURCE_LOCATION_S, choice("max", "players", "value", "visible")).setName("GET"),
+                            group(literal("remove"), noToken().addTags("cspn:Bossbar"), RESOURCE_LOCATION_S).setName("REMOVE"),
+                            group(literal("set"), noToken().addTags("cspn:Bossbar"), RESOURCE_LOCATION_S, choice(
+                                    group(literal("color"), choice("blue", "green", "pink", "purple", "red", "white", "yellow")).setName("SET_COLOR").setName("cspn:Bossbar Color"),
+                                    group(literal("max"), integer().addTags("cspn:Max Value")).setName("SET_MAX"),
+                                    group(literal("name"), noToken().addTags("cspn:Display Name"), TEXT_COMPONENT).setName("SET_NAME"),
                                     group(literal("players"), optional(sameLine(), ENTITY).setName("OPTIONAL_ENTITY")).setName("SET_PLAYERS"),
                                     group(literal("style"), choice("progress", "notched_6", "notched_10", "notched_12", "notched_20")).setName("SET_STYLE"),
-                                    group(literal("value"), integer()).setName("SET_VALUE"),
-                                    group(literal("visible"), ofType(BOOLEAN)).setName("SET_VISIBLE")
+                                    group(literal("value"), integer().addTags("cspn:Value")).setName("SET_VALUE"),
+                                    group(literal("visible"), ofType(BOOLEAN).addTags("cspn:Visible?")).setName("SET_VISIBLE")
                             )).setName("SET")
                     )
             ));
@@ -1096,20 +1091,22 @@ public class TridentProductions {
                     group(literal("entity"), ENTITY).setName("ENTITY_TARGET"),
                     group(literal("storage"), RESOURCE_LOCATION_S).setName("STORAGE_TARGET")
             ).setName("DATA_TARGET");
+            target.addTags("cspn:Data Target");
 
             LazyTokenStructureMatch source = choice(
                     group(literal("from"), target, optional(sameLine(), NBT_PATH).setName("PATH_CLAUSE")).setName("TARGET_SOURCE"),
                     group(literal("value"), NBT_VALUE).setName("LITERAL_SOURCE")
             ).setName("DATA_SOURCE");
+            target.addTags("cspn:Data Source");
 
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "data"),
                     choice(
-                            group(literal("get"), target, optional(sameLine(), NBT_PATH, real().setOptional().setName("SCALE")).setName("PATH_CLAUSE")).setName("GET"),
+                            group(literal("get"), target, optional(sameLine(), NBT_PATH, real().setOptional().setName("SCALE").addTags("cspn:Scale")).setName("PATH_CLAUSE")).setName("GET"),
                             group(literal("merge"), target, NBT_COMPOUND).setName("MERGE"),
                             group(literal("modify"), target, NBT_PATH, choice(
                                     group(literal("append"), source).setName("MODIFY_APPEND"),
-                                    group(literal("insert"), choice("before", "after"), integer(), source).setName("MODIFY_INSERT"),
+                                    group(literal("insert"), choice("before", "after"), integer().addTags("cspn:Insert Index"), source).setName("MODIFY_INSERT"),
                                     group(literal("merge"), source).setName("MODIFY_MERGE"),
                                     group(literal("prepend"), source).setName("MODIFY_PREPEND"),
                                     group(literal("set"), source).setName("MODIFY_SET")
@@ -1125,13 +1122,13 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "datapack"),
                     choice(
                             group(literal("list"), choice("available", "enabled").setOptional().setName("DATAPACK_FILTER")).setName("DATAPACK_LIST"),
-                            group(literal("enable"), STRING_LITERAL_OR_IDENTIFIER_A, choice(
+                            group(literal("enable"), noToken().addTags("cspn:Data Pack"), STRING_LITERAL_OR_IDENTIFIER_A, choice(
                                     group(literal("first")).setName("DATAPACK_ENABLE_FIRST"),
                                     group(literal("last")).setName("DATAPACK_ENABLE_LAST"),
-                                    group(literal("before"), STRING_LITERAL_OR_IDENTIFIER_A).setName("DATAPACK_ENABLE_BEFORE"),
-                                    group(literal("after"), STRING_LITERAL_OR_IDENTIFIER_A).setName("DATAPACK_ENABLE_AFTER")
+                                    group(literal("before"), noToken().addTags("cspn:Before Data Pack"), STRING_LITERAL_OR_IDENTIFIER_A).setName("DATAPACK_ENABLE_BEFORE"),
+                                    group(literal("after"), noToken().addTags("cspn:After Data Pack"), STRING_LITERAL_OR_IDENTIFIER_A).setName("DATAPACK_ENABLE_AFTER")
                             ).setOptional()).setName("DATAPACK_ENABLE"),
-                            group(literal("disable"), STRING_LITERAL_OR_IDENTIFIER_A, choice("available", "enabled").setOptional().setName("DATAPACK_FILTER")).setName("DATAPACK_DISABLE")
+                            group(literal("disable"), noToken().addTags("cspn:Data Pack"), STRING_LITERAL_OR_IDENTIFIER_A, choice("available", "enabled").setOptional().setName("DATAPACK_FILTER")).setName("DATAPACK_DISABLE")
                     )
             ));
         }
@@ -1193,7 +1190,7 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "ban"),
                     ENTITY,
-                    group(sameLine(), ofType(TRAILING_STRING)).setOptional().setName("REASON")
+                    group(sameLine(), ofType(TRAILING_STRING)).setOptional().setName("REASON").addTags("cspn:Reason")
             ));
         }
         //endregion
@@ -1201,8 +1198,8 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "ban-ip"),
-                    identifierA(),
-                    group(sameLine(), ofType(TRAILING_STRING)).setOptional().setName("REASON")
+                    identifierA().addTags("cspn:IP"),
+                    group(sameLine(), ofType(TRAILING_STRING)).setOptional().setName("REASON").addTags("cspn:Reason")
             ));
         }
         //endregion
@@ -1218,7 +1215,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "pardon-ip"),
-                    identifierA()
+                    identifierA().addTags("cspn:IP")
             ));
         }
         //endregion
@@ -1256,7 +1253,7 @@ public class TridentProductions {
         //region loot
         {
 
-            LazyTokenPatternMatch tool = choice(literal("mainhand"), literal("offhand"), ITEM).setOptional().setName("TOOL");
+            LazyTokenPatternMatch tool = choice(literal("mainhand"), literal("offhand"), ITEM).setOptional().setName("TOOL").addTags("cspn:Tool");
 
             LazyTokenStructureMatch destination = choice(
                     group(literal("give"), ENTITY).setName("GIVE"),
@@ -1271,13 +1268,15 @@ public class TridentProductions {
                     ).setName("REPLACE"),
                     group(literal("spawn"), COORDINATE_SET).setName("SPAWN")
             ).setName("LOOT_DESTINATION");
+            destination.addTags("cspn:Loot Destination");
 
             LazyTokenStructureMatch source = choice(
-                    group(literal("fish"), RESOURCE_LOCATION_S, COORDINATE_SET, tool).setName("FISH"),
+                    group(literal("fish"), noToken().addTags("cspn:Loot Table"), RESOURCE_LOCATION_S, COORDINATE_SET, tool).setName("FISH"),
                     group(literal("kill"), ENTITY).setName("KILL"),
-                    group(literal("loot"), RESOURCE_LOCATION_S).setName("LOOT"),
+                    group(literal("loot"), noToken().addTags("cspn:Loot Table"), RESOURCE_LOCATION_S).setName("LOOT"),
                     group(literal("mine"), COORDINATE_SET, tool).setName("MINE")
             ).setName("LOOT_SOURCE");
+            source.addTags("cspn:Loot Source");
 
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "loot"),
@@ -1305,7 +1304,7 @@ public class TridentProductions {
                     optional(
                             literal("run"),
                             COMMAND
-                    ).setName("CHAINED_COMMAND")
+                    ).setName("CHAINED_COMMAND").addTags("cspn:Chained Command")
             ));
         }
         //endregion
@@ -1316,7 +1315,7 @@ public class TridentProductions {
         {
             MODIFIER.add(group(
                     matchItem(MODIFIER_HEADER, "align"),
-                    ofType(SWIZZLE)
+                    ofType(SWIZZLE).addTags("cspn:Axes")
             ));
         }
         //endregion
@@ -1369,7 +1368,7 @@ public class TridentProductions {
                     choice(matchItem(MODIFIER_HEADER, "if"), matchItem(MODIFIER_HEADER, "unless")).setName("HEADER"),
                     choice(
                             group(literal("entity"), ENTITY).setName("ENTITY_CONDITION"),
-                            group(literal("predicate"), RESOURCE_LOCATION_S).setName("PREDICATE_CONDITION"),
+                            group(literal("predicate"), noToken().addTags("cspn:Predicate"), RESOURCE_LOCATION_S).setName("PREDICATE_CONDITION"),
                             group(literal("block"), COORDINATE_SET, BLOCK_TAGGED).setName("BLOCK_CONDITION"),
                             group(literal("score"), score(), choice(
                                     matchItem(TridentTokens.CUSTOM_COMMAND_KEYWORD, "isset").setName("ISSET"),
@@ -1377,9 +1376,9 @@ public class TridentProductions {
                                     group(literal("matches"), INTEGER_NUMBER_RANGE).setName("MATCHES"))
                             ).setName("SCORE_CONDITION"),
                             group(literal("blocks"),
-                                    group(COORDINATE_SET).setName("FROM"),
-                                    group(COORDINATE_SET).setName("TO"),
-                                    group(COORDINATE_SET).setName("TEMPLATE"),
+                                    group(COORDINATE_SET).setName("FROM").addTags("cspn:From"),
+                                    group(COORDINATE_SET).setName("TO").addTags("cspn:To"),
+                                    group(COORDINATE_SET).setName("TEMPLATE").addTags("cspn:Template"),
                                     choice("all", "masked").setName("AIR_POLICY")
                             ).setName("REGION_CONDITION"),
                             group(literal("data"),
@@ -1412,7 +1411,7 @@ public class TridentProductions {
                     choice(
                             group(literal("as").setOptional(), ENTITY).setName("ENTITY_BRANCH"),
                             TWO_COORDINATE_SET
-                    )
+                    ).addTags("cspn:Rotation")
             ));
         }
         //endregion
@@ -1422,10 +1421,10 @@ public class TridentProductions {
                     matchItem(MODIFIER_HEADER, "store"),
                     choice("result", "success").setName("STORE_VALUE"),
                     choice(
-                            group(literal("storage"), RESOURCE_LOCATION_S, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_STORAGE"),
-                            group(literal("block"), COORDINATE_SET, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_BLOCK"),
-                            group(literal("bossbar"), RESOURCE_LOCATION_S, choice("max", "value").setName("BOSSBAR_VARIABLE")).setName("STORE_BOSSBAR"),
-                            group(literal("entity"), ENTITY, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE")).setName("STORE_ENTITY"),
+                            group(literal("storage"), RESOURCE_LOCATION_S, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE").addTags("cspn:Scale")).setName("STORE_STORAGE"),
+                            group(literal("block"), COORDINATE_SET, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE").addTags("cspn:Scale")).setName("STORE_BLOCK"),
+                            group(literal("bossbar"), noToken().addTags("cspn:Bossbar"), RESOURCE_LOCATION_S, choice("max", "value").setName("BOSSBAR_VARIABLE")).setName("STORE_BOSSBAR"),
+                            group(literal("entity"), ENTITY, NBT_PATH, numericDataType().setOptional().setName("NUMERIC_TYPE"), real().setName("SCALE").addTags("cspn:Scale")).setName("STORE_ENTITY"),
                             group(literal("score"), score()).setName("STORE_SCORE")
                     )
             ));
@@ -1448,10 +1447,10 @@ public class TridentProductions {
             g.append(brace("["));
             {
                 LazyTokenGroupMatch g2 = new LazyTokenGroupMatch().setName("BLOCKSTATE_PROPERTY");
-                g2.append(group(identifierA()).setName("BLOCKSTATE_PROPERTY_KEY"));
+                g2.append(group(identifierA()).setName("BLOCKSTATE_PROPERTY_KEY").addTags("cspn:Blockstate Key"));
                 g2.append(equals());
                 {
-                    g2.append(group(identifierA()).setName("BLOCKSTATE_PROPERTY_VALUE"));
+                    g2.append(group(identifierA()).setName("BLOCKSTATE_PROPERTY_VALUE").addTags("cspn:Blockstate Value"));
                 }
                 g.append(new LazyTokenListMatch(g2, comma(), true).setName("BLOCKSTATE_LIST"));
             }
@@ -1469,6 +1468,9 @@ public class TridentProductions {
             BLOCK.add(g);
             BLOCK.add(group(INTERPOLATION_BLOCK, optional(glue(), BLOCKSTATE).setName("APPENDED_BLOCKSTATE"), optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("BLOCK_VARIABLE"));
             BLOCK_TAGGED.add(BLOCK);
+
+            BLOCK.addTags("cspn:Block");
+            BLOCK_TAGGED.addTags("cspn:Block Tag");
         }
 
         {
@@ -1489,6 +1491,9 @@ public class TridentProductions {
             ITEM.add(g);
             ITEM.add(group(INTERPOLATION_BLOCK, optional(glue(), hash(), integer()).setName("APPENDED_MODEL_DATA"), optional(glue(), NBT_COMPOUND).setName("APPENDED_NBT")).setName("ITEM_VARIABLE"));
             ITEM_TAGGED.add(ITEM);
+
+            ITEM.addTags("cspn:Item");
+            ITEM_TAGGED.addTags("cspn:Item Tag");
         }
 
         {
@@ -1597,68 +1602,9 @@ public class TridentProductions {
             NBT_VALUE.add(ofType(TYPED_NUMBER).setName("NBT_NUMBER"));
             NBT_VALUE.add(ofType(BOOLEAN).setName("BOOLEAN"));
             NBT_VALUE.add(INTERPOLATION_BLOCK);
+            NBT_VALUE.addTags("cspn:NBT Value");
         }
 
-        /*{
-            LazyTokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_D = choice(string(), ofType(IDENTIFIER_TYPE_D).setName("IDENTIFIER_D")).setName("STRING_LITERAL_OR_IDENTIFIER_D");
-
-            LazyTokenStructureMatch DOT_CONNECTOR = struct("DOT_CONNECTOR");
-            DOT_CONNECTOR.setOptional();
-            LazyTokenStructureMatch DOTLESS_CONNECTOR = struct("DOTLESS_CONNECTOR");
-            DOTLESS_CONNECTOR.setGreedy(true);
-            DOTLESS_CONNECTOR.setOptional();
-
-            LazyTokenStructureMatch POST_DOT_NBT_PATH_NODE = struct("POST_DOT_NBT_PATH_NODE");
-            LazyTokenStructureMatch POST_DOTLESS_NBT_PATH_NODE = struct("POST_DOTLESS_NBT_PATH_NODE");
-
-            DOT_CONNECTOR.add(group(dot(), glue(), optional(POST_DOTLESS_NBT_PATH_NODE)));
-            DOTLESS_CONNECTOR.add(dot());
-            DOTLESS_CONNECTOR.add(POST_DOT_NBT_PATH_NODE);
-
-            {
-                //keys
-                POST_DOT_NBT_PATH_NODE.add(
-                        group(
-                                glue(),
-                                group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL"),
-                                optional(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH"),
-                                optional(dot(), optional(POST_DOT_NBT_PATH_NODE))
-                        )
-                );
-                POST_DOTLESS_NBT_PATH_NODE.add(
-                        group(
-                                group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL"),
-                                optional(NBT_COMPOUND).setName("NBT_PATH_COMPOUND_MATCH"),
-                                DOTLESS_CONNECTOR
-                        )
-                );
-            }
-            {
-                //lists
-                POST_DOT_NBT_PATH_NODE.add(
-                        group(
-                                glue(),
-                                brace("["),
-                                choice(integer(), NBT_COMPOUND, INTERPOLATION_BLOCK).setOptional().setName("NBT_PATH_LIST_CONTENT"),
-                                brace("]"),
-                                choice(DOT_CONNECTOR, POST_DOTLESS_NBT_PATH_NODE)
-                        )
-                );
-                POST_DOTLESS_NBT_PATH_NODE.add(
-                        group(
-                                glue(),
-                                brace("["),
-                                choice(integer(), NBT_COMPOUND, INTERPOLATION_BLOCK).setOptional().setName("NBT_PATH_LIST_CONTENT"),
-                                brace("]"),
-                                DOT_CONNECTOR
-                        )
-                );
-            }
-
-            NBT_PATH.add(POST_DOTLESS_NBT_PATH_NODE);
-            NBT_PATH.add(INTERPOLATION_BLOCK);
-
-        }*/
 
         {
             LazyTokenStructureMatch NBT_PATH_NODE = new LazyTokenStructureMatch("NBT_PATH_NODE");
@@ -1702,6 +1648,7 @@ public class TridentProductions {
             );
 
             NBT_PATH.add(INTERPOLATION_BLOCK);
+            NBT_PATH.addTags("cspn:NBT Path");
         }
         //endregion
         //region Selector
@@ -1743,6 +1690,8 @@ public class TridentProductions {
                 INTEGER_NUMBER_RANGE.add(g);
             }
 
+            INTEGER_NUMBER_RANGE.addTags("cspn:Integer Range");
+
             REAL_NUMBER_RANGE.add(INTERPOLATION_BLOCK);
             REAL_NUMBER_RANGE.add(real().setName("EXACT"));
             {
@@ -1764,6 +1713,8 @@ public class TridentProductions {
                 g.append(real().setName("MAX"));
                 REAL_NUMBER_RANGE.add(g);
             }
+
+            REAL_NUMBER_RANGE.addTags("cspn:Real Range");
         }
         //endregion
         //region Selector Arguments
@@ -1859,7 +1810,7 @@ public class TridentProductions {
             SELECTOR_ARGUMENT.add(group(
                     choice("predicate").setName("SELECTOR_ARGUMENT_KEY"),
                     equals(),
-                    choice(group(not().setOptional(), RESOURCE_LOCATION_S)).setName("SELECTOR_ARGUMENT_VALUE")
+                    choice(group(not().setOptional(), noToken().addTags("cspn:Predicate"), RESOURCE_LOCATION_S)).setName("SELECTOR_ARGUMENT_VALUE")
             ));
         }
 
@@ -1931,6 +1882,8 @@ public class TridentProductions {
         //endregion
         //region Coordinates
         {
+            COORDINATE_SET.addTags("cspn:Position");
+
             LOCAL_COORDINATE.add(new LazyTokenGroupMatch().append(caret()).append(new LazyTokenGroupMatch(true).append(ofType(GLUE)).append(ofType(SHORT_REAL_NUMBER))));
 
             ABSOLUTE_COORDINATE.add(ofType(SHORT_REAL_NUMBER));
@@ -2006,26 +1959,28 @@ public class TridentProductions {
                 }
             }
 
-            STRUCTURE.add(categoryMap.get(StructureType.CATEGORY)).addTags(SuggestionTags.ENABLED);
-            DIFFICULTY.add(categoryMap.get(DifficultyType.CATEGORY)).addTags(SuggestionTags.ENABLED);
-            GAMEMODE.add(categoryMap.get(GamemodeType.CATEGORY)).addTags(SuggestionTags.ENABLED);
-            DIMENSION_ID.add(categoryMap.get(DimensionType.CATEGORY)).addTags(SuggestionTags.ENABLED);
+            STRUCTURE.add(categoryMap.get(StructureType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Structure");
+            DIFFICULTY.add(categoryMap.get(DifficultyType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Difficulty");
+            GAMEMODE.add(categoryMap.get(GamemodeType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Gamemode");
+            DIMENSION_ID.add(categoryMap.get(DimensionType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Dimension");
 
             BLOCK_ID.add(categoryMap.get(BlockType.CATEGORY).addTags(SuggestionTags.DISABLED)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BLOCK);
             ITEM_ID.add(categoryMap.get(ItemType.CATEGORY).addTags(SuggestionTags.DISABLED)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ITEM);
             ENTITY_ID.add(categoryMap.get(EntityType.CATEGORY).addTags(SuggestionTags.DISABLED)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ENTITY_TYPE);
 
-            EFFECT_ID.add(categoryMap.get(EffectType.CATEGORY)).addTags(SuggestionTags.ENABLED);
-            ENCHANTMENT_ID.add(categoryMap.get(EnchantmentType.CATEGORY)).addTags(SuggestionTags.ENABLED);
-            SLOT_ID.add(categoryMap.get(ItemSlot.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags(SuggestionTags.ENABLED);
+            EFFECT_ID.add(categoryMap.get(EffectType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Effect");
+            ENCHANTMENT_ID.add(categoryMap.get(EnchantmentType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Enchantment");
+            SLOT_ID.add(categoryMap.get(ItemSlot.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags(SuggestionTags.ENABLED).addTags("cspn:Item Slot");
 
             LazyTokenGroupMatch COLOR = new LazyTokenGroupMatch().setName("COLOR")
                     .append(real().setName("RED_COMPONENT"))
                     .append(real().setName("GREEN_COMPONENT"))
                     .append(real().setName("BLUE_COMPONENT"));
+            COLOR.addTags("cspn:RGB Color");
 
 
             //particles have to be different
+            PARTICLE.addTags("cspn:Particle");
 
             {
                 for(Namespace namespace : module.getAllNamespaces()) {
@@ -2080,6 +2035,7 @@ public class TridentProductions {
                 }
             }
 
+            GAMERULE.addTags("cspn:Gamerule");
             {
                 for(Type type : module.minecraft.types.gamerule.list()) {
                     LazyTokenGroupMatch g = group(literal(type.getName()).setName("TYPE_NAME")).setName("GAMERULE_ID");
@@ -2156,6 +2112,7 @@ public class TridentProductions {
                 ENTITY_ID_TAGGED.add(g2);
 
                 ENTITY_ID.add(INTERPOLATION_BLOCK);
+                ENTITY_ID_TAGGED.addTags("cspn:Entity Type Tag");
             }
 
         } catch (Exception x) {
@@ -2183,6 +2140,7 @@ public class TridentProductions {
         POINTER.add(entityPointer);
         POINTER.add(varPointer);
         POINTER.add(blockPointer);
+        POINTER.addTags("cspn:Pointer");
 
         COMMAND.add(
                 group(matchItem(COMMAND_HEADER, "set"), POINTER, equals(), choice(POINTER, NBT_VALUE, INTERPOLATION_BLOCK).setName("VALUE"))
@@ -2198,9 +2156,9 @@ public class TridentProductions {
             LazyTokenStructureMatch entityBodyEntry = choice(
                     group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT"),
                     group(literal("default"), literal("passengers"), brace("["), list(NEW_ENTITY_LITERAL, comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
-                    group(literal("default"), literal("health"), real().setName("HEALTH")).setName("DEFAULT_HEALTH"),
+                    group(literal("default"), literal("health"), real().setName("HEALTH").addTags("cspn:Health")).setName("DEFAULT_HEALTH"),
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
-                    group(literal("var"), identifierX().setName("FIELD_NAME"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ENTITY_FIELD"),
+                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ENTITY_FIELD"),
                     COMMENT_S,
                     group(choice(group(literal("ticking"), list(MODIFIER).setOptional().setName("TICKING_MODIFIERS")).setName("TICKING_ENTITY_FUNCTION")).setOptional().setName("ENTITY_FUNCTION_MODIFIER"), literal("function"), OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_INNER_FUNCTION")
             );
@@ -2226,7 +2184,7 @@ public class TridentProductions {
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(literal("default"), literal("lore"), brace("["), list(TEXT_COMPONENT, comma()).setOptional().setName("LORE_LIST"), brace("]")).setName("DEFAULT_LORE"),
                     COMMENT_S,
-                    group(literal("var"), identifierX().setName("FIELD_NAME"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ITEM_FIELD")
+                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ITEM_FIELD")
             );
             itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_ITEM_BODY);
 
@@ -2239,16 +2197,16 @@ public class TridentProductions {
             INSTRUCTION.add(
                     group(instructionKeyword("define"),
                             choice(
-                                    group(literal("objective"), group(identifierA()).setName("OBJECTIVE_NAME"), optional(sameLine(), group(identifierB()).setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE")
+                                    group(literal("objective"), group(identifierA()).setName("OBJECTIVE_NAME").addTags("cspn:Objective Name"), optional(sameLine(), group(identifierB()).setName("CRITERIA"), optional(TEXT_COMPONENT))).setName("DEFINE_OBJECTIVE")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
                                                     ((TridentSummaryModule) l.getSummaryModule()).addObjective(new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.find("OBJECTIVE_NAME").flatten(false), p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_OBJECTIVE));
                                                 }
                                             }),
                                     group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("entity"), choice(
-                                            group(choice(identifierX(), literal("default")).setName("ENTITY_NAME"), choice(symbol("*"), ENTITY_ID_TAGGED).setName("ENTITY_BASE")).setName("CONCRETE_ENTITY_DECLARATION"),
-                                            group(literal("component"), group(identifierX()).setName("ENTITY_NAME")).setName("ABSTRACT_ENTITY_DECLARATION")
-                                    ).setName("ENTITY_DECLARATION_HEADER"), optional(keyword("implements"), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST")).setName("IMPLEMENTED_COMPONENTS"), entityBody).setName("DEFINE_ENTITY")
+                                            group(choice(identifierX(), literal("default")).setName("ENTITY_NAME").addTags("cspn:Entity Type Name"), choice(symbol("*"), ENTITY_ID_TAGGED).setName("ENTITY_BASE").addTags("cspn:Base Type")).setName("CONCRETE_ENTITY_DECLARATION"),
+                                            group(literal("component"), group(identifierX()).setName("ENTITY_NAME").addTags("cspn:Component Name")).setName("ABSTRACT_ENTITY_DECLARATION")
+                                    ).setName("ENTITY_DECLARATION_HEADER"), optional(keyword("implements"), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST").addTags("cspn:Implemented Components")).setName("IMPLEMENTED_COMPONENTS"), entityBody).setName("DEFINE_ENTITY")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
                                                     String name = p.find("ENTITY_DECLARATION_HEADER.ENTITY_NAME").flatten(false);
@@ -2262,7 +2220,7 @@ public class TridentProductions {
                                                     }
                                                 }
                                             }),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("item"), choice(identifierX(), literal("default")).setName("ITEM_NAME"), ITEM_ID, optional(hash(), integer()).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM")
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("item"), choice(identifierX().addTags("cspn:Item Type Name"), literal("default")).setName("ITEM_NAME"), noToken().addTags("cspn:Base Type"), ITEM_ID, optional(hash(), integer().addTags("cspn:Model Index")).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
                                                     String name = p.find("ITEM_NAME").flatten(false);
@@ -2283,7 +2241,7 @@ public class TridentProductions {
         {
             INSTRUCTION.add(
                     group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), instructionKeyword("var"),
-                            identifierX().setName("VARIABLE_NAME").addProcessor((p, l) -> {
+                            identifierX().setName("VARIABLE_NAME").addTags("cspn:Variable Name").addProcessor((p, l) -> {
                                 if(l.getSummaryModule() != null) {
                                     SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), p.getStringLocation().index);
                                     ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
@@ -2325,7 +2283,7 @@ public class TridentProductions {
             INSTRUCTION.add(
                     group(instructionKeyword("within"),
                             identifierX().setName("VARIABLE_NAME"),
-                            group(COORDINATE_SET).setName("FROM"), group(COORDINATE_SET).setName("TO"), optional(literal("step"), real()).setName("STEP"), ANONYMOUS_INNER_FUNCTION
+                            group(COORDINATE_SET).setName("FROM").addTags("cspn:From"), group(COORDINATE_SET).setName("TO").addTags("cspn:To"), optional(literal("step"), real().addTags("cspn:Step")).setName("STEP"), ANONYMOUS_INNER_FUNCTION
                     ).addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
                             SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.find("VARIABLE_NAME").flatten(false), p.find("ANONYMOUS_INNER_FUNCTION.FILE_INNER.FILE_START_MARKER").getStringLocation().index);
@@ -2341,8 +2299,8 @@ public class TridentProductions {
             INSTRUCTION.add(
                     group(instructionKeyword("using"),
                             choice(
-                                    group(literal("tag"), group(identifierA()).setName("USING_TAG_NAME"), ENTITY, list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_TAG"),
-                                    group(literal("summon"), NEW_ENTITY_LITERAL, optional(COORDINATE_SET, optional(NBT_COMPOUND)), literal("with"), group(identifierA()).setName("USING_SUMMON_TAG_NAME"), list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_SUMMON")
+                                    group(literal("tag"), group(identifierA()).setName("USING_TAG_NAME").addTags("cspn:Tag"), ENTITY, list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_TAG"),
+                                    group(literal("summon"), NEW_ENTITY_LITERAL, optional(COORDINATE_SET, optional(NBT_COMPOUND)), literal("with"), group(identifierA()).setName("USING_SUMMON_TAG_NAME").addTags("cspn:Summoning Tag"), list(MODIFIER).setOptional().setName("MODIFIER_LIST")).setName("USING_SUMMON")
                             ).setName("USING_CASE"),
                             ANONYMOUS_INNER_FUNCTION
                     )
@@ -2359,8 +2317,8 @@ public class TridentProductions {
 
         {
             LazyTokenPatternMatch FOR_HEADER = choice(
-                    group(identifierX().setName("VARIABLE_NAME"), keyword("in"), INTERPOLATION_VALUE).setName("ITERATOR_FOR"),
-                    group(optional(INTERPOLATION_VALUE).setName("FOR_HEADER_INITIALIZATION"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_CONDITION"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_ITERATION")).setName("CLASSICAL_FOR")
+                    group(identifierX().setName("VARIABLE_NAME").addTags("cspn:Iterator Name"), keyword("in"), noToken().addTags("cspn:Iterable"), INTERPOLATION_VALUE).setName("ITERATOR_FOR"),
+                    group(optional(INTERPOLATION_VALUE).setName("FOR_HEADER_INITIALIZATION").addTags("cspn:Initialization"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_CONDITION").addTags("cspn:Loop Condition"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_ITERATION").addTags("cspn:Iteration Expression")).setName("CLASSICAL_FOR")
             ).setName("LOOP_HEADER");
 
             INSTRUCTION.add(
@@ -2381,7 +2339,7 @@ public class TridentProductions {
 
         {
             LazyTokenPatternMatch WHILE_HEADER = choice(
-                    group(INTERPOLATION_VALUE).setName("WHILE_HEADER")
+                    group(INTERPOLATION_VALUE).setName("WHILE_HEADER").addTags("cspn:Loop Condition")
             ).setName("LOOP_HEADER");
 
             INSTRUCTION.add(
@@ -2391,13 +2349,13 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(keyword("do"), instructionKeyword("if"), brace("("), group(INTERPOLATION_VALUE).setName("CONDITION"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), optional(keyword("else"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("ELSE_CLAUSE"))
+                    group(keyword("do"), instructionKeyword("if"), brace("("), group(INTERPOLATION_VALUE).setName("CONDITION").addTags("cspn:Condition"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), optional(keyword("else"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("ELSE_CLAUSE"))
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(blockLabel, instructionKeyword("switch"), brace("("), group(INTERPOLATION_VALUE).setName("SWITCH_VALUE"), brace(")"),
+                    group(blockLabel, instructionKeyword("switch"), brace("("), group(INTERPOLATION_VALUE).setName("SWITCH_VALUE").addTags("cspn:Switch Value"), brace(")"),
                             brace("{"),
                             list(
                                     group(
@@ -2412,25 +2370,25 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(instructionKeyword("try"), literal("recovering").setOptional(), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), group(instructionKeyword("catch"), brace("("), identifierX().setName("EXCEPTION_VARIABLE"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("CATCH_CLAUSE"))
+                    group(instructionKeyword("try"), literal("recovering").setOptional(), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), group(instructionKeyword("catch"), brace("("), identifierX().setName("EXCEPTION_VARIABLE").addTags("cspn:Exception Variable Name"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("CATCH_CLAUSE"))
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(instructionKeyword("throw"), LINE_SAFE_INTERPOLATION_VALUE)
+                    group(instructionKeyword("throw"), noToken().addTags("cspn:Cause"), LINE_SAFE_INTERPOLATION_VALUE)
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(instructionKeyword("log"), choice("info", "warning", "error").setName("NOTICE_GROUP"), LINE_SAFE_INTERPOLATION_VALUE)
+                    group(instructionKeyword("log"), choice("info", "warning", "error").setName("NOTICE_GROUP"), noToken().addTags("cspn:Value"), LINE_SAFE_INTERPOLATION_VALUE)
             );
         }
 
         {
             INSTRUCTION.add(
-                    group(instructionKeyword("return"), optional(LINE_SAFE_INTERPOLATION_VALUE).setName("RETURN_VALUE"))
+                    group(instructionKeyword("return"), optional(LINE_SAFE_INTERPOLATION_VALUE).setName("RETURN_VALUE").addTags("cspn:Value"))
             );
         }
 
@@ -2452,6 +2410,10 @@ public class TridentProductions {
 
     }
 
+    private static LazyTokenPatternMatch noToken() {
+        return ofType(NO_TOKEN).setOptional();
+    }
+
     private static LazyTokenItemMatch literal(String text) {
         return (LazyTokenItemMatch) new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase()).addTags(SuggestionTags.ENABLED);
     }
@@ -2461,7 +2423,7 @@ public class TridentProductions {
     }
 
     private LazyTokenPatternMatch anchor() {
-        return choice("feet", "eyes").setName("ANCHOR").addTags(SuggestionTags.ENABLED);
+        return choice("feet", "eyes").setName("ANCHOR").addTags(SuggestionTags.ENABLED).addTags("cspn:Anchor");
     }
 
     private static LazyTokenItemMatch symbol(String text) {
@@ -2511,15 +2473,15 @@ public class TridentProductions {
     }
 
     private LazyTokenPatternMatch objectiveName() {
-        return group(identifierA()).setName("OBJECTIVE_NAME").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.OBJECTIVE_EXISTING);
+        return group(identifierA()).setName("OBJECTIVE_NAME").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.OBJECTIVE_EXISTING).addTags("cspn:Objective");
     }
 
     private LazyTokenPatternMatch score() {
-        return choice(group(ENTITY, objectiveName()).setName("EXPLICIT_SCORE"), group(literal("deref"), sameLine(), INTERPOLATION_BLOCK).setName("POINTER_WRAPPER")).setName("SCORE");
+        return choice(group(ENTITY, objectiveName()).setName("EXPLICIT_SCORE"), group(literal("deref"), sameLine(), INTERPOLATION_BLOCK).setName("POINTER_WRAPPER")).setName("SCORE").addTags("cspn:Score");
     }
 
     private LazyTokenStructureMatch scoreOptionalObjective() {
-        return choice(group(choice(ENTITY, symbol("*")).setName("TARGET_ENTITY"), group(sameLine(), choice(symbol("*"), objectiveName()).setName("OBJECTIVE_NAME_WRAPPER")).setOptional().setName("OBJECTIVE_CLAUSE")).setName("SCORE_OPTIONAL_OBJECTIVE"), POINTER).setName("SCORE");
+        return (LazyTokenStructureMatch) choice(group(choice(ENTITY, symbol("*")).setName("TARGET_ENTITY"), group(sameLine(), choice(symbol("*"), objectiveName()).setName("OBJECTIVE_NAME_WRAPPER")).setOptional().setName("OBJECTIVE_CLAUSE")).setName("SCORE_OPTIONAL_OBJECTIVE"), POINTER).setName("SCORE").addTags("cspn:Score");
     }
 
     private LazyTokenStructureMatch entityNBT() {

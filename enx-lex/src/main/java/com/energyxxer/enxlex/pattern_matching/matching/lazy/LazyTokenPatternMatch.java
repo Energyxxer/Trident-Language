@@ -78,7 +78,7 @@ public abstract class LazyTokenPatternMatch extends GeneralTokenPatternMatch {
             if(lexer.getSuggestionModule().isAtSuggestionIndex(index)) {
                 ComplexSuggestion complexSuggestion = null;
                 for(String tag : tags) {
-                    if((tag.startsWith("csk:") && lexer.getSuggestionModule().shouldSuggest()) || tag.startsWith("ctx:")) {
+                    if((tag.startsWith("csk:") && lexer.getSuggestionModule().shouldSuggest()) || tag.startsWith("ctx:") || tag.startsWith("cspn:")) {
                         lexer.getSuggestionModule().addSuggestion(complexSuggestion = new ComplexSuggestion(tag));
                     } else if((tag.startsWith("cst:") || tag.startsWith("mst:")) && complexSuggestion != null && lexer.getSuggestionModule().shouldSuggest()) {
                         complexSuggestion.addTag(tag);
