@@ -1071,7 +1071,7 @@ public class TridentProductions {
                             group(literal("get"), noToken().addTags("cspn:Bossbar"), RESOURCE_LOCATION_S, choice("max", "players", "value", "visible")).setName("GET"),
                             group(literal("remove"), noToken().addTags("cspn:Bossbar"), RESOURCE_LOCATION_S).setName("REMOVE"),
                             group(literal("set"), noToken().addTags("cspn:Bossbar"), RESOURCE_LOCATION_S, choice(
-                                    group(literal("color"), choice("blue", "green", "pink", "purple", "red", "white", "yellow")).setName("SET_COLOR").setName("cspn:Bossbar Color"),
+                                    group(literal("color"), choice("blue", "green", "pink", "purple", "red", "white", "yellow")).setName("SET_COLOR").addTags("cspn:Bossbar Color"),
                                     group(literal("max"), integer().addTags("cspn:Max Value")).setName("SET_MAX"),
                                     group(literal("name"), noToken().addTags("cspn:Display Name"), TEXT_COMPONENT).setName("SET_NAME"),
                                     group(literal("players"), optional(sameLine(), ENTITY).setName("OPTIONAL_ENTITY")).setName("SET_PLAYERS"),
