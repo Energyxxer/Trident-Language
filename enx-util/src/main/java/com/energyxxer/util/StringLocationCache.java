@@ -16,6 +16,20 @@ public class StringLocationCache {
         setText(text);
     }
 
+    public void textChanged(String newText, int changeIndex) {
+        this.text = newText;
+        int line = 0;
+        while(lineLocations.containsKey(line)) {
+            if(lineLocations.get(line) <= changeIndex) {
+                lineLocations.remove(line);
+            }
+            line++;
+        }
+        if(lineLocations.isEmpty()) {
+            lineLocations.put(0,0);
+        }
+    }
+
     public void setText(String text) {
         this.text = text;
         clear();
