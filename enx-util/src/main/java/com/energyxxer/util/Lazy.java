@@ -25,4 +25,8 @@ public class Lazy<T> {
         if(accessor != null) accessor.accept(value);
         return value;
     }
+
+    public boolean hasValue() {
+        return hasValue;
+    }
 }
