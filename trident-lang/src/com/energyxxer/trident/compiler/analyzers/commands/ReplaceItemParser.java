@@ -6,20 +6,21 @@ import com.energyxxer.commodore.functionlogic.commands.replaceitem.ReplaceItemBl
 import com.energyxxer.commodore.functionlogic.commands.replaceitem.ReplaceItemEntityCommand;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.defaults.ItemSlot;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "replaceitem")
 public class ReplaceItemParser implements SimpleCommandParser {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Type slot = ctx.getCompiler().getModule().minecraft.types.slot.get(pattern.find("SLOT_ID").flatten(false));
+        Type slot = CommonParsers.parseType(pattern.find("SLOT_ID"), ctx, ItemSlot.CATEGORY);
         Item item = CommonParsers.parseItem(pattern.find("ITEM"), ctx, NBTMode.SETTING);
         int count = 1;
 
