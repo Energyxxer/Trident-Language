@@ -131,7 +131,7 @@ public class TridentProductions {
                 if(index > 0) {
                     while (true) {
                         char c = str.charAt(index-1);
-                        if (!(Character.isJavaIdentifierPart(c) || "#:/.".contains(c+"")) || --index <= 1)
+                        if (!(Character.isJavaIdentifierPart(c) || "#:/.-".contains(c+"")) || --index <= 1)
                             break;
                     }
                 }
@@ -404,13 +404,13 @@ public class TridentProductions {
                             ((TridentSummaryModule) l.getSummaryModule()).setCompileOnly();
                         }
                     })).setName("ON_DIRECTIVE"));
-            directiveBody.add(group(literal("tag").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION).addTags(TridentSuggestionTags.RESOURCE)
+            directiveBody.add(group(literal("tag").setName("DIRECTIVE_LABEL"), resourceLocationFixer, ofType(RESOURCE_LOCATION).addTags(TridentSuggestionTags.RESOURCE)
                     .addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
                             ((TridentSummaryModule) l.getSummaryModule()).addFunctionTag(new TridentUtil.ResourceLocation(p.flatten(false)));
                         }
                     })).setName("TAG_DIRECTIVE"));
-            directiveBody.add(group(literal("require").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION).addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.TRIDENT_FUNCTION)
+            directiveBody.add(group(literal("require").setName("DIRECTIVE_LABEL"), resourceLocationFixer, ofType(RESOURCE_LOCATION).addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.TRIDENT_FUNCTION)
                     .addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
                             ((TridentSummaryModule) l.getSummaryModule()).addRequires(new TridentUtil.ResourceLocation(p.flatten(false)));

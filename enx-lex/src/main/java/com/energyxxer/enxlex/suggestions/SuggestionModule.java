@@ -18,6 +18,7 @@ public class SuggestionModule {
     private LazyLexer lexer;
 
     private final int originalSuggestionIndex;
+    private boolean changedSuggestionIndex = false;
     private int suggestionIndex;
     private int caretIndex;
     private Stack<SuggestionStatus> statusStack = new Stack<>();
@@ -66,6 +67,7 @@ public class SuggestionModule {
 
     public void setSuggestionIndex(int index) {
         this.suggestionIndex = index;
+        this.changedSuggestionIndex = true;
     }
 
     public int getCaretIndex() {
@@ -106,5 +108,9 @@ public class SuggestionModule {
 
     public String[] getLookingAtMemberPath() {
         return lookingAtMemberPath;
+    }
+
+    public boolean changedSuggestionIndex() {
+        return changedSuggestionIndex;
     }
 }
