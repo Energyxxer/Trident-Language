@@ -5,6 +5,7 @@ import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.summon.SummonCommand;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
+import com.energyxxer.commodore.functionlogic.nbt.TagString;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -43,7 +44,7 @@ public class SummonParser implements SimpleCommandParser {
     public static SummonData parseNewEntityLiteral(TokenPattern<?> pattern, ISymbolContext ctx) {
         TagCompound nbt = NBTParser.parseCompound(pattern.find("NEW_ENTITY_NBT.NBT_COMPOUND"), ctx);
         Type type;
-        Object reference = CommonParsers.parseEntityReference(pattern.find("ENTITY_ID"), ctx);
+        Object reference = CommonParsers.parseEntityReference(pattern.find("ENTITY_ID"), ctx, true);
 
         if(reference instanceof Type) {
             type = (Type) reference;
@@ -60,6 +61,22 @@ public class SummonParser implements SimpleCommandParser {
                 nbt = ce.getDefaultNBT().merge(nbt);
             } catch(CommodoreException x) {
                 throw new TridentException(TridentException.Source.COMMAND_ERROR, "Error while merging given NBT with custom entity's NBT: " + x.getMessage(), pattern, ctx);
+            }
+        } else if(reference instanceof TagCompound) {
+            reference = ((TagCompound) reference).clone();
+            type = CommonParsers.parseType(((TagString) ((TagCompound) reference).get("id")).getValue(), pattern, ctx, "entity");
+            ((TagCompound) reference).remove("id");
+            if(nbt != null) {
+                try {
+                    nbt = ((TagCompound) reference).merge(nbt);
+                } catch(CommodoreException x) {
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Error while merging given NBT with custom entity's NBT: " + x.getMessage(), pattern, ctx);
+                }
+            } else {
+                nbt = ((TagCompound) reference);
+            }
+            if(nbt.isEmpty()) {
+                nbt = null;
             }
         } else {
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), pattern.find("ENTITY_ID"), ctx);

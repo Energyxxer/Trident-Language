@@ -62,11 +62,30 @@ import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SET
 
 public class CommonParsers {
     public static Object parseEntityReference(TokenPattern<?> id, ISymbolContext ctx) {
+        return parseEntityReference(id, ctx, false);
+    }
+
+    public static Object parseEntityReference(TokenPattern<?> id, ISymbolContext ctx, boolean acceptNBT) {
         if(id.getName().equals("ENTITY_ID_TAGGED")) return parseEntityReference(((TokenStructure)id).getContents(), ctx);
         if(id.getName().equals("ENTITY_ID_WRAPPER")) return parseEntityReference(id.find("ENTITY_ID"), ctx);
         if(id.getName().equals("ABSTRACT_RESOURCE")) return parseTag(id.find("RESOURCE_NAME"), ctx, EntityType.CATEGORY, g -> g.entity, g -> g.entityTypeTags);
         if(id instanceof TokenStructure && ((TokenStructure) id).getContents().getName().equals("INTERPOLATION_BLOCK")) {
-            Object result = InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, CustomEntity.class, TridentUtil.ResourceLocation.class, String.class);
+            Object result;
+            if(acceptNBT) {
+                result = InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, CustomEntity.class, TridentUtil.ResourceLocation.class, String.class, TagCompound.class);
+            } else {
+                result = InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, CustomEntity.class, TridentUtil.ResourceLocation.class, String.class);
+            }
+
+            if(result instanceof TagCompound) {
+                NBTTag idTag = ((TagCompound) result).get("id");
+                if(idTag == null) {
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "'id' string not found in entity root compound", id, ctx);
+                } else if(!(idTag instanceof TagString)) {
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "'id' tag in entity root compound is not of type TAG_String", id, ctx);
+                }
+                return result;
+            }
             if(result instanceof CustomEntity) return result;
             return parseType(result, id, ctx, EntityType.CATEGORY);
         } else return parseType(id, ctx, EntityType.CATEGORY);
