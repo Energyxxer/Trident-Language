@@ -335,10 +335,9 @@ public class TextParser {
     }
 
     static class RawEntity extends PlayerName {
-        private String rawName;
+
         public RawEntity(@NotNull String name) {
             super(name);
-            this.rawName = name;
         }
 
         @Override
@@ -379,11 +378,6 @@ public class TextParser {
         @Override
         public void assertAvailable() {
 
-        }
-
-        @Override
-        public @NotNull String scoreHolderToString() {
-            return rawName;
         }
     }
 }
