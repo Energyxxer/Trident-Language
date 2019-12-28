@@ -706,9 +706,9 @@ public class TridentProductions {
                     ENTITY,
                     optional(
                             COORDINATE_SET,
-                            real().setOptional().addTags("cspn:Min Volume"),
+                            real().setOptional().addTags("cspn:Max Volume"),
                             real().setOptional().addTags("cspn:Pitch"),
-                            real().setOptional().addTags("cspn:Max Volume")
+                            real().setOptional().addTags("cspn:Min Volume")
                     )
             ));
         }
