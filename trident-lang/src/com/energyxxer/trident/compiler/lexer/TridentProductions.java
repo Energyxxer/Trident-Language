@@ -239,6 +239,15 @@ public class TridentProductions {
             }
         };
 
+        BiConsumer<TokenPattern<?>, Lexer> surroundBlock = (p, lx) -> {
+            if(lx.getSummaryModule() != null) {
+                StringBounds bounds = p.getStringBounds();
+                if(bounds != null) {
+                    ((TridentSummaryModule) lx.getSummaryModule()).peek().surroundBlock(bounds.start.index, bounds.end.index);
+                }
+            }
+        };
+
         {
             INTERPOLATION_BLOCK = choice(
                     group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED), glue().addTags(SuggestionTags.ENABLED, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE).addTags("cspn:Variable"), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
@@ -378,7 +387,7 @@ public class TridentProductions {
                             comma()
                     ).setOptional().setName("DICTIONARY_ENTRY_LIST"),
                     brace("}"))).addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);});
-            LIST.add(group(brace("[").addProcessor(startClosure), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")).addProcessor(endComplexValue).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);}));
+            LIST.add(group(brace("[").addProcessor(startClosure), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")).addProcessor(surroundBlock).addProcessor(endComplexValue).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);}));
         }
 
         PLAYER_NAME.add(identifierB());
@@ -429,16 +438,7 @@ public class TridentProductions {
                         if(lx.getSummaryModule() != null) {
                             ((TridentSummaryModule) lx.getSummaryModule()).lockDirectives();
                         }
-                    }), ofType(EMPTY_TOKEN).setName("FILE_START_MARKER"), l).addProcessor(
-                    (p, lx) -> {
-                        if(lx.getSummaryModule() != null) {
-                            StringBounds bounds = p.getStringBounds();
-                            if(bounds != null) {
-                                ((TridentSummaryModule) lx.getSummaryModule()).peek().surroundBlock(bounds.start.index, bounds.end.index);
-                            }
-                        }
-                    }
-            ));
+                    }), ofType(EMPTY_TOKEN).setName("FILE_START_MARKER"), l).addProcessor(surroundBlock));
             FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l,ofType(TokenType.END_OF_FILE)));
         }
 
@@ -893,7 +893,6 @@ public class TridentProductions {
                             group(
                                     ENTITY,
                                     choice(
-                                            ENTITY,
                                             group(
                                                     COORDINATE_SET,
                                                     choice(
@@ -906,7 +905,8 @@ public class TridentProductions {
                                                             ).setName("FACING_CLAUSE"),
                                                             TWO_COORDINATE_SET
                                                     ).setOptional().setName("ROTATION_OPTION").addTags("cspn:Rotation")
-                                            )
+                                            ),
+                                            ENTITY
                                     ).setOptional().addTags("cspn:Destination")
                             ),
                             COORDINATE_SET
