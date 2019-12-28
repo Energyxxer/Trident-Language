@@ -250,7 +250,7 @@ public class TridentProductions {
 
         {
             INTERPOLATION_BLOCK = choice(
-                    group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED), glue().addTags(SuggestionTags.ENABLED, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE).addTags("cspn:Variable"), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
+                    group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED).addProcessor(clearMemberListProcessor), glue().addTags(SuggestionTags.ENABLED, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE).addTags("cspn:Variable"), identifierX().setName("VARIABLE_NAME")).setName("VARIABLE")
             ).setName("INTERPOLATION_BLOCK");
 
             INTERPOLATION_VALUE = new LazyTokenStructureMatch("INTERPOLATION_VALUE");
@@ -288,7 +288,7 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(group(literal("pointer").setName("VALUE_WRAPPER_KEY"), brace("<"), POINTER, brace(">")).setName("WRAPPED_POINTER"));
             ROOT_INTERPOLATION_VALUE.add(DICTIONARY);
             ROOT_INTERPOLATION_VALUE.add(LIST);
-            ROOT_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")")).setName("PARENTHESIZED_VALUE"));
+            ROOT_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")").addProcessor(clearMemberListProcessor)).setName("PARENTHESIZED_VALUE"));
             ROOT_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("function").setName("VALUE_WRAPPER_KEY").addProcessor(startClosure), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION").addProcessor(endComplexValue));
             ROOT_INTERPOLATION_VALUE.add(group(literal("new").setName("VALUE_WRAPPER_KEY"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
@@ -317,7 +317,7 @@ public class TridentProductions {
             LazyTokenGroupMatch INTERPOLATION_CHAIN = group(ROOT_INTERPOLATION_VALUE, list(MEMBER_ACCESS).setOptional().setName("MEMBER_ACCESSES")).setName("INTERPOLATION_CHAIN");
 
             LazyTokenStructureMatch MID_INTERPOLATION_VALUE = struct("MID_INTERPOLATION_VALUE");
-            MID_INTERPOLATION_VALUE.add(group(list(ofType(COMPILER_PREFIX_OPERATOR)).setOptional().setName("PREFIX_OPERATORS"), INTERPOLATION_CHAIN, list(ofType(COMPILER_POSTFIX_OPERATOR)).setOptional().setName("POSTFIX_OPERATORS")).setName("SURROUNDED_INTERPOLATION_VALUE"));
+            MID_INTERPOLATION_VALUE.add(group(list(ofType(COMPILER_PREFIX_OPERATOR).addProcessor(clearMemberListProcessor)).setOptional().setName("PREFIX_OPERATORS"), INTERPOLATION_CHAIN, list(ofType(COMPILER_POSTFIX_OPERATOR).addProcessor(clearMemberListProcessor)).setOptional().setName("POSTFIX_OPERATORS")).setName("SURROUNDED_INTERPOLATION_VALUE"));
             MID_INTERPOLATION_VALUE.add(group(brace("("), choice(
                     "int",
                     "real",
@@ -349,10 +349,10 @@ public class TridentProductions {
                     "pointer"
             ).setName("TARGET_TYPE"), brace(")"), MID_INTERPOLATION_VALUE).setName("CAST"));
 
-            INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR)).setName("EXPRESSION"));
-            LINE_SAFE_INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, group(sameLine(), ofType(COMPILER_OPERATOR))).setName("EXPRESSION"));
+            INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR).addProcessor(clearMemberListProcessor)).setName("EXPRESSION"));
+            LINE_SAFE_INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, group(sameLine(), ofType(COMPILER_OPERATOR).addProcessor(clearMemberListProcessor))).setName("EXPRESSION"));
 
-            INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED), glue(), brace("{").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED)).setName("INTERPOLATION_WRAPPER"));
+            INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED).addProcessor(clearMemberListProcessor), glue(), brace("{").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED).addProcessor(clearMemberListProcessor)).setName("INTERPOLATION_WRAPPER"));
 
             DICTIONARY.add(group(
                     brace("{").addProcessor(startComplexValue),
