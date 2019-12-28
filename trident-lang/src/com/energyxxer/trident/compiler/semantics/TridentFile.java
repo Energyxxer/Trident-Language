@@ -377,13 +377,34 @@ public class TridentFile extends SymbolContext {
                     }
                 }
                 while(!parentFile.postProcessingActions.isEmpty()) {
-                    parentFile.postProcessingActions.remove(0).run();
+                    try {
+                        parentFile.postProcessingActions.remove(0).run();
+                    }  catch(TridentException x) {
+                        if(compiler.getTryStack().isEmpty()) {
+                            x.expandToUncaught();
+                            compiler.getReport().addNotice(x.getNotice());
+                        } else if(compiler.getTryStack().isRecovering()) {
+                            queuedExceptions.add(x);
+                        } else if(compiler.getTryStack().isBreaking()) {
+                            throw x;
+                        }
+                    } catch(TridentException.Grouped gx) {
+                        queuedExceptions.addAll(gx.getExceptions());
+                    }
                 }
             }
             if(!queuedExceptions.isEmpty()) {
-                throw new TridentException.Grouped(queuedExceptions);
+                TridentException.Grouped ex = new TridentException.Grouped(queuedExceptions);
+                queuedExceptions = null;
+                throw ex;
             }
         } finally {
+            if(queuedExceptions != null && !queuedExceptions.isEmpty()) {
+                for(TridentException x : queuedExceptions) {
+                    x.expandToUncaught();
+                    compiler.getReport().addNotice(x.getNotice());
+                }
+            }
             if(popCall) {
                 compiler.getCallStack().pop();
                 compiler.popWritingFile();
