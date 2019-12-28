@@ -11,8 +11,8 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.List;
 
@@ -36,11 +36,11 @@ public class PlaySoundParser implements SimpleCommandParser {
 
                 List<TokenPattern<?>> numberArgs = sub.searchByName("REAL");
                 if(numberArgs.size() >= 1) {
-                    maxVol = Float.parseFloat(numberArgs.get(0).flatten(false));
+                    maxVol = (float)CommonParsers.parseDouble(numberArgs.get(0), ctx);
                     if(numberArgs.size() >= 2) {
-                        pitch = Float.parseFloat(numberArgs.get(1).flatten(false));
+                        pitch = (float)CommonParsers.parseDouble(numberArgs.get(1), ctx);
                         if(numberArgs.size() >= 3) {
-                            minVol = Float.parseFloat(numberArgs.get(2).flatten(false));
+                            minVol = (float)CommonParsers.parseDouble(numberArgs.get(2), ctx);
                         }
                     }
                 }
