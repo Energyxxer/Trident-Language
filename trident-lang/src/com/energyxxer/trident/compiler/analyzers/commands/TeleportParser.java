@@ -11,14 +11,16 @@ import com.energyxxer.commodore.functionlogic.commands.teleport.facing.BlockFaci
 import com.energyxxer.commodore.functionlogic.commands.teleport.facing.EntityFacing;
 import com.energyxxer.commodore.functionlogic.commands.teleport.facing.RotationFacing;
 import com.energyxxer.commodore.functionlogic.commands.teleport.facing.TeleportFacing;
+import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.EntityParser;
+import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "teleport")
 public class TeleportParser implements SimpleCommandParser {
@@ -38,7 +40,21 @@ public class TeleportParser implements SimpleCommandParser {
             if(rawDestination != null) {
                 victim = first;
                 TokenPattern<?> rawDestinationEntity = rawDestination.find("ENTITY");
-                if(rawDestinationEntity != null) {
+                if(rawDestination.find("INTERPOLATION_BLOCK") != null) {
+                    Object contained = InterpolationManager.parse(rawDestination.find("INTERPOLATION_BLOCK"), ctx, Entity.class, CoordinateSet.class);
+                    if(contained instanceof Entity) {
+                        try {
+                            destination = new EntityDestination(((Entity) contained));
+                        } catch(CommodoreException x) {
+                            TridentException.handleCommodoreException(x, pattern, ctx)
+                                    .map(CommodoreException.Source.ENTITY_ERROR, rawDestinationEntity)
+                                    .invokeThrow();
+                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", rawDestinationEntity, ctx);
+                        }
+                    } else { //Coordinates
+                        destination = new BlockDestination(((CoordinateSet) contained));
+                    }
+                } else if(rawDestinationEntity != null) {
                     try {
                         destination = new EntityDestination(EntityParser.parseEntity(rawDestinationEntity, ctx));
                     } catch(CommodoreException x) {

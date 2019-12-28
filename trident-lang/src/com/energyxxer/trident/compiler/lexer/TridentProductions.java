@@ -906,7 +906,8 @@ public class TridentProductions {
                                                             TWO_COORDINATE_SET
                                                     ).setOptional().setName("ROTATION_OPTION").addTags("cspn:Rotation")
                                             ),
-                                            ENTITY
+                                            ENTITY,
+                                            INTERPOLATION_BLOCK
                                     ).setOptional().addTags("cspn:Destination")
                             ),
                             COORDINATE_SET
