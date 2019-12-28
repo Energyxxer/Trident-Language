@@ -3,7 +3,10 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberWrapper;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.NBTToDictionary;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.HashMap;
@@ -17,6 +20,7 @@ public class TagCompoundTypeHandler implements VariableTypeHandler<TagCompound> 
     static {
         try {
             members.put("merge", new MethodWrapper<>(TagCompound.class.getMethod("merge", TagCompound.class)));
+            members.put("remove", new MethodWrapper<>(TagCompound.class.getMethod("remove", String.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
