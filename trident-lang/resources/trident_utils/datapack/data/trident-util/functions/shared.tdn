@@ -173,6 +173,16 @@ var Shared = {
     Location: function() {
         return SelfBuilder({
             objectType: function() {return "Shared.Location"},
+            _block: function(obj) {
+                eval assertObjectType(obj, "Shared.Block")
+                eval this._sb_buildData["block"] = obj
+                return this
+            },
+            _fluid: function(obj) {
+                eval assertObjectType(obj, "Shared.Fluid")
+                eval this._sb_buildData["fluid"] = obj
+                return this
+            },
             biome: function(biome) {
                 eval assertType(biome, "resource")
                 do if(!MinecraftTypes.exists("biome", biome)) throw "Given type '" + biome + "' does not exist as a biome type"
@@ -359,24 +369,17 @@ var Shared = {
     Block: function(base) {
         var obj = SelfBuilder({
             objectType: function() {return "Shared.Block"},
-            _block: function(type) {
+            type: function(type) {
                 eval assertType(type, "resource")
                 do if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
                 do if(!MinecraftTypes.exists("block", type)) throw "Given type '" + type + "' does not exist as a block type"
                 eval this._sb_buildData["block"] = type
                 return this
             },
-            fluid: function(type) {
-                eval assertType(type, "resource")
-                do if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
-                do if(!MinecraftTypes.exists("fluid", type)) throw "Given type '" + type + "' does not exist as a fluid type"
-                eval this._sb_buildData["fluid"] = type
-                return this
-            },
             tag: function(type) {
                 eval assertType(type, "resource")
                 do if(!type.isTag) throw "Given location '" + type + "' is a type, expected a tag"
-                do if(!MinecraftTypes.exists("block", type) && !MinecraftTypes.exists("fluid", type)) throw "Given tag '" + type + "' does not exist as a block nor fluid tag"
+                do if(!MinecraftTypes.exists("block", type)) throw "Given tag '" + type + "' does not exist as a block tag"
                 eval this._sb_buildData.tag = ((string)type).substring(1)
                 return this
             },
@@ -397,11 +400,50 @@ var Shared = {
             }
         })
         do if(base != null) {
-            eval assertType(base, "item")
-            eval obj = obj.type(base.itemType)
-            do if(base.itemTag != null) {
-                eval obj = obj._nbt(base.itemTag)
+            eval assertType(base, "block")
+            eval obj = obj.type(base.blockType)
+            do if(base.blockTag != null) {
+                eval obj = obj._nbt(base.blockTag)
             }
+        }
+        return obj
+    },
+    Fluid: function(base) {
+        var obj = SelfBuilder({
+            objectType: function() {return "Shared.Fluid"},
+            type: function(type) {
+                eval assertType(type, "resource")
+                do if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
+                do if(!MinecraftTypes.exists("fluid", type)) throw "Given type '" + type + "' does not exist as a fluid type"
+                eval this._sb_buildData["fluid"] = type
+                return this
+            },
+            tag: function(type) {
+                eval assertType(type, "resource")
+                do if(!type.isTag) throw "Given location '" + type + "' is a type, expected a tag"
+                do if(!MinecraftTypes.exists("fluid", type)) throw "Given tag '" + type + "' does not exist as a fluid tag"
+                eval this._sb_buildData.tag = ((string)type).substring(1)
+                return this
+            },
+            state: function(key, value) {
+                do if(this._sb_buildData.state == null) eval this._sb_buildData.state = {}
+                eval assertType(key, "string")
+                do if(isInstance(value, "string") || isInstance(value, "boolean") || isInstance(value, "int") || isInstance(value, "int_range")) {
+                    eval this._sb_buildData.state[key] = rangeToObj(value)
+                } else {
+                    throw "Expected string, boolean, int or int_range, instead got " + typeOf(obj)
+                }
+                return this
+            },
+            _nbt: function(tag) {
+                eval assertType(tag, "nbt")
+                eval this._sb_buildData["nbt"] = (string)tag
+                return this
+            }
+        })
+        do if(base != null) {
+            eval assertType(base, "resource")
+            eval obj = obj.type(base)
         }
         return obj
     }

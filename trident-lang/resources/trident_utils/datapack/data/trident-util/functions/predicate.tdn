@@ -72,7 +72,7 @@ var Predicate = {
         eval obj._sb_buildLocation = function() {
             return obj.predicate
         }
-        return newEntityPredicate(obj)
+        return newEntityPredicate(obj).which("this")
     },
     locationCheck: function() {
         var obj = Shared.Location()
