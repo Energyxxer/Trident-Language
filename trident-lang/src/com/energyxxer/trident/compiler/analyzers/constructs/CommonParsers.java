@@ -187,6 +187,7 @@ public class CommonParsers {
                 splits.remove(i);
                 splits.remove(i);
                 i--;
+                if(i >= 0) i--;
             }
         }
 

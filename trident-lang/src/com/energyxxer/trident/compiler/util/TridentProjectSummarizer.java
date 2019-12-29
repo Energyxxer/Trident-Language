@@ -276,7 +276,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
         for(TagGroup gr : module.minecraft.tags.getGroups()) {
             if(gr.getDirectoryName().equals(tagDir)) return gr;
         }
-        throw new IllegalArgumentException();
+        return null;
     }
 
     private void logException(Exception x) {
