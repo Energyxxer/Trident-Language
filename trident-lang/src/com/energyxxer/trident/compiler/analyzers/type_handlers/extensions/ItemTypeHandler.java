@@ -31,19 +31,21 @@ public class ItemTypeHandler implements VariableTypeHandler<Item> {
             AutoPropertySymbol property = new AutoPropertySymbol<>("itemTag", TagCompound.class, object::getNBT, object::setNbt);
             return keepSymbol ? property : property.getValue();
         } else if(member.equals("getSlotNBT")) {
-            return (VariableMethod) (params, patterns, pattern1, file1) -> {
-                TagCompound nbt = new TagCompound(
-                        new TagString("id", object.getItemType().toString()),
-                        new TagByte("Count", 1));
-                if(object.getNBT() != null) {
-                    TagCompound tag = object.getNBT().clone();
-                    tag.setName("tag");
-                    nbt = new TagCompound(tag).merge(nbt);
-                }
-                return nbt;
-            };
+            return (VariableMethod) (params, patterns, pattern1, file1) -> getSlotNBT(object);
         }
         throw new MemberNotFoundException();
+    }
+
+    public static TagCompound getSlotNBT(Item item) {
+        TagCompound nbt = new TagCompound(
+                new TagString("id", item.getItemType().toString()),
+                new TagByte("Count", 1));
+        if(item.getNBT() != null) {
+            TagCompound tag = item.getNBT().clone();
+            tag.setName("tag");
+            nbt = new TagCompound(tag).merge(nbt);
+        }
+        return nbt;
     }
 
     @Override

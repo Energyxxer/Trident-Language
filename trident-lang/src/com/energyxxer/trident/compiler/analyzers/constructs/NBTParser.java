@@ -3,6 +3,8 @@ package com.energyxxer.trident.compiler.analyzers.constructs;
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.*;
+import com.energyxxer.commodore.item.Item;
+import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
@@ -16,6 +18,7 @@ import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
 import com.energyxxer.nbtmapper.tags.FlatType;
 import com.energyxxer.nbtmapper.tags.TypeFlags;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.ItemTypeHandler;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -42,9 +45,15 @@ public class NBTParser {
                     return parseValue(((TokenStructure)pattern).getContents(), ctx);
                 }
                 case "INTERPOLATION_BLOCK": {
-                    NBTTag result = InterpolationManager.parse(pattern, ctx, NBTTag.class);
+                    Object result = InterpolationManager.parse(pattern, ctx, NBTTag.class, Item.class, TextComponent.class);
                     EObject.assertNotNull(result, pattern, ctx);
-                    return result;
+                    if(result instanceof Item) {
+                        return ItemTypeHandler.getSlotNBT((Item) result);
+                    }
+                    if(result instanceof TextComponent) {
+                        return new TagString(result.toString());
+                    }
+                    return (NBTTag) result;
                 }
                 case "NBT_COMPOUND_GROUP": {
                     TagCompound compound = new TagCompound();
