@@ -15,6 +15,7 @@ import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.StandardTags;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.suggestions.ComplexSuggestion;
@@ -290,7 +291,28 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(LIST);
             ROOT_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")").addProcessor(clearMemberListProcessor)).setName("PARENTHESIZED_VALUE"));
             ROOT_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("function").setName("VALUE_WRAPPER_KEY").addProcessor(startClosure), optional(brace("("), list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"), brace(")")).setName("FORMAL_PARAMETERS"), ANONYMOUS_INNER_FUNCTION).setName("NEW_FUNCTION").addProcessor(endComplexValue));
+            ROOT_INTERPOLATION_VALUE.add(
+                    group(
+                            literal("function").setName("VALUE_WRAPPER_KEY").addProcessor(startClosure),
+                            optional(
+                                    brace("("),
+                                    list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"),
+                                    brace(")")
+                            ).setName("FORMAL_PARAMETERS"),
+                            ANONYMOUS_INNER_FUNCTION
+                    ).setName("NEW_FUNCTION").addProcessor(endComplexValue).addProcessor((p, l) -> {
+                        if(l.getSummaryModule() != null) {
+                            TokenList paramList = (TokenList) p.find("FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
+                            if(paramList != null) {
+                                for(TokenPattern<?> paramName : paramList.searchByName("FORMAL_PARAMETER_NAME")) {
+                                    SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), paramName.flatten(false), p.find("ANONYMOUS_INNER_FUNCTION").getStringLocation().index+1);
+                                    sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
+                                    sym.setVisibility(Symbol.SymbolVisibility.LOCAL);
+                                    ((TridentSummaryModule) l.getSummaryModule()).peek().putLateElement(sym);
+                                }
+                            }
+                        }
+                    }));
             ROOT_INTERPOLATION_VALUE.add(group(literal("new").setName("VALUE_WRAPPER_KEY"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
             LazyTokenStructureMatch MEMBER_ACCESS = choice(
@@ -2196,12 +2218,14 @@ public class TridentProductions {
                                                 }
                                             }),
                                     group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("entity"), choice(
-                                            group(choice(identifierX(), literal("default")).setName("ENTITY_NAME").addTags("cspn:Entity Type Name"), choice(symbol("*"), ENTITY_ID_TAGGED).setName("ENTITY_BASE").addTags("cspn:Base Type")).setName("CONCRETE_ENTITY_DECLARATION"),
-                                            group(literal("component"), group(identifierX()).setName("ENTITY_NAME").addTags("cspn:Component Name")).setName("ABSTRACT_ENTITY_DECLARATION")
+                                            group(choice(identifierA(), identifierX().addTags("cspn:Entity Name"), literal("default")).setName("ENTITY_NAME").addTags("cspn:Entity Type Name"), choice(symbol("*"), ENTITY_ID_TAGGED).setName("ENTITY_BASE").addTags("cspn:Base Type")).setName("CONCRETE_ENTITY_DECLARATION"),
+                                            group(literal("component"), choice(identifierA(), identifierX()).setName("ENTITY_NAME").addTags("cspn:Component Name")).setName("ABSTRACT_ENTITY_DECLARATION")
                                     ).setName("ENTITY_DECLARATION_HEADER"), optional(keyword("implements"), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST").addTags("cspn:Implemented Components")).setName("IMPLEMENTED_COMPONENTS"), entityBody).setName("DEFINE_ENTITY")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
-                                                    String name = p.find("ENTITY_DECLARATION_HEADER.ENTITY_NAME").flatten(false);
+                                                    TokenPattern<?> namePattern = p.find("ENTITY_DECLARATION_HEADER.ENTITY_NAME");
+                                                    if(namePattern.find("IDENTIFIER_A") != null) return;
+                                                    String name = namePattern.flatten(false);
                                                     if(!name.equals("default")) {
                                                         SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), name, p.getStringLocation().index);
                                                         sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
@@ -2212,10 +2236,12 @@ public class TridentProductions {
                                                     }
                                                 }
                                             }),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("item"), choice(identifierX().addTags("cspn:Item Type Name"), literal("default")).setName("ITEM_NAME"), noToken().addTags("cspn:Base Type"), ITEM_ID, optional(hash(), integer().addTags("cspn:Model Index")).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM")
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("item"), choice(identifierA(), identifierX().addTags("cspn:Item Type Name"), literal("default")).setName("ITEM_NAME"), noToken().addTags("cspn:Base Type"), resourceLocationFixer, ITEM_ID, optional(hash(), integer().addTags("cspn:Model Index")).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
-                                                    String name = p.find("ITEM_NAME").flatten(false);
+                                                    TokenPattern<?> namePattern = p.find("ITEM_NAME");
+                                                    if(namePattern.find("IDENTIFIER_A") != null) return;
+                                                    String name = namePattern.flatten(false);
                                                     if(!name.equals("default")) {
                                                         SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), name, p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_VARIABLE);
                                                         sym.addTag(TridentSuggestionTags.TAG_CUSTOM_ITEM);

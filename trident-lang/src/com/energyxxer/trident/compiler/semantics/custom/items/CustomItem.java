@@ -184,17 +184,21 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
     public static void defineItem(TokenPattern<?> pattern, ISymbolContext ctx) {
         Symbol.SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), ctx, Symbol.SymbolVisibility.GLOBAL);
 
-        String entityName = pattern.find("ITEM_NAME").flatten(false);
+        String itemName = CommonParsers.parseIdentifierA(pattern.find("ITEM_NAME.IDENTIFIER_A"), ctx);
+        if(itemName == null) { //Is not an IDENTIFIER_A
+            itemName = pattern.find("ITEM_NAME").flatten(false);
+        }
+
         Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), ctx);
 
         final CustomItem itemDecl;
         TokenPattern<?> rawCustomModelData = pattern.find("CUSTOM_MODEL_DATA.INTEGER");
 
-        if(!entityName.equals("default")) {
-            itemDecl = new CustomItem(entityName, defaultType, ctx);
+        if(!itemName.equals("default")) {
+            itemDecl = new CustomItem(itemName, defaultType, ctx);
             if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, ctx));
 
-            ctx.putInContextForVisibility(visibility, new Symbol(entityName, visibility, itemDecl));
+            ctx.putInContextForVisibility(visibility, new Symbol(itemName, visibility, itemDecl));
         } else if(rawCustomModelData != null) {
             throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default items don't support custom model data specifiers", rawCustomModelData, ctx);
         } else {

@@ -152,7 +152,10 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
         switch (headerDeclaration.getName()) {
             case "CONCRETE_ENTITY_DECLARATION": {
-                entityName = headerDeclaration.find("ENTITY_NAME").flatten(false);
+                entityName = CommonParsers.parseIdentifierA(headerDeclaration.find("ENTITY_NAME.IDENTIFIER_A"), ctx);
+                if(entityName == null) { //Is not an IDENTIFIER_A
+                    entityName = headerDeclaration.find("ENTITY_NAME").flatten(false);
+                }
 
                 if (headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED") != null) {
                     Object referencedType = CommonParsers.parseEntityReference(headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
@@ -172,7 +175,10 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                 break;
             }
             case "ABSTRACT_ENTITY_DECLARATION": {
-                entityName = headerDeclaration.find("ENTITY_NAME").flatten(false);
+                entityName = CommonParsers.parseIdentifierA(headerDeclaration.find("ENTITY_NAME.IDENTIFIER_A"), ctx);
+                if(entityName == null) { //Is not an IDENTIFIER_A
+                    entityName = headerDeclaration.find("ENTITY_NAME").flatten(false);
+                }
                 break;
             }
             default: {

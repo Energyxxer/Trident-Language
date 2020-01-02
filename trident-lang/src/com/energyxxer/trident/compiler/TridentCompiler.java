@@ -196,6 +196,7 @@ public class TridentCompiler extends AbstractProcess {
             typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("entities.nbttm"));
             typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("block_entities.nbttm"));
         }
+        typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("trident.nbttm"));
 
         this.setProgress("Adding native methods");
 
@@ -822,6 +823,7 @@ public class TridentCompiler extends AbstractProcess {
             defaults.put("common.nbttm", read("/typemaps/common.nbttm"));
             defaults.put("entities.nbttm", read("/typemaps/entities.nbttm"));
             defaults.put("block_entities.nbttm", read("/typemaps/block_entities.nbttm"));
+            defaults.put("trident.nbttm", read("/typemaps/trident.nbttm"));
 
             dummyModule.minecraft.types.entity.create("player");
             dummyModule.minecraft.types.block.create("air");

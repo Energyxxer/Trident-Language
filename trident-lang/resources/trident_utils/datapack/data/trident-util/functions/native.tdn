@@ -20,6 +20,17 @@ global var Block = {
     getAll: 0
 }
 
+global var Character = {
+    fromCodePoint: 0,
+    toCodePoint: 0,
+    getName: 0,
+    isLetter: 0,
+    isDigit: 0,
+    isWhitespace: 0,
+    isUpperCase: 0,
+    isLowerCase: 0
+}
+
 global var Item = {
     exists: 0,
     getAll: 0
@@ -66,6 +77,7 @@ global var JSON = {
 global var Reflection = {
     getMetadata: 0,
     getFilesWithTag: 0,
+    getFilesWithMetaTag: 0,
     insertToFile: 0,
     getCurrentFile: 0,
     getWritingFile: 0
