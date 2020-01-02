@@ -329,6 +329,7 @@ public class TridentFile extends SymbolContext {
         TridentFile parentFile = parent.getStaticParentFile();
 
         boolean popCall = false;
+        int postProcessingActionStartIndex = parentFile.postProcessingActions.size();
         parentFile.addCascadingRequires(Collections.emptyList());
         TridentCompiler compiler = parent.getCompiler();
 
@@ -376,22 +377,6 @@ public class TridentFile extends SymbolContext {
                         }
                     }
                 }
-                while(!parentFile.postProcessingActions.isEmpty()) {
-                    try {
-                        parentFile.postProcessingActions.remove(0).run();
-                    }  catch(TridentException x) {
-                        if(compiler.getTryStack().isEmpty()) {
-                            x.expandToUncaught();
-                            compiler.getReport().addNotice(x.getNotice());
-                        } else if(compiler.getTryStack().isRecovering()) {
-                            queuedExceptions.add(x);
-                        } else if(compiler.getTryStack().isBreaking()) {
-                            throw x;
-                        }
-                    } catch(TridentException.Grouped gx) {
-                        queuedExceptions.addAll(gx.getExceptions());
-                    }
-                }
             }
             if(!queuedExceptions.isEmpty()) {
                 TridentException.Grouped ex = new TridentException.Grouped(queuedExceptions);
@@ -399,6 +384,23 @@ public class TridentFile extends SymbolContext {
                 throw ex;
             }
         } finally {
+            while(parentFile.postProcessingActions.size() > postProcessingActionStartIndex) {
+                try {
+                    parentFile.postProcessingActions.remove(postProcessingActionStartIndex).run();
+                }  catch(TridentException x) {
+                    if(compiler.getTryStack().isEmpty()) {
+                        x.expandToUncaught();
+                        compiler.getReport().addNotice(x.getNotice());
+                    } else {
+                        if(queuedExceptions == null) queuedExceptions = new ArrayList<>();
+                        queuedExceptions.add(x);
+                    }
+                } catch(TridentException.Grouped gx) {
+                    if(queuedExceptions == null) queuedExceptions = new ArrayList<>();
+                    queuedExceptions.addAll(gx.getExceptions());
+                }
+            }
+
             if(queuedExceptions != null && !queuedExceptions.isEmpty()) {
                 for(TridentException x : queuedExceptions) {
                     x.expandToUncaught();
