@@ -37,6 +37,27 @@ import java.util.Locale;
 
 @AnalyzerMember(key = "set")
 public class SetParser implements SimpleCommandParser {
+    
+    public enum SetOperator {
+        ASSIGN("="),ADD("+="),SUBTRACT("-="),MULTIPLY("*="),DIVIDE("/="),MODULO("%="),LESS_THAN("<"),GREATER_THAN(">"),SWAP("<>");
+        
+        private String shorthand;
+
+        SetOperator(String shorthand) {
+            this.shorthand = shorthand;
+        }
+
+        public String getShorthand() {
+            return shorthand;
+        }
+
+        public static SetOperator getOperatorForSymbol(String symbol) {
+            for(SetOperator operator : values()) {
+                if(operator.shorthand.equals(symbol)) return operator;
+            }
+            throw new IllegalArgumentException("Invalid set-operator shorthand '" + symbol + "'");
+        }
+    }
 
     private interface SetOperationHandler<A extends PointerDecorator, B extends PointerDecorator> {
         Command perform(A a, B b, TokenPattern<?> pattern, ISymbolContext ctx);
@@ -44,17 +65,17 @@ public class SetParser implements SimpleCommandParser {
 
     private static HashMap<String, SetOperationHandler> handlers = new HashMap<>();
 
-    private static <A extends PointerDecorator, B extends PointerDecorator> void putHandler(Class<A> classA, ScorePlayersOperation.Operation operator, Class<B> classB, SetOperationHandler<A, B> handler) {
+    private static <A extends PointerDecorator, B extends PointerDecorator> void putHandler(Class<A> classA, SetOperator operator, Class<B> classB, SetOperationHandler<A, B> handler) {
         handlers.put(classA.getName() + " " + operator.getShorthand() + " " + classB.getName(), handler);
     }
 
     static {
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.ASSIGN, PointerDecorator.ScorePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.ASSIGN, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
                         new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.ASSIGN, b.score)
         );
 
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.ASSIGN, PointerDecorator.ValuePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.ASSIGN, PointerDecorator.ValuePointer.class,
                 (a, b, pattern, ctx) -> {
                     if(b.value instanceof TagInt) {
                         return new ScoreSet(a.score, ((TagInt) b.value).getValue());
@@ -63,7 +84,7 @@ public class SetParser implements SimpleCommandParser {
                     }
                 }
         );
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.ASSIGN, PointerDecorator.DataHolderPointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.ASSIGN, PointerDecorator.DataHolderPointer.class,
                 (a, b, pattern, ctx) -> {
                     Command get = new DataGetCommand(b.holder, b.path, b.scale);
                     return new ExecuteCommand(get, new ExecuteStoreScore(ExecuteStore.StoreValue.RESULT, a.score));
@@ -71,13 +92,13 @@ public class SetParser implements SimpleCommandParser {
         );
 
 
-        putHandler(PointerDecorator.DataHolderPointer.class, ScorePlayersOperation.Operation.ASSIGN, PointerDecorator.ScorePointer.class,
+        putHandler(PointerDecorator.DataHolderPointer.class, SetOperator.ASSIGN, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) -> {
                     Command get = new ScoreGet(b.score);
                     return new ExecuteCommand(get, new ExecuteStoreDataHolder(ExecuteStore.StoreValue.RESULT, a.holder, a.path, a.type.getValue(), a.scale));
                 }
         );
-        putHandler(PointerDecorator.DataHolderPointer.class, ScorePlayersOperation.Operation.ASSIGN, PointerDecorator.ValuePointer.class,
+        putHandler(PointerDecorator.DataHolderPointer.class, SetOperator.ASSIGN, PointerDecorator.ValuePointer.class,
                 (a, b, pattern, ctx) -> {
                     if(a.scale != 1) {
                         if(b.value instanceof NumericNBTTag) {
@@ -89,7 +110,7 @@ public class SetParser implements SimpleCommandParser {
                     return new DataModifyCommand(a.holder, a.path, DataModifyCommand.SET(), new ModifySourceValue(b.value));
                 }
         );
-        putHandler(PointerDecorator.DataHolderPointer.class, ScorePlayersOperation.Operation.ASSIGN, PointerDecorator.DataHolderPointer.class,
+        putHandler(PointerDecorator.DataHolderPointer.class, SetOperator.ASSIGN, PointerDecorator.DataHolderPointer.class,
                 (a, b, pattern, ctx) -> {
                     if(a.scale * b.scale == 1) {
                         return new DataModifyCommand(a.holder, a.path, DataModifyCommand.SET(), new ModifySourceFromHolder(b.holder, b.path));
@@ -100,41 +121,41 @@ public class SetParser implements SimpleCommandParser {
         );
 
 
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.ADD, PointerDecorator.ScorePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.ADD, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
                         new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.ADD, b.score)
         );
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.SUBTRACT, PointerDecorator.ScorePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.SUBTRACT, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
                         new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.SUBTRACT, b.score)
         );
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.MULTIPLY, PointerDecorator.ScorePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.MULTIPLY, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
                         new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.MULTIPLY, b.score)
         );
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.DIVIDE, PointerDecorator.ScorePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.DIVIDE, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
                         new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.DIVIDE, b.score)
         );
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.MODULO, PointerDecorator.ScorePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.MODULO, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
                         new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.MODULO, b.score)
         );
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.LESS_THAN, PointerDecorator.ScorePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.LESS_THAN, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
                         new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.LESS_THAN, b.score)
         );
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.GREATER_THAN, PointerDecorator.ScorePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.GREATER_THAN, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
                         new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.GREATER_THAN, b.score)
         );
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.SWAP, PointerDecorator.ScorePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.SWAP, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
                         new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.SWAP, b.score)
         );
 
 
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.ADD, PointerDecorator.ValuePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.ADD, PointerDecorator.ValuePointer.class,
                 (a, b, pattern, ctx) -> {
                     if(b.value instanceof TagInt) {
                         return new ScoreAdd(a.score, ((TagInt) b.value).getValue());
@@ -143,7 +164,7 @@ public class SetParser implements SimpleCommandParser {
                     }
                 }
         );
-        putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.SUBTRACT, PointerDecorator.ValuePointer.class,
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.SUBTRACT, PointerDecorator.ValuePointer.class,
                 (a, b, pattern, ctx) -> {
                     if(b.value instanceof TagInt) {
                         return new ScoreAdd(a.score, -((TagInt) b.value).getValue());
@@ -155,7 +176,7 @@ public class SetParser implements SimpleCommandParser {
 
 
 
-        putHandler(PointerDecorator.DataHolderPointer.class, ScorePlayersOperation.Operation.MULTIPLY, PointerDecorator.ValuePointer.class,
+        putHandler(PointerDecorator.DataHolderPointer.class, SetOperator.MULTIPLY, PointerDecorator.ValuePointer.class,
                 (a, b, pattern, ctx) -> {
                     if(!(b.value instanceof NumericNBTTag)) {
                         throw new TridentException(TridentException.Source.TYPE_ERROR, "Can only multiply by a numeric NBT type", pattern, ctx);
@@ -181,7 +202,7 @@ public class SetParser implements SimpleCommandParser {
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
 
         PointerDecorator target = parsePointer(pattern.find("POINTER"), ctx);
-        ScorePlayersOperation.Operation operator = ScorePlayersOperation.Operation.getOperationForSymbol(pattern.find("OPERATOR").flatten(false));
+        SetOperator operator = SetOperator.getOperatorForSymbol(pattern.find("OPERATOR").flatten(false));
         PointerDecorator source = parsePointer(pattern.find("VALUE"), ctx);
 
         String key = target.getClass().getName() + " " + operator.getShorthand() + " " + source.getClass().getName();
