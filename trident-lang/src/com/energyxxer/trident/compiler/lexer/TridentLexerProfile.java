@@ -42,7 +42,11 @@ public class TridentLexerProfile extends LexerProfile {
     }
 
     public static boolean isValidIdentifier(String str) {
-        return str.matches("[a-zA-Z_][a-zA-Z0-9_]*") && !reservedWords.contains(str);
+        return str.matches("[a-zA-Z_][a-zA-Z0-9_]*");
+    }
+
+    public static boolean isReservedKeyword(String str) {
+        return reservedWords.contains(str);
     }
 
     private void initialize() {

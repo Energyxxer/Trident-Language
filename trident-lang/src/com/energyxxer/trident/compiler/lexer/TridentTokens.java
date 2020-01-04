@@ -64,7 +64,7 @@ public class TridentTokens {
             IDENTIFIER_TYPE_D,
             //Pretty much Java identifiers, without using reserved keywords
             IDENTIFIER_TYPE_X,
-            //Java identifiers but only for constructor names (data type names)
+            //Java identifiers without the reserved words
             IDENTIFIER_TYPE_Y,
             //minecraft:trident/resource_locations
             RESOURCE_LOCATION,

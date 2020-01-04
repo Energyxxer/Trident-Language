@@ -324,7 +324,7 @@ public class TridentProductions {
                                 l.getSuggestionModule().addSuggestion(new ComplexSuggestion(TridentSuggestionTags.IDENTIFIER_MEMBER));
                             }
                         }
-                    }), identifierX()
+                    }), identifierY()
                             .setName("MEMBER_NAME")
                             .addTags(SuggestionTags.ENABLED)
                             .addProcessor((p, l) -> {
@@ -380,7 +380,7 @@ public class TridentProductions {
                     brace("{").addProcessor(startComplexValue),
                     list(
                             group(
-                                    choice(identifierX(), ofType(STRING_LITERAL))
+                                    choice(identifierY(), ofType(STRING_LITERAL))
                                             .setName("DICTIONARY_KEY")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
@@ -2629,9 +2629,11 @@ public class TridentProductions {
         return g;
     }
 
-
     private LazyTokenItemMatch identifierX() {
         return ofType(IDENTIFIER_TYPE_X).setName("IDENTIFIER");
+    }
+    private LazyTokenItemMatch identifierY() {
+        return ofType(IDENTIFIER_TYPE_Y).setName("IDENTIFIER");
     }
 
     private static Symbol.SymbolVisibility parseVisibility(TokenPattern<?> pattern, Symbol.SymbolVisibility defaultValue) {

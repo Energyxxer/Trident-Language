@@ -44,9 +44,9 @@ var Shared = {
                 eval this._sb_buildData.effects = obj
                 return this
             },
-            _nbt: function(tag) {
+            nbt: function(tag) {
                 eval assertType(tag, "nbt")
-                eval this._sb_buildData["nbt"] = (string)tag
+                eval this._sb_buildData.nbt = (string)tag
                 return this
             },
             isOnFire: function(bool) {
@@ -173,12 +173,12 @@ var Shared = {
     Location: function() {
         return SelfBuilder({
             objectType: function() {return "Shared.Location"},
-            _block: function(obj) {
+            block: function(obj) {
                 eval assertObjectType(obj, "Shared.Block")
                 eval this._sb_buildData["block"] = obj
                 return this
             },
-            _fluid: function(obj) {
+            fluid: function(obj) {
                 eval assertObjectType(obj, "Shared.Fluid")
                 eval this._sb_buildData["fluid"] = obj
                 return this
@@ -331,7 +331,7 @@ var Shared = {
                 eval this._sb_buildData.stored_enchantments = enchantments
                 return this
             },
-            _nbt: function(tag) {
+            nbt: function(tag) {
                 eval assertType(tag, "nbt")
                 eval this._sb_buildData["nbt"] = (string)tag
                 return this
@@ -435,7 +435,7 @@ var Shared = {
                 }
                 return this
             },
-            _nbt: function(tag) {
+            nbt: function(tag) {
                 eval assertType(tag, "nbt")
                 eval this._sb_buildData["nbt"] = (string)tag
                 return this
