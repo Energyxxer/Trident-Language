@@ -127,8 +127,9 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
         return newStruct;
     }
 
-    public void setGreedy(boolean greedy) {
+    public LazyTokenStructureMatch setGreedy(boolean greedy) {
         this.greedy = greedy;
+        return this;
     }
 
     public boolean getGreedy() {

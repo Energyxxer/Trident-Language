@@ -630,7 +630,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "function"),
-                    choice(group(resourceLocationFixer, group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE_WRAPPER").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION)).setName("FUNCTION_REFERENCE"), OPTIONAL_NAME_INNER_FUNCTION).addTags(SuggestionTags.ENABLED)
+                    choice(group(resourceLocationFixer, group(RESOURCE_LOCATION_TAGGED).setName("FUNCTION_REFERENCE_WRAPPER").addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.FUNCTION)).setName("FUNCTION_REFERENCE"), OPTIONAL_NAME_INNER_FUNCTION).setGreedy(true).addTags(SuggestionTags.ENABLED)
             ));
         }
         //endregion
