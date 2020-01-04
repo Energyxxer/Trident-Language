@@ -81,6 +81,7 @@ public class TridentCompiler extends AbstractProcess {
     private JsonObject properties = null;
     private int languageLevel = 1;
     private String defaultNamespace = null;
+    private String anonymousFunctionTemplate = "_anonymous*";
 
     //Caller Feedback
     private CompilerReport report = null;
@@ -173,6 +174,10 @@ public class TridentCompiler extends AbstractProcess {
 
         if(properties.has("resources-output") && properties.get("resources-output").isJsonPrimitive() && properties.get("resources-output").getAsJsonPrimitive().isString()) {
             resourcePack = new ResourcePackGenerator(this, newFileObject(properties.get("resources-output").getAsString()));
+        }
+
+        if(properties.has("anonymous-function-name") && properties.get("anonymous-function-name").isJsonPrimitive() && properties.get("anonymous-function-name").getAsJsonPrimitive().isString()) {
+            anonymousFunctionTemplate = properties.get("anonymous-function-name").getAsString();
         }
 
         VersionFeatureManager.setActiveFeatureMap(featureMap);
@@ -804,6 +809,10 @@ public class TridentCompiler extends AbstractProcess {
 
     public Dependency.Mode getDependencyMode() {
         return dependencyMode;
+    }
+
+    public String createAnonymousFunctionName(int index) {
+        return anonymousFunctionTemplate.replace("*",String.valueOf(index));
     }
 
     private void setDefaultDefinitionPacks(DefinitionPack[] defaultDefinitionPacks) {

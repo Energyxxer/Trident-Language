@@ -159,7 +159,7 @@ public class TridentFile extends SymbolContext {
         String innerFilePathRaw = parent.getStaticParentFile().getPath().toString();
         innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
 
-        Path relSourcePath = Paths.get(innerFilePathRaw).resolve("_anonymous" + parent.getStaticParentFile().anonymousChildren + ".tdn");
+        Path relSourcePath = Paths.get(innerFilePathRaw).resolve(parent.getCompiler().createAnonymousFunctionName(parent.getStaticParentFile().anonymousChildren) + ".tdn");
         parent.getStaticParentFile().anonymousChildren++;
 
         String functionPath = relSourcePath.subpath(2, relSourcePath.getNameCount()).toString();
@@ -200,7 +200,7 @@ public class TridentFile extends SymbolContext {
                 innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(functionName + ".tdn").toString();
             }
         } else {
-            innerFilePathRaw = Paths.get(innerFilePathRaw).resolve("_anonymous" + parent.getStaticParentFile().anonymousChildren + ".tdn").toString();
+            innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(parent.getCompiler().createAnonymousFunctionName(parent.getStaticParentFile().anonymousChildren) + ".tdn").toString();
             parent.getStaticParentFile().anonymousChildren++;
         }
 
