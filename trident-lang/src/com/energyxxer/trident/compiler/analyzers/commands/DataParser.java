@@ -4,7 +4,10 @@ import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.data.*;
 import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTListMatch;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathCompoundRoot;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathNode;
 import com.energyxxer.commodore.types.defaults.StorageTarget;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -18,8 +21,7 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.nbtmapper.tags.PathProtocol.BLOCK_ENTITY;
-import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
+import java.util.ArrayList;
 
 @AnalyzerMember(key = "data")
 public class DataParser implements SimpleCommandParser {
@@ -56,14 +58,18 @@ public class DataParser implements SimpleCommandParser {
         NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"), ctx);
         DataModifyCommand.ModifyOperation operation;
 
+        boolean appendListNode = false;
+
 
         TokenPattern<?> inner = ((TokenStructure)pattern.find("CHOICE")).getContents();
         switch(inner.getName()) {
             case "MODIFY_APPEND": {
                 operation = DataModifyCommand.APPEND();
+                appendListNode = true;
                 break;
             }
             case "MODIFY_INSERT": {
+                appendListNode = true;
                 operation = DataModifyCommand.INSERT(
                         inner.find("CHOICE").flatten(false).equals("after") ?
                                 DataModifyCommand.InsertOrder.AFTER :
@@ -75,6 +81,7 @@ public class DataParser implements SimpleCommandParser {
                 operation = DataModifyCommand.MERGE();
                 break;
             case "MODIFY_PREPEND":
+                appendListNode = true;
                 operation = DataModifyCommand.PREPEND();
                 break;
             case "MODIFY_SET":
@@ -87,7 +94,24 @@ public class DataParser implements SimpleCommandParser {
 
         DataModifyCommand.ModifySource source = parseSource(inner.find("DATA_SOURCE"), ctx);
 
+        NBTPath analysisPath = path;
+        if(appendListNode) {
+            ArrayList<NBTPathNode> newNodes = new ArrayList<>();
+            for(NBTPath subPath : path) {
+                newNodes.add(subPath.getNode());
+            }
+            newNodes.add(new NBTListMatch());
+            analysisPath = new NBTPath(newNodes.toArray(new NBTPathNode[0]));
+        }
+
         try {
+            if(source instanceof ModifySourceValue) {
+                NBTParser.analyzeTag(((ModifySourceValue) source).getValue(), NBTParser.createContextForDataHolder(target, ctx), analysisPath, pattern, ctx);
+            } else {
+                NBTPath sourcePath = ((ModifySourceFromHolder) source).getSourcePath();
+                if(sourcePath == null) sourcePath = new NBTPath(new NBTPathCompoundRoot(new TagCompound()));
+                NBTParser.comparePaths(analysisPath, NBTParser.createContextForDataHolder(target, ctx), sourcePath, NBTParser.createContextForDataHolder(((ModifySourceFromHolder) source).getHolder(), ctx), pattern, ctx);
+            }
             return new DataModifyCommand(target, path, operation, source);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
@@ -102,13 +126,8 @@ public class DataParser implements SimpleCommandParser {
         TagCompound nbt = NBTParser.parseCompound(inner.find("NBT_COMPOUND"), ctx);
 
         try {
-            if(target instanceof DataHolderBlock) {
-                PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
-                NBTParser.analyzeTag(nbt, context, inner.find("NBT_COMPOUND"), ctx);
-            } else if(target instanceof DataHolderEntity) {
-                PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
-                NBTParser.analyzeTag(nbt, context, inner.find("NBT_COMPOUND"), ctx);
-            }
+            PathContext context = NBTParser.createContextForDataHolder(target, ctx);
+            NBTParser.analyzeTag(nbt, context, inner.find("NBT_COMPOUND"), ctx);
             return new DataMergeCommand(target, nbt);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, inner, ctx)

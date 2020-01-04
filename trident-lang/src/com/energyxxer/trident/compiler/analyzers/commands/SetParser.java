@@ -107,11 +107,14 @@ public class SetParser implements SimpleCommandParser {
                             throw new TridentException(TridentException.Source.COMMAND_ERROR, "Cannot scale a non-numerical value, found " + b.value.getType(), pattern, ctx);
                         }
                     }
+                    NBTParser.analyzeTag(b.value, NBTParser.createContextForDataHolder(a.holder, ctx), a.path, pattern, ctx);
                     return new DataModifyCommand(a.holder, a.path, DataModifyCommand.SET(), new ModifySourceValue(b.value));
                 }
         );
         putHandler(PointerDecorator.DataHolderPointer.class, SetOperator.ASSIGN, PointerDecorator.DataHolderPointer.class,
                 (a, b, pattern, ctx) -> {
+                    NBTParser.comparePaths(a.path, NBTParser.createContextForDataHolder(a.holder, ctx), b.path, NBTParser.createContextForDataHolder(b.holder, ctx), pattern, ctx);
+
                     if(a.scale * b.scale == 1) {
                         return new DataModifyCommand(a.holder, a.path, DataModifyCommand.SET(), new ModifySourceFromHolder(b.holder, b.path));
                     }
