@@ -29,6 +29,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.custom.special.ObjectiveCreationFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.util.Lazy;
 
@@ -171,6 +172,81 @@ public class SetParser implements SimpleCommandParser {
                 (a, b, pattern, ctx) -> {
                     if(b.value instanceof TagInt) {
                         return new ScoreAdd(a.score, -((TagInt) b.value).getValue());
+                    } else {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot perform operations between scores and non-integer", pattern, ctx);
+                    }
+                }
+        );
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.MULTIPLY, PointerDecorator.ValuePointer.class,
+                (a, b, pattern, ctx) -> {
+                    if(b.value instanceof TagInt) {
+                        ctx.assertLanguageLevel(2, "Score constants in operations are ", pattern);
+                        return new ScorePlayersOperation(
+                                a.score,
+                                ScorePlayersOperation.Operation.MULTIPLY,
+                                ((ObjectiveCreationFile) ctx.getCompiler().getSpecialFileManager().get("create_objectives"))
+                                        .getConstant(((TagInt) b.value).getValue())
+                        );
+                    } else {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot perform operations between scores and non-integer", pattern, ctx);
+                    }
+                }
+        );
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.DIVIDE, PointerDecorator.ValuePointer.class,
+                (a, b, pattern, ctx) -> {
+                    if(b.value instanceof TagInt) {
+                        ctx.assertLanguageLevel(2, "Score constants in operations are ", pattern);
+                        return new ScorePlayersOperation(
+                                a.score,
+                                ScorePlayersOperation.Operation.DIVIDE,
+                                ((ObjectiveCreationFile) ctx.getCompiler().getSpecialFileManager().get("create_objectives"))
+                                        .getConstant(((TagInt) b.value).getValue())
+                        );
+                    } else {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot perform operations between scores and non-integer", pattern, ctx);
+                    }
+                }
+        );
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.MODULO, PointerDecorator.ValuePointer.class,
+                (a, b, pattern, ctx) -> {
+                    if(b.value instanceof TagInt) {
+                        ctx.assertLanguageLevel(2, "Score constants in operations are ", pattern);
+                        return new ScorePlayersOperation(
+                                a.score,
+                                ScorePlayersOperation.Operation.MODULO,
+                                ((ObjectiveCreationFile) ctx.getCompiler().getSpecialFileManager().get("create_objectives"))
+                                        .getConstant(((TagInt) b.value).getValue())
+                        );
+                    } else {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot perform operations between scores and non-integer", pattern, ctx);
+                    }
+                }
+        );
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.LESS_THAN, PointerDecorator.ValuePointer.class,
+                (a, b, pattern, ctx) -> {
+                    if(b.value instanceof TagInt) {
+                        ctx.assertLanguageLevel(2, "Score constants in operations are ", pattern);
+                        return new ScorePlayersOperation(
+                                a.score,
+                                ScorePlayersOperation.Operation.MULTIPLY,
+                                ((ObjectiveCreationFile) ctx.getCompiler().getSpecialFileManager().get("create_objectives"))
+                                        .getConstant(((TagInt) b.value).getValue())
+                        );
+                    } else {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot perform operations between scores and non-integer", pattern, ctx);
+                    }
+                }
+        );
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.GREATER_THAN, PointerDecorator.ValuePointer.class,
+                (a, b, pattern, ctx) -> {
+                    if(b.value instanceof TagInt) {
+                        ctx.assertLanguageLevel(2, "Score constants in operations are ", pattern);
+                        return new ScorePlayersOperation(
+                                a.score,
+                                ScorePlayersOperation.Operation.MULTIPLY,
+                                ((ObjectiveCreationFile) ctx.getCompiler().getSpecialFileManager().get("create_objectives"))
+                                        .getConstant(((TagInt) b.value).getValue())
+                        );
                     } else {
                         throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot perform operations between scores and non-integer", pattern, ctx);
                     }
