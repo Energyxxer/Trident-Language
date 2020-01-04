@@ -40,7 +40,7 @@ public class ScoreboardParser implements SimpleCommandParser {
         switch(inner.getName()) {
             case "ADD": {
                 String objectiveName = CommonParsers.parseIdentifierA(inner.find("OBJECTIVE_NAME.IDENTIFIER_A"), ctx);
-                String criteria = CommonParsers.parseIdentifierB(inner.find("CRITERIA"), ctx);
+                String criteria = CommonParsers.parseIdentifierB(inner.find("CRITERIA.IDENTIFIER_B"), ctx);
                 TextComponent displayName = TextParser.parseTextComponent(inner.find(".TEXT_COMPONENT"), ctx);
                 Objective objective;
                 if(ctx.getCompiler().getModule().getObjectiveManager().exists(objectiveName)) {

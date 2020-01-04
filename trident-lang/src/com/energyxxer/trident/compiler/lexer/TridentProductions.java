@@ -1040,7 +1040,7 @@ public class TridentProductions {
                     matchItem(COMMAND_HEADER, "scoreboard"),
                     choice(
                             group(literal("objectives"), choice(
-                                    group(literal("add"), group(identifierA()).setName("OBJECTIVE_NAME").addTags("cspn:Objective"), identifierB().setName("CRITERIA").addTags("cspn:Criteria"), optional(TEXT_COMPONENT).addTags("cspn:Display Name")).setName("ADD"),
+                                    group(literal("add"), group(identifierA()).setName("OBJECTIVE_NAME").addTags("cspn:Objective"), group(identifierB()).setName("CRITERIA").addTags("cspn:Criteria"), optional(TEXT_COMPONENT).addTags("cspn:Display Name")).setName("ADD"),
                                     literal("list").setName("LIST"),
                                     group(literal("modify"), objectiveName(), choice(
                                             group(literal("displayname"), noToken().addTags("cspn:Display Name"), TEXT_COMPONENT).setName("DISPLAYNAME"),
