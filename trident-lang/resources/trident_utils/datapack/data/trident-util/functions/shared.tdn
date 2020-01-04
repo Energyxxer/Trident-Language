@@ -393,7 +393,7 @@ var Shared = {
                 }
                 return this
             },
-            _nbt: function(tag) {
+            nbt: function(tag) {
                 eval assertType(tag, "nbt")
                 eval this._sb_buildData["nbt"] = (string)tag
                 return this
