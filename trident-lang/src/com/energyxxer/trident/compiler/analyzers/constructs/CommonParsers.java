@@ -673,7 +673,7 @@ public class CommonParsers {
 
     public static NumericNBTType getNumericType(Object body, NBTPath path, ISymbolContext ctx, TokenPattern<?> pattern, boolean strict) {
 
-        PathContext context = new PathContext().setIsSetting(true).setProtocol(body instanceof Entity ? PathProtocol.ENTITY : body instanceof CoordinateSet ? PathProtocol.BLOCK_ENTITY : STORAGE, body instanceof Entity ? guessEntityType((Entity) body, ctx) : null);
+        PathContext context = new PathContext().setIsSetting(true).setProtocol(body instanceof Entity ? PathProtocol.ENTITY : body instanceof CoordinateSet ? PathProtocol.BLOCK_ENTITY : STORAGE, body instanceof Entity ? guessEntityType((Entity) body, ctx) : body instanceof TridentUtil.ResourceLocation ? body.toString() : null);
 
         DataTypeQueryResponse response = ctx.getCompiler().getTypeMap().collectTypeInformation(path, context);
         //Debug.log(response.getPossibleTypes());
@@ -822,7 +822,7 @@ public class CommonParsers {
             case "POINTER": return parsePointer(((TokenStructure) pattern).getContents(), ctx);
             case "VARIABLE_POINTER": {
                 if(pattern.find("POINTER_HEAD_WRAPPER") != null) {
-                    Object target = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class, CoordinateSet.class);
+                    Object target = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class, CoordinateSet.class, TridentUtil.ResourceLocation.class);
                     PointerObject pointer = new PointerObject(target, null);
                     parsePointerHead(pointer, pattern.find("POINTER_HEAD_WRAPPER.POINTER_HEAD"), ctx);
 
@@ -842,6 +842,13 @@ public class CommonParsers {
                 Object target = CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx);
                 PointerObject pointer = new PointerObject(target, null);
                 parsePointerHead(pointer, pattern.find("NBT_POINTER_HEAD"), ctx);
+
+                return pointer.validate(pattern, ctx);
+            }
+            case "STORAGE_POINTER": {
+                Object target = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), ctx);
+                PointerObject pointer = new PointerObject(target, null);
+                parsePointerHead(pointer, pattern.find("STORAGE_POINTER_HEAD"), ctx);
 
                 return pointer.validate(pattern, ctx);
             }
@@ -927,7 +934,8 @@ public class CommonParsers {
                 }
                 break;
             }
-            case "NBT_POINTER_HEAD": {
+            case "NBT_POINTER_HEAD":
+            case "STORAGE_POINTER_HEAD": {
                 NBTPath path = NBTParser.parsePath(pattern.find("NBT_PATH"), ctx);
                 pointer.setMember(path);
                 TokenPattern<?> scalePattern = pattern.find("SCALE.REAL");

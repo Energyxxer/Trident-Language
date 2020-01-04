@@ -2137,27 +2137,30 @@ public class TridentProductions {
         //region Instructions
 
 
-        LazyTokenPatternMatch scale = group(symbol("*"), real()).setOptional().setName("SCALE");
+        LazyTokenPatternMatch scale = group(matchItem(COMPILER_OPERATOR, "*"), real()).setOptional().setName("SCALE");
         LazyTokenPatternMatch typeCast = group(brace("("), numericDataType().setName("NUMERIC_DATA_TYPE"), brace(")")).setOptional().setName("TYPE_CAST");
 
-        LazyTokenGroupMatch scoreHead = group(ofType(ARROW), objectiveName(), scale).setName("SCORE_POINTER_HEAD");
+        LazyTokenGroupMatch scoreHead = group(ofType(ARROW), objectiveName()).setName("SCORE_POINTER_HEAD");
         LazyTokenGroupMatch nbtHead = group(dot(), NBT_PATH, scale, typeCast).setName("NBT_POINTER_HEAD");
+        LazyTokenGroupMatch storageHead = group(tilde(), NBT_PATH, scale, typeCast).setName("STORAGE_POINTER_HEAD");
 
-        LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead).setName("POINTER_HEAD");
+        LazyTokenStructureMatch anyHead = choice(scoreHead, nbtHead, storageHead).setName("POINTER_HEAD");
 
         LazyTokenGroupMatch varPointer = group(INTERPOLATION_BLOCK, optional(anyHead).setName("POINTER_HEAD_WRAPPER")).setName("VARIABLE_POINTER");
         LazyTokenGroupMatch entityPointer = group(LIMITED_ENTITY, anyHead).setName("ENTITY_POINTER");
         LazyTokenGroupMatch blockPointer = group(brace("("), COORDINATE_SET, brace(")"), nbtHead).setName("BLOCK_POINTER");
+        LazyTokenGroupMatch storagePointer = group(resourceLocationFixer, RESOURCE_LOCATION_S, storageHead).setName("STORAGE_POINTER");
 
         //LazyTokenGroupMatch nbtPointer = group(choice(ENTITY, group(brace("("), COORDINATE_SET, brace(")"))), nbtHead);
 
         POINTER.add(entityPointer);
         POINTER.add(varPointer);
         POINTER.add(blockPointer);
+        POINTER.add(storagePointer);
         POINTER.addTags("cspn:Pointer");
 
         COMMAND.add(
-                group(matchItem(COMMAND_HEADER, "set"), POINTER, equals(), choice(POINTER, NBT_VALUE, INTERPOLATION_BLOCK).setName("VALUE"))
+                group(matchItem(COMMAND_HEADER, "set"), POINTER, ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), choice(POINTER, NBT_VALUE, INTERPOLATION_BLOCK).setName("VALUE"))
         );
 
         {

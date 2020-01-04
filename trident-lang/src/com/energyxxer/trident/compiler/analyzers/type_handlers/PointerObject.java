@@ -6,6 +6,7 @@ import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -23,9 +24,10 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
     public static final int WRONG_MEMBER_TYPE = 2;
     public static final int ILLEGAL_TYPE_COMBINATION = 3;
     public static final int ILLEGAL_OBJECTIVE_NAME = 4;
+    public static final int TARGET_NOT_STANDALONE = 5;
 
     @NotNull
-    private Symbol target;  // Should contain either: Entity or CoordinateSet
+    private Symbol target;  // Should contain either: Entity, CoordinateSet or ResourceLocation
     @NotNull
     private Symbol member;  // Should contain either: NBTPath or String (Identifier A)
     private double scale;
@@ -96,13 +98,14 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
     }
 
     public int getErrorCode() {
-        if(!(target.getValue() instanceof Entity || target.getValue() instanceof CoordinateSet)) return WRONG_TARGET_TYPE;
+        if(!(target.getValue() instanceof Entity || target.getValue() instanceof CoordinateSet || target.getValue() instanceof TridentUtil.ResourceLocation)) return WRONG_TARGET_TYPE;
         if(!(member.getValue() instanceof String || member.getValue() instanceof NBTPath)) return WRONG_MEMBER_TYPE;
+        if(target.getValue() instanceof TridentUtil.ResourceLocation && ((TridentUtil.ResourceLocation) target.getValue()).isTag) return TARGET_NOT_STANDALONE;
         if(member.getValue() instanceof String &&
                 (((String) member.getValue()).length() > 16 ||
                         !TridentLexerProfile.IDENTIFIER_A_REGEX.matcher((String) member.getValue()).matches()))
             return ILLEGAL_OBJECTIVE_NAME;
-        if(target.getValue() instanceof CoordinateSet && member.getValue() instanceof String) return ILLEGAL_TYPE_COMBINATION;
+        if(member.getValue() instanceof String && !(target.getValue() instanceof Entity)) return ILLEGAL_TYPE_COMBINATION;
         return 0;
     }
 
@@ -156,8 +159,7 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
         if(surround) sb.append('(');
         sb.append(target.getValue());
         if(surround) sb.append(')');
-        else sb.append(' ');
-        sb.append(member.getValue() instanceof NBTPath ? "." : "->");
+        sb.append(member.getValue() instanceof NBTPath ? (target.getValue() instanceof TridentUtil.ResourceLocation ? "~" : ".") : "->");
         sb.append(member.getValue());
         if(scale != 1) {
             sb.append(" * ");
@@ -176,7 +178,8 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
             case WRONG_TARGET_TYPE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer target type: " + VariableTypeHandler.Static.getShorthandForObject(target.getValue()), pattern, ctx);
             case WRONG_MEMBER_TYPE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer member type: " + VariableTypeHandler.Static.getShorthandForObject(member.getValue()), pattern, ctx);
             case ILLEGAL_OBJECTIVE_NAME: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal objective name: '" + member.getValue() + "'", pattern, ctx);
-            case ILLEGAL_TYPE_COMBINATION: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer type combination: Coordinate and Objective", pattern, ctx);
+            case ILLEGAL_TYPE_COMBINATION: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer type combination: " + (target.getValue() instanceof CoordinateSet ? "Coordinate" : "Storage") + " and Objective", pattern, ctx);
+            case TARGET_NOT_STANDALONE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer target: Storage spaces can't be tags: '" + target.getValue() + "'", pattern, ctx);
         }
         return this;
     }

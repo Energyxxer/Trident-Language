@@ -25,7 +25,7 @@ public class TridentLexerProfile extends LexerProfile {
     public static final Pattern IDENTIFIER_A_REGEX = Pattern.compile("[a-zA-Z0-9._\\-+]+");
     public static final Pattern IDENTIFIER_B_REGEX = Pattern.compile("[^@\\s]\\S*");
     public static final Pattern IDENTIFIER_B_TOKEN_REGEX = Pattern.compile("[^@$\\s][^\\s]*");
-    public static final Pattern IDENTIFIER_B_LIMITED_TOKEN_REGEX = Pattern.compile("[^@$\\s]((?!->)[^\\s>])*");
+    public static final Pattern IDENTIFIER_B_LIMITED_TOKEN_REGEX = Pattern.compile("[^@$\\s]((?!->)[^\\s~])*");
     public static final String IDENTIFIER_C_REGEX = "\\S+";
     public static final String IDENTIFIER_D_REGEX = "[a-zA-Z0-9_\\-+]+";
 

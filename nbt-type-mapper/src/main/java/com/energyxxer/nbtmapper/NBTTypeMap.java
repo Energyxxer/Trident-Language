@@ -49,6 +49,19 @@ public class NBTTypeMap {
         }
     }
 
+    public void collectDataTypeForStorage(String storageName, PathContext context, NBTPath path, DataTypeQueryResponse response) {
+        if(rootTypes.containsKey(STORAGE_ROOT)) {
+            for(DeepDataType type : rootTypes.get(STORAGE_ROOT)) {
+                if(type instanceof CompoundType) {
+                    DataType storageType = ((CompoundType) type).get(storageName);
+                    if(storageType instanceof CompoundType) {
+                        ((CompoundType) storageType).collectDataTypeFor(context, path, response);
+                    }
+                }
+            }
+        }
+    }
+
     private static final String ENTITY_ROOT = "ENTITY";
     private static final String ENTITY_BREEDABLE_ROOT = "ENTITY_BREEDABLE";
     private static final String ENTITY_TAMABLE_ROOT = "ENTITY_TAMABLE";
@@ -107,7 +120,7 @@ public class NBTTypeMap {
                 module.getAllNamespaces().forEach(n -> n.types.blockEntity.list().forEach(e -> rootsToCheck.add(0, getRootForBlockEntity(e))));
             }
         } else if(protocol == PathProtocol.STORAGE) {
-            rootsToCheck.add(STORAGE_ROOT);
+            collectDataTypeForStorage(((String) metadata), context, path, response);
         } else { //DEFAULT
             if(metadata instanceof String) {
                 rootsToCheck.add((String)metadata);

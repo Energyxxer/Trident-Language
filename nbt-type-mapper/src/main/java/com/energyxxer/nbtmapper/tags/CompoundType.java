@@ -2,7 +2,10 @@ package com.energyxxer.nbtmapper.tags;
 
 import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
-import com.energyxxer.commodore.functionlogic.nbt.path.*;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathCompoundRoot;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathKey;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathNode;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
@@ -131,5 +134,9 @@ public class CompoundType extends DataType implements DeepDataType {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), defaultType, types);
+    }
+
+    public DataType get(String key) {
+        return types.get(key);
     }
 }
