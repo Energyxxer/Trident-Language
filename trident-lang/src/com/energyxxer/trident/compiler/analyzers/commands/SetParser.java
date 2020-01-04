@@ -51,7 +51,7 @@ public class SetParser implements SimpleCommandParser {
     static {
         putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.ASSIGN, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
-                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.ASSIGN, a.score)
+                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.ASSIGN, b.score)
         );
 
         putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.ASSIGN, PointerDecorator.ValuePointer.class,
@@ -102,35 +102,35 @@ public class SetParser implements SimpleCommandParser {
 
         putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.ADD, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
-                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.ADD, a.score)
+                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.ADD, b.score)
         );
         putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.SUBTRACT, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
-                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.SUBTRACT, a.score)
+                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.SUBTRACT, b.score)
         );
         putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.MULTIPLY, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
-                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.MULTIPLY, a.score)
+                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.MULTIPLY, b.score)
         );
         putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.DIVIDE, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
-                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.DIVIDE, a.score)
+                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.DIVIDE, b.score)
         );
         putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.MODULO, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
-                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.MODULO, a.score)
+                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.MODULO, b.score)
         );
         putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.LESS_THAN, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
-                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.LESS_THAN, a.score)
+                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.LESS_THAN, b.score)
         );
         putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.GREATER_THAN, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
-                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.GREATER_THAN, a.score)
+                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.GREATER_THAN, b.score)
         );
         putHandler(PointerDecorator.ScorePointer.class, ScorePlayersOperation.Operation.SWAP, PointerDecorator.ScorePointer.class,
                 (a, b, pattern, ctx) ->
-                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.SWAP, a.score)
+                        new ScorePlayersOperation(a.score, ScorePlayersOperation.Operation.SWAP, b.score)
         );
 
 
