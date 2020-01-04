@@ -2160,7 +2160,7 @@ public class TridentProductions {
         POINTER.addTags("cspn:Pointer");
 
         COMMAND.add(
-                group(matchItem(COMMAND_HEADER, "set"), POINTER, ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), choice(POINTER, NBT_VALUE, INTERPOLATION_BLOCK).setName("VALUE"))
+                group(matchItem(COMMAND_HEADER, "set"), POINTER, ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), choice(POINTER, NBT_VALUE, INTERPOLATION_BLOCK, ofType(NULL).setName("NULL")).setName("VALUE"))
         );
 
         {

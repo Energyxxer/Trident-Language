@@ -2,18 +2,12 @@ package com.energyxxer.trident.compiler.analyzers.commands;
 
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
-import com.energyxxer.commodore.functionlogic.commands.data.DataGetCommand;
-import com.energyxxer.commodore.functionlogic.commands.data.DataModifyCommand;
-import com.energyxxer.commodore.functionlogic.commands.data.ModifySourceFromHolder;
-import com.energyxxer.commodore.functionlogic.commands.data.ModifySourceValue;
+import com.energyxxer.commodore.functionlogic.commands.data.*;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteStore;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteStoreDataHolder;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteStoreScore;
-import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreAdd;
-import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreGet;
-import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScorePlayersOperation;
-import com.energyxxer.commodore.functionlogic.commands.scoreboard.ScoreSet;
+import com.energyxxer.commodore.functionlogic.commands.scoreboard.*;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.nbt.*;
@@ -35,6 +29,8 @@ import com.energyxxer.util.Lazy;
 
 import java.util.HashMap;
 import java.util.Locale;
+
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
 @AnalyzerMember(key = "set")
 public class SetParser implements SimpleCommandParser {
@@ -275,6 +271,15 @@ public class SetParser implements SimpleCommandParser {
                     return new ExecuteCommand(get, new ExecuteStoreDataHolder(ExecuteStore.StoreValue.RESULT, a.holder, a.path, a.type.getValue(), 1/a.scale));
                 }
         );
+
+
+
+        putHandler(PointerDecorator.ScorePointer.class, SetOperator.ASSIGN, PointerDecorator.NullPointer.class,
+                (a, b, pattern, ctx) -> new ScoreReset(a.score)
+        );
+        putHandler(PointerDecorator.DataHolderPointer.class, SetOperator.ASSIGN, PointerDecorator.NullPointer.class,
+                (a, b, pattern, ctx) -> new DataRemoveCommand(a.holder, a.path)
+        );
     }
 
     @Override
@@ -313,11 +318,14 @@ public class SetParser implements SimpleCommandParser {
                 return decorate(CommonParsers.parsePointer(pattern, ctx), pattern, ctx);
             case "NBT_VALUE":
                 return new PointerDecorator.ValuePointer(NBTParser.parseValue(pattern, ctx));
+            case "NULL":
+                return new PointerDecorator.NullPointer();
             case "INTERPOLATION_BLOCK":
-                Object value = InterpolationManager.parse(pattern, ctx, NBTTag.class, Integer.class, Double.class, PointerObject.class);
+                Object value = InterpolationManager.parse(pattern, ctx);
                 if(value == null) {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null value at pointer", pattern, ctx);
+                    return new PointerDecorator.NullPointer();
                 }
+                assertOfType(value, pattern, ctx, NBTTag.class, Integer.class, Double.class, PointerObject.class);
                 if(value instanceof PointerObject) return decorate(((PointerObject) value), pattern, ctx);
                 if(value instanceof Integer) value = new TagInt((int) value);
                 else if(value instanceof Double) value = new TagDouble((double) value);
@@ -395,6 +403,13 @@ public class SetParser implements SimpleCommandParser {
             @Override
             public String getName() {
                 return "Value";
+            }
+        }
+
+        class NullPointer implements PointerDecorator {
+            @Override
+            public String getName() {
+                return "Null";
             }
         }
     }

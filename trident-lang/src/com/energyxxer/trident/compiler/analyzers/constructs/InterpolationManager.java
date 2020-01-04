@@ -44,7 +44,7 @@ public class InterpolationManager {
         for(Class cls : expected) {
             if(cls.isInstance(obj)) return obj;
         }
-        throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + Arrays.asList(expected).stream().map(Class::getSimpleName).collect(Collectors.joining(", ")), pattern, ctx);
+        throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + Arrays.stream(expected).map(Class::getSimpleName).collect(Collectors.joining(", ")), pattern, ctx);
     }
 
     @SuppressWarnings("unchecked")
