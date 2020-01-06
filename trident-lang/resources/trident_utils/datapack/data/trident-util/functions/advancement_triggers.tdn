@@ -10,7 +10,7 @@ for(fileLoc in Reflection.getFilesWithMetaTag(resource<trident:advancement_rewar
     var triggers = Reflection.getMetadata(fileLoc).advancement_triggers
     do if(triggers != null) {
         do if(!rootWritten) {
-            eval File.out.writeData("data/trident-generated/advancements/triggers/root.json", JSON.stringify({"display": {"icon": {"item": "minecraft:command_block"},"title": {"translate": "Internal"},"description": {"translate": "Advancements used for game logic"},"frame": "task","show_toast": false,"announce_to_chat": false,"hidden": false,"background": "minecraft:textures/gui/advancements/backgrounds/husbandry.png"},"criteria": {"impossible": {"trigger": "minecraft:impossible"}},"requirements": [["impossible"]]}, true))
+            eval File.out.writeData("data/trident-generated/advancements/triggers/root.json", JSON.stringify({"criteria": {"impossible": {"trigger": "minecraft:impossible"}},"requirements": [["impossible"]]}, true))
             eval rootWritten = true
         }
         do if(indices[fileLoc.namespace] == null) eval indices[fileLoc.namespace] = 0
