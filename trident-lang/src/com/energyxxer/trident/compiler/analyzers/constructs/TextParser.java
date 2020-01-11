@@ -177,6 +177,17 @@ public class TextParser {
                             }
                         }).otherwise(v -> delegate.report("Expected boolean in 'strikethrough'", obj.get("strikethrough")));
             }
+            if(obj.has("underlined")) {
+                using(getAsBooleanOrNull(obj.get("underlined"))).notIfNull()
+                        .run(v -> {
+                            style.setMask(style.getMask() | TextStyle.UNDERLINED);
+                            if(v) {
+                                style.setFlags((byte) (style.getFlags() | TextStyle.UNDERLINED));
+                            } else {
+                                style.setFlags((byte) ~(~style.getFlags() | TextStyle.UNDERLINED));
+                            }
+                        }).otherwise(v -> delegate.report("Expected boolean in 'underlined'", obj.get("underlined")));
+            }
             if(obj.has("obfuscated")) {
                 using(getAsBooleanOrNull(obj.get("obfuscated"))).notIfNull()
                         .run(v -> {
