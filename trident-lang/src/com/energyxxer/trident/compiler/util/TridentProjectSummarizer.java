@@ -118,6 +118,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
             dependency.setParentSummarizer(this);
             dependency.setSourceCache(this.getSourceCache());
             dependency.setDefaultDefinitionPacks(definitionPacks != null ? definitionPacks : defaultDefinitionPacks);
+            dependency.setDefinitionPackAliases(definitionPackAliases);
             try {
                 dependency.runSummary();
             } catch(Exception ex) {
@@ -301,5 +302,9 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
 
     private void setDefaultDefinitionPacks(DefinitionPack[] defaultDefinitionPacks) {
         this.defaultDefinitionPacks = defaultDefinitionPacks;
+    }
+
+    private void setDefinitionPackAliases(Map<String, DefinitionPack> definitionPackAliases) {
+        this.definitionPackAliases = definitionPackAliases;
     }
 }

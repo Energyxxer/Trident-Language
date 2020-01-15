@@ -236,6 +236,7 @@ public class TridentCompiler extends AbstractProcess {
                         dependency.compiler.setStartingRawTypeMaps(typeMapsRaw);
                         dependency.compiler.setStartingFeatureMap(featureMap);
                         dependency.compiler.setDefaultDefinitionPacks(definitionPacks != null ? definitionPacks : defaultDefinitionPacks);
+                        dependency.compiler.setDefinitionPackAliases(definitionPackAliases);
                         if(obj.has("export") && obj.get("export").isJsonPrimitive() && obj.get("export").getAsJsonPrimitive().isBoolean()) {
                             dependency.doExport = obj.get("export").getAsBoolean();
                         }
