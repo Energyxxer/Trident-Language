@@ -8,7 +8,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.Collection;
 
-@AnalyzerGroup
+@AnalyzerGroup(
+        classes="AdvancementArgumentParser,ComponentArgumentParser,DistanceArgumentParser,DXArgumentParser,DYArgumentParser,DZArgumentParser,GamemodeArgumentParser,LevelArgumentParser,LimitArgumentParser,NameArgumentParser,NBTArgumentParser,PitchArgumentParser,PredicateArgumentParser,ScoresArgumentParser,SortArgumentParser,TagArgumentParser,TeamArgumentParser,TypeArgumentParser,XArgumentParser,YArgumentParser,YawArgumentParser,ZArgumentParser"
+)
 public interface SelectorArgumentParser {
     Collection<SelectorArgument> parse(TokenPattern<?> pattern, ISymbolContext ctx, PathContext pathContext);
 }

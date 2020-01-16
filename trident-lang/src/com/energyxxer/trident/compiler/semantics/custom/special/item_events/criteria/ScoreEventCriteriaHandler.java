@@ -3,7 +3,9 @@ package com.energyxxer.trident.compiler.semantics.custom.special.item_events.cri
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
 
-@AnalyzerGroup
+@AnalyzerGroup(
+        classes="BrokenScoreEvent,DroppedScoreEvent,PickedUpScoreEvent,UsedScoreEvent"
+)
 public interface ScoreEventCriteriaHandler {
     //once
     void startOnce(ItemEventFile itemEventFile);

@@ -7,7 +7,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.Collection;
 
-@AnalyzerGroup
+@AnalyzerGroup(
+        classes="AlignParser,AnchoredParser,AsParser,AtParser,ConditionalParser,FacingParser,InParser,PositionedParser,RawParser,RotatedParser,StoreParser"
+)
 public interface ModifierParser {
     Collection<ExecuteModifier> parse(TokenPattern<?> pattern, ISymbolContext ctx);
 }

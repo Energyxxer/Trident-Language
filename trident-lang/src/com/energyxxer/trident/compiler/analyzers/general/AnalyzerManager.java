@@ -1,9 +1,13 @@
 package com.energyxxer.trident.compiler.analyzers.general;
 
+import com.energyxxer.trident.compiler.analyzers.commands.CommandParser;
+import com.energyxxer.trident.compiler.analyzers.constructs.selectors.SelectorArgumentParser;
+import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
+import com.energyxxer.trident.compiler.analyzers.instructions.Instruction;
+import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.criteria.ScoreEventCriteriaHandler;
 import com.energyxxer.util.logger.Debug;
-import org.reflections.Reflections;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -17,41 +21,63 @@ public class AnalyzerManager {
         Debug.log("Starting analyzer caching");
         long start = System.currentTimeMillis();
 
-        ConfigurationBuilder builder = new ConfigurationBuilder();
-        builder.addUrls(ClasspathHelper.forJavaClassPath());
-        Reflections r = new Reflections(builder);
-
-        for(Class<?> cls : r.getTypesAnnotatedWith(AnalyzerGroup.class, true)) {
-            if(!cls.isInterface()) {
-                Debug.log("Class marked with AnalyzerGroup is not an interface: '" + cls.getSimpleName() + "'", Debug.MessageType.WARN);
-            } else {
-                groups.put(cls, new HashMap<>());
-                Debug.log("Defined analyzer group '" + cls.getSimpleName() + "'");
-            }
-        }
-        for(Class<?> cls : r.getTypesAnnotatedWith(AnalyzerMember.class)) {
-            try {
-                boolean hasGroup = false;
-                for(Class<?> interf : getInterfaces(cls)) {
-                    HashMap<String, Object> toPut = groups.get(interf);
-                    if(toPut != null) {
-                        hasGroup = true;
-                        String key = cls.getAnnotation(AnalyzerMember.class).key();
-                        Object parser = cls.getConstructor().newInstance();
-                        toPut.put(key, parser);
-                        //Debug.log("Defined '" + interf.getSimpleName() + "' member '" + cls.getSimpleName() + "'");
-                    }
-                }
-                if(!hasGroup) {
-                    Debug.log("AnalyzerMember '" + cls + "' doesn't implement any analyzer group interface", Debug.MessageType.WARN);
-                }
-            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
+        try {
+            cacheGroup(CommandParser.class);
+            cacheGroup(DefaultLibraryProvider.class);
+            cacheGroup(Instruction.class);
+            cacheGroup(ModifierParser.class);
+            cacheGroup(ScoreEventCriteriaHandler.class);
+            cacheGroup(SelectorArgumentParser.class);
+            cacheGroup(VariableTypeHandler.class);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
+            e.printStackTrace();
         }
 
         long time = System.currentTimeMillis() - start;
         Debug.log("Finished analyzer caching in " + time + " ms");
+    }
+
+    private static void cacheGroup(Class<?> groupClass) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        HashMap<String, Object> map;
+        if(!groupClass.isInterface()) {
+            Debug.log("Class marked with AnalyzerGroup is not an interface: '" + groupClass.getSimpleName() + "'", Debug.MessageType.WARN);
+            return;
+        } else {
+            map = new HashMap<>();
+            groups.put(groupClass, map);
+            Debug.log("Defined analyzer group '" + groupClass.getSimpleName() + "'");
+        }
+
+        String[] classes = groupClass.getAnnotation(AnalyzerGroup.class).classes().split(",");
+        for(String simpleClassName : classes) {
+            String className = groupClass.getPackage().getName() + "." + simpleClassName;
+            Class<?> memberClass = groupClass.getClassLoader().loadClass(className);
+
+            if(!cacheMember(memberClass, groupClass, map)) {
+                Debug.log("Class '" + memberClass + "' is not a member of group '" + groupClass + "'!", Debug.MessageType.WARN);
+            }
+        }
+    }
+
+    private static boolean cacheMember(Class<?> memberClass, Class<?> groupClass, HashMap<String, Object> map) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        boolean throwError = true;
+        AnalyzerMember annot = memberClass.getAnnotation(AnalyzerMember.class);
+        if(annot != null) {
+            String key = annot.key();
+            Object parser = memberClass.getConstructor().newInstance();
+            map.put(key, parser);
+            throwError = false;
+        }
+
+
+        for(Class<?> innerClass : memberClass.getDeclaredClasses()) {
+            if(groupClass.isAssignableFrom(innerClass)) {
+                if(cacheMember(innerClass, groupClass, map)) {
+                    throwError = false;
+                }
+            }
+        }
+        return !throwError;
     }
 
     private static Collection<Class> getInterfaces(Class cls) {

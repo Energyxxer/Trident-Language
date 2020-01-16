@@ -1,10 +1,11 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
-import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
+import com.energyxxer.commodore.functionlogic.nbt.TagDouble;
+import com.energyxxer.commodore.functionlogic.nbt.TagFloat;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "java.lang.Double")
