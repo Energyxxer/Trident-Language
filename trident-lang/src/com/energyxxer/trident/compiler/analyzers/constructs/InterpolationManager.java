@@ -7,6 +7,7 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.constructors.ObjectConstructors;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.NullTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperandType;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperationOrder;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.Operator;

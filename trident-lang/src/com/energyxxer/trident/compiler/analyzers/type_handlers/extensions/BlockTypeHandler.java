@@ -9,8 +9,9 @@ import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
-import com.energyxxer.trident.compiler.semantics.*;
+import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
+import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.Map;

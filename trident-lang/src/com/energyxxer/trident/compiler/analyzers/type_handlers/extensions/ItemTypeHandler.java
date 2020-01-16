@@ -9,7 +9,6 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;

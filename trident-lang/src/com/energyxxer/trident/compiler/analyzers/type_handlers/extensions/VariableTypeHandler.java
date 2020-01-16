@@ -1,4 +1,4 @@
-package com.energyxxer.trident.compiler.analyzers.type_handlers;
+package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
@@ -12,6 +12,10 @@ import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
 import com.energyxxer.trident.compiler.semantics.ILazyValue;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -21,7 +25,24 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.*;
 
-@AnalyzerGroup
+@AnalyzerGroup(
+        classes="BlockTypeHandler," +
+                "BooleanTypeHandler," +
+                "CoordinateTypeHandler," +
+                "EntityTypeHandler," +
+                "IntRangeTypeHandler," +
+                "IntTypeHandler," +
+                "ItemTypeHandler," +
+                "NBTPathTypeHandler," +
+                "NullTypeHandler," +
+                "RealRangeTypeHandler," +
+                "RealTypeHandler," +
+                "ResourceTypeHandler," +
+                "StringTypeHandler," +
+                "tags.TagCompoundTypeHandler," +
+                "tags.TagListTypeHandler," +
+                "TextComponentTypeHandler"
+)
 public interface VariableTypeHandler<T> {
     Object getMember(T object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol);
 

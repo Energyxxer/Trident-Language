@@ -17,6 +17,7 @@ public class Main {
     private static int previousProgress = 0;
 
     public static void main(String[] args) {
+
         System.out.println("Trident Language Compiler version " + TridentCompiler.TRIDENT_LANGUAGE_VERSION);
         if(args.length == 0) {
             System.out.println("No arguments passed to the program.\nFirst argument should be the path to the root directory of the project to compile.");
