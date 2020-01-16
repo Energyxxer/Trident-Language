@@ -369,7 +369,7 @@ public class TridentCompiler extends AbstractProcess {
         updateProgress(0);
         this.setProgress("Generating resource pack");
         try {
-            resourcePack.generate();
+            if(resourcePack != null) resourcePack.generate();
         } catch(IOException x) {
             logException(x, "Error while generating output resource pack: ");
         }

@@ -2157,7 +2157,7 @@ public class TridentProductions {
         POINTER.add(varPointer);
         POINTER.add(blockPointer);
         POINTER.add(storagePointer);
-        POINTER.addTags("cspn:Pointer");
+        POINTER.addTags("cspn:Pointer", SuggestionTags.ENABLED);
 
         COMMAND.add(
                 group(matchItem(COMMAND_HEADER, "set"), POINTER, ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"), choice(POINTER, NBT_VALUE, INTERPOLATION_BLOCK, ofType(NULL).setName("NULL")).setName("VALUE"))
