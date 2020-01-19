@@ -193,8 +193,8 @@ public class TridentProductions {
         LazyTokenPatternMatch COMMAND_WRAPPER = group(list(MODIFIER).setOptional().setName("MODIFIERS"), literal("run").setOptional(), COMMAND).setName("COMMAND_WRAPPER");
 
         ENTRY.add(COMMENT_S);
-        ENTRY.add(COMMAND_WRAPPER);
         ENTRY.add(INSTRUCTION);
+        ENTRY.add(COMMAND_WRAPPER);
 
         BiConsumer<TokenPattern<?>, Lexer> clearMemberListProcessor = (p, l) -> {
             if(l.getSummaryModule() != null) {
@@ -686,15 +686,6 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "me"),
-                    ofType(TRAILING_STRING).addTags("cspn:Message")
-            ));
-        }
-        //endregion
-        //region msg
-        {
-            COMMAND.add(group(
-                    choice(matchItem(COMMAND_HEADER, "msg"), matchItem(COMMAND_HEADER, "tell"), matchItem(COMMAND_HEADER, "w")),
-                    ENTITY,
                     ofType(TRAILING_STRING).addTags("cspn:Message")
             ));
         }
@@ -1452,6 +1443,18 @@ public class TridentProductions {
             ));
         }
         //endregion
+        //endregion
+
+
+
+        //region msg
+        {
+            COMMAND.add(group(
+                    choice(matchItem(COMMAND_HEADER, "msg"), matchItem(COMMAND_HEADER, "tell"), matchItem(COMMAND_HEADER, "w")),
+                    ENTITY,
+                    ofType(TRAILING_STRING).addTags("cspn:Message")
+            ));
+        }
         //endregion
 
         //region Constructs
