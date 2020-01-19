@@ -202,7 +202,7 @@ public class TridentFile extends SymbolContext {
 
         TokenPattern<?> innerFilePattern = pattern.find("FILE_INNER");
 
-        TridentFile innerFile = new TridentFile(parent.getCompiler(), parent, Paths.get(innerFilePathRaw), innerFilePattern, parent.getCompiler().getLanguageLevel());
+        TridentFile innerFile = new TridentFile(parent.getCompiler(), parent, Paths.get(innerFilePathRaw), innerFilePattern, parent.getStaticParentFile().languageLevel);
         if(autoResolve) innerFile.resolveEntries();
         return innerFile;
     }
