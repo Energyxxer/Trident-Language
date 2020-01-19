@@ -3,14 +3,11 @@ package com.energyxxer.trident.compiler.semantics.custom.special;
 import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.module.Namespace;
-import com.energyxxer.commodore.tags.Tag;
-import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.preparation.PrepareDroppedItemsFile;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.preparation.PrepareHeldItemsFile;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.preparation.SaveHeldItemsFile;
-import com.energyxxer.util.Lazy;
 
 import java.util.HashMap;
 
@@ -18,7 +15,7 @@ public class SpecialFileManager {
     private final TridentCompiler compiler;
     private final HashMap<String, SpecialFile> files = new HashMap<>();
 
-    private Lazy<Function> tickFunction;
+    private HashMap<Integer, TickingFunction> tickingFunctions = new HashMap<>();
 
     public SpecialFileManager(TridentCompiler compiler) {
         this.compiler = compiler;
@@ -31,19 +28,15 @@ public class SpecialFileManager {
         put(new ObjectiveCreationFile(this));
 
         put(new GameLogFetcherFile(this));
-
-        tickFunction = new Lazy<>(() -> {
-            Function function = getNamespace().functions.create("trident/tick");
-            Tag tag = compiler.getModule().minecraft.tags.functionTags.getOrCreate("tick");
-            tag.setExport(true);
-            tag.addValue(new FunctionReference(function));
-            return function;
-        });
     }
 
     public void compile() {
         for(SpecialFile file : files.values()) {
             if(file.shouldForceCompile()) file.startCompilation();
+        }
+
+        for(TickingFunction file : tickingFunctions.values()) {
+            file.startCompilation();
         }
     }
 
@@ -51,8 +44,17 @@ public class SpecialFileManager {
         return compiler.getDefaultNamespace();
     }
 
+    public TickingFunction getTickingFunction(int interval) {
+        if(interval <= 0) throw new IllegalArgumentException("Ticking interval may not be zero or negative");
+        TickingFunction function = tickingFunctions.get(interval);
+        if(function == null) {
+            tickingFunctions.put(interval, function = new TickingFunction(this, interval));
+        }
+        return function;
+    }
+
     public Function getTickFunction() {
-        return tickFunction.getValue();
+        return getTickingFunction(1).getFunction();
     }
 
     public Objective getGlobalObjective() {

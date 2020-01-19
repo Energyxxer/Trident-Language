@@ -1,12 +1,10 @@
 package com.energyxxer.trident.compiler.semantics.custom.entities;
 
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCondition;
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteConditionEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
 import com.energyxxer.commodore.functionlogic.nbt.*;
-import com.energyxxer.commodore.functionlogic.selector.Selector;
+import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.util.attributes.Attribute;
@@ -28,6 +26,7 @@ import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.special.TickingFunction;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.SENDER;
 import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
@@ -346,13 +344,27 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
                                                 ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) functionModifier.find("TICKING_MODIFIERS")), finalCtx, collector);
 
-                                                if(entityDecl != null) {
-                                                    modifiers.add(0, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, TypeArgumentParser.getFilterForCustomEntity(entityDecl)));
-                                                } else if(finalDefaultType != null) {
-                                                    modifiers.add(0, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, new Selector(SENDER, new TypeArgument(finalDefaultType))));
+                                                int interval = 1;
+                                                if(functionModifier.find("TICKING_INTERVAL") != null) {
+                                                    interval = CommonParsers.parseTime(functionModifier.find("TICKING_INTERVAL"), finalCtx).getTicks();
+                                                    if(interval <= 0) {
+                                                        throw new TridentException(TridentException.Source.COMMAND_ERROR, "Ticking interval must be greater than zero", functionModifier.find("TICKING_INTERVAL"), finalCtx);
+                                                    }
                                                 }
 
-                                                finalCtx.getStaticParentFile().getEntityTickFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
+                                                SelectorArgument[] filter = new SelectorArgument[0];
+                                                if(entityDecl != null) {
+                                                    filter = TypeArgumentParser.getFilterForCustomEntity(entityDecl);
+                                                } else if(finalDefaultType != null) {
+                                                    filter = new SelectorArgument[] {new TypeArgument(finalDefaultType)};
+                                                }
+
+                                                finalCtx.getCompiler().getSpecialFileManager().getTickingFunction(interval).addEntityTickEvent(
+                                                        new TickingFunction.EntityEvent(
+                                                                filter,
+                                                                new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers)
+                                                        )
+                                                );
                                             }
                                         }
                                     }

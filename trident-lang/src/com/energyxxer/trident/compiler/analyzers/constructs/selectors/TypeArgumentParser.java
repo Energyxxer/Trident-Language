@@ -1,7 +1,5 @@
 package com.energyxxer.trident.compiler.analyzers.constructs.selectors;
 
-import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TagArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
@@ -16,8 +14,6 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
-
-import static com.energyxxer.commodore.functionlogic.selector.Selector.BaseSelector.SENDER;
 
 @AnalyzerMember(key = "type")
 public class TypeArgumentParser implements SelectorArgumentParser {
@@ -42,16 +38,16 @@ public class TypeArgumentParser implements SelectorArgumentParser {
         return args;
     }
 
-    public static Entity getFilterForCustomEntity(CustomEntity ce) {
+    public static SelectorArgument[] getFilterForCustomEntity(CustomEntity ce) {
         return getFilterForCustomEntity(ce, false);
     }
 
-    public static Entity getFilterForCustomEntity(CustomEntity ce, boolean negated) {
-        Selector sel = new Selector(SENDER);
+    public static SelectorArgument[] getFilterForCustomEntity(CustomEntity ce, boolean negated) {
+        ArrayList<SelectorArgument> args = new ArrayList<>();
         if(ce.getBaseType() != null) {
-            sel.addArgument(new TypeArgument(ce.getBaseType(), negated));
+            args.add(new TypeArgument(ce.getBaseType(), negated));
         }
-        sel.addArgument(new TagArgument(ce.getIdTag(), negated));
-        return sel;
+        args.add(new TagArgument(ce.getIdTag(), negated));
+        return args.toArray(new SelectorArgument[0]);
     }
 }
