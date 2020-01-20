@@ -47,6 +47,12 @@ public class TickingFunction extends SpecialFile {
     }
 
     @Override
+    public Function getFunction() {
+        if(this.function == null) this.function = parent.getNamespace().functions.getOrCreate("trident/" + this.getFunctionName());
+        return this.function;
+    }
+
+    @Override
     protected void compile() {
         Tag tag = compiler.getModule().minecraft.tags.functionTags.getOrCreate(interval == 1 ? "tick" : "load");
         tag.setExport(true);

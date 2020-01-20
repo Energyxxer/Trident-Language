@@ -21,7 +21,7 @@ public abstract class SpecialFile {
 
     public void startCompilation() {
         if(compiled) return;
-        this.function = parent.getNamespace().functions.create("trident/" + functionName);
+        this.function = parent.getNamespace().functions.getOrCreate("trident/" + functionName);
         this.compile();
         this.compiled = true;
     }
