@@ -37,6 +37,7 @@ import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
 import com.energyxxer.trident.compiler.semantics.symbols.GlobalSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.compiler.util.JsonTraverser;
 import com.energyxxer.trident.compiler.util.TridentProjectSummary;
 import com.energyxxer.util.Lazy;
 import com.energyxxer.util.StringLocation;
@@ -358,7 +359,11 @@ public class TridentCompiler extends AbstractProcess {
         this.setProgress("Generating data pack");
         if(properties.has("datapack-output") && properties.get("datapack-output").isJsonPrimitive() && properties.get("datapack-output").getAsJsonPrimitive().isString()) {
             try {
-                module.compile(newFileObject(properties.get("datapack-output").getAsString()));
+                File dataOut = newFileObject(properties.get("datapack-output").getAsString());
+                if(JsonTraverser.INSTANCE.reset(properties).get("clear-datapack-output").asBoolean(false)) {
+                    recursivelyDelete(dataOut);
+                }
+                module.compile(dataOut);
             } catch(IOException x) {
                 logException(x, "Error while generating output data pack: ");
             }
@@ -369,7 +374,12 @@ public class TridentCompiler extends AbstractProcess {
         updateProgress(0);
         this.setProgress("Generating resource pack");
         try {
-            if(resourcePack != null) resourcePack.generate();
+            if(resourcePack != null) {
+                if(JsonTraverser.INSTANCE.reset(properties).get("clear-resources-output").asBoolean(false)) {
+                    recursivelyDelete(newFileObject(properties.get("resources-output").getAsString()));
+                }
+                resourcePack.generate();
+            }
         } catch(IOException x) {
             logException(x, "Error while generating output resource pack: ");
         }
@@ -455,6 +465,7 @@ public class TridentCompiler extends AbstractProcess {
                         outResourceCache.put(relPath, new ParsingSignature(hashCode));
 
                         if(resourcePack.getOutputType() == ModulePackGenerator.OutputType.ZIP
+                                || JsonTraverser.INSTANCE.reset(properties).get("clear-resources-output").asBoolean(false)
                                 || !Objects.equals(inResourceCache.get(relPath), new ParsingSignature(hashCode))) {
                             resourcePack.exportables.add(new RawExportable(relPath, data));
                         }
@@ -822,6 +833,26 @@ public class TridentCompiler extends AbstractProcess {
 
     public static void summarizeLibraries(TridentProjectSummary summary) {
         Resources.summarize(summary);
+    }
+
+
+
+    static boolean recursivelyDelete(File folder) {
+        if(!Files.isWritable(folder.toPath())) return false;
+        if(!folder.isDirectory()) {
+            return folder.delete();
+        }
+        File[] files = folder.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    recursivelyDelete(f);
+                } else {
+                    f.delete();
+                }
+            }
+        }
+        return folder.delete();
     }
 
     private static class Resources {
