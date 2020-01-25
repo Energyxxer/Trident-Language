@@ -7,6 +7,8 @@ public class PathContext {
     private PathProtocol protocol = PathProtocol.DEFAULT;
     private Object protocolMetadata = null;
 
+    public PathContext() {
+    }
 
     public PathContext setIsSetting(boolean setting) {
         this.setting = setting;

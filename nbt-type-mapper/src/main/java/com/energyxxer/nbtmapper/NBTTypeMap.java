@@ -174,6 +174,7 @@ public class NBTTypeMap {
                 }
                 case "COMPOUND": {
                     CompoundType compound = new CompoundType(NBTTypeMap.this);
+                    compound.setFlags(parseFlags(pattern.find("FLAGS")));
                     TokenList innerList = (TokenList) pattern.find("COMPOUND_INNER_LIST");
                     if(innerList != null) {
                         for(TokenPattern<?> entry : innerList.getContents()) {
@@ -193,10 +194,14 @@ public class NBTTypeMap {
                     return compound;
                 }
                 case "LIST": {
-                    return new ListType(NBTTypeMap.this, parseType(pattern.find("TYPE")));
+                    ListType type = new ListType(NBTTypeMap.this, parseType(pattern.find("TYPE")));
+                    type.setFlags(parseFlags(pattern.find("FLAGS")));
+                    return type;
                 }
                 case "ARRAY": {
-                    return new ArrayType(NBTTypeMap.this, pattern.find("ARRAY_TYPE").flatten(false));
+                    ArrayType type = new ArrayType(NBTTypeMap.this, pattern.find("ARRAY_TYPE").flatten(false));
+                    type.setFlags(parseFlags(pattern.find("FLAGS")));
+                    return type;
                 }
                 case "REFERENCE": {
                     return new ReferenceType(NBTTypeMap.this, pattern.find("REFERENCE_NAME").flatten(false).substring(1), parseFlags(pattern.find("FLAGS")));

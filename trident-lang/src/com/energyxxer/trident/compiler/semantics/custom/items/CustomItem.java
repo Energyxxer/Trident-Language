@@ -10,6 +10,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.nbtmapper.tags.DataType;
+import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
@@ -22,6 +24,7 @@ import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.TypeAwareMerger;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -32,6 +35,7 @@ import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareMerger.REPLACE;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
 public class CustomItem implements VariableTypeHandler<CustomItem> {
@@ -63,6 +67,24 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
         return defaultNBT;
     }
 
+    public void mergeNBT(TagCompound newNBT, ISymbolContext ctx) {
+        PathContext context = new PathContext().setIsSetting(true).setProtocolMetadata(baseType);
+        this.defaultNBT = ((TypeAwareMerger) path -> {
+            DataTypeQueryResponse response = ctx.getCompiler().getTypeMap().collectTypeInformation(path, context);
+            if (!response.isEmpty()) {
+                for (DataType type : new ArrayList<>(response.getPossibleTypes())) {
+                    if (type.getFlags() != null && type.getFlags().hasFlag("fixed"))
+                        return REPLACE;
+                }
+            }
+            return TypeAwareMerger.MERGE;
+        }).merge(this.defaultNBT, newNBT);
+    }
+
+    public void overrideNBT(TagCompound newNBT, ISymbolContext ctx) {
+        this.defaultNBT = ((TypeAwareMerger) path -> REPLACE).merge(this.defaultNBT, newNBT);
+    }
+
     public void setDefaultNBT(TagCompound defaultNBT) {
         this.defaultNBT = defaultNBT;
     }
@@ -79,9 +101,9 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
         return customModelData;
     }
 
-    public void setCustomModelData(int customModelData) {
+    public void setCustomModelData(int customModelData, ISymbolContext ctx) {
         this.customModelData = customModelData;
-        defaultNBT = defaultNBT.merge(new TagCompound(new TagInt("CustomModelData", customModelData)));
+        mergeNBT(new TagCompound(new TagInt("CustomModelData", customModelData)), ctx);
         setUseModelData(true);
     }
 
@@ -196,7 +218,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
 
         if(!itemName.equals("default")) {
             itemDecl = new CustomItem(itemName, defaultType, ctx);
-            if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, ctx));
+            if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, ctx), ctx);
 
             ctx.putInContextForVisibility(visibility, new Symbol(itemName, visibility, itemDecl));
         } else if(rawCustomModelData != null) {
@@ -227,7 +249,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                             TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), ctx);
                             PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
                             NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), ctx);
-                            itemDecl.defaultNBT = itemDecl.defaultNBT.merge(newNBT);
+                            itemDecl.mergeNBT(newNBT, ctx);
                             break;
                         }
                         case "ITEM_INNER_FUNCTION": {
@@ -301,7 +323,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                             NBTCompoundBuilder builder = new NBTCompoundBuilder();
                             builder.put(new NBTPath("display", new NBTPath("Name")), new TagString("Name", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), ctx).toString()));
 
-                            itemDecl.defaultNBT = itemDecl.defaultNBT.merge(builder.getCompound());
+                            itemDecl.mergeNBT(builder.getCompound(), ctx);
                             break;
                         }
                         case "DEFAULT_LORE": {
@@ -320,7 +342,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                                 }
                             }
 
-                            itemDecl.defaultNBT = itemDecl.defaultNBT.merge(newNBT);
+                            itemDecl.mergeNBT(newNBT, ctx);
                             break;
                         }
                         case "ITEM_FIELD": {

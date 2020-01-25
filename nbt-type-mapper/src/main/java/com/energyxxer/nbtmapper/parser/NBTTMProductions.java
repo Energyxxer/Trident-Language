@@ -16,34 +16,34 @@ public class NBTTMProductions {
 
         LazyTokenStructureMatch KEY = choice(ofType(NBTTMTokens.KEY), ofType(STRING_LITERAL), ofType(WILDCARD)).setName("KEY");
 
-        LazyTokenGroupMatch COMPOUND = group(
-                brace("{"),
-                list(
-                        group(KEY, colon(), TYPE).setName("COMPOUND_INNER"),
-                        comma()
-                ).setOptional().setName("COMPOUND_INNER_LIST"),
-                brace("}")
-        ).setName("COMPOUND");
-
-        LazyTokenGroupMatch LIST = group(
-                brace("["),
-                TYPE,
-                brace("]")
-        ).setName("LIST");
-
-        LazyTokenGroupMatch ARRAY = group(
-                brace("["),
-                ofType(ARRAY_TYPE).setName("ARRAY_TYPE"),
-                ofType(SEMICOLON),
-                brace("]")
-        ).setName("ARRAY");
-
         LazyTokenStructureMatch FLAG = struct("FLAG");
         FLAG.add(ofType(IDENTIFIER)); //boolean, text_component, resource_location...
         FLAG.add(group(matchItem(IDENTIFIER, "type"), brace("("), ofType(HASH).setOptional().setName("IS_TAG"), ofType(DEFINITION_CATEGORY).setName("DEFINITION_CATEGORY"), brace(")")).setName("TYPE_FLAG"));
         FLAG.add(group(matchItem(IDENTIFIER, "one_of"), brace("("), list(ofType(STRING_LITERAL).setName("OPTION"), comma()).setName("OPTION_LIST"), brace(")")).setName("ONE_OF_FLAG"));
 
         LazyTokenPatternMatch FLAGS = group(brace("("), list(FLAG, comma()).setName("FLAG_LIST"), brace(")")).setOptional().setName("FLAGS");
+
+        LazyTokenGroupMatch COMPOUND = group(
+                brace("{"),
+                list(
+                        group(KEY, colon(), TYPE).setName("COMPOUND_INNER"),
+                        comma()
+                ).setOptional().setName("COMPOUND_INNER_LIST"),
+                brace("}"), FLAGS
+        ).setName("COMPOUND");
+
+        LazyTokenGroupMatch LIST = group(
+                brace("["),
+                TYPE,
+                brace("]"), FLAGS
+        ).setName("LIST");
+
+        LazyTokenGroupMatch ARRAY = group(
+                brace("["),
+                ofType(ARRAY_TYPE).setName("ARRAY_TYPE"),
+                ofType(SEMICOLON),
+                brace("]"), FLAGS
+        ).setName("ARRAY");
 
         TYPE.add(group(ofType(PRIMITIVE_TYPE).setName("PRIMITIVE_NAME"), FLAGS).setName("PRIMITIVE"));
         TYPE.add(COMPOUND);

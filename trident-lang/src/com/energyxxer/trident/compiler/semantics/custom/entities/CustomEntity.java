@@ -12,6 +12,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.nbtmapper.tags.DataType;
+import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.commands.SummonParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
@@ -26,6 +28,7 @@ import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.TypeAwareMerger;
 import com.energyxxer.trident.compiler.semantics.custom.special.TickingFunction;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
@@ -37,6 +40,7 @@ import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareMerger.REPLACE;
 
 public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     private final String id;
@@ -70,12 +74,22 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         return defaultNBT;
     }
 
-    public void mergeNBT(TagCompound newNBT) {
-        this.defaultNBT = this.defaultNBT.merge(newNBT);
+    public void mergeNBT(TagCompound newNBT, ISymbolContext ctx) {
+        PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY).setProtocolMetadata(baseType);
+        this.defaultNBT = ((TypeAwareMerger) path -> {
+            DataTypeQueryResponse response = ctx.getCompiler().getTypeMap().collectTypeInformation(path, context);
+            if (!response.isEmpty()) {
+                for (DataType type : new ArrayList<>(response.getPossibleTypes())) {
+                    if (type.getFlags() != null && type.getFlags().hasFlag("fixed"))
+                        return TypeAwareMerger.REPLACE;
+                }
+            }
+            return TypeAwareMerger.MERGE;
+        }).merge(this.defaultNBT, newNBT);
     }
 
-    public void overrideNBT(TagCompound newNBT) {
-        this.defaultNBT = getBaseNBT().merge(newNBT);
+    public void overrideNBT(TagCompound newNBT, ISymbolContext ctx) {
+        this.defaultNBT = ((TypeAwareMerger) path -> REPLACE).merge(this.defaultNBT, newNBT);
     }
 
     public String getIdTag() {
@@ -211,11 +225,11 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
             ctx.putInContextForVisibility(visibility, new Symbol(entityName, visibility, entityDecl));
 
             if (superEntity != null) {
-                entityDecl.mergeNBT(superEntity.getDefaultNBT());
+                entityDecl.mergeNBT(superEntity.getDefaultNBT(), ctx);
                 entityDecl.members.putAll(superEntity.members);
             }
             for (CustomEntity component : implemented) {
-                entityDecl.mergeNBT(component.getDefaultNBT());
+                entityDecl.mergeNBT(component.getDefaultNBT(), ctx);
                 entityDecl.members.putAll(component.members);
             }
         } else {
@@ -249,11 +263,11 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
                                 TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), ctx);
                                 if (newNBT != null) {
-                                    PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY);
+                                    PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY).setProtocolMetadata(defaultType);
                                     NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), ctx);
                                 }
 
-                                entityDecl.mergeNBT(newNBT);
+                                entityDecl.mergeNBT(newNBT, ctx);
                                 break;
                             }
                             case "DEFAULT_PASSENGERS": {
@@ -279,7 +293,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                     }
                                 }
 
-                                entityDecl.mergeNBT(new TagCompound(passengersTag));
+                                entityDecl.mergeNBT(new TagCompound(passengersTag), ctx);
                                 break;
                             }
                             case "DEFAULT_HEALTH": {
@@ -298,7 +312,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                 healthNBT.add(new TagFloat("Health", (float) health));
                                 healthNBT.add(new TagList("Attributes", new TagCompound(new TagString("Name", Attribute.MAX_HEALTH), new TagDouble("Base", health))));
 
-                                entityDecl.mergeNBT(healthNBT);
+                                entityDecl.mergeNBT(healthNBT, ctx);
                                 break;
                             }
                             case "DEFAULT_NAME": {
