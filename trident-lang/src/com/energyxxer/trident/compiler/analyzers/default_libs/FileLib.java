@@ -6,8 +6,8 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
 import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
@@ -30,12 +30,12 @@ public class FileLib implements DefaultLibraryProvider {
                     }
                     Path path = compiler.getRootCompiler().getRootDir().toPath().resolve(Paths.get(rawPath).normalize());
                     if(!path.startsWith(compiler.getRootCompiler().getRootDir().toPath())) {
-                        throw new IllegalArgumentException("Cannot read files outside of the current project: " + path);
+                        throw new IllegalArgumentException("Cannot read files outside of the current project: " + path.toString().replace("\\", "/"));
                     }
                     if(Files.exists(path)) {
                         if(Files.isDirectory(path)) return path.toFile().list();
                         return new String(Files.readAllBytes(path), TridentCompiler.DEFAULT_CHARSET);
-                    } else throw new FileNotFoundException(path.toString());
+                    } else throw new FileNotFoundException(path.toString().replace("\\", "/"));
                 }), String.class).createForInstance(null));
         globalCtx.put(new Symbol("File", Symbol.SymbolVisibility.GLOBAL, fileLib));
 
@@ -54,7 +54,7 @@ public class FileLib implements DefaultLibraryProvider {
             }
             ResourcePackGenerator resourcePack = compiler.getRootCompiler().getResourcePackGenerator();
             if(resourcePack != null) {
-                resourcePack.exportables.add(new RawExportable(path.toString(), ((String) params[1]).getBytes(TridentCompiler.DEFAULT_CHARSET)));
+                resourcePack.exportables.add(new RawExportable(path.toString().replace("\\", "/"), ((String) params[1]).getBytes(TridentCompiler.DEFAULT_CHARSET)));
             }
             return null;
         }), String.class, String.class).createForInstance(null));
@@ -68,7 +68,7 @@ public class FileLib implements DefaultLibraryProvider {
             if(path.startsWith(Paths.get("../"))) {
                 throw new IllegalArgumentException("Cannot write files outside the data pack: " + path);
             }
-            compiler.getRootCompiler().getModule().exportables.add(new RawExportable(path.toString(), ((String) params[1]).getBytes(TridentCompiler.DEFAULT_CHARSET)));
+            compiler.getRootCompiler().getModule().exportables.add(new RawExportable(path.toString().replace("\\", "/"), ((String) params[1]).getBytes(TridentCompiler.DEFAULT_CHARSET)));
             return null;
         }), String.class, String.class).createForInstance(null));
     }

@@ -3,10 +3,7 @@ package com.energyxxer.trident.compiler;
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.defpacks.DefinitionPack;
 import com.energyxxer.commodore.functionlogic.score.Objective;
-import com.energyxxer.commodore.module.CommandModule;
-import com.energyxxer.commodore.module.ModulePackGenerator;
-import com.energyxxer.commodore.module.Namespace;
-import com.energyxxer.commodore.module.RawExportable;
+import com.energyxxer.commodore.module.*;
 import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.tags.TagGroup;
@@ -105,6 +102,8 @@ public class TridentCompiler extends AbstractProcess {
     private HashMap<String, ParsingSignature> inResourceCache = new HashMap<>();
     private HashMap<String, ParsingSignature> outResourceCache = new HashMap<>();
     private Dependency.Mode dependencyMode;
+    private HashSet<String> dataSubFolderNames = new HashSet<>();
+    private HashSet<String> resourceSubFolderNames = new HashSet<>();
 
     public TridentCompiler(File rootDir) {
         super("Trident-Compiler[" + rootDir.getName() + "]");
@@ -360,8 +359,19 @@ public class TridentCompiler extends AbstractProcess {
         if(properties.has("datapack-output") && properties.get("datapack-output").isJsonPrimitive() && properties.get("datapack-output").getAsJsonPrimitive().isString()) {
             try {
                 File dataOut = newFileObject(properties.get("datapack-output").getAsString());
+                this.dataSubFolderNames.add("data");
+                for(Exportable exportable : module.exportables) {
+                    if(exportable.shouldExport() && exportable.getExportPath() != null) {
+                        String firstName = exportable.getExportPath();
+                        if(firstName.contains("/")) firstName = firstName.substring(0, firstName.indexOf("/"));
+                        dataSubFolderNames.add(firstName);
+                    }
+                }
                 if(JsonTraverser.INSTANCE.reset(properties).get("clear-datapack-output").asBoolean(false)) {
-                    recursivelyDelete(dataOut);
+                    for(String subFolder : this.dataSubFolderNames) {
+                        Debug.log("Clearing folder: " + subFolder);
+                        recursivelyDelete(dataOut.toPath().resolve(subFolder).toFile());
+                    }
                 }
                 module.compile(dataOut);
             } catch(IOException x) {
@@ -376,7 +386,19 @@ public class TridentCompiler extends AbstractProcess {
         try {
             if(resourcePack != null) {
                 if(JsonTraverser.INSTANCE.reset(properties).get("clear-resources-output").asBoolean(false)) {
-                    recursivelyDelete(newFileObject(properties.get("resources-output").getAsString()));
+                    File resourceOut = newFileObject(properties.get("resources-output").getAsString());
+                    this.resourceSubFolderNames.add("assets");
+                    for(Exportable exportable : resourcePack.exportables) {
+                        if(exportable.shouldExport() && exportable.getExportPath() != null) {
+                            String firstName = exportable.getExportPath();
+                            if(firstName.contains("/")) firstName = firstName.substring(0, firstName.indexOf("/"));
+                            resourceSubFolderNames.add(firstName);
+                        }
+                    }
+                    for(String subFolder : this.resourceSubFolderNames) {
+                        Debug.log("Clearing folder: " + subFolder);
+                        recursivelyDelete(resourceOut.toPath().resolve(subFolder).toFile());
+                    }
                 }
                 resourcePack.generate();
             }
@@ -838,6 +860,7 @@ public class TridentCompiler extends AbstractProcess {
 
 
     static boolean recursivelyDelete(File folder) {
+        if(!folder.exists()) return true;
         if(!Files.isWritable(folder.toPath())) return false;
         if(!folder.isDirectory()) {
             return folder.delete();
