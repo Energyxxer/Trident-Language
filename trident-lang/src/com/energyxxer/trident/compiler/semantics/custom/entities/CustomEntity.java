@@ -76,11 +76,11 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
     public void mergeNBT(TagCompound newNBT, ISymbolContext ctx) {
         PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY).setProtocolMetadata(baseType);
-        this.defaultNBT = ((TypeAwareMerger) path -> {
+        this.defaultNBT = ((TypeAwareMerger) (path, cls) -> {
             DataTypeQueryResponse response = ctx.getCompiler().getTypeMap().collectTypeInformation(path, context);
             if (!response.isEmpty()) {
                 for (DataType type : new ArrayList<>(response.getPossibleTypes())) {
-                    if (type.getFlags() != null && type.getFlags().hasFlag("fixed"))
+                    if (type.getFlags() != null && type.getFlags().hasFlag("fixed") && cls.equals(type.getCorrespondingTagType()))
                         return TypeAwareMerger.REPLACE;
                 }
             }
@@ -89,7 +89,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     }
 
     public void overrideNBT(TagCompound newNBT, ISymbolContext ctx) {
-        this.defaultNBT = ((TypeAwareMerger) path -> REPLACE).merge(this.defaultNBT, newNBT);
+        this.defaultNBT = ((TypeAwareMerger) (path, cls) -> REPLACE).merge(this.defaultNBT, newNBT);
     }
 
     public String getIdTag() {

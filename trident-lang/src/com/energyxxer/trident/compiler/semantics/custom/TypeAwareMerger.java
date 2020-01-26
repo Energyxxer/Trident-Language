@@ -25,7 +25,7 @@ public interface TypeAwareMerger {
                 NBTTag tag = merged.get(otherTag.getName());
                 path.get().push(new NBTPathKey(otherTag.getName()));
                 try {
-                    if (otherTag.getClass() == tag.getClass() && otherTag instanceof ComplexNBTTag && handleCollision(new NBTPath(path.get().toArray(new NBTPathNode[0]))) == MERGE) {
+                    if (otherTag.getClass() == tag.getClass() && otherTag instanceof ComplexNBTTag && handleCollision(new NBTPath(path.get().toArray(new NBTPathNode[0])), otherTag.getClass()) == MERGE) {
                         merged.remove(otherTag.getName());
                         if (otherTag instanceof TagCompound) {
                             merged.add(merge(((TagCompound) tag), ((TagCompound) otherTag)));
@@ -46,5 +46,5 @@ public interface TypeAwareMerger {
         return merged;
     }
 
-    int handleCollision(NBTPath path);
+    int handleCollision(NBTPath path, Class<? extends NBTTag> tagClass);
 }
