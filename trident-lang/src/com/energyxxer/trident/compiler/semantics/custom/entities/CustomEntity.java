@@ -1,9 +1,12 @@
 package com.energyxxer.trident.compiler.semantics.custom.entities;
 
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCondition;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteConditionEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
 import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.types.Type;
@@ -48,7 +51,6 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     private final Type baseType;
     @NotNull
     private TagCompound defaultNBT;
-    private CustomEntity superEntity = null;
     private String idTag;
     private boolean fullyDeclared = false;
     private HashMap<String, Symbol> members = new HashMap<>();
@@ -159,6 +161,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         String entityName;
         Type defaultType = null;
         CustomEntity superEntity = null;
+        HashMap<String, EntityEvent> eventTargets = new HashMap<>();
 
         TokenPattern<?> headerDeclaration = ((TokenStructure) pattern.find("ENTITY_DECLARATION_HEADER")).getContents();
 
@@ -221,7 +224,6 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot create a non-default entity with this type: " + defaultType, pattern.find("ENTITY_DECLARATION_HEADER.ENTITY_BASE"), ctx);
             }
             entityDecl = new CustomEntity(entityName, defaultType, ctx);
-            entityDecl.superEntity = superEntity;
             ctx.putInContextForVisibility(visibility, new Symbol(entityName, visibility, entityDecl));
 
             if (superEntity != null) {
@@ -335,7 +337,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                                 defaultType != null ?
                                                         "default_" + defaultType.getName() :
                                                         null
-                                , false);
+                                        , false);
                                 TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
                                 if (namePattern != null) {
                                     String name = namePattern.flatten(false);
@@ -383,6 +385,65 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                         }
                                     }
                                 });
+                                break;
+                            }
+                            /*case "ENTITY_EVENT_DECLARATION": {
+                                if (entityDecl == null) {
+                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Events aren't allowed for default entities", entry, ctx));
+                                    break;
+                                }
+                                String eventName = CommonParsers.parseIdentifierA(entry.find("EVENT_NAME.IDENTIFIER_A"), ctx);
+                                if(entityDecl.eventTargets.containsKey(eventName)) {
+                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Duplicate event declaration: " + eventName, entry, ctx));
+                                    break;
+                                }
+                                String subPath = ctx.getParent() instanceof TridentFile &&
+                                        ((TridentFile) ctx.getParent()).getPath().endsWith(entityDecl.id + ".tdn") ?
+                                        "" :
+                                        "/" + entityDecl.id;
+                                String functionPath = ctx.getStaticParentFile().getResourceLocation().toString() + subPath + "/trident_dispatch_event_" + eventName;
+                                TridentUtil.ResourceLocation functionLoc = new TridentUtil.ResourceLocation(functionPath);
+                                Function function = ctx.getCompiler().getModule().getNamespace(functionLoc.namespace).functions.create(functionLoc.body);
+                                entityDecl.eventTargets.put(eventName, function);
+                                entityDecl.members.put(eventName, new Symbol(eventName, Symbol.SymbolVisibility.LOCAL, functionLoc));
+
+                                break;
+                            }*/
+                            case "ENTITY_EVENT_IMPLEMENTATION": {
+                                TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx,
+                                        entityDecl != null ?
+                                                ctx.getParent() instanceof TridentFile &&
+                                                        ((TridentFile) ctx.getParent()).getPath().endsWith(entityDecl.id + ".tdn") ?
+                                                        null :
+                                                        entityDecl.id
+                                                :
+                                                defaultType != null ?
+                                                        "default_" + defaultType.getName() :
+                                                        null
+                                        , false);
+                                TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
+                                if (namePattern != null) {
+                                    String name = namePattern.flatten(false);
+                                    Symbol sym = new Symbol(name, Symbol.SymbolVisibility.LOCAL, innerFile.getResourceLocation());
+                                    if (entityDecl != null) {
+                                        entityDecl.members.put(name, sym);
+                                    } else {
+                                        finalCtx.put(sym);
+                                    }
+                                }
+
+                                EntityEvent event = InterpolationManager.parse(entry.find("EVENT_NAME.INTERPOLATION_VALUE"), ctx, EntityEvent.class);
+
+                                ctx.getStaticParentFile().schedulePostResolutionAction(innerFile::resolveEntries);
+
+                                SelectorArgument[] filter = new SelectorArgument[0];
+                                if(entityDecl != null) {
+                                    filter = TypeArgumentParser.getFilterForCustomEntity(entityDecl);
+                                } else if(finalDefaultType != null) {
+                                    filter = new SelectorArgument[] {new TypeArgument(finalDefaultType)};
+                                }
+
+                                event.getFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, new Selector(Selector.BaseSelector.SENDER, filter))));
                                 break;
                             }
                             case "ENTITY_FIELD": {

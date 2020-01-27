@@ -553,6 +553,15 @@ public class TridentProductions {
             COMMAND.add(g);
         }
         //endregion
+        //region event
+        {
+            LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+            g.append(matchItem(COMMAND_HEADER, "event"));
+            g.append(ENTITY);
+            g.append(LINE_SAFE_INTERPOLATION_VALUE);
+            COMMAND.add(g);
+        }
+        //endregion
         //region experience
         {
             LazyTokenPatternMatch unit = choice("points", "levels").setName("UNIT").setOptional();
@@ -2179,7 +2188,8 @@ public class TridentProductions {
                     group(literal("default"), literal("health"), real().setName("HEALTH").addTags("cspn:Health")).setName("DEFAULT_HEALTH"),
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ENTITY_FIELD"),
-                    //group(literal("on"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
+                    group(literal("on"), group(INTERPOLATION_VALUE).setName("EVENT_NAME"), literal("function"),
+                            OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_EVENT_IMPLEMENTATION"),
                     COMMENT_S,
                     group(choice(group(literal("ticking"), ofType(TIME).setOptional().setName("TICKING_INTERVAL"), list(MODIFIER).setOptional().setName("TICKING_MODIFIERS")).setName("TICKING_ENTITY_FUNCTION")).setOptional().setName("ENTITY_FUNCTION_MODIFIER"), literal("function"), OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_INNER_FUNCTION")
             );
@@ -2241,6 +2251,17 @@ public class TridentProductions {
                                                         if(p.find("ENTITY_DECLARATION_HEADER.LITERAL_COMPONENT") != null) sym.addTag(TridentSuggestionTags.TAG_ENTITY_COMPONENT);
                                                         ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                                     }
+                                                }
+                                            }),
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("event"), group(identifierX().addTags("cspn:Item Type Name")).setName("EVENT_NAME")).setName("DEFINE_EVENT")
+                                            .addProcessor((p, l) -> {
+                                                if(l.getSummaryModule() != null) {
+                                                    TokenPattern<?> namePattern = p.find("EVENT_NAME");
+                                                    String name = namePattern.flatten(false);
+                                                    SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), name, p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_VARIABLE);
+                                                    sym.addTag(TridentSuggestionTags.TAG_ENTITY_COMPONENT);
+                                                    sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.LOCAL));
+                                                    ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                                 }
                                             }),
                                     group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("item"), choice(identifierA(), identifierX().addTags("cspn:Item Type Name"), literal("default")).setName("ITEM_NAME"), noToken().addTags("cspn:Base Type"), resourceLocationFixer, ITEM_ID, optional(hash(), integer().addTags("cspn:Model Index")).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM")

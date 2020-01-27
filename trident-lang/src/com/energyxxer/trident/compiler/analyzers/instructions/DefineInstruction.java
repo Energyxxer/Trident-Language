@@ -11,6 +11,7 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
+import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -25,6 +26,9 @@ public class DefineInstruction implements Instruction {
                 break;
             case "DEFINE_ENTITY":
                 CustomEntity.defineEntity(inner, ctx);
+                break;
+            case "DEFINE_EVENT":
+                EntityEvent.defineEvent(inner, ctx);
                 break;
             case "DEFINE_ITEM":
                 CustomItem.defineItem(inner, ctx);
