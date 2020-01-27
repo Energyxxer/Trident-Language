@@ -7,7 +7,9 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundExc
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 
 public class EntityEvent implements VariableTypeHandler<EntityEvent> {
     private TridentUtil.ResourceLocation location;
@@ -55,6 +57,10 @@ public class EntityEvent implements VariableTypeHandler<EntityEvent> {
             throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "A function by the name '" + functionLoc + "' already exists.", pattern, ctx);
         }
         Function function = ctx.getCompiler().getModule().getNamespace(functionLoc.namespace).functions.create(functionLoc.body);
+        if(pattern.find("EVENT_INITIALIZATION") != null) {
+            ISymbolContext innerCtx = new SymbolContext(ctx);
+            TridentFile.resolveInnerFileIntoSection(pattern.find("EVENT_INITIALIZATION.ANONYMOUS_INNER_FUNCTION"), innerCtx, function);
+        }
         EntityEvent event = new EntityEvent(functionLoc, function);
         ctx.put(new Symbol(eventName, Symbol.SymbolVisibility.LOCAL, event));
     }

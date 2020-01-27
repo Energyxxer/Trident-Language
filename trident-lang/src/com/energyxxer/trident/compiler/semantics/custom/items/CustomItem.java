@@ -298,7 +298,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                                             ArrayList<ExecuteModifier> eventModifiers = CommonParsers.parseModifierList((TokenList) modifiers.find("EVENT_MODIFIERS"), finalCtx);
 
                                             if (onWhat.getName().equals("ITEM_CRITERIA")) {
-                                                finalCtx.assertLanguageLevel(3, "Custom non-default item events are", entry, collector);
+                                                finalCtx.assertLanguageLevel(3, "Item events are", entry, collector);
 
                                                 ((ItemEventFile) finalCtx.getCompiler().getSpecialFileManager().get("item_events")).addCustomItem(
                                                         ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()),

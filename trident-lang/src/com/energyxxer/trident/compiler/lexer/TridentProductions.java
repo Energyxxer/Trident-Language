@@ -2188,7 +2188,7 @@ public class TridentProductions {
                     group(literal("default"), literal("health"), real().setName("HEALTH").addTags("cspn:Health")).setName("DEFAULT_HEALTH"),
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ENTITY_FIELD"),
-                    group(literal("on"), group(INTERPOLATION_VALUE).setName("EVENT_NAME"), literal("function"),
+                    group(literal("on"), group(INTERPOLATION_VALUE).setName("EVENT_NAME"), list(MODIFIER).setOptional().setName("EVENT_MODIFIERS"), literal("function"),
                             OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_EVENT_IMPLEMENTATION"),
                     COMMENT_S,
                     group(choice(group(literal("ticking"), ofType(TIME).setOptional().setName("TICKING_INTERVAL"), list(MODIFIER).setOptional().setName("TICKING_MODIFIERS")).setName("TICKING_ENTITY_FUNCTION")).setOptional().setName("ENTITY_FUNCTION_MODIFIER"), literal("function"), OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_INNER_FUNCTION")
@@ -2253,13 +2253,13 @@ public class TridentProductions {
                                                     }
                                                 }
                                             }),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("event"), group(identifierX().addTags("cspn:Item Type Name")).setName("EVENT_NAME")).setName("DEFINE_EVENT")
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("event"), group(identifierX().addTags("cspn:Event Name")).setName("EVENT_NAME"), optional(ANONYMOUS_INNER_FUNCTION).setName("EVENT_INITIALIZATION")).setName("DEFINE_EVENT")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
                                                     TokenPattern<?> namePattern = p.find("EVENT_NAME");
                                                     String name = namePattern.flatten(false);
                                                     SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), name, p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_VARIABLE);
-                                                    sym.addTag(TridentSuggestionTags.TAG_ENTITY_COMPONENT);
+                                                    sym.addTag(TridentSuggestionTags.TAG_ENTITY_EVENT);
                                                     sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.LOCAL));
                                                     ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                                 }

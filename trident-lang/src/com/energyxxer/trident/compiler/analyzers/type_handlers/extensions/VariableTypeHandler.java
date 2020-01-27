@@ -20,6 +20,7 @@ import com.energyxxer.trident.compiler.semantics.ILazyValue;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
+import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -115,6 +116,7 @@ public interface VariableTypeHandler<T> {
             shorthands.put("dictionary",        DictionaryObject.class);
             shorthands.put("list",              ListObject.class);
             shorthands.put("custom_entity",     CustomEntity.class);
+            shorthands.put("entity_event",      EntityEvent.class);
             shorthands.put("custom_item",       CustomItem.class);
             shorthands.put("function",          VariableMethod.class);
             shorthands.put("exception",         TridentException.class);

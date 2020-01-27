@@ -387,28 +387,6 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                 });
                                 break;
                             }
-                            /*case "ENTITY_EVENT_DECLARATION": {
-                                if (entityDecl == null) {
-                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Events aren't allowed for default entities", entry, ctx));
-                                    break;
-                                }
-                                String eventName = CommonParsers.parseIdentifierA(entry.find("EVENT_NAME.IDENTIFIER_A"), ctx);
-                                if(entityDecl.eventTargets.containsKey(eventName)) {
-                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Duplicate event declaration: " + eventName, entry, ctx));
-                                    break;
-                                }
-                                String subPath = ctx.getParent() instanceof TridentFile &&
-                                        ((TridentFile) ctx.getParent()).getPath().endsWith(entityDecl.id + ".tdn") ?
-                                        "" :
-                                        "/" + entityDecl.id;
-                                String functionPath = ctx.getStaticParentFile().getResourceLocation().toString() + subPath + "/trident_dispatch_event_" + eventName;
-                                TridentUtil.ResourceLocation functionLoc = new TridentUtil.ResourceLocation(functionPath);
-                                Function function = ctx.getCompiler().getModule().getNamespace(functionLoc.namespace).functions.create(functionLoc.body);
-                                entityDecl.eventTargets.put(eventName, function);
-                                entityDecl.members.put(eventName, new Symbol(eventName, Symbol.SymbolVisibility.LOCAL, functionLoc));
-
-                                break;
-                            }*/
                             case "ENTITY_EVENT_IMPLEMENTATION": {
                                 TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx,
                                         entityDecl != null ?
@@ -443,7 +421,10 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                     filter = new SelectorArgument[] {new TypeArgument(finalDefaultType)};
                                 }
 
-                                event.getFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, new Selector(Selector.BaseSelector.SENDER, filter))));
+                                ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) entry.find("EVENT_MODIFIERS")), ctx, collector);
+                                modifiers.add(0, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, new Selector(Selector.BaseSelector.SENDER, filter)));
+
+                                event.getFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
                                 break;
                             }
                             case "ENTITY_FIELD": {
