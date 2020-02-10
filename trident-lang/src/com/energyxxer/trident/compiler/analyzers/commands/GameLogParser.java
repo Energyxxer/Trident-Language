@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
 import com.energyxxer.commodore.functionlogic.commands.Command;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.textcomponents.ListTextComponent;
@@ -23,7 +24,7 @@ public class GameLogParser implements CommandParser {
     private static Stack<Object> toStringRecursion = new Stack<>();
 
     @Override
-    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> preModifiers) {
         boolean exportGamelog = ctx.getCompiler().getProperties().get("export-gamelog") == null || (ctx.getCompiler().getProperties().get("export-gamelog").getAsBoolean());
         if(!exportGamelog) return null;
         ctx.assertLanguageLevel(3, "The gamelog command is", pattern);

@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
 import com.energyxxer.commodore.functionlogic.commands.Command;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.commands.tag.TagCommand;
 import com.energyxxer.commodore.functionlogic.commands.tag.TagQueryCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
@@ -19,7 +20,7 @@ import java.util.Collections;
 @AnalyzerMember(key = "tag")
 public class TagParser implements CommandParser {
     @Override
-    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> preModifiers) {
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
         switch(pattern.find("CHOICE").flattenTokens().get(0).value) {
             case "list": return Collections.singletonList(new TagQueryCommand(entity));

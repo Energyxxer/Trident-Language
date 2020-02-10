@@ -1,21 +1,14 @@
 package com.energyxxer.trident.compiler;
 
 import com.energyxxer.commodore.CommodoreException;
-import com.energyxxer.commodore.defpacks.DefinitionPack;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.module.*;
-import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.tags.TagGroup;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeNotFoundException;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
-import com.energyxxer.commodore.util.io.CompoundInput;
-import com.energyxxer.commodore.util.io.DirectoryCompoundInput;
-import com.energyxxer.commodore.util.io.ZipCompoundInput;
-import com.energyxxer.commodore.versioning.JavaEditionVersion;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
-import com.energyxxer.commodore.versioning.compatibility.VersionFeatures;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
@@ -59,12 +52,10 @@ public class TridentCompiler extends AbstractProcess {
     public static final String TRIDENT_LANGUAGE_VERSION = "1.0.1";
 
     //Resources
-    private DefinitionPack[] defaultDefinitionPacks;
-    private DefinitionPack[] definitionPacks;
-    private Map<String, DefinitionPack> definitionPackAliases = null;
-    private VersionFeatures featureMap;
-    private String[] typeMapsRaw = null;
+    private TridentProjectWorker worker;
+    private TridentCompilerResources resources;
     private NBTTypeMap typeMap;
+    private boolean workerHasWorked = false;
 
     //Output objects
     private final File rootDir;
@@ -120,18 +111,41 @@ public class TridentCompiler extends AbstractProcess {
         gsonBuilder.setPrettyPrinting();
         this.gson = gsonBuilder.create();
         globalObjective = new Lazy<>(() -> this.getModule().getObjectiveManager().create("trident_global"));
+
+        worker = new TridentProjectWorker(rootDir);
+        workerHasWorked = false;
     }
 
-    public void setStartingDefinitionPacks(DefinitionPack[] definitionPacks) {
-        this.definitionPacks = definitionPacks;
+    TridentCompiler(TridentProjectWorker worker) {
+        super("Trident-Compiler[" + worker.rootDir.getName() + "]");
+        this.rootDir = worker.rootDir;
+        initializeThread(this::runCompilation);
+        this.thread.setUncaughtExceptionHandler((th, ex) -> {
+            logException(ex);
+        });
+        report = new CompilerReport();
+
+        specialFileManager = new SpecialFileManager(this);
+
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.setPrettyPrinting();
+        this.gson = gsonBuilder.create();
+        globalObjective = new Lazy<>(() -> this.getModule().getObjectiveManager().create("trident_global"));
+
+        this.worker = worker;
+        workerHasWorked = true;
     }
 
-    public void setStartingFeatureMap(VersionFeatures featureMap) {
-        this.featureMap = featureMap;
+    public TridentProjectWorker getWorker() {
+        return worker;
     }
 
-    public void setStartingRawTypeMaps(String[] typeMapsRaw) {
-        this.typeMapsRaw = typeMapsRaw;
+    public void setResources(TridentCompilerResources resources) {
+        this.resources = resources;
+    }
+
+    public TridentCompilerResources getResources() {
+        return resources;
     }
 
     private void runCompilation() {
@@ -153,19 +167,27 @@ public class TridentCompiler extends AbstractProcess {
         AnalyzerManager.initialize();
 
         this.setProgress("Reading project settings file");
+
+        worker.setup.setupProperties = true;
+        worker.setup.setupModule = true;
+        worker.setup.setupProductions = true;
+        worker.setup.useReport = true;
+        worker.setResources(resources);
+
         try {
-            properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
-        } catch(JsonSyntaxException | IOException x) {
-            logException(x, "Error while reading project settings: ");
+            if(!workerHasWorked) worker.work();
+            workerHasWorked = true;
+        } catch(IOException x) {
+            logException(x, "Error while importing vanilla definitions: ");
             return;
         }
 
-        if(properties.has("language-level") && properties.get("language-level").isJsonPrimitive() && properties.get("language-level").getAsJsonPrimitive().isNumber()) {
-            languageLevel = properties.get("language-level").getAsInt();
-            if(languageLevel < 1 || languageLevel > 3) {
-                report.addNotice(new Notice(NoticeType.ERROR, "Invalid language level: " + languageLevel));
-                languageLevel = 1;
-            }
+        properties = worker.output.properties;
+
+        languageLevel = JsonTraverser.INSTANCE.reset(properties).get("language-level").asInt(1);
+        if(languageLevel < 1 || languageLevel > 3) {
+            report.addNotice(new Notice(NoticeType.ERROR, "Invalid language level: " + languageLevel));
+            languageLevel = 1;
         }
 
         if(properties.has("default-namespace") && properties.get("default-namespace").isJsonPrimitive() && properties.get("default-namespace").getAsJsonPrimitive().isString() && !properties.get("default-namespace").getAsString().isEmpty()) {
@@ -180,20 +202,25 @@ public class TridentCompiler extends AbstractProcess {
             anonymousFunctionTemplate = properties.get("anonymous-function-name").getAsString();
         }
 
-        VersionFeatureManager.setActiveFeatureMap(featureMap);
+        VersionFeatureManager.setActiveFeatureMap(resources.featureMap);
+
+        TridentCompilerResources resources = this.resources.shallowClone();
+        if(resources.definitionPacks == null) resources.definitionPacks = resources.defaultDefinitionPacks;
 
         this.setProgress("Importing vanilla definitions");
-        try {
-            module = createModuleForProject(rootDir.getName(), rootDir, properties, definitionPacks != null ? definitionPacks : defaultDefinitionPacks, definitionPackAliases);
-        } catch(IOException x) {
-            logException(x, "Error while importing vanilla definitions: ");
+
+        module = worker.output.module;
+
+        report.addNotices(worker.report.getAllNotices());
+        if(report.getTotal() > 0) {
+            finalizeProcess(false);
             return;
         }
 
         typeMap = new NBTTypeMap(module);
 
-        if(typeMapsRaw != null) {
-            for(String rawContent : typeMapsRaw) {
+        if(resources.rawTypeMaps != null) {
+            for(String rawContent : resources.rawTypeMaps) {
                 typeMap.parsing.parseNBTTMFile(rootDir, rawContent);
             }
         } else {
@@ -213,7 +240,7 @@ public class TridentCompiler extends AbstractProcess {
 
         this.setProgress("Parsing files");
         TokenStream ts = new TokenStream();
-        LazyLexer lex = new LazyLexer(ts, new TridentProductions(module).FILE);
+        LazyLexer lex = new LazyLexer(ts, worker.output.productions.FILE);
         recursivelyParse(lex, rootDir);
 
         report.addNotices(lex.getNotices());
@@ -224,66 +251,32 @@ public class TridentCompiler extends AbstractProcess {
         }
 
         this.setProgress("Resolving dependencies");
-        ArrayList<Dependency> dependencies = new ArrayList<>();
 
-        if(properties.has("dependencies") && properties.get("dependencies").isJsonArray()) {
-            for(JsonElement rawElem : properties.get("dependencies").getAsJsonArray()) {
-                if(rawElem.isJsonObject()) {
-                    JsonObject obj = rawElem.getAsJsonObject();
-                    if(obj.has("path") && obj.get("path").isJsonPrimitive() && obj.get("path").getAsJsonPrimitive().isString()) {
-                        String dependencyPath = obj.get("path").getAsString();
-                        Dependency dependency = new Dependency(new TridentCompiler(newFileObject(dependencyPath)));
-                        dependency.compiler.setStartingRawTypeMaps(typeMapsRaw);
-                        dependency.compiler.setStartingFeatureMap(featureMap);
-                        dependency.compiler.setDefaultDefinitionPacks(definitionPacks != null ? definitionPacks : defaultDefinitionPacks);
-                        dependency.compiler.setDefinitionPackAliases(definitionPackAliases);
-                        if(obj.has("export") && obj.get("export").isJsonPrimitive() && obj.get("export").getAsJsonPrimitive().isBoolean()) {
-                            dependency.doExport = obj.get("export").getAsBoolean();
-                        }
-                        if(obj.has("mode") && obj.get("mode").isJsonPrimitive() && obj.get("mode").getAsJsonPrimitive().isString()) {
-                            switch(obj.get("mode").getAsString()) {
-                                case "precompile": {
-                                    dependency.mode = Dependency.Mode.PRECOMPILE;
-                                    break;
-                                }
-                                case "combine": {
-                                    dependency.mode = Dependency.Mode.COMBINE;
-                                    break;
-                                }
-                            }
-                        }
-
-                        dependencies.add(dependency);
-                    }
-                }
-            }
-        }
-
-        for(Dependency dependency : dependencies) {
-            dependency.compiler.setParentCompiler(this);
-            dependency.compiler.setDependencyMode(dependency.mode);
-            dependency.compiler.addProgressListener((process) -> this.updateStatus(process.getStatus()));
+        for(TridentProjectWorker dependencyWorker : worker.output.dependencies) {
+            TridentCompiler subCompiler = dependencyWorker.createCompiler();
+            subCompiler.setParentCompiler(this);
+            subCompiler.addProgressListener((process) -> this.updateStatus(process.getStatus()));
             try {
-                dependency.compiler.runCompilation();
+                subCompiler.runCompilation();
             } catch(Exception ex) {
                 logException(ex);
                 return;
             }
-            report.addNotices(dependency.compiler.getReport().getAllNotices());
-            if(!dependency.compiler.isSuccessful()) {
+            report.addNotices(subCompiler.getReport().getAllNotices());
+            if(!subCompiler.isSuccessful()) {
                 finalizeProcess(false);
             } else {
-                files.putAll(dependency.compiler.files);
-                if(!dependency.doExport) {
-                    dependency.compiler.module.propagateExport(false);
-                    for(TridentFile file : dependency.compiler.files.values()) {
+                files.putAll(subCompiler.files);
+                if(!dependencyWorker.getDependencyInfo().doExport) {
+                    subCompiler.module.propagateExport(false);
+                    for(TridentFile file : subCompiler.files.values()) {
                         file.setShouldExportFunction(false);
                     }
                 }
-                module.join(dependency.compiler.module);
-                global.join(dependency.compiler.global);
+                module.join(subCompiler.module);
+                global.join(subCompiler.global);
 
-                dependency.compiler.setRerouteRoot(true);
+                subCompiler.setRerouteRoot(true);
             }
         }
 
@@ -681,10 +674,6 @@ public class TridentCompiler extends AbstractProcess {
         }
     }
 
-    public void setDefinitionPackAliases(Map<String, DefinitionPack> definitionPackAliases) {
-        this.definitionPackAliases = definitionPackAliases;
-    }
-
     public void setInResourceCache(HashMap<String, ParsingSignature> inResourceCache) {
         if(inResourceCache != null)
         this.inResourceCache = inResourceCache;
@@ -739,104 +728,6 @@ public class TridentCompiler extends AbstractProcess {
         return files.values();
     }
 
-    public static CommandModule createModuleForProject(String name, File rootDir, DefinitionPack[] definitionPacks) throws IOException {
-        JsonObject properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
-        return createModuleForProject(name, rootDir, properties, definitionPacks);
-    }
-
-    public static CommandModule createModuleForProject(String name, File rootDir, JsonObject properties, DefinitionPack[] definitionPacks) throws IOException {
-        return createModuleForProject(name, rootDir, properties, definitionPacks, null);
-    }
-
-    public static CommandModule createModuleForProject(String name, File rootDir, DefinitionPack[] definitionPacks, Map<String, DefinitionPack> definitionPackAliases) throws IOException {
-        JsonObject properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
-        return createModuleForProject(name, rootDir, properties, definitionPacks, definitionPackAliases);
-    }
-
-    public static CommandModule createModuleForProject(String name, File rootDir, JsonObject properties, DefinitionPack[] definitionPacks, Map<String, DefinitionPack> definitionPackAliases) throws IOException {
-        CommandModule module = new CommandModule(name, "Command Module created with Trident");
-        module.getSettingsManager().EXPORT_EMPTY_FUNCTIONS.setValue(true);
-
-        if(definitionPacks == null) {
-            definitionPacks = new DefinitionPack[] {StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_RELEASE};
-        }
-
-        JavaEditionVersion targetVersion = new JavaEditionVersion(1, 14, 0);
-        if(properties.has("target-version") && properties.get("target-version").isJsonArray()) {
-            JsonArray rawTargetVersion = properties.get("target-version").getAsJsonArray();
-            try {
-                int major = rawTargetVersion.get(0).getAsInt();
-                int minor = rawTargetVersion.get(1).getAsInt();
-                int patch = rawTargetVersion.get(2).getAsInt();
-
-                targetVersion = new JavaEditionVersion(major, minor, patch);
-            } catch(IndexOutOfBoundsException x) {
-                throw new IOException("Invalid target version array: got less than 3 elements");
-            } catch(UnsupportedOperationException x) {
-                throw new IOException("Expected string in target version array");
-            }
-        }
-
-        module.getSettingsManager().setTargetVersion(targetVersion);
-
-        ArrayList<DefinitionPack> toImport = new ArrayList<>();
-
-        if(properties.has("use-definitions") && properties.get("use-definitions").isJsonArray()) {
-            for(JsonElement rawElement : properties.getAsJsonArray("use-definitions")) {
-                if(rawElement.isJsonPrimitive() && rawElement.getAsJsonPrimitive().isString()) {
-                    String element = rawElement.getAsString();
-                    if(element.equals("DEFAULT")) {
-                        toImport.addAll(Arrays.asList(definitionPacks));
-                    } else {
-                        File pathToPack = rootDir.toPath().resolve("defpacks").resolve(element).toFile();
-                        File pathToZip = new File(pathToPack.getPath() + ".zip");
-
-                        CompoundInput input = null;
-
-                        if(pathToZip.exists() && pathToZip.isFile()) {
-                            input = new ZipCompoundInput(pathToZip);
-                        } else if(pathToPack.exists() && pathToPack.isDirectory()) {
-                            input = new DirectoryCompoundInput(pathToPack);
-                        }
-
-                        if(input != null) {
-                            toImport.add(new DefinitionPack(input));
-                        } else if(definitionPackAliases != null && definitionPackAliases.containsKey(element)) {
-                            toImport.add(definitionPackAliases.get(element));
-                        } else {
-                            throw new FileNotFoundException("Could not find folder nor zip at path '" + pathToPack + "'");
-                        }
-                    }
-                }
-            }
-        } else {
-            toImport.addAll(Arrays.asList(definitionPacks));
-        }
-
-        for(DefinitionPack defpack : toImport) {
-            module.importDefinitions(defpack);
-        }
-
-        if(properties.has("aliases") && properties.get("aliases").isJsonObject()) {
-            for(Map.Entry<String, JsonElement> categoryEntry : properties.getAsJsonObject("aliases").entrySet()) {
-                String category = categoryEntry.getKey();
-
-                if(categoryEntry.getValue().isJsonObject()) {
-                    for(Map.Entry<String, JsonElement> entry : categoryEntry.getValue().getAsJsonObject().entrySet()) {
-                        TridentUtil.ResourceLocation alias = TridentUtil.ResourceLocation.createStrict(entry.getKey());
-                        TridentUtil.ResourceLocation real = TridentUtil.ResourceLocation.createStrict(entry.getValue().getAsString());
-                        if(alias == null) continue;
-                        if(real == null) continue;
-
-                        module.getNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasType(c, ns, n, module.getNamespace(real.namespace), real.body), alias.body);
-                        //Debug.log("Created alias '" + alias + "' for '" + real + "'");
-                    }
-                }
-            }
-        }
-        return module;
-    }
-
     public void setDependencyMode(Dependency.Mode dependencyMode) {
         this.dependencyMode = dependencyMode;
     }
@@ -847,10 +738,6 @@ public class TridentCompiler extends AbstractProcess {
 
     public String createAnonymousFunctionName(int index) {
         return anonymousFunctionTemplate.replace("*",String.valueOf(index));
-    }
-
-    private void setDefaultDefinitionPacks(DefinitionPack[] defaultDefinitionPacks) {
-        this.defaultDefinitionPacks = defaultDefinitionPacks;
     }
 
     public static void summarizeLibraries(TridentProjectSummary summary) {
@@ -978,10 +865,9 @@ public class TridentCompiler extends AbstractProcess {
             }
         }
     }
-    private static class Dependency {
+    static class Dependency {
 
-
-        private enum Mode {
+        enum Mode {
             PRECOMPILE, COMBINE;
         }
 

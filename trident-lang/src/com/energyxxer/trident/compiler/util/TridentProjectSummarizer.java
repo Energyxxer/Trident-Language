@@ -13,6 +13,8 @@ import com.energyxxer.enxlex.lexical_analysis.summary.ProjectSummarizer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.ParsingSignature;
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.TridentCompilerResources;
+import com.energyxxer.trident.compiler.TridentProjectWorker;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -20,7 +22,6 @@ import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
@@ -33,7 +34,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
 
 import static com.energyxxer.trident.compiler.TridentCompiler.DEFAULT_CHARSET;
 
@@ -41,28 +41,36 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
     private File rootDir;
     private Path dataPath;
     private Thread thread;
-    private DefinitionPack[] defaultDefinitionPacks;
-    private DefinitionPack[] definitionPacks;
-    private Map<String, DefinitionPack> definitionPackAliases = null;
+    private TridentCompilerResources resources;
     private CommandModule module;
     private HashMap<String, ParsingSignature> filePatterns = new HashMap<>();
 
     private TridentProjectSummary summary = new TridentProjectSummary();
     private ArrayList<java.lang.Runnable> completionListeners = new ArrayList<>();
 
+    private TridentProjectWorker worker;
+    private boolean workerHasWorked = false;
+
     public TridentProjectSummarizer(File rootDir) {
-        this(rootDir, new DefinitionPack[] {StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_RELEASE});
+        this(rootDir, new TridentCompilerResources() {{this.definitionPacks = new DefinitionPack[] {StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_RELEASE};}});
     }
 
-    public TridentProjectSummarizer(File rootDir, DefinitionPack[] definitionPacks) {
-        this(rootDir, definitionPacks, null);
-    }
-
-    public TridentProjectSummarizer(File rootDir, DefinitionPack[] definitionPacks, Map<String, DefinitionPack> definitionPackAliases) {
+    public TridentProjectSummarizer(File rootDir, TridentCompilerResources resources) {
         this.rootDir = rootDir;
         this.dataPath = rootDir.toPath().resolve("datapack").resolve("data");
-        this.definitionPacks = definitionPacks;
-        this.definitionPackAliases = definitionPackAliases;
+        this.resources = resources;
+
+        this.worker = new TridentProjectWorker(rootDir);
+        this.workerHasWorked = false;
+    }
+
+    public TridentProjectSummarizer(TridentProjectWorker worker) {
+        this.rootDir = worker.rootDir;
+        this.dataPath = rootDir.toPath().resolve("datapack").resolve("data");
+        this.resources = worker.getResources();
+
+        this.worker = worker;
+        this.workerHasWorked = true;
     }
 
     private JsonObject properties;
@@ -92,41 +100,34 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
             return;
         }
 
+        TridentCompilerResources resources = this.resources.shallowClone();
+        if(resources.definitionPacks == null) resources.definitionPacks = resources.defaultDefinitionPacks;
+
+        worker.setup.setupModule = true;
+        worker.setup.setupDependencies = true;
+        worker.setResources(resources);
+
         try {
-            module = TridentCompiler.createModuleForProject(rootDir.getName(), rootDir, properties, definitionPacks != null ? definitionPacks : defaultDefinitionPacks, definitionPackAliases);
+            if(!workerHasWorked) worker.work();
         } catch(IOException x) {
             logException(x);
             return;
         }
 
-        ArrayList<TridentProjectSummarizer> dependencies = new ArrayList<>();
+        module = worker.output.module;
 
-        if(properties.has("dependencies") && properties.get("dependencies").isJsonArray()) {
-            for(JsonElement rawElem : properties.get("dependencies").getAsJsonArray()) {
-                if(rawElem.isJsonObject()) {
-                    JsonObject obj = rawElem.getAsJsonObject();
-                    if(obj.has("path") && obj.get("path").isJsonPrimitive() && obj.get("path").getAsJsonPrimitive().isString()) {
-                        String dependencyPath = obj.get("path").getAsString();
-
-                        dependencies.add(new TridentProjectSummarizer(TridentCompiler.newFileObject(dependencyPath, rootDir)));
-                    }
-                }
-            }
-        }
-
-        for(TridentProjectSummarizer dependency : dependencies) {
-            dependency.setParentSummarizer(this);
-            dependency.setSourceCache(this.getSourceCache());
-            dependency.setDefaultDefinitionPacks(definitionPacks != null ? definitionPacks : defaultDefinitionPacks);
-            dependency.setDefinitionPackAliases(definitionPackAliases);
+        for(TridentProjectWorker subWorker : worker.output.dependencies) {
+            TridentProjectSummarizer subSummarizer = subWorker.createSummarizer();
+            subSummarizer.setParentSummarizer(this);
+            subSummarizer.setSourceCache(this.getSourceCache());
             try {
-                dependency.runSummary();
+                subSummarizer.runSummary();
             } catch(Exception ex) {
                 logException(ex);
                 return;
             }
-            this.setSourceCache(dependency.getSourceCache());
-            this.summary.join(dependency.summary);
+            this.setSourceCache(subSummarizer.getSourceCache());
+            this.summary.join(subSummarizer.summary);
         }
 
         TridentCompiler.summarizeLibraries(summary);
@@ -298,13 +299,5 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
 
     public TridentProjectSummary getSummary() {
         return summary;
-    }
-
-    private void setDefaultDefinitionPacks(DefinitionPack[] defaultDefinitionPacks) {
-        this.defaultDefinitionPacks = defaultDefinitionPacks;
-    }
-
-    private void setDefinitionPackAliases(Map<String, DefinitionPack> definitionPackAliases) {
-        this.definitionPackAliases = definitionPackAliases;
     }
 }

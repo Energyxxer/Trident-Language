@@ -26,7 +26,7 @@ public class ExecuteParser implements SimpleCommandParser {
         if(rawCommand != null) {
             CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, rawCommand.flattenTokens().get(0).value);
             if(parser != null) {
-                Collection<Command> commands = parser.parse((TokenPattern<?>) (rawCommand.getContents()), ctx);
+                Collection<Command> commands = parser.parse((TokenPattern<?>) (rawCommand.getContents()), ctx, modifiers);
                 if(!commands.isEmpty()) {
                     if(commands.size() == 1) {
                         return new ExecuteCommand(commands.toArray(new Command[0])[0], modifiers);

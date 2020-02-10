@@ -21,6 +21,9 @@ import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.instructions.Instruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
+import com.energyxxer.trident.compiler.plugin.CommandDefinition;
+import com.energyxxer.trident.compiler.plugin.PluginCommandParser;
+import com.energyxxer.trident.compiler.plugin.TridentPlugin;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ImportedSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
@@ -217,6 +220,15 @@ public class TridentFile extends SymbolContext {
     }
 
     //Sub context NOT automatically created
+    public static void resolveFileIntoSection(TokenPattern<?> pattern, ISymbolContext parentCtx, FunctionSection function) {
+        if(pattern.find("DIRECTIVES") != null) {
+            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Directives aren't allowed in this context", pattern.find("DIRECTIVES"), parentCtx);
+        }
+
+        resolveEntries((TokenList) pattern.find("ENTRIES"), parentCtx, function, false);
+    }
+
+    //Sub context NOT automatically created
     public static void resolveEntryListIntoSection(TokenList list, ISymbolContext parentCtx, FunctionSection function) {
         resolveEntries(list, parentCtx, function, false);
     }
@@ -406,15 +418,26 @@ public class TridentFile extends SymbolContext {
                         ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList((TokenList) inner.find("MODIFIERS"), parent);
 
                         TokenPattern<?> commandPattern = inner.find("COMMAND");
-                        CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandPattern.flattenTokens().get(0).value);
+                        String commandName = ((TokenGroup) ((TokenStructure) commandPattern).getContents()).getContents()[0].flattenTokens().get(0).value;
+                        CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandName);
                         if (parser != null) {
-                            Collection<Command> commands = parser.parse(((TokenStructure) commandPattern).getContents(), parent);
+                            Collection<Command> commands = parser.parse(((TokenStructure) commandPattern).getContents(), parent, modifiers);
                             for(Command command : commands) {
                                 if (modifiers.isEmpty()) appendTo.append(command);
                                 else appendTo.append(new ExecuteCommand(command, modifiers));
                             }
                         } else {
-                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + commandPattern.flattenTokens().get(0).value + "'", commandPattern, parent);
+                            boolean found = false;
+                            for(TridentPlugin plugin : parent.getCompiler().getWorker().output.transitivePlugins) {
+                                CommandDefinition def = plugin.getCommand(commandName);
+                                if(def != null) {
+                                    Debug.log("Found command analyzer for '" + commandName + "': " + def);
+                                    new PluginCommandParser().handleCommand(def, commandPattern, modifiers, parent, appendTo);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if(!found) throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + commandName + "'", commandPattern, parent);
                         }
                     } else if (!parent.getStaticParentFile().reportedNoCommands) {
                         parent.getStaticParentFile().reportedNoCommands = true;

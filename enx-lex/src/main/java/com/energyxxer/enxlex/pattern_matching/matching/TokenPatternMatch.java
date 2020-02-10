@@ -12,6 +12,11 @@ public abstract class TokenPatternMatch extends GeneralTokenPatternMatch {
 
 	public abstract TokenMatchResponse match(List<Token> tokens, Token lastToken, Stack st);
 
+	public TokenPatternMatch setName(String name) {
+		super.setName(name);
+		return this;
+	}
+
 	public TokenPatternMatch setOptional() {
 		return setOptional(true);
 	}

@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
 import com.energyxxer.commodore.functionlogic.commands.Command;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.commands.tag.TagCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -17,7 +18,7 @@ import java.util.Collections;
 @AnalyzerMember(key = "component")
 public class ComponentParser implements CommandParser {
     @Override
-    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> preModifiers) {
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
 
         TagCommand.Action action = pattern.find("COMPONENT_ACTION.LITERAL_REMOVE") != null ? TagCommand.Action.REMOVE : TagCommand.Action.ADD;

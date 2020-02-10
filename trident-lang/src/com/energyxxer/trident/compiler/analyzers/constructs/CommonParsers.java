@@ -51,10 +51,7 @@ import com.energyxxer.trident.extensions.EObject;
 import com.energyxxer.util.logger.Debug;
 import org.jetbrains.annotations.Contract;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.*;
@@ -802,18 +799,22 @@ public class CommonParsers {
         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
         if(rawModifierList != null) {
             for(TokenPattern<?> rawModifier : rawModifierList.getContents()) {
-                ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
-                if(parser != null) {
-                    Collection<ExecuteModifier> modifier = parser.parse(rawModifier, ctx);
-                    modifiers.addAll(modifier);
-                } else {
-                    TridentException x = new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + rawModifier.flattenTokens().get(0).value + "'", rawModifier, ctx);
-                    if(collector != null) collector.log(x);
-                    else throw x;
-                }
+                modifiers.addAll(parseModifier(rawModifier, ctx, collector));
             }
         }
         return modifiers;
+    }
+
+    public static Collection<ExecuteModifier> parseModifier(TokenPattern<?> rawModifier, ISymbolContext ctx, ExceptionCollector collector) {
+        ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
+        if(parser != null) {
+            return parser.parse(rawModifier, ctx);
+        } else {
+            TridentException x = new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown modifier analyzer for '" + rawModifier.flattenTokens().get(0).value + "'", rawModifier, ctx);
+            if(collector != null) collector.log(x);
+            else throw x;
+        }
+        return Collections.emptyList();
     }
 
     //Must always return a VALID pointer

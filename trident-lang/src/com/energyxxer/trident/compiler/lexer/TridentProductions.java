@@ -2450,10 +2450,6 @@ public class TridentProductions {
             );
         }
         //endregion
-
-
-
-
     }
 
     private static LazyTokenPatternMatch noToken() {
@@ -2465,7 +2461,7 @@ public class TridentProductions {
     }
 
     private LazyTokenStructureMatch numericDataType() {
-        return choice("byte", "double", "float", "int", "long", "short");
+        return choice("byte", "double", "float", "int", "long", "short").setName("NUMERIC_DATA_TYPE");
     }
 
     private LazyTokenPatternMatch anchor() {
@@ -2530,14 +2526,6 @@ public class TridentProductions {
         return (LazyTokenStructureMatch) choice(group(choice(ENTITY, symbol("*")).setName("TARGET_ENTITY"), group(sameLine(), choice(symbol("*"), objectiveName()).setName("OBJECTIVE_NAME_WRAPPER")).setOptional().setName("OBJECTIVE_CLAUSE")).setName("SCORE_OPTIONAL_OBJECTIVE"), POINTER).setName("SCORE").addTags("cspn:Score");
     }
 
-    private LazyTokenStructureMatch entityNBT() {
-        return choice(group(ENTITY, NBT_PATH).setName("EXPLICIT_ENTITY_NBT"), POINTER).setName("ENTITY_NBT");
-    }
-
-    private LazyTokenStructureMatch blockNBT() {
-        return choice(group(COORDINATE_SET, NBT_PATH).setName("EXPLICIT_BLOCK_NBT"), POINTER).setName("BLOCK_NBT");
-    }
-
     private static LazyTokenItemMatch equals() {
         return ofType(EQUALS);
     }
@@ -2600,6 +2588,10 @@ public class TridentProductions {
 
     private static LazyTokenPatternMatch identifierC() {
         return ofType(IDENTIFIER_TYPE_C).setName("IDENTIFIER_C");
+    }
+
+    private static LazyTokenPatternMatch identifierD() {
+        return ofType(IDENTIFIER_TYPE_D).setName("IDENTIFIER_D");
     }
 
     private static LazyTokenItemMatch ofType(TokenType type) {
@@ -2669,5 +2661,86 @@ public class TridentProductions {
             case "private": return Symbol.SymbolVisibility.PRIVATE;
             default: return defaultValue;
         }
+    }
+
+    public LazyTokenPatternMatch getStructureByName(String name) {
+        switch(name) {
+            case "INNER_FUNCTION": return INNER_FUNCTION;
+            case "ANONYMOUS_INNER_FUNCTION": return ANONYMOUS_INNER_FUNCTION;
+            case "OPTIONAL_NAME_INNER_FUNCTION": return OPTIONAL_NAME_INNER_FUNCTION;
+            case "MODIFIER": return MODIFIER;
+            case "RESOURCE_LOCATION": return RESOURCE_LOCATION_S;
+            case "RESOURCE_LOCATION_TAGGED": return RESOURCE_LOCATION_TAGGED;
+            case "SELECTOR": return SELECTOR;
+            case "TEXT_COMPONENT": return TEXT_COMPONENT;
+            case "TEXT_COLOR": return TEXT_COLOR;
+            case "INTEGER_NUMBER_RANGE": return INTEGER_NUMBER_RANGE;
+            case "REAL_NUMBER_RANGE": return REAL_NUMBER_RANGE;
+            case "NBT_COMPOUND": return NBT_COMPOUND;
+            case "NBT_LIST": return NBT_LIST;
+            case "NBT_VALUE": return NBT_VALUE;
+            case "NBT_PATH": return NBT_PATH;
+            case "COORDINATE_SET": return COORDINATE_SET;
+            case "TWO_COORDINATE_SET": return TWO_COORDINATE_SET;
+            case "BLOCK": return BLOCK;
+            case "BLOCK_TAGGED": return BLOCK_TAGGED;
+            case "ITEM": return ITEM;
+            case "ITEM_TAGGED": return ITEM_TAGGED;
+            case "PARTICLE": return PARTICLE;
+            case "NEW_ENTITY_LITERAL": return NEW_ENTITY_LITERAL;
+            case "BLOCK_ID": return BLOCK_ID;
+            case "ITEM_ID": return ITEM_ID;
+            case "ENTITY_ID": return ENTITY_ID;
+            case "ENTITY_ID_TAGGED": return ENTITY_ID_TAGGED;
+            case "EFFECT_ID": return EFFECT_ID;
+            case "PARTICLE_ID": return PARTICLE_ID;
+            case "ENCHANTMENT_ID": return ENCHANTMENT_ID;
+            case "DIMENSION_ID": return DIMENSION_ID;
+            case "SLOT_ID": return SLOT_ID;
+            case "GAMEMODE": return GAMEMODE;
+            case "GAMERULE": return GAMERULE;
+            case "STRUCTURE": return STRUCTURE;
+            case "DIFFICULTY": return DIFFICULTY;
+            case "STRING_LITERAL_OR_IDENTIFIER_A": return STRING_LITERAL_OR_IDENTIFIER_A;
+            case "DICTIONARY": return DICTIONARY;
+            case "LIST": return LIST;
+            case "ENTITY": return ENTITY;
+            case "LIMITED_ENTITY": return LIMITED_ENTITY;
+            case "INTERPOLATION_BLOCK": return INTERPOLATION_BLOCK;
+            case "INTERPOLATION_VALUE": return INTERPOLATION_VALUE;
+            case "LINE_SAFE_INTERPOLATION_VALUE": return LINE_SAFE_INTERPOLATION_VALUE;
+            case "POINTER": return POINTER;
+            case "INTEGER": return integer();
+            case "BOOLEAN": return rawBoolean();
+            case "STRING": return string();
+            case "REAL": return real();
+            case "OBJECTIVE_NAME": return objectiveName();
+            case "SCORE": return score();
+            case "SCORE_OPTIONAL_OBJECTIVE": return scoreOptionalObjective();
+            case "NUMERIC_DATA_TYPE": return numericDataType();
+            case "ANCHOR": return anchor();
+            case "COLON": return colon();
+            case "COMMA": return comma();
+            case "DOT": return dot();
+            case "EQUALS": return equals();
+            case "CARET": return caret();
+            case "TILDE": return tilde();
+            case "NOT": return not();
+            case "HASH": return hash();
+            case "GLUE": return glue();
+            case "SAME_LINE": return sameLine();
+            case "IDENTIFIER_A": return identifierA();
+            case "IDENTIFIER_B": return identifierB();
+            case "IDENTIFIER_B_LIMITED": return identifierBLimited();
+            case "IDENTIFIER_C": return identifierC();
+            case "IDENTIFIER_D": return identifierD();
+            case "IDENTIFIER_X": return identifierX();
+            case "IDENTIFIER_Y": return identifierY();
+            default: return null;
+        }
+    }
+
+    public void registerCustomCommand(String commandHeader, LazyTokenPatternMatch pattern) {
+        COMMAND.add(group(matchItem(COMMAND_HEADER, commandHeader), pattern));
     }
 }

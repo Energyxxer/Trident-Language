@@ -134,10 +134,14 @@ public class Main {
             }
         }
 
+        TridentCompilerResources resources = new TridentCompilerResources();
+        resources.definitionPacks = definitionPacks;
+        resources.featureMap = featMap != null ? VersionFeatureManager.parseFeatureMap(featMapReader) : null;
+        resources.rawTypeMaps = rawTypeMaps;
+
         TridentCompiler c = new TridentCompiler(rootDir);
-        c.setStartingDefinitionPacks(definitionPacks);
-        c.setStartingFeatureMap(featMap != null ? VersionFeatureManager.parseFeatureMap(featMapReader) : null);
-        c.setStartingRawTypeMaps(rawTypeMaps);
+        c.setResources(resources);
+
 
         c.addProgressListener((process) -> {
             StringBuilder line = new StringBuilder(process.getStatus());

@@ -18,7 +18,7 @@ import java.util.Collection;
 @AnalyzerMember(key = "expand")
 public class ExpandParser implements CommandParser {
     @Override
-    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> preModifiers) {
         ArrayList<Command> commands = new ArrayList<>();
 
         TokenList commandPatterns = ((TokenList) pattern.find("COMMANDS"));
@@ -32,7 +32,7 @@ public class ExpandParser implements CommandParser {
             TokenPattern<?> commandPattern = inner.find("COMMAND");
             CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandPattern.flattenTokens().get(0).value);
             if (parser != null) {
-                Collection<Command> innerCommands = parser.parse(((TokenStructure) commandPattern).getContents(), ctx);
+                Collection<Command> innerCommands = parser.parse(((TokenStructure) commandPattern).getContents(), ctx, modifiers);
                 if(modifiers.isEmpty()) {
                     commands.addAll(innerCommands);
                 } else {
