@@ -176,6 +176,10 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                     Object referencedType = CommonParsers.parseEntityReference(headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
                     if (referencedType instanceof Type) {
                         defaultType = ((Type) referencedType);
+
+                        if(!entityName.equals("default") && defaultType.getProperty("spawnable").equals("false")) {
+                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "This entity type is not summonable", headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
+                        }
                     } else if (referencedType instanceof CustomEntity) {
                         superEntity = ((CustomEntity) referencedType);
                         if (!superEntity.isComponent()) {
@@ -217,6 +221,8 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default entities may not implement components", rawComponentList, ctx);
             }
         }
+
+
 
         final CustomEntity entityDecl;
         if (!entityName.equals("default")) {
