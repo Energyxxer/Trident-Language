@@ -20,6 +20,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 import com.energyxxer.util.logger.Debug;
@@ -64,7 +65,7 @@ public class PluginCommandParser {
                     if(pattern.hasTag(TDNMetaBuilder.STORE_FLAT_TAG)) {
                         value = pattern.flatten(true);
                     } else {
-                        value = parseVar(argPattern, ctx);
+                        value = parseVar(argPattern, ctx, pattern);
                     }
 
                     if(!argsObj.containsKey(storeVar)) {
@@ -97,7 +98,7 @@ public class PluginCommandParser {
         }
     }
 
-    private static Object parseVar(TokenPattern<?> pattern, ISymbolContext ctx) {
+    private static Object parseVar(TokenPattern<?> pattern, ISymbolContext ctx, TokenPattern<?> parentPattern) {
         switch(pattern.getName()) {
             case "INNER_FUNCTION":
             case "OPTIONAL_NAME_INNER_FUNCTION": {
@@ -122,6 +123,14 @@ public class PluginCommandParser {
             case "RESOURCE_LOCATION_TAGGED": return CommonParsers.parseResourceLocation(pattern, ctx);
             case "ENTITY":
             case "SELECTOR": return EntityParser.parseEntity(pattern, ctx);
+            case "BLOCK":
+            case "BLOCK_TAGGED": return CommonParsers.parseBlock(pattern, ctx);
+            case "ITEM":
+            case "ITEM_TAGGED": {
+                NBTMode mode = NBTMode.SETTING;
+                if(parentPattern.hasTag(TDNMetaBuilder.STORE_METADATA_TAG_PREFIX + "TESTING")) mode = NBTMode.TESTING;
+                return CommonParsers.parseItem(pattern, ctx, mode);
+            }
             case "NEW_ENTITY_LITERAL": {
                 SummonParser.SummonData summonData = SummonParser.parseNewEntityLiteral(pattern, ctx);
                 DictionaryObject newEntityDict = new DictionaryObject();

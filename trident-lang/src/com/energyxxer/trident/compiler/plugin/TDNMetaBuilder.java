@@ -23,6 +23,7 @@ public class TDNMetaBuilder {
     public static final String PLUGIN_CREATED_TAG = "__PLUGIN_CREATED";
     public static final String STORE_VAR_TAG_PREFIX = "__PLUGIN_STORE_VAR:";
     public static final String STORE_FLAT_TAG = "__PLUGIN_STORE_FLAT:";
+    public static final String STORE_METADATA_TAG_PREFIX = "__PLUGIN_STORE_VAR_METADATA:";
 
     private static final ArrayList<FunctionDefinition> FUNCTIONS = new ArrayList<>();
 
@@ -272,7 +273,7 @@ public class TDNMetaBuilder {
             LazyTokenStructureMatch s = new LazyTokenStructureMatch("CHOICE");
             s.addTags(PLUGIN_CREATED_TAG);
             if(args.size() == 0) {
-                throw new IllegalArgumentException("Function 'choice' requires at least 1 parameter, found" + args.size());
+                throw new IllegalArgumentException("Function 'choice' requires at least 1 parameter, found " + args.size());
             }
             for(Value arg : args) {
                 if(arg instanceof TokenMatchValue) {
@@ -293,16 +294,16 @@ public class TDNMetaBuilder {
                 if(args.get(0) instanceof TokenMatchValue) {
                     listValue = ((TokenMatchValue) args.get(0)).patternMatch;
                 } else {
-                    throw new IllegalArgumentException("Function 'list' only accepts Token Match values at argument 0, found" + args.get(0).getClass().getSimpleName());
+                    throw new IllegalArgumentException("Function 'list' only accepts Token Match values at argument 0, found " + args.get(0).getClass().getSimpleName());
                 }
             } else {
-                throw new IllegalArgumentException("Function 'list' requires at least 1 parameter, found" + args.size());
+                throw new IllegalArgumentException("Function 'list' requires at least 1 parameter, found " + args.size());
             }
             if(args.size() >= 2) {
                 if(args.get(1) instanceof TokenMatchValue) {
                     separatorValue = ((TokenMatchValue) args.get(1)).patternMatch;
                 } else {
-                    throw new IllegalArgumentException("Function 'list' only accepts Token Match values at argument 1, found" + args.get(1).getClass().getSimpleName());
+                    throw new IllegalArgumentException("Function 'list' only accepts Token Match values at argument 1, found " + args.get(1).getClass().getSimpleName());
                 }
             }
             return new TokenMatchValue(new LazyTokenListMatch(listValue, separatorValue).addTags(PLUGIN_CREATED_TAG));
@@ -316,10 +317,10 @@ public class TDNMetaBuilder {
                         throw new IllegalArgumentException("Function 'name' can only be performed on plugin-created patterns");
                     }
                 } else {
-                    throw new IllegalArgumentException("Function 'name' only accepts String Literal values at argument 0, found" + args.get(0).getClass().getSimpleName());
+                    throw new IllegalArgumentException("Function 'name' only accepts String Literal values at argument 0, found " + args.get(0).getClass().getSimpleName());
                 }
             } else {
-                throw new IllegalArgumentException("Function 'name' requires at least 1 parameter, found" + args.size());
+                throw new IllegalArgumentException("Function 'name' requires at least 1 parameter, found " + args.size());
             }
             return value;
         });
@@ -332,10 +333,10 @@ public class TDNMetaBuilder {
                         throw new IllegalArgumentException("Function 'hint' can only be performed on plugin-created patterns");
                     }
                 } else {
-                    throw new IllegalArgumentException("Function 'hint' only accepts String Literal values at argument 0, found" + args.get(0).getClass().getSimpleName());
+                    throw new IllegalArgumentException("Function 'hint' only accepts String Literal values at argument 0, found " + args.get(0).getClass().getSimpleName());
                 }
             } else {
-                throw new IllegalArgumentException("Function 'hint' requires at least 1 parameter, found" + args.size());
+                throw new IllegalArgumentException("Function 'hint' requires at least 1 parameter, found " + args.size());
             }
             return value;
         });
@@ -343,15 +344,25 @@ public class TDNMetaBuilder {
             if(args.size() >= 1) {
                 if(args.get(0) instanceof StringLiteralValue) {
                     if(!((TokenMatchValue) value).patternMatch.tags.contains(PLUGIN_CREATED_TAG)) {
-                        return new TokenMatchValue(new LazyTokenGroupMatch().append(((TokenMatchValue) value).patternMatch).addTags(PLUGIN_CREATED_TAG).addTags(STORE_VAR_TAG_PREFIX + ((StringLiteralValue) args.get(0)).stringValue));
+                        LazyTokenGroupMatch match = new LazyTokenGroupMatch().append(((TokenMatchValue) value).patternMatch);
+                        match.addTags(PLUGIN_CREATED_TAG).addTags(STORE_VAR_TAG_PREFIX + ((StringLiteralValue) args.get(0)).stringValue);
+                        for(int i = 1; i < args.size(); i++) {
+                            Value arg = args.get(i);
+                            if(arg instanceof StringLiteralValue) {
+                                match.addTags(STORE_METADATA_TAG_PREFIX + ((StringLiteralValue) arg).stringValue);
+                            } else {
+                                throw new IllegalArgumentException("Function 'storeVar' only accepts String Literal values at arguments 1 and later, found " + arg.getClass().getSimpleName());
+                            }
+                        }
+                        return new TokenMatchValue(match);
                     } else {
                         throw new IllegalArgumentException("Function 'storeVar' can only be performed on non-plugin-created patterns");
                     }
                 } else {
-                    throw new IllegalArgumentException("Function 'storeVar' only accepts String Literal values at argument 0, found" + args.get(0).getClass().getSimpleName());
+                    throw new IllegalArgumentException("Function 'storeVar' only accepts String Literal values at argument 0, found " + args.get(0).getClass().getSimpleName());
                 }
             } else {
-                throw new IllegalArgumentException("Function 'storeVar' requires at least 1 parameter, found" + args.size());
+                throw new IllegalArgumentException("Function 'storeVar' requires at least 1 parameter, found " + args.size());
             }
         });
         registerFunction("storeFlat", TokenMatchValue.class, (value, args) -> {
@@ -359,10 +370,10 @@ public class TDNMetaBuilder {
                 if(args.get(0) instanceof StringLiteralValue) {
                     return new TokenMatchValue(new LazyTokenGroupMatch().append(((TokenMatchValue) value).patternMatch).addTags(PLUGIN_CREATED_TAG).addTags(STORE_FLAT_TAG).addTags(STORE_VAR_TAG_PREFIX + ((StringLiteralValue) args.get(0)).stringValue));
                 } else {
-                    throw new IllegalArgumentException("Function 'storeVar' only accepts String Literal values at argument 0, found" + args.get(0).getClass().getSimpleName());
+                    throw new IllegalArgumentException("Function 'storeVar' only accepts String Literal values at argument 0, found " + args.get(0).getClass().getSimpleName());
                 }
             } else {
-                throw new IllegalArgumentException("Function 'storeVar' requires at least 1 parameter, found" + args.size());
+                throw new IllegalArgumentException("Function 'storeVar' requires at least 1 parameter, found " + args.size());
             }
         });
         registerFunction("optional", TokenMatchValue.class, (value, args) -> {
@@ -371,7 +382,7 @@ public class TDNMetaBuilder {
                 if(args.get(0) instanceof BooleanValue) {
                     shouldBeOptional = ((BooleanValue) args.get(0)).boolValue;
                 } else {
-                    throw new IllegalArgumentException("Function 'optional' only accepts Boolean values at argument 0, found" + args.get(0).getClass().getSimpleName());
+                    throw new IllegalArgumentException("Function 'optional' only accepts Boolean values at argument 0, found " + args.get(0).getClass().getSimpleName());
                 }
             }
             if(((TokenMatchValue) value).patternMatch.tags.contains(PLUGIN_CREATED_TAG)) {
@@ -387,10 +398,10 @@ public class TDNMetaBuilder {
                     String text = ((StringLiteralValue) args.get(0)).stringValue;
                     return new TokenMatchValue(new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase()).addTags(SuggestionTags.ENABLED, PLUGIN_CREATED_TAG));
                 } else {
-                    throw new IllegalArgumentException("Function 'hint' only accepts String Literal values at argument 0, found" + args.get(0).getClass().getSimpleName());
+                    throw new IllegalArgumentException("Function 'hint' only accepts String Literal values at argument 0, found " + args.get(0).getClass().getSimpleName());
                 }
             } else {
-                throw new IllegalArgumentException("Function 'hint' requires at least 1 parameter, found" + args.size());
+                throw new IllegalArgumentException("Function 'hint' requires at least 1 parameter, found " + args.size());
             }
         });
         registerFunction("brace", (ignore, args) -> {
@@ -399,10 +410,10 @@ public class TDNMetaBuilder {
                     String text = ((StringLiteralValue) args.get(0)).stringValue;
                     return new TokenMatchValue(new LazyTokenItemMatch(TridentTokens.BRACE, text).addTags(PLUGIN_CREATED_TAG));
                 } else {
-                    throw new IllegalArgumentException("Function 'brace' only accepts String Literal values at argument 0, found" + args.get(0).getClass().getSimpleName());
+                    throw new IllegalArgumentException("Function 'brace' only accepts String Literal values at argument 0, found " + args.get(0).getClass().getSimpleName());
                 }
             } else {
-                throw new IllegalArgumentException("Function 'brace' requires at least 1 parameter, found" + args.size());
+                throw new IllegalArgumentException("Function 'brace' requires at least 1 parameter, found " + args.size());
             }
         });
     }

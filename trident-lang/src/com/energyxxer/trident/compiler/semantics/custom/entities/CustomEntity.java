@@ -161,7 +161,6 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         String entityName;
         Type defaultType = null;
         CustomEntity superEntity = null;
-        HashMap<String, EntityEvent> eventTargets = new HashMap<>();
 
         TokenPattern<?> headerDeclaration = ((TokenStructure) pattern.find("ENTITY_DECLARATION_HEADER")).getContents();
 
