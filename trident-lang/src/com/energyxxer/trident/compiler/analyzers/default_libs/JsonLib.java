@@ -12,6 +12,7 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.google.gson.*;
+import com.google.gson.stream.MalformedJsonException;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -23,7 +24,13 @@ public class JsonLib implements DefaultLibraryProvider {
         DictionaryObject block = new DictionaryObject();
 
         block.put("parse",
-                new MethodWrapper<>("parse", ((instance, params) -> parseJson(new Gson().fromJson((String) params[0], JsonElement.class))), String.class).createForInstance(null));
+                new MethodWrapper<>("parse", ((instance, params) -> {
+                    String raw = (String) params[0];
+                    if(raw.isEmpty()) return null;
+                    JsonElement asJson = new Gson().fromJson(raw, JsonElement.class);
+                    if(asJson.isJsonPrimitive() && asJson.getAsJsonPrimitive().isString() && !(raw.startsWith("\"") || raw.startsWith("'"))) throw new MalformedJsonException("Use JsonReader.setLenient(true) to accept malformed JSON at line 1 column 1 path $");
+                    return parseJson(asJson);
+                }), String.class).createForInstance(null));
         block.put("stringify",
                 (VariableMethod) (params, patterns, pattern, ctx) -> {
                     if(params.length < 1) {
