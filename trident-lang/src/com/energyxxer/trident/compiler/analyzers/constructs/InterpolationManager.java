@@ -1,11 +1,13 @@
 package com.energyxxer.trident.compiler.analyzers.constructs;
 
+import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.constructors.ObjectConstructors;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.NBTTagTypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.NullTypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperandType;
@@ -456,6 +458,7 @@ public class InterpolationManager {
         if(value instanceof VariableTypeHandler) return ((VariableTypeHandler) value);
         if(value == null) return new NullTypeHandler();
         VariableTypeHandler handler = AnalyzerManager.getAnalyzer(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(value.getClass()));
+        if(handler == null && value instanceof NBTTag) return new NBTTagTypeHandler();
         if(handler == null && !nullable) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Couldn't find handler for type " + value.getClass().getName(), pattern, ctx);
         }

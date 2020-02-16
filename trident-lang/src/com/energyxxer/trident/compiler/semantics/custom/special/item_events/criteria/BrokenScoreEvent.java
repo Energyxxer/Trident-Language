@@ -43,7 +43,7 @@ public class BrokenScoreEvent implements ScoreEventCriteriaHandler {
         modifiers.add(new ExecuteConditionEntity(IF, initialSelector));
 
         if(data.customItem != null) {
-            Objective objective = data.compiler.getModule().getObjectiveManager().create("btitem." + Integer.toString(data.customItem.getItemIdHash(),16), "dummy", new StringTextComponent("Temporary broken " + data.customItem), true);
+            Objective objective = data.compiler.getModule().getObjectiveManager().create("btitem." + Integer.toString(data.customItem.getItemIdHash(),16), "dummy", new StringTextComponent("Temporary broken " + data.customItem));
 
             //store result score #OPERATION btitem.### clear @s <citem> 0
             data.function.append(new ExecuteCommand(new ClearCommand(new Selector(Selector.BaseSelector.SENDER),data.customItem.constructItem(NBTMode.TESTING), 0), new ExecuteStoreScore(new LocalScore(new PlayerName("#OPERATION"), objective))));

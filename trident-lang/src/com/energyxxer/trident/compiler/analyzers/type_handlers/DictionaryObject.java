@@ -137,6 +137,17 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
         return newDict;
     }
 
+    public DictionaryObject shallowMerge(DictionaryObject other) {
+        DictionaryObject newDict = new DictionaryObject();
+        for(Map.Entry<String, Symbol> entry : this.entrySet()) {
+            newDict.put(entry.getKey(), entry.getValue().getValue());
+        }
+        for(Map.Entry<String, Symbol> entry : other.entrySet()) {
+            newDict.put(entry.getKey(), entry.getValue().getValue());
+        }
+        return newDict;
+    }
+
     @NotNull
     @Override
     public Iterator<Object> iterator() {

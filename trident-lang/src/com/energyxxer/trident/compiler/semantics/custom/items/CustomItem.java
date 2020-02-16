@@ -24,7 +24,7 @@ import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.compiler.semantics.custom.TypeAwareMerger;
+import com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -35,7 +35,7 @@ import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
-import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareMerger.REPLACE;
+import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger.REPLACE;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
 public class CustomItem implements VariableTypeHandler<CustomItem> {
@@ -69,7 +69,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
 
     public void mergeNBT(TagCompound newNBT, ISymbolContext ctx) {
         PathContext context = new PathContext().setIsSetting(true).setProtocolMetadata(baseType);
-        this.defaultNBT = ((TypeAwareMerger) (path, cls) -> {
+        this.defaultNBT = ((TypeAwareNBTMerger) (path, cls) -> {
             DataTypeQueryResponse response = ctx.getCompiler().getTypeMap().collectTypeInformation(path, context);
             if (!response.isEmpty()) {
                 for (DataType type : new ArrayList<>(response.getPossibleTypes())) {
@@ -77,12 +77,12 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                         return REPLACE;
                 }
             }
-            return TypeAwareMerger.MERGE;
+            return TypeAwareNBTMerger.MERGE;
         }).merge(this.defaultNBT, newNBT);
     }
 
     public void overrideNBT(TagCompound newNBT, ISymbolContext ctx) {
-        this.defaultNBT = ((TypeAwareMerger) (path, cls) -> REPLACE).merge(this.defaultNBT, newNBT);
+        this.defaultNBT = ((TypeAwareNBTMerger) (path, cls) -> REPLACE).merge(this.defaultNBT, newNBT);
     }
 
     public void setDefaultNBT(TagCompound defaultNBT) {

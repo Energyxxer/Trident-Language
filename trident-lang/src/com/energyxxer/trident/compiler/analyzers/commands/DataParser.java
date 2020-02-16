@@ -71,9 +71,6 @@ public class DataParser implements SimpleCommandParser {
             case "MODIFY_INSERT": {
                 appendListNode = true;
                 operation = DataModifyCommand.INSERT(
-                        inner.find("CHOICE").flatten(false).equals("after") ?
-                                DataModifyCommand.InsertOrder.AFTER :
-                                DataModifyCommand.InsertOrder.BEFORE,
                         CommonParsers.parseInt(inner.find("INTEGER"), ctx));
                 break;
             }

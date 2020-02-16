@@ -1120,7 +1120,7 @@ public class TridentProductions {
                             group(literal("merge"), target, NBT_COMPOUND).setName("MERGE"),
                             group(literal("modify"), target, NBT_PATH, choice(
                                     group(literal("append"), source).setName("MODIFY_APPEND"),
-                                    group(literal("insert"), choice("before", "after"), integer().addTags("cspn:Insert Index"), source).setName("MODIFY_INSERT"),
+                                    group(literal("insert"), integer().addTags("cspn:Insert Index"), source).setName("MODIFY_INSERT"),
                                     group(literal("merge"), source).setName("MODIFY_MERGE"),
                                     group(literal("prepend"), source).setName("MODIFY_PREPEND"),
                                     group(literal("set"), source).setName("MODIFY_SET")
