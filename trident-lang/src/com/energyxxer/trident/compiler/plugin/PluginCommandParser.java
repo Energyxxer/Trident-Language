@@ -12,6 +12,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.analyzers.commands.SummonParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.FunctionMethod;
@@ -121,6 +122,14 @@ public class PluginCommandParser {
             case "RESOURCE_LOCATION_TAGGED": return CommonParsers.parseResourceLocation(pattern, ctx);
             case "ENTITY":
             case "SELECTOR": return EntityParser.parseEntity(pattern, ctx);
+            case "NEW_ENTITY_LITERAL": {
+                SummonParser.SummonData summonData = SummonParser.parseNewEntityLiteral(pattern, ctx);
+                DictionaryObject newEntityDict = new DictionaryObject();
+                newEntityDict.put("type", new TridentUtil.ResourceLocation(summonData.type.toString()));
+                newEntityDict.put("components", new ListObject(summonData.components));
+                newEntityDict.put("fullNBT", summonData.nbt);
+                return newEntityDict;
+            }
             case "TEXT_COMPONENT": return TextParser.parseTextComponent(pattern, ctx);
             case "NBT_COMPOUND":
             case "NBT_VALUE":
