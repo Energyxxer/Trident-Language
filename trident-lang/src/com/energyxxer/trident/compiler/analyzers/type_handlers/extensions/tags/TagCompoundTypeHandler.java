@@ -3,6 +3,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberWrapper;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.NBTToDictionary;
@@ -10,6 +11,8 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.Variab
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.stream.Collectors;
 
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
@@ -48,5 +51,15 @@ public class TagCompoundTypeHandler implements VariableTypeHandler<TagCompound> 
     @Override
     public <F> F cast(TagCompound object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
+    }
+
+    @Override
+    public Iterator<?> getIterator(TagCompound object) {
+        return object.getAllTags().stream().map(t -> {
+            DictionaryObject entry = new DictionaryObject();
+            entry.put("key", t.getName());
+            entry.put("value", t);
+            return entry;
+        }).collect(Collectors.toList()).iterator();
     }
 }

@@ -9,6 +9,7 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.HashMap;
+import java.util.Iterator;
 
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
@@ -48,5 +49,10 @@ public class TagListTypeHandler implements VariableTypeHandler<TagList> {
     @Override
     public <F> F cast(TagList object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
+    }
+
+    @Override
+    public Iterator<?> getIterator(TagList object) {
+        return object.getAllTags().iterator();
     }
 }
