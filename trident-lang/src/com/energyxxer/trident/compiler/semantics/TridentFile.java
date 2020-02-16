@@ -84,7 +84,7 @@ public class TridentFile extends SymbolContext {
             valid = false;
         }
 
-        this.function = compileOnly ? null : getNamespace().functions.create(functionPath);
+        this.function = compileOnly ? null : getNamespace().functions.getOrCreate(functionPath);
         setShouldExportFunction(parentContext == null || parentContext.getStaticParentFile().shouldExportFunction);
     }
 
