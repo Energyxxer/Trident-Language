@@ -16,6 +16,7 @@ public class TridentCompilerResources {
 
     public TridentCompilerResources shallowClone() {
         TridentCompilerResources copy = new TridentCompilerResources();
+        copy.defaultDefinitionPacks = this.defaultDefinitionPacks;
         copy.definitionPacks = this.definitionPacks;
         copy.definitionPackAliases = this.definitionPackAliases;
         copy.featureMap = this.featureMap;
