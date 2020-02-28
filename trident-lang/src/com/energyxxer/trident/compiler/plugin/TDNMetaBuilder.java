@@ -282,7 +282,7 @@ public class TDNMetaBuilder {
                     String text = ((StringLiteralValue) arg).stringValue;
                     s.add(new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase()).addTags(SuggestionTags.ENABLED, PLUGIN_CREATED_TAG));
                 } else {
-                    throw new IllegalArgumentException("Function 'choice' only accepts Token Match values, found " + arg.getClass().getSimpleName());
+                    throw new IllegalArgumentException("Function 'choice' only accepts Token Match values or Strings, found " + arg.getClass().getSimpleName());
                 }
             }
             return new TokenMatchValue(s);
@@ -356,7 +356,7 @@ public class TDNMetaBuilder {
                         }
                         return new TokenMatchValue(match);
                     } else {
-                        throw new IllegalArgumentException("Function 'storeVar' can only be performed on non-plugin-created patterns");
+                        throw new IllegalArgumentException("Function 'storeVar' can only be performed on native patterns");
                     }
                 } else {
                     throw new IllegalArgumentException("Function 'storeVar' only accepts String Literal values at argument 0, found " + args.get(0).getClass().getSimpleName());
