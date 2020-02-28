@@ -8,6 +8,8 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 public interface ISymbolContext {
 
     ISymbolContext getParent();
@@ -51,5 +53,9 @@ public interface ISymbolContext {
                 throw x;
             }
         }
+    }
+
+    default File getDeclaringFSFile() {
+        return getStaticParentFile().getPattern().getFile();
     }
 }

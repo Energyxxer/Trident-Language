@@ -25,7 +25,7 @@ public class SymbolContext implements ISymbolContext {
         Symbol inMap = table.get(name);
         if(inMap != null &&
                 (inMap.getVisibility() != Symbol.SymbolVisibility.PRIVATE || from == this ||
-                        this.getStaticParentFile().getPattern().getFile().equals(from.getStaticParentFile().getPattern().getFile())
+                        this.getDeclaringFSFile().equals(from.getDeclaringFSFile())
                 )
         ) {
             return table.get(name);

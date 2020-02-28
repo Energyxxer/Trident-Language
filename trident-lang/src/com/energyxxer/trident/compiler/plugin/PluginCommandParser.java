@@ -25,6 +25,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 import com.energyxxer.util.logger.Debug;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,7 +37,7 @@ public class PluginCommandParser {
     private HashSet<String> multiVars = new HashSet<>();
 
     public void handleCommand(CommandDefinition def, TokenPattern<?> pattern, List<ExecuteModifier> modifiers, ISymbolContext ctx, FunctionSection appendTo) {
-        ISymbolContext subContext = new SymbolContext(ctx);
+        ISymbolContext subContext = new PluginSymbolContext(ctx, def.getRawHandlerPattern().getFile());
         DictionaryObject argsObj = new DictionaryObject();
         ListObject modifiersList = new ListObject();
         for(ExecuteModifier modifier : modifiers) {
@@ -193,6 +194,22 @@ public class PluginCommandParser {
             case "NUMERIC_DATA_TYPE":
             case "ANCHOR": return pattern.flatten(false);
             default: return null;
+        }
+    }
+
+    public static class PluginSymbolContext extends SymbolContext {
+
+        private File declaringFile;
+
+        public PluginSymbolContext(ISymbolContext parentScope, File declaringFile) {
+            super(parentScope);
+
+            this.declaringFile = declaringFile;
+        }
+
+        @Override
+        public File getDeclaringFSFile() {
+            return declaringFile;
         }
     }
 }
