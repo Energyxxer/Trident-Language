@@ -22,13 +22,17 @@ public class RawParser implements ModifierParser {
         TokenPattern<?> inner = ((TokenStructure) pattern.find("RAW_MODIFIER_VALUE")).getContents();
         Object obj = inner.getName().equals("STRING") ?
                 CommonParsers.parseStringLiteral(inner, ctx) :
-                InterpolationManager.parse(inner, ctx, String.class, ListObject.class);
-        if(obj instanceof String) return Collections.singletonList(new RawExecuteModifier(((String) obj)));
+                InterpolationManager.parse(inner, ctx, true, String.class, ListObject.class);
+        if(obj == null) return Collections.emptyList();
+        if(obj instanceof String) {
+            if(((String) obj).isEmpty()) return Collections.emptyList();
+            return Collections.singletonList(new RawExecuteModifier(((String) obj)));
+        }
         ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
         ListObject list = ((ListObject) obj);
         for(Object elem : list) {
             if(elem instanceof String) {
-                modifiers.add(new RawExecuteModifier(((String) elem)));
+                if(!((String) elem).isEmpty()) modifiers.add(new RawExecuteModifier(((String) elem)));
             } else {
                 throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot turn an object of type " + VariableTypeHandler.Static.getShorthandForObject(elem) + " into a string for a raw execute modifier", pattern.find("RAW_MODIFIER_VALUE"), ctx);
             }

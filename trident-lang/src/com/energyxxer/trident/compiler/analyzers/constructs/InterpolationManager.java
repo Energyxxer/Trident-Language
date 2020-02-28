@@ -32,9 +32,14 @@ public class InterpolationManager {
     private static Object nextThis = null;
     private static String nextFunctionName = null;
 
-    @SuppressWarnings("unchecked")
     public static <T> T parse(TokenPattern<?> pattern, ISymbolContext ctx, Class<T> expected) {
+        return parse(pattern, ctx, false, expected);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T parse(TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable, Class<T> expected) {
         Object obj = parse(pattern, ctx, false);
+        if(nullable && obj == null) return null;
         if(expected.isInstance(obj)) {
             return (T) obj;
         } else {
@@ -43,7 +48,12 @@ public class InterpolationManager {
     }
 
     public static Object parse(TokenPattern<?> pattern, ISymbolContext ctx, Class... expected) {
+        return parse(pattern, ctx, false, expected);
+    }
+
+    public static Object parse(TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable, Class... expected) {
         Object obj = parse(pattern, ctx, false);
+        if(nullable && obj == null) return null;
         for(Class cls : expected) {
             if(cls.isInstance(obj)) return obj;
         }
