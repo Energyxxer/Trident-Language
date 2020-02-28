@@ -29,7 +29,6 @@ import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.logger.Debug;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -99,6 +98,7 @@ public class TridentProductions {
     private final LazyTokenStructureMatch PARTICLE_ID = new LazyTokenStructureMatch("PARTICLE_ID");
     private final LazyTokenStructureMatch ENCHANTMENT_ID = new LazyTokenStructureMatch("ENCHANTMENT_ID");
     private final LazyTokenStructureMatch DIMENSION_ID = new LazyTokenStructureMatch("DIMENSION_ID");
+    private final LazyTokenStructureMatch BIOME_ID = new LazyTokenStructureMatch("BIOME_ID");
     private final LazyTokenStructureMatch SLOT_ID = new LazyTokenStructureMatch("SLOT_ID");
 
     private final LazyTokenStructureMatch GAMEMODE = new LazyTokenStructureMatch("GAMEMODE");
@@ -688,6 +688,14 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "locate"),
                     STRUCTURE
+            ));
+        }
+        //endregion
+        //region locatebiome
+        {
+            COMMAND.add(group(
+                    matchItem(COMMAND_HEADER, "locatebiome"),
+                    BIOME_ID
             ));
         }
         //endregion
@@ -1989,6 +1997,7 @@ public class TridentProductions {
             DIFFICULTY.add(categoryMap.get(DifficultyType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Difficulty");
             GAMEMODE.add(categoryMap.get(GamemodeType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Gamemode");
             DIMENSION_ID.add(categoryMap.get(DimensionType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Dimension");
+            BIOME_ID.add(categoryMap.get(BiomeType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Biome");
 
             BLOCK_ID.add(categoryMap.get(BlockType.CATEGORY).addTags(SuggestionTags.DISABLED)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BLOCK);
             ITEM_ID.add(categoryMap.get(ItemType.CATEGORY).addTags(SuggestionTags.DISABLED)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ITEM);
@@ -2142,7 +2151,7 @@ public class TridentProductions {
             }
 
         } catch (Exception x) {
-            Debug.log("Error in loading standard definition pack for Minecraft Java Edition 1.14: " + x.getClass() + ": " + x.getMessage() + "\n" + Arrays.toString(x.getStackTrace()), Debug.MessageType.ERROR);
+            throw new RuntimeException("Error in loading standard definition pack for Minecraft Java Edition 1.14: " + x.getClass() + ": " + x.getMessage());
         }
         //endregion
 
@@ -2696,6 +2705,7 @@ public class TridentProductions {
             case "PARTICLE_ID": return PARTICLE_ID;
             case "ENCHANTMENT_ID": return ENCHANTMENT_ID;
             case "DIMENSION_ID": return DIMENSION_ID;
+            case "BIOME_ID": return BIOME_ID;
             case "SLOT_ID": return SLOT_ID;
             case "GAMEMODE": return GAMEMODE;
             case "GAMERULE": return GAMERULE;
@@ -2736,6 +2746,7 @@ public class TridentProductions {
             case "IDENTIFIER_D": return identifierD();
             case "IDENTIFIER_X": return identifierX();
             case "IDENTIFIER_Y": return identifierY();
+            case "TRAILING_STRING": return ofType(TRAILING_STRING).setName("TRAILING_STRING");
             default: return null;
         }
     }
