@@ -2741,6 +2741,6 @@ public class TridentProductions {
     }
 
     public void registerCustomCommand(String commandHeader, LazyTokenPatternMatch pattern) {
-        COMMAND.add(group(matchItem(COMMAND_HEADER, commandHeader), pattern));
+        COMMAND.add(group(matchItem(COMMAND_HEADER, commandHeader).setName("CUSTOM_COMMAND_HEADER"), pattern));
     }
 }
