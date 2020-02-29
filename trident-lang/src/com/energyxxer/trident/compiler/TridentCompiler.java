@@ -285,13 +285,15 @@ public class TridentCompiler extends AbstractProcess {
         for(String key : ownFiles) {
             ParsingSignature value = filePatterns.get(key);
             Path relativePath = Paths.get(key);
-            if("functions".equals(relativePath.getName(1).toString())) {
+            if(relativePath.getNameCount() >= 2 && "functions".equals(relativePath.getName(1).toString())) {
                 try {
                     files.put(key, new TridentFile(this, relativePath, value.getPattern()));
                 } catch(CommodoreException ex) {
                     report.addNotice(new Notice(NoticeType.ERROR, ex.toString(), value.getPattern()));
                     break;
                 }
+            } else {
+                report.addNotice(new Notice(NoticeType.WARNING, "Trident file found outside a functions directory. This file will be ignored.", value.getPattern()));
             }
         }
 
