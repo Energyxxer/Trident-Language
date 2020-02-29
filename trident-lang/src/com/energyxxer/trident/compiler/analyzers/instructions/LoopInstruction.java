@@ -8,7 +8,6 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.Variab
 import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
-import com.energyxxer.util.logger.Debug;
 
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
@@ -92,10 +91,6 @@ public class LoopInstruction implements Instruction {
                 return new LoopHeader() {
                     @Override
                     public void initialize() {
-                        Debug.log("FOR INITIALIZATION: ");
-                        Debug.log(initialization);
-                        Debug.log(initializationVariableDecl);
-                        Debug.log();
                         if(initializationVariableDecl != null) {
                             new VariableInstruction().run(initializationVariableDecl, ctx);
                         } else {
