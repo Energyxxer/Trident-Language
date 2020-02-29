@@ -18,7 +18,7 @@ import java.util.Collections;
 @AnalyzerMember(key = "component")
 public class ComponentParser implements CommandParser {
     @Override
-    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> preModifiers) {
+    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> modifiers) {
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
 
         TagCommand.Action action = pattern.find("COMPONENT_ACTION.LITERAL_REMOVE") != null ? TagCommand.Action.REMOVE : TagCommand.Action.ADD;

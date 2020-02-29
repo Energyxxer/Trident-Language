@@ -1310,11 +1310,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "expand"),
-                    brace("{"),
-                    list(
-                            optional(choice(COMMAND_WRAPPER, COMMENT_S).setName("EXPAND_ENTRY"), ofType(TokenType.NEWLINE).setOptional().setName("LINE_PADDING"))
-                    ).setName("COMMANDS"),
-                    brace("}")
+                    ANONYMOUS_INNER_FUNCTION
             ));
         }
         //endregion

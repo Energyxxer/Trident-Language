@@ -45,6 +45,7 @@ public class TridentFile extends SymbolContext {
     private final Path relSourcePath;
 
     private Function function;
+    private final ArrayList<ExecuteModifier> writingModifiers = new ArrayList<>();
     private final TridentUtil.ResourceLocation location;
 
     private boolean compileOnly = false;
@@ -257,6 +258,10 @@ public class TridentFile extends SymbolContext {
         return function;
     }
 
+    public ArrayList<ExecuteModifier> getWritingModifiers() {
+        return writingModifiers;
+    }
+
     public Collection<TridentUtil.ResourceLocation> getRequires() {
         return requires.values();
     }
@@ -422,6 +427,7 @@ public class TridentFile extends SymbolContext {
                         CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandName);
                         if (parser != null) {
                             Collection<Command> commands = parser.parse(((TokenStructure) commandPattern).getContents(), parent, modifiers);
+                            modifiers.addAll(0, parent.getWritingFile().getWritingModifiers());
                             for(Command command : commands) {
                                 if (modifiers.isEmpty()) appendTo.append(command);
                                 else appendTo.append(new ExecuteCommand(command, modifiers));

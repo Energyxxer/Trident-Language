@@ -24,7 +24,7 @@ public class GameLogParser implements CommandParser {
     private static Stack<Object> toStringRecursion = new Stack<>();
 
     @Override
-    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> preModifiers) {
+    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> modifiers) {
         boolean exportGamelog = ctx.getCompiler().getProperties().get("export-gamelog") == null || (ctx.getCompiler().getProperties().get("export-gamelog").getAsBoolean());
         if(!exportGamelog) return null;
         ctx.assertLanguageLevel(3, "The gamelog command is", pattern);

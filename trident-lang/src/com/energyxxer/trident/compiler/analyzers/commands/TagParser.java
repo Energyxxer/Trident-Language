@@ -20,7 +20,7 @@ import java.util.Collections;
 @AnalyzerMember(key = "tag")
 public class TagParser implements CommandParser {
     @Override
-    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> preModifiers) {
+    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> modifiers) {
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
         switch(pattern.find("CHOICE").flattenTokens().get(0).value) {
             case "list": return Collections.singletonList(new TagQueryCommand(entity));

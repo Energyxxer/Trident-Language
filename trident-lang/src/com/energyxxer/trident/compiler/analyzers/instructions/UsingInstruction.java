@@ -66,17 +66,18 @@ public class UsingInstruction implements Instruction {
 
         Entity startEntity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
         ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) pattern.find("MODIFIER_LIST")), ctx);
+        modifiers.addAll(0, ctx.getWritingFile().getWritingModifiers());
 
         if(modifiers.isEmpty()) {
             function.append(new TagCommand(TagCommand.Action.ADD, startEntity, tag));
         } else {
-            modifiers.add(0, new ExecuteAsEntity(startEntity));
+            modifiers.add(ctx.getWritingFile().getWritingModifiers().size(), new ExecuteAsEntity(startEntity));
             function.append(new ExecuteCommand(new TagCommand(TagCommand.Action.ADD, new Selector(Selector.BaseSelector.SENDER), tag), modifiers));
         }
 
         IfInstruction.resolveBlock(executionBlock, ctx);
 
-        function.append(new TagCommand(TagCommand.Action.REMOVE, TridentUtil.getTopLevelEntity(startEntity), tag));
+        function.append(new ExecuteCommand(new TagCommand(TagCommand.Action.REMOVE, TridentUtil.getTopLevelEntity(startEntity), tag), ctx.getWritingFile().getWritingModifiers()));
     }
 
     private void usingSummon(TokenPattern<?> pattern, ISymbolContext ctx, TokenPattern<?> executionBlock) {
@@ -90,7 +91,7 @@ public class UsingInstruction implements Instruction {
         data.mergeNBT(NBTParser.parseCompound(pattern.find("..NBT_COMPOUND"), ctx));
         data.analyzeNBT(pattern, ctx);
         data.mergeNBT(new TagCompound(new TagList("Tags", new TagString(tag))));
-        function.append(data.constructSummon());
+        function.append(new ExecuteCommand(data.constructSummon(), ctx.getWritingFile().getWritingModifiers()));
 
         data.fillDefaults();
 
@@ -156,14 +157,17 @@ public class UsingInstruction implements Instruction {
         if(collapse) {
             innerFile.getFunction().prepend(tagRemoveCommand);
             modifiers.add(0, new ExecuteAsEntity(summoned));
+            modifiers.addAll(0, ctx.getWritingFile().getWritingModifiers());
             function.append(new ExecuteCommand(innerCallCommand, modifiers));
         } else {
             Function middleFunction = TridentFile.createAnonymousSubFunction(ctx);
             middleFunction.append(tagRemoveCommand);
             middleFunction.append(new ExecuteCommand(innerCallCommand, modifiers));
-            function.append(new ExecuteCommand(new FunctionCommand(middleFunction), new ExecuteAsEntity(summoned)));
-        }
 
-        //ctx.getStaticParentFile().
+            ArrayList<ExecuteModifier> outerModifiers = new ArrayList<>(ctx.getWritingFile().getWritingModifiers());
+            outerModifiers.add(new ExecuteAsEntity(summoned));
+
+            function.append(new ExecuteCommand(new FunctionCommand(middleFunction), outerModifiers));
+        }
     }
 }

@@ -21,6 +21,7 @@ public class ExecuteParser implements SimpleCommandParser {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) pattern.find("MODIFIER_LIST")), ctx);
+        modifiers.addAll(0, ctx.getWritingFile().getWritingModifiers());
 
         TokenPattern<?> rawCommand = pattern.find("CHAINED_COMMAND.COMMAND");
         if(rawCommand != null) {

@@ -11,7 +11,7 @@ import java.util.Collections;
 public interface SimpleCommandParser extends CommandParser {
     Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx);
 
-    default Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> preModifiers) {
+    default Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> modifiers) {
         Command result = parseSimple(pattern, ctx);
         if(result != null) return Collections.singletonList(result);
         else return Collections.emptyList();
