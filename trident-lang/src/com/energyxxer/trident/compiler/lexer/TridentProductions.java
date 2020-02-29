@@ -2289,44 +2289,46 @@ public class TridentProductions {
             );
         }
 
+        LazyTokenPatternMatch VARIABLE_DECLARATION = group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), instructionKeyword("var"),
+                identifierX().setName("VARIABLE_NAME").addTags("cspn:Variable Name").addProcessor((p, l) -> {
+                    if(l.getSummaryModule() != null) {
+                        SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), p.getStringLocation().index);
+                        ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
+                    }
+                }),
+                choice(group(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))).setName("VARIABLE_INITIALIZATION")
+        ).setName("VARIABLE_DECLARATION").addProcessor((p, l) -> {
+            if(l.getSummaryModule() != null) {
+                SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
+
+                sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
+                TokenStructure root = ((TokenStructure) p.find("VARIABLE_INITIALIZATION.VARIABLE_VALUE.LINE_SAFE_INTERPOLATION_VALUE.EXPRESSION.MID_INTERPOLATION_VALUE.SURROUNDED_INTERPOLATION_VALUE.INTERPOLATION_CHAIN.ROOT_INTERPOLATION_VALUE"));
+                if(root != null) {
+                    switch(root.getContents().getName()) {
+                        case "WRAPPED_ENTITY": {
+                            sym.addTag(TridentSuggestionTags.TAG_ENTITY);
+                            break;
+                        }
+                        case "WRAPPED_ITEM": {
+                            sym.addTag(TridentSuggestionTags.TAG_ITEM);
+                            break;
+                        }
+                        case "WRAPPED_COORDINATE": {
+                            sym.addTag(TridentSuggestionTags.TAG_COORDINATE);
+                            break;
+                        }
+                    }
+                }
+                sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.LOCAL));
+                if(!sym.hasSubBlock()) {
+                    ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
+                }
+            }
+        });
+
         {
             INSTRUCTION.add(
-                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), instructionKeyword("var"),
-                            identifierX().setName("VARIABLE_NAME").addTags("cspn:Variable Name").addProcessor((p, l) -> {
-                                if(l.getSummaryModule() != null) {
-                                    SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), p.getStringLocation().index);
-                                    ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
-                                }
-                            }),
-                            choice(group(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))).setName("VARIABLE_INITIALIZATION")
-                    ).addProcessor((p, l) -> {
-                        if(l.getSummaryModule() != null) {
-                            SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
-
-                            sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
-                            TokenStructure root = ((TokenStructure) p.find("VARIABLE_INITIALIZATION.VARIABLE_VALUE.LINE_SAFE_INTERPOLATION_VALUE.EXPRESSION.MID_INTERPOLATION_VALUE.SURROUNDED_INTERPOLATION_VALUE.INTERPOLATION_CHAIN.ROOT_INTERPOLATION_VALUE"));
-                            if(root != null) {
-                                switch(root.getContents().getName()) {
-                                    case "WRAPPED_ENTITY": {
-                                        sym.addTag(TridentSuggestionTags.TAG_ENTITY);
-                                        break;
-                                    }
-                                    case "WRAPPED_ITEM": {
-                                        sym.addTag(TridentSuggestionTags.TAG_ITEM);
-                                        break;
-                                    }
-                                    case "WRAPPED_COORDINATE": {
-                                        sym.addTag(TridentSuggestionTags.TAG_COORDINATE);
-                                        break;
-                                    }
-                                }
-                            }
-                            sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.LOCAL));
-                            if(!sym.hasSubBlock()) {
-                                ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
-                            }
-                        }
-                    })
+                    VARIABLE_DECLARATION
             );
         }
 
@@ -2369,7 +2371,7 @@ public class TridentProductions {
         {
             LazyTokenPatternMatch FOR_HEADER = choice(
                     group(identifierX().setName("VARIABLE_NAME").addTags("cspn:Iterator Name"), keyword("in"), noToken().addTags("cspn:Iterable"), INTERPOLATION_VALUE).setName("ITERATOR_FOR"),
-                    group(optional(INTERPOLATION_VALUE).setName("FOR_HEADER_INITIALIZATION").addTags("cspn:Initialization"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_CONDITION").addTags("cspn:Loop Condition"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_ITERATION").addTags("cspn:Iteration Expression")).setName("CLASSICAL_FOR")
+                    group(choice(INTERPOLATION_VALUE, group(VARIABLE_DECLARATION)).setOptional().setName("FOR_HEADER_INITIALIZATION").addTags("cspn:Initialization"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_CONDITION").addTags("cspn:Loop Condition"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_ITERATION").addTags("cspn:Iteration Expression")).setName("CLASSICAL_FOR")
             ).setName("LOOP_HEADER");
 
             INSTRUCTION.add(

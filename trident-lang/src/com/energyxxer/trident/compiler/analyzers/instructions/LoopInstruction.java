@@ -8,6 +8,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.Variab
 import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
+import com.energyxxer.util.logger.Debug;
 
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
@@ -85,12 +86,21 @@ public class LoopInstruction implements Instruction {
             }
             case "CLASSICAL_FOR": {
                 TokenPattern<?> initialization = pattern.find("FOR_HEADER_INITIALIZATION.INTERPOLATION_VALUE");
+                TokenPattern<?> initializationVariableDecl = pattern.find("FOR_HEADER_INITIALIZATION.VARIABLE_DECLARATION");
                 TokenPattern<?> condition = pattern.find("FOR_HEADER_CONDITION.INTERPOLATION_VALUE");
                 TokenPattern<?> iteration = pattern.find("FOR_HEADER_ITERATION.INTERPOLATION_VALUE");
                 return new LoopHeader() {
                     @Override
                     public void initialize() {
-                        InterpolationManager.parse(initialization, ctx);
+                        Debug.log("FOR INITIALIZATION: ");
+                        Debug.log(initialization);
+                        Debug.log(initializationVariableDecl);
+                        Debug.log();
+                        if(initializationVariableDecl != null) {
+                            new VariableInstruction().run(initializationVariableDecl, ctx);
+                        } else {
+                            InterpolationManager.parse(initialization, ctx);
+                        }
                     }
 
                     @Override
