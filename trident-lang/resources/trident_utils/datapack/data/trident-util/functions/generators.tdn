@@ -1,0 +1,62 @@
+@on compile
+@require trident-util:type_checking
+
+private var _generateFunctionTree = function(root, interval, splits, nodeFunction, leafFunction, usefulInterval) {
+    var intervalSize = interval.range / splits
+
+    var clippedInterval = new int_range(
+            interval.min,
+            Math.min(interval.max - 1, usefulInterval.max - 1)
+    )
+
+    do if(intervalSize > 1 && clippedInterval.range > 1) {
+        var i = 0
+        for(i = 0; i < splits; i++) {
+            var innerInterval = new int_range(
+                    interval.min + intervalSize * i,
+                    interval.min + intervalSize * (i + 1)
+            )
+            var clippedInnerInterval = new int_range(
+                    innerInterval.min,
+                    Math.min(innerInterval.max - 1, usefulInterval.max - 1)
+            )
+            do if(innerInterval.min >= usefulInterval.max) {
+                continue
+            }
+
+            do if(clippedInnerInterval.range >= 1) {
+                var nodeName = root.resolve(((string) clippedInnerInterval).replace("..", "_"))
+
+                define function ${(resource) nodeName} {
+                    eval _generateFunctionTree(nodeName, innerInterval, splits, nodeFunction, leafFunction, usefulInterval)
+                }
+                eval nodeFunction(clippedInnerInterval, (resource) nodeName)
+            } else {
+                eval leafFunction(innerInterval.min)
+            }
+        }
+    } else {
+        for(var i = interval.min; i < interval.max && i < usefulInterval.max; i++) {
+            eval leafFunction(i)
+        }
+    }
+}
+
+var generateFunctionTree = function(root, interval, splits, nodeFunction, leafFunction) {
+    eval assertType(root, "resource")
+    eval assertType(interval, "int_range")
+    eval assertType(splits, "int")
+    eval assertType(nodeFunction, "function")
+    eval assertType(leafFunction, "function")
+
+    var usefulInterval = interval
+
+    var intervalSize = (int)Math.pow(splits, Math.ceil(Math.log(interval.range) / Math.log(splits)))
+    eval interval = new int_range(interval.min, interval.min + intervalSize)
+
+    define function ${(resource) root} {
+        eval _generateFunctionTree(root, interval, splits, nodeFunction, leafFunction, usefulInterval)
+    }
+
+    return root
+}
