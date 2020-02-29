@@ -502,4 +502,8 @@ public class TridentFile extends SymbolContext {
     public void schedulePostResolutionAction(Runnable r) {
         postProcessingActions.add(r);
     }
+
+    public File getDeclaringFSFile() {
+        return pattern.getFile();
+    }
 }

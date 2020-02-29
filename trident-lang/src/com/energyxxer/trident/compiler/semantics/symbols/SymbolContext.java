@@ -5,6 +5,7 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.HashMap;
 
 public class SymbolContext implements ISymbolContext {
@@ -41,6 +42,11 @@ public class SymbolContext implements ISymbolContext {
     public TridentFile getStaticParentFile() {
         if(this instanceof TridentFile) return ((TridentFile) this);
         else if(parentScope != null) return parentScope.getStaticParentFile();
+        else throw new IllegalStateException();
+    }
+
+    public File getDeclaringFSFile() {
+        if(parentScope != null) return parentScope.getDeclaringFSFile();
         else throw new IllegalStateException();
     }
 

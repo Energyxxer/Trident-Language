@@ -47,7 +47,7 @@ public class PluginCommandParser {
         subContext.put(new Symbol("modifiers", Symbol.SymbolVisibility.LOCAL, modifiersList));
         Debug.log("Handling command '" + def.getCommandName() + "'");
 
-        scanPattern(((TokenGroup) ((TokenStructure) pattern).getContents()).getContents()[1], argsObj, subContext);
+        scanPattern(((TokenGroup) ((TokenStructure) pattern).getContents()).getContents()[1], argsObj, ctx);
 
         TridentFile.resolveFileIntoSection(def.getRawHandlerPattern(), subContext, appendTo);
     }
