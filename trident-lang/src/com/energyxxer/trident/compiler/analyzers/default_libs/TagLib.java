@@ -55,7 +55,20 @@ public class TagLib implements DefaultLibraryProvider {
 
             return null;
         }), String.class, TridentUtil.ResourceLocation.class, ListObject.class).createForInstance(null));
-        tagLib.put("tagContainsValue", new MethodWrapper<>("existsInTag", ((instance, params) -> {
+        tagLib.put("exists", new MethodWrapper<>("exists", ((instance, params) -> {
+            String category = (String) params[0];
+            TridentUtil.ResourceLocation tagLoc = (TridentUtil.ResourceLocation) params[1];
+            CommandModule module = compiler.getRootCompiler().getModule();
+            Namespace ns = module.getNamespace(tagLoc.namespace);
+
+            if(!ns.getTagManager().groupExists(category)) {
+                throw new IllegalArgumentException("Invalid tag category '" + category + "'");
+            }
+
+            TagGroup tagGroup = ns.getTagManager().getGroup(category);
+            return tagGroup.exists(tagLoc.body);
+        }), String.class, TridentUtil.ResourceLocation.class).createForInstance(null));
+        tagLib.put("tagContainsValue", new MethodWrapper<>("tagContainsValue", ((instance, params) -> {
             String category = (String) params[0];
             TridentUtil.ResourceLocation tagLoc = (TridentUtil.ResourceLocation) params[1];
             TridentUtil.ResourceLocation valueLoc = (TridentUtil.ResourceLocation) params[2];

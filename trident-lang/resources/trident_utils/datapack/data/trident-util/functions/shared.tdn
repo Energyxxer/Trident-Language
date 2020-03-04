@@ -25,7 +25,8 @@ var Shared = {
             objectType: function() {return "Shared.Entity"},
             type: function(type) {
                 eval assertType(type, "resource")
-                do if(!MinecraftTypes.exists("entity", type)) throw "Given type '" + type + "' does not exist as an entity type"
+                do if(type.isTag && !Tags.exists("entity", type)) throw "Given tag '" + type + "' does not exist as an entity tag"
+                do if(!type.isTag && !MinecraftTypes.exists("entity", type)) throw "Given type '" + type + "' does not exist as an entity type"
                 eval this._sb_buildData.type = type
                 return this
             },
