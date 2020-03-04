@@ -110,10 +110,10 @@ public class TypeLib implements DefaultLibraryProvider {
         globalCtx.put(new Symbol("isInstance", Symbol.SymbolVisibility.GLOBAL, new MethodWrapper<>("isInstance", (instance, params) -> {
             params[1] = ((String) params[1]).trim();
             Class cls = VariableTypeHandler.Static.getClassForShorthand((String)params[1]);
+            if(params[0] == null) return "null".equals(params[1]);
             if(cls == null) {
                 throw new IllegalArgumentException("Illegal data type name '" + params[1] + "'");
             }
-            if(params[0] == null) return false;
             if(params[1].equals("real") && params[0] instanceof Integer) return true;
             return cls.isInstance(params[0]);
         }, Object.class, String.class).setNullable(0).createForInstance(null)));
