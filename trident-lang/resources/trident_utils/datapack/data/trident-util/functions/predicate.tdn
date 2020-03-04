@@ -193,7 +193,7 @@ var Predicate = {
         do if(!MinecraftTypes.exists("enchantment", enchantment)) throw "Given type '" + enchantment + "' does not exist as an enchantment type"
         eval assertType(chanceTable, "list")
         for(chance in chanceTable) {
-            eval assertType(chance, "int")
+            eval assertType(chance, "real")
         }
         return newPredicate({
             "condition": "minecraft:table_bonus",
@@ -212,11 +212,6 @@ var Predicate = {
                 eval this._sb_buildData.scores[objective] = value
                 return this
             }
-        })
-    },
-    entityPresent: function() {
-        return newPredicate({
-            "condition": "minecraft:entity_present"
         })
     },
     reference: function(loc) {
