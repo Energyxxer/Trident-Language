@@ -19,6 +19,13 @@ local var assertDualTypes = function(obj, type0, type1) {
     }
 }
 
+local var assertTypes = function(obj, types) {
+    for(type in types) {
+        do if(isInstance(obj, type)) return
+    }
+    throw "Expected " + types + ", instead got " + typeOf(obj)
+}
+
 local var assertOneOf = function(obj, validTypes) {
     for(valid in validTypes) {
         do if(obj == valid) return

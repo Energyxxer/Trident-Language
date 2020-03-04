@@ -93,9 +93,9 @@ var Shared = {
                 }
                 eval assertType(slot, "string")
                 eval assertOneOf(slot, ["mainhand", "offhand", "head", "chest", "legs", "feet"])
-                eval assertDualTypes(itm, "item", "dictionary")
-                
-                do if(isInstance(itm, "item")) {
+                eval assertTypes(itm, ["item", "custom_item", "dictionary"])
+
+                do if(isInstance(itm, "item") || isInstance(itm, "custom_item")) {
                     eval itm = Shared.Item(itm)
                 } else {
                     eval assertObjectType(itm, "Shared.Item")
@@ -244,12 +244,11 @@ var Shared = {
         var obj = SelfBuilder({
             objectType: function() {return "Shared.Effects"}
         })
-        do if(effects != null) {
-            eval assertType(effects, "list")
-            for(effect in effects) {
-                eval obj._sb_buildData[(string)effect.id] = effect
-                eval effect.id = null
-            }
+        eval assertType(effects, "list")
+        for(effect in effects) {
+            eval assertObjectType(effect, "Shared.Effect")
+            eval obj._sb_buildData[(string)effect.id] = effect
+            eval effect.id = null
         }
         return obj
     },
@@ -339,14 +338,15 @@ var Shared = {
             }
         })
         do if(base != null) {
-            eval assertType(base, "item")
+            eval assertDualTypes(base, "item", "custom_item")
+            do if(isInstance(base, "custom_item")) eval base = item<${base.baseType}${base.getItemTag()}>
             do if(base.itemType.isTag) {
                 eval obj = obj.tag(base.itemType)
             } else {
                 eval obj = obj.type(base.itemType)
             }
             do if(base.itemTag != null) {
-                eval obj = obj._nbt(base.itemTag)
+                eval obj = obj.nbt(base.itemTag)
             }
         }
         return obj
@@ -404,7 +404,7 @@ var Shared = {
             eval assertType(base, "block")
             eval obj = obj.type(base.blockType)
             do if(base.blockTag != null) {
-                eval obj = obj._nbt(base.blockTag)
+                eval obj = obj.nbt(base.blockTag)
             }
         }
         return obj
