@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.default_libs;
 
+import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
@@ -93,7 +94,7 @@ public class JsonLib implements DefaultLibraryProvider {
     }
 
     public static JsonElement toJson(Object obj, Function<Object, JsonElement> filter, boolean skipUnknownTypes) {
-        if(obj instanceof String || obj instanceof TridentUtil.ResourceLocation) return new JsonPrimitive(obj.toString());
+        if(obj instanceof String || obj instanceof TridentUtil.ResourceLocation || obj instanceof TagCompound) return new JsonPrimitive(obj.toString());
         if(obj instanceof Number) return new JsonPrimitive(((Number) obj));
         if(obj instanceof Boolean) return new JsonPrimitive((Boolean) obj);
         if(obj instanceof ListObject) {

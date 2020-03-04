@@ -32,13 +32,3 @@ local var assertOneOf = function(obj, validTypes) {
     }
     throw "Got " + obj + ", expected one of the following: " + validTypes
 }
-
-local var rangeToObj = function(value) {
-    do if(isInstance(value, "int_range") || isInstance(value, "real_range")) {
-        var range = value
-        eval value = {}
-        do if(range.min != null) eval value.min = range.min
-        do if(range.max != null) eval value.max = range.max
-    }
-    return value
-}
