@@ -811,6 +811,7 @@ public class TridentCompiler extends AbstractProcess {
         static void summarize(TridentProjectSummary summary) {
             for(Library lib : libraries) {
                 summary.store(null, lib.fileSummary);
+                lib.fileSummary.setParentSummary(summary);
             }
         }
 

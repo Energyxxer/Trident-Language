@@ -106,6 +106,7 @@ public class TridentProjectSummary implements ProjectSummary {
     }
 
     public void join(TridentProjectSummary other) {
+        this.fileSummaries.addAll(other.fileSummaries);
         this.types.putAll(other.types);
         this.tags.putAll(other.tags);
         this.soundEvents.addAll(other.soundEvents);
