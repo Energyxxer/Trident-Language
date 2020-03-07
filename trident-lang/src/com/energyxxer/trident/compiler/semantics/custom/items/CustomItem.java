@@ -300,12 +300,18 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                                             if (onWhat.getName().equals("ITEM_CRITERIA")) {
                                                 finalCtx.assertLanguageLevel(3, "Item events are", entry, collector);
 
-                                                ((ItemEventFile) finalCtx.getCompiler().getSpecialFileManager().get("item_events")).addCustomItem(
-                                                        ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase()),
-                                                        defaultType,
-                                                        itemDecl,
-                                                        new ItemEvent(new FunctionReference(innerFile.getFunction()), pure, eventModifiers)
-                                                );
+                                                ItemEvent.ItemScoreEventType eventType = ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase());
+
+                                                if((itemDecl == null && eventType.supportsDefaultItems) || (itemDecl != null && eventType.supportsCustomItems)) {
+                                                    ((ItemEventFile) finalCtx.getCompiler().getSpecialFileManager().get("item_events")).addCustomItem(
+                                                            eventType,
+                                                            defaultType,
+                                                            itemDecl,
+                                                            new ItemEvent(new FunctionReference(innerFile.getFunction()), pure, eventModifiers)
+                                                    );
+                                                } else {
+                                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Item events for stat '" + eventType.toString().toLowerCase() + "' are not supported for " + (itemDecl == null ? "default" : "custom") + " items", onWhat, finalCtx));
+                                                }
                                             }
                                         }
                                     }

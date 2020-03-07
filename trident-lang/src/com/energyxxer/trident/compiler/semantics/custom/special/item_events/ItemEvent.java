@@ -8,7 +8,19 @@ import java.util.ArrayList;
 public class ItemEvent {
 
     public enum ItemScoreEventType {
-        USED, BROKEN, DROPPED, PICKED_UP
+        USED, BROKEN, DROPPED, PICKED_UP, CRAFTED(true, false);
+
+        public final boolean supportsDefaultItems;
+        public final boolean supportsCustomItems;
+
+        ItemScoreEventType() {
+            this(true, true);
+        }
+
+        ItemScoreEventType(boolean supportsDefaultItems, boolean supportsCustomItems) {
+            this.supportsDefaultItems = supportsDefaultItems;
+            this.supportsCustomItems = supportsCustomItems;
+        }
     }
 
     public FunctionReference toCall;

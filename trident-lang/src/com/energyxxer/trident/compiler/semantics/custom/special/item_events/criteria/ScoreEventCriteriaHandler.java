@@ -4,7 +4,7 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
 
 @AnalyzerGroup(
-        classes="BrokenScoreEvent,DroppedScoreEvent,PickedUpScoreEvent,UsedScoreEvent"
+        classes="BrokenScoreEvent,DroppedScoreEvent,PickedUpScoreEvent,UsedScoreEvent,CraftedScoreEvent"
 )
 public interface ScoreEventCriteriaHandler {
     //once
