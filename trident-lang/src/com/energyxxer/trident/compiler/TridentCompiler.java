@@ -212,7 +212,7 @@ public class TridentCompiler extends AbstractProcess {
         module = worker.output.module;
 
         report.addNotices(worker.report.getAllNotices());
-        if(report.getTotal() > 0) {
+        if(report.hasErrors()) {
             finalizeProcess(false);
             return;
         }
@@ -245,7 +245,7 @@ public class TridentCompiler extends AbstractProcess {
 
         report.addNotices(lex.getNotices());
         report.addNotices(typeMap.getNotices());
-        if(report.getTotal() > 0) {
+        if(report.hasErrors()) {
             finalizeProcess(false);
             return;
         }
@@ -513,6 +513,12 @@ public class TridentCompiler extends AbstractProcess {
 
         Path relPath = dataPath.relativize(file.toPath());
         relPath = relPath.subpath(2, relPath.getNameCount());
+
+        if(relPath.getNameCount() <= 1) {
+            report.addNotice(new Notice(NoticeType.WARNING, "Tag is not in a type category folder", new Token("", file, new StringLocation(0))));
+            return;
+        }
+
         String tagDir = relPath.getName(0).toString();
         relPath = relPath.subpath(1, relPath.getNameCount());
 
@@ -525,7 +531,13 @@ public class TridentCompiler extends AbstractProcess {
                 tag.setExport(true);
                 Debug.log("Created tag " + tag);
 
-                JsonObject obj = gson.fromJson(new FileReader(file), JsonObject.class);
+                JsonObject obj;
+                try {
+                    obj = gson.fromJson(new FileReader(file), JsonObject.class);
+                } catch(JsonSyntaxException x) {
+                    report.addNotice(new Notice(NoticeType.ERROR, "Invalid JSON in " + group.getCategory().toLowerCase() + " tag '" + tag + "': " + x.getMessage(), new Token("", file, new StringLocation(0))));
+                    continue;
+                }
 
                 tag.setOverridePolicy(Tag.OverridePolicy.valueOf(getAsBoolean(obj, "replace", Tag.OverridePolicy.DEFAULT_POLICY.valueBool)));
                 tag.setExport(true);

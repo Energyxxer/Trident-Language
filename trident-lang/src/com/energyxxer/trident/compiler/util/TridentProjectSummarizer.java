@@ -226,6 +226,11 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
 
                             relPath = relPath.subpath(2, relPath.getNameCount());
                             String tagDir = relPath.getName(0).toString();
+
+                            if(relPath.getNameCount() <= 1) {
+                                Debug.log("Tag is not in a type category folder: " + relPath);
+                                return;
+                            }
                             relPath = relPath.subpath(1, relPath.getNameCount());
 
                             String tagName = relPath.toString().replace(File.separator, "/");
