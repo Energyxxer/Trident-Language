@@ -23,7 +23,6 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
-import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
 import java.util.Collection;
@@ -45,7 +44,6 @@ public class PluginCommandParser {
         }
         subContext.put(new Symbol("args", Symbol.SymbolVisibility.LOCAL, argsObj));
         subContext.put(new Symbol("modifiers", Symbol.SymbolVisibility.LOCAL, modifiersList));
-        Debug.log("Handling command '" + def.getCommandName() + "'");
 
         scanPattern(((TokenGroup) ((TokenStructure) pattern).getContents()).getContents()[1], argsObj, ctx);
 
@@ -60,7 +58,6 @@ public class PluginCommandParser {
                     storingInVar = true;
                     String storeVar = tag.substring(TDNMetaBuilder.STORE_VAR_TAG_PREFIX.length());
                     TokenPattern<?> argPattern = ((TokenGroup) pattern).getContents()[0];
-                    Debug.log("STORE IN VAR '" + storeVar + "': PARSE: " + argPattern);
 
                     Object value;
                     if(pattern.hasTag(TDNMetaBuilder.STORE_FLAT_TAG)) {

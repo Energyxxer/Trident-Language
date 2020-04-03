@@ -53,7 +53,6 @@ public class LazyLexer extends Lexer {
         matchResponse = pattern.match(0, this);
 
         if(matchResponse.matched) {
-            //Debug.log("Successfully matched: " + matchResponse.pattern);
             matchResponse.pattern.validate();
             for(Token token : matchResponse.pattern.flattenTokens()) {
                 notices.addAll(token.attachedNotices);
@@ -61,9 +60,7 @@ public class LazyLexer extends Lexer {
             }
         } else {
             this.notices.add(new Notice(NoticeType.ERROR, matchResponse.getErrorMessage(), matchResponse.faultyToken));
-            //Debug.log("Did not match:" + matchResponse.faultyToken + " | " + matchResponse.faultyToken.loc + " | expected " + matchResponse.expected);
         }
-
 
         {
             Token eof = new Token("", TokenType.END_OF_FILE, file, lineCache.getLocationForOffset(fileContents.length()));

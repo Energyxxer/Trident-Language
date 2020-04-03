@@ -48,7 +48,6 @@ import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
-import com.energyxxer.util.logger.Debug;
 import org.jetbrains.annotations.Contract;
 
 import java.util.*;
@@ -193,8 +192,6 @@ public class CommonParsers {
         if("..".equals(splits.get(0))) {
             throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal resource location: " + flat + " - path cannot go backwards any further", id, ctx);
         }
-
-        Debug.log(flat);
 
         if(flat.isEmpty()) {
             return ctx.getWritingFile().getFunction().getPath();
@@ -673,7 +670,6 @@ public class CommonParsers {
         PathContext context = new PathContext().setIsSetting(true).setProtocol(body instanceof Entity ? PathProtocol.ENTITY : body instanceof CoordinateSet ? PathProtocol.BLOCK_ENTITY : STORAGE, body instanceof Entity ? guessEntityType((Entity) body, ctx) : body instanceof TridentUtil.ResourceLocation ? body.toString() : null);
 
         DataTypeQueryResponse response = ctx.getCompiler().getTypeMap().collectTypeInformation(path, context);
-        //Debug.log(response.getPossibleTypes());
 
         if(response.isEmpty()) {
             if(strict) {

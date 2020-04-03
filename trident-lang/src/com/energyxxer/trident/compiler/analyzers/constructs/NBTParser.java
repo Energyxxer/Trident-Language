@@ -324,7 +324,6 @@ public class NBTParser {
             if(filteredPossibleTypes.size() > 1) {
                 Debug.log("Ambiguity between possible types, skipping it");
                 Debug.log(filteredPossibleTypes);
-                //Ambiguity between possible types, give it a free pass
                 return;
             }
 
