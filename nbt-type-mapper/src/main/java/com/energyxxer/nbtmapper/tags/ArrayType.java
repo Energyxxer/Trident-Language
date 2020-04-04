@@ -1,11 +1,18 @@
 package com.energyxxer.nbtmapper.tags;
 
 import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTListMatch;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathIndex;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathNode;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
+import com.energyxxer.nbtmapper.PathContext;
 
 import java.util.Objects;
 
-public class ArrayType extends DataType {
+public class ArrayType extends DataType implements DeepDataType {
     private DataType innerType;
     private Class<? extends ArrayNBTTag> correspondingType;
     private String typeName;
@@ -45,7 +52,7 @@ public class ArrayType extends DataType {
         return typeName;
     }
 
-    /*@Override
+    @Override
     public void collectDataTypeFor(PathContext context, NBTPath path, DataTypeQueryResponse response) {
         NBTPathNode node = path.getNode();
         if(node instanceof NBTPathIndex || node instanceof NBTListMatch) {
@@ -59,7 +66,7 @@ public class ArrayType extends DataType {
                 response.addLikelyType(innerType);
             }
         }
-    }*/
+    }
 
     @Override
     public String toString() {
