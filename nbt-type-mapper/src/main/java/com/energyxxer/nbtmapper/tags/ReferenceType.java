@@ -1,7 +1,6 @@
 package com.energyxxer.nbtmapper.tags;
 
 import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
-import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.nbtmapper.PathContext;
@@ -32,14 +31,18 @@ public class ReferenceType extends DataType implements DeepDataType {
         }
     }
 
+    public String getReferenceName() {
+        return name;
+    }
+
     @Override
     public Class<? extends NBTTag> getCorrespondingTagType() {
-        return TagCompound.class;
+        return NBTTag.class;
     }
 
     @Override
     public String getShortTypeName() {
-        return "Compound";
+        return "Tag";
     }
 
     @Override

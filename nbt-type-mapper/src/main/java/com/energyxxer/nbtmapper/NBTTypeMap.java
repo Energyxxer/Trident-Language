@@ -28,13 +28,13 @@ public class NBTTypeMap {
     private CommandModule module;
     private ArrayList<Notice> notices = new ArrayList<>();
 
-    private HashMap<String, ArrayList<DeepDataType>> rootTypes = new HashMap<>();
+    private HashMap<String, ArrayList<DataType>> rootTypes = new HashMap<>();
 
     public NBTTypeMap(CommandModule module) {
         this.module = module;
     }
 
-    private void addType(String typeName, DeepDataType type) {
+    private void addType(String typeName, DataType type) {
         if(!rootTypes.containsKey(typeName)) {
             rootTypes.put(typeName, new ArrayList<>());
         }
@@ -43,15 +43,21 @@ public class NBTTypeMap {
 
     public void collectDataTypeFor(String rootName, PathContext context, NBTPath path, DataTypeQueryResponse response) {
         if(rootTypes.containsKey(rootName)) {
-            for(DeepDataType type : rootTypes.get(rootName)) {
-                type.collectDataTypeFor(context, path, response);
+            for(DataType type : rootTypes.get(rootName)) {
+                if(type instanceof DeepDataType) {
+                    ((DeepDataType) type).collectDataTypeFor(context, path, response);
+                }
             }
         }
     }
 
+    public Collection<DataType> getDataTypesForRootName(ReferenceType reference) {
+        return rootTypes.get(reference.getReferenceName());
+    }
+
     public void collectDataTypeForStorage(String storageName, PathContext context, NBTPath path, DataTypeQueryResponse response) {
         if(rootTypes.containsKey(STORAGE_ROOT)) {
-            for(DeepDataType type : rootTypes.get(STORAGE_ROOT)) {
+            for(DataType type : rootTypes.get(STORAGE_ROOT)) {
                 if(type instanceof CompoundType) {
                     DataType storageType = ((CompoundType) type).get(storageName);
                     if(storageType instanceof CompoundType) {
@@ -155,7 +161,7 @@ public class NBTTypeMap {
 
                             DataType type = parseType(entry.find("ROOT_TYPE.TYPE"));
 
-                            addType(typeName, (DeepDataType) type);
+                            addType(typeName, type);
                         }
                     }
                 }

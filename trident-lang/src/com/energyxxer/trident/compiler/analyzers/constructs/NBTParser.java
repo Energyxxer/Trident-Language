@@ -319,7 +319,7 @@ public class NBTParser {
 
         if(!response.isEmpty()) {
             ArrayList<DataType> filteredPossibleTypes = new ArrayList<>(response.getPossibleTypes());
-            filteredPossibleTypes.removeIf(t -> t.getCorrespondingTagType() != tag.getClass());
+            filteredPossibleTypes.removeIf(t -> !t.getCorrespondingTagType().isAssignableFrom(tag.getClass()));
 
             if(filteredPossibleTypes.size() > 1) {
                 Debug.log("Ambiguity between possible types, skipping it");
@@ -329,7 +329,7 @@ public class NBTParser {
 
             boolean matchesType = false;
             for(DataType type : filteredPossibleTypes) {
-                if(type.getCorrespondingTagType() == tag.getClass()) {
+                if(type.getCorrespondingTagType().isAssignableFrom(tag.getClass())) {
                     matchesType = true;
 
                     TypeFlags flags;

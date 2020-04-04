@@ -9,13 +9,13 @@ public class DataTypeQueryResponse {
     private ArrayList<DataType> possibleTypes = new ArrayList<>();
     private ArrayList<Notice> notices = new ArrayList<>();
 
-    void addLikelyType(DataType type) {
+    public void addLikelyType(DataType type) {
         possibleTypes.remove(type);
         possibleTypes.add(0, type); //add it to the start, even if it already exists
         //if it was previously unlikely, this will make it likely
     }
 
-    void addUnlikelyType(DataType type) {
+    public void addUnlikelyType(DataType type) {
         if(!possibleTypes.contains(type)) possibleTypes.add(type); //add it to the end, if it doesn't already exist
         //if it was previously likely, this will not make it unlikely
     }

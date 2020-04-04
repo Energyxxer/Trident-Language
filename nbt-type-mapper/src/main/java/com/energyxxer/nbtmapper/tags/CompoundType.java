@@ -41,7 +41,7 @@ public class CompoundType extends DataType implements DeepDataType {
                         response.addNotice(new Notice(NoticeType.ERROR, "'" + key + "' cannot contain children"));
                     }
                 } else { //end of path
-                    response.addLikelyType(type);
+                    searchLeafTypes(type, response, parent, true);
                 }
             } else if(context.isSetting() && volatileTypes.containsKey(key)) {
                 DataType type = volatileTypes.get(key);
@@ -52,14 +52,33 @@ public class CompoundType extends DataType implements DeepDataType {
                         response.addNotice(new Notice(NoticeType.ERROR, "'" + key + "' cannot contain children"));
                     }
                 } else {
-                    response.addLikelyType(volatileTypes.get(key));
+                    searchLeafTypes(type, response, parent, true);
                 }
             } else if(defaultType != null) {
-                response.addUnlikelyType(defaultType);
+                searchLeafTypes(defaultType, response, parent, false);
             }
         }
     }
 
+    static void searchLeafTypes(DataType from, DataTypeQueryResponse response, NBTTypeMap parent, boolean likely) {
+        if(from instanceof ReferenceType) {
+            ArrayList<DataType> innerTypes = new ArrayList<>(parent.getDataTypesForRootName(((ReferenceType) from)));
+
+            while(!innerTypes.isEmpty()) {
+                DataType innerType = innerTypes.get(0);
+                innerTypes.remove(0);
+
+                if(innerType instanceof ReferenceType) {
+                    innerTypes.addAll(0, parent.getDataTypesForRootName(((ReferenceType) innerType)));
+                } else {
+                    response.addLikelyType(innerType);
+                }
+            }
+        } else {
+            if(likely) response.addLikelyType(from);
+            else response.addUnlikelyType(from);
+        }
+    }
 
     @Override
     public Class<? extends NBTTag> getCorrespondingTagType() {

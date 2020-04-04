@@ -32,7 +32,7 @@ public class ListType extends DataType implements DeepDataType {
                     response.addNotice(new Notice(NoticeType.ERROR, "Elements of type '" + innerType.getShortTypeName() + "' cannot contain children"));
                 }
             } else {
-                response.addLikelyType(innerType);
+                CompoundType.searchLeafTypes(innerType, response, parent, true);
             }
         }
     }
