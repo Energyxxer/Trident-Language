@@ -16,11 +16,13 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CoordinateParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 @AnalyzerMember(key = "summon")
 public class SummonParser implements SimpleCommandParser {
@@ -87,17 +89,36 @@ public class SummonParser implements SimpleCommandParser {
         if(componentList != null) {
             if (nbt == null) nbt = new TagCompound();
             for (TokenPattern<?> rawComponent : componentList.searchByName("INTERPOLATION_VALUE")) {
-                CustomEntity component = InterpolationManager.parse(rawComponent, ctx, CustomEntity.class);
-                if (component.isComponent()) {
-                    nbt = component.getDefaultNBT().merge(nbt);
-                    components.add(component);
-                } else {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity component here, instead got an entity", rawComponent, ctx);
-                }
+                requestComponents(components, rawComponent, ctx);
             }
+        }
+        for(CustomEntity component : components) {
+            nbt = component.getDefaultNBT().merge(nbt);
         }
 
         return new SummonData(type, null, nbt, components, reference);
+    }
+
+    public static Collection<CustomEntity> requestComponents(ArrayList<CustomEntity> list, TokenPattern<?> rawComponent, ISymbolContext ctx) {
+        return requestComponents(list, rawComponent, InterpolationManager.parse(rawComponent, ctx, CustomEntity.class, ListObject.class), ctx);
+    }
+
+    public static Collection<CustomEntity> requestComponents(ArrayList<CustomEntity> list, TokenPattern<?> rawComponent, Object obj, ISymbolContext ctx) {
+        if(obj instanceof CustomEntity) {
+            CustomEntity component = (CustomEntity) obj;
+            if (component.isComponent()) {
+                list.add(component);
+            } else {
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity component here, instead got an entity", rawComponent, ctx);
+            }
+            return list;
+        } else if(obj instanceof ListObject) {
+            for(Object inList : ((ListObject) obj)) {
+                requestComponents(list, rawComponent, inList, ctx);
+            }
+            return list;
+        }
+        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity component or a list of entity components here, instead got: " + obj, rawComponent, ctx);
     }
 
     public static class SummonData {

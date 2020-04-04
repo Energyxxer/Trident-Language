@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
+import static com.energyxxer.trident.compiler.analyzers.commands.SummonParser.requestComponents;
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger.REPLACE;
 
@@ -209,12 +210,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
         if (rawComponentList != null) {
             if(!entityName.equals("default")) {
                 for (TokenPattern<?> rawComponent : rawComponentList.searchByName("INTERPOLATION_VALUE")) {
-                    CustomEntity component = InterpolationManager.parse(rawComponent, ctx, CustomEntity.class);
-                    if (component.isComponent()) {
-                        implemented.add(component);
-                    } else {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Expected an entity component here, instead got an entity", rawComponent, ctx);
-                    }
+                    requestComponents(implemented, rawComponent, ctx);
                 }
             } else {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default entities may not implement components", rawComponentList, ctx);
