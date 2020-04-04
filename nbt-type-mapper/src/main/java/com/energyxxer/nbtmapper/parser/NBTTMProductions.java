@@ -53,7 +53,7 @@ public class NBTTMProductions {
         TYPE.add(REFERENCE_S);
 
         ENTRY = choice(
-                group(ofType(REFERENCE).setName("TYPE_NAME"), colon(), choice(COMPOUND, REFERENCE_S).setName("TYPE")).setName("ROOT_TYPE"),
+                group(ofType(REFERENCE).setName("TYPE_NAME"), colon(), TYPE).setName("ROOT_TYPE"),
                 ofType(COMMENT).setName("COMMENT")
         ).setName("ENTRY");
 

@@ -29,7 +29,7 @@ public class NBTTMLexerProfile extends LexerProfile {
                 defcategories.add(decl.getCategory().toLowerCase());
             }
         } catch (IOException e) {
-            defcategories.addAll(Arrays.asList("entity, block, item, particle, enchantment, dimension, effect, difficulty, gamemode, gamerule, slot".split(", ")));
+            defcategories.addAll(Arrays.asList("entity, block, item, particle, enchantment, dimension, effect, difficulty, gamemode, gamerule, slot, attributes".split(", ")));
             e.printStackTrace();
         }
 
