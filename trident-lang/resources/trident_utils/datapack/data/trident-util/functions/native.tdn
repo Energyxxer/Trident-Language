@@ -82,7 +82,8 @@ global var Reflection = {
     getCurrentFile: 0,
     getWritingFile: 0,
     getSymbol: 0,
-    getVisibleSymbols: 0
+    getVisibleSymbols: 0,
+    getDefinedObjectives: 0
 }
 
 global var File = {

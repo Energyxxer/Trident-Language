@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.default_libs;
 
+import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
@@ -42,6 +43,17 @@ public class ReflectionLib implements DefaultLibraryProvider {
         });
         reflect.put("getVisibleSymbols", (VariableMethod) (params, patterns, pattern, ctx) -> getVisibleSymbols(ctx));
         reflect.put("insertToFile", (VariableMethod) this::insertToFile);
+        reflect.put("getDefinedObjectives", (VariableMethod) (params, patterns, pattern, ctx) -> {
+            DictionaryObject objectives = new DictionaryObject();
+            for(Objective objective : ctx.getCompiler().getModule().getObjectiveManager().getAll()) {
+                DictionaryObject entry = new DictionaryObject();
+                entry.put("name", objective.getName());
+                entry.put("criterion", objective.getType());
+                entry.put("displayName", objective.getDisplayName());
+                objectives.put(objective.getName(), entry);
+            }
+            return objectives;
+        });
         globalCtx.put(new Symbol("Reflection", Symbol.SymbolVisibility.GLOBAL, reflect));
     }
 
