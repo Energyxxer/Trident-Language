@@ -4,6 +4,7 @@ import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.enxlex.report.StackTrace;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -45,10 +46,10 @@ public class TridentException extends RuntimeException implements VariableTypeHa
     private boolean breaking = false;
 
     public TridentException(Source source, String message, @NotNull TokenPattern<?> cause, ISymbolContext ctx) {
-        this(source, message, cause, ctx.getCompiler().getCallStack().getView().setLeaf(cause));
+        this(source, message, cause, ctx.getCompiler().getCallStack().getView(cause));
     }
 
-    public TridentException(Source source, String message, @NotNull TokenPattern<?> cause, CallStack.StackTrace stackTrace) {
+    private TridentException(Source source, String message, @NotNull TokenPattern<?> cause, StackTrace stackTrace) {
         this.source = source;
 
         if(source == Source.IMPOSSIBLE) {
@@ -62,7 +63,7 @@ public class TridentException extends RuntimeException implements VariableTypeHa
             }
         }
 
-        this.notice = new Notice(NoticeType.ERROR, message, message + (stackTrace != null ? ("\n" + stackTrace.toString()) : ""), cause);
+        this.notice = new Notice(NoticeType.ERROR, message, message, cause).setStackTrace(stackTrace);
         this.cause = cause;
     }
 

@@ -32,6 +32,10 @@ public class InterpolationManager {
     private static Object nextThis = null;
     private static String nextFunctionName = null;
 
+    public static void setNextFunctionName(String nextFunctionName) {
+        InterpolationManager.nextFunctionName = nextFunctionName;
+    }
+
     public static <T> T parse(TokenPattern<?> pattern, ISymbolContext ctx, Class<T> expected) {
         return parse(pattern, ctx, false, expected);
     }

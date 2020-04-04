@@ -16,6 +16,8 @@ public class Notice {
     private int locationIndex;
     private int locationLength;
 
+    private StackTrace stackTrace;
+
     private String group;
 
     public Notice(NoticeType type, String message) {
@@ -129,5 +131,14 @@ public class Notice {
 
     public void setExtendedMessage(String extendedMessage) {
         this.extendedMessage = extendedMessage;
+    }
+
+    public StackTrace getStackTrace() {
+        return stackTrace;
+    }
+
+    public Notice setStackTrace(StackTrace stackTrace) {
+        this.stackTrace = stackTrace;
+        return this;
     }
 }
