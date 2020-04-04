@@ -58,4 +58,16 @@ public class SymbolContext implements ISymbolContext {
     public ISymbolContext getParent() {
         return parentScope;
     }
+
+    @Override
+    public HashMap<String, Symbol> collectVisibleSymbols(HashMap<String, Symbol> list, ISymbolContext from) {
+        for(Symbol inMap : table.values()) {
+            if(inMap.getVisibility() != Symbol.SymbolVisibility.PRIVATE || from == this || this.getDeclaringFSFile().equals(from.getDeclaringFSFile())) {
+                list.putIfAbsent(inMap.getName(), inMap);
+            }
+        }
+        if(parentScope != null) parentScope.collectVisibleSymbols(list, from);
+        getGlobalContext().collectVisibleSymbols(list, from);
+        return list;
+    }
 }

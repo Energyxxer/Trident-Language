@@ -6,6 +6,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ImportedSymbolContext implements ISymbolContext {
     protected final TridentCompiler compiler;
@@ -53,5 +54,14 @@ public class ImportedSymbolContext implements ISymbolContext {
 
     public void setParentScope(ISymbolContext parent) {
         this.parent = parent;
+    }
+
+    @Override
+    public HashMap<String, Symbol> collectVisibleSymbols(HashMap<String, Symbol> list, ISymbolContext from) {
+        for(ISymbolContext ctx : contexts) {
+            ctx.collectVisibleSymbols(list, from);
+        }
+        if(parent != null) parent.collectVisibleSymbols(list, from);
+        return list;
     }
 }

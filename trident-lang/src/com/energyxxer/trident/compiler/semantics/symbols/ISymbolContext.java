@@ -9,6 +9,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.HashMap;
 
 public interface ISymbolContext {
 
@@ -58,4 +59,6 @@ public interface ISymbolContext {
     default File getDeclaringFSFile() {
         return getStaticParentFile().getPattern().getFile();
     }
+
+    HashMap<String, Symbol> collectVisibleSymbols(HashMap<String, Symbol> list, ISymbolContext from);
 }

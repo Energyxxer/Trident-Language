@@ -80,7 +80,9 @@ global var Reflection = {
     getFilesWithMetaTag: 0,
     insertToFile: 0,
     getCurrentFile: 0,
-    getWritingFile: 0
+    getWritingFile: 0,
+    getSymbol: 0,
+    getVisibleSymbols: 0
 }
 
 global var File = {
