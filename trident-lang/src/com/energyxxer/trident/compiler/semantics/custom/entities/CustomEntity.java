@@ -441,6 +441,11 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                 } else {
                                     ctx.put(sym);
                                 }
+                                break;
+                            }
+                            case "ENTITY_EVAL": {
+                                InterpolationManager.parse(((TokenStructure) entry.find("LINE_SAFE_INTERPOLATION_VALUE")).getContents(), ctx);
+                                break;
                             }
                             case "COMMENT": {
                                 break;

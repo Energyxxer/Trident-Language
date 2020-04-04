@@ -2193,6 +2193,7 @@ public class TridentProductions {
                     group(literal("default"), literal("health"), real().setName("HEALTH").addTags("cspn:Health")).setName("DEFAULT_HEALTH"),
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ENTITY_FIELD"),
+                    group(literal("eval"), LINE_SAFE_INTERPOLATION_VALUE).setName("ENTITY_EVAL"),
                     group(literal("on"), group(INTERPOLATION_VALUE).setName("EVENT_NAME"), list(MODIFIER).setOptional().setName("EVENT_MODIFIERS"), literal("function"),
                             OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_EVENT_IMPLEMENTATION"),
                     COMMENT_S,
@@ -2220,7 +2221,8 @@ public class TridentProductions {
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(literal("default"), literal("lore"), brace("["), list(TEXT_COMPONENT, comma()).setOptional().setName("LORE_LIST"), brace("]")).setName("DEFAULT_LORE"),
                     COMMENT_S,
-                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ITEM_FIELD")
+                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ITEM_FIELD"),
+                    group(literal("eval"), LINE_SAFE_INTERPOLATION_VALUE).setName("ITEM_EVAL")
             );
             itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_ITEM_BODY);
 
