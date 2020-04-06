@@ -43,7 +43,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static com.energyxxer.trident.extensions.EJsonElement.getAsStringOrNull;
-import static com.energyxxer.trident.extensions.EJsonObject.getAsBoolean;
 
 public class TridentCompiler extends AbstractProcess {
 
@@ -539,34 +538,37 @@ public class TridentCompiler extends AbstractProcess {
                     continue;
                 }
 
-                tag.setOverridePolicy(Tag.OverridePolicy.valueOf(getAsBoolean(obj, "replace", Tag.OverridePolicy.DEFAULT_POLICY.valueBool)));
+                tag.setOverridePolicy(Tag.OverridePolicy.valueOf(JsonTraverser.INSTANCE.reset(obj).get("replace").asBoolean(Tag.OverridePolicy.DEFAULT_POLICY.valueBool)));
                 tag.setExport(true);
-                JsonArray values = obj.getAsJsonArray("values");
 
-                for(JsonElement elem : values) {
-                    String value = getAsStringOrNull(elem);
-                    if(value == null) continue;
-                    boolean isTag = value.startsWith("#");
-                    if(isTag) value = value.substring(1);
-                    TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(value);
+                JsonArray values = JsonTraverser.INSTANCE.reset(obj).get("values").asJsonArray();
 
-                    if(isTag) {
-                        Tag created = module.getNamespace(loc.namespace).getTagManager().getGroup(group.getCategory()).getOrCreate(loc.body);
-                        created.setExport(true);
-                        tag.addValue(created);
-                    } else {
-                        Type created;
-                        if(group.getCategory().equals(FunctionReference.CATEGORY)) {
-                            created = new FunctionReference(module.getNamespace(loc.namespace), loc.body);
+                if(values != null) {
+                    for(JsonElement elem : values) {
+                        String value = getAsStringOrNull(elem);
+                        if(value == null) continue;
+                        boolean isTag = value.startsWith("#");
+                        if(isTag) value = value.substring(1);
+                        TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(value);
+
+                        if(isTag) {
+                            Tag created = module.getNamespace(loc.namespace).getTagManager().getGroup(group.getCategory()).getOrCreate(loc.body);
+                            created.setExport(true);
+                            tag.addValue(created);
                         } else {
-                            try {
-                                created = module.getNamespace(loc.namespace).getTypeManager().createDictionary(group.getCategory(), true).get(loc.body);
-                            } catch(TypeNotFoundException x) {
-                                report.addNotice(new Notice(NoticeType.WARNING, "Invalid value in " + group.getCategory().toLowerCase() + " tag '" + tag + "': " + loc + " is not a valid " + group.getCategory().toLowerCase() + " type", new Token("", file, new StringLocation(0))));
-                                continue;
+                            Type created;
+                            if(group.getCategory().equals(FunctionReference.CATEGORY)) {
+                                created = new FunctionReference(module.getNamespace(loc.namespace), loc.body);
+                            } else {
+                                try {
+                                    created = module.getNamespace(loc.namespace).getTypeManager().createDictionary(group.getCategory(), true).get(loc.body);
+                                } catch(TypeNotFoundException x) {
+                                    report.addNotice(new Notice(NoticeType.WARNING, "Invalid value in " + group.getCategory().toLowerCase() + " tag '" + tag + "': " + loc + " is not a valid " + group.getCategory().toLowerCase() + " type", new Token("", file, new StringLocation(0))));
+                                    continue;
+                                }
                             }
+                            tag.addValue(created);
                         }
-                        tag.addValue(created);
                     }
                 }
 
