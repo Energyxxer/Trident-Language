@@ -1,18 +1,20 @@
 package com.energyxxer.trident.compiler.semantics;
 
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public class Symbol {
-
     public enum SymbolVisibility {
-        GLOBAL, LOCAL, PRIVATE
+        GLOBAL, LOCAL, PRIVATE;
     }
     private String name;
-
     private final SymbolVisibility visibility;
     private Object value;
+    private VariableTypeHandler typeConstraint = null;
     public Symbol(String name) {
         this(name, SymbolVisibility.LOCAL);
     }
@@ -39,12 +41,22 @@ public class Symbol {
         return visibility;
     }
 
+    public void setTypeConstraint(VariableTypeHandler typeConstraint) {
+    }
+
     @Nullable
     public Object getValue() {
         return value;
     }
 
     public void setValue(Object value) {
+        this.value = value;
+    }
+
+    public void safeSetValue(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(typeConstraint != null) {
+
+        }
         this.value = value;
     }
 

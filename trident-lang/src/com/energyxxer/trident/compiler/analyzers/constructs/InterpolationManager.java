@@ -36,6 +36,11 @@ public class InterpolationManager {
         InterpolationManager.nextFunctionName = nextFunctionName;
     }
 
+    public static VariableTypeHandler parseType(TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(pattern == null) return null;
+        return parse(pattern, ctx, false, VariableTypeHandler.class);
+    }
+
     public static <T> T parse(TokenPattern<?> pattern, ISymbolContext ctx, Class<T> expected) {
         return parse(pattern, ctx, false, expected);
     }
@@ -78,6 +83,8 @@ public class InterpolationManager {
         switch(pattern.getName()) {
             case "INTERPOLATION_BLOCK":
             case "LINE_SAFE_INTERPOLATION_VALUE":
+            case "INTERPOLATION_TYPE":
+            case "ROOT_INTERPOLATION_TYPE":
             case "INTERPOLATION_VALUE":
             case "MID_INTERPOLATION_VALUE":
             case "ROOT_INTERPOLATION_VALUE": {
@@ -200,6 +207,9 @@ public class InterpolationManager {
                     TridentFile innerFile = TridentFile.createInnerFile(pattern.find("ANONYMOUS_INNER_FUNCTION"), ctx);
                     return innerFile.getResourceLocation();
                 }
+            }
+            case "PRIMITIVE_ROOT_TYPE": {
+                return AnalyzerManager.getAnalyzer(VariableTypeHandler.class, VariableTypeHandler.Static.getClassForShorthand(pattern.flatten(false)).getName());
             }
             case "NULL_VALUE": {
                 return null;
@@ -329,16 +339,6 @@ public class InterpolationManager {
                         } else {
                             //Operator
                             Operator operator = Operator.getOperatorForSymbol(contents.get(i).flatten(false));
-                            /*if(operator.getLeftOperandType() == OperandType.VARIABLE) {
-                                flatValues.remove(flatValues.size()-1);
-
-                                Object symbol = parse(contents.get(i-1), ctx, true);
-                                if(symbol instanceof Symbol) {
-                                    flatValues.add(symbol);
-                                } else {
-                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected symbol in the left hand side of the expression", pattern, ctx);
-                                }
-                            }*/
                             flatOperators.add(operator);
                         }
                     }
@@ -366,23 +366,6 @@ public class InterpolationManager {
 
                         flatValues.remove(index);
                         flatValues.remove(index);
-
-                        /*if(a instanceof TokenPattern<?>) {
-                            if(topOperator.isShortCircuiting()) {
-                                a = new ILazyValue(((TokenPattern) a), ctx, topOperator.getLeftOperandType() == OperandType.VARIABLE);
-                            } else {
-                                a = parse(((TokenPattern) a), ctx, topOperator.getLeftOperandType() == OperandType.VARIABLE);
-                            }
-                        }
-                        if(b instanceof TokenPattern<?>) {
-                            if(topOperator.isShortCircuiting()) {
-                                b = new ILazyValue(((TokenPattern) b), ctx);
-                            } else {
-                                b = parse(((TokenPattern) b), ctx);
-                            }
-                        }
-
-                        Object result = OperatorHandler.Static.perform(a, topOperator, b, pattern, ctx);*/
 
                         flatValues.add(index, new BinaryExpression(a, topOperator, b, pattern, ctx));
                         flatOperators.remove(index);
