@@ -4,6 +4,7 @@ import com.energyxxer.commodore.functionlogic.nbt.TagList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.NBTTagTypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -54,5 +55,20 @@ public class TagListTypeHandler implements VariableTypeHandler<TagList> {
     @Override
     public Iterator<?> getIterator(TagList object) {
         return object.getAllTags().iterator();
+    }
+
+    @Override
+    public Class<TagList> getHandledClass() {
+        return TagList.class;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "tag_list";
+    }
+
+    @Override
+    public VariableTypeHandler<?> getSuperType() {
+        return TridentTypeManager.getHandlerForHandlerClass(NBTTagTypeHandler.class);
     }
 }

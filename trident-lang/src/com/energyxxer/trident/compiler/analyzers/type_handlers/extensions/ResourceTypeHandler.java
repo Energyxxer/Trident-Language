@@ -86,4 +86,14 @@ public class ResourceTypeHandler implements VariableTypeHandler<TridentUtil.Reso
     public Iterator<?> getIterator(TridentUtil.ResourceLocation loc) {
         return Arrays.stream(loc.getParts()).iterator();
     }
+
+    @Override
+    public Class<TridentUtil.ResourceLocation> getHandledClass() {
+        return TridentUtil.ResourceLocation.class;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "resource";
+    }
 }

@@ -47,6 +47,7 @@ import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMe
 import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger.REPLACE;
 
 public class CustomEntity implements VariableTypeHandler<CustomEntity> {
+    public static final CustomEntity STATIC_HANDLER = new CustomEntity();
     private final String id;
     @Nullable
     private final Type baseType;
@@ -55,6 +56,13 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     private String idTag;
     private boolean fullyDeclared = false;
     private HashMap<String, Symbol> members = new HashMap<>();
+
+    //EMPTY OBJECT FOR STATIC HANDLER
+    private CustomEntity() {
+        id = null;
+        baseType = null;
+        defaultNBT = new TagCompound();
+    }
 
     public CustomEntity(String id, @Nullable Type baseType, ISymbolContext ctx) {
         this.id = id;
@@ -469,5 +477,15 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     @Override
     public String toString() {
         return "[Custom Entity: " + id + "]";
+    }
+
+    @Override
+    public Class<CustomEntity> getHandledClass() {
+        return CustomEntity.class;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "custom_entity";
     }
 }

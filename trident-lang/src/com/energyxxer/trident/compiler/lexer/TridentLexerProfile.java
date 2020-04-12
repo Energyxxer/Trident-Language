@@ -634,7 +634,7 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new IdentifierLexerContext(COMMAND_HEADER, "[a-zA-Z0-9._\\-+]"));
         contexts.add(new IdentifierLexerContext(MODIFIER_HEADER, "[a-zA-Z0-9._\\-+]"));
 
-        contexts.add(new StringMatchLexerContext(SYMBOL, "*", "<=", ">=", "<", ">", "!=", "=", "$", ";"));
+        contexts.add(new StringMatchLexerContext(SYMBOL, "*", "<=", ">=", "<", ">", "!=", "=", "$", ";", "?"));
         contexts.add(new StringMatchLexerContext(ARROW, "->"));
 
         contexts.add(new StringMatchLexerContext(COMPILER_OPERATOR, "+=", "-=", "*=", "/=", "%=", "+", "-", "*", "/", "%", "<=", ">=", "<", ">", "==", "!=", "=", "&&", "||", "&", "|", "^"));

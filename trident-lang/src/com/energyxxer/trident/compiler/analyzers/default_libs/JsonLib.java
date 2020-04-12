@@ -4,11 +4,7 @@ import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -114,7 +110,7 @@ public class JsonLib implements DefaultLibraryProvider {
             return jObj;
         }
         JsonElement applied = filter != null ? filter.apply(obj) : null;
-        if(applied == null && !skipUnknownTypes) throw new IllegalArgumentException("Cannot convert object of type '" + VariableTypeHandler.Static.getShorthandForObject(obj) + "' to a JSON element");
+        if(applied == null && !skipUnknownTypes) throw new IllegalArgumentException("Cannot convert object of type '" + TridentTypeManager.getShorthandForObject(obj) + "' to a JSON element");
         return applied;
     }
 

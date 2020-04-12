@@ -42,4 +42,14 @@ public class IntTypeHandler implements VariableTypeHandler<Integer> {
         if(targetType == TagLong.class) return new TagLong(object);
         return null;
     }
+
+    @Override
+    public Class<Integer> getHandledClass() {
+        return Integer.class;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "int";
+    }
 }

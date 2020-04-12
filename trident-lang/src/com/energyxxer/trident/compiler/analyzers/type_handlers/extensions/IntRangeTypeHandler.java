@@ -68,4 +68,14 @@ public class IntRangeTypeHandler implements VariableTypeHandler<IntegerRange> {
     public <F> F cast(IntegerRange range, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
+
+    @Override
+    public Class<IntegerRange> getHandledClass() {
+        return IntegerRange.class;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "int_range";
+    }
 }

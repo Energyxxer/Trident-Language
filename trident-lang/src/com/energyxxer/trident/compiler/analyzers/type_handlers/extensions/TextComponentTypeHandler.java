@@ -22,4 +22,14 @@ public class TextComponentTypeHandler implements VariableTypeHandler<TextCompone
     public <F> F cast(TextComponent object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
+
+    @Override
+    public Class<TextComponent> getHandledClass() {
+        return TextComponent.class;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "text_component";
+    }
 }

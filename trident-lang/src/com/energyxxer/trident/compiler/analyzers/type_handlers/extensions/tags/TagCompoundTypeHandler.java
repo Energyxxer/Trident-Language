@@ -3,10 +3,8 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.NBTToDictionary;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.NBTTagTypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -61,5 +59,20 @@ public class TagCompoundTypeHandler implements VariableTypeHandler<TagCompound> 
             entry.put("value", t);
             return entry;
         }).collect(Collectors.toList()).iterator();
+    }
+
+    @Override
+    public Class<TagCompound> getHandledClass() {
+        return TagCompound.class;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "tag_compound";
+    }
+
+    @Override
+    public VariableTypeHandler<?> getSuperType() {
+        return TridentTypeManager.getHandlerForHandlerClass(NBTTagTypeHandler.class);
     }
 }

@@ -67,4 +67,14 @@ public class BlockTypeHandler implements VariableTypeHandler<Block> {
     public <F> F cast(Block object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "block";
+    }
+
+    @Override
+    public Class<Block> getHandledClass() {
+        return Block.class;
+    }
 }

@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 
 public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, Iterable<Object> {
+    public static final DictionaryObject STATIC_HANDLER = new DictionaryObject();
     private static Stack<DictionaryObject> toStringRecursion = new Stack<>();
     private static HashMap<String, MemberWrapper<DictionaryObject>> members = new HashMap<>();
 
@@ -179,5 +180,15 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
         String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue()))).collect(Collectors.joining(", ")) + "}";
         toStringRecursion.pop();
         return str;
+    }
+
+    @Override
+    public Class<DictionaryObject> getHandledClass() {
+        return DictionaryObject.class;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "dictionary";
     }
 }
