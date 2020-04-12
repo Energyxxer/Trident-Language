@@ -176,8 +176,8 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
 
     public PointerObject validate(TokenPattern<?> pattern, ISymbolContext ctx) {
         switch(getErrorCode()) {
-            case WRONG_TARGET_TYPE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer target type: " + VariableTypeHandler.Static.getShorthandForObject(target.getValue()), pattern, ctx);
-            case WRONG_MEMBER_TYPE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer member type: " + VariableTypeHandler.Static.getShorthandForObject(member.getValue()), pattern, ctx);
+            case WRONG_TARGET_TYPE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer target type: " + TridentTypeManager.getShorthandForObject(target.getValue()), pattern, ctx);
+            case WRONG_MEMBER_TYPE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer member type: " + TridentTypeManager.getShorthandForObject(member.getValue()), pattern, ctx);
             case ILLEGAL_OBJECTIVE_NAME: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal objective name: '" + member.getValue() + "'", pattern, ctx);
             case ILLEGAL_TYPE_COMBINATION: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer type combination: " + (target.getValue() instanceof CoordinateSet ? "Coordinate" : "Storage") + " and Objective", pattern, ctx);
             case TARGET_NOT_STANDALONE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer target: Storage spaces can't be tags: '" + target.getValue() + "'", pattern, ctx);
@@ -199,5 +199,15 @@ public class PointerObject implements VariableTypeHandler<PointerObject> {
     @Override
     public int hashCode() {
         return Objects.hash(target.getValue(), member.getValue(), scale, numericType);
+    }
+
+    @Override
+    public Class<PointerObject> getHandledClass() {
+        return PointerObject.class;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "pointer";
     }
 }

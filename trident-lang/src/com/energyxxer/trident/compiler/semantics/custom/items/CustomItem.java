@@ -39,6 +39,7 @@ import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerge
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
 public class CustomItem implements VariableTypeHandler<CustomItem> {
+    public static final CustomItem STATIC_HANDLER = new CustomItem();
     private final String id;
     private final String namespace;
     private final Type baseType;
@@ -47,6 +48,14 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
     private int customModelData = 0;
     private boolean fullyDeclared = false;
     private HashMap<String, Symbol> members = new HashMap<>();
+
+    //EMPTY OBJECT FOR STATIC HANDLER
+    private CustomItem() {
+        id = null;
+        namespace = null;
+        baseType = null;
+        defaultNBT = new TagCompound();
+    }
 
     public CustomItem(String id, Type baseType, ISymbolContext ctx) {
         this.id = id;
@@ -382,6 +391,16 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
             collector.end();
             if(itemDecl != null) itemDecl.endDeclaration();
         }
+    }
+
+    @Override
+    public Class<CustomItem> getHandledClass() {
+        return CustomItem.class;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "custom_item";
     }
 
     public int getItemIdHash() {

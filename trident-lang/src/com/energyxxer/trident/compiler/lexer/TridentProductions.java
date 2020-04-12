@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import static com.energyxxer.nbtmapper.parser.NBTTMTokens.PRIMITIVE_TYPE;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
 @SuppressWarnings("FieldCanBeLocal")
@@ -2363,7 +2364,8 @@ public class TridentProductions {
                         ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
                     }
                 }),
-                choice(group(optional(colon(), INTERPOLATION_TYPE).setName("VARIABLE_TYPE_CONSTRAINTS"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))).setName("VARIABLE_INITIALIZATION")
+                optional(colon(), optional(INTERPOLATION_TYPE, symbol("?").setOptional().setName("VARIABLE_NULLABLE")).setName("VARIABLE_TYPE_CONSTRAINTS_INNER")).setName("VARIABLE_TYPE_CONSTRAINTS"),
+                optional(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE")).setName("VARIABLE_INITIALIZATION")
         ).setName("VARIABLE_DECLARATION").addProcessor((p, l) -> {
             if(l.getSummaryModule() != null) {
                 SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();

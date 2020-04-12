@@ -17,6 +17,7 @@ public class CustomClass implements VariableTypeHandler<CustomClass> {
 
     private final String name;
     private final HashMap<String, Symbol> members = new HashMap<>();
+    private final CustomClass superClass = null;
 
     public CustomClass(String name) {
         this.name = name;
@@ -74,5 +75,25 @@ public class CustomClass implements VariableTypeHandler<CustomClass> {
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public Class<CustomClass> getHandledClass() {
+        return CustomClass.class;
+    }
+
+    @Override
+    public boolean isPrimitive() {
+        return false;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public VariableTypeHandler<?> getSuperType() {
+        return superClass;
     }
 }

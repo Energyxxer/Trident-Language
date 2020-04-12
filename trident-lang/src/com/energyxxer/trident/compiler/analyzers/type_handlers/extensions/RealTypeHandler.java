@@ -35,4 +35,19 @@ public class RealTypeHandler implements VariableTypeHandler<Double> {
         if(targetType == TagFloat.class) return new TagFloat(object.floatValue());
         return null;
     }
+
+    @Override
+    public Class<Double> getHandledClass() {
+        return Double.class;
+    }
+
+    @Override
+    public String getPrimitiveShorthand() {
+        return "real";
+    }
+
+    @Override
+    public boolean isInstance(Object obj) {
+        return obj instanceof Double || obj instanceof Integer;
+    }
 }

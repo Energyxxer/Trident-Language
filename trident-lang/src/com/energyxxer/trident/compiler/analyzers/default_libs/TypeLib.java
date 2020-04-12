@@ -5,10 +5,7 @@ import com.energyxxer.commodore.types.Type;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -105,17 +102,16 @@ public class TypeLib implements DefaultLibraryProvider {
         globalCtx.put(new Symbol("MinecraftTypes", Symbol.SymbolVisibility.GLOBAL, type));
 
         globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (VariableMethod) (params, patterns, pattern, file) ->
-                (params.length >= 1 && params[0] != null) ? VariableTypeHandler.Static.getShorthandForObject(params[0]) : "null"
+                TridentTypeManager.getShorthandForObject(params[0])
         ));
         globalCtx.put(new Symbol("isInstance", Symbol.SymbolVisibility.GLOBAL, new MethodWrapper<>("isInstance", (instance, params) -> {
             params[1] = ((String) params[1]).trim();
-            Class cls = VariableTypeHandler.Static.getClassForShorthand((String)params[1]);
+            VariableTypeHandler handler = TridentTypeManager.getHandlerForShorthand((String) params[1]);;
             if(params[0] == null) return "null".equals(params[1]);
-            if(cls == null) {
+            if(handler == null) {
                 throw new IllegalArgumentException("Illegal data type name '" + params[1] + "'");
             }
-            if(params[1].equals("real") && params[0] instanceof Integer) return true;
-            return cls.isInstance(params[0]);
+            return handler.isInstance(params[0]);
         }, Object.class, String.class).setNullable(0).createForInstance(null)));
     }
 }

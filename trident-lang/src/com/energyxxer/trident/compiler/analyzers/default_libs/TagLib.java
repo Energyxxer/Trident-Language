@@ -11,7 +11,7 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -49,7 +49,7 @@ public class TagLib implements DefaultLibraryProvider {
                     }
                     tag.addValue(type);
                 } else {
-                    throw new IllegalArgumentException("Expected resource type in 'values' list parameter, instead got " + VariableTypeHandler.Static.getShorthandForObject(rawValue));
+                    throw new IllegalArgumentException("Expected resource type in 'values' list parameter, instead got " + TridentTypeManager.getShorthandForObject(rawValue));
                 }
             }
 
