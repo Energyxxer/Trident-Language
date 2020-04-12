@@ -114,9 +114,9 @@ public class LoopInstruction implements Instruction {
             case "ITERATOR_FOR": {
                 String varName = pattern.find("VARIABLE_NAME").flatten(false);
                 Object iterable = InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), ctx);
-                VariableTypeHandler handler = InterpolationManager.getHandlerForObject(iterable, pattern, ctx);
+                VariableTypeHandler handler = InterpolationManager.getHandlerForObject(iterable, pattern, ctx, true);
                 Iterator it;
-                if((it = handler.getIterator(iterable)) != null) {
+                if(handler != null && (it = handler.getIterator(iterable)) != null) {
                     if(!it.hasNext()) return null;
                     return new LoopHeader() {
                         @Override

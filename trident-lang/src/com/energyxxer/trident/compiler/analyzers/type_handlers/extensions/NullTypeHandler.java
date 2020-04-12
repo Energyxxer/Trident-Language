@@ -20,19 +20,4 @@ public class NullTypeHandler implements VariableTypeHandler<Object> {
     public <F> F cast(Object object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         return null;
     }
-
-    @Override
-    public Class<Object> getHandledClass() {
-        return null;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "null";
-    }
-
-    @Override
-    public boolean isInstance(Object obj) {
-        return true;
-    }
 }

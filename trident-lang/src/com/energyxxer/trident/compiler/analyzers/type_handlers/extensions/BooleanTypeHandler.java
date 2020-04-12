@@ -22,14 +22,4 @@ public class BooleanTypeHandler implements VariableTypeHandler<Boolean> {
     public <F> F cast(Boolean object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
-
-    @Override
-    public Class<Boolean> getHandledClass() {
-        return Boolean.class;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "boolean";
-    }
 }

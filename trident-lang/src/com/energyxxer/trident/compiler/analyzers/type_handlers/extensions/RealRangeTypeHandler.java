@@ -67,14 +67,4 @@ public class RealRangeTypeHandler implements VariableTypeHandler<DoubleRange> {
     public <F> F cast(DoubleRange range, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
-
-    @Override
-    public Class<DoubleRange> getHandledClass() {
-        return DoubleRange.class;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "real_range";
-    }
 }

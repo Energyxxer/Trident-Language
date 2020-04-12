@@ -42,14 +42,4 @@ public class EntityTypeHandler implements VariableTypeHandler<Entity> {
     public <F> F cast(Entity object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
-
-    @Override
-    public Class<Entity> getHandledClass() {
-        return Entity.class;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "entity";
-    }
 }

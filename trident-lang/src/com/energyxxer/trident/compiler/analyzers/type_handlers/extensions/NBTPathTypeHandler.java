@@ -59,14 +59,4 @@ public class NBTPathTypeHandler implements VariableTypeHandler<NBTPath> {
     public <F> F cast(NBTPath object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
-
-    @Override
-    public Class<NBTPath> getHandledClass() {
-        return NBTPath.class;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "nbt_path";
-    }
 }

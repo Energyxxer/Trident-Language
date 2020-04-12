@@ -12,7 +12,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Object> {
-    public static final ListObject STATIC_HANDLER = new ListObject();
     private static Stack<ListObject> toStringRecursion = new Stack<>();
 
     private static HashMap<String, MemberWrapper<ListObject>> members = new HashMap<>();
@@ -210,15 +209,5 @@ public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Obj
         String str = "[" + content.stream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue())).collect(Collectors.joining(", "))  + "]";
         toStringRecursion.pop();
         return str;
-    }
-
-    @Override
-    public Class<ListObject> getHandledClass() {
-        return ListObject.class;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "list";
     }
 }

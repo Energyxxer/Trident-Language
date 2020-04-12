@@ -21,6 +21,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.default_libs.JsonLib;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -235,7 +236,7 @@ public class ObjectConstructors {
 
             return list;
         } else if(!skipIncompatibleTypes) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot convert object of type '" + TridentTypeManager.getShorthandForObject(params[0]) + "' to an nbt tag", pattern, ctx);
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot convert object of type '" + VariableTypeHandler.Static.getIdentifierForClass(params[0].getClass()) + "' to an nbt tag", pattern, ctx);
         } else return null;
     }
 
@@ -302,7 +303,7 @@ public class ObjectConstructors {
             if (asJson != null) {
                 return TextParser.parseTextComponent(asJson, ctx, patterns[0], TextComponentContext.CHAT);
             } else {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot turn a value of type " + TridentTypeManager.getShorthandForObject(params[0]) + " into a text component", patterns[0], ctx);
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot turn a value of type " + VariableTypeHandler.Static.getIdentifierForClass(params[0].getClass()) + " into a text component", patterns[0], ctx);
             }
         } catch(IllegalArgumentException x) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.getMessage(), pattern, ctx);

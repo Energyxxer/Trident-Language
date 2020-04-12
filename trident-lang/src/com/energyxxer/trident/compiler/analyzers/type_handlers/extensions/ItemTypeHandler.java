@@ -57,14 +57,4 @@ public class ItemTypeHandler implements VariableTypeHandler<Item> {
     public <F> F cast(Item object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
-
-    @Override
-    public Class<Item> getHandledClass() {
-        return Item.class;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "item";
-    }
 }

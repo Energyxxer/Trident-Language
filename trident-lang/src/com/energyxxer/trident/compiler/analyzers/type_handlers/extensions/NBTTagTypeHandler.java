@@ -27,14 +27,4 @@ public class NBTTagTypeHandler implements VariableTypeHandler<NBTTag> {
         }
         throw new ClassCastException();
     }
-
-    @Override
-    public Class<NBTTag> getHandledClass() {
-        return NBTTag.class;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "nbt_tag";
-    }
 }

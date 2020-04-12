@@ -64,14 +64,4 @@ public class EntityEvent implements VariableTypeHandler<EntityEvent> {
         EntityEvent event = new EntityEvent(functionLoc, function);
         ctx.put(new Symbol(eventName, Symbol.SymbolVisibility.LOCAL, event));
     }
-
-    @Override
-    public Class<EntityEvent> getHandledClass() {
-        return EntityEvent.class;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "entity_event";
-    }
 }

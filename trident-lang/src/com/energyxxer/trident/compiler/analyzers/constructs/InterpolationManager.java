@@ -1,10 +1,14 @@
 package com.energyxxer.trident.compiler.analyzers.constructs;
 
+import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.constructors.ObjectConstructors;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.NBTTagTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.NullTypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperandType;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperationOrder;
@@ -205,7 +209,7 @@ public class InterpolationManager {
                 }
             }
             case "PRIMITIVE_ROOT_TYPE": {
-                return TridentTypeManager.getHandlerForShorthand(pattern.flatten(false));
+                return AnalyzerManager.getAnalyzer(VariableTypeHandler.class, VariableTypeHandler.Static.getClassForShorthand(pattern.flatten(false)).getName());
             }
             case "NULL_VALUE": {
                 return null;
@@ -226,6 +230,28 @@ public class InterpolationManager {
                 }
 
                 return parent;
+            }
+            case "MEMBER": {
+                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), ctx);
+                EObject.assertNotNull(parent, pattern.find("INTERPOLATION_VALUE"), ctx);
+                VariableTypeHandler handler = getHandlerForObject(parent, pattern, ctx);
+                String memberName = pattern.find("MEMBER_NAME").flatten(false);
+                try {
+                    return sanitizeObject(handler.getMember(parent, memberName, pattern, ctx, keepSymbol));
+                } catch(MemberNotFoundException x) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member '" + memberName + "' of " + parent.getClass().getSimpleName(), pattern, ctx);
+                }
+            }
+            case "INDEXED_MEMBER": {
+                Object parent = parse(pattern.find("INTERPOLATION_VALUE"), ctx);
+                EObject.assertNotNull(parent, pattern.find("INTERPOLATION_VALUE"), ctx);
+                VariableTypeHandler handler = getHandlerForObject(parent, pattern, ctx);
+                Object index = parse(pattern.find("INDEX.INTERPOLATION_VALUE"), ctx);
+                try {
+                    return sanitizeObject(handler.getIndexer(parent, index, pattern, ctx, keepSymbol));
+                } catch(MemberNotFoundException x) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member for index " + index + " of " + parent.getClass().getSimpleName(), pattern, ctx);
+                }
             }
             case "CONSTRUCTOR_CALL": {
                 String constructorName = pattern.find("CONSTRUCTOR_NAME").flatten(false);
@@ -251,7 +277,7 @@ public class InterpolationManager {
             }
             case "CAST": {
                 Object parent = parse(pattern.find("MID_INTERPOLATION_VALUE"), ctx);
-                Class newType = TridentTypeManager.getHandlerForShorthand(pattern.find("TARGET_TYPE").flatten(false)).getHandledClass();
+                Class newType = VariableTypeHandler.Static.getClassForShorthand(pattern.find("TARGET_TYPE").flatten(false));
                 return cast(parent, newType, pattern, ctx);
             }
             case "SURROUNDED_INTERPOLATION_VALUE": {
@@ -363,27 +389,19 @@ public class InterpolationManager {
             case "MEMBER_KEY": {
                 String memberName = accessorPattern.find("MEMBER_NAME").flatten(false);
                 VariableTypeHandler handler = getHandlerForObject(parent, parentPattern, ctx);
-                while(true) {
-                    try {
-                        return sanitizeObject(handler.getMember(parent, memberName, accessorPattern, ctx, keepSymbol));
-                    } catch(MemberNotFoundException x) {
-                        if((handler = handler.getSuperType()) == null) {
-                            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member '" + memberName + "' of " + parent.getClass().getSimpleName(), accessorPattern, ctx);
-                        }
-                    }
+                try {
+                    return sanitizeObject(handler.getMember(parent, memberName, accessorPattern, ctx, keepSymbol));
+                } catch(MemberNotFoundException x) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member '" + memberName + "' of " + parent.getClass().getSimpleName(), accessorPattern, ctx);
                 }
             }
             case "MEMBER_INDEX": {
                 Object index = parse(accessorPattern.find("INDEX.INTERPOLATION_VALUE"), ctx);
                 VariableTypeHandler handler = getHandlerForObject(parent, parentPattern, ctx);
-                while(true) {
-                    try {
-                        return sanitizeObject(handler.getIndexer(parent, index, accessorPattern, ctx, keepSymbol));
-                    } catch(MemberNotFoundException x) {
-                        if((handler = handler.getSuperType()) == null) {
-                            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member for index " + index + " of " + parent.getClass().getSimpleName(), accessorPattern, ctx);
-                        }
-                    }
+                try {
+                    return sanitizeObject(handler.getIndexer(parent, index, accessorPattern, ctx, keepSymbol));
+                } catch(MemberNotFoundException x) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member for index " + index + " of " + parent.getClass().getSimpleName(), accessorPattern, ctx);
                 }
             }
             case "METHOD_CALL": {
@@ -414,7 +432,6 @@ public class InterpolationManager {
         }
     }
 
-    //TODO: Rework this to use variable type handlers instead of classes
     @SuppressWarnings("unchecked")
     public static <T> T cast(Object obj, Class<T> newType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(obj == null) return null;
@@ -431,8 +448,15 @@ public class InterpolationManager {
     }
 
     public static VariableTypeHandler getHandlerForObject(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
-        VariableTypeHandler handler = TridentTypeManager.getHandlerForObject(value);
-        if(handler == null) {
+        return getHandlerForObject(value, pattern, ctx, false);
+    }
+
+    public static VariableTypeHandler getHandlerForObject(Object value, TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable) {
+        if(value instanceof VariableTypeHandler) return ((VariableTypeHandler) value);
+        if(value == null) return new NullTypeHandler();
+        VariableTypeHandler handler = AnalyzerManager.getAnalyzer(VariableTypeHandler.class, VariableTypeHandler.Static.getIdentifierForClass(value.getClass()));
+        if(handler == null && value instanceof NBTTag) return new NBTTagTypeHandler();
+        if(handler == null && !nullable) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Couldn't find handler for type " + value.getClass().getName(), pattern, ctx);
         }
         return handler;

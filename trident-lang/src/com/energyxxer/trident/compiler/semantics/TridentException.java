@@ -18,8 +18,6 @@ import java.util.function.Supplier;
 
 public class TridentException extends RuntimeException implements VariableTypeHandler<TridentException> {
 
-    public static final VariableTypeHandler<?> STATIC_HANDLER = new TridentException();
-
     public enum Source {
         TYPE_ERROR("Type Error"),
         ARITHMETIC_ERROR("Arithmetic Error"),
@@ -46,10 +44,6 @@ public class TridentException extends RuntimeException implements VariableTypeHa
     private Notice notice;
     private TokenPattern<?> cause;
     private boolean breaking = false;
-
-    //EMPTY OBJECT FOR STATIC HANDLER
-    private TridentException() {
-    }
 
     public TridentException(Source source, String message, @NotNull TokenPattern<?> cause, ISymbolContext ctx) {
         this(source, message, cause, ctx.getCompiler().getCallStack().getView(cause));
@@ -189,15 +183,5 @@ public class TridentException extends RuntimeException implements VariableTypeHa
             }
             throw new TridentException(Source.COMMAND_ERROR, ex.getMessage(), defaultPattern, ctx);
         }
-    }
-
-    @Override
-    public Class<TridentException> getHandledClass() {
-        return TridentException.class;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "exception";
     }
 }

@@ -120,14 +120,4 @@ public class StringTypeHandler implements VariableTypeHandler<String> {
             }
         };
     }
-
-    @Override
-    public Class<String> getHandledClass() {
-        return String.class;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "string";
-    }
 }

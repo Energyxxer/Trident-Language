@@ -7,7 +7,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -34,7 +34,7 @@ public class RawParser implements ModifierParser {
             if(elem instanceof String) {
                 if(!((String) elem).isEmpty()) modifiers.add(new RawExecuteModifier(((String) elem)));
             } else {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot turn an object of type " + TridentTypeManager.getShorthandForObject(elem) + " into a string for a raw execute modifier", pattern.find("RAW_MODIFIER_VALUE"), ctx);
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot turn an object of type " + VariableTypeHandler.Static.getShorthandForObject(elem) + " into a string for a raw execute modifier", pattern.find("RAW_MODIFIER_VALUE"), ctx);
             }
         }
         return modifiers;

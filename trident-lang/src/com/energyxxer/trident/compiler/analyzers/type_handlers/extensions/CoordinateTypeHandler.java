@@ -115,14 +115,4 @@ public class CoordinateTypeHandler implements VariableTypeHandler<CoordinateSet>
     public <F> F cast(CoordinateSet object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
-
-    @Override
-    public Class<CoordinateSet> getHandledClass() {
-        return CoordinateSet.class;
-    }
-
-    @Override
-    public String getPrimitiveShorthand() {
-        return "coordinates";
-    }
 }
