@@ -20,6 +20,7 @@ import static com.energyxxer.trident.compiler.lexer.TridentTokens.NO_TOKEN;
 
 public class TDNMetaBuilder {
 
+    public static final String PLUGIN_CREATED_COMMAND_TAG = "__PLUGIN_CREATED";
     public static final String PLUGIN_CREATED_TAG = "__PLUGIN_CREATED";
     public static final String STORE_VAR_TAG_PREFIX = "__PLUGIN_STORE_VAR:";
     public static final String STORE_FLAT_TAG = "__PLUGIN_STORE_FLAT:";

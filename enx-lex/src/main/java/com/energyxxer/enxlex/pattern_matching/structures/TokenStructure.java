@@ -103,7 +103,10 @@ public class TokenStructure extends TokenPattern<TokenPattern<?>> {
 	@Override
 	public void validate() {
 		if(this.name != null && this.name.length() > 0) this.tags.add(name);
-		group.addTags(this.tags);
+
+		for(String tag : this.tags) {
+			if(!tag.startsWith("__")) group.addTag(tag);
+		}
 		group.validate();
 	}
 }
