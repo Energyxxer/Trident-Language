@@ -30,7 +30,6 @@ public class TridentSuggestionTags {
     public static final String CONTEXT_MODIFIER = "ctx:trident.modifier";
     public static final String CONTEXT_ENTITY_BODY = "ctx:trident.entity_body";
     public static final String CONTEXT_ITEM_BODY = "ctx:trident.item_body";
-    public static final String CONTEXT_CLASS_BODY = "ctx:trident.class_body";
     public static final String CONTEXT_INTERPOLATION_VALUE = "ctx:trident.interpolation_value";
 
 
@@ -48,5 +47,4 @@ public class TridentSuggestionTags {
     public static final String TAG_ENTITY_EVENT = "cst:entity_event";
     public static final String TAG_CUSTOM_ITEM = "cst:custom_item";
     public static final String TAG_OBJECTIVE = "cst:objective";
-    public static final String TAG_CLASS = "cst:class";
 }

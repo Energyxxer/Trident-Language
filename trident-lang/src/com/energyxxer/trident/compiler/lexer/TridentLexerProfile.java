@@ -590,34 +590,6 @@ public class TridentLexerProfile extends LexerProfile {
                     i++;
                 }
                 str = str.substring(0, i);
-                if(i > 0 && reservedWords.contains(str)) return new ScannerContextResponse(true, str, type);
-                return new ScannerContextResponse(false);
-            }
-
-            @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(PRIMITIVE_TYPE);
-            }
-        });
-
-        contexts.add(new LexerContext() {
-
-            @Override
-            public ScannerContextResponse analyze(String str, LexerProfile profile) {
-                return new ScannerContextResponse(false);
-            }
-
-            @Override
-            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
-                int i = 0;
-                while(i < str.length() && (
-                        (i == 0 && str.substring(i,i+1).matches("[a-zA-Z_]")
-                                ||
-                                (i > 0 && str.substring(i,i+1).matches("[a-zA-Z0-9_]"))
-                        ))) {
-                    i++;
-                }
-                str = str.substring(0, i);
                 if(i > 0) return new ScannerContextResponse(true, str, type);
                 return new ScannerContextResponse(false);
             }

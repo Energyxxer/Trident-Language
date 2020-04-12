@@ -121,11 +121,6 @@ public class TridentProductions {
     private final LazyTokenStructureMatch INTERPOLATION_VALUE;
     private final LazyTokenStructureMatch ROOT_INTERPOLATION_VALUE;
     private final LazyTokenStructureMatch LINE_SAFE_INTERPOLATION_VALUE;
-
-    private final LazyTokenStructureMatch ROOT_INTERPOLATION_TYPE;
-    private final LazyTokenStructureMatch INTERPOLATION_TYPE;
-
-
     private final LazyTokenStructureMatch POINTER;
     private final LazyTokenPatternMatch resourceLocationFixer = ofType(NO_TOKEN).setName("_RLCF").setOptional().addFailProcessor((p, l) -> {
         if(l.getSuggestionModule() != null) {
@@ -267,9 +262,6 @@ public class TridentProductions {
             LINE_SAFE_INTERPOLATION_VALUE = new LazyTokenStructureMatch("LINE_SAFE_INTERPOLATION_VALUE");
             LINE_SAFE_INTERPOLATION_VALUE.addProcessor(clearMemberListProcessor);
 
-            ROOT_INTERPOLATION_TYPE = new LazyTokenStructureMatch("ROOT_INTERPOLATION_VALUE");
-            INTERPOLATION_TYPE = new LazyTokenStructureMatch("INTERPOLATION_TYPE");
-
             ROOT_INTERPOLATION_VALUE.add(
                     identifierX()
                             .setName("VARIABLE_NAME")
@@ -323,17 +315,6 @@ public class TridentProductions {
                     }));
             ROOT_INTERPOLATION_VALUE.add(group(literal("new").setName("VALUE_WRAPPER_KEY"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
-            ROOT_INTERPOLATION_TYPE.add(ofType(PRIMITIVE_TYPE).setName("PRIMITIVE_ROOT_TYPE"));
-            ROOT_INTERPOLATION_TYPE.add(
-                    identifierX()
-                            .setName("VARIABLE_NAME")
-                            .addTags(SuggestionTags.ENABLED_INDEX, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE)
-                            .addProcessor((p, l) -> {
-                                if(l.getSummaryModule() != null) {
-                                    ((TridentSummaryModule) l.getSummaryModule()).addTempMemberAccess(p.flatten(false));
-                                }
-                            }));
-
             LazyTokenStructureMatch MEMBER_ACCESS = choice(
                     group(dot().addProcessor((p, l) -> {
                         if(l.getSuggestionModule() != null && l.getSuggestionModule().getSuggestionIndex() == p.getStringBounds().end.index) {
@@ -356,27 +337,6 @@ public class TridentProductions {
             ).setName("MEMBER_ACCESS");
 
             LazyTokenGroupMatch INTERPOLATION_CHAIN = group(ROOT_INTERPOLATION_VALUE, list(MEMBER_ACCESS).setOptional().setName("MEMBER_ACCESSES")).setName("INTERPOLATION_CHAIN");
-
-
-            LazyTokenStructureMatch MEMBER_TYPE_ACCESS = choice(
-                    group(dot().addProcessor((p, l) -> {
-                        if(l.getSuggestionModule() != null && l.getSuggestionModule().getSuggestionIndex() == p.getStringBounds().end.index) {
-                            if(l.getSummaryModule() != null) {
-                                ArrayList<String> memberPath = ((TridentSummaryModule) l.getSummaryModule()).getTempMemberAccessList();
-                                l.getSuggestionModule().setLookingAtMemberPath(memberPath.toArray(new String[0]));
-                                l.getSuggestionModule().addSuggestion(new ComplexSuggestion(TridentSuggestionTags.IDENTIFIER_MEMBER));
-                            }
-                        }
-                    }), identifierY()
-                            .setName("MEMBER_NAME")
-                            .addTags(SuggestionTags.ENABLED)
-                            .addProcessor((p, l) -> {
-                                if(l.getSummaryModule() != null) {
-                                    ((TridentSummaryModule) l.getSummaryModule()).addTempMemberAccess(p.flatten(false));
-                                }
-                            })).setName("MEMBER_KEY")
-            ).setName("MEMBER_ACCESS");
-            LazyTokenGroupMatch INTERPOLATION_TYPE_CHAIN = group(ROOT_INTERPOLATION_TYPE, list(MEMBER_TYPE_ACCESS).setOptional().setName("MEMBER_ACCESSES")).setName("INTERPOLATION_CHAIN");
 
             LazyTokenStructureMatch MID_INTERPOLATION_VALUE = struct("MID_INTERPOLATION_VALUE");
             MID_INTERPOLATION_VALUE.add(group(list(ofType(COMPILER_PREFIX_OPERATOR).addProcessor(clearMemberListProcessor)).setOptional().setName("PREFIX_OPERATORS"), INTERPOLATION_CHAIN, list(ofType(COMPILER_POSTFIX_OPERATOR).addProcessor(clearMemberListProcessor)).setOptional().setName("POSTFIX_OPERATORS")).setName("SURROUNDED_INTERPOLATION_VALUE"));
@@ -413,8 +373,6 @@ public class TridentProductions {
 
             INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR).addProcessor(clearMemberListProcessor)).setName("EXPRESSION"));
             LINE_SAFE_INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, group(sameLine(), ofType(COMPILER_OPERATOR).addProcessor(clearMemberListProcessor))).setName("EXPRESSION"));
-
-            INTERPOLATION_TYPE.add(INTERPOLATION_TYPE_CHAIN);
 
             INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED).addProcessor(clearMemberListProcessor), glue(), brace("{").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED).addProcessor(clearMemberListProcessor)).setName("INTERPOLATION_WRAPPER"));
 
@@ -2234,7 +2192,7 @@ public class TridentProductions {
                     group(literal("default"), literal("passengers"), brace("["), list(NEW_ENTITY_LITERAL, comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
                     group(literal("default"), literal("health"), real().setName("HEALTH").addTags("cspn:Health")).setName("DEFAULT_HEALTH"),
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
-                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), optional(colon(), INTERPOLATION_TYPE).setName("VARIABLE_TYPE_CONSTRAINTS"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ENTITY_FIELD"),
+                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ENTITY_FIELD"),
                     group(literal("eval"), LINE_SAFE_INTERPOLATION_VALUE).setName("ENTITY_EVAL"),
                     group(literal("on"), group(INTERPOLATION_VALUE).setName("EVENT_NAME"), list(MODIFIER).setOptional().setName("EVENT_MODIFIERS"), literal("function"),
                             OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_EVENT_IMPLEMENTATION"),
@@ -2263,7 +2221,7 @@ public class TridentProductions {
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(literal("default"), literal("lore"), brace("["), list(TEXT_COMPONENT, comma()).setOptional().setName("LORE_LIST"), brace("]")).setName("DEFAULT_LORE"),
                     COMMENT_S,
-                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), optional(colon(), INTERPOLATION_TYPE).setName("VARIABLE_TYPE_CONSTRAINTS"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ITEM_FIELD"),
+                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ITEM_FIELD"),
                     group(literal("eval"), LINE_SAFE_INTERPOLATION_VALUE).setName("ITEM_EVAL")
             );
             itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_ITEM_BODY);
@@ -2273,18 +2231,6 @@ public class TridentProductions {
                     list(itemBodyEntry).setOptional().setName("ITEM_BODY_ENTRIES"),
                     brace("}")
             ).setOptional().setName("ITEM_DECLARATION_BODY");
-
-            LazyTokenStructureMatch classBodyEntry = choice(
-                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), identifierX().setName("MEMBER_NAME"), equals(), INTERPOLATION_VALUE).setName("CLASS_MEMBER"),
-                    COMMENT_S
-            ).setName("CLASS_BODY_ENTRY");
-            itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_CLASS_BODY);
-
-            LazyTokenPatternMatch classBody = group(
-                    brace("{"),
-                    list(classBodyEntry).setOptional().setName("CLASS_BODY_ENTRIES"),
-                    brace("}")
-            ).setName("CLASS_DECLARATION_BODY");
 
             INSTRUCTION.add(
                     group(instructionKeyword("define"),
@@ -2339,17 +2285,6 @@ public class TridentProductions {
                                                     }
                                                 }
                                             }),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), optional(colon(), group(INTERPOLATION_VALUE).addTags("cspn:Superclass")).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
-                                            .addProcessor((p, l) -> {
-                                                if(l.getSummaryModule() != null) {
-                                                    TokenPattern<?> namePattern = p.find("CLASS_NAME");
-                                                    String name = namePattern.flatten(false);
-                                                    SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), name, p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_VARIABLE);
-                                                    sym.addTag(TridentSuggestionTags.TAG_CLASS);
-                                                    sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.GLOBAL));
-                                                    ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
-                                                }
-                                            }),
                                     group(literal("function"), INNER_FUNCTION).setName("DEFINE_FUNCTION")
                             )
                     )
@@ -2363,7 +2298,7 @@ public class TridentProductions {
                         ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
                     }
                 }),
-                choice(group(optional(colon(), INTERPOLATION_TYPE).setName("VARIABLE_TYPE_CONSTRAINTS"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))).setName("VARIABLE_INITIALIZATION")
+                choice(group(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE"))).setName("VARIABLE_INITIALIZATION")
         ).setName("VARIABLE_DECLARATION").addProcessor((p, l) -> {
             if(l.getSummaryModule() != null) {
                 SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
