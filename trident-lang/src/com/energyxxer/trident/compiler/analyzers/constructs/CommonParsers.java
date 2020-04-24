@@ -124,23 +124,26 @@ public class CommonParsers {
     }
     @Contract("null, _, _ -> null")
     public static Type parseType(TokenPattern<?> id, ISymbolContext ctx, String category) {
-        if(id == null) return null;
-        if(id.getName().endsWith("_ID") && id instanceof TokenStructure) {
-            return parseType(((TokenStructure) id).getContents(), ctx, category);
-        }
-        switch (id.getName()) {
-            case "INTERPOLATION_BLOCK":
-                Object result = InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, TridentUtil.ResourceLocation.class, String.class);
-                EObject.assertNotNull(result, id, ctx);
-                return parseType(result, id, ctx, category);
-            case "STRING_LITERAL":
-                return parseType(parseStringLiteral(id, ctx), id, ctx, category);
-            default:
-                if(id.getName().endsWith("_DEFAULT") || id.getName().endsWith("_ID")) {
-                    TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id);
-                    return ctx.getCompiler().getModule().getTypeManager(typeLoc.namespace).getDictionary(category).get(typeLoc.body);
-                }
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + id.getName() + "'", id, ctx);
+        while (true) {
+            if (id == null) return null;
+            if (id.getName().endsWith("_ID") && id instanceof TokenStructure) {
+                id = ((TokenStructure) id).getContents();
+                continue;
+            }
+            switch (id.getName()) {
+                case "INTERPOLATION_BLOCK":
+                    Object result = InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, TridentUtil.ResourceLocation.class, String.class);
+                    EObject.assertNotNull(result, id, ctx);
+                    return parseType(result, id, ctx, category);
+                case "STRING_LITERAL":
+                    return parseType(parseStringLiteral(id, ctx), id, ctx, category);
+                default:
+                    if (id.getName().endsWith("_DEFAULT") || id.getName().endsWith("_ID")) {
+                        TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id);
+                        return ctx.getCompiler().getModule().getTypeManager(typeLoc.namespace).getDictionary(category).get(typeLoc.body);
+                    }
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + id.getName() + "'", id, ctx);
+            }
         }
     }
 
@@ -299,145 +302,155 @@ public class CommonParsers {
     }
 
     public static Item parseItem(TokenPattern<?> pattern, ISymbolContext ctx, NBTMode mode) {
-        if(pattern == null) return null;
-        if(pattern.getName().equals("ITEM_TAGGED") || pattern.getName().equals("ITEM")) return parseItem(((TokenStructure) pattern).getContents(), ctx, mode);
-
-        if(pattern.getName().equals("ITEM_VARIABLE")) {
-            Object reference = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Item.class, CustomItem.class, TridentUtil.ResourceLocation.class, String.class);
-            Item item;
-            if(reference == null) {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null value for item", pattern.find("INTERPOLATION_BLOCK"), ctx);
-            } else if(reference instanceof Item) {
-                item = (Item) reference;
-            } else if(reference instanceof CustomItem) {
-                item = ((CustomItem) reference).constructItem(mode);
-            } else {
-                item = new Item(parseType(reference, pattern, ctx, ItemType.CATEGORY));
+        while (true) {
+            if (pattern == null) return null;
+            if (pattern.getName().equals("ITEM_TAGGED") || pattern.getName().equals("ITEM")) {
+                pattern = ((TokenStructure) pattern).getContents();
+                continue;
             }
+
+            if (pattern.getName().equals("ITEM_VARIABLE")) {
+                Object reference = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Item.class, CustomItem.class, TridentUtil.ResourceLocation.class, String.class);
+                Item item;
+                if (reference == null) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Unexpected null value for item", pattern.find("INTERPOLATION_BLOCK"), ctx);
+                } else if (reference instanceof Item) {
+                    item = (Item) reference;
+                } else if (reference instanceof CustomItem) {
+                    item = ((CustomItem) reference).constructItem(mode);
+                } else {
+                    item = new Item(parseType(reference, pattern, ctx, ItemType.CATEGORY));
+                }
+
+                TokenPattern<?> appendedModelData = pattern.find("APPENDED_MODEL_DATA.INTEGER");
+                if (appendedModelData != null) {
+                    int modelData = parseInt(appendedModelData, ctx);
+
+                    TagCompound nbt = item.getNBT();
+                    if (nbt == null) nbt = new TagCompound();
+
+                    TagCompound mergedNBT = nbt.merge(new TagCompound(new TagInt("CustomModelData", modelData)));
+
+                    item = new Item(item.getItemType(), mergedNBT);
+                }
+
+                TokenPattern<?> appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
+                if (appendedNBT != null) {
+                    TagCompound nbt = item.getNBT();
+                    if (nbt == null) nbt = new TagCompound();
+
+                    TagCompound mergedNBT = nbt.merge(NBTParser.parseCompound(appendedNBT, ctx));
+
+                    PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
+                    NBTParser.analyzeTag(nbt, context, appendedNBT, ctx);
+
+                    item = new Item(item.getItemType(), mergedNBT);
+                }
+                return item;
+            }
+
+            boolean isStandalone = pattern.getName().equals("CONCRETE_RESOURCE");
+
+            Type type;
+
+            if (isStandalone) {
+                type = parseItemType(pattern.find("RESOURCE_NAME.ITEM_ID"), ctx);
+            } else {
+                type = parseItemTag(pattern.find("RESOURCE_NAME.RESOURCE_LOCATION"), ctx);
+            }
+
+            TagCompound tag = null;
 
             TokenPattern<?> appendedModelData = pattern.find("APPENDED_MODEL_DATA.INTEGER");
-            if(appendedModelData != null) {
+            if (appendedModelData != null) {
                 int modelData = parseInt(appendedModelData, ctx);
-
-                TagCompound nbt = item.getNBT();
-                if(nbt == null) nbt = new TagCompound();
-
-                TagCompound mergedNBT = nbt.merge(new TagCompound(new TagInt("CustomModelData", modelData)));
-
-                item = new Item(item.getItemType(), mergedNBT);
+                tag = new TagCompound(new TagInt("CustomModelData", modelData));
             }
 
-            TokenPattern<?> appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
-            if(appendedNBT != null) {
-                TagCompound nbt = item.getNBT();
-                if(nbt == null) nbt = new TagCompound();
+            TokenPattern<?> appendedNBT = pattern.find(".NBT_COMPOUND");
+            if (appendedNBT != null) {
+                if (tag == null) tag = new TagCompound();
 
-                TagCompound mergedNBT = nbt.merge(NBTParser.parseCompound(appendedNBT, ctx));
+                tag = tag.merge(NBTParser.parseCompound(appendedNBT, ctx));
+            }
 
+            if (tag != null) {
                 PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
-                NBTParser.analyzeTag(nbt, context, appendedNBT, ctx);
-
-                item = new Item(item.getItemType(), mergedNBT);
+                NBTParser.analyzeTag(tag, context, pattern, ctx);
             }
-            return item;
+            return new Item(type, tag);
         }
-
-        boolean isStandalone = pattern.getName().equals("CONCRETE_RESOURCE");
-
-        Type type;
-
-        if(isStandalone) {
-            type = parseItemType(pattern.find("RESOURCE_NAME.ITEM_ID"), ctx);
-        } else {
-            type = parseItemTag(pattern.find("RESOURCE_NAME.RESOURCE_LOCATION"), ctx);
-        }
-
-        TagCompound tag = null;
-
-        TokenPattern<?> appendedModelData = pattern.find("APPENDED_MODEL_DATA.INTEGER");
-        if(appendedModelData != null) {
-            int modelData = parseInt(appendedModelData, ctx);
-            tag = new TagCompound(new TagInt("CustomModelData", modelData));
-        }
-
-        TokenPattern<?> appendedNBT = pattern.find(".NBT_COMPOUND");
-        if(appendedNBT != null) {
-            if(tag == null) tag = new TagCompound();
-
-            tag = tag.merge(NBTParser.parseCompound(appendedNBT, ctx));
-        }
-
-        if(tag != null) {
-            PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
-            NBTParser.analyzeTag(tag, context, pattern, ctx);
-        }
-        return new Item(type, tag);
     }
 
     public static Block parseBlock(TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(pattern == null) return null;
-        if(pattern.getName().equals("BLOCK_TAGGED") || pattern.getName().equals("BLOCK")) return parseBlock(((TokenStructure) pattern).getContents(), ctx);
+        while (true) {
+            if (pattern == null) return null;
+            if (pattern.getName().equals("BLOCK_TAGGED") || pattern.getName().equals("BLOCK")) {
+                pattern = ((TokenStructure) pattern).getContents();
+                continue;
+            }
 
-        if(pattern.getName().equals("BLOCK_VARIABLE")) {
-            Block block;
-            Object result = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Block.class, TridentUtil.ResourceLocation.class, String.class);
-            EObject.assertNotNull(result, pattern.find("INTERPOLATION_BLOCK"), ctx);
-            if(result instanceof Block) {
-                block = (Block) result;
-            } else {
-                if(result instanceof String) result = new TridentUtil.ResourceLocation((String) result);
-                try {
-                    if(!((TridentUtil.ResourceLocation) result).isTag) {
-                        block = new Block(ctx.getCompiler().getModule().getTypeManager(((TridentUtil.ResourceLocation) result).namespace).block.get(((TridentUtil.ResourceLocation) result).body));
-                    } else {
-
-                        Tag tag = ctx.getCompiler().getModule().getTagManager(((TridentUtil.ResourceLocation) result).namespace).blockTags.get(((TridentUtil.ResourceLocation) result).body);
-                        if(tag != null) {
-                            block = new Block(tag);
+            if (pattern.getName().equals("BLOCK_VARIABLE")) {
+                Block block;
+                Object result = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Block.class, TridentUtil.ResourceLocation.class, String.class);
+                EObject.assertNotNull(result, pattern.find("INTERPOLATION_BLOCK"), ctx);
+                if (result instanceof Block) {
+                    block = (Block) result;
+                } else {
+                    if (result instanceof String) result = new TridentUtil.ResourceLocation((String) result);
+                    try {
+                        if (!((TridentUtil.ResourceLocation) result).isTag) {
+                            block = new Block(ctx.getCompiler().getModule().getTypeManager(((TridentUtil.ResourceLocation) result).namespace).block.get(((TridentUtil.ResourceLocation) result).body));
                         } else {
-                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such tag '" + result + "' for category 'block'", pattern, ctx);
+
+                            Tag tag = ctx.getCompiler().getModule().getTagManager(((TridentUtil.ResourceLocation) result).namespace).blockTags.get(((TridentUtil.ResourceLocation) result).body);
+                            if (tag != null) {
+                                block = new Block(tag);
+                            } else {
+                                throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such tag '" + result + "' for category 'block'", pattern, ctx);
+                            }
                         }
+                    } catch (TypeNotFoundException x) {
+                        throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such type '" + result + "' for category 'block'", pattern, ctx);
                     }
-                } catch(TypeNotFoundException x) {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such type '" + result + "' for category 'block'", pattern, ctx);
                 }
+                TokenPattern<?> appendedState = pattern.find("APPENDED_BLOCKSTATE.BLOCKSTATE");
+                if (appendedState != null) {
+                    Blockstate state = block.getBlockstate();
+                    if (state == null) state = new Blockstate();
+                    block = new Block(block.getBlockType(), state.merge(parseBlockstate(appendedState, ctx)), block.getNBT());
+                }
+                TokenPattern<?> appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
+                if (appendedNBT != null) {
+                    TagCompound nbt = block.getNBT();
+                    if (nbt == null) nbt = new TagCompound();
+                    TagCompound mergedNBT = nbt.merge(NBTParser.parseCompound(appendedNBT, ctx));
+                    PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
+                    NBTParser.analyzeTag(mergedNBT, context, appendedNBT, ctx);
+                    block = new Block(block.getBlockType(), block.getBlockstate(), mergedNBT);
+                }
+                return block;
             }
-            TokenPattern<?> appendedState = pattern.find("APPENDED_BLOCKSTATE.BLOCKSTATE");
-            if(appendedState != null) {
-                Blockstate state = block.getBlockstate();
-                if(state == null) state = new Blockstate();
-                block = new Block(block.getBlockType(), state.merge(parseBlockstate(appendedState, ctx)), block.getNBT());
+
+            boolean isStandalone = pattern.getName().equals("CONCRETE_RESOURCE");
+
+            Type type;
+
+            if (isStandalone) {
+                type = parseBlockType(pattern.find("RESOURCE_NAME.BLOCK_ID"), ctx);
+            } else {
+                type = parseBlockTag(pattern.find("RESOURCE_NAME.RESOURCE_LOCATION"), ctx);
             }
-            TokenPattern<?> appendedNBT = pattern.find("APPENDED_NBT.NBT_COMPOUND");
-            if(appendedNBT != null) {
-                TagCompound nbt = block.getNBT();
-                if(nbt == null) nbt = new TagCompound();
-                TagCompound mergedNBT = nbt.merge(NBTParser.parseCompound(appendedNBT, ctx));
+
+
+            Blockstate state = parseBlockstate(pattern.find("BLOCKSTATE_CLAUSE.BLOCKSTATE"), ctx);
+            TagCompound tag = NBTParser.parseCompound(pattern.find("NBT_CLAUSE.NBT_COMPOUND"), ctx);
+            if (tag != null) {
                 PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
-                NBTParser.analyzeTag(mergedNBT, context, appendedNBT, ctx);
-                block = new Block(block.getBlockType(), block.getBlockstate(), mergedNBT);
+                NBTParser.analyzeTag(tag, context, pattern.find("NBT_CLAUSE.NBT_COMPOUND"), ctx);
             }
-            return block;
+            return new Block(type, state, tag);
         }
-
-        boolean isStandalone = pattern.getName().equals("CONCRETE_RESOURCE");
-
-        Type type;
-
-        if(isStandalone) {
-            type = parseBlockType(pattern.find("RESOURCE_NAME.BLOCK_ID"), ctx);
-        } else {
-            type = parseBlockTag(pattern.find("RESOURCE_NAME.RESOURCE_LOCATION"), ctx);
-        }
-
-
-        Blockstate state = parseBlockstate(pattern.find("BLOCKSTATE_CLAUSE.BLOCKSTATE"), ctx);
-        TagCompound tag = NBTParser.parseCompound(pattern.find("NBT_CLAUSE.NBT_COMPOUND"), ctx);
-        if(tag != null) {
-            PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
-            NBTParser.analyzeTag(tag, context, pattern.find("NBT_CLAUSE.NBT_COMPOUND"), ctx);
-        }
-        return new Block(type, state, tag);
     }
 
     public static Blockstate parseBlockstate(TokenPattern<?> pattern, ISymbolContext ctx) {
@@ -460,7 +473,6 @@ public class CommonParsers {
         return blockstate;
     }
 
-    @SuppressWarnings("unchecked")
     public static IntegerRange parseIntRange(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
@@ -489,7 +501,6 @@ public class CommonParsers {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static DoubleRange parseRealRange(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
@@ -543,21 +554,24 @@ public class CommonParsers {
     }
 
     public static String parseStringLiteralOrIdentifierA(TokenPattern<?> pattern, ISymbolContext ctx) {
-        switch(pattern.getName()) {
-            case "STRING_LITERAL_OR_IDENTIFIER_A":
-            case "STRING_LITERAL_OR_IDENTIFIER_D":
-                return parseStringLiteralOrIdentifierA(((TokenStructure) pattern).getContents(), ctx);
-            case "STRING":
-            case "STRING_LITERAL":
-            case "INTERPOLATION_BLOCK":
-                return parseStringLiteral(pattern, ctx);
-            case "IDENTIFIER_A":
-                return parseIdentifierA(pattern, ctx); //should never have a string literal inside because of
-                                                    // the order of the entries in the grammar but just to be safe...
-            case "IDENTIFIER_D":
-                return pattern.flatten(false);
-            default:
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+        while (true) {
+            switch (pattern.getName()) {
+                case "STRING_LITERAL_OR_IDENTIFIER_A":
+                case "STRING_LITERAL_OR_IDENTIFIER_D":
+                    pattern = ((TokenStructure) pattern).getContents();
+                    continue;
+                case "STRING":
+                case "STRING_LITERAL":
+                case "INTERPOLATION_BLOCK":
+                    return parseStringLiteral(pattern, ctx);
+                case "IDENTIFIER_A":
+                    return parseIdentifierA(pattern, ctx); //should never have a string literal inside because of
+                // the order of the entries in the grammar but just to be safe...
+                case "IDENTIFIER_D":
+                    return pattern.flatten(false);
+                default:
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+            }
         }
     }
 
@@ -715,35 +729,46 @@ public class CommonParsers {
 
     @Contract("null, _ -> null")
     public static String parseStringLiteral(TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(pattern == null) return null;
-        switch(pattern.getName()) {
-            case "STRING": return parseStringLiteral(((TokenStructure) pattern).getContents(), ctx);
-            case "STRING_LITERAL": return parseQuotedString(pattern.flatten(false), pattern, ctx);
-            case "INTERPOLATION_BLOCK": {
-                String result = InterpolationManager.parse(pattern, ctx, String.class);
-                EObject.assertNotNull(result, pattern, ctx);
-                return result;
-            }
-            case "RAW_STRING": return pattern.flatten(false);
-            default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+        while (true) {
+            if (pattern == null) return null;
+            switch (pattern.getName()) {
+                case "STRING":
+                    pattern = ((TokenStructure) pattern).getContents();
+                    continue;
+                case "STRING_LITERAL":
+                    return parseQuotedString(pattern.flatten(false), pattern, ctx);
+                case "INTERPOLATION_BLOCK": {
+                    String result = InterpolationManager.parse(pattern, ctx, String.class);
+                    EObject.assertNotNull(result, pattern, ctx);
+                    return result;
+                }
+                case "RAW_STRING":
+                    return pattern.flatten(false);
+                default: {
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                }
             }
         }
     }
 
     @Contract("null, _ -> null")
     public static String parseIdentifierA(TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(pattern == null) return null;
-        switch(pattern.getName()) {
-            case "IDENTIFIER_A": return parseIdentifierA(((TokenStructure)pattern).getContents(), ctx);
-            case "RAW_IDENTIFIER_A": return pattern.flatten(false);
-            case "STRING": {
-                String result = parseStringLiteral(pattern, ctx);
-                validateIdentifierA(result, pattern, ctx);
-                return result;
-            }
-            default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+        while (true) {
+            if (pattern == null) return null;
+            switch (pattern.getName()) {
+                case "IDENTIFIER_A":
+                    pattern = ((TokenStructure) pattern).getContents();
+                    continue;
+                case "RAW_IDENTIFIER_A":
+                    return pattern.flatten(false);
+                case "STRING": {
+                    String result = parseStringLiteral(pattern, ctx);
+                    validateIdentifierA(result, pattern, ctx);
+                    return result;
+                }
+                default: {
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                }
             }
         }
     }
@@ -756,20 +781,25 @@ public class CommonParsers {
 
     @Contract("null, _ -> null")
     public static String parseIdentifierB(TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(pattern == null) return null;
-        switch(pattern.getName()) {
-            case "IDENTIFIER_B": return parseIdentifierB(((TokenStructure)pattern).getContents(), ctx);
-            case "RAW_IDENTIFIER_B": return pattern.flatten(false);
-            case "STRING": {
-                String result = parseStringLiteral(pattern, ctx);
-                if(TridentLexerProfile.IDENTIFIER_B_REGEX.matcher(result).matches()) {
-                    return result;
-                } else {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "The string '" + result + "' is not a valid argument here", pattern, ctx);
+        while (true) {
+            if (pattern == null) return null;
+            switch (pattern.getName()) {
+                case "IDENTIFIER_B":
+                    pattern = ((TokenStructure) pattern).getContents();
+                    continue;
+                case "RAW_IDENTIFIER_B":
+                    return pattern.flatten(false);
+                case "STRING": {
+                    String result = parseStringLiteral(pattern, ctx);
+                    if (TridentLexerProfile.IDENTIFIER_B_REGEX.matcher(result).matches()) {
+                        return result;
+                    } else {
+                        throw new TridentException(TridentException.Source.COMMAND_ERROR, "The string '" + result + "' is not a valid argument here", pattern, ctx);
+                    }
                 }
-            }
-            default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                default: {
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                }
             }
         }
     }
@@ -816,103 +846,111 @@ public class CommonParsers {
 
     //Must always return a VALID pointer
     public static PointerObject parsePointer(TokenPattern<?> pattern, ISymbolContext ctx) {
-        switch(pattern.getName()) {
-            case "POINTER": return parsePointer(((TokenStructure) pattern).getContents(), ctx);
-            case "VARIABLE_POINTER": {
-                if(pattern.find("POINTER_HEAD_WRAPPER") != null) {
-                    Object target = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class, CoordinateSet.class, TridentUtil.ResourceLocation.class);
+        while (true) {
+            switch (pattern.getName()) {
+                case "POINTER":
+                    pattern = ((TokenStructure) pattern).getContents();
+                    continue;
+                case "VARIABLE_POINTER": {
+                    if (pattern.find("POINTER_HEAD_WRAPPER") != null) {
+                        Object target = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class, CoordinateSet.class, TridentUtil.ResourceLocation.class);
+                        PointerObject pointer = new PointerObject(target, null);
+                        parsePointerHead(pointer, pattern.find("POINTER_HEAD_WRAPPER.POINTER_HEAD"), ctx);
+
+                        return pointer.validate(pattern, ctx);
+                    } else {
+                        return InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerObject.class).validate(pattern, ctx);
+                    }
+                }
+                case "ENTITY_POINTER": {
+                    Object target = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
                     PointerObject pointer = new PointerObject(target, null);
-                    parsePointerHead(pointer, pattern.find("POINTER_HEAD_WRAPPER.POINTER_HEAD"), ctx);
+                    parsePointerHead(pointer, pattern.find("POINTER_HEAD"), ctx);
 
                     return pointer.validate(pattern, ctx);
-                } else {
-                    return InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerObject.class).validate(pattern, ctx);
                 }
-            }
-            case "ENTITY_POINTER": {
-                Object target = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
-                PointerObject pointer = new PointerObject(target, null);
-                parsePointerHead(pointer, pattern.find("POINTER_HEAD"), ctx);
+                case "BLOCK_POINTER": {
+                    Object target = CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx);
+                    PointerObject pointer = new PointerObject(target, null);
+                    parsePointerHead(pointer, pattern.find("NBT_POINTER_HEAD"), ctx);
 
-                return pointer.validate(pattern, ctx);
-            }
-            case "BLOCK_POINTER": {
-                Object target = CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx);
-                PointerObject pointer = new PointerObject(target, null);
-                parsePointerHead(pointer, pattern.find("NBT_POINTER_HEAD"), ctx);
+                    return pointer.validate(pattern, ctx);
+                }
+                case "STORAGE_POINTER": {
+                    Object target = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), ctx);
+                    PointerObject pointer = new PointerObject(target, null);
+                    parsePointerHead(pointer, pattern.find("STORAGE_POINTER_HEAD"), ctx);
 
-                return pointer.validate(pattern, ctx);
-            }
-            case "STORAGE_POINTER": {
-                Object target = CommonParsers.parseResourceLocation(pattern.find("RESOURCE_LOCATION"), ctx);
-                PointerObject pointer = new PointerObject(target, null);
-                parsePointerHead(pointer, pattern.find("STORAGE_POINTER_HEAD"), ctx);
-
-                return pointer.validate(pattern, ctx);
-            }
-            default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                    return pointer.validate(pattern, ctx);
+                }
+                default: {
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                }
             }
         }
     }
 
     public static LocalScore parseScore(TokenPattern<?> pattern, ISymbolContext ctx) {
-        switch(pattern.getName()) {
-            case "SCORE": return parseScore(((TokenStructure) pattern).getContents(), ctx);
-            case "POINTER_WRAPPER": {
-                PointerObject pointer = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerObject.class);
-                if(!(pointer.getMember() instanceof String)) {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
-                }
-                return new LocalScore((Entity) pointer.getTarget(), parseObjective((String) pointer.getMember(), pattern, ctx));
-            }
-            case "POINTER": {
-                PointerObject pointer = parsePointer(pattern, ctx);
-                if(!(pointer.getMember() instanceof String)) {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
-                }
-                return new LocalScore((Entity) pointer.getTarget(), parseObjective((String) pointer.getMember(), pattern, ctx));
-            }
-            case "EXPLICIT_SCORE": {
-                Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
-                Objective objective = parseObjective(pattern.find("OBJECTIVE_NAME"), ctx);
-                return new LocalScore(entity, objective);
-            }
-            case "VAR_SCORE": {
-                Objective objective = parseObjective(pattern.find("OBJECTIVE_NAME"), ctx);
-                Entity entity;
-                if(objective != null) {
-                    entity = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class);
-                } else {
+        while (true) {
+            switch (pattern.getName()) {
+                case "SCORE":
+                    pattern = ((TokenStructure) pattern).getContents();
+                    continue;
+                case "POINTER_WRAPPER": {
                     PointerObject pointer = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerObject.class);
-                    if(!(pointer.getMember() instanceof String)) {
+                    if (!(pointer.getMember() instanceof String)) {
                         throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
                     }
-                    objective = parseObjective((String) pointer.getMember(), pattern, ctx);
-                    entity = (Entity) pointer.getTarget();
+                    return new LocalScore((Entity) pointer.getTarget(), parseObjective((String) pointer.getMember(), pattern, ctx));
                 }
-
-                return new LocalScore(entity, objective);
-            }
-            case "SCORE_OPTIONAL_OBJECTIVE": {
-                TokenPattern<?> entityClause = ((TokenStructure) pattern.find("TARGET_ENTITY")).getContents();
-
-                Entity entity = entityClause.getName().equals("ENTITY") ? EntityParser.parseEntity(entityClause, ctx) : null;
-
-                Objective objective = null;
-
-                TokenPattern<?> objectiveClause = (pattern.find("OBJECTIVE_CLAUSE.OBJECTIVE_NAME_WRAPPER"));
-                if(objectiveClause != null) {
-                    objectiveClause = ((TokenStructure) objectiveClause).getContents();
+                case "POINTER": {
+                    PointerObject pointer = parsePointer(pattern, ctx);
+                    if (!(pointer.getMember() instanceof String)) {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
+                    }
+                    return new LocalScore((Entity) pointer.getTarget(), parseObjective((String) pointer.getMember(), pattern, ctx));
                 }
-                if(objectiveClause != null && objectiveClause.getName().equals("OBJECTIVE_NAME")) {
-                    objective = parseObjective(objectiveClause, ctx);
+                case "EXPLICIT_SCORE": {
+                    Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
+                    Objective objective = parseObjective(pattern.find("OBJECTIVE_NAME"), ctx);
+                    return new LocalScore(entity, objective);
                 }
+                case "VAR_SCORE": {
+                    Objective objective = parseObjective(pattern.find("OBJECTIVE_NAME"), ctx);
+                    Entity entity;
+                    if (objective != null) {
+                        entity = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class);
+                    } else {
+                        PointerObject pointer = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, PointerObject.class);
+                        if (!(pointer.getMember() instanceof String)) {
+                            throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected score pointer, instead got NBT pointer", pattern, ctx);
+                        }
+                        objective = parseObjective((String) pointer.getMember(), pattern, ctx);
+                        entity = (Entity) pointer.getTarget();
+                    }
 
-                return new LocalScore(entity, objective);
-            }
-            default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                    return new LocalScore(entity, objective);
+                }
+                case "SCORE_OPTIONAL_OBJECTIVE": {
+                    TokenPattern<?> entityClause = ((TokenStructure) pattern.find("TARGET_ENTITY")).getContents();
+
+                    Entity entity = entityClause.getName().equals("ENTITY") ? EntityParser.parseEntity(entityClause, ctx) : null;
+
+                    Objective objective = null;
+
+                    TokenPattern<?> objectiveClause = (pattern.find("OBJECTIVE_CLAUSE.OBJECTIVE_NAME_WRAPPER"));
+                    if (objectiveClause != null) {
+                        objectiveClause = ((TokenStructure) objectiveClause).getContents();
+                    }
+                    if (objectiveClause != null && objectiveClause.getName().equals("OBJECTIVE_NAME")) {
+                        objective = parseObjective(objectiveClause, ctx);
+                    }
+
+                    return new LocalScore(entity, objective);
+                }
+                default: {
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                }
             }
         }
     }

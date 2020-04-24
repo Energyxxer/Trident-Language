@@ -307,31 +307,34 @@ public class SetParser implements SimpleCommandParser {
     }
 
     private PointerDecorator parsePointer(TokenPattern<?> pattern, ISymbolContext ctx) {
-        switch(pattern.getName()) {
-            case "VALUE":
-                return parsePointer(((TokenStructure) pattern).getContents(), ctx);
-            case "POINTER":
-            case "VARIABLE_POINTER":
-            case "ENTITY_POINTER":
-            case "BLOCK_POINTER":
-            case "STORAGE_POINTER":
-                return decorate(CommonParsers.parsePointer(pattern, ctx), pattern, ctx);
-            case "NBT_VALUE":
-                return new PointerDecorator.ValuePointer(NBTParser.parseValue(pattern, ctx));
-            case "NULL":
-                return new PointerDecorator.NullPointer();
-            case "INTERPOLATION_BLOCK":
-                Object value = InterpolationManager.parse(pattern, ctx);
-                if(value == null) {
+        while (true) {
+            switch (pattern.getName()) {
+                case "VALUE":
+                    pattern = ((TokenStructure) pattern).getContents();
+                    continue;
+                case "POINTER":
+                case "VARIABLE_POINTER":
+                case "ENTITY_POINTER":
+                case "BLOCK_POINTER":
+                case "STORAGE_POINTER":
+                    return decorate(CommonParsers.parsePointer(pattern, ctx), pattern, ctx);
+                case "NBT_VALUE":
+                    return new PointerDecorator.ValuePointer(NBTParser.parseValue(pattern, ctx));
+                case "NULL":
                     return new PointerDecorator.NullPointer();
-                }
-                assertOfType(value, pattern, ctx, NBTTag.class, Integer.class, Double.class, PointerObject.class);
-                if(value instanceof PointerObject) return decorate(((PointerObject) value), pattern, ctx);
-                if(value instanceof Integer) value = new TagInt((int) value);
-                else if(value instanceof Double) value = new TagDouble((double) value);
-                return new PointerDecorator.ValuePointer((NBTTag) value);
-            default:
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                case "INTERPOLATION_BLOCK":
+                    Object value = InterpolationManager.parse(pattern, ctx);
+                    if (value == null) {
+                        return new PointerDecorator.NullPointer();
+                    }
+                    assertOfType(value, pattern, ctx, NBTTag.class, Integer.class, Double.class, PointerObject.class);
+                    if (value instanceof PointerObject) return decorate(((PointerObject) value), pattern, ctx);
+                    if (value instanceof Integer) value = new TagInt((int) value);
+                    else if (value instanceof Double) value = new TagDouble((double) value);
+                    return new PointerDecorator.ValuePointer((NBTTag) value);
+                default:
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+            }
         }
     }
 

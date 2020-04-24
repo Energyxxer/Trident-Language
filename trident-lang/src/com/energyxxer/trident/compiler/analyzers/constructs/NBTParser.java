@@ -38,161 +38,164 @@ public class NBTParser {
     }
 
     public static NBTTag parseValue(TokenPattern<?> pattern, ISymbolContext ctx) {
-        try {
-            switch(pattern.getName()) {
-                case "NBT_VALUE":
-                case "NBT_COMPOUND": {
-                    return parseValue(((TokenStructure)pattern).getContents(), ctx);
-                }
-                case "INTERPOLATION_BLOCK": {
-                    Object result = InterpolationManager.parse(pattern, ctx, NBTTag.class, Item.class, TextComponent.class);
-                    EObject.assertNotNull(result, pattern, ctx);
-                    if(result instanceof Item) {
-                        return ItemTypeHandler.getSlotNBT((Item) result);
+        while (true) {
+            try {
+                switch (pattern.getName()) {
+                    case "NBT_VALUE":
+                    case "NBT_COMPOUND": {
+                        pattern = ((TokenStructure) pattern).getContents();
+                        continue;
                     }
-                    if(result instanceof TextComponent) {
-                        return new TagString(result.toString());
-                    }
-                    return (NBTTag) result;
-                }
-                case "NBT_COMPOUND_GROUP": {
-                    TagCompound compound = new TagCompound();
-                    TokenList entries = (TokenList) pattern.find("NBT_COMPOUND_ENTRIES");
-                    if(entries != null) {
-                        for (TokenPattern<?> inner : entries.getContents()) {
-                            if (inner instanceof TokenGroup) {
-                                String key = CommonParsers.parseStringLiteralOrIdentifierA(inner.find("NBT_KEY.STRING_LITERAL_OR_IDENTIFIER_A"), ctx);
-                                NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
-                                value.setName(key);
-                                compound.add(value);
-                            }
+                    case "INTERPOLATION_BLOCK": {
+                        Object result = InterpolationManager.parse(pattern, ctx, NBTTag.class, Item.class, TextComponent.class);
+                        EObject.assertNotNull(result, pattern, ctx);
+                        if (result instanceof Item) {
+                            return ItemTypeHandler.getSlotNBT((Item) result);
                         }
-                    }
-                    return compound;
-                }
-                case "NBT_LIST": {
-                    TagList list = new TagList();
-                    TokenList entries = (TokenList) pattern.find("..NBT_LIST_ENTRIES");
-                    if(entries != null) {
-                        for (TokenPattern<?> inner : entries.getContents()) {
-                            if (!inner.getName().equals("COMMA")) {
-                                NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
-                                list.add(value);
-                            }
+                        if (result instanceof TextComponent) {
+                            return new TagString(result.toString());
                         }
+                        return (NBTTag) result;
                     }
-                    return list;
-                }
-                case "NBT_BYTE_ARRAY": {
-                    TagByteArray arr = new TagByteArray();
-                    TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
-                    if(entries != null) {
-                        for (TokenPattern<?> inner : entries.getContents()) {
-                            if (!inner.getName().equals("COMMA")) {
-                                NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
-                                if(value instanceof TagByte) {
-                                    arr.add(value);
-                                } else {
-                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Byte in TAG_Byte_Array, instead got " + value.getType(), inner, ctx);
+                    case "NBT_COMPOUND_GROUP": {
+                        TagCompound compound = new TagCompound();
+                        TokenList entries = (TokenList) pattern.find("NBT_COMPOUND_ENTRIES");
+                        if (entries != null) {
+                            for (TokenPattern<?> inner : entries.getContents()) {
+                                if (inner instanceof TokenGroup) {
+                                    String key = CommonParsers.parseStringLiteralOrIdentifierA(inner.find("NBT_KEY.STRING_LITERAL_OR_IDENTIFIER_A"), ctx);
+                                    NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
+                                    value.setName(key);
+                                    compound.add(value);
                                 }
                             }
                         }
+                        return compound;
                     }
-                    return arr;
-                }
-                case "NBT_INT_ARRAY": {
-                    TagIntArray arr = new TagIntArray();
-                    TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
-                    if(entries != null) {
-                        for (TokenPattern<?> inner : entries.getContents()) {
-                            if (!inner.getName().equals("COMMA")) {
-                                NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
-                                if(value instanceof TagInt) {
-                                    arr.add(value);
-                                } else {
-                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Int in TAG_Int_Array, instead got " + value.getType(), inner, ctx);
+                    case "NBT_LIST": {
+                        TagList list = new TagList();
+                        TokenList entries = (TokenList) pattern.find("..NBT_LIST_ENTRIES");
+                        if (entries != null) {
+                            for (TokenPattern<?> inner : entries.getContents()) {
+                                if (!inner.getName().equals("COMMA")) {
+                                    NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
+                                    list.add(value);
                                 }
                             }
                         }
+                        return list;
                     }
-                    return arr;
-                }
-                case "NBT_LONG_ARRAY": {
-                    TagLongArray arr = new TagLongArray();
-                    TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
-                    if(entries != null) {
-                        for (TokenPattern<?> inner : entries.getContents()) {
-                            if (!inner.getName().equals("COMMA")) {
-                                NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
-                                if(value instanceof TagLong) {
-                                    arr.add(value);
-                                } else {
-                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Long in TAG_Long_Array, instead got " + value.getType(), inner, ctx);
+                    case "NBT_BYTE_ARRAY": {
+                        TagByteArray arr = new TagByteArray();
+                        TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
+                        if (entries != null) {
+                            for (TokenPattern<?> inner : entries.getContents()) {
+                                if (!inner.getName().equals("COMMA")) {
+                                    NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
+                                    if (value instanceof TagByte) {
+                                        arr.add(value);
+                                    } else {
+                                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Byte in TAG_Byte_Array, instead got " + value.getType(), inner, ctx);
+                                    }
                                 }
                             }
                         }
+                        return arr;
                     }
-                    return arr;
-                }
-                case "BOOLEAN": {
-                    return new TagByte(pattern.flattenTokens().get(0).value.equals("true") ? 1 : 0);
-                }
-                case "RAW_STRING":
-                case "STRING": {
-                    return new TagString(CommonParsers.parseStringLiteral(pattern, ctx));
-                }
-                case "NBT_NUMBER": {
-                    String flat = pattern.flattenTokens().get(0).value;
+                    case "NBT_INT_ARRAY": {
+                        TagIntArray arr = new TagIntArray();
+                        TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
+                        if (entries != null) {
+                            for (TokenPattern<?> inner : entries.getContents()) {
+                                if (!inner.getName().equals("COMMA")) {
+                                    NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
+                                    if (value instanceof TagInt) {
+                                        arr.add(value);
+                                    } else {
+                                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Int in TAG_Int_Array, instead got " + value.getType(), inner, ctx);
+                                    }
+                                }
+                            }
+                        }
+                        return arr;
+                    }
+                    case "NBT_LONG_ARRAY": {
+                        TagLongArray arr = new TagLongArray();
+                        TokenList entries = (TokenList) pattern.find("..NBT_ARRAY_ENTRIES");
+                        if (entries != null) {
+                            for (TokenPattern<?> inner : entries.getContents()) {
+                                if (!inner.getName().equals("COMMA")) {
+                                    NBTTag value = parseValue(inner.find("NBT_VALUE"), ctx);
+                                    if (value instanceof TagLong) {
+                                        arr.add(value);
+                                    } else {
+                                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected TAG_Long in TAG_Long_Array, instead got " + value.getType(), inner, ctx);
+                                    }
+                                }
+                            }
+                        }
+                        return arr;
+                    }
+                    case "BOOLEAN": {
+                        return new TagByte(pattern.flattenTokens().get(0).value.equals("true") ? 1 : 0);
+                    }
+                    case "RAW_STRING":
+                    case "STRING": {
+                        return new TagString(CommonParsers.parseStringLiteral(pattern, ctx));
+                    }
+                    case "NBT_NUMBER": {
+                        String flat = pattern.flattenTokens().get(0).value;
 
-                    Matcher matcher = TridentLexerProfile.NUMBER_REGEX.matcher(flat);
-                    matcher.lookingAt(); //must be true
+                        Matcher matcher = TridentLexerProfile.NUMBER_REGEX.matcher(flat);
+                        matcher.lookingAt(); //must be true
 
-                    String numberPart = matcher.group(1);
-                    try {
-                        switch (matcher.group(3).toLowerCase()) {
-                            case "": {
-                                return (numberPart.contains(".")) ?
-                                        new TagDouble(Double.parseDouble(numberPart)) :
-                                        new TagInt(Integer.parseInt(numberPart));
+                        String numberPart = matcher.group(1);
+                        try {
+                            switch (matcher.group(3).toLowerCase()) {
+                                case "": {
+                                    return (numberPart.contains(".")) ?
+                                            new TagDouble(Double.parseDouble(numberPart)) :
+                                            new TagInt(Integer.parseInt(numberPart));
+                                }
+                                case "b": {
+                                    return new TagByte(Integer.parseInt(numberPart));
+                                }
+                                case "d": {
+                                    return new TagDouble(Double.parseDouble(numberPart));
+                                }
+                                case "f": {
+                                    return new TagFloat(Float.parseFloat(numberPart));
+                                }
+                                case "s": {
+                                    return new TagShort(Short.parseShort(numberPart));
+                                }
+                                case "l": {
+                                    return new TagLong(Long.parseLong(numberPart));
+                                }
                             }
-                            case "b": {
-                                return new TagByte(Integer.parseInt(numberPart));
+                        } catch (NumberFormatException x) {
+                            NumericNBTType expectedType = matcher.group(3).length() == 0 && numberPart.contains(".") ? NumericNBTType.DOUBLE : NumericNBTType.getTypeForSuffix(matcher.group(3));
+                            String baseError = "Numeric value out of range: " + numberPart + " for a number of type " + expectedType.toString().toLowerCase() + ".";
+                            if (ctx.getCompiler().getProperties().has("strict-nbt") &&
+                                    ctx.getCompiler().getProperties().get("strict-nbt").isJsonPrimitive() &&
+                                    ctx.getCompiler().getProperties().get("strict-nbt").getAsJsonPrimitive().isBoolean() &&
+                                    ctx.getCompiler().getProperties().get("strict-nbt").getAsBoolean()) {
+                                throw new TridentException(TridentException.Source.TYPE_ERROR, baseError, pattern, ctx);
+                            } else {
+                                ctx.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, baseError + " Interpreting as String: \"" + flat + "\"", pattern));
+                                return new TagString(flat);
                             }
-                            case "d": {
-                                return new TagDouble(Double.parseDouble(numberPart));
-                            }
-                            case "f": {
-                                return new TagFloat(Float.parseFloat(numberPart));
-                            }
-                            case "s": {
-                                return new TagShort(Short.parseShort(numberPart));
-                            }
-                            case "l": {
-                                return new TagLong(Long.parseLong(numberPart));
-                            }
-                        }
-                    } catch(NumberFormatException x) {
-                        NumericNBTType expectedType = matcher.group(3).length() == 0 && numberPart.contains(".") ? NumericNBTType.DOUBLE : NumericNBTType.getTypeForSuffix(matcher.group(3));
-                        String baseError = "Numeric value out of range: " + numberPart + " for a number of type " + expectedType.toString().toLowerCase() + ".";
-                        if(ctx.getCompiler().getProperties().has("strict-nbt") &&
-                                ctx.getCompiler().getProperties().get("strict-nbt").isJsonPrimitive() &&
-                                ctx.getCompiler().getProperties().get("strict-nbt").getAsJsonPrimitive().isBoolean() &&
-                                ctx.getCompiler().getProperties().get("strict-nbt").getAsBoolean()) {
-                            throw new TridentException(TridentException.Source.TYPE_ERROR, baseError, pattern, ctx);
-                        } else {
-                            ctx.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, baseError + " Interpreting as String: \"" + flat + "\"", pattern));
-                            return new TagString(flat);
                         }
                     }
+                    default: {
+                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                    }
                 }
-                default: {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
-                }
+            } catch (CommodoreException x) {
+                TridentException.handleCommodoreException(x, pattern, ctx)
+                        .invokeThrow();
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
             }
-        } catch(CommodoreException x) {
-            TridentException.handleCommodoreException(x, pattern, ctx)
-                    .invokeThrow();
-            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }
     }
 
@@ -203,72 +206,80 @@ public class NBTParser {
     }
 
     public static NBTPath parsePath(TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(pattern == null) return null;
-        switch(pattern.getName()) {
-            case "NBT_PATH": {
-                return parsePath(((TokenStructure) pattern).getContents(), ctx);
-            }
-            case "INTERPOLATION_BLOCK": {
-                return InterpolationManager.parse(((TokenStructure) pattern).getContents(), ctx, NBTPath.class);
-            }
-            case "NBT_PATH_ROOT_WRAPPER": {
-                NBTPathNode root = parsePathNode(pattern.find("NBT_PATH_ROOT"), ctx);
-                ArrayList<NBTPathNode> nodes = new ArrayList<>();
-                nodes.add(root);
-
-                TokenList otherNodes = (TokenList) pattern.find("NBT_PATH_NODE_SEQUENCE");
-                if(otherNodes != null) {
-                    for(TokenPattern<?> rawNode : otherNodes.getContents()) {
-                        NBTPathNode node = parsePathNode(rawNode, ctx);
-                        if(node != null) nodes.add(node);
-                    }
+        while (true) {
+            if (pattern == null) return null;
+            switch (pattern.getName()) {
+                case "NBT_PATH": {
+                    pattern = ((TokenStructure) pattern).getContents();
+                    continue;
                 }
+                case "INTERPOLATION_BLOCK": {
+                    return InterpolationManager.parse(((TokenStructure) pattern).getContents(), ctx, NBTPath.class);
+                }
+                case "NBT_PATH_ROOT_WRAPPER": {
+                    NBTPathNode root = parsePathNode(pattern.find("NBT_PATH_ROOT"), ctx);
+                    ArrayList<NBTPathNode> nodes = new ArrayList<>();
+                    nodes.add(root);
 
-                return new NBTPath(nodes.toArray(new NBTPathNode[0]));
-            }
-            default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                    TokenList otherNodes = (TokenList) pattern.find("NBT_PATH_NODE_SEQUENCE");
+                    if (otherNodes != null) {
+                        for (TokenPattern<?> rawNode : otherNodes.getContents()) {
+                            NBTPathNode node = parsePathNode(rawNode, ctx);
+                            if (node != null) nodes.add(node);
+                        }
+                    }
+
+                    return new NBTPath(nodes.toArray(new NBTPathNode[0]));
+                }
+                default: {
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                }
             }
         }
     }
 
     private static NBTPathNode parsePathNode(TokenPattern<?> pattern, ISymbolContext ctx) {
-        switch(pattern.getName()) {
-            case "NBT_PATH_ROOT":
-            case "NBT_PATH_NODE": {
-                return parsePathNode(((TokenStructure) pattern).getContents(), ctx);
-            }
-            case "NBT_PATH_TRAILING_DOT": {
-                return null;
-            }
-            case "NBT_PATH_COMPOUND_ROOT": {
-                return new NBTPathCompoundRoot(parseCompound(pattern.find("NBT_COMPOUND"), ctx));
-            }
-            case "NBT_PATH_KEY": {
-                TagCompound compoundMatch = NBTParser.parseCompound(pattern.find("NBT_PATH_COMPOUND_MATCH.NBT_COMPOUND"), ctx);
-                return new NBTPathKey(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("NBT_PATH_KEY_LABEL.STRING_LITERAL_OR_IDENTIFIER_D"), ctx), compoundMatch);
-            }
-            case "NBT_PATH_LIST_ACCESS": {
-                TokenStructure content = ((TokenStructure) pattern.find("NBT_PATH_LIST_CONTENT"));
-                if(content == null) return new NBTListMatch();
-                TokenPattern<?> contentInner = content.getContents();
-                switch(contentInner.getName()) {
-                    case "INTEGER": return new NBTPathIndex(CommonParsers.parseInt(contentInner, ctx));
-                    case "NBT_COMPOUND": return new NBTListMatch(parseCompound(contentInner, ctx));
-                    case "INTERPOLATION_BLOCK": {
-                        Object val = InterpolationManager.parse(contentInner, ctx, Integer.class, TagCompound.class);
-                        if(val instanceof Integer) {
-                            return new NBTPathIndex((int) val);
-                        } else if(val instanceof TagCompound){
-                            return new NBTListMatch((TagCompound) val);
-                        } else {
-                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown symbol return type: " + val.getClass().getSimpleName(), pattern, ctx);
+        while (true) {
+            switch (pattern.getName()) {
+                case "NBT_PATH_ROOT":
+                case "NBT_PATH_NODE": {
+                    pattern = ((TokenStructure) pattern).getContents();
+                    continue;
+                }
+                case "NBT_PATH_TRAILING_DOT": {
+                    return null;
+                }
+                case "NBT_PATH_COMPOUND_ROOT": {
+                    return new NBTPathCompoundRoot(parseCompound(pattern.find("NBT_COMPOUND"), ctx));
+                }
+                case "NBT_PATH_KEY": {
+                    TagCompound compoundMatch = NBTParser.parseCompound(pattern.find("NBT_PATH_COMPOUND_MATCH.NBT_COMPOUND"), ctx);
+                    return new NBTPathKey(CommonParsers.parseStringLiteralOrIdentifierA(pattern.find("NBT_PATH_KEY_LABEL.STRING_LITERAL_OR_IDENTIFIER_D"), ctx), compoundMatch);
+                }
+                case "NBT_PATH_LIST_ACCESS": {
+                    TokenStructure content = ((TokenStructure) pattern.find("NBT_PATH_LIST_CONTENT"));
+                    if (content == null) return new NBTListMatch();
+                    TokenPattern<?> contentInner = content.getContents();
+                    switch (contentInner.getName()) {
+                        case "INTEGER":
+                            return new NBTPathIndex(CommonParsers.parseInt(contentInner, ctx));
+                        case "NBT_COMPOUND":
+                            return new NBTListMatch(parseCompound(contentInner, ctx));
+                        case "INTERPOLATION_BLOCK": {
+                            Object val = InterpolationManager.parse(contentInner, ctx, Integer.class, TagCompound.class);
+                            if (val instanceof Integer) {
+                                return new NBTPathIndex((int) val);
+                            } else if (val instanceof TagCompound) {
+                                return new NBTListMatch((TagCompound) val);
+                            } else {
+                                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown symbol return type: " + val.getClass().getSimpleName(), pattern, ctx);
+                            }
                         }
                     }
                 }
-            }
-            default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                default: {
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                }
             }
         }
     }

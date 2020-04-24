@@ -169,52 +169,55 @@ public class NBTTypeMap {
         }
 
         private DataType parseType(TokenPattern<?> pattern) {
-            switch(pattern.getName()) {
-                case "TYPE": {
-                    return parseType(((TokenStructure) pattern).getContents());
-                }
-                case "PRIMITIVE": {
-                    DataType type = new FlatType(NBTTypeMap.this, pattern.find("PRIMITIVE_NAME").flatten(false));
-                    type.setFlags(parseFlags(pattern.find("FLAGS")));
-                    return type;
-                }
-                case "COMPOUND": {
-                    CompoundType compound = new CompoundType(NBTTypeMap.this);
-                    compound.setFlags(parseFlags(pattern.find("FLAGS")));
-                    TokenList innerList = (TokenList) pattern.find("COMPOUND_INNER_LIST");
-                    if(innerList != null) {
-                        for(TokenPattern<?> entry : innerList.getContents()) {
-                            if(entry.getName().equals("COMPOUND_INNER")) {
-                                String key = parseKey(entry.find("KEY"));
-                                DataType value = parseType(entry.find("TYPE"));
-                                if(key == null) {
-                                    compound.setDefaultType(value);
-                                } else if(value.getFlags() != null && value.getFlags().hasFlag("volatile")) {
-                                    compound.putVolatile(key, value);
-                                } else {
-                                    compound.put(key, value);
+            while (true) {
+                switch (pattern.getName()) {
+                    case "TYPE": {
+                        pattern = ((TokenStructure) pattern).getContents();
+                        continue;
+                    }
+                    case "PRIMITIVE": {
+                        DataType type = new FlatType(NBTTypeMap.this, pattern.find("PRIMITIVE_NAME").flatten(false));
+                        type.setFlags(parseFlags(pattern.find("FLAGS")));
+                        return type;
+                    }
+                    case "COMPOUND": {
+                        CompoundType compound = new CompoundType(NBTTypeMap.this);
+                        compound.setFlags(parseFlags(pattern.find("FLAGS")));
+                        TokenList innerList = (TokenList) pattern.find("COMPOUND_INNER_LIST");
+                        if (innerList != null) {
+                            for (TokenPattern<?> entry : innerList.getContents()) {
+                                if (entry.getName().equals("COMPOUND_INNER")) {
+                                    String key = parseKey(entry.find("KEY"));
+                                    DataType value = parseType(entry.find("TYPE"));
+                                    if (key == null) {
+                                        compound.setDefaultType(value);
+                                    } else if (value.getFlags() != null && value.getFlags().hasFlag("volatile")) {
+                                        compound.putVolatile(key, value);
+                                    } else {
+                                        compound.put(key, value);
+                                    }
                                 }
                             }
                         }
+                        return compound;
                     }
-                    return compound;
-                }
-                case "LIST": {
-                    ListType type = new ListType(NBTTypeMap.this, parseType(pattern.find("TYPE")));
-                    type.setFlags(parseFlags(pattern.find("FLAGS")));
-                    return type;
-                }
-                case "ARRAY": {
-                    ArrayType type = new ArrayType(NBTTypeMap.this, pattern.find("ARRAY_TYPE").flatten(false));
-                    type.setFlags(parseFlags(pattern.find("FLAGS")));
-                    return type;
-                }
-                case "REFERENCE": {
-                    return new ReferenceType(NBTTypeMap.this, pattern.find("REFERENCE_NAME").flatten(false).substring(1), parseFlags(pattern.find("FLAGS")));
-                }
-                default: {
-                    notices.add(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
-                    throw new RuntimeException("Unknown grammar branch; details in notices");
+                    case "LIST": {
+                        ListType type = new ListType(NBTTypeMap.this, parseType(pattern.find("TYPE")));
+                        type.setFlags(parseFlags(pattern.find("FLAGS")));
+                        return type;
+                    }
+                    case "ARRAY": {
+                        ArrayType type = new ArrayType(NBTTypeMap.this, pattern.find("ARRAY_TYPE").flatten(false));
+                        type.setFlags(parseFlags(pattern.find("FLAGS")));
+                        return type;
+                    }
+                    case "REFERENCE": {
+                        return new ReferenceType(NBTTypeMap.this, pattern.find("REFERENCE_NAME").flatten(false).substring(1), parseFlags(pattern.find("FLAGS")));
+                    }
+                    default: {
+                        notices.add(new Notice(NoticeType.ERROR, "Unknown grammar branch name '" + pattern.getName() + "'", pattern));
+                        throw new RuntimeException("Unknown grammar branch; details in notices");
+                    }
                 }
             }
         }
