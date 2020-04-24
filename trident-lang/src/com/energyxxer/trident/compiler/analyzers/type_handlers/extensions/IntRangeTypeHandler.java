@@ -4,14 +4,22 @@ import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.util.IntegerRange")
-public class IntRangeTypeHandler implements VariableTypeHandler<IntegerRange> {
+public class IntRangeTypeHandler implements TypeHandler<IntegerRange> {
+    private static final TridentMethod CONSTRUCTOR = new MethodWrapper<>(
+            "new int_range",
+            ((instance, params) -> new IntegerRange((Integer)params[0], (Integer)params[1])),
+            Integer.class,
+            Integer.class
+    ).setNullable(0).setNullable(1).createForInstance(null);
+
     @Override
     public Object getMember(IntegerRange object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(member.equals("min")) {
@@ -24,7 +32,7 @@ public class IntRangeTypeHandler implements VariableTypeHandler<IntegerRange> {
             return getMax(object) - getMin(object);
         }
         if(member.equals("deriveMin")) {
-            return (VariableMethod) (params, patterns, pattern1, file1) -> {
+            return (TridentMethod) (params, patterns, pattern1, file1) -> {
                 if(params.length != 1) {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMin' requires 1 parameter, instead found " + params.length, pattern, ctx);
                 }
@@ -35,7 +43,7 @@ public class IntRangeTypeHandler implements VariableTypeHandler<IntegerRange> {
             };
         }
         if(member.equals("deriveMax")) {
-            return (VariableMethod) (params, patterns, pattern1, file1) -> {
+            return (TridentMethod) (params, patterns, pattern1, file1) -> {
                 if(params.length != 1) {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMax' requires 1 parameter, instead found " + params.length, pattern, ctx);
                 }
@@ -75,7 +83,12 @@ public class IntRangeTypeHandler implements VariableTypeHandler<IntegerRange> {
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "int_range";
+    }
+
+    @Override
+    public TridentMethod getConstructor() {
+        return CONSTRUCTOR;
     }
 }

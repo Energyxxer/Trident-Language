@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-import static com.energyxxer.nbtmapper.parser.NBTTMTokens.PRIMITIVE_TYPE;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
 @SuppressWarnings("FieldCanBeLocal")
@@ -125,6 +124,11 @@ public class TridentProductions {
 
     private final LazyTokenStructureMatch ROOT_INTERPOLATION_TYPE;
     private final LazyTokenStructureMatch INTERPOLATION_TYPE;
+
+    private final LazyTokenPatternMatch FORMAL_PARAMETERS;
+
+    private final LazyTokenPatternMatch TYPE_CONSTRAINTS;
+    private final LazyTokenPatternMatch INFERRABLE_TYPE_CONSTRAINTS;
 
 
     private final LazyTokenStructureMatch POINTER;
@@ -271,6 +275,9 @@ public class TridentProductions {
             ROOT_INTERPOLATION_TYPE = new LazyTokenStructureMatch("ROOT_INTERPOLATION_VALUE");
             INTERPOLATION_TYPE = new LazyTokenStructureMatch("INTERPOLATION_TYPE");
 
+            TYPE_CONSTRAINTS = optional(colon(), group(INTERPOLATION_TYPE, symbol("?").setOptional().setName("VARIABLE_NULLABLE")).setName("TYPE_CONSTRAINTS_INNER")).setName("TYPE_CONSTRAINTS");
+            INFERRABLE_TYPE_CONSTRAINTS = optional(colon(), optional(INTERPOLATION_TYPE, symbol("?").setOptional().setName("VARIABLE_NULLABLE")).setName("TYPE_CONSTRAINTS_INNER")).setName("TYPE_CONSTRAINTS");
+
             ROOT_INTERPOLATION_VALUE.add(
                     identifierX()
                             .setName("VARIABLE_NAME")
@@ -296,18 +303,22 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(group(literal("real_range").setName("VALUE_WRAPPER_KEY"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("resource").setName("VALUE_WRAPPER_KEY"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("pointer").setName("VALUE_WRAPPER_KEY"), brace("<"), POINTER, brace(">")).setName("WRAPPED_POINTER"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("type_definition").setName("VALUE_WRAPPER_KEY"), brace("<"), INTERPOLATION_TYPE, brace(">")).setName("WRAPPED_TYPE"));
             ROOT_INTERPOLATION_VALUE.add(DICTIONARY);
             ROOT_INTERPOLATION_VALUE.add(LIST);
             ROOT_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")").addProcessor(clearMemberListProcessor)).setName("PARENTHESIZED_VALUE"));
             ROOT_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
+
+            FORMAL_PARAMETERS = group(
+                    brace("("),
+                    list(group(identifierX().setName("FORMAL_PARAMETER_NAME"), TYPE_CONSTRAINTS).setName("FORMAL_PARAMETER"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"),
+                    brace(")")
+            ).setName("FORMAL_PARAMETERS");
+
             ROOT_INTERPOLATION_VALUE.add(
                     group(
                             literal("function").setName("VALUE_WRAPPER_KEY").addProcessor(startClosure),
-                            optional(
-                                    brace("("),
-                                    list(identifierX().setName("FORMAL_PARAMETER_NAME"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"),
-                                    brace(")")
-                            ).setName("FORMAL_PARAMETERS"),
+                            optional(FORMAL_PARAMETERS).setName("FORMAL_PARAMETERS_OPT"),
                             ANONYMOUS_INNER_FUNCTION
                     ).setName("NEW_FUNCTION").addProcessor(endComplexValue).addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
@@ -322,9 +333,8 @@ public class TridentProductions {
                             }
                         }
                     }));
-            ROOT_INTERPOLATION_VALUE.add(group(literal("new").setName("VALUE_WRAPPER_KEY"), ofType(IDENTIFIER_TYPE_Y).setName("CONSTRUCTOR_NAME"), brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("new").setName("VALUE_WRAPPER_KEY"), INTERPOLATION_TYPE, brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
-            ROOT_INTERPOLATION_TYPE.add(ofType(PRIMITIVE_TYPE).setName("PRIMITIVE_ROOT_TYPE"));
             ROOT_INTERPOLATION_TYPE.add(
                     identifierX()
                             .setName("VARIABLE_NAME")
@@ -416,6 +426,7 @@ public class TridentProductions {
             LINE_SAFE_INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, group(sameLine(), ofType(COMPILER_OPERATOR).addProcessor(clearMemberListProcessor))).setName("EXPRESSION"));
 
             INTERPOLATION_TYPE.add(INTERPOLATION_TYPE_CHAIN);
+            INTERPOLATION_TYPE.add(ofType(PRIMITIVE_TYPE).setName("PRIMITIVE_ROOT_TYPE"));
 
             INTERPOLATION_BLOCK.add(group(symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED).addProcessor(clearMemberListProcessor), glue(), brace("{").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED), INTERPOLATION_VALUE, brace("}").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED).addProcessor(clearMemberListProcessor)).setName("INTERPOLATION_WRAPPER"));
 
@@ -2235,7 +2246,7 @@ public class TridentProductions {
                     group(literal("default"), literal("passengers"), brace("["), list(NEW_ENTITY_LITERAL, comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
                     group(literal("default"), literal("health"), real().setName("HEALTH").addTags("cspn:Health")).setName("DEFAULT_HEALTH"),
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
-                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), optional(colon(), INTERPOLATION_TYPE).setName("VARIABLE_TYPE_CONSTRAINTS"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ENTITY_FIELD"),
+                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("FIELD_INITIALIZATION")).setName("ENTITY_FIELD"),
                     group(literal("eval"), LINE_SAFE_INTERPOLATION_VALUE).setName("ENTITY_EVAL"),
                     group(literal("on"), group(INTERPOLATION_VALUE).setName("EVENT_NAME"), list(MODIFIER).setOptional().setName("EVENT_MODIFIERS"), literal("function"),
                             OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_EVENT_IMPLEMENTATION"),
@@ -2264,7 +2275,7 @@ public class TridentProductions {
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(literal("default"), literal("lore"), brace("["), list(TEXT_COMPONENT, comma()).setOptional().setName("LORE_LIST"), brace("]")).setName("DEFAULT_LORE"),
                     COMMENT_S,
-                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), optional(colon(), INTERPOLATION_TYPE).setName("VARIABLE_TYPE_CONSTRAINTS"), equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("ITEM_FIELD"),
+                    group(literal("var"), identifierX().setName("FIELD_NAME").addTags("cspn:Field Name"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("FIELD_VALUE")).setName("FIELD_INITIALIZATION")).setName("ITEM_FIELD"),
                     group(literal("eval"), LINE_SAFE_INTERPOLATION_VALUE).setName("ITEM_EVAL")
             );
             itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_ITEM_BODY);
@@ -2276,9 +2287,10 @@ public class TridentProductions {
             ).setOptional().setName("ITEM_DECLARATION_BODY");
 
             LazyTokenStructureMatch classBodyEntry = choice(
-                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), identifierX().setName("MEMBER_NAME"), equals(), INTERPOLATION_VALUE).setName("CLASS_MEMBER"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("static").setOptional().setName("LITERAL_STATIC"), identifierX().setName("MEMBER_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), INTERPOLATION_VALUE).setName("FIELD_INITIALIZATION")).setName("CLASS_MEMBER"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("static").setOptional().setName("LITERAL_STATIC"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("MEMBER_NAME"), FORMAL_PARAMETERS, ANONYMOUS_INNER_FUNCTION).setName("CLASS_FUNCTION"),
                     COMMENT_S
-            ).setName("CLASS_BODY_ENTRY");
+            ).setName("CLASS_BODY_ENTRY").setGreedy(true);
             itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_CLASS_BODY);
 
             LazyTokenPatternMatch classBody = group(
@@ -2364,7 +2376,7 @@ public class TridentProductions {
                         ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
                     }
                 }),
-                optional(colon(), optional(INTERPOLATION_TYPE, symbol("?").setOptional().setName("VARIABLE_NULLABLE")).setName("VARIABLE_TYPE_CONSTRAINTS_INNER")).setName("VARIABLE_TYPE_CONSTRAINTS"),
+                INFERRABLE_TYPE_CONSTRAINTS,
                 optional(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("VARIABLE_VALUE")).setName("VARIABLE_INITIALIZATION")
         ).setName("VARIABLE_DECLARATION").addProcessor((p, l) -> {
             if(l.getSummaryModule() != null) {

@@ -29,17 +29,17 @@ public class JsonLib implements DefaultLibraryProvider {
                     return parseJson(asJson);
                 }), String.class).createForInstance(null));
         block.put("stringify",
-                (VariableMethod) (params, patterns, pattern, ctx) -> {
+                (TridentMethod) (params, patterns, pattern, ctx) -> {
                     if(params.length < 1) {
                         throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'stringify' requires 1 parameter, instead found " + params.length, pattern, ctx);
                     }
                     boolean prettyPrinting = false;
 
                     if(params.length >= 2) {
-                        prettyPrinting = VariableMethod.HelperMethods.assertOfType(params[1], patterns[1], ctx, Boolean.class);
+                        prettyPrinting = TridentMethod.HelperMethods.assertOfType(params[1], patterns[1], ctx, Boolean.class);
                     }
 
-                    Object param = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], ctx, String.class, Integer.class, Double.class, Boolean.class, ListObject.class, DictionaryObject.class);
+                    Object param = TridentMethod.HelperMethods.assertOfType(params[0], patterns[0], ctx, String.class, Integer.class, Double.class, Boolean.class, ListObject.class, DictionaryObject.class);
 
                     GsonBuilder gb = new GsonBuilder();
                     if(prettyPrinting) gb.setPrettyPrinting();
@@ -110,7 +110,7 @@ public class JsonLib implements DefaultLibraryProvider {
             return jObj;
         }
         JsonElement applied = filter != null ? filter.apply(obj) : null;
-        if(applied == null && !skipUnknownTypes) throw new IllegalArgumentException("Cannot convert object of type '" + TridentTypeManager.getShorthandForObject(obj) + "' to a JSON element");
+        if(applied == null && !skipUnknownTypes) throw new IllegalArgumentException("Cannot convert object of type '" + TridentTypeManager.getTypeIdentifierForObject(obj) + "' to a JSON element");
         return applied;
     }
 

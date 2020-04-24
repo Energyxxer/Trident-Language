@@ -1,16 +1,16 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.*;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.TagCompoundTypeHandler;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.TagListTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.*;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
+import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 
 import java.util.LinkedHashMap;
 
 public class TridentTypeManager {
-    private static final LinkedHashMap<String, VariableTypeHandler<?>> PRIMITIVE_HANDLERS = new LinkedHashMap<>();
+    private static final LinkedHashMap<String, TypeHandler<?>> PRIMITIVE_HANDLERS = new LinkedHashMap<>();
 
     static {
 
@@ -30,30 +30,46 @@ public class TridentTypeManager {
         registerTypeHandler(new TagCompoundTypeHandler());
         registerTypeHandler(new TagListTypeHandler());
         registerTypeHandler(new TextComponentTypeHandler());
+        registerTypeHandler(new NBTAliasTypeHandler());
+        registerTypeHandler(new TagByteTypeHandler());
+        registerTypeHandler(new TagShortTypeHandler());
+        registerTypeHandler(new TagIntTypeHandler());
+        registerTypeHandler(new TagFloatTypeHandler());
+        registerTypeHandler(new TagDoubleTypeHandler());
+        registerTypeHandler(new TagLongTypeHandler());
+        registerTypeHandler(new TagStringTypeHandler());
+
+        registerTypeHandler(new TagByteArrayTypeHandler());
+        registerTypeHandler(new TagIntArrayTypeHandler());
+        registerTypeHandler(new TagLongArrayTypeHandler());
+
         registerTypeHandler(new NBTTagTypeHandler());
 
         registerTypeHandler(CustomEntity.STATIC_HANDLER);
         registerTypeHandler(CustomItem.STATIC_HANDLER);
+        registerTypeHandler(EntityEvent.STATIC_HANDLER);
         registerTypeHandler(DictionaryObject.STATIC_HANDLER);
         registerTypeHandler(ListObject.STATIC_HANDLER);
         registerTypeHandler(TridentException.STATIC_HANDLER);
-        registerTypeHandler(VariableMethod.STATIC_HANDLER);
+        registerTypeHandler(TridentMethod.STATIC_HANDLER);
+
+        registerTypeHandler(new TypeHandlerTypeHandler());
     }
 
-    public static void registerTypeHandler(VariableTypeHandler<?> handler) {
+    public static void registerTypeHandler(TypeHandler<?> handler) {
         if(handler.isPrimitive()) {
-            PRIMITIVE_HANDLERS.put(handler.getPrimitiveShorthand(), handler);
+            PRIMITIVE_HANDLERS.put(handler.getTypeIdentifier(), handler);
         }
     }
 
-    public static VariableTypeHandler<?> getHandlerForShorthand(String shorthand) {
+    public static TypeHandler<?> getHandlerForShorthand(String shorthand) {
         return PRIMITIVE_HANDLERS.get(shorthand);
     }
-    public static VariableTypeHandler<?> getHandlerForObject(Object obj) {
+    public static TypeHandler<?> getHandlerForObject(Object obj) {
         if(obj == null) return PRIMITIVE_HANDLERS.get("null");
-        if(obj instanceof VariableTypeHandler && ((VariableTypeHandler) obj).isSelfHandler()) return (VariableTypeHandler) obj;
-        VariableTypeHandler superHandler = null;
-        for(VariableTypeHandler<?> handler : PRIMITIVE_HANDLERS.values()) {
+        if(obj instanceof TypeHandler && ((TypeHandler) obj).isSelfHandler()) return (TypeHandler) obj;
+        TypeHandler superHandler = null;
+        for(TypeHandler<?> handler : PRIMITIVE_HANDLERS.values()) {
             if(handler.getHandledClass() == obj.getClass()) {
                 //A sure match
                 return handler;
@@ -67,20 +83,28 @@ public class TridentTypeManager {
         return superHandler;
     }
 
-    public static VariableTypeHandler<?> getHandlerForHandlerClass(Class handlerClass) {
-        for(VariableTypeHandler<?> handler : PRIMITIVE_HANDLERS.values()) {
+    public static TypeHandler<?> getHandlerForHandlerClass(Class handlerClass) {
+        for(TypeHandler<?> handler : PRIMITIVE_HANDLERS.values()) {
             if(handler.getClass() == handlerClass) return handler;
         }
         return null;
     }
-    public static VariableTypeHandler<?> getHandlerForHandledClass(Class handlingClass) {
-        for(VariableTypeHandler<?> handler : PRIMITIVE_HANDLERS.values()) {
+    public static TypeHandler<?> getHandlerForHandledClass(Class handlingClass) {
+        for(TypeHandler<?> handler : PRIMITIVE_HANDLERS.values()) {
             if(handler.getHandledClass() == handlingClass) return handler;
         }
         return null;
     }
 
-    public static String getShorthandForObject(Object param) {
-        return getHandlerForObject(param).getPrimitiveShorthand();
+    public static String getTypeIdentifierForObject(Object param) {
+        return (!(param instanceof TypeHandler<?>) || !((TypeHandler) param).isStaticHandler()) ? getHandlerForObject(param).getTypeIdentifier() : "type_definition<" + ((TypeHandler) param).getTypeIdentifier() + ">";
+    }
+
+    public static String getTypeIdentifierForType(TypeHandler<?> handler) {
+        return handler.getTypeIdentifier();
+    }
+
+    public static boolean isStaticPrimitiveHandler(TypeHandler<?> handler) {
+        return PRIMITIVE_HANDLERS.values().contains(handler);
     }
 }

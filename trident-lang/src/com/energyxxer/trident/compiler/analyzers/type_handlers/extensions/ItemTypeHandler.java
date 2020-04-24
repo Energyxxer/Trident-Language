@@ -4,17 +4,24 @@ import com.energyxxer.commodore.functionlogic.nbt.TagByte;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.nbt.TagString;
 import com.energyxxer.commodore.item.Item;
+import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.module.Namespace;
+import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+
 @AnalyzerMember(key = "com.energyxxer.commodore.item.Item")
-public class ItemTypeHandler implements VariableTypeHandler<Item> {
+public class ItemTypeHandler implements TypeHandler<Item> {
+    private static final TridentMethod CONSTRUCTOR = ItemTypeHandler::constructItem;
+
     @Override
     public Object getMember(Item object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(member.equals("itemType")) {
@@ -30,7 +37,7 @@ public class ItemTypeHandler implements VariableTypeHandler<Item> {
             AutoPropertySymbol property = new AutoPropertySymbol<>("itemTag", TagCompound.class, object::getNBT, object::setNbt);
             return keepSymbol ? property : property.getValue();
         } else if(member.equals("getSlotNBT")) {
-            return (VariableMethod) (params, patterns, pattern1, file1) -> getSlotNBT(object);
+            return (TridentMethod) (params, patterns, pattern1, file1) -> getSlotNBT(object);
         }
         throw new MemberNotFoundException();
     }
@@ -64,7 +71,31 @@ public class ItemTypeHandler implements VariableTypeHandler<Item> {
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "item";
+    }
+
+    @Override
+    public TridentMethod getConstructor() {
+        return CONSTRUCTOR;
+    }
+
+    private static Item constructItem(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        CommandModule module = ctx.getCompiler().getModule();
+        if(params.length == 0 || params[0] == null) return new Item(module.minecraft.types.item.get("air"));
+        TridentUtil.ResourceLocation loc = assertOfType(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
+        Namespace ns = module.getNamespace(loc.namespace);
+
+        Type type;
+
+        if(loc.isTag) {
+            type = ns.tags.itemTags.get(loc.body);
+        } else {
+            type = ns.types.item.get(loc.body);
+        }
+
+        if(type == null) throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Resource location " + params[0] + " is not a valid item type", patterns[0], ctx);
+
+        return new Item(type);
     }
 }

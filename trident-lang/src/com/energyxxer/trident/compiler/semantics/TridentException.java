@@ -6,7 +6,7 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.enxlex.report.StackTrace;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,9 +16,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class TridentException extends RuntimeException implements VariableTypeHandler<TridentException> {
+public class TridentException extends RuntimeException implements TypeHandler<TridentException> {
 
-    public static final VariableTypeHandler<?> STATIC_HANDLER = new TridentException();
+    public static final TypeHandler<?> STATIC_HANDLER = new TridentException();
 
     public enum Source {
         TYPE_ERROR("Type Error"),
@@ -197,7 +197,7 @@ public class TridentException extends RuntimeException implements VariableTypeHa
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "exception";
     }
 }

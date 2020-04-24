@@ -13,7 +13,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import java.util.HashMap;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet")
-public class CoordinateTypeHandler implements VariableTypeHandler<CoordinateSet> {
+public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
     private static HashMap<String, MemberWrapper<CoordinateSet>> members = new HashMap<>();
 
     static {
@@ -122,7 +122,7 @@ public class CoordinateTypeHandler implements VariableTypeHandler<CoordinateSet>
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "coordinates";
     }
 }

@@ -3,7 +3,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.operators;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.ILazyValue;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -26,9 +26,9 @@ public interface OperatorHandler<A, B> {
             if(obj instanceof Symbol) {
                 return "symbol";
             }
-            VariableTypeHandler handler = TridentTypeManager.getHandlerForObject(obj);
+            TypeHandler handler = TridentTypeManager.getHandlerForObject(obj);
             if(handler.isPrimitive()) {
-                return "primitive(" + handler.getPrimitiveShorthand() + ")";
+                return "primitive(" + handler.getTypeIdentifier() + ")";
             } else {
                 return "user_defined(" + handler + ")";
             }

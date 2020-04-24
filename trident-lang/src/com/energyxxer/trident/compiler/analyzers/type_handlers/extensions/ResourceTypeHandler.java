@@ -2,6 +2,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -12,10 +13,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 
 @AnalyzerMember(key = "com.energyxxer.trident.compiler.TridentUtil$ResourceLocation")
-public class ResourceTypeHandler implements VariableTypeHandler<TridentUtil.ResourceLocation> {
+public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLocation> {
     private static HashMap<String, MemberWrapper<TridentUtil.ResourceLocation>> members = new HashMap<>();
 
     static {
@@ -36,7 +37,7 @@ public class ResourceTypeHandler implements VariableTypeHandler<TridentUtil.Reso
             case "namespace": return object.namespace;
             case "isTag": return object.isTag;
             case "body": return object.body;
-            case "resolve": return (VariableMethod) (params, patterns, pattern1, ctx1) -> {
+            case "resolve": return (TridentMethod) (params, patterns, pattern1, ctx1) -> {
                 if(params.length < 1) {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'resolve' requires at least 1 parameter, instead found " + params.length, pattern, ctx);
                 }
@@ -93,7 +94,51 @@ public class ResourceTypeHandler implements VariableTypeHandler<TridentUtil.Reso
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "resource";
     }
+
+    @Override
+    public TridentMethod getConstructor() {
+        return CONSTRUCTOR;
+    }
+
+    private static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> {
+        if (params.length < 1) {
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'new resource' requires at least 2 parameters, instead found " + params.length, pattern, ctx);
+        }
+
+        assertOfType(params[0], patterns[0], ctx, String.class);
+        if(params.length == 1) {
+            return CommonParsers.parseResourceLocation(((String) params[0]), patterns[0], ctx);
+        }
+
+        assertOfType(params[1], patterns[1], ctx, ListObject.class);
+        ListObject list = ((ListObject) params[1]);
+
+        String delimiter = "/";
+        if(params.length >= 3) {
+            assertOfType(params[2], patterns[2], ctx, String.class);
+            delimiter = (String) params[2];
+        }
+
+        StringBuilder body = new StringBuilder((String)params[0]);
+        body.append(":");
+        int i = 0;
+        for(Object part : list) {
+            if(part instanceof String) {
+                body.append(part);
+            } else if(part instanceof TridentUtil.ResourceLocation) {
+                body.append(((TridentUtil.ResourceLocation) part).body);
+            } else {
+                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected string or resource in the list, instead got: " + part + " at index " + i, patterns[1], ctx);
+            }
+            if(i < ((ListObject) params[1]).size()-1) {
+                body.append(delimiter);
+            }
+            i++;
+        }
+
+        return CommonParsers.parseResourceLocation(body.toString(), pattern, ctx);
+    };
 }

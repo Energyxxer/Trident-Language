@@ -12,7 +12,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import java.util.HashMap;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.entity.Entity")
-public class EntityTypeHandler implements VariableTypeHandler<Entity> {
+public class EntityTypeHandler implements TypeHandler<Entity> {
     private static HashMap<String, MemberWrapper<Entity>> members = new HashMap<>();
 
     static {
@@ -49,7 +49,7 @@ public class EntityTypeHandler implements VariableTypeHandler<Entity> {
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "entity";
     }
 }

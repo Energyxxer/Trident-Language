@@ -7,7 +7,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundExc
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "java.lang.Integer")
-public class IntTypeHandler implements VariableTypeHandler<Integer> {
+public class IntTypeHandler implements TypeHandler<Integer> {
     @Override
     public Object getMember(Integer object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
@@ -49,7 +49,7 @@ public class IntTypeHandler implements VariableTypeHandler<Integer> {
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "int";
     }
 }

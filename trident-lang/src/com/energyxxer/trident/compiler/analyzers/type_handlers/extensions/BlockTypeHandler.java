@@ -3,12 +3,16 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 import com.energyxxer.commodore.block.Block;
 import com.energyxxer.commodore.block.Blockstate;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
+import com.energyxxer.commodore.module.CommandModule;
+import com.energyxxer.commodore.module.Namespace;
+import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -16,8 +20,12 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.Map;
 
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+
 @AnalyzerMember(key = "com.energyxxer.commodore.block.Block")
-public class BlockTypeHandler implements VariableTypeHandler<Block> {
+public class BlockTypeHandler implements TypeHandler<Block> {
+    public static final TridentMethod CONSTRUCTOR = BlockTypeHandler::constructBlock;
+
     @Override
     public Object getMember(Block object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(member.equals("blockType")) {
@@ -69,12 +77,36 @@ public class BlockTypeHandler implements VariableTypeHandler<Block> {
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "block";
     }
 
     @Override
     public Class<Block> getHandledClass() {
         return Block.class;
+    }
+
+    @Override
+    public TridentMethod getConstructor() {
+        return CONSTRUCTOR;
+    }
+
+    private static Block constructBlock(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        CommandModule module = ctx.getCompiler().getModule();
+        if(params.length == 0 || params[0] == null) return new Block(module.minecraft.types.block.get("air"));
+        TridentUtil.ResourceLocation loc = assertOfType(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
+        Namespace ns = module.getNamespace(loc.namespace);
+
+        Type type;
+
+        if(loc.isTag) {
+            type = ns.tags.blockTags.get(loc.body);
+        } else {
+            type = ns.types.block.get(loc.body);
+        }
+
+        if(type == null) throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Resource location " + params[0] + " is not a valid block type", patterns[0], ctx);
+
+        return new Block(type);
     }
 }

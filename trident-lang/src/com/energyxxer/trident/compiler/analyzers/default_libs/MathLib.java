@@ -4,12 +4,12 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 
 @AnalyzerMember(key = "Math")
 public class MathLib implements DefaultLibraryProvider {
@@ -18,7 +18,7 @@ public class MathLib implements DefaultLibraryProvider {
     @SuppressWarnings("unchecked")
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         DictionaryObject math = new DictionaryObject();
-        math.put("pow", (VariableMethod) (params, patterns, pattern, file) -> {
+        math.put("pow", (TridentMethod) (params, patterns, pattern, file) -> {
             if(params.length < 2) {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'pow' requires 2 parameters, instead found " + params.length, pattern, file);
             }
@@ -28,7 +28,7 @@ public class MathLib implements DefaultLibraryProvider {
 
             return Math.pow(base.doubleValue(), exponent.doubleValue());
         });
-        math.put("min", (VariableMethod) (params, patterns, pattern, file) -> {
+        math.put("min", (TridentMethod) (params, patterns, pattern, file) -> {
             if(params.length < 2) {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'min' requires 2 parameters, instead found " + params.length, pattern, file);
             }
@@ -41,7 +41,7 @@ public class MathLib implements DefaultLibraryProvider {
             if(params[0] instanceof Double || params[1] instanceof Double) return result;
             else return (int) result;
         });
-        math.put("max", (VariableMethod) (params, patterns, pattern, file) -> {
+        math.put("max", (TridentMethod) (params, patterns, pattern, file) -> {
             if(params.length < 2) {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'max' requires 2 parameters, instead found " + params.length, pattern, file);
             }
@@ -54,7 +54,7 @@ public class MathLib implements DefaultLibraryProvider {
             if(params[0] instanceof Double || params[1] instanceof Double) return result;
             else return (int) result;
         });
-        math.put("abs", (VariableMethod) (params, patterns, pattern, file) -> {
+        math.put("abs", (TridentMethod) (params, patterns, pattern, file) -> {
             if(params.length < 1) {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'max' requires 2 parameters, instead found " + params.length, pattern, file);
             }
@@ -110,11 +110,25 @@ public class MathLib implements DefaultLibraryProvider {
                 return Integer.parseInt(((String) params[0]), ((int) params[1]));
             }
         }, String.class, int.class).setNullable(1).createForInstance(null));
+        integer.put("parseUnsignedInt", new MethodWrapper<>("parseUnsignedInt", (instance, params) -> {
+            if (params[1] == null) {
+                return Integer.parseUnsignedInt(((String) params[0]));
+            } else {
+                return Integer.parseUnsignedInt(((String) params[0]), ((int) params[1]));
+            }
+        }, String.class, int.class).setNullable(1).createForInstance(null));
         integer.put("toString", new MethodWrapper<>("toString", (instance, params) -> {
             if (params[1] == null) {
                 return Integer.toString(((int) params[0]));
             } else {
                 return Integer.toString(((int) params[0]), ((int) params[1]));
+            }
+        }, int.class, int.class).setNullable(1).createForInstance(null));
+        integer.put("toUnsignedString", new MethodWrapper<>("toUnsignedString", (instance, params) -> {
+            if (params[1] == null) {
+                return Integer.toUnsignedString(((int) params[0]));
+            } else {
+                return Integer.toUnsignedString(((int) params[0]), ((int) params[1]));
             }
         }, int.class, int.class).setNullable(1).createForInstance(null));
         globalCtx.put(new Symbol("Integer", Symbol.SymbolVisibility.GLOBAL, integer));

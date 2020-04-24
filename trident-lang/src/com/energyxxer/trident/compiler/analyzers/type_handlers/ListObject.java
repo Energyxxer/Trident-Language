@@ -2,7 +2,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Object> {
+public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, ContextualToString {
     public static final ListObject STATIC_HANDLER = new ListObject();
     private static Stack<ListObject> toStringRecursion = new Stack<>();
 
@@ -54,11 +54,11 @@ public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Obj
     @Override
     public Object getMember(ListObject object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(member.equals("map")) {
-            return (VariableMethod) (params, patterns, pattern1, file1) -> {
+            return (TridentMethod) (params, patterns, pattern1, file1) -> {
                 if(params.length < 1) {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern, ctx);
                 }
-                FunctionMethod func = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
+                TridentUserMethod func = TridentMethod.HelperMethods.assertOfType(params[0], patterns[0], file1, TridentUserMethod.class);
 
                 ListObject newList = new ListObject();
 
@@ -76,11 +76,11 @@ public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Obj
             };
         }
         if(member.equals("filter")) {
-            return (VariableMethod) (params, patterns, pattern1, file1) -> {
+            return (TridentMethod) (params, patterns, pattern1, file1) -> {
                 if(params.length < 1) {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'filter' requires at least 1 parameter, instead found " + params.length, pattern, ctx);
                 }
-                FunctionMethod func = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
+                TridentUserMethod func = TridentMethod.HelperMethods.assertOfType(params[0], patterns[0], file1, TridentUserMethod.class);
 
                 ListObject newList = new ListObject();
 
@@ -109,7 +109,7 @@ public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Obj
 
     @Override
     public Object getIndexer(ListObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        int realIndex = VariableMethod.HelperMethods.assertOfType(index, pattern, ctx, Integer.class);
+        int realIndex = TridentMethod.HelperMethods.assertOfType(index, pattern, ctx, Integer.class);
         if(realIndex < 0 || realIndex >= object.size()) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index + "; Length: " + object.size(), pattern, ctx);
         }
@@ -212,13 +212,23 @@ public class ListObject implements VariableTypeHandler<ListObject>, Iterable<Obj
         return str;
     }
 
+    public String contextualToString(TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(toStringRecursion.contains(this)) {
+            return "{ ...circular... }";
+        }
+        toStringRecursion.push(this);
+        String str = "{" + content.stream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue(), pattern, ctx)).collect(Collectors.joining(", ")) + "}";
+        toStringRecursion.pop();
+        return str;
+    }
+
     @Override
     public Class<ListObject> getHandledClass() {
         return ListObject.class;
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "list";
     }
 }

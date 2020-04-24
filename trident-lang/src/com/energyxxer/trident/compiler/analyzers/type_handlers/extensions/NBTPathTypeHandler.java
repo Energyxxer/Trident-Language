@@ -7,13 +7,19 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberWrapper;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+
 @AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.nbt.path.NBTPath")
-public class NBTPathTypeHandler implements VariableTypeHandler<NBTPath> {
+public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
+    private static final TridentMethod CONSTRUCTOR = NBTPathTypeHandler::constructNBTPath;
+
     private static HashMap<String, MemberWrapper<NBTPath>> members = new HashMap<>();
 
     static {
@@ -66,7 +72,35 @@ public class NBTPathTypeHandler implements VariableTypeHandler<NBTPath> {
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "nbt_path";
+    }
+
+    @Override
+    public TridentMethod getConstructor() {
+        return CONSTRUCTOR;
+    }
+
+    private static NBTPath constructNBTPath(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(params.length == 0 || params[0] == null) return new NBTPath(new NBTListMatch());
+
+        Object obj = assertOfType(params[0], patterns[0], ctx, String.class, Integer.class, TagCompound.class);
+        if(obj instanceof TagCompound) {
+            boolean wrapInList = params.length >= 2 && params[1] instanceof Boolean && ((Boolean) params[1]);
+            if(wrapInList) {
+                return new NBTPath(new NBTListMatch((TagCompound) obj));
+            } else {
+                return new NBTPath(new NBTPathCompoundRoot((TagCompound) obj));
+            }
+        }
+        if(obj instanceof String) {
+            TagCompound compoundMatch = null;
+            if(params.length >= 2 && params[1] != null) {
+                compoundMatch = assertOfType(params[1], patterns[1], ctx, TagCompound.class);
+            }
+            return new NBTPath(new NBTPathKey((String) obj, compoundMatch));
+        }
+        if(obj instanceof Integer) return new NBTPath(new NBTPathIndex((int) obj));
+        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
     }
 }

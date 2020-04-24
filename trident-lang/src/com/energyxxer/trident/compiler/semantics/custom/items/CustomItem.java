@@ -18,8 +18,9 @@ import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -34,11 +35,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger.REPLACE;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
-public class CustomItem implements VariableTypeHandler<CustomItem> {
+public class CustomItem implements TypeHandler<CustomItem> {
     public static final CustomItem STATIC_HANDLER = new CustomItem();
     private final String id;
     private final String namespace;
@@ -142,7 +143,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
         }
         switch (member) {
             case "getSlotNBT":
-                return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                return (TridentMethod) (params, patterns, pattern1, file1) -> {
                     TagCompound nbt = new TagCompound(
                             new TagString("id", ((CustomItem) this).getBaseType().toString()),
                             new TagByte("Count", 1));
@@ -154,16 +155,16 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                     return nbt;
                 };
             case "getItemTag":
-                return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                return (TridentMethod) (params, patterns, pattern1, file1) -> {
                     if (((CustomItem) this).getDefaultNBT() != null) {
                         return ((CustomItem) this).getDefaultNBT().clone();
                     }
                     return new TagCompound();
                 };
             case "getMatchingNBT":
-                return (VariableMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
+                return (TridentMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
             case "getItem":
-                return (VariableMethod) (params, patterns, pattern1, file1) -> new Item(baseType, defaultNBT);
+                return (TridentMethod) (params, patterns, pattern1, file1) -> new Item(baseType, defaultNBT);
             case "baseType":
                 return baseType != null ? new TridentUtil.ResourceLocation(baseType.toString()) : null;
             case "itemCode":
@@ -362,9 +363,19 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
                         }
                         case "ITEM_FIELD": {
                             String fieldName = entry.find("FIELD_NAME").flatten(false);
-                            Object value = InterpolationManager.parse(((TokenStructure) entry.find("FIELD_VALUE")).getContents(), ctx);
-                            Symbol sym = new Symbol(fieldName, Symbol.SymbolVisibility.LOCAL, value);
-                            if(itemDecl != null) {
+
+                            Symbol sym = new Symbol(fieldName, Symbol.SymbolVisibility.LOCAL);
+
+                            Object value = null;
+                            TokenPattern<?> initializationPattern = entry.find("FIELD_INITIALIZATION");
+                            if(initializationPattern != null) {
+                                value = InterpolationManager.parse(((TokenStructure) initializationPattern.find("FIELD_VALUE")).getContents(), ctx);
+                            }
+                            sym.setTypeConstraints(TypeConstraints.parseConstraintsInfer(entry.find("TYPE_CONSTRAINTS"), ctx, value));
+
+                            sym.safeSetValue(value, pattern, ctx);
+
+                            if (itemDecl != null) {
                                 itemDecl.members.put(fieldName, sym);
                             } else {
                                 ctx.put(sym);
@@ -399,7 +410,7 @@ public class CustomItem implements VariableTypeHandler<CustomItem> {
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "custom_item";
     }
 

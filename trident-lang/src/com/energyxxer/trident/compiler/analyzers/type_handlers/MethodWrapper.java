@@ -65,7 +65,7 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
         return this;
     }
 
-    public VariableMethod createForInstance(T instance) {
+    public TridentMethod createForInstance(T instance) {
         return (params, patterns, pattern, file) -> {
             file.getCompiler().getCallStack().push(new CallStack.Call(methodName, null, null, pattern));
             try {
@@ -76,12 +76,12 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
                 for (Class<?> cls : paramTypes) {
                     if (i < requiredSize) {
                         if (params[i] != null || !nullables[i])
-                            params[i] = VariableMethod.HelperMethods.assertOfType(params[i], patterns[i], file, cls);
+                            params[i] = TridentMethod.HelperMethods.assertOfType(params[i], patterns[i], file, cls);
                     } else { //if we reach this, the remaining parameter types are nullable
                         if (i >= params.length) break;
                         if (i < paramTypes.length) { //param is present
                             if (params[i] != null) {
-                                params[i] = VariableMethod.HelperMethods.assertOfType(params[i], patterns[i], file, cls);
+                                params[i] = TridentMethod.HelperMethods.assertOfType(params[i], patterns[i], file, cls);
                             }
                         } else break;
                     }

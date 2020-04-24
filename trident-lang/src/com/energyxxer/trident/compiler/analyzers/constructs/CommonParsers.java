@@ -779,6 +779,7 @@ public class CommonParsers {
         if(pattern == null) return defaultValue;
         switch(pattern.flatten(false)) {
             case "global": return Symbol.SymbolVisibility.GLOBAL;
+            case "public": return Symbol.SymbolVisibility.PUBLIC;
             case "local": return Symbol.SymbolVisibility.LOCAL;
             case "private": return Symbol.SymbolVisibility.PRIVATE;
             default: {

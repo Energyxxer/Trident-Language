@@ -4,7 +4,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
@@ -114,7 +114,7 @@ public class LoopInstruction implements Instruction {
             case "ITERATOR_FOR": {
                 String varName = pattern.find("VARIABLE_NAME").flatten(false);
                 Object iterable = InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), ctx);
-                VariableTypeHandler handler = InterpolationManager.getHandlerForObject(iterable, pattern, ctx);
+                TypeHandler handler = InterpolationManager.getHandlerForObject(iterable, pattern, ctx);
                 Iterator it;
                 if((it = handler.getIterator(iterable)) != null) {
                     if(!it.hasNext()) return null;

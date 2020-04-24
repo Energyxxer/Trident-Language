@@ -49,7 +49,7 @@ public class TagLib implements DefaultLibraryProvider {
                     }
                     tag.addValue(type);
                 } else {
-                    throw new IllegalArgumentException("Expected resource type in 'values' list parameter, instead got " + TridentTypeManager.getShorthandForObject(rawValue));
+                    throw new IllegalArgumentException("Expected resource type in 'values' list parameter, instead got " + TridentTypeManager.getTypeIdentifierForObject(rawValue));
                 }
             }
 

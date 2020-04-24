@@ -6,7 +6,7 @@ import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -15,7 +15,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import java.util.Collection;
 import java.util.Map;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 
 @AnalyzerMember(key = "Types")
 public class TypeLib implements DefaultLibraryProvider {
@@ -79,7 +79,7 @@ public class TypeLib implements DefaultLibraryProvider {
 
             return obj;
         }), String.class).createForInstance(null));
-        type.put("exists", (VariableMethod) (params, patterns, pattern, file) -> {
+        type.put("exists", (TridentMethod) (params, patterns, pattern, file) -> {
             if(params.length < 2) {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'exists' requires 2 parameters, instead found " + params.length, pattern, file);
             }
@@ -101,12 +101,12 @@ public class TypeLib implements DefaultLibraryProvider {
         });
         globalCtx.put(new Symbol("MinecraftTypes", Symbol.SymbolVisibility.GLOBAL, type));
 
-        globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (VariableMethod) (params, patterns, pattern, file) ->
-                TridentTypeManager.getShorthandForObject(params[0])
+        globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (TridentMethod) (params, patterns, pattern, file) ->
+                TridentTypeManager.getTypeIdentifierForObject(params[0])
         ));
         globalCtx.put(new Symbol("isInstance", Symbol.SymbolVisibility.GLOBAL, new MethodWrapper<>("isInstance", (instance, params) -> {
             params[1] = ((String) params[1]).trim();
-            VariableTypeHandler handler = TridentTypeManager.getHandlerForShorthand((String) params[1]);;
+            TypeHandler handler = TridentTypeManager.getHandlerForShorthand((String) params[1]);;
             if(params[0] == null) return "null".equals(params[1]);
             if(handler == null) {
                 throw new IllegalArgumentException("Illegal data type name '" + params[1] + "'");

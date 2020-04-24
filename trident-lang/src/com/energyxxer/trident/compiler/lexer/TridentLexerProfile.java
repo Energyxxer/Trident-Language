@@ -20,7 +20,8 @@ public class TridentLexerProfile extends LexerProfile {
     public static final Lazy<TridentLexerProfile> INSTANCE = new Lazy<>(TridentLexerProfile::new);
 
     public static final HashMap<TokenType, LexerContext> usefulContexts = new HashMap<>();
-    private static final List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "tag_byte", "tag_short", "tag_int", "tag_float", "tag_double", "tag_long", "tag_string", "tag_compound", "tag_list", "tag_int_array", "tag_byte_array", "tag_long_array", "nbt_path", "coordinate", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "global", "case", "switch", "default", "component", "implements", "pointer", "true", "false");
+    private static final List<String> allPrimitiveTypes = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "tag_byte", "tag_short", "tag_int", "tag_float", "tag_double", "tag_long", "tag_string", "tag_compound", "tag_list", "tag_int_array", "tag_byte_array", "tag_long_array", "nbt_path", "coordinate", "resource", "int_range", "real_range", "function", "pointer", "dictionary", "list", "exception", "custom_item", "custom_entity", "entity_event", "type_definition");
+    private static final List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "tag_byte", "tag_short", "tag_int", "tag_float", "tag_double", "tag_long", "tag_string", "tag_compound", "tag_list", "tag_int_array", "tag_byte_array", "tag_long_array", "nbt_path", "coordinate", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "public", "global", "case", "switch", "default", "component", "implements", "pointer", "true", "false", "class", "static", "final", "type_definition");
 
     public static final Pattern IDENTIFIER_A_REGEX = Pattern.compile("[a-zA-Z0-9._\\-+]+");
     public static final Pattern IDENTIFIER_B_REGEX = Pattern.compile("[^@\\s]\\S*");
@@ -590,7 +591,7 @@ public class TridentLexerProfile extends LexerProfile {
                     i++;
                 }
                 str = str.substring(0, i);
-                if(i > 0 && reservedWords.contains(str)) return new ScannerContextResponse(true, str, type);
+                if(i > 0 && allPrimitiveTypes.contains(str)) return new ScannerContextResponse(true, str, type);
                 return new ScannerContextResponse(false);
             }
 

@@ -30,7 +30,7 @@ import com.energyxxer.util.Lazy;
 import java.util.HashMap;
 import java.util.Locale;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 
 @AnalyzerMember(key = "set")
 public class SetParser implements SimpleCommandParser {

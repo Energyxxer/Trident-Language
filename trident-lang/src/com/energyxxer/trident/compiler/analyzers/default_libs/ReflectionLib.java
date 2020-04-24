@@ -8,7 +8,7 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -16,7 +16,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.HashMap;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 
 @AnalyzerMember(key = "Reflection")
 public class ReflectionLib implements DefaultLibraryProvider {
@@ -30,9 +30,9 @@ public class ReflectionLib implements DefaultLibraryProvider {
                 new MethodWrapper<>("getFilesWithMetaTag", ((instance, params) -> getFilesWithMetaTag(((TridentUtil.ResourceLocation) params[0]), compiler.getRootCompiler())), TridentUtil.ResourceLocation.class).createForInstance(null));
         reflect.put("getMetadata",
                 new MethodWrapper<>("getMetadata", ((instance, params) -> getMetadata(((TridentUtil.ResourceLocation) params[0]), compiler.getRootCompiler())), TridentUtil.ResourceLocation.class).createForInstance(null));
-        reflect.put("getCurrentFile", (VariableMethod) (params, patterns, pattern, ctx) -> ctx.getStaticParentFile().getResourceLocation());
-        reflect.put("getWritingFile", (VariableMethod) (params, patterns, pattern, ctx) -> ctx.getWritingFile().getResourceLocation());
-        reflect.put("getSymbol", (VariableMethod) (params, patterns, pattern, ctx) -> {
+        reflect.put("getCurrentFile", (TridentMethod) (params, patterns, pattern, ctx) -> ctx.getStaticParentFile().getResourceLocation());
+        reflect.put("getWritingFile", (TridentMethod) (params, patterns, pattern, ctx) -> ctx.getWritingFile().getResourceLocation());
+        reflect.put("getSymbol", (TridentMethod) (params, patterns, pattern, ctx) -> {
             if(params.length < 1) {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'getSymbol' requires 1 parameters, instead found " + params.length, pattern, ctx);
             }
@@ -41,9 +41,9 @@ public class ReflectionLib implements DefaultLibraryProvider {
             if(sym != null) return sym.getValue();
             return null;
         });
-        reflect.put("getVisibleSymbols", (VariableMethod) (params, patterns, pattern, ctx) -> getVisibleSymbols(ctx));
-        reflect.put("insertToFile", (VariableMethod) this::insertToFile);
-        reflect.put("getDefinedObjectives", (VariableMethod) (params, patterns, pattern, ctx) -> {
+        reflect.put("getVisibleSymbols", (TridentMethod) (params, patterns, pattern, ctx) -> getVisibleSymbols(ctx));
+        reflect.put("insertToFile", (TridentMethod) this::insertToFile);
+        reflect.put("getDefinedObjectives", (TridentMethod) (params, patterns, pattern, ctx) -> {
             DictionaryObject objectives = new DictionaryObject();
             for(Objective objective : ctx.getCompiler().getModule().getObjectiveManager().getAll()) {
                 DictionaryObject entry = new DictionaryObject();
@@ -62,7 +62,7 @@ public class ReflectionLib implements DefaultLibraryProvider {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'insertToFile' requires 2 parameters, instead found " + params.length, pattern, ctx);
         }
         TridentUtil.ResourceLocation fileLoc = assertOfType(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
-        VariableMethod func = assertOfType(params[1], patterns[1], ctx, VariableMethod.class);
+        TridentMethod func = assertOfType(params[1], patterns[1], ctx, TridentMethod.class);
         if(fileLoc.isTag) throw new IllegalArgumentException("Cannot insert instructions to a tag: " + fileLoc);
 
         TridentFile file = ctx.getCompiler().getFile(fileLoc);

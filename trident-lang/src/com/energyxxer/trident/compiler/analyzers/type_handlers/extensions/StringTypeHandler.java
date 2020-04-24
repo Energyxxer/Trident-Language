@@ -18,10 +18,10 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 
 @AnalyzerMember(key = "java.lang.String")
-public class StringTypeHandler implements VariableTypeHandler<String> {
+public class StringTypeHandler implements TypeHandler<String> {
     private static HashMap<String, MemberWrapper<String>> members = new HashMap<>();
 
     static {
@@ -127,7 +127,7 @@ public class StringTypeHandler implements VariableTypeHandler<String> {
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "string";
     }
 }

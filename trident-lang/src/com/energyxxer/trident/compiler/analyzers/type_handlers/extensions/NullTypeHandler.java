@@ -4,7 +4,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-public class NullTypeHandler implements VariableTypeHandler<Object> {
+public class NullTypeHandler implements TypeHandler<Object> {
     @Override
     public Object getMember(Object object, String member, TokenPattern pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
@@ -27,7 +27,7 @@ public class NullTypeHandler implements VariableTypeHandler<Object> {
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "null";
     }
 

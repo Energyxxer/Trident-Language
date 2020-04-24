@@ -2,7 +2,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 
-public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, Iterable<Object> {
+public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable<Object>, ContextualToString {
     public static final DictionaryObject STATIC_HANDLER = new DictionaryObject();
     private static Stack<DictionaryObject> toStringRecursion = new Stack<>();
     private static HashMap<String, MemberWrapper<DictionaryObject>> members = new HashMap<>();
@@ -37,11 +37,11 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
         }
         if(!keepSymbol && !dict.map.containsKey(member)) {
             if(member.equals("map")) {
-                return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                return (TridentMethod) (params, patterns, pattern1, file1) -> {
                     if (params.length < 1) {
                         throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1, ctx);
                     }
-                    FunctionMethod func = assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
+                    TridentUserMethod func = assertOfType(params[0], patterns[0], file1, TridentUserMethod.class);
 
                     DictionaryObject newDict = new DictionaryObject();
 
@@ -182,13 +182,23 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
         return str;
     }
 
+    public String contextualToString(TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(toStringRecursion.contains(this)) {
+            return "{ ...circular... }";
+        }
+        toStringRecursion.push(this);
+        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue(), pattern, ctx))).collect(Collectors.joining(", ")) + "}";
+        toStringRecursion.pop();
+        return str;
+    }
+
     @Override
     public Class<DictionaryObject> getHandledClass() {
         return DictionaryObject.class;
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "dictionary";
     }
 }

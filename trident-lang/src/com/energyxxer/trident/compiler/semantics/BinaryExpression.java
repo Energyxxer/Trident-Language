@@ -7,7 +7,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.Operato
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperatorHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 
 public class BinaryExpression implements ILazyValue {
     private Object rawA;

@@ -9,7 +9,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundExc
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "java.lang.Double")
-public class RealTypeHandler implements VariableTypeHandler<Double> {
+public class RealTypeHandler implements TypeHandler<Double> {
     @Override
     public Object getMember(Double object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
@@ -42,7 +42,7 @@ public class RealTypeHandler implements VariableTypeHandler<Double> {
     }
 
     @Override
-    public String getPrimitiveShorthand() {
+    public String getTypeIdentifier() {
         return "real";
     }
 

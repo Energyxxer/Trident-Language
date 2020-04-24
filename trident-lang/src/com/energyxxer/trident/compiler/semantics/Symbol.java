@@ -1,8 +1,7 @@
 package com.energyxxer.trident.compiler.semantics;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,14 +9,15 @@ import java.util.Objects;
 
 public class Symbol {
     public enum SymbolVisibility {
-        GLOBAL, LOCAL, PRIVATE;
+        GLOBAL, PUBLIC, LOCAL, PRIVATE
     }
     private String name;
     private final SymbolVisibility visibility;
     private Object value;
+    private boolean maySet = true;
+    private boolean isFinal = false;
 
-    private VariableTypeHandler typeConstraint = null;
-    private boolean nullable = true;
+    private TypeConstraints typeConstraints = null;
 
     public Symbol(String name) {
         this(name, SymbolVisibility.LOCAL);
@@ -45,9 +45,12 @@ public class Symbol {
         return visibility;
     }
 
-    public void setTypeConstraint(VariableTypeHandler typeConstraint, boolean nullable) {
-        this.typeConstraint = typeConstraint;
-        this.nullable = nullable;
+    public TypeConstraints getTypeConstraints() {
+        return typeConstraints;
+    }
+
+    public void setTypeConstraints(TypeConstraints newConstraints) {
+        this.typeConstraints = newConstraints;
     }
 
     @Nullable
@@ -59,14 +62,22 @@ public class Symbol {
         this.value = value;
     }
 
+    public boolean isFinal() {
+        return isFinal;
+    }
+
+    public void setFinal(boolean aFinal) {
+        isFinal = aFinal;
+    }
+
     public void safeSetValue(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(value == null && !nullable) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot assign null to a non-nullable variable", pattern, ctx);
+        if(maySet) {
+            if(typeConstraints != null) typeConstraints.validate(value, pattern, ctx);
+            this.value = value;
+            if(isFinal) maySet = false;
+        } else {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot assign a value to a final variable", pattern, ctx);
         }
-        if(value != null && typeConstraint != null && !typeConstraint.isInstance(value)) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Incompatible types. Expected '" + typeConstraint.getPrimitiveShorthand() + "', Found '" + TridentTypeManager.getShorthandForObject(value) + "'", pattern, ctx);
-        }
-        this.value = value;
     }
 
     @Override
