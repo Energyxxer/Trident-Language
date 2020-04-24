@@ -45,7 +45,7 @@ public class NBTAliasTypeHandler implements TypeHandler<TagCompound> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 

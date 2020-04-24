@@ -87,7 +87,7 @@ public class RealRangeTypeHandler implements TypeHandler<DoubleRange> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 }

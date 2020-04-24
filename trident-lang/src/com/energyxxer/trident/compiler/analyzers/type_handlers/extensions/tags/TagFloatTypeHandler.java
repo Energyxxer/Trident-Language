@@ -53,7 +53,7 @@ public class TagFloatTypeHandler implements TypeHandler<TagFloat> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 }

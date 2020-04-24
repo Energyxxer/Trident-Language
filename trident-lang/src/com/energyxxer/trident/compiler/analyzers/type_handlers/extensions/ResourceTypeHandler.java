@@ -99,7 +99,7 @@ public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLoca
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 

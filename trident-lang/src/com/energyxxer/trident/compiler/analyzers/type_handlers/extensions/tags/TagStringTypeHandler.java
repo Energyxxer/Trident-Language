@@ -47,7 +47,7 @@ public class TagStringTypeHandler implements TypeHandler<TagString> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 }

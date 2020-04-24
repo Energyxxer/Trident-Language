@@ -1,7 +1,10 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
+import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
 import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
@@ -16,6 +19,7 @@ public class TridentUserMethod implements TridentMethod {
     private ArrayList<FormalParameter> formalParameters = new ArrayList<>();
     private Object thisObject;
     private String functionName = "<anonymous function>";
+    private TypeConstraints returnConstraints;
 
     public TridentUserMethod(TokenPattern<?> functionPattern, ISymbolContext declaringContext, Collection<FormalParameter> formalParameters, Object thisObject, String functionName) {
         this.functionPattern = functionPattern;
@@ -46,9 +50,18 @@ public class TridentUserMethod implements TridentMethod {
         } catch(StackOverflowError x) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Stack Overflow Error", pattern, ctx);
         } catch(ReturnException x) {
-            return x.getValue();
+            Object returnValue = x.getValue();
+            if(returnConstraints != null) {
+                returnConstraints.validate(returnValue, x.getPattern(), ctx);
+            }
+            return returnValue;
         } finally {
             ctx.getCompiler().getCallStack().pop();
+        }
+        if(returnConstraints != null) {
+            TokenPattern<?>[] innerFunctContent = ((TokenGroup)((TokenStructure)functionPattern).getContents()).getContents();
+            TokenPattern<?> closingBracePattern = innerFunctContent[innerFunctContent.length-1];
+            returnConstraints.validate(null, closingBracePattern, ctx);
         }
         return null;
     }
@@ -63,5 +76,9 @@ public class TridentUserMethod implements TridentMethod {
     @Override
     public String toString() {
         return "<function(" + formalParameters.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")>";
+    }
+
+    public void setReturnConstraints(TypeConstraints returnConstraints) {
+        this.returnConstraints = returnConstraints;
     }
 }

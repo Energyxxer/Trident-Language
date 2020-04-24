@@ -44,7 +44,7 @@ public class TypeConstraints {
 
     public void validate(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(value == null && !nullable) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot assign null to a non-nullable variable", pattern, ctx);
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected a non-null value, Found null", pattern, ctx);
         }
         if(value != null && handler != null && !handler.isInstance(value)) {
             throw new TridentException(TridentException.Source.TYPE_ERROR, "Incompatible types. Expected '" + handler.getTypeIdentifier() + "', Found '" + TridentTypeManager.getTypeIdentifierForObject(value) + "'", pattern, ctx);

@@ -318,7 +318,7 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(
                     group(
                             literal("function").setName("VALUE_WRAPPER_KEY").addProcessor(startClosure),
-                            optional(FORMAL_PARAMETERS).setName("FORMAL_PARAMETERS_OPT"),
+                            optional(FORMAL_PARAMETERS, TYPE_CONSTRAINTS).setName("FORMAL_PARAMETERS_OPT"),
                             ANONYMOUS_INNER_FUNCTION
                     ).setName("NEW_FUNCTION").addProcessor(endComplexValue).addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
@@ -2288,7 +2288,7 @@ public class TridentProductions {
 
             LazyTokenStructureMatch classBodyEntry = choice(
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("static").setOptional().setName("LITERAL_STATIC"), identifierX().setName("MEMBER_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), INTERPOLATION_VALUE).setName("FIELD_INITIALIZATION")).setName("CLASS_MEMBER"),
-                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("static").setOptional().setName("LITERAL_STATIC"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("MEMBER_NAME"), FORMAL_PARAMETERS, ANONYMOUS_INNER_FUNCTION).setName("CLASS_FUNCTION"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("static").setOptional().setName("LITERAL_STATIC"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("MEMBER_NAME"), FORMAL_PARAMETERS, TYPE_CONSTRAINTS, ANONYMOUS_INNER_FUNCTION).setName("CLASS_FUNCTION"),
                     COMMENT_S
             ).setName("CLASS_BODY_ENTRY").setGreedy(true);
             itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_CLASS_BODY);

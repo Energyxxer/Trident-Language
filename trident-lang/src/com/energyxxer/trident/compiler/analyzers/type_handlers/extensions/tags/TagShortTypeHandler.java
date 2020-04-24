@@ -53,7 +53,7 @@ public class TagShortTypeHandler implements TypeHandler<TagShort> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 }

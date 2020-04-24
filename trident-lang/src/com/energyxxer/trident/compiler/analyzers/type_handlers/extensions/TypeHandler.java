@@ -59,7 +59,7 @@ public interface TypeHandler<T> {
         return null;
     }
 
-    default TridentMethod getConstructor() {
+    default TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return null;
     }
 

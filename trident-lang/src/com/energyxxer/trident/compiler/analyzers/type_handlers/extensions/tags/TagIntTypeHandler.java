@@ -53,7 +53,7 @@ public class TagIntTypeHandler implements TypeHandler<TagInt> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 }

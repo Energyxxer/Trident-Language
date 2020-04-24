@@ -88,7 +88,7 @@ public class IntRangeTypeHandler implements TypeHandler<IntegerRange> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 }

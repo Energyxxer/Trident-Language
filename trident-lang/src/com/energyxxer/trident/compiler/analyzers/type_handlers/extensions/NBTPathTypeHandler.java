@@ -77,7 +77,7 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 

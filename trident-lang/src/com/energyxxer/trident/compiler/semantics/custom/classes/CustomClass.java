@@ -6,10 +6,10 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -31,6 +31,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
     private final CustomClass superClass = null;
 
     private Function<CustomClassObject, TridentMethod> constructorSupplier = null;
+    private Symbol.SymbolVisibility constructorVisibility = Symbol.SymbolVisibility.LOCAL;
 
     private TridentFile definitionFile;
     private ISymbolContext definitionContext;
@@ -96,6 +97,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
                         final TokenPattern<?> entryFinal = entry;
 
                         ArrayList<FormalParameter> formalParams = new ArrayList<>();
+                        TypeConstraints returnConstraints = TypeConstraints.parseConstraints(entry.find("TYPE_CONSTRAINTS"), ctx);
                         TokenList paramNames = (TokenList) entry.find("FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
                         if(paramNames != null) {
                             for(TokenPattern<?> param : paramNames.searchByName("FORMAL_PARAMETER")) {
@@ -114,11 +116,12 @@ public class CustomClass implements TypeHandler<CustomClass> {
                                         innerFrame.put(instanceSym);
                                     }
                                 }
-                                Object initialValue = new TridentUserMethod(innerFunctionPattern, innerFrame, formalParams, thiz, functionName);
+                                TridentUserMethod method = new TridentUserMethod(innerFunctionPattern, innerFrame, formalParams, thiz, functionName);
+                                method.setReturnConstraints(returnConstraints);
                                 Symbol sym = new Symbol(functionName, memberVisibility);
                                 sym.setTypeConstraints(new TypeConstraints(TridentTypeManager.getHandlerForHandledClass(TridentMethod.class), false));
                                 sym.setFinal(true);
-                                sym.safeSetValue(initialValue, entryFinal, ctx);
+                                sym.safeSetValue(method, entryFinal, ctx);
                                 return sym;
                             };
                             if(isStatic) {
@@ -130,6 +133,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
                             }
                         } else {
                             classObject.constructorSupplier = thiz -> new TridentUserMethod(innerFunctionPattern, classObject.innerContext, formalParams, thiz, functionName);
+                            classObject.constructorVisibility = memberVisibility;
                         }
                         break;
                     }
@@ -211,24 +215,28 @@ public class CustomClass implements TypeHandler<CustomClass> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
-        return (params, patterns, pattern, ctx) -> {
-            CustomClassObject created = new CustomClassObject(this);
-            for(Function<CustomClassObject, Symbol> symbolSupplier : instanceMemberSuppliers) {
-                created.putMember(symbolSupplier.apply(created));
-            }
-
-            if(constructorSupplier != null) {
-
-                ISymbolContext innerFrame = new SymbolContext(this.innerContext);
-                for(Symbol instanceSym : created.instanceMembers.values()) {
-                    innerFrame.put(instanceSym);
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(hasAccess(ctx, constructorVisibility)) {
+            return (params, patterns, pattern2, ctx2) -> {
+                CustomClassObject created = new CustomClassObject(this);
+                for(Function<CustomClassObject, Symbol> symbolSupplier : instanceMemberSuppliers) {
+                    created.putMember(symbolSupplier.apply(created));
                 }
 
-                constructorSupplier.apply(created).safeCall(params, patterns, pattern, ctx);
-            }
-            return created;
-        };
+                if(constructorSupplier != null) {
+
+                    ISymbolContext innerFrame = new SymbolContext(this.innerContext);
+                    for(Symbol instanceSym : created.instanceMembers.values()) {
+                        innerFrame.put(instanceSym);
+                    }
+
+                    constructorSupplier.apply(created).safeCall(params, patterns, pattern2, ctx2);
+                }
+                return created;
+            };
+        } else {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Constructor has " + constructorVisibility.toString().toLowerCase() + " access in " + getClassTypeIdentifier(), pattern, ctx);
+        }
     }
 
     public ISymbolContext getDeclaringContext() {

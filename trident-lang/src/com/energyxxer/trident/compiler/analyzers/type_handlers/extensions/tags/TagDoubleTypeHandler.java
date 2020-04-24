@@ -53,7 +53,7 @@ public class TagDoubleTypeHandler implements TypeHandler<TagDouble> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 }

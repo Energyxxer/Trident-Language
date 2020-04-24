@@ -50,7 +50,7 @@ public class TagLongArrayTypeHandler implements TypeHandler<TagLongArray> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 

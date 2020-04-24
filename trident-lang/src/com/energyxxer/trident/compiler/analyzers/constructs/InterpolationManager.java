@@ -197,6 +197,8 @@ public class InterpolationManager {
                 }
                 case "NEW_FUNCTION": {
                     if (pattern.find("FORMAL_PARAMETERS_OPT") != null) {
+                        TypeConstraints returnConstraints = TypeConstraints.parseConstraints(pattern.find("FORMAL_PARAMETERS_OPT.TYPE_CONSTRAINTS"), ctx);
+
                         ArrayList<FormalParameter> formalParams = new ArrayList<>();
                         TokenList paramNames = (TokenList) pattern.find("FORMAL_PARAMETERS_OPT.FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
                         if (paramNames != null) {
@@ -205,7 +207,9 @@ public class InterpolationManager {
                             }
                         }
 
-                        return new TridentUserMethod(pattern.find("ANONYMOUS_INNER_FUNCTION"), ctx, formalParams, nextThis, nextFunctionName);
+                        TridentUserMethod met = new TridentUserMethod(pattern.find("ANONYMOUS_INNER_FUNCTION"), ctx, formalParams, nextThis, nextFunctionName);
+                        met.setReturnConstraints(returnConstraints);
+                        return met;
                     } else {
                         TridentFile innerFile = TridentFile.createInnerFile(pattern.find("ANONYMOUS_INNER_FUNCTION"), ctx);
                         return innerFile.getResourceLocation();
@@ -237,8 +241,8 @@ public class InterpolationManager {
                 case "CONSTRUCTOR_CALL": {
                     TypeHandler<?> handler = parseType(pattern.find("INTERPOLATION_TYPE"), ctx);
 
-                    TridentMethod constructor = handler.getConstructor();
-                    //ObjectConstructors.getConstructor(constructorName);
+                    TridentMethod constructor = handler.getConstructor(pattern, ctx);
+
                     if (constructor == null) {
                         throw new TridentException(TridentException.Source.TYPE_ERROR, "There is no constructor for type '" + TridentTypeManager.getTypeIdentifierForType(handler) + "'", pattern.find("INTERPOLATION_TYPE"), ctx);
                     }

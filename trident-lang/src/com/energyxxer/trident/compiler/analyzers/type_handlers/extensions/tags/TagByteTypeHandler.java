@@ -53,7 +53,7 @@ public class TagByteTypeHandler implements TypeHandler<TagByte> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 }

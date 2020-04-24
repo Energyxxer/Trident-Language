@@ -76,7 +76,7 @@ public class ItemTypeHandler implements TypeHandler<Item> {
     }
 
     @Override
-    public TridentMethod getConstructor() {
+    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 
