@@ -77,6 +77,7 @@ public interface TridentMethod extends TypeHandler<TridentMethod> {
 
                 TypeHandler couldCoerce = null;
                 for(TypeHandler type : expected) {
+                    if(type == null) return value;
                     if(type.isInstance(value)) return value;
                     if(couldCoerce == null && valueType.getHandledClass().isInstance(value) && valueType.canCoerce(value, type)) couldCoerce = type;
                 }

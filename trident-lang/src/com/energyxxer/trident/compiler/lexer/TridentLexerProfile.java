@@ -563,7 +563,7 @@ public class TridentLexerProfile extends LexerProfile {
                     i++;
                 }
                 str = str.substring(0, i);
-                if(i > 0 && !reservedWords.contains(str)) return new ScannerContextResponse(true, str, type);
+                if(i > 0) return new ScannerContextResponse(true, str, type);
                 return new ScannerContextResponse(false);
             }
 

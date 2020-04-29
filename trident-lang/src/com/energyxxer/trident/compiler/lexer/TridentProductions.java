@@ -2311,8 +2311,8 @@ public class TridentProductions {
             ).setOptional().setName("ITEM_DECLARATION_BODY");
 
             LazyTokenStructureMatch classBodyEntry = choice(
-                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER"),
-                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static")).setOptional().setName("SYMBOL_MODIFIER_LIST"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), choice(DYNAMIC_FUNCTION, OVERLOADED_FUNCTION).setName("CLASS_FUNCTION_SPLIT").setGreedy(true)).setName("CLASS_FUNCTION"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("static").setOptional(), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), choice(DYNAMIC_FUNCTION, OVERLOADED_FUNCTION).setName("CLASS_FUNCTION_SPLIT").setGreedy(true)).setName("CLASS_FUNCTION"),
                     COMMENT_S
             ).setName("CLASS_BODY_ENTRY").setGreedy(true);
             itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_CLASS_BODY);
