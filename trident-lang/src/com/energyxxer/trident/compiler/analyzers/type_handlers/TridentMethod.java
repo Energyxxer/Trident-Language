@@ -100,9 +100,10 @@ public interface TridentMethod extends TypeHandler<TridentMethod> {
         }
 
         //Java amirite
-        private static Class sanitizeClass(Class cls) {
+        public static Class sanitizeClass(Class cls) {
             if(cls == double.class) return Double.class;
             if(cls == int.class) return Integer.class;
+            if(cls == boolean.class) return Boolean.class;
             return cls;
         }
     }

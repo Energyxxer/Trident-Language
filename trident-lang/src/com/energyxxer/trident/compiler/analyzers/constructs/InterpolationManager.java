@@ -192,15 +192,15 @@ public class InterpolationManager {
                             return innerFile.getResourceLocation();
                         }
                         case "DYNAMIC_FUNCTION": {
-                            return new TridentUserMethod(Collections.singletonList(TridentUserMethodBranch.parseDynamicFunction(choice, ctx)), ctx, nextThis, nextFunctionName);
+                            return new TridentUserMethod(nextFunctionName, Collections.singletonList(TridentMethodBranch.parseDynamicFunction(choice, ctx)), ctx, nextThis);
                         }
                         case "OVERLOADED_FUNCTION": {
                             TokenList implementations = (TokenList) choice.find("OVERLOADED_FUNCTION_IMPLEMENTATIONS");
-                            ArrayList<TridentUserMethodBranch> branches = new ArrayList<>();
+                            ArrayList<TridentMethodBranch> branches = new ArrayList<>();
                             for(TokenPattern<?> branch : implementations.getContents()) {
-                                branches.add(TridentUserMethodBranch.parseDynamicFunction(branch, ctx));
+                                branches.add(TridentMethodBranch.parseDynamicFunction(branch, ctx));
                             }
-                            return new TridentUserMethod(branches, ctx, nextThis, nextFunctionName);
+                            return new TridentUserMethod(nextFunctionName, branches, ctx, nextThis);
                         }
                         default:
                             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + choice.getName() + "'", choice, ctx);

@@ -1,13 +1,11 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
-import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
-import com.energyxxer.trident.compiler.semantics.*;
+import com.energyxxer.trident.compiler.semantics.CallStack;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class TridentUserMethod implements TridentMethod {
-    private List<TridentUserMethodBranch> branches;
+    private List<TridentMethodBranch> branches;
     private ISymbolContext declaringContext;
     private Object thisObject;
     private String functionName = "<anonymous function>";
@@ -28,7 +26,7 @@ public class TridentUserMethod implements TridentMethod {
 
         branches = Collections.singletonList(new TridentUserMethodBranch(formalParameters, functionPattern, returnConstraints));
     }
-    public TridentUserMethod(Collection<TridentUserMethodBranch> branches, ISymbolContext declaringContext, Object thisObject, String functionName) {
+    public TridentUserMethod(String functionName, Collection<TridentMethodBranch> branches, ISymbolContext declaringContext, Object thisObject) {
         this.branches = new ArrayList<>(branches);
         this.declaringContext = declaringContext;
         this.thisObject = thisObject;
@@ -38,56 +36,30 @@ public class TridentUserMethod implements TridentMethod {
     @Override
     public Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
 
-        TridentUserMethodBranch branch = pickBranch(params, patterns, pattern, ctx);
+        TridentMethodBranch branch = pickBranch(params, patterns, pattern, ctx);
 
         TokenPattern<?> functionPattern = branch.getFunctionPattern();
-        List<FormalParameter> formalParameters = branch.getFormalParameters();
-        TypeConstraints returnConstraints = branch.getReturnConstraints();
-
-        SymbolContext innerFrame = new SymbolContext(declaringContext);
 
         ctx.getCompiler().getCallStack().push(new CallStack.Call(functionName, functionPattern, declaringContext.getStaticParentFile(), pattern));
 
-        for(int i = 0; i < formalParameters.size(); i++) {
-            FormalParameter param = formalParameters.get(i);
-            Symbol sym = new Symbol(param.getName(), Symbol.SymbolVisibility.PRIVATE);
-            sym.setTypeConstraints(param.getConstraints());
-            sym.safeSetValue(i < params.length ? params[i] : null, i < params.length ? patterns[i] : pattern, ctx);
-            innerFrame.put(sym);
-        }
-        if(thisObject != null) innerFrame.put(new Symbol("this", Symbol.SymbolVisibility.PRIVATE, thisObject));
-
         try {
-            TridentFile.resolveInnerFileIntoSection(functionPattern, innerFrame, ctx.getWritingFile().getFunction());
+            return branch.call(params, patterns, pattern, declaringContext, ctx, thisObject);
         } catch(StackOverflowError x) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Stack Overflow Error", pattern, ctx);
-        } catch(ReturnException x) {
-            Object returnValue = x.getValue();
-            if(returnConstraints != null) {
-                returnConstraints.validate(returnValue, x.getPattern(), ctx);
-                returnValue = returnConstraints.adjustValue(returnValue, pattern, ctx);
-            }
-            return returnValue;
         } finally {
             ctx.getCompiler().getCallStack().pop();
         }
-        if(returnConstraints != null) {
-            TokenPattern<?>[] innerFunctContent = ((TokenGroup)((TokenStructure)functionPattern).getContents()).getContents();
-            TokenPattern<?> closingBracePattern = innerFunctContent[innerFunctContent.length-1];
-            returnConstraints.validate(null, closingBracePattern, ctx);
-        }
-        return null;
     }
 
-    private TridentUserMethodBranch pickBranch(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-        ArrayList<TridentUserMethodBranch> bestScoreBranchMatches = new ArrayList<>();
+    private TridentMethodBranch pickBranch(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        ArrayList<TridentMethodBranch> bestScoreBranchMatches = new ArrayList<>();
         double bestScore = -1;
         boolean foundSameLengthMatch = false;
 
-        //TridentUserMethodBranch bestPick = null;
+        //TridentMethodBranch bestPick = null;
         //boolean bestPickFullyMatched = false;
 
-        for(TridentUserMethodBranch branch : branches) {
+        for(TridentMethodBranch branch : branches) {
             List<FormalParameter> branchParams = branch.getFormalParameters();
             boolean branchMatched = true;
             double score = 0;
@@ -143,6 +115,10 @@ public class TridentUserMethod implements TridentMethod {
         if(member.equals("formalParameters")) return branches.size() == 1 ? new ListObject(branches.get(0).getFormalParameters().stream().map(p -> p.getConstraints().getHandler()).collect(Collectors.toList())) : null;
         if(member.equals("declaringFile")) return declaringContext.getStaticParentFile().getResourceLocation();
         throw new MemberNotFoundException();
+    }
+
+    public String getFunctionName() {
+        return functionName;
     }
 
     @Override

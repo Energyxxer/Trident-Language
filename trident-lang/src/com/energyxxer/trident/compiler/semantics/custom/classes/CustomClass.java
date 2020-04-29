@@ -35,9 +35,19 @@ public class CustomClass implements TypeHandler<CustomClass> {
     private ISymbolContext definitionContext;
 
     private ISymbolContext innerContext;
+    private String typeIdentifier;
 
-    public CustomClass(String name) {
+    private CustomClass(String name) {
         this.name = name;
+    }
+
+    public CustomClass(String name, String location, ISymbolContext ctx) {
+        this.name = name;
+        this.definitionContext = ctx;
+        this.definitionFile = ctx.getStaticParentFile();
+        this.innerContext = new SymbolContext(ctx);
+
+        this.typeIdentifier = location + "@" + name;
     }
 
     public static void defineClass(TokenPattern<?> pattern, ISymbolContext ctx) {
@@ -52,6 +62,8 @@ public class CustomClass implements TypeHandler<CustomClass> {
 
         classObject.innerContext = new SymbolContext(ctx);
 
+        classObject.typeIdentifier = classObject.definitionFile.getResourceLocation() + "@" + classObject.name;
+
         TokenList bodyEntryList = (TokenList) pattern.find("CLASS_DECLARATION_BODY.CLASS_BODY_ENTRIES");
 
         if(bodyEntryList != null) {
@@ -62,11 +74,9 @@ public class CustomClass implements TypeHandler<CustomClass> {
                         VariableInstruction.SymbolDeclaration decl = parseSymbolDeclaration(entry, classObject.definitionContext);
 
                         if(decl.hasModifier(Symbol.SymbolModifier.STATIC)) {
-                            Symbol staticSym = decl.getSupplier().get();
-                            classObject.staticMembers.put(decl.getName(), staticSym);
-                            classObject.innerContext.put(staticSym);
+                            classObject.putStaticMember(decl.getName(), decl.getSupplier().get());
                         } else {
-                            classObject.instanceMemberSuppliers.add(thiz -> decl.getSupplier().get());
+                            classObject.putInstanceMember(thiz -> decl.getSupplier().get());
                         }
                         break;
                     }
@@ -82,18 +92,18 @@ public class CustomClass implements TypeHandler<CustomClass> {
                         Symbol.SymbolVisibility memberVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), classObject.definitionContext, Symbol.SymbolVisibility.LOCAL);
                         final TokenPattern<?> entryFinal = entry;
 
-                        ArrayList<TridentUserMethodBranch> branches = new ArrayList<>();
+                        ArrayList<TridentMethodBranch> branches = new ArrayList<>();
 
                         TokenPattern<?> choice = ((TokenStructure)entry.find("CLASS_FUNCTION_SPLIT")).getContents();
                         switch(choice.getName()) {
                             case "DYNAMIC_FUNCTION": {
-                                branches.add(TridentUserMethodBranch.parseDynamicFunction(choice, ctx));
+                                branches.add(TridentMethodBranch.parseDynamicFunction(choice, ctx));
                                 break;
                             }
                             case "OVERLOADED_FUNCTION": {
                                 TokenList implementations = (TokenList) choice.find("OVERLOADED_FUNCTION_IMPLEMENTATIONS");
                                 for(TokenPattern<?> branch : implementations.getContents()) {
-                                    branches.add(TridentUserMethodBranch.parseDynamicFunction(branch, ctx));
+                                    branches.add(TridentMethodBranch.parseDynamicFunction(branch, ctx));
                                 }
                                 break;
                             }
@@ -110,7 +120,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
                                     }
                                 }
 
-                                TridentUserMethod method = new TridentUserMethod(branches, innerFrame, thiz, functionName);
+                                TridentUserMethod method = new TridentUserMethod(functionName, branches, innerFrame, thiz);
                                 Symbol sym = new Symbol(functionName, memberVisibility);
                                 sym.setTypeConstraints(new TypeConstraints(TridentTypeManager.getHandlerForHandledClass(TridentMethod.class), false));
                                 sym.setFinal(true);
@@ -118,15 +128,12 @@ public class CustomClass implements TypeHandler<CustomClass> {
                                 return sym;
                             };
                             if(isStatic) {
-                                Symbol staticSym = memberSupplier.apply(null);
-                                classObject.staticMembers.put(functionName, staticSym);
-                                classObject.innerContext.put(staticSym);
+                                classObject.putStaticMember(functionName, memberSupplier.apply(null));
                             } else {
-                                classObject.instanceMemberSuppliers.add(memberSupplier);
+                                classObject.putInstanceMember(memberSupplier);
                             }
                         } else {
-                            classObject.constructorSupplier = thiz -> new TridentUserMethod(branches, classObject.innerContext, thiz, functionName);
-                            classObject.constructorVisibility = memberVisibility;
+                            classObject.setConstructor(memberVisibility, thiz -> new TridentUserMethod(functionName, branches, classObject.innerContext, thiz));
                         }
                         break;
                     }
@@ -141,6 +148,34 @@ public class CustomClass implements TypeHandler<CustomClass> {
         }
 
         Debug.log(classObject.staticMembers);
+    }
+
+    public void putStaticFunction(TridentUserMethod value) {
+        Symbol sym = new Symbol(name, Symbol.SymbolVisibility.PUBLIC, value);
+        sym.setValue(value);
+        sym.setFinalAndLock();
+        putStaticMember(value.getFunctionName(), sym);
+    }
+
+    public void putStaticFinalMember(String name, Object value) {
+        Symbol sym = new Symbol(name, Symbol.SymbolVisibility.PUBLIC, value);
+        sym.setValue(value);
+        sym.setFinalAndLock();
+        putStaticMember(name, sym);
+    }
+
+    public void putStaticMember(String name, Symbol sym) {
+        staticMembers.put(name, sym);
+        innerContext.put(sym);
+    }
+
+    public void putInstanceMember(Function<CustomClassObject, Symbol> symSupplier) {
+        instanceMemberSuppliers.add(symSupplier);
+    }
+
+    public void setConstructor(Symbol.SymbolVisibility visibility, Function<CustomClassObject, TridentMethod> supplier) {
+        constructorVisibility = visibility;
+        constructorSupplier = supplier;
     }
 
     @Override
@@ -194,7 +229,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
     }
 
     String getClassTypeIdentifier() {
-        return definitionFile.getResourceLocation() + "@" + name;
+        return typeIdentifier;
     }
 
     @Override

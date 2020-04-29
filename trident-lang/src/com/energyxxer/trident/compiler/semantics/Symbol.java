@@ -83,6 +83,10 @@ public class Symbol {
         isFinal = aFinal;
     }
 
+    public void setFinalAndLock() {
+        maySet = true;
+    }
+
     public void safeSetValue(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(maySet) {
             if(typeConstraints != null) {
