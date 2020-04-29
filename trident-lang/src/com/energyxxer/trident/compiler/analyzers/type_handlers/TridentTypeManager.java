@@ -2,6 +2,8 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.*;
+import com.energyxxer.trident.compiler.semantics.ILazyValue;
+import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
@@ -106,5 +108,25 @@ public class TridentTypeManager {
 
     public static boolean isStaticPrimitiveHandler(TypeHandler<?> handler) {
         return PRIMITIVE_HANDLERS.values().contains(handler);
+    }
+
+
+    public static String getInternalTypeIdentifierForObject(Object obj) {
+        if(obj instanceof ILazyValue) {
+            return "lazy";
+        }
+        if(obj instanceof Symbol) {
+            return "symbol";
+        }
+        TypeHandler handler = TridentTypeManager.getHandlerForObject(obj);
+        return getInternalTypeIdentifierForType(handler);
+    }
+
+    public static String getInternalTypeIdentifierForType(TypeHandler handler) {
+        if(handler.isPrimitive()) {
+            return "primitive(" + handler.getTypeIdentifier() + ")";
+        } else {
+            return "user_defined(" + handler + ")";
+        }
     }
 }

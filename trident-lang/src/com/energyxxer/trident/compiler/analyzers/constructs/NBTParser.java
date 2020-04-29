@@ -21,7 +21,6 @@ import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
-import com.energyxxer.util.logger.Debug;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -333,8 +332,8 @@ public class NBTParser {
             filteredPossibleTypes.removeIf(t -> !t.getCorrespondingTagType().isAssignableFrom(tag.getClass()));
 
             if(filteredPossibleTypes.size() > 1) {
-                Debug.log("Ambiguity between possible types, skipping it");
-                Debug.log(filteredPossibleTypes);
+                //Debug.log("Ambiguity between possible types, skipping it");
+                //Debug.log(filteredPossibleTypes);
                 return;
             }
 

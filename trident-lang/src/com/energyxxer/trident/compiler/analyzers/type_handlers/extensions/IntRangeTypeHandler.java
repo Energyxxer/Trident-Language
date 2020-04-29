@@ -9,7 +9,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.util.IntegerRange")
 public class IntRangeTypeHandler implements TypeHandler<IntegerRange> {
@@ -37,7 +37,7 @@ public class IntRangeTypeHandler implements TypeHandler<IntegerRange> {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMin' requires 1 parameter, instead found " + params.length, pattern, ctx);
                 }
 
-                Integer newMin = params[0] != null ? assertOfType(params[0], patterns[0], ctx, Integer.class) : null;
+                Integer newMin = params[0] != null ? TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, Integer.class) : null;
 
                 return new IntegerRange(newMin, object.getMax());
             };
@@ -48,7 +48,7 @@ public class IntRangeTypeHandler implements TypeHandler<IntegerRange> {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMax' requires 1 parameter, instead found " + params.length, pattern, ctx);
                 }
 
-                Integer newMax = params[0] != null ? assertOfType(params[0], patterns[0], ctx, Integer.class) : null;
+                Integer newMax = params[0] != null ? TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, Integer.class) : null;
 
                 return new IntegerRange(object.getMin(), newMax);
             };
@@ -73,7 +73,7 @@ public class IntRangeTypeHandler implements TypeHandler<IntegerRange> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(IntegerRange range, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(IntegerRange range, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 

@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "com.energyxxer.trident.compiler.TridentUtil$ResourceLocation")
 public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLocation> {
@@ -42,9 +42,9 @@ public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLoca
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'resolve' requires at least 1 parameter, instead found " + params.length, pattern, ctx);
                 }
 
-                Object param = assertOfType(params[0], patterns[0], ctx1, String.class, TridentUtil.ResourceLocation.class);
+                Object param = assertOfClass(params[0], patterns[0], ctx1, String.class, TridentUtil.ResourceLocation.class);
 
-                String delimiter = (params.length > 1 && params[1] != null) ? assertOfType(params[1], patterns[1], ctx1, String.class) : "/";
+                String delimiter = (params.length > 1 && params[1] != null) ? TridentMethod.HelperMethods.assertOfClass(params[1], patterns[1], ctx1, String.class) : "/";
 
                 String other = delimiter + (param instanceof TridentUtil.ResourceLocation ? ((TridentUtil.ResourceLocation) param).body : ((String) param));
 
@@ -66,7 +66,7 @@ public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLoca
 
     @Override
     public Object getIndexer(TridentUtil.ResourceLocation object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        int realIndex = assertOfType(index, pattern, ctx, Integer.class);
+        int realIndex = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
 
         String[] parts = object.getParts();
 
@@ -79,7 +79,7 @@ public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLoca
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(TridentUtil.ResourceLocation object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(TridentUtil.ResourceLocation object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
@@ -108,17 +108,17 @@ public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLoca
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'new resource' requires at least 2 parameters, instead found " + params.length, pattern, ctx);
         }
 
-        assertOfType(params[0], patterns[0], ctx, String.class);
+        TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, String.class);
         if(params.length == 1) {
             return CommonParsers.parseResourceLocation(((String) params[0]), patterns[0], ctx);
         }
 
-        assertOfType(params[1], patterns[1], ctx, ListObject.class);
+        TridentMethod.HelperMethods.assertOfClass(params[1], patterns[1], ctx, ListObject.class);
         ListObject list = ((ListObject) params[1]);
 
         String delimiter = "/";
         if(params.length >= 3) {
-            assertOfType(params[2], patterns[2], ctx, String.class);
+            TridentMethod.HelperMethods.assertOfClass(params[2], patterns[2], ctx, String.class);
             delimiter = (String) params[2];
         }
 

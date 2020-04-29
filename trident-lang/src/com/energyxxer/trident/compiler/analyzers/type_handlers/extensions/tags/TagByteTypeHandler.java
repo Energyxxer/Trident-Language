@@ -28,11 +28,12 @@ public class TagByteTypeHandler implements TypeHandler<TagByte> {
     }
 
     @Override
-    public <F> F cast(TagByte object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(object != null && Number.class.isAssignableFrom(targetType)) {
-            Number number = ((NumericNBTTag) object).getValue();
-            if(targetType == Integer.class || targetType == int.class) return (F) (Integer)number.intValue();
-            if(targetType == Double.class || targetType == double.class) return (F) (Double)number.doubleValue();
+    public Object cast(TagByte object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        switch (targetType.getTypeIdentifier()) {
+            case "primitive(int)":
+                return object.getValue().intValue();
+            case "primitive(real)":
+                return object.getValue().doubleValue();
         }
         throw new ClassCastException();
     }

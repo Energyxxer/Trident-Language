@@ -2,9 +2,10 @@ package com.energyxxer.trident.compiler.semantics;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 public class LazyValue implements ILazyValue {
     private TokenPattern<?> pattern;
@@ -43,6 +44,6 @@ public class LazyValue implements ILazyValue {
             value = InterpolationManager.parse(pattern, ctx, expected);
             evaluated = true;
             return (T) value;
-        } else return assertOfType(value, pattern, ctx, expected);
+        } else return TridentMethod.HelperMethods.assertOfClass(value, pattern, ctx, expected);
     }
 }

@@ -1,15 +1,14 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
-import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.functionlogic.nbt.TagString;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.commodore.textcomponents.StringTextComponent;
-import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.NBTTagTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.TagStringTypeHandler;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -17,8 +16,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.regex.Pattern;
-
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 
 @AnalyzerMember(key = "java.lang.String")
 public class StringTypeHandler implements TypeHandler<String> {
@@ -63,7 +60,7 @@ public class StringTypeHandler implements TypeHandler<String> {
 
     @Override
     public Object getIndexer(String object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        int realIndex = assertOfType(index, pattern, ctx, Integer.class);
+        int realIndex = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
         if(realIndex < 0 || realIndex >= object.length()) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index, pattern, ctx);
         }
@@ -71,36 +68,50 @@ public class StringTypeHandler implements TypeHandler<String> {
         return object.charAt(realIndex) + "";
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(String object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(targetType == NBTTag.class || targetType == TagString.class) {
-            return (F) new TagString(object);
-        }
-        if(targetType == Entity.class) {
-            if(object.isEmpty()) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names cannot be empty", pattern, ctx);
-            } else if(object.contains(" ")) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names may not contain whitespaces", pattern, ctx);
-            } else {
-                return (F) new PlayerName(object);
+    public Object cast(String object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        switch(TridentTypeManager.getInternalTypeIdentifierForType(targetType)) {
+            case "primitive(nbt_value)":
+            case "primitive(tag_string)":
+                return new TagString(object);
+            case "primitive(entity)": {
+                if(object.isEmpty()) {
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names cannot be empty", pattern, ctx);
+                } else if(object.contains(" ")) {
+                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names may not contain whitespaces", pattern, ctx);
+                } else {
+                    return new PlayerName(object);
+                }
             }
-        }
-        if(targetType == TridentUtil.ResourceLocation.class) {
-            TridentUtil.ResourceLocation loc = CommonParsers.parseResourceLocation(object, pattern, ctx);
-            return (F) loc;
-        }
-        if(targetType == TextComponent.class) {
-            return (F) new StringTextComponent(object);
+            case "primitive(resource)":
+                return CommonParsers.parseResourceLocation(object, pattern, ctx);
+            case "primitive(text_component)":
+                return new StringTextComponent(object);
         }
         throw new ClassCastException();
     }
 
     @Override
-    public Object coerce(String object, Class targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(targetType == TagString.class) return new TagString(object);
-        if(targetType == TextComponent.class) return new StringTextComponent(object);
+    public Object coerce(String object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        //TODO remove these coerces. Not necessary, and could lead to unintended JS-style behavior
+        //Leaving these here to test the coercion system
+        switch(TridentTypeManager.getInternalTypeIdentifierForType(targetType)) {
+            case "primitive(nbt_value)":
+            case "primitive(tag_string)":
+                return new TagString(object);
+            case "primitive(text_component)":
+                return new StringTextComponent(object);
+        }
         return null;
+    }
+
+    @Override
+    public boolean canCoerce(Object object, TypeHandler into) {
+        return object instanceof String && (
+                    into instanceof TagStringTypeHandler ||
+                    into instanceof NBTTagTypeHandler ||
+                    into instanceof TextComponentTypeHandler
+        );
     }
 
     @Override

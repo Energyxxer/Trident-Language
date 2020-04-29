@@ -31,11 +31,14 @@ public interface TypeHandler<T> {
 
     Object getIndexer(T object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol);
 
-    @SuppressWarnings("unchecked")
-    <F> F cast(T object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx);
+    Object cast(T object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx);
 
-    default Object coerce(T object, Class targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    default Object coerce(T object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         return null;
+    }
+
+    default boolean canCoerce(Object object, TypeHandler into) {
+        return false;
     }
 
     default Iterator<?> getIterator(T object) {
@@ -43,7 +46,6 @@ public interface TypeHandler<T> {
     }
 
     Class<T> getHandledClass();
-
     default boolean isPrimitive() {
         return true;
     }
@@ -51,6 +53,7 @@ public interface TypeHandler<T> {
     default boolean isSelfHandler() {
         return this.getClass() == getHandledClass();
     }
+
     default boolean isInstance(Object obj) {
         return getHandledClass().isInstance(obj);
     }
@@ -65,5 +68,10 @@ public interface TypeHandler<T> {
 
     default boolean isStaticHandler() {
         return TridentTypeManager.isStaticPrimitiveHandler(this);
+    }
+
+    default TypeHandler getStaticHandler() {
+        if(isStaticHandler()) return this;
+        return TridentTypeManager.getHandlerForShorthand(getTypeIdentifier());
     }
 }

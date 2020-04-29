@@ -12,7 +12,7 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "Text")
 public class TextLib implements DefaultLibraryProvider {
@@ -26,7 +26,7 @@ public class TextLib implements DefaultLibraryProvider {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'parse' requires 1 parameter, instead found " + params.length, pattern, ctx);
             }
 
-            String raw = assertOfType(params[0], patterns[0], ctx, String.class);
+            String raw = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, String.class);
 
             try {
                 return TextParser.parseTextComponent(gson.fromJson(raw, JsonElement.class), ctx, patterns[0], TextComponentContext.CHAT);

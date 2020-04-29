@@ -10,10 +10,10 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 public class TagLongArrayTypeHandler implements TypeHandler<TagLongArray> {
-    private static final TridentMethod CONSTRUCTOR = TagLongArrayTypeHandler::constructTagLongArray;
+    private static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructTagLongArray(params, patterns, pattern, ctx);
 
     @Override
     public Object getMember(TagLongArray object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -26,10 +26,9 @@ public class TagLongArrayTypeHandler implements TypeHandler<TagLongArray> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <F> F cast(TagLongArray object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(targetType == ListObject.class) {
-            return (F) new ListObject(object.getAllTags());
+    public Object cast(TagLongArray object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if ("primitive(list)".equals(TridentTypeManager.getInternalTypeIdentifierForType(targetType))) {
+            return new ListObject(object.getAllTags());
         }
         throw new ClassCastException();
     }
@@ -56,7 +55,7 @@ public class TagLongArrayTypeHandler implements TypeHandler<TagLongArray> {
 
     private static TagLongArray constructTagLongArray(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(params.length == 0 || params[0] == null) return new TagLongArray();
-        ListObject list = assertOfType(params[0], patterns[0], ctx, ListObject.class);
+        ListObject list = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, ListObject.class);
 
         TagLongArray arr = new TagLongArray();
 

@@ -2,8 +2,6 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.operators;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.ILazyValue;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -12,6 +10,8 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import java.util.HashMap;
 import java.util.Objects;
 
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager.getInternalTypeIdentifierForObject;
+
 public interface OperatorHandler<A, B> {
 
     Object perform(A a, B b, TokenPattern<?> pattern, ISymbolContext ctx);
@@ -19,28 +19,13 @@ public interface OperatorHandler<A, B> {
     class Static {
         private static HashMap<String, OperatorHandler<?, ?>> handlers = new HashMap<>();
 
-        private static String getIdentifierForObject(Object obj) {
-            if(obj instanceof ILazyValue) {
-                return "lazy";
-            }
-            if(obj instanceof Symbol) {
-                return "symbol";
-            }
-            TypeHandler handler = TridentTypeManager.getHandlerForObject(obj);
-            if(handler.isPrimitive()) {
-                return "primitive(" + handler.getTypeIdentifier() + ")";
-            } else {
-                return "user_defined(" + handler + ")";
-            }
-        }
-
         @SuppressWarnings("unchecked")
         public static Object perform(Object a, Operator operator, Object b, TokenPattern<?> pattern, ISymbolContext ctx) {
             OperatorType operatorType = operator.getOperatorType();
             
             if(operatorType == OperatorType.BINARY) {
-                String idA = a != null ? getIdentifierForObject(a) : "*";
-                String idB = b != null ? getIdentifierForObject(b) : "*";
+                String idA = a != null ? getInternalTypeIdentifierForObject(a) : "*";
+                String idB = b != null ? getInternalTypeIdentifierForObject(b) : "*";
                 OperatorHandler handler = handlers.get(idA + " " + operator.getSymbol() + " " + idB);
 
                 if (handler == null) handler = handlers.get(idA + " " + operator.getSymbol() + " *");
@@ -55,8 +40,8 @@ public interface OperatorHandler<A, B> {
                 return handler.perform(a, b, pattern, ctx);
             } else if(operatorType == OperatorType.UNARY_ANY || operatorType == OperatorType.UNARY_LEFT || operatorType == OperatorType.UNARY_RIGHT) {
                 OperatorHandler handler = null;
-                String idA = a != null ? getIdentifierForObject(a) : "*";
-                String idB = b != null ? getIdentifierForObject(b) : "*";
+                String idA = a != null ? getInternalTypeIdentifierForObject(a) : "*";
+                String idB = b != null ? getInternalTypeIdentifierForObject(b) : "*";
 
                 if(operatorType == OperatorType.UNARY_LEFT) {
                     handler = handlers.get(operator.getSymbol() + " " + idB);
@@ -201,7 +186,7 @@ public interface OperatorHandler<A, B> {
 
             handlers.put("primitive(string) + primitive(string)", (OperatorHandler<String, String>) (s, str, pattern, compiler) -> s.concat(str));
             handlers.put("primitive(string) + *", (String a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                String converted = InterpolationManager.cast(b, String.class, pattern, ctx);
+                String converted = InterpolationManager.castToString(b, pattern, ctx);
                 return a + converted;
             });
 

@@ -30,7 +30,7 @@ import com.energyxxer.util.Lazy;
 import java.util.HashMap;
 import java.util.Locale;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "set")
 public class SetParser implements SimpleCommandParser {
@@ -327,7 +327,7 @@ public class SetParser implements SimpleCommandParser {
                     if (value == null) {
                         return new PointerDecorator.NullPointer();
                     }
-                    assertOfType(value, pattern, ctx, NBTTag.class, Integer.class, Double.class, PointerObject.class);
+                    assertOfClass(value, pattern, ctx, NBTTag.class, Integer.class, Double.class, PointerObject.class);
                     if (value instanceof PointerObject) return decorate(((PointerObject) value), pattern, ctx);
                     if (value instanceof Integer) value = new TagInt((int) value);
                     else if (value instanceof Double) value = new TagDouble((double) value);

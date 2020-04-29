@@ -17,7 +17,7 @@ public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
     }
 
     @Override
-    public <F> F cast(TypeHandler object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(TypeHandler object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
@@ -29,5 +29,10 @@ public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
     @Override
     public String getTypeIdentifier() {
         return "type_definition";
+    }
+
+    @Override
+    public boolean isInstance(Object obj) {
+        return obj instanceof TypeHandler && ((TypeHandler) obj).isStaticHandler();
     }
 }

@@ -16,11 +16,11 @@ import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.item.Item")
 public class ItemTypeHandler implements TypeHandler<Item> {
-    private static final TridentMethod CONSTRUCTOR = ItemTypeHandler::constructItem;
+    private static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructItem(params, patterns, pattern, ctx);
 
     @Override
     public Object getMember(Item object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -61,7 +61,7 @@ public class ItemTypeHandler implements TypeHandler<Item> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(Item object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(Item object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
@@ -83,7 +83,7 @@ public class ItemTypeHandler implements TypeHandler<Item> {
     private static Item constructItem(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         CommandModule module = ctx.getCompiler().getModule();
         if(params.length == 0 || params[0] == null) return new Item(module.minecraft.types.item.get("air"));
-        TridentUtil.ResourceLocation loc = assertOfType(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
+        TridentUtil.ResourceLocation loc = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
         Namespace ns = module.getNamespace(loc.namespace);
 
         Type type;

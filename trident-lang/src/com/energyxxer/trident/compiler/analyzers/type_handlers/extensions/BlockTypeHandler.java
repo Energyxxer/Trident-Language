@@ -20,11 +20,9 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.Map;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
-
 @AnalyzerMember(key = "com.energyxxer.commodore.block.Block")
 public class BlockTypeHandler implements TypeHandler<Block> {
-    public static final TridentMethod CONSTRUCTOR = BlockTypeHandler::constructBlock;
+    public static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructBlock(params, patterns, pattern, ctx);
 
     @Override
     public Object getMember(Block object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -56,7 +54,7 @@ public class BlockTypeHandler implements TypeHandler<Block> {
                 Blockstate newState = new Blockstate();
                 for (Map.Entry<String, Symbol> a : value.entrySet()) {
                     if(a.getValue().getValue() != null) {
-                        newState.put(a.getKey(), InterpolationManager.cast(a.getValue().getValue(), String.class, pattern, ctx));
+                        newState.put(a.getKey(), InterpolationManager.castToString(a.getValue().getValue(), pattern, ctx));
                     }
                 }
                 object.setBlockstate(newState);
@@ -72,7 +70,7 @@ public class BlockTypeHandler implements TypeHandler<Block> {
     }
 
     @Override
-    public <F> F cast(Block object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(Block object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
@@ -94,7 +92,7 @@ public class BlockTypeHandler implements TypeHandler<Block> {
     private static Block constructBlock(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         CommandModule module = ctx.getCompiler().getModule();
         if(params.length == 0 || params[0] == null) return new Block(module.minecraft.types.block.get("air"));
-        TridentUtil.ResourceLocation loc = assertOfType(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
+        TridentUtil.ResourceLocation loc = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
         Namespace ns = module.getNamespace(loc.namespace);
 
         Type type;

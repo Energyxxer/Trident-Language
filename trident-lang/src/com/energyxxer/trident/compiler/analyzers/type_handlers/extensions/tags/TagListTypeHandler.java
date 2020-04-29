@@ -11,7 +11,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.nbt.TagList")
 public class TagListTypeHandler implements TypeHandler<TagList> {
@@ -38,7 +38,7 @@ public class TagListTypeHandler implements TypeHandler<TagList> {
 
     @Override
     public Object getIndexer(TagList object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        assertOfType(index, pattern, ctx, Integer.class);
+        TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
         int realIndex = (int) index;
         if(realIndex < 0 || realIndex >= object.size()) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index + "; Length: " + object.size(), pattern, ctx);
@@ -47,7 +47,7 @@ public class TagListTypeHandler implements TypeHandler<TagList> {
     }
 
     @Override
-    public <F> F cast(TagList object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(TagList object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 

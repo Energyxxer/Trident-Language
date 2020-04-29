@@ -4,12 +4,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
-import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
-import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserMethod;
+import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -22,6 +18,8 @@ import com.energyxxer.util.logger.Debug;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Function;
+
+import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
 
 public class CustomClass implements TypeHandler<CustomClass> {
 
@@ -61,31 +59,19 @@ public class CustomClass implements TypeHandler<CustomClass> {
                 entry = ((TokenStructure)entry).getContents();
                 switch(entry.getName()) {
                     case "CLASS_MEMBER": {
-                        boolean isStatic = entry.find("LITERAL_STATIC") != null;
+                        VariableInstruction.SymbolDeclaration decl = parseSymbolDeclaration(entry, classObject.definitionContext);
 
-                        String memberName = entry.find("MEMBER_NAME").flatten(false);
-                        Symbol.SymbolVisibility memberVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), classObject.definitionContext, Symbol.SymbolVisibility.LOCAL);
-                        final TokenPattern<?> entryFinal = entry;
-
-                        Function<CustomClassObject, Symbol> memberSupplier = thiz -> {
-                            Object initialValue = InterpolationManager.parse(entryFinal.find("FIELD_INITIALIZATION.INTERPOLATION_VALUE"), classObject.definitionContext);
-                            Symbol sym = new Symbol(memberName, memberVisibility);
-                            sym.setTypeConstraints(TypeConstraints.parseConstraintsInfer(entryFinal.find("TYPE_CONSTRAINTS"), classObject.definitionContext, initialValue));
-                            sym.safeSetValue(initialValue, entryFinal, classObject.definitionContext);
-                            return sym;
-                        };
-
-                        if(isStatic) {
-                            Symbol staticSym = memberSupplier.apply(null);
-                            classObject.staticMembers.put(memberName, staticSym);
+                        if(decl.hasModifier(Symbol.SymbolModifier.STATIC)) {
+                            Symbol staticSym = decl.getSupplier().get();
+                            classObject.staticMembers.put(decl.getName(), staticSym);
                             classObject.innerContext.put(staticSym);
                         } else {
-                            classObject.instanceMemberSuppliers.add(memberSupplier);
+                            classObject.instanceMemberSuppliers.add(thiz -> decl.getSupplier().get());
                         }
                         break;
                     }
                     case "CLASS_FUNCTION": {
-                        String functionName = entry.find("MEMBER_NAME").flatten(false);
+                        String functionName = entry.find("SYMBOL_NAME").flatten(false);
                         boolean isConstructor = "new".equals(functionName);
                         boolean isStatic = entry.find("LITERAL_STATIC") != null;
 
@@ -96,17 +82,24 @@ public class CustomClass implements TypeHandler<CustomClass> {
                         Symbol.SymbolVisibility memberVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), classObject.definitionContext, Symbol.SymbolVisibility.LOCAL);
                         final TokenPattern<?> entryFinal = entry;
 
-                        ArrayList<FormalParameter> formalParams = new ArrayList<>();
-                        TypeConstraints returnConstraints = TypeConstraints.parseConstraints(entry.find("TYPE_CONSTRAINTS"), ctx);
-                        TokenList paramNames = (TokenList) entry.find("FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
-                        if(paramNames != null) {
-                            for(TokenPattern<?> param : paramNames.searchByName("FORMAL_PARAMETER")) {
-                                formalParams.add(new FormalParameter(param.find("FORMAL_PARAMETER_NAME").flatten(false), TypeConstraints.parseConstraints(param.find("TYPE_CONSTRAINTS"), classObject.definitionContext)));
+                        ArrayList<TridentUserMethodBranch> branches = new ArrayList<>();
+
+                        TokenPattern<?> choice = ((TokenStructure)entry.find("CLASS_FUNCTION_SPLIT")).getContents();
+                        switch(choice.getName()) {
+                            case "DYNAMIC_FUNCTION": {
+                                branches.add(TridentUserMethodBranch.parseDynamicFunction(choice, ctx));
+                                break;
                             }
+                            case "OVERLOADED_FUNCTION": {
+                                TokenList implementations = (TokenList) choice.find("OVERLOADED_FUNCTION_IMPLEMENTATIONS");
+                                for(TokenPattern<?> branch : implementations.getContents()) {
+                                    branches.add(TridentUserMethodBranch.parseDynamicFunction(branch, ctx));
+                                }
+                                break;
+                            }
+                            default:
+                                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + choice.getName() + "'", choice, ctx);
                         }
-
-
-                        TokenPattern<?> innerFunctionPattern = entry.find("ANONYMOUS_INNER_FUNCTION");
 
                         if(!isConstructor) {
                             Function<CustomClassObject, Symbol> memberSupplier = thiz -> {
@@ -116,8 +109,8 @@ public class CustomClass implements TypeHandler<CustomClass> {
                                         innerFrame.put(instanceSym);
                                     }
                                 }
-                                TridentUserMethod method = new TridentUserMethod(innerFunctionPattern, innerFrame, formalParams, thiz, functionName);
-                                method.setReturnConstraints(returnConstraints);
+
+                                TridentUserMethod method = new TridentUserMethod(branches, innerFrame, thiz, functionName);
                                 Symbol sym = new Symbol(functionName, memberVisibility);
                                 sym.setTypeConstraints(new TypeConstraints(TridentTypeManager.getHandlerForHandledClass(TridentMethod.class), false));
                                 sym.setFinal(true);
@@ -132,7 +125,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
                                 classObject.instanceMemberSuppliers.add(memberSupplier);
                             }
                         } else {
-                            classObject.constructorSupplier = thiz -> new TridentUserMethod(innerFunctionPattern, classObject.innerContext, formalParams, thiz, functionName);
+                            classObject.constructorSupplier = thiz -> new TridentUserMethod(branches, classObject.innerContext, thiz, functionName);
                             classObject.constructorVisibility = memberVisibility;
                         }
                         break;
@@ -170,7 +163,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
     }
 
     @Override
-    public <F> F cast(CustomClass object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(CustomClass object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 

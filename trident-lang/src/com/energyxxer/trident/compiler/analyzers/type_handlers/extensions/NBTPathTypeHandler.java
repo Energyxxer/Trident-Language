@@ -14,11 +14,11 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.nbt.path.NBTPath")
 public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
-    private static final TridentMethod CONSTRUCTOR = NBTPathTypeHandler::constructNBTPath;
+    private static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructNBTPath(params, patterns, pattern, ctx);
 
     private static HashMap<String, MemberWrapper<NBTPath>> members = new HashMap<>();
 
@@ -62,7 +62,7 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
     }
 
     @Override
-    public <F> F cast(NBTPath object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(NBTPath object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
@@ -84,7 +84,7 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
     private static NBTPath constructNBTPath(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(params.length == 0 || params[0] == null) return new NBTPath(new NBTListMatch());
 
-        Object obj = assertOfType(params[0], patterns[0], ctx, String.class, Integer.class, TagCompound.class);
+        Object obj = assertOfClass(params[0], patterns[0], ctx, String.class, Integer.class, TagCompound.class);
         if(obj instanceof TagCompound) {
             boolean wrapInList = params.length >= 2 && params[1] instanceof Boolean && ((Boolean) params[1]);
             if(wrapInList) {
@@ -96,7 +96,7 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
         if(obj instanceof String) {
             TagCompound compoundMatch = null;
             if(params.length >= 2 && params[1] != null) {
-                compoundMatch = assertOfType(params[1], patterns[1], ctx, TagCompound.class);
+                compoundMatch = TridentMethod.HelperMethods.assertOfClass(params[1], patterns[1], ctx, TagCompound.class);
             }
             return new NBTPath(new NBTPathKey((String) obj, compoundMatch));
         }

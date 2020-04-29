@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable<Object>, ContextualToString {
     public static final DictionaryObject STATIC_HANDLER = new DictionaryObject();
@@ -41,7 +41,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
                     if (params.length < 1) {
                         throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1, ctx);
                     }
-                    TridentUserMethod func = assertOfType(params[0], patterns[0], file1, TridentUserMethod.class);
+                    TridentUserMethod func = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], file1, TridentUserMethod.class);
 
                     DictionaryObject newDict = new DictionaryObject();
 
@@ -68,13 +68,13 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
 
     @Override
     public Object getIndexer(DictionaryObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        String key = assertOfType(index, pattern, ctx, String.class);
+        String key = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         return getMember(object, key, pattern, ctx, keepSymbol);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(DictionaryObject object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(DictionaryObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 

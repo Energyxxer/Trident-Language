@@ -4,11 +4,10 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.util.logger.Debug;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
-
-import static com.energyxxer.trident.extensions.EObject.assertNotNull;
 
 public interface TridentMethod extends TypeHandler<TridentMethod> {
     TridentMethod STATIC_HANDLER = (params, patterns, pattern, ctx) -> null;
@@ -38,7 +37,7 @@ public interface TridentMethod extends TypeHandler<TridentMethod> {
     }
 
     @Override
-    default <F> F cast(TridentMethod object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    default Object cast(TridentMethod object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
@@ -55,30 +54,49 @@ public interface TridentMethod extends TypeHandler<TridentMethod> {
     class HelperMethods {
 
         @SuppressWarnings("unchecked")
-        public static <T> T assertOfType(Object param, TokenPattern<?> pattern, ISymbolContext ctx, Class<T> expected) {
-            expected = sanitizeClass(expected);
-            if(expected.isInstance(param)) return (T) param;
-            assertNotNull(param, pattern, ctx);
-            TypeHandler handler = TridentTypeManager.getHandlerForObject(param);
-            if(handler != null) {
-                T coerced = (T) handler.coerce(param, expected, pattern, ctx);
-                if(coerced != null) {
-                    return coerced;
-                } else {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of type " + TridentTypeManager.getHandlerForHandledClass(expected).getTypeIdentifier(), pattern, ctx);
-                }
-            } else {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown variable handler for '" + param.getClass().getSimpleName() + "'", pattern, ctx);
+        public static <T> T assertOfClass(Object param, TokenPattern<?> pattern, ISymbolContext ctx, Class<? extends T>... expected) {
+            TypeHandler[] expectedTypes = new TypeHandler[expected.length];
+            for(int i = 0; i < expected.length; i++) {
+                expectedTypes[i] = TridentTypeManager.getHandlerForHandledClass(sanitizeClass(expected[i]));
             }
-        }
+            param = assertOfType(param, pattern, ctx, false, expectedTypes);
 
-        @SuppressWarnings("unchecked")
-        public static <T> T assertOfType(Object param, TokenPattern<?> pattern, ISymbolContext ctx, Class<? extends T>... expected) {
+            //Ensure of the expected types
             for(Class cls : expected) {
                 cls = sanitizeClass(cls);
                 if(cls.isInstance(param)) return (T) param;
             }
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected parameter of one of the following types: " + Arrays.stream(expected).map((cls) -> TridentTypeManager.getHandlerForHandledClass(cls).getTypeIdentifier()).collect(Collectors.joining(", ")), pattern, ctx);
+            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Expected one of the following java classes: " + Arrays.stream(expected).map(Class::getSimpleName).collect(Collectors.joining(", ")) + "; Instead got: " + param.getClass().getSimpleName(), pattern, ctx);
+        }
+
+        @SuppressWarnings("unchecked")
+        public static Object assertOfType(Object value, TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable, TypeHandler... expected) {
+            if(value == null && nullable) return null;
+            if(value != null) {
+                TypeHandler valueType = TridentTypeManager.getHandlerForObject(value);
+
+                TypeHandler couldCoerce = null;
+                for(TypeHandler type : expected) {
+                    if(type.isInstance(value)) return value;
+                    if(couldCoerce == null && valueType.getHandledClass().isInstance(value) && valueType.canCoerce(value, type)) couldCoerce = type;
+                }
+
+                //not instance of accepted types. Attempt to coerce into the first applicable expected value
+                if(couldCoerce != null) {
+                    Object coerced = valueType.coerce(value, couldCoerce, pattern, ctx);
+                    if(coerced != null) {
+                        return coerced;
+                    } else {
+                        Debug.log("LIES");
+                    }
+                }
+            }
+
+            if(expected.length > 1) {
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected value of one of the following types: " + Arrays.stream(expected).map(TypeHandler::getTypeIdentifier).collect(Collectors.joining(", ")) + "; Instead got " + TridentTypeManager.getTypeIdentifierForObject(value), pattern, ctx);
+            } else {
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected value of type " + expected[0].getTypeIdentifier() + "; Instead got " + TridentTypeManager.getTypeIdentifierForObject(value), pattern, ctx);
+            }
         }
 
         //Java amirite

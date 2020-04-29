@@ -104,7 +104,7 @@ public class PluginCommandParser {
                 return file.getResourceLocation();
             }
             case "ANONYMOUS_INNER_FUNCTION": {
-                return new TridentUserMethod(pattern, ctx, Collections.emptyList(), null, null);
+                return new TridentUserMethod(pattern, ctx, Collections.emptyList(), null, null, null);
             }
             case "MODIFIER": {
                 Collection<ExecuteModifier> modifiers = CommonParsers.parseModifier(pattern, ctx, null);

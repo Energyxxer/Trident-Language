@@ -58,7 +58,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
                 if(params.length < 1) {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern, ctx);
                 }
-                TridentUserMethod func = TridentMethod.HelperMethods.assertOfType(params[0], patterns[0], file1, TridentUserMethod.class);
+                TridentUserMethod func = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], file1, TridentUserMethod.class);
 
                 ListObject newList = new ListObject();
 
@@ -80,7 +80,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
                 if(params.length < 1) {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'filter' requires at least 1 parameter, instead found " + params.length, pattern, ctx);
                 }
-                TridentUserMethod func = TridentMethod.HelperMethods.assertOfType(params[0], patterns[0], file1, TridentUserMethod.class);
+                TridentUserMethod func = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], file1, TridentUserMethod.class);
 
                 ListObject newList = new ListObject();
 
@@ -109,7 +109,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
 
     @Override
     public Object getIndexer(ListObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        int realIndex = TridentMethod.HelperMethods.assertOfType(index, pattern, ctx, Integer.class);
+        int realIndex = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
         if(realIndex < 0 || realIndex >= object.size()) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index + "; Length: " + object.size(), pattern, ctx);
         }
@@ -120,7 +120,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(ListObject object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(ListObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 

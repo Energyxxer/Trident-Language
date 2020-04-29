@@ -19,7 +19,7 @@ public class BooleanTypeHandler implements TypeHandler<Boolean> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(Boolean object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(Boolean object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 

@@ -17,7 +17,7 @@ public class NullTypeHandler implements TypeHandler<Object> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(Object object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(Object object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         return null;
     }
 

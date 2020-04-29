@@ -2,6 +2,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -42,11 +43,16 @@ public class TypeConstraints {
         return new TypeConstraints(null, true);
     }
 
+    public Object adjustValue(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(handler != null) value = TridentMethod.HelperMethods.assertOfType(value, pattern, ctx, nullable, handler);
+        return value;
+    }
+
     public void validate(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(value == null && !nullable) {
             throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected a non-null value, Found null", pattern, ctx);
         }
-        if(value != null && handler != null && !handler.isInstance(value)) {
+        if(value != null && handler != null && !handler.isInstance(value) && !TridentTypeManager.getHandlerForObject(value).canCoerce(value, handler)) {
             throw new TridentException(TridentException.Source.TYPE_ERROR, "Incompatible types. Expected '" + handler.getTypeIdentifier() + "', Found '" + TridentTypeManager.getTypeIdentifierForObject(value) + "'", pattern, ctx);
         }
     }
@@ -66,5 +72,22 @@ public class TypeConstraints {
     @Override
     public String toString() {
         return (handler != null ? TridentTypeManager.getTypeIdentifierForType(handler) : "*") + (nullable ? "?" : "");
+    }
+
+    //4: exact match
+    //3: subtype match
+    //2: coercion match
+    //1: null match
+    //0: no match
+    @SuppressWarnings("unchecked")
+    public int rateMatch(Object value) {
+        if(value == null && nullable) return 1;
+        if(handler == null && value != null) return 4;
+        if(!verify(value)) return 0;
+        TypeHandler objectTypeHandler = TridentTypeManager.getHandlerForObject(value).getStaticHandler();
+        if(objectTypeHandler == handler) return 4;
+        if(handler.isInstance(value)) return 3;
+        if(objectTypeHandler.canCoerce(value, handler)) return 2;
+        return 0;
     }
 }

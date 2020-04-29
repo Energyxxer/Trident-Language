@@ -15,7 +15,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import java.util.Collection;
 import java.util.Map;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "Types")
 public class TypeLib implements DefaultLibraryProvider {
@@ -84,8 +84,8 @@ public class TypeLib implements DefaultLibraryProvider {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'exists' requires 2 parameters, instead found " + params.length, pattern, file);
             }
 
-            String category = assertOfType(params[0], patterns[0], file, String.class);
-            Object rawLoc = assertOfType(params[1], patterns[1], file, TridentUtil.ResourceLocation.class, String.class);
+            String category = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], file, String.class);
+            Object rawLoc = assertOfClass(params[1], patterns[1], file, TridentUtil.ResourceLocation.class, String.class);
 
             if(rawLoc instanceof String) {
                 rawLoc = new TridentUtil.ResourceLocation((String) rawLoc);

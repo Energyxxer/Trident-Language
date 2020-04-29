@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.stream.Collectors;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.nbt.TagCompound")
 public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
@@ -39,14 +39,14 @@ public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
 
     @Override
     public Object getIndexer(TagCompound object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        String key = assertOfType(index, pattern, ctx, String.class);
+        String key = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         if(object.contains(key)) return object.get(key);
         else return null;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(TagCompound object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(TagCompound object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 

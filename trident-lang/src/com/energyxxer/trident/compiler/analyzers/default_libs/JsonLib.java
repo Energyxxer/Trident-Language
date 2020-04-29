@@ -36,10 +36,10 @@ public class JsonLib implements DefaultLibraryProvider {
                     boolean prettyPrinting = false;
 
                     if(params.length >= 2) {
-                        prettyPrinting = TridentMethod.HelperMethods.assertOfType(params[1], patterns[1], ctx, Boolean.class);
+                        prettyPrinting = TridentMethod.HelperMethods.assertOfClass(params[1], patterns[1], ctx, Boolean.class);
                     }
 
-                    Object param = TridentMethod.HelperMethods.assertOfType(params[0], patterns[0], ctx, String.class, Integer.class, Double.class, Boolean.class, ListObject.class, DictionaryObject.class);
+                    Object param = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, String.class, Integer.class, Double.class, Boolean.class, ListObject.class, DictionaryObject.class);
 
                     GsonBuilder gb = new GsonBuilder();
                     if(prettyPrinting) gb.setPrettyPrinting();

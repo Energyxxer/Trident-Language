@@ -17,9 +17,9 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
+import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -35,7 +35,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger.REPLACE;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
@@ -175,7 +176,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
 
     @Override
     public Object getIndexer(CustomItem object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        String indexStr = assertOfType(index, pattern, ctx, String.class);
+        String indexStr = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         if(members.containsKey(indexStr)) {
             Symbol sym = members.get(indexStr);
             return keepSymbol ? sym : sym.getValue();
@@ -187,7 +188,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
     }
 
     @Override
-    public <F> F cast(CustomItem object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext file) {
+    public Object cast(CustomItem object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext file) {
         throw new ClassCastException();
     }
 
@@ -362,23 +363,12 @@ public class CustomItem implements TypeHandler<CustomItem> {
                             break;
                         }
                         case "ITEM_FIELD": {
-                            String fieldName = entry.find("FIELD_NAME").flatten(false);
-
-                            Symbol sym = new Symbol(fieldName, Symbol.SymbolVisibility.LOCAL);
-
-                            Object value = null;
-                            TokenPattern<?> initializationPattern = entry.find("FIELD_INITIALIZATION");
-                            if(initializationPattern != null) {
-                                value = InterpolationManager.parse(((TokenStructure) initializationPattern.find("FIELD_VALUE")).getContents(), ctx);
-                            }
-                            sym.setTypeConstraints(TypeConstraints.parseConstraintsInfer(entry.find("TYPE_CONSTRAINTS"), ctx, value));
-
-                            sym.safeSetValue(value, pattern, ctx);
+                            VariableInstruction.SymbolDeclaration decl = parseSymbolDeclaration(entry, ctx);
 
                             if (itemDecl != null) {
-                                itemDecl.members.put(fieldName, sym);
+                                itemDecl.members.put(decl.getName(), decl.getSupplier().get());
                             } else {
-                                ctx.put(sym);
+                                ctx.put(decl.getSupplier().get());
                             }
                             break;
                         }

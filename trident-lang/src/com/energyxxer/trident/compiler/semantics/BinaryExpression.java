@@ -2,12 +2,11 @@ package com.energyxxer.trident.compiler.semantics;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperandType;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.Operator;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperatorHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
 
 public class BinaryExpression implements ILazyValue {
     private Object rawA;
@@ -65,12 +64,16 @@ public class BinaryExpression implements ILazyValue {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> T getValue(Class<T> expected) {
         if(!evaluated) {
             result = evaluate();
             evaluated = true;
         }
-        return assertOfType(result, pattern, ctx, expected);
+        if(expected == Object.class) {
+            return (T) result;
+        }
+        return TridentMethod.HelperMethods.assertOfClass(result, pattern, ctx, expected);
     }
 }

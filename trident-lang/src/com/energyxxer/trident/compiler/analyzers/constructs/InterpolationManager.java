@@ -4,7 +4,6 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperandType;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperationOrder;
@@ -21,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
 public class InterpolationManager {
 
@@ -41,15 +40,10 @@ public class InterpolationManager {
         return parse(pattern, ctx, false, expected);
     }
 
-    @SuppressWarnings("unchecked")
     public static <T> T parse(TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable, Class<T> expected) {
         Object obj = parse(pattern, ctx, false);
         if(nullable && obj == null) return null;
-        if(expected.isInstance(obj)) {
-            return (T) obj;
-        } else {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + expected.getSimpleName(), pattern, ctx);
-        }
+        return TridentMethod.HelperMethods.assertOfClass(obj, pattern, ctx, expected);
     }
 
     public static Object parse(TokenPattern<?> pattern, ISymbolContext ctx, Class... expected) {
@@ -59,10 +53,7 @@ public class InterpolationManager {
     public static Object parse(TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable, Class... expected) {
         Object obj = parse(pattern, ctx, false);
         if(nullable && obj == null) return null;
-        for(Class cls : expected) {
-            if(cls.isInstance(obj)) return obj;
-        }
-        throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' does not contain a value of type " + Arrays.stream(expected).map(Class::getSimpleName).collect(Collectors.joining(", ")), pattern, ctx);
+        return TridentMethod.HelperMethods.assertOfClass(obj, pattern, ctx, expected);
     }
 
     @Nullable
@@ -70,7 +61,6 @@ public class InterpolationManager {
         return parse(pattern, ctx, false);
     }
 
-    @SuppressWarnings("unchecked")
     @Nullable
     public static Object parse(TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         while (true) {
@@ -156,8 +146,7 @@ public class InterpolationManager {
                     return CommonParsers.parsePointer(pattern.find("POINTER"), ctx);
                 }
                 case "WRAPPED_TYPE": {
-                    pattern = pattern.find("INTERPOLATION_TYPE");
-                    continue;
+                    return parse(pattern.find("INTERPOLATION_TYPE"), ctx, false, TypeHandler.class);
                 }
                 case "DICTIONARY": {
                     DictionaryObject dict = new DictionaryObject();
@@ -196,23 +185,25 @@ public class InterpolationManager {
                     return list;
                 }
                 case "NEW_FUNCTION": {
-                    if (pattern.find("FORMAL_PARAMETERS_OPT") != null) {
-                        TypeConstraints returnConstraints = TypeConstraints.parseConstraints(pattern.find("FORMAL_PARAMETERS_OPT.TYPE_CONSTRAINTS"), ctx);
-
-                        ArrayList<FormalParameter> formalParams = new ArrayList<>();
-                        TokenList paramNames = (TokenList) pattern.find("FORMAL_PARAMETERS_OPT.FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
-                        if (paramNames != null) {
-                            for (TokenPattern<?> param : paramNames.searchByName("FORMAL_PARAMETER")) {
-                                formalParams.add(new FormalParameter(param.find("FORMAL_PARAMETER_NAME").flatten(false), TypeConstraints.parseConstraints(param.find("TYPE_CONSTRAINTS"), ctx)));
-                            }
+                    TokenPattern<?> choice = ((TokenStructure)pattern.find("NEW_FUNCTION_SPLIT")).getContents();
+                    switch(choice.getName()) {
+                        case "ANONYMOUS_INNER_FUNCTION": {
+                            TridentFile innerFile = TridentFile.createInnerFile(choice.find("ANONYMOUS_INNER_FUNCTION"), ctx);
+                            return innerFile.getResourceLocation();
                         }
-
-                        TridentUserMethod met = new TridentUserMethod(pattern.find("ANONYMOUS_INNER_FUNCTION"), ctx, formalParams, nextThis, nextFunctionName);
-                        met.setReturnConstraints(returnConstraints);
-                        return met;
-                    } else {
-                        TridentFile innerFile = TridentFile.createInnerFile(pattern.find("ANONYMOUS_INNER_FUNCTION"), ctx);
-                        return innerFile.getResourceLocation();
+                        case "DYNAMIC_FUNCTION": {
+                            return new TridentUserMethod(Collections.singletonList(TridentUserMethodBranch.parseDynamicFunction(choice, ctx)), ctx, nextThis, nextFunctionName);
+                        }
+                        case "OVERLOADED_FUNCTION": {
+                            TokenList implementations = (TokenList) choice.find("OVERLOADED_FUNCTION_IMPLEMENTATIONS");
+                            ArrayList<TridentUserMethodBranch> branches = new ArrayList<>();
+                            for(TokenPattern<?> branch : implementations.getContents()) {
+                                branches.add(TridentUserMethodBranch.parseDynamicFunction(branch, ctx));
+                            }
+                            return new TridentUserMethod(branches, ctx, nextThis, nextFunctionName);
+                        }
+                        default:
+                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + choice.getName() + "'", choice, ctx);
                     }
                 }
                 case "PRIMITIVE_ROOT_TYPE": {
@@ -264,8 +255,8 @@ public class InterpolationManager {
                 }
                 case "CAST": {
                     Object parent = parse(pattern.find("MID_INTERPOLATION_VALUE"), ctx);
-                    Class newType = TridentTypeManager.getHandlerForShorthand(pattern.find("TARGET_TYPE").flatten(false)).getHandledClass();
-                    return cast(parent, newType, pattern, ctx);
+                    TypeHandler targetType = TridentTypeManager.getHandlerForShorthand(pattern.find("TARGET_TYPE").flatten(false));
+                    return cast(parent, targetType, pattern, ctx);
                 }
                 case "SURROUNDED_INTERPOLATION_VALUE": {
                     if (pattern.find("PREFIX_OPERATORS") == null && pattern.find("POSTFIX_OPERATORS") == null) {
@@ -385,7 +376,7 @@ public class InterpolationManager {
             EObject.assertNotNull(parent, parentPattern, ctx);
             switch (accessorPattern.getName()) {
                 case "MEMBER_KEY": {
-                    String memberName = accessorPattern.find("MEMBER_NAME").flatten(false);
+                    String memberName = accessorPattern.find("SYMBOL_NAME").flatten(false);
                     TypeHandler handler = getHandlerForObject(parent, parentPattern, ctx);
                     while (true) {
                         try {
@@ -440,18 +431,17 @@ public class InterpolationManager {
     }
 
     //TODO: Rework this to use variable type handlers instead of classes
-    @SuppressWarnings("unchecked")
-    public static <T> T cast(Object obj, Class<T> newType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static Object cast(Object obj, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(obj == null) return null;
-        if(newType == String.class) {
-            return (T)castToString(obj, pattern, ctx);
+        if("primitive(string)".equals(TridentTypeManager.getInternalTypeIdentifierForType(targetType))) {
+            return castToString(obj, pattern, ctx);
         }
-        TypeHandler handler = getHandlerForObject(obj, pattern, ctx);
-        if(newType == obj.getClass()) return (T) obj;
+        if(targetType.isInstance(obj)) return obj;
+        TypeHandler sourceType = getHandlerForObject(obj, pattern, ctx);
         try {
-            return (T) handler.cast(obj, newType, pattern, ctx);
+            return sourceType.cast(obj, targetType, pattern, ctx);
         } catch(ClassCastException x) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Unable to cast " + obj.getClass().getSimpleName() + " to type " + newType.getName(), pattern, ctx);
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Unable to cast " + TridentTypeManager.getTypeIdentifierForObject(obj) + " to type " + targetType.getTypeIdentifier(), pattern, ctx);
         }
     }
 

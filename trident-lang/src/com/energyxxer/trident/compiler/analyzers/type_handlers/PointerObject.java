@@ -149,7 +149,7 @@ public class PointerObject implements TypeHandler<PointerObject> {
     }
 
     @Override
-    public <F> F cast(PointerObject object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(PointerObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 

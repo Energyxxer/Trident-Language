@@ -9,7 +9,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.util.DoubleRange")
 public class RealRangeTypeHandler implements TypeHandler<DoubleRange> {
@@ -37,7 +37,7 @@ public class RealRangeTypeHandler implements TypeHandler<DoubleRange> {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMin' requires 1 parameter, instead found " + params.length, pattern, ctx);
                 }
 
-                Double newMin = params[0] != null ? assertOfType(params[0], patterns[0], ctx, Double.class) : null;
+                Double newMin = params[0] != null ? TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, Double.class) : null;
 
                 return new DoubleRange(newMin, object.getMax());
             };
@@ -48,7 +48,7 @@ public class RealRangeTypeHandler implements TypeHandler<DoubleRange> {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMax' requires 1 parameter, instead found " + params.length, pattern, ctx);
                 }
 
-                Double newMax = params[0] != null ? assertOfType(params[0], patterns[0], ctx, Double.class) : null;
+                Double newMax = params[0] != null ? TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, Double.class) : null;
 
                 return new DoubleRange(object.getMin(), newMax);
             };
@@ -72,7 +72,7 @@ public class RealRangeTypeHandler implements TypeHandler<DoubleRange> {
     }
 
     @Override
-    public <F> F cast(DoubleRange range, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(DoubleRange range, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 

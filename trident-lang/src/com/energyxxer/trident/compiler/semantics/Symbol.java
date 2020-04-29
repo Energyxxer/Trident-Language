@@ -11,6 +11,19 @@ public class Symbol {
     public enum SymbolVisibility {
         GLOBAL, PUBLIC, LOCAL, PRIVATE
     }
+
+    public enum SymbolModifier {
+        STATIC(0b1), FINAL(0b10);
+        private final int bit;
+        SymbolModifier(int bit) {
+            this.bit = bit;
+        }
+
+        public int getBit() {
+            return bit;
+        }
+    }
+
     private String name;
     private final SymbolVisibility visibility;
     private Object value;
@@ -72,7 +85,10 @@ public class Symbol {
 
     public void safeSetValue(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(maySet) {
-            if(typeConstraints != null) typeConstraints.validate(value, pattern, ctx);
+            if(typeConstraints != null) {
+                typeConstraints.validate(value, pattern, ctx);
+                value = typeConstraints.adjustValue(value, pattern, ctx);
+            }
             this.value = value;
             if(isFinal) maySet = false;
         } else {

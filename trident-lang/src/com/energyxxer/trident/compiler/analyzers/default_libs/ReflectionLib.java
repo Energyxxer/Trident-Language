@@ -16,7 +16,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.HashMap;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "Reflection")
 public class ReflectionLib implements DefaultLibraryProvider {
@@ -36,13 +36,13 @@ public class ReflectionLib implements DefaultLibraryProvider {
             if(params.length < 1) {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'getSymbol' requires 1 parameters, instead found " + params.length, pattern, ctx);
             }
-            String symbolName = assertOfType(params[0], patterns[0], ctx, String.class);
+            String symbolName = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, String.class);
             Symbol sym = ctx.search(symbolName, ctx);
             if(sym != null) return sym.getValue();
             return null;
         });
         reflect.put("getVisibleSymbols", (TridentMethod) (params, patterns, pattern, ctx) -> getVisibleSymbols(ctx));
-        reflect.put("insertToFile", (TridentMethod) this::insertToFile);
+        reflect.put("insertToFile", (TridentMethod) (params1, patterns1, pattern1, ctx1) -> insertToFile(params1, patterns1, pattern1, ctx1));
         reflect.put("getDefinedObjectives", (TridentMethod) (params, patterns, pattern, ctx) -> {
             DictionaryObject objectives = new DictionaryObject();
             for(Objective objective : ctx.getCompiler().getModule().getObjectiveManager().getAll()) {
@@ -61,8 +61,8 @@ public class ReflectionLib implements DefaultLibraryProvider {
         if(params.length < 2) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'insertToFile' requires 2 parameters, instead found " + params.length, pattern, ctx);
         }
-        TridentUtil.ResourceLocation fileLoc = assertOfType(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
-        TridentMethod func = assertOfType(params[1], patterns[1], ctx, TridentMethod.class);
+        TridentUtil.ResourceLocation fileLoc = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
+        TridentMethod func = TridentMethod.HelperMethods.assertOfClass(params[1], patterns[1], ctx, TridentMethod.class);
         if(fileLoc.isTag) throw new IllegalArgumentException("Cannot insert instructions to a tag: " + fileLoc);
 
         TridentFile file = ctx.getCompiler().getFile(fileLoc);

@@ -10,10 +10,10 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 public class TagIntArrayTypeHandler implements TypeHandler<TagIntArray> {
-    private static final TridentMethod CONSTRUCTOR = TagIntArrayTypeHandler::constructTagIntArray;
+    private static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructTagIntArray(params, patterns, pattern, ctx);
 
     @Override
     public Object getMember(TagIntArray object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -26,10 +26,9 @@ public class TagIntArrayTypeHandler implements TypeHandler<TagIntArray> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <F> F cast(TagIntArray object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(targetType == ListObject.class) {
-            return (F) new ListObject(object.getAllTags());
+    public Object cast(TagIntArray object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if ("primitive(list)".equals(TridentTypeManager.getInternalTypeIdentifierForType(targetType))) {
+            return new ListObject(object.getAllTags());
         }
         throw new ClassCastException();
     }
@@ -56,12 +55,12 @@ public class TagIntArrayTypeHandler implements TypeHandler<TagIntArray> {
 
     private static TagIntArray constructTagIntArray(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(params.length == 0 || params[0] == null) return new TagIntArray();
-        ListObject list = assertOfType(params[0], patterns[0], ctx, ListObject.class);
+        ListObject list = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, ListObject.class);
 
         TagIntArray arr = new TagIntArray();
 
         for(Object obj : list) {
-            Object checked = assertOfType(obj, patterns[0], ctx, Integer.class, TagInt.class);
+            Object checked = assertOfClass(obj, patterns[0], ctx, Integer.class, TagInt.class);
             if(checked instanceof TagInt) {
                 arr.add((TagInt) checked);
             } else {

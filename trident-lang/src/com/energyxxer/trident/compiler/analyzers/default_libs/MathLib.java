@@ -9,7 +9,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "Math")
 public class MathLib implements DefaultLibraryProvider {
@@ -23,8 +23,8 @@ public class MathLib implements DefaultLibraryProvider {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'pow' requires 2 parameters, instead found " + params.length, pattern, file);
             }
 
-            Number base = assertOfType(params[0], patterns[0], file, Double.class, Integer.class);
-            Number exponent = assertOfType(params[1], patterns[1], file, Double.class, Integer.class);
+            Number base = assertOfClass(params[0], patterns[0], file, Double.class, Integer.class);
+            Number exponent = assertOfClass(params[1], patterns[1], file, Double.class, Integer.class);
 
             return Math.pow(base.doubleValue(), exponent.doubleValue());
         });
@@ -33,8 +33,8 @@ public class MathLib implements DefaultLibraryProvider {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'min' requires 2 parameters, instead found " + params.length, pattern, file);
             }
 
-            Number base = assertOfType(params[0], patterns[0], file, Double.class, Integer.class);
-            Number exponent = assertOfType(params[1], patterns[1], file, Double.class, Integer.class);
+            Number base = assertOfClass(params[0], patterns[0], file, Double.class, Integer.class);
+            Number exponent = assertOfClass(params[1], patterns[1], file, Double.class, Integer.class);
 
             double result = Math.min(base.doubleValue(), exponent.doubleValue());
 
@@ -46,8 +46,8 @@ public class MathLib implements DefaultLibraryProvider {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'max' requires 2 parameters, instead found " + params.length, pattern, file);
             }
 
-            Number base = assertOfType(params[0], patterns[0], file, Double.class, Integer.class);
-            Number exponent = assertOfType(params[1], patterns[1], file, Double.class, Integer.class);
+            Number base = assertOfClass(params[0], patterns[0], file, Double.class, Integer.class);
+            Number exponent = assertOfClass(params[1], patterns[1], file, Double.class, Integer.class);
 
             double result = Math.max(base.doubleValue(), exponent.doubleValue());
 
@@ -59,7 +59,7 @@ public class MathLib implements DefaultLibraryProvider {
                 throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'max' requires 2 parameters, instead found " + params.length, pattern, file);
             }
 
-            Number num = assertOfType(params[0], patterns[0], file, Double.class, Integer.class);
+            Number num = assertOfClass(params[0], patterns[0], file, Double.class, Integer.class);
 
             double result = Math.abs(num.doubleValue());
 

@@ -14,10 +14,10 @@ import com.energyxxer.trident.extensions.EObject;
 
 import java.util.Map;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 public class NBTAliasTypeHandler implements TypeHandler<TagCompound> {
-    private static final TridentMethod CONSTRUCTOR = NBTAliasTypeHandler::constructNBT;
+    private static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructNBT(params, patterns, pattern, ctx);
 
     @Override
     public Object getMember(TagCompound object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -30,7 +30,7 @@ public class NBTAliasTypeHandler implements TypeHandler<TagCompound> {
     }
 
     @Override
-    public <F> F cast(TagCompound object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(TagCompound object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
@@ -56,7 +56,7 @@ public class NBTAliasTypeHandler implements TypeHandler<TagCompound> {
         boolean skipIncompatibleTypes = false;
         if(params.length >= 2) {
             EObject.assertNotNull(params[1], patterns[1], ctx);
-            skipIncompatibleTypes = assertOfType(params[1], patterns[1], ctx, Boolean.class);
+            skipIncompatibleTypes = TridentMethod.HelperMethods.assertOfClass(params[1], patterns[1], ctx, Boolean.class);
         }
 
         if(params[0] instanceof NBTTag) return ((NBTTag) params[0]).clone();

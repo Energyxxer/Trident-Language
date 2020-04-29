@@ -1,6 +1,5 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 
-import com.energyxxer.commodore.functionlogic.nbt.NumericNBTTag;
 import com.energyxxer.commodore.functionlogic.nbt.TagLong;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
@@ -10,10 +9,10 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHa
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 public class TagLongTypeHandler implements TypeHandler<TagLong> {
-    static final TridentMethod CONSTRUCTOR = TagLongTypeHandler::constructTagLong;
+    static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructTagLong(params, patterns, pattern, ctx);
 
     @Override
     public Object getMember(TagLong object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -26,11 +25,12 @@ public class TagLongTypeHandler implements TypeHandler<TagLong> {
     }
 
     @Override
-    public <F> F cast(TagLong object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(object != null && Number.class.isAssignableFrom(targetType)) {
-            Number number = ((NumericNBTTag) object).getValue();
-            if(targetType == Integer.class || targetType == int.class) return (F) (Integer)number.intValue();
-            if(targetType == Double.class || targetType == double.class) return (F) (Double)number.doubleValue();
+    public Object cast(TagLong object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        switch (TridentTypeManager.getInternalTypeIdentifierForType(targetType)) {
+            case "primitive(int)":
+                return object.getValue().intValue();
+            case "primitive(real)":
+                return object.getValue().doubleValue();
         }
         throw new ClassCastException();
     }
@@ -58,7 +58,7 @@ public class TagLongTypeHandler implements TypeHandler<TagLong> {
     @SuppressWarnings("unchecked")
     private static TagLong constructTagLong(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(params.length == 0 || params[0] == null) return new TagLong(0L);
-        Object param = assertOfType(params[0], patterns[0], ctx, TagLong.class, Integer.class, Double.class, String.class);
+        Object param = assertOfClass(params[0], patterns[0], ctx, TagLong.class, Integer.class, Double.class, String.class);
         if(param instanceof String) {
             try {
                 return new TagLong(Long.parseLong((String) param));

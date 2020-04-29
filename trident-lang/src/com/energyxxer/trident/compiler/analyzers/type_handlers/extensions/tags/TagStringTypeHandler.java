@@ -27,7 +27,7 @@ public class TagStringTypeHandler implements TypeHandler<TagString> {
     }
 
     @Override
-    public <F> F cast(TagString object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(TagString object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 

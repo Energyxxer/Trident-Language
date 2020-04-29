@@ -21,11 +21,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.textcomponents.TextComponent")
 public class TextComponentTypeHandler implements TypeHandler<TextComponent> {
-    private static final TridentMethod CONSTRUCTOR = TextComponentTypeHandler::constructTextComponent;
+    private static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructTextComponent(params, patterns, pattern, ctx);
 
     @Override
     public Object getMember(TextComponent object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -38,7 +38,7 @@ public class TextComponentTypeHandler implements TypeHandler<TextComponent> {
     }
 
     @Override
-    public <F> F cast(TextComponent object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(TextComponent object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
@@ -64,7 +64,7 @@ public class TextComponentTypeHandler implements TypeHandler<TextComponent> {
         boolean skipIncompatibleTypes = false;
         if(params.length >= 2) {
             EObject.assertNotNull(params[1], patterns[1], ctx);
-            skipIncompatibleTypes = assertOfType(params[1], patterns[1], ctx, Boolean.class);
+            skipIncompatibleTypes = TridentMethod.HelperMethods.assertOfClass(params[1], patterns[1], ctx, Boolean.class);
         }
 
         try {

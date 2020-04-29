@@ -36,7 +36,7 @@ public class EntityEvent implements TypeHandler<EntityEvent> {
     }
 
     @Override
-    public <F> F cast(EntityEvent object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(EntityEvent object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
