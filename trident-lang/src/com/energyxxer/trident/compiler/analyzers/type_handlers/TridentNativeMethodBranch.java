@@ -28,6 +28,10 @@ public class TridentNativeMethodBranch extends TridentMethodBranch {
         for(Parameter param : parameterJavaTypes) {
             Class<?> paramType = param.getType();
             paramType = TridentMethod.HelperMethods.sanitizeClass(paramType);
+            if(paramType == TokenPattern.class || paramType == ISymbolContext.class) {
+                //Reserved for calling pattern and context
+                continue;
+            }
             TypeHandler correspondingHandler = TridentTypeManager.getHandlerForHandledClass(paramType);
             if(correspondingHandler == null && paramType != Object.class) {
                 throw new IllegalArgumentException("Could not create formal parameter for type '" + paramType.getName() + "'; Did not find appropriate TypeHandler instance.");
@@ -44,10 +48,21 @@ public class TridentNativeMethodBranch extends TridentMethodBranch {
 
     @Override
     public Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext declaringCtx, ISymbolContext callingCtx, Object thisObject) {
-        Object[] actualParams = new Object[formalParameters.size()];
+        Object[] actualParams = new Object[method.getParameterCount()];
 
-        for(int i = 0; i < actualParams.length; i++) {
-            FormalParameter formalParameter = formalParameters.get(i);
+        int j = 0;
+        for(int i = 0; i < method.getParameterCount(); i++,j++) {
+            if(method.getParameterTypes()[i] == ISymbolContext.class) {
+                actualParams[i] = callingCtx;
+                j--;
+                continue;
+            }
+            if(method.getParameterTypes()[i] == TokenPattern.class) {
+                actualParams[i] = pattern;
+                j--;
+                continue;
+            }
+            FormalParameter formalParameter = formalParameters.get(j);
             if(i < params.length) {
                 actualParams[i] = params[i];
             } else {
@@ -68,11 +83,14 @@ public class TridentNativeMethodBranch extends TridentMethodBranch {
         }
     }
 
-    public static TridentUserMethod createOverloadedNativeFunction(ISymbolContext ctx, Method... overloads) {
-        String name = null;
+    public static TridentUserMethod nativeMethodsToFunction(ISymbolContext ctx, Method... overloads) {
+        return nativeMethodsToFunction(ctx, null, overloads);
+    }
+
+    public static TridentUserMethod nativeMethodsToFunction(ISymbolContext ctx, String name, Method... overloads) {
         ArrayList<TridentMethodBranch> branches = new ArrayList<>();
         for(Method met : overloads) {
-            name = met.getName();
+            if(name == null) name = met.getName();
             branches.add(new TridentNativeMethodBranch(met));
         }
         return new TridentUserMethod(name, branches, ctx, null);

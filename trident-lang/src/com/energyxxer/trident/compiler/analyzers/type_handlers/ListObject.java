@@ -214,10 +214,10 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
 
     public String contextualToString(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(toStringRecursion.contains(this)) {
-            return "{ ...circular... }";
+            return "[ ...circular... ]";
         }
         toStringRecursion.push(this);
-        String str = "{" + content.stream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue(), pattern, ctx)).collect(Collectors.joining(", ")) + "}";
+        String str = "[" + content.stream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue(), pattern, ctx)).collect(Collectors.joining(", ")) + "]";
         toStringRecursion.pop();
         return str;
     }

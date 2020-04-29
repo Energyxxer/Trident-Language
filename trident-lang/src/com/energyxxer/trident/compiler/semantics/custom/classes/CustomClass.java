@@ -244,7 +244,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
 
     @Override
     public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(hasAccess(ctx, constructorVisibility)) {
+        if(ctx == null || hasAccess(ctx, constructorVisibility)) {
             return (params, patterns, pattern2, ctx2) -> {
                 CustomClassObject created = new CustomClassObject(this);
                 for(Function<CustomClassObject, Symbol> symbolSupplier : instanceMemberSuppliers) {
@@ -275,6 +275,10 @@ public class CustomClass implements TypeHandler<CustomClass> {
         return definitionFile;
     }
 
+    public ISymbolContext getInnerContext() {
+        return innerContext;
+    }
+
     public boolean hasAccess(ISymbolContext ctx, Symbol.SymbolVisibility visibility) {
         return visibility == Symbol.SymbolVisibility.PUBLIC ||
                 (visibility == Symbol.SymbolVisibility.LOCAL && getDeclaringFile().getDeclaringFSFile().equals(ctx.getDeclaringFSFile())) ||
@@ -284,5 +288,9 @@ public class CustomClass implements TypeHandler<CustomClass> {
     @Override
     public boolean isStaticHandler() {
         return true;
+    }
+
+    public Object forceInstantiate() {
+        return null;
     }
 }
