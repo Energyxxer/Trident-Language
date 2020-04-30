@@ -102,14 +102,14 @@ public class TypeLib implements DefaultLibraryProvider {
         globalCtx.put(new Symbol("MinecraftTypes", Symbol.SymbolVisibility.GLOBAL, type));
 
         globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (TridentMethod) (params, patterns, pattern, file) ->
-                TridentTypeManager.getTypeIdentifierForObject(params[0])
+                TridentTypeManager.getHandlerForObject(params[0]).getStaticHandler()
         ));
         globalCtx.put(new Symbol("isInstance", Symbol.SymbolVisibility.GLOBAL, new MethodWrapper<>("isInstance", (instance, params) -> {
             params[1] = ((String) params[1]).trim();
-            TypeHandler handler = TridentTypeManager.getHandlerForShorthand((String) params[1]);;
+            TypeHandler handler = TridentTypeManager.getPrimitiveHandlerForShorthand((String) params[1]);
             if(params[0] == null) return "null".equals(params[1]);
             if(handler == null) {
-                throw new IllegalArgumentException("Illegal data type name '" + params[1] + "'");
+                throw new IllegalArgumentException("Illegal primitive data type name '" + params[1] + "'");
             }
             return handler.isInstance(params[0]);
         }, Object.class, String.class).setNullable(0).createForInstance(null)));

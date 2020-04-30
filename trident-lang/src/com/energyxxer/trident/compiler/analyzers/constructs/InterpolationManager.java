@@ -207,7 +207,7 @@ public class InterpolationManager {
                     }
                 }
                 case "PRIMITIVE_ROOT_TYPE": {
-                    return TridentTypeManager.getHandlerForShorthand(pattern.flatten(false));
+                    return TridentTypeManager.getPrimitiveHandlerForShorthand(pattern.flatten(false));
                 }
                 case "NULL_VALUE": {
                     return null;
@@ -255,7 +255,7 @@ public class InterpolationManager {
                 }
                 case "CAST": {
                     Object parent = parse(pattern.find("MID_INTERPOLATION_VALUE"), ctx);
-                    TypeHandler targetType = TridentTypeManager.getHandlerForShorthand(pattern.find("TARGET_TYPE").flatten(false));
+                    TypeHandler targetType = TridentTypeManager.getPrimitiveHandlerForShorthand(pattern.find("TARGET_TYPE").flatten(false));
                     return cast(parent, targetType, pattern, ctx);
                 }
                 case "SURROUNDED_INTERPOLATION_VALUE": {

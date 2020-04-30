@@ -95,4 +95,9 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Contex
     public boolean isStaticHandler() {
         return false;
     }
+
+    @Override
+    public TypeHandler getStaticHandler() {
+        return type;
+    }
 }

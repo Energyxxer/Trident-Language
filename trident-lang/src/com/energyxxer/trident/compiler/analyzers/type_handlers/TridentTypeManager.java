@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 
 public class TridentTypeManager {
     private static final LinkedHashMap<String, TypeHandler<?>> PRIMITIVE_HANDLERS = new LinkedHashMap<>();
+    private static final TypeHandlerTypeHandler TYPE_HANDLER_TYPE_HANDLER;
 
     static {
 
@@ -55,7 +56,7 @@ public class TridentTypeManager {
         registerTypeHandler(TridentException.STATIC_HANDLER);
         registerTypeHandler(TridentMethod.STATIC_HANDLER);
 
-        registerTypeHandler(new TypeHandlerTypeHandler());
+        registerTypeHandler(TYPE_HANDLER_TYPE_HANDLER = new TypeHandlerTypeHandler());
     }
 
     public static void registerTypeHandler(TypeHandler<?> handler) {
@@ -64,7 +65,7 @@ public class TridentTypeManager {
         }
     }
 
-    public static TypeHandler<?> getHandlerForShorthand(String shorthand) {
+    public static TypeHandler<?> getPrimitiveHandlerForShorthand(String shorthand) {
         return PRIMITIVE_HANDLERS.get(shorthand);
     }
     public static TypeHandler<?> getHandlerForObject(Object obj) {
@@ -128,5 +129,9 @@ public class TridentTypeManager {
         } else {
             return "user_defined(" + handler + ")";
         }
+    }
+
+    public static TypeHandler getTypeHandlerTypeHandler() {
+        return TYPE_HANDLER_TYPE_HANDLER;
     }
 }

@@ -2,6 +2,8 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.operators;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.ILazyValue;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -190,8 +192,8 @@ public interface OperatorHandler<A, B> {
                 return a + converted;
             });
 
-            handlers.put("* == *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> Objects.equals(a,b));
-            handlers.put("* != *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> !Objects.equals(a,b));
+            handlers.put("* == *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> equals(a,b, pattern, ctx));
+            handlers.put("* != *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> !equals(a,b, pattern, ctx));
 
             handlers.put("- primitive(int)", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> -a);
             handlers.put("- primitive(real)", (Object nl, Double a, TokenPattern<?> pattern, ISymbolContext ctx) -> -a);
@@ -258,6 +260,28 @@ public interface OperatorHandler<A, B> {
                 a.safeSetValue(result, pattern, ctx);
                 return result;
             });
+        }
+
+        public static boolean equals(Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) {
+            if(a == b) return true;
+            if((a == null) != (b == null)) return false;
+            if(Objects.equals(a, b)) return true;
+
+            TypeHandler aType = TridentTypeManager.getHandlerForObject(a);
+            TypeHandler bType = TridentTypeManager.getHandlerForObject(b);
+
+            //Try coercing a to b's type
+            if(aType.canCoerce(a, bType) && equalsNoCoercion(aType.coerce(a, bType, pattern, ctx), b)) {
+                return true;
+            }
+            //Try coercing b to a's type
+            return bType.canCoerce(b, aType) && equalsNoCoercion(a, bType.coerce(b, aType, pattern, ctx));
+        }
+
+        public static boolean equalsNoCoercion(Object a, Object b) {
+            if(a == b) return true;
+            if((a == null) != (b == null)) return false;
+            return Objects.equals(a, b);
         }
     }
 }

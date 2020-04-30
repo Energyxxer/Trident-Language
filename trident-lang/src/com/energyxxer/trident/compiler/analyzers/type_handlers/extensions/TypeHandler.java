@@ -71,7 +71,7 @@ public interface TypeHandler<T> {
     }
 
     default TypeHandler getStaticHandler() {
-        if(isStaticHandler()) return this;
-        return TridentTypeManager.getHandlerForShorthand(getTypeIdentifier());
+        if(isStaticHandler()) return TridentTypeManager.getTypeHandlerTypeHandler();
+        return TridentTypeManager.getPrimitiveHandlerForShorthand(getTypeIdentifier());
     }
 }

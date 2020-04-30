@@ -5,7 +5,10 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethodBranch;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -180,26 +183,53 @@ public class CustomClass implements TypeHandler<CustomClass> {
 
     @Override
     public Object getMember(CustomClass object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(staticMembers.containsKey(member)) {
-            Symbol sym = staticMembers.get(member);
+        CustomClass other = this;
+        while (true) {
+            if(other.staticMembers.containsKey(member)) {
+                Symbol sym = other.staticMembers.get(member);
 
-            if(hasAccess(ctx, sym.getVisibility())) {
-                return keepSymbol ? sym : sym.getValue();
+                if(hasAccess(ctx, sym.getVisibility())) {
+                    return keepSymbol ? sym : sym.getValue();
+                } else {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + getClassTypeIdentifier(), pattern, ctx);
+                }
+            }
+            if (other.superClass != null) {
+                other = other.superClass;
             } else {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + getClassTypeIdentifier(), pattern, ctx);
+                return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
             }
         }
-        throw new MemberNotFoundException();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Object getIndexer(CustomClass object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        throw new MemberNotFoundException();
+        return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Object cast(CustomClass object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        CustomClass other = this;
+        while (true) {
+            if (other.superClass != null) {
+                other = other.superClass;
+            } else {
+                return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Object coerce(CustomClass object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        return TridentTypeManager.getTypeHandlerTypeHandler().coerce(object, targetType, pattern, ctx);
     }
 
     @Override
-    public Object cast(CustomClass object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+    public boolean canCoerce(Object object, TypeHandler into) {
+        return TridentTypeManager.getTypeHandlerTypeHandler().canCoerce(object, into);
     }
 
     @Override
