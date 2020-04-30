@@ -102,7 +102,7 @@ public class TypeLib implements DefaultLibraryProvider {
         globalCtx.put(new Symbol("MinecraftTypes", Symbol.SymbolVisibility.GLOBAL, type));
 
         globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (TridentMethod) (params, patterns, pattern, file) ->
-                TridentTypeManager.getHandlerForObject(params[0]).getStaticHandler()
+                TridentTypeManager.getStaticHandlerForObject(params[0])
         ));
         globalCtx.put(new Symbol("isInstance", Symbol.SymbolVisibility.GLOBAL, new MethodWrapper<>("isInstance", (instance, params) -> {
             params[1] = ((String) params[1]).trim();
@@ -113,5 +113,7 @@ public class TypeLib implements DefaultLibraryProvider {
             }
             return handler.isInstance(params[0]);
         }, Object.class, String.class).setNullable(0).createForInstance(null)));
+
+        globalCtx.put(new Symbol("type_definition", Symbol.SymbolVisibility.GLOBAL, TridentTypeManager.getTypeHandlerTypeHandler()));
     }
 }

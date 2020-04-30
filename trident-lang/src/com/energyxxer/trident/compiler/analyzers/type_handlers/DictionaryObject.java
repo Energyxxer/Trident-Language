@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
-
 public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable<Object>, ContextualToString {
     public static final DictionaryObject STATIC_HANDLER = new DictionaryObject();
     private static Stack<DictionaryObject> toStringRecursion = new Stack<>();
@@ -32,6 +30,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
 
     @Override
     public Object getMember(DictionaryObject dict, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(dict, member, pattern, ctx, keepSymbol);
         if(keepSymbol && !dict.map.containsKey(member)) {
             put(member, null);
         }
@@ -68,6 +67,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
 
     @Override
     public Object getIndexer(DictionaryObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
         String key = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         return getMember(object, key, pattern, ctx, keepSymbol);
     }
@@ -75,6 +75,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
     @SuppressWarnings("unchecked")
     @Override
     public Object cast(DictionaryObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 

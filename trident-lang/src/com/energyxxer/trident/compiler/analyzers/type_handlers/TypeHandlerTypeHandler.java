@@ -7,9 +7,24 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
 
+    private final Object of;
+
+    public TypeHandlerTypeHandler() {
+        of = new MethodWrapper<>("of", ((instance, params) -> of(params[0])), Object.class).createForInstance(null);
+    }
+
     @Override
     public Object getMember(TypeHandler object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if("of".equals(member)) {
+            return of;
+        } else if("isInstance".equals(member)) {
+            return new MethodWrapper<>("isInstance", ((instance, params) -> object.isInstance(params[0])), Object.class).createForInstance(null);
+        }
         throw new MemberNotFoundException();
+    }
+
+    public static TypeHandler of(Object obj) {
+        return TridentTypeManager.getStaticHandlerForObject(obj);
     }
 
     @Override

@@ -53,6 +53,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
 
     @Override
     public Object getMember(ListObject object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
         if(member.equals("map")) {
             return (TridentMethod) (params, patterns, pattern1, file1) -> {
                 if(params.length < 1) {
@@ -109,6 +110,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
 
     @Override
     public Object getIndexer(ListObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
         int realIndex = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
         if(realIndex < 0 || realIndex >= object.size()) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index + "; Length: " + object.size(), pattern, ctx);
@@ -121,6 +123,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
     @SuppressWarnings("unchecked")
     @Override
     public Object cast(ListObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 

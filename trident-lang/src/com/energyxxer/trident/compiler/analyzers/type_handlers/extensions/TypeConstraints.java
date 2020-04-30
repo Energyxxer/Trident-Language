@@ -84,7 +84,7 @@ public class TypeConstraints {
         if(value == null && nullable) return 1;
         if(handler == null && value != null) return 4;
         if(!verify(value)) return 0;
-        TypeHandler objectTypeHandler = TridentTypeManager.getHandlerForObject(value).getStaticHandler();
+        TypeHandler objectTypeHandler = TridentTypeManager.getStaticHandlerForObject(value);
         if(objectTypeHandler == handler) return 4;
         if(handler.isInstance(value)) return 3;
         if(objectTypeHandler.canCoerce(value, handler)) return 2;

@@ -134,4 +134,13 @@ public class TridentTypeManager {
     public static TypeHandler getTypeHandlerTypeHandler() {
         return TYPE_HANDLER_TYPE_HANDLER;
     }
+
+    public static TypeHandler getStaticHandlerForObject(Object obj) {
+        TypeHandler handler = getHandlerForObject(obj);
+        if(handler != obj) return handler;
+        if(handler.isStaticHandler()) {
+            return getTypeHandlerTypeHandler();
+        }
+        return handler.getStaticHandler();
+    }
 }

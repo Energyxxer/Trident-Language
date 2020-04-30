@@ -20,6 +20,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -36,7 +37,6 @@ import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
 import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger.REPLACE;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
@@ -137,7 +137,8 @@ public class CustomItem implements TypeHandler<CustomItem> {
 
 
     @Override
-    public Object getMember(CustomItem object, String member, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
+    public Object getMember(CustomItem object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
         if(members.containsKey(member)) {
             Symbol sym = members.get(member);
             return keepSymbol ? sym : sym.getValue();
@@ -176,6 +177,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
 
     @Override
     public Object getIndexer(CustomItem object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
         String indexStr = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         if(members.containsKey(indexStr)) {
             Symbol sym = members.get(indexStr);
@@ -188,7 +190,8 @@ public class CustomItem implements TypeHandler<CustomItem> {
     }
 
     @Override
-    public Object cast(CustomItem object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext file) {
+    public Object cast(CustomItem object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 

@@ -26,6 +26,7 @@ public interface TridentMethod extends TypeHandler<TridentMethod> {
 
     @Override
     default Object getMember(TridentMethod object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
         if(member.equals("formalParameters")) return new ListObject();
         if(member.equals("declaringFile")) return null;
         throw new MemberNotFoundException();
@@ -33,11 +34,13 @@ public interface TridentMethod extends TypeHandler<TridentMethod> {
 
     @Override
     default Object getIndexer(TridentMethod object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
         throw new MemberNotFoundException();
     }
 
     @Override
     default Object cast(TridentMethod object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 
