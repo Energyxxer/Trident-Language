@@ -255,7 +255,7 @@ public class InterpolationManager {
                 }
                 case "CAST": {
                     Object parent = parse(pattern.find("MID_INTERPOLATION_VALUE"), ctx);
-                    TypeHandler targetType = TridentTypeManager.getPrimitiveHandlerForShorthand(pattern.find("TARGET_TYPE").flatten(false));
+                    TypeHandler targetType = parseType(pattern.find("INTERPOLATION_TYPE"), ctx);
                     return cast(parent, targetType, pattern, ctx);
                 }
                 case "SURROUNDED_INTERPOLATION_VALUE": {

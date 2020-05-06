@@ -8,6 +8,10 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 public class TypeConstraints {
+    public enum SpecialInferInstruction {
+        NO_INSTANCE_INFER
+    }
+
     private TypeHandler<?> handler = null;
     private boolean nullable = true;
 
@@ -19,8 +23,10 @@ public class TypeConstraints {
     public static TypeConstraints parseConstraintsInfer(TokenPattern<?> pattern, ISymbolContext ctx, Object value) {
         TypeConstraints constraints = parseConstraints(pattern, ctx);
         if(constraints == null) {
-            if(value != null) {
-                constraints = new TypeConstraints(TridentTypeManager.getHandlerForObject(value), true);
+            if(value == SpecialInferInstruction.NO_INSTANCE_INFER) {
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot infer type constraints for instance fields", pattern, ctx);
+            } else if(value != null) {
+                constraints = new TypeConstraints(TridentTypeManager.getStaticHandlerForObject(value), true);
             } else {
                 throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot infer type constraints for null", pattern, ctx);
             }

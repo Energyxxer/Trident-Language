@@ -24,6 +24,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.plugin.CommandDefinition;
 import com.energyxxer.trident.compiler.plugin.PluginCommandParser;
 import com.energyxxer.trident.compiler.plugin.TridentPlugin;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ImportedSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
@@ -505,5 +506,20 @@ public class TridentFile extends SymbolContext {
 
     public File getDeclaringFSFile() {
         return pattern.getFile();
+    }
+
+    private HashMap<String, CustomClass> definedInnerClasses = null;
+
+    public void registerInnerClass(CustomClass cls, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(definedInnerClasses == null) definedInnerClasses = new HashMap<>();
+        if(definedInnerClasses.containsKey(cls.getClassName())) {
+            throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Class '" + cls.getTypeIdentifier() + "' already exists", pattern, ctx);
+        }
+        definedInnerClasses.put(cls.getClassName(), cls);
+    }
+
+    public CustomClass getClassForName(String className) {
+        if(definedInnerClasses == null) return null;
+        return definedInnerClasses.get(className);
     }
 }

@@ -415,36 +415,7 @@ public class TridentProductions {
 
             LazyTokenStructureMatch MID_INTERPOLATION_VALUE = struct("MID_INTERPOLATION_VALUE");
             MID_INTERPOLATION_VALUE.add(group(list(ofType(COMPILER_PREFIX_OPERATOR).addProcessor(clearMemberListProcessor)).setOptional().setName("PREFIX_OPERATORS"), INTERPOLATION_CHAIN, list(ofType(COMPILER_POSTFIX_OPERATOR).addProcessor(clearMemberListProcessor)).setOptional().setName("POSTFIX_OPERATORS")).setName("SURROUNDED_INTERPOLATION_VALUE"));
-            MID_INTERPOLATION_VALUE.add(group(brace("("), choice(
-                    "int",
-                    "real",
-                    "boolean",
-                    "string",
-                    "entity",
-                    "block",
-                    "item",
-                    "text_component",
-                    "nbt",
-                    "tag_compound",
-                    "tag_list",
-                    "tag_byte",
-                    "tag_short",
-                    "tag_int",
-                    "tag_float",
-                    "tag_double",
-                    "tag_long",
-                    "tag_string",
-                    "tag_byte_array",
-                    "tag_int_array",
-                    "tag_long_array",
-                    "nbt_value",
-                    "nbt_path",
-                    "coordinates",
-                    "int_range",
-                    "real_range",
-                    "resource",
-                    "pointer"
-            ).setName("TARGET_TYPE"), brace(")"), MID_INTERPOLATION_VALUE).setName("CAST"));
+            MID_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_TYPE, brace(")"), MID_INTERPOLATION_VALUE).setName("CAST"));
 
             INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, ofType(COMPILER_OPERATOR).addProcessor(clearMemberListProcessor)).setName("EXPRESSION"));
             LINE_SAFE_INTERPOLATION_VALUE.add(list(MID_INTERPOLATION_VALUE, group(sameLine(), ofType(COMPILER_OPERATOR).addProcessor(clearMemberListProcessor))).setName("EXPRESSION"));
@@ -2313,6 +2284,8 @@ public class TridentProductions {
             LazyTokenStructureMatch classBodyEntry = choice(
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER"),
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("static").setOptional(), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), choice(DYNAMIC_FUNCTION, OVERLOADED_FUNCTION).setName("CLASS_FUNCTION_SPLIT").setGreedy(true)).setName("CLASS_FUNCTION"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), brace("("), list(choice(identifierX(), symbol("*")).setName("FORWARD_MEMBER_NAME"), comma()).setName("FORWARD_MEMBER_NAMES"), brace(")"), ofType(ARROW), identifierX().setName("FORWARD_TARGET_NAME")).setName("CLASS_FORWARD"),
+                    group(literal("override").setOptional(), choice("explicit", "implicit").setName("CLASS_TRANSFORM_TYPE"), brace("<"), INTERPOLATION_TYPE, brace(">"), DYNAMIC_FUNCTION).setName("CLASS_OVERRIDE"),
                     COMMENT_S
             ).setName("CLASS_BODY_ENTRY").setGreedy(true);
             itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_CLASS_BODY);
@@ -2321,7 +2294,7 @@ public class TridentProductions {
                     brace("{"),
                     list(classBodyEntry).setOptional().setName("CLASS_BODY_ENTRIES"),
                     brace("}")
-            ).setName("CLASS_DECLARATION_BODY");
+            ).setOptional().setName("CLASS_DECLARATION_BODY");
 
             INSTRUCTION.add(
                     group(instructionKeyword("define"),
@@ -2376,7 +2349,7 @@ public class TridentProductions {
                                                     }
                                                 }
                                             }),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), optional(colon(), group(INTERPOLATION_VALUE).addTags("cspn:Superclass")).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), classBody).setName("DEFINE_CLASS")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
                                                     TokenPattern<?> namePattern = p.find("CLASS_NAME");

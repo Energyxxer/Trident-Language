@@ -35,7 +35,6 @@ public class TridentUserMethod implements TridentMethod {
 
     @Override
     public Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-
         TridentMethodBranch branch = pickBranch(params, patterns, pattern, ctx);
 
         TokenPattern<?> functionPattern = branch.getFunctionPattern();
@@ -102,7 +101,14 @@ public class TridentUserMethod implements TridentMethod {
             if(any) {
                 sb.setLength(sb.length()-2);
             }
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Overload not found for parameter types: (" + sb.toString() + ")", pattern, ctx);
+            StringBuilder overloads = new StringBuilder();
+            for(TridentMethodBranch branch : branches) {
+                overloads.append("\n    ").append(functionName).append("(");
+                overloads.append(branch.getFormalParameters().toString().substring(1));
+                overloads.setLength(overloads.length()-1);
+                overloads.append(")");
+            }
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Overload not found for parameter types: (" + sb.toString() + ")\nValid overloads are:" + overloads.toString(), pattern, ctx);
         }
         if(bestScoreBranchMatches.size() > 1) {
             throw new TridentException(TridentException.Source.TYPE_ERROR, "Ambiguous call between: " + bestScoreBranchMatches.stream().map(b -> b.getFormalParameters().toString()).collect(Collectors.joining(", ")), pattern, ctx);
@@ -119,6 +125,14 @@ public class TridentUserMethod implements TridentMethod {
 
     public String getFunctionName() {
         return functionName;
+    }
+
+    public void setThisObject(Object thisObject) {
+        this.thisObject = thisObject;
+    }
+
+    public List<TridentMethodBranch> getBranches() {
+        return branches;
     }
 
     @Override

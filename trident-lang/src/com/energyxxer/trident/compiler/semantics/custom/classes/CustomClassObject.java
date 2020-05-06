@@ -1,9 +1,7 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ContextualToString;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -40,7 +38,33 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Contex
 
     @Override
     public Object cast(CustomClassObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        TridentUserMethod castMethod = type.explicitCasts.get(targetType);
+        if(castMethod != null) {
+            castMethod.setThisObject(object);
+            Object rv = castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
+            castMethod.setThisObject(null);
+            TridentMethod.HelperMethods.assertOfType(rv, ((TridentUserMethodBranch) castMethod.getBranches().get(0)).getFunctionPattern(), ctx, false, targetType);
+            return rv;
+        }
         throw new ClassCastException();
+    }
+
+    @Override
+    public Object coerce(CustomClassObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        TridentUserMethod castMethod = type.implicitCasts.get(targetType);
+        if(castMethod != null) {
+            castMethod.setThisObject(object);
+            Object rv = castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
+            castMethod.setThisObject(null);
+            TridentMethod.HelperMethods.assertOfType(rv, ((TridentUserMethodBranch) castMethod.getBranches().get(0)).getFunctionPattern(), ctx, false, targetType);
+            return rv;
+        }
+        return null;
+    }
+
+    @Override
+    public boolean canCoerce(Object object, TypeHandler into) {
+        return type.isInstance(object) && type.implicitCasts.containsKey(into);
     }
 
     @Override
@@ -76,6 +100,10 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Contex
         instanceMembers.put(sym.getName(), sym);
     }
 
+    public void putMemberIfAbsent(Symbol sym) {
+        instanceMembers.putIfAbsent(sym.getName(), sym);
+    }
+
     @Override
     public String toString() {
         return super.toString();
@@ -99,5 +127,9 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Contex
     @Override
     public TypeHandler getStaticHandler() {
         return type;
+    }
+
+    public Symbol getSymbol(String name) {
+        return instanceMembers.get(name);
     }
 }

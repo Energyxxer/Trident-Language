@@ -10,6 +10,7 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @AnalyzerMember(key = "var")
@@ -30,6 +31,9 @@ public class VariableInstruction implements Instruction {
         SymbolDeclaration response = new SymbolDeclaration(memberName);
         response.setName(memberName);
         response.setVisibility(memberVisibility);
+        response.setConstraintSupplier(initialValue -> {
+            return TypeConstraints.parseConstraintsInfer(entryFinal.find("TYPE_CONSTRAINTS"), ctx, initialValue);
+        });
         response.setSupplier(() -> {
             Object initialValue = null;
             boolean initialized = false;
@@ -40,7 +44,7 @@ public class VariableInstruction implements Instruction {
                 initialized = true;
             }
             Symbol sym = new Symbol(memberName, memberVisibility);
-            sym.setTypeConstraints(TypeConstraints.parseConstraintsInfer(entryFinal.find("TYPE_CONSTRAINTS"), ctx, initialValue));
+            sym.setTypeConstraints(response.getConstraint(initialValue));
             sym.setFinal(response.hasModifier(Symbol.SymbolModifier.FINAL));
             if(initialized) sym.safeSetValue(initialValue, entryFinal, ctx);
             return sym;
@@ -62,6 +66,9 @@ public class VariableInstruction implements Instruction {
         private String symbolName;
         private Symbol.SymbolVisibility visibility;
         private Supplier<Symbol> symbolSupplier;
+        private TypeConstraints constraint;
+        private boolean constraintForced = false;
+        private Function<Object, TypeConstraints> constraintSupplier = null;
         private int modifiers = 0;
 
         public SymbolDeclaration(String symbolName) {
@@ -105,6 +112,20 @@ public class VariableInstruction implements Instruction {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Duplicated modifier '" + mod.name().toLowerCase() + "'", pattern, ctx);
             }
             modifiers |= mod.getBit();
+        }
+
+        public void setConstraintSupplier(Function<Object, TypeConstraints> constraintSupplier) {
+            this.constraintSupplier = constraintSupplier;
+        }
+
+        public TypeConstraints preparseConstraints() {
+            constraint = getConstraint(TypeConstraints.SpecialInferInstruction.NO_INSTANCE_INFER);
+            constraintForced = true;
+            return constraint;
+        }
+
+        public TypeConstraints getConstraint(Object initialValue) {
+            return constraintForced ? constraint : (constraintSupplier != null ? constraintSupplier.apply(initialValue) : null);
         }
     }
 }

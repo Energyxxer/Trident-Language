@@ -4,6 +4,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethodBranch;
@@ -19,17 +20,21 @@ import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 import com.energyxxer.util.logger.Debug;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.function.Function;
 
 import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
 
 public class CustomClass implements TypeHandler<CustomClass> {
+    private boolean complete = false;
 
     private final String name;
     private final HashMap<String, Symbol> staticMembers = new HashMap<>();
-    private final ArrayList<Function<CustomClassObject, Symbol>> instanceMemberSuppliers = new ArrayList<>();
-    private final CustomClass superClass = null;
+    private final LinkedHashMap<String, InstanceMemberSupplier> instanceMemberSuppliers = new LinkedHashMap<>();
+    final LinkedHashMap<TypeHandler, TridentUserMethod> explicitCasts = new LinkedHashMap<>();
+    final LinkedHashMap<TypeHandler, TridentUserMethod> implicitCasts = new LinkedHashMap<>();
 
     private Function<CustomClassObject, TridentMethod> constructorSupplier = null;
     private Symbol.SymbolVisibility constructorVisibility = Symbol.SymbolVisibility.LOCAL;
@@ -40,10 +45,13 @@ public class CustomClass implements TypeHandler<CustomClass> {
     private ISymbolContext innerContext;
     private String typeIdentifier;
 
+    private ArrayList<TokenPattern<?>> forwardEntries = new ArrayList<>();
+
     private CustomClass(String name) {
         this.name = name;
     }
 
+    //Constructor exclusively for native classes:
     public CustomClass(String name, String location, ISymbolContext ctx) {
         this.name = name;
         this.definitionContext = ctx;
@@ -51,35 +59,69 @@ public class CustomClass implements TypeHandler<CustomClass> {
         this.innerContext = new SymbolContext(ctx);
 
         this.typeIdentifier = location + "@" + name;
+
+        this.complete = true;
     }
 
     public static void defineClass(TokenPattern<?> pattern, ISymbolContext ctx) {
         Symbol.SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), ctx, Symbol.SymbolVisibility.GLOBAL);
         String className = pattern.find("CLASS_NAME").flatten(false);
 
-        CustomClass classObject = new CustomClass(className);
-        classObject.definitionFile = ctx.getStaticParentFile();
-        classObject.definitionContext = ctx;
+        CustomClass classObject = ctx.getStaticParentFile().getClassForName(className);
+        if(classObject != null) {
+            if(classObject.isComplete()) {
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot modify definition of class '" + classObject.getTypeIdentifier() + "': Class is already complete", pattern.find("CLASS_NAME"), ctx);
+            }
+        } else {
+            classObject = new CustomClass(className);
+            classObject.definitionFile = ctx.getStaticParentFile();
+            classObject.definitionContext = ctx;
+            classObject.innerContext = new SymbolContext(ctx);
+            classObject.typeIdentifier = classObject.definitionFile.getResourceLocation() + "@" + classObject.name;
 
-        ctx.putInContextForVisibility(visibility, new Symbol(className, visibility, classObject));
 
-        classObject.innerContext = new SymbolContext(ctx);
-
-        classObject.typeIdentifier = classObject.definitionFile.getResourceLocation() + "@" + classObject.name;
+            ctx.getStaticParentFile().registerInnerClass(classObject, pattern, ctx);
+            Symbol sym = new Symbol(className, visibility, classObject);
+            sym.setFinalAndLock();
+            ctx.putInContextForVisibility(visibility, sym);
+        }
+        CustomClass finalClassObject = classObject;
 
         TokenList bodyEntryList = (TokenList) pattern.find("CLASS_DECLARATION_BODY.CLASS_BODY_ENTRIES");
 
         if(bodyEntryList != null) {
+            classObject.complete = true;
             for(TokenPattern<?> entry : bodyEntryList.getContents()) {
                 entry = ((TokenStructure)entry).getContents();
                 switch(entry.getName()) {
                     case "CLASS_MEMBER": {
                         VariableInstruction.SymbolDeclaration decl = parseSymbolDeclaration(entry, classObject.definitionContext);
+                        decl.preparseConstraints();
 
                         if(decl.hasModifier(Symbol.SymbolModifier.STATIC)) {
                             classObject.putStaticMember(decl.getName(), decl.getSupplier().get());
                         } else {
-                            classObject.putInstanceMember(thiz -> decl.getSupplier().get());
+                            classObject.putInstanceMember(decl.getName(), new InstanceMemberSupplier() {
+                                @Override
+                                public String getName() {
+                                    return decl.getName();
+                                }
+
+                                @Override
+                                public Symbol constructSymbol(CustomClassObject thiz) {
+                                    return decl.getSupplier().get();
+                                }
+
+                                @Override
+                                public boolean isFunction() {
+                                    return false;
+                                }
+
+                                @Override
+                                public Symbol.SymbolVisibility getVisibility() {
+                                    return decl.getVisibility();
+                                }
+                            });
                         }
                         break;
                     }
@@ -116,7 +158,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
 
                         if(!isConstructor) {
                             Function<CustomClassObject, Symbol> memberSupplier = thiz -> {
-                                ISymbolContext innerFrame = new SymbolContext(classObject.innerContext);
+                                ISymbolContext innerFrame = new SymbolContext(finalClassObject.innerContext);
                                 if(thiz != null) {
                                     for(Symbol instanceSym : thiz.instanceMembers.values()) {
                                         innerFrame.put(instanceSym);
@@ -133,11 +175,44 @@ public class CustomClass implements TypeHandler<CustomClass> {
                             if(isStatic) {
                                 classObject.putStaticMember(functionName, memberSupplier.apply(null));
                             } else {
-                                classObject.putInstanceMember(memberSupplier);
+                                classObject.putInstanceMember(functionName, new InstanceMemberSupplier() {
+                                    @Override
+                                    public String getName() {
+                                        return functionName;
+                                    }
+
+                                    @Override
+                                    public Symbol constructSymbol(CustomClassObject thiz) {
+                                        return memberSupplier.apply(thiz);
+                                    }
+
+                                    @Override
+                                    public boolean isFunction() {
+                                        return true;
+                                    }
+
+                                    @Override
+                                    public Symbol.SymbolVisibility getVisibility() {
+                                        return memberVisibility;
+                                    }
+                                });
                             }
                         } else {
-                            classObject.setConstructor(memberVisibility, thiz -> new TridentUserMethod(functionName, branches, classObject.innerContext, thiz));
+                            classObject.setConstructor(memberVisibility, thiz -> new TridentUserMethod(functionName, branches, finalClassObject.innerContext, thiz));
                         }
+                        break;
+                    }
+                    case "CLASS_FORWARD": {
+                        classObject.forwardEntries.add(entry);
+                        break;
+                    }
+                    case "CLASS_OVERRIDE": {
+                        boolean implicit = "implicit".equals(entry.find("CLASS_TRANSFORM_TYPE").flatten(false));
+                        TypeHandler toType = InterpolationManager.parseType(entry.find("INTERPOLATION_TYPE"), classObject.getInnerContext());
+                        TridentMethodBranch branch = TridentMethodBranch.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), classObject.getInnerContext());
+                        TridentUserMethod function = new TridentUserMethod(toType.getTypeIdentifier(), Collections.singletonList(branch), classObject.getInnerContext(), null);
+                        LinkedHashMap<TypeHandler, TridentUserMethod> castMap = implicit ? classObject.implicitCasts : classObject.explicitCasts;
+                        castMap.put(toType, function);
                         break;
                     }
                     case "COMMENT": {
@@ -172,8 +247,8 @@ public class CustomClass implements TypeHandler<CustomClass> {
         innerContext.put(sym);
     }
 
-    public void putInstanceMember(Function<CustomClassObject, Symbol> symSupplier) {
-        instanceMemberSuppliers.add(symSupplier);
+    public void putInstanceMember(String name, InstanceMemberSupplier symSupplier) {
+        instanceMemberSuppliers.put(name, symSupplier);
     }
 
     public void setConstructor(Symbol.SymbolVisibility visibility, Function<CustomClassObject, TridentMethod> supplier) {
@@ -183,22 +258,22 @@ public class CustomClass implements TypeHandler<CustomClass> {
 
     @Override
     public Object getMember(CustomClass object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        CustomClass other = this;
-        while (true) {
-            if(other.staticMembers.containsKey(member)) {
-                Symbol sym = other.staticMembers.get(member);
+        object.assertComplete(pattern, ctx);
+        if(this.staticMembers.containsKey(member)) {
+            Symbol sym = this.staticMembers.get(member);
 
-                if(hasAccess(ctx, sym.getVisibility())) {
-                    return keepSymbol ? sym : sym.getValue();
-                } else {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + getClassTypeIdentifier(), pattern, ctx);
-                }
-            }
-            if (other.superClass != null) {
-                other = other.superClass;
+            if(hasAccess(ctx, sym.getVisibility())) {
+                return keepSymbol ? sym : sym.getValue();
             } else {
-                return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + getClassTypeIdentifier(), pattern, ctx);
             }
+        }
+        return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
+    }
+
+    private void assertComplete(TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(!isComplete()) {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Definition of class '" + getTypeIdentifier() + "' is not yet complete", pattern, ctx);
         }
     }
 
@@ -211,14 +286,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
     @SuppressWarnings("unchecked")
     @Override
     public Object cast(CustomClass object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        CustomClass other = this;
-        while (true) {
-            if (other.superClass != null) {
-                other = other.superClass;
-            } else {
-                return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
-            }
-        }
+        return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
     }
 
     @SuppressWarnings("unchecked")
@@ -249,7 +317,6 @@ public class CustomClass implements TypeHandler<CustomClass> {
 
     @Override
     public boolean isInstance(Object obj) {
-        //TODO: Inheritance
         return obj instanceof CustomClassObject && ((CustomClassObject) obj).getType() == this;
     }
 
@@ -268,17 +335,14 @@ public class CustomClass implements TypeHandler<CustomClass> {
     }
 
     @Override
-    public TypeHandler<?> getSuperType() {
-        return superClass;
-    }
-
-    @Override
     public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+        assertComplete(pattern, ctx);
         if(ctx == null || hasAccess(ctx, constructorVisibility)) {
             return (params, patterns, pattern2, ctx2) -> {
                 CustomClassObject created = new CustomClassObject(this);
-                for(Function<CustomClassObject, Symbol> symbolSupplier : instanceMemberSuppliers) {
-                    created.putMember(symbolSupplier.apply(created));
+
+                for(InstanceMemberSupplier symbolSupplier : this.instanceMemberSuppliers.values()) {
+                    created.putMemberIfAbsent(symbolSupplier.constructSymbol(created));
                 }
 
                 if(constructorSupplier != null) {
@@ -289,6 +353,63 @@ public class CustomClass implements TypeHandler<CustomClass> {
                     }
 
                     constructorSupplier.apply(created).safeCall(params, patterns, pattern2, ctx2);
+                    for(Symbol field : created.instanceMembers.values()) {
+                        if(field.isFinal() && field.maySet()) {
+                            throw new TridentException(TridentException.Source.TYPE_ERROR, "Final symbol '" + field.getName() + "' was not initialized in constructor.", pattern, ctx2);
+                        }
+                    }
+                }
+
+                for(TokenPattern<?> entry : forwardEntries) {
+                    String forwardTargetName = entry.find("FORWARD_TARGET_NAME").flatten(false);
+
+                    Symbol targetSym = created.getSymbol(forwardTargetName);
+                    if(targetSym == null) {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Unknown symbol '" + forwardTargetName + "'", entry, ctx2);
+                    }
+                    if(!targetSym.isFinal()) {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + forwardTargetName + "' is not final.", entry, ctx2);
+                    }
+                    if(targetSym.getValue() == null) {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + forwardTargetName + "' is not initialized.", entry, ctx2);
+                    }
+                    CustomClass forwardTargetType;
+                    if(targetSym.getTypeConstraints() != null && targetSym.getTypeConstraints().getHandler() instanceof CustomClass) {
+                        forwardTargetType = ((CustomClass) targetSym.getTypeConstraints().getHandler());
+                    } else {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "The type of symbol '" + forwardTargetName + "' is not constrained to a class type", entry, ctx2);
+                    }
+
+
+
+                    TokenList memberList = ((TokenList) entry.find("FORWARD_MEMBER_NAMES"));
+                    for(TokenPattern<?> rawMember : memberList.searchByName("FORWARD_MEMBER_NAME")) {
+                        String rawMemberName = rawMember.flatten(false);
+                        if("*".equals(rawMemberName)) {
+                            //wildcard, forward all functions into the instance
+                            for(InstanceMemberSupplier forwardTypeMemberSupplier : forwardTargetType.instanceMemberSuppliers.values()) {
+                                if(forwardTypeMemberSupplier.isFunction() && forwardTargetType.hasAccess(innerContext, forwardTypeMemberSupplier.getVisibility())) {
+                                    Debug.log("forwarded: " + forwardTypeMemberSupplier.getName());
+                                    created.putMemberIfAbsent(((CustomClassObject) targetSym.getValue()).instanceMembers.get(forwardTypeMemberSupplier.getName()));
+                                }
+                            }
+                        } else {
+                            InstanceMemberSupplier forwardTypeMemberSupplier = forwardTargetType.instanceMemberSuppliers.get(rawMemberName);
+                            if(forwardTypeMemberSupplier == null) {
+                                throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + rawMemberName + "' does not exist in the forward target", rawMember, ctx2);
+                            }
+                            if(forwardTypeMemberSupplier.isFunction()) {
+                                if(forwardTargetType.hasAccess(innerContext, forwardTypeMemberSupplier.getVisibility())) {
+                                    Debug.log("forwarded: " + forwardTypeMemberSupplier.getName());
+                                    created.putMemberIfAbsent(((CustomClassObject) targetSym.getValue()).instanceMembers.get(rawMemberName));
+                                } else {
+                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + rawMemberName + "' has " + forwardTypeMemberSupplier.getVisibility().toString().toLowerCase() + " access in " + forwardTargetType.getClassTypeIdentifier(), rawMember, ctx2);
+                                }
+                            } else {
+                                throw new TridentException(TridentException.Source.TYPE_ERROR, "The forward member must be a function", rawMember, ctx2);
+                            }
+                        }
+                    }
                 }
                 return created;
             };
@@ -322,5 +443,21 @@ public class CustomClass implements TypeHandler<CustomClass> {
 
     public Object forceInstantiate() {
         return null;
+    }
+
+    public boolean isComplete() {
+        return complete;
+    }
+
+    public String getClassName() {
+        return name;
+    }
+
+    private interface InstanceMemberSupplier {
+        String getName();
+        Symbol constructSymbol(CustomClassObject thiz);
+
+        boolean isFunction();
+        Symbol.SymbolVisibility getVisibility();
     }
 }
