@@ -1,6 +1,8 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.util.DoubleRange;
+import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
@@ -25,6 +27,8 @@ public class IntTypeHandler implements TypeHandler<Integer> {
     public Object cast(Integer object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         switch(TridentTypeManager.getInternalTypeIdentifierForType(targetType)) {
             case "primitive(real)": return object.doubleValue();
+            case "primitive(int_range)": return new IntegerRange(object, object);
+            case "primitive(real_range)": return new DoubleRange(object.doubleValue(), object.doubleValue());
             case "primitive(nbt_value)":
             case "primitive(tag_int)": return new TagInt(object);
             case "primitive(tag_byte)": return new TagByte(object);
@@ -48,6 +52,8 @@ public class IntTypeHandler implements TypeHandler<Integer> {
     public boolean canCoerce(Object object, TypeHandler into) {
         return object instanceof Integer && (
                     into instanceof RealTypeHandler ||
+                    into instanceof RealRangeTypeHandler ||
+                    into instanceof IntRangeTypeHandler ||
                     into instanceof NBTTagTypeHandler ||
                     into instanceof TagIntTypeHandler ||
                     into instanceof TagByteTypeHandler ||

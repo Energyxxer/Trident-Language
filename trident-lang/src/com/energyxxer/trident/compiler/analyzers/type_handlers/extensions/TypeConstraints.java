@@ -50,7 +50,7 @@ public class TypeConstraints {
     }
 
     public Object adjustValue(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(handler != null) value = TridentMethod.HelperMethods.assertOfType(value, pattern, ctx, nullable, handler);
+        if(handler != null) value = TridentMethod.HelperMethods.convertToType(value, pattern, ctx, nullable, handler);
         return value;
     }
 
@@ -59,6 +59,15 @@ public class TypeConstraints {
             throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected a non-null value, Found null", pattern, ctx);
         }
         if(value != null && handler != null && !handler.isInstance(value) && !TridentTypeManager.getHandlerForObject(value).canCoerce(value, handler)) {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Incompatible types. Expected '" + handler.getTypeIdentifier() + "', Found '" + TridentTypeManager.getTypeIdentifierForObject(value) + "'", pattern, ctx);
+        }
+    }
+
+    public void validateExact(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(value == null && !nullable) {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected a non-null value, Found null", pattern, ctx);
+        }
+        if(value != null && handler != null && !handler.isInstance(value)) {
             throw new TridentException(TridentException.Source.TYPE_ERROR, "Incompatible types. Expected '" + handler.getTypeIdentifier() + "', Found '" + TridentTypeManager.getTypeIdentifierForObject(value) + "'", pattern, ctx);
         }
     }

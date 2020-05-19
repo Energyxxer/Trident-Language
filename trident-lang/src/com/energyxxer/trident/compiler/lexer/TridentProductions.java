@@ -2283,7 +2283,7 @@ public class TridentProductions {
 
             LazyTokenStructureMatch classBodyEntry = choice(
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER"),
-                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("static").setOptional(), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), choice(DYNAMIC_FUNCTION, OVERLOADED_FUNCTION).setName("CLASS_FUNCTION_SPLIT").setGreedy(true)).setName("CLASS_FUNCTION"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), choice("override", "overload").setOptional().setName("FUNCTION_PARENT_MODE"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), choice(DYNAMIC_FUNCTION, OVERLOADED_FUNCTION).setName("CLASS_FUNCTION_SPLIT").setGreedy(true)).setName("CLASS_FUNCTION"),
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), brace("("), list(choice(identifierX(), symbol("*")).setName("FORWARD_MEMBER_NAME"), comma()).setName("FORWARD_MEMBER_NAMES"), brace(")"), ofType(ARROW), identifierX().setName("FORWARD_TARGET_NAME")).setName("CLASS_FORWARD"),
                     group(literal("override").setOptional(), choice("explicit", "implicit").setName("CLASS_TRANSFORM_TYPE"), brace("<"), INTERPOLATION_TYPE, brace(">"), DYNAMIC_FUNCTION).setName("CLASS_OVERRIDE"),
                     COMMENT_S
@@ -2349,7 +2349,7 @@ public class TridentProductions {
                                                     }
                                                 }
                                             }),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), classBody).setName("DEFINE_CLASS")
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), optional(colon(), list(INTERPOLATION_TYPE, comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST")).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
                                                     TokenPattern<?> namePattern = p.find("CLASS_NAME");

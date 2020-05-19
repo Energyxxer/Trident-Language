@@ -31,9 +31,7 @@ public class VariableInstruction implements Instruction {
         SymbolDeclaration response = new SymbolDeclaration(memberName);
         response.setName(memberName);
         response.setVisibility(memberVisibility);
-        response.setConstraintSupplier(initialValue -> {
-            return TypeConstraints.parseConstraintsInfer(entryFinal.find("TYPE_CONSTRAINTS"), ctx, initialValue);
-        });
+        response.setConstraintSupplier(initialValue -> TypeConstraints.parseConstraintsInfer(entryFinal.find("TYPE_CONSTRAINTS"), ctx, initialValue));
         response.setSupplier(() -> {
             Object initialValue = null;
             boolean initialized = false;
@@ -50,26 +48,52 @@ public class VariableInstruction implements Instruction {
             return sym;
         });
 
-        TokenList modifierList = ((TokenList) pattern.find("SYMBOL_MODIFIER_LIST"));
-        if(modifierList != null) {
-            for(TokenPattern<?> rawModifier : modifierList.getContents()) {
-                String modifierName = rawModifier.flatten(false);
-                Symbol.SymbolModifier modifier = Symbol.SymbolModifier.valueOf(modifierName.toUpperCase());
-                response.setModifier(modifier, rawModifier, ctx);
-            }
-        }
+        response.populate((TokenList) pattern.find("SYMBOL_MODIFIER_LIST"), ctx);
 
         return response;
     }
 
-    public static class SymbolDeclaration {
+    public static class SymbolModifierMap {
+        private int modifiers = 0;
+
+        public boolean hasModifier(Symbol.SymbolModifier mod) {
+            return (modifiers & mod.getBit()) > 0;
+        }
+
+        public void setModifier(Symbol.SymbolModifier mod) {
+            setModifier(mod, null, null);
+        }
+
+        public void setModifier(Symbol.SymbolModifier mod, TokenPattern<?> pattern, ISymbolContext ctx) {
+            if(hasModifier(mod) && pattern != null) {
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Duplicated modifier '" + mod.name().toLowerCase() + "'", pattern, ctx);
+            }
+            modifiers |= mod.getBit();
+        }
+
+        public static SymbolModifierMap createFromList(TokenList modifierList, ISymbolContext ctx) {
+            return new SymbolModifierMap().populate(modifierList, ctx);
+        }
+
+        public SymbolModifierMap populate(TokenList modifierList, ISymbolContext ctx) {
+            if(modifierList != null) {
+                for(TokenPattern<?> rawModifier : modifierList.getContents()) {
+                    String modifierName = rawModifier.flatten(false);
+                    Symbol.SymbolModifier modifier = Symbol.SymbolModifier.valueOf(modifierName.toUpperCase());
+                    setModifier(modifier, rawModifier, ctx);
+                }
+            }
+            return this;
+        }
+    }
+
+    public static class SymbolDeclaration extends SymbolModifierMap {
         private String symbolName;
         private Symbol.SymbolVisibility visibility;
         private Supplier<Symbol> symbolSupplier;
         private TypeConstraints constraint;
         private boolean constraintForced = false;
         private Function<Object, TypeConstraints> constraintSupplier = null;
-        private int modifiers = 0;
 
         public SymbolDeclaration(String symbolName) {
             this.symbolName = symbolName;
@@ -97,21 +121,6 @@ public class VariableInstruction implements Instruction {
 
         public Supplier<Symbol> getSupplier() {
             return symbolSupplier;
-        }
-
-        public boolean hasModifier(Symbol.SymbolModifier mod) {
-            return (modifiers & mod.getBit()) > 0;
-        }
-
-        public void setModifier(Symbol.SymbolModifier mod) {
-            setModifier(mod, null, null);
-        }
-
-        public void setModifier(Symbol.SymbolModifier mod, TokenPattern<?> pattern, ISymbolContext ctx) {
-            if(hasModifier(mod) && pattern != null) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Duplicated modifier '" + mod.name().toLowerCase() + "'", pattern, ctx);
-            }
-            modifiers |= mod.getBit();
         }
 
         public void setConstraintSupplier(Function<Object, TypeConstraints> constraintSupplier) {

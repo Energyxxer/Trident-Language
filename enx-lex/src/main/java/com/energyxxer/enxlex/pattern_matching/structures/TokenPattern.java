@@ -23,6 +23,14 @@ public abstract class TokenPattern<T> {
 
 	public abstract TokenPattern<?> find(String path);
 
+	public TokenPattern<?> tryFind(String path) {
+		TokenPattern<?> rv = find(path);
+		if(rv == null) {
+			rv = this;
+		}
+		return rv;
+	}
+
 	public abstract String flatten(boolean separate);
 
 	public abstract File getFile();

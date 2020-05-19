@@ -62,7 +62,7 @@ public interface TridentMethod extends TypeHandler<TridentMethod> {
             for(int i = 0; i < expected.length; i++) {
                 expectedTypes[i] = TridentTypeManager.getHandlerForHandledClass(sanitizeClass(expected[i]));
             }
-            param = assertOfType(param, pattern, ctx, false, expectedTypes);
+            param = convertToType(param, pattern, ctx, false, expectedTypes);
 
             //Ensure of the expected types
             for(Class cls : expected) {
@@ -72,8 +72,24 @@ public interface TridentMethod extends TypeHandler<TridentMethod> {
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Expected one of the following java classes: " + Arrays.stream(expected).map(Class::getSimpleName).collect(Collectors.joining(", ")) + "; Instead got: " + param.getClass().getSimpleName(), pattern, ctx);
         }
 
+        public static void assertOfType(Object value, TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable, TypeHandler... expected) { //no coercion
+            if(value == null && nullable) return;
+            if(value != null) {
+                for(TypeHandler type : expected) {
+                    if(type == null) return;
+                    if(type.isInstance(value)) return;
+                }
+            }
+
+            if(expected.length > 1) {
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected value of one of the following types: " + Arrays.stream(expected).map(TypeHandler::getTypeIdentifier).collect(Collectors.joining(", ")) + "; Instead got " + TridentTypeManager.getTypeIdentifierForObject(value), pattern, ctx);
+            } else {
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Expected value of type " + expected[0].getTypeIdentifier() + "; Instead got " + TridentTypeManager.getTypeIdentifierForObject(value), pattern, ctx);
+            }
+        }
+
         @SuppressWarnings("unchecked")
-        public static Object assertOfType(Object value, TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable, TypeHandler... expected) {
+        public static Object convertToType(Object value, TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable, TypeHandler... expected) { //coercion
             if(value == null && nullable) return null;
             if(value != null) {
                 TypeHandler valueType = TridentTypeManager.getHandlerForObject(value);

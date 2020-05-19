@@ -38,26 +38,22 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Contex
 
     @Override
     public Object cast(CustomClassObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        TridentUserMethod castMethod = type.explicitCasts.get(targetType);
-        if(castMethod != null) {
-            castMethod.setThisObject(object);
-            Object rv = castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
-            castMethod.setThisObject(null);
-            TridentMethod.HelperMethods.assertOfType(rv, ((TridentUserMethodBranch) castMethod.getBranches().get(0)).getFunctionPattern(), ctx, false, targetType);
-            return rv;
+        for(CustomClass type : type.getInheritanceTree()) {
+            TridentUserMethod castMethod = type.explicitCasts.get(targetType);
+            if(castMethod != null) {
+                return castMethod.safeCall(new Object[] {object}, new TokenPattern[] {pattern}, pattern, ctx);
+            }
         }
         throw new ClassCastException();
     }
 
     @Override
     public Object coerce(CustomClassObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        TridentUserMethod castMethod = type.implicitCasts.get(targetType);
-        if(castMethod != null) {
-            castMethod.setThisObject(object);
-            Object rv = castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
-            castMethod.setThisObject(null);
-            TridentMethod.HelperMethods.assertOfType(rv, ((TridentUserMethodBranch) castMethod.getBranches().get(0)).getFunctionPattern(), ctx, false, targetType);
-            return rv;
+        for(CustomClass type : type.getInheritanceTree()) {
+            TridentUserMethod castMethod = type.implicitCasts.get(targetType);
+            if(castMethod != null) {
+                return castMethod.safeCall(new Object[] {object}, new TokenPattern[] {pattern}, pattern, ctx);
+            }
         }
         return null;
     }

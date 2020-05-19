@@ -2,6 +2,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.commodore.functionlogic.nbt.TagDouble;
 import com.energyxxer.commodore.functionlogic.nbt.TagFloat;
+import com.energyxxer.commodore.util.DoubleRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
@@ -27,6 +28,7 @@ public class RealTypeHandler implements TypeHandler<Double> {
     public Object cast(Double object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         switch(TridentTypeManager.getInternalTypeIdentifierForType(targetType)) {
             case "primitive(int)": return object.intValue();
+            case "primitive(real_range)": return new DoubleRange(object, object);
             case "primitive(nbt_value)":
             case "primitive(tag_double)": return new TagDouble(object);
             case "primitive(tag_float)": return new TagFloat(object.floatValue());
@@ -37,6 +39,7 @@ public class RealTypeHandler implements TypeHandler<Double> {
     @Override
     public boolean canCoerce(Object object, TypeHandler into) {
         return object instanceof Double && (
+                    into instanceof RealRangeTypeHandler ||
                     into instanceof NBTTagTypeHandler ||
                     into instanceof TagFloatTypeHandler ||
                     into instanceof TagDoubleTypeHandler

@@ -17,6 +17,7 @@ public class TridentUserMethodBranch extends TridentMethodBranch {
     private TokenPattern<?> functionPattern;
     private TokenPattern<?> voidReturnPattern;
     protected TypeConstraints returnConstraints;
+    private boolean shouldCoerce = true;
 
     public TridentUserMethodBranch(Collection<FormalParameter> formalParameters, TokenPattern<?> functionPattern, TypeConstraints returnConstraints) {
         super(formalParameters);
@@ -54,9 +55,29 @@ public class TridentUserMethodBranch extends TridentMethodBranch {
         }
 
         if(returnConstraints != null) {
-            returnConstraints.validate(returnValue, returnPattern, callingCtx);
-            returnValue = returnConstraints.adjustValue(returnValue, pattern, callingCtx);
+            if(shouldCoerce) {
+                returnConstraints.validate(returnValue, returnPattern, callingCtx);
+                returnValue = returnConstraints.adjustValue(returnValue, pattern, callingCtx);
+            } else {
+                returnConstraints.validateExact(returnValue, returnPattern, callingCtx);
+            }
         }
         return returnValue;
+    }
+
+    public TypeConstraints getReturnConstraints() {
+        return returnConstraints;
+    }
+
+    public void setReturnConstraints(TypeConstraints returnConstraints) {
+        this.returnConstraints = returnConstraints;
+    }
+
+    public boolean isShouldCoerce() {
+        return shouldCoerce;
+    }
+
+    public void setShouldCoerce(boolean shouldCoerce) {
+        this.shouldCoerce = shouldCoerce;
     }
 }

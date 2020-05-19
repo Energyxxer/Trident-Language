@@ -86,6 +86,9 @@ public class TagLib implements DefaultLibraryProvider {
                 Type type;
                 if(value.isTag) {
                     type = module.getNamespace(value.namespace).getTagManager().getGroup(category).get(value.body);
+                    if(type == null) {
+                        throw new IllegalArgumentException("Tag '" + value + "' does not exist");
+                    }
                 } else {
                     type = module.getNamespace(value.namespace).getTypeManager().getDictionary(category).get(value.body);
                 }
