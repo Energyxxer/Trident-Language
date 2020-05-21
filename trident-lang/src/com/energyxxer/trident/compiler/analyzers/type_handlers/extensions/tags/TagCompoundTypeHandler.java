@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.stream.Collectors;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
-
 @AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.nbt.TagCompound")
 public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
     private static HashMap<String, MemberWrapper<TagCompound>> members = new HashMap<>();
@@ -20,7 +18,6 @@ public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
     static {
         try {
             members.put("merge", new MethodWrapper<>(TagCompound.class.getMethod("merge", TagCompound.class)));
-            members.put("remove", new MethodWrapper<>(TagCompound.class.getMethod("remove", String.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }

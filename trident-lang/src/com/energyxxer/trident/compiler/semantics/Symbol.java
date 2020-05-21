@@ -29,6 +29,7 @@ public class Symbol {
     private Object value;
     private boolean maySet = true;
     private boolean isFinal = false;
+    private boolean isClassFunction = false;
 
     private TypeConstraints typeConstraints = null;
 
@@ -92,6 +93,11 @@ public class Symbol {
         maySet = false;
     }
 
+    public void setClassFunction() {
+        isClassFunction = true;
+        maySet = false;
+    }
+
     public void safeSetValue(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(maySet) {
             if(typeConstraints != null) {
@@ -100,6 +106,8 @@ public class Symbol {
             }
             this.value = value;
             if(isFinal) maySet = false;
+        } else if(isClassFunction) {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot assign a value to a class function", pattern, ctx);
         } else {
             throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot assign a value to a final variable", pattern, ctx);
         }

@@ -127,7 +127,7 @@ public class VariableInstruction implements Instruction {
             this.constraintSupplier = constraintSupplier;
         }
 
-        public TypeConstraints preparseConstraints() {
+        public TypeConstraints preParseConstraints() {
             constraint = getConstraint(TypeConstraints.SpecialInferInstruction.NO_INSTANCE_INFER);
             constraintForced = true;
             return constraint;

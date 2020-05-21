@@ -5,6 +5,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHa
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.util.logger.Debug;
+import org.jetbrains.annotations.Contract;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -88,6 +89,7 @@ public interface TridentMethod extends TypeHandler<TridentMethod> {
             }
         }
 
+        @Contract("null, _, _, true, _ -> null")
         @SuppressWarnings("unchecked")
         public static Object convertToType(Object value, TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable, TypeHandler... expected) { //coercion
             if(value == null && nullable) return null;
@@ -120,6 +122,7 @@ public interface TridentMethod extends TypeHandler<TridentMethod> {
         }
 
         //Java amirite
+        @Contract(pure = true)
         public static Class sanitizeClass(Class cls) {
             if(cls == double.class) return Double.class;
             if(cls == int.class) return Integer.class;

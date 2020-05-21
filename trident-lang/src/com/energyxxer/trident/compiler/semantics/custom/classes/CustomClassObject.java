@@ -31,6 +31,10 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Contex
         throw new MemberNotFoundException();
     }
 
+    public boolean containsMember(String name) {
+        return instanceMembers.containsKey(name);
+    }
+
     @Override
     public Object getIndexer(CustomClassObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();

@@ -6,6 +6,9 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import org.jetbrains.annotations.Contract;
+
+import java.util.Objects;
 
 public class TypeConstraints {
     public enum SpecialInferInstruction {
@@ -34,6 +37,7 @@ public class TypeConstraints {
         return constraints;
     }
 
+    @Contract("null, _ -> new")
     public static TypeConstraints parseConstraints(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern != null) {
             boolean inferConstraints = pattern.find("TYPE_CONSTRAINTS_INNER") == null;
@@ -84,6 +88,10 @@ public class TypeConstraints {
         return nullable;
     }
 
+    public boolean isNullConstraint() {
+        return handler == null && nullable;
+    }
+
     @Override
     public String toString() {
         return (handler != null ? TridentTypeManager.getTypeIdentifierForType(handler) : "*") + (nullable ? "?" : "");
@@ -94,7 +102,6 @@ public class TypeConstraints {
     //2: coercion match
     //1: null match
     //0: no match
-    @SuppressWarnings("unchecked")
     public int rateMatch(Object value) {
         if(value == null && nullable) return 1;
         if(handler == null && value != null) return 4;
@@ -104,5 +111,30 @@ public class TypeConstraints {
         if(handler.isInstance(value)) return 3;
         if(objectTypeHandler.canCoerce(value, handler)) return 2;
         return 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TypeConstraints that = (TypeConstraints) o;
+        return nullable == that.nullable &&
+                Objects.equals(handler, that.handler);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(handler, nullable);
+    }
+
+    public static boolean constraintsEqual(TypeConstraints a, TypeConstraints b) {
+        if(a == b) return true;
+        if(
+                (a == null && b.isNullConstraint()) ||
+                (b == null && a.isNullConstraint())
+        ) {
+            return true;
+        }
+        return a != null && a.equals(b);
     }
 }

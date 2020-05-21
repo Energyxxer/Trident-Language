@@ -46,12 +46,12 @@ public class NBTParser {
                         continue;
                     }
                     case "INTERPOLATION_BLOCK": {
-                        Object result = InterpolationManager.parse(pattern, ctx, NBTTag.class, Item.class, TextComponent.class);
+                        Object result = InterpolationManager.parse(pattern, ctx, NBTTag.class, Item.class, TextComponent.class, String.class);
                         EObject.assertNotNull(result, pattern, ctx);
                         if (result instanceof Item) {
                             return ItemTypeHandler.getSlotNBT((Item) result);
                         }
-                        if (result instanceof TextComponent) {
+                        if (result instanceof TextComponent || result instanceof String) {
                             return new TagString(result.toString());
                         }
                         return (NBTTag) result;

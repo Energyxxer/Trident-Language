@@ -4,6 +4,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
@@ -23,6 +24,10 @@ import java.util.function.Function;
 import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
 
 public class CustomClass implements TypeHandler<CustomClass> {
+    private enum MemberParentMode {
+        CREATE, OVERRIDE, OVERLOAD
+    }
+
     private boolean complete = false;
 
     private final String name;
@@ -118,12 +123,53 @@ public class CustomClass implements TypeHandler<CustomClass> {
                 switch(entry.getName()) {
                     case "CLASS_MEMBER": {
                         VariableInstruction.SymbolDeclaration decl = parseSymbolDeclaration(entry, classObject.definitionContext);
-                        decl.preparseConstraints();
+                        decl.preParseConstraints();
+                        MemberParentMode mode = MemberParentMode.CREATE;
+                        if(entry.find("MEMBER_PARENT_MODE") != null) {
+                            mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
+                        }
 
                         if(decl.hasModifier(Symbol.SymbolModifier.STATIC)) {
+                            if(mode != MemberParentMode.CREATE) {
+                                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a static member", entry.find("MEMBER_PARENT_MODE"), ctx);
+                            }
                             classObject.putStaticMember(decl.getName(), decl.getSupplier().get());
                         } else {
-                            classObject.putInstanceMember(decl.getName(), new InstanceMemberSupplier() {
+                            if(mode == MemberParentMode.CREATE) {
+                                InstanceMemberSupplier alreadyDefinedSupplier = classObject.getInstanceMemberSupplier(decl.getName());
+                                if(alreadyDefinedSupplier != null && alreadyDefinedSupplier.getDefiningClass() == classObject) {
+                                    throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate member '" + decl.getName() + "': it's already defined in the same class", entry, ctx);
+                                } if(alreadyDefinedSupplier != null) {
+                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Member '" + decl.getName() + "' is already defined in inherited class " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ". Use the 'override' keyword to change its default value", entry, ctx);
+                                }
+                            } else if(mode == MemberParentMode.OVERRIDE) {
+                                InstanceMemberSupplier alreadyDefinedSupplier = classObject.getInstanceMemberSupplier(decl.getName());
+                                if(alreadyDefinedSupplier == null) {
+                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override member '" + decl.getName() + "': not found in any of the inherited classes", entry, ctx);
+                                } else if(alreadyDefinedSupplier.getDefiningClass() == classObject) {
+                                    throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Cannot override member '" + decl.getName() + "': it's already defined in the same class", entry, ctx);
+                                }
+                                if(alreadyDefinedSupplier instanceof InstanceFunctionSupplier) {
+                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override a function with a field: Function '" + decl.getName() + "' found in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
+                                }
+                                //We know it's a field;
+                                //Check finality
+                                if(((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().hasModifier(Symbol.SymbolModifier.FINAL)) {
+                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': it's defined as final in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
+                                } else if(decl.hasModifier(Symbol.SymbolModifier.FINAL)) {
+                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "' with a final member", entry, ctx);
+                                }
+
+                                TypeConstraints thisConstraints = decl.getConstraint(null);
+                                TypeConstraints otherConstraints = ((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().getConstraint(null);
+                                if (!TypeConstraints.constraintsEqual(thisConstraints, otherConstraints)) {
+                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': Mismatch of type constraints. Defined in superclass " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ": " + otherConstraints + "; Found: " + thisConstraints, entry, ctx);
+                                }
+                            } else if(mode == MemberParentMode.OVERLOAD) {
+                                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Non-function class members don't have 'overload' as a valid member-parent-mode", entry, ctx);
+                            }
+
+                            classObject.putInstanceMember(decl.getName(), new InstanceFieldSupplier(decl) {
                                 @Override
                                 public String getName() {
                                     return decl.getName();
@@ -135,13 +181,13 @@ public class CustomClass implements TypeHandler<CustomClass> {
                                 }
 
                                 @Override
-                                public boolean isFunction() {
-                                    return false;
+                                public Symbol.SymbolVisibility getVisibility() {
+                                    return decl.getVisibility();
                                 }
 
                                 @Override
-                                public Symbol.SymbolVisibility getVisibility() {
-                                    return decl.getVisibility();
+                                public CustomClass getDefiningClass() {
+                                    return finalClassObject;
                                 }
                             });
                         }
@@ -151,13 +197,16 @@ public class CustomClass implements TypeHandler<CustomClass> {
                         String functionName = entry.find("SYMBOL_NAME").flatten(false);
                         boolean isConstructor = "new".equals(functionName);
                         VariableInstruction.SymbolModifierMap modifiers = VariableInstruction.SymbolModifierMap.createFromList(((TokenList) entry.find("SYMBOL_MODIFIER_LIST")), ctx);
+                        MemberParentMode mode = MemberParentMode.CREATE;
+                        if(entry.find("MEMBER_PARENT_MODE") != null) {
+                            mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
+                        }
 
                         if(isConstructor && modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
                             throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "'static' modifier not allowed here", entry.find("SYMBOL_MODIFIER_LIST.LITERAL_STATIC"), classObject.definitionContext);
                         }
 
                         Symbol.SymbolVisibility memberVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), classObject.definitionContext, Symbol.SymbolVisibility.LOCAL);
-                        final TokenPattern<?> entryFinal = entry;
 
                         ArrayList<TridentMethodBranch> branches = new ArrayList<>();
 
@@ -179,48 +228,97 @@ public class CustomClass implements TypeHandler<CustomClass> {
                         }
 
                         if(!isConstructor) {
-                            Function<CustomClassObject, Symbol> memberSupplier = thiz -> {
-                                ISymbolContext innerFrame = new SymbolContext(finalClassObject.innerContext);
-                                if(thiz != null) {
-                                    for(Symbol instanceSym : thiz.instanceMembers.values()) {
-                                        innerFrame.put(instanceSym);
-                                    }
-                                }
 
-                                TridentUserMethod method = new TridentUserMethod(functionName, branches, innerFrame, thiz);
-                                Symbol sym = new Symbol(functionName, memberVisibility);
-                                sym.setTypeConstraints(new TypeConstraints(TridentTypeManager.getHandlerForHandledClass(TridentMethod.class), false));
-                                sym.setFinal(modifiers.hasModifier(Symbol.SymbolModifier.FINAL));
-                                sym.safeSetValue(method, entryFinal, ctx);
-                                return sym;
-                            };
+
                             if(modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
-                                classObject.putStaticMember(functionName, memberSupplier.apply(null));
+                                if(mode != MemberParentMode.CREATE) {
+                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a static function", entry.find("MEMBER_PARENT_MODE"), ctx);
+                                }
+                                InstanceFunctionSupplier functionSupplier =
+                                        new InstanceFunctionSupplier(finalClassObject, entry, functionName, branches)
+                                                .setVisibility(memberVisibility)
+                                                .setModifiers(modifiers);
+                                classObject.putStaticMember(functionName, functionSupplier.constructSymbol(null));
                             } else {
-                                classObject.putInstanceMember(functionName, new InstanceMemberSupplier() {
-                                    @Override
-                                    public String getName() {
-                                        return functionName;
+                                if(mode == MemberParentMode.CREATE) {
+                                    InstanceMemberSupplier alreadyDefinedSupplier = classObject.getInstanceMemberSupplier(functionName);
+                                    if(alreadyDefinedSupplier != null && alreadyDefinedSupplier.getDefiningClass() == classObject) {
+                                        throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate member '" + functionName + "': it's already defined in the same class", entry, ctx);
+                                    } if(alreadyDefinedSupplier != null) {
+                                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Member '" + functionName + "' is already defined in inherited class " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ". Use the 'override' keyword to change an execution branch or 'overload' to add one", entry, ctx);
+                                    }
+                                    InstanceFunctionSupplier functionSupplier =
+                                            new InstanceFunctionSupplier(finalClassObject, entry, functionName, branches)
+                                                    .setVisibility(memberVisibility)
+                                                    .setModifiers(modifiers);
+                                    classObject.putInstanceMember(functionName, functionSupplier);
+                                } else {
+                                    InstanceMemberSupplier alreadyDefinedSupplier = classObject.getInstanceMemberSupplier(functionName);
+                                    if(alreadyDefinedSupplier == null) {
+                                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " member '" + functionName + "': not found in any of the inherited classes", entry, ctx);
+                                    }
+                                    if(!(alreadyDefinedSupplier instanceof InstanceFunctionSupplier)) {
+                                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a field with a function: Field '" + functionName + "' found in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
+                                    }
+                                    //We know it's a function;
+                                    //Check finality
+                                    if(((InstanceFunctionSupplier) alreadyDefinedSupplier).getModifiers().hasModifier(Symbol.SymbolModifier.FINAL)) {
+                                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override function '" + functionName + "': it's defined as final in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
                                     }
 
-                                    @Override
-                                    public Symbol constructSymbol(CustomClassObject thiz) {
-                                        return memberSupplier.apply(thiz);
-                                    }
+                                    List<TridentMethodBranch> alreadyDefinedBranches = ((InstanceFunctionSupplier) alreadyDefinedSupplier).branches;
 
-                                    @Override
-                                    public boolean isFunction() {
-                                        return true;
-                                    }
+                                    ArrayList<TridentMethodBranch> allBranches = new ArrayList<>(alreadyDefinedBranches);
 
-                                    @Override
-                                    public Symbol.SymbolVisibility getVisibility() {
-                                        return memberVisibility;
+                                    for(TridentMethodBranch branch : branches) {
+                                        int indexOfMatchingParameterBranch = -1;
+                                        for(int i = 0; i < alreadyDefinedBranches.size(); i++) {
+                                            TridentMethodBranch alreadyDefinedBranch = alreadyDefinedBranches.get(i);
+                                            if(FormalParameter.parameterListEquals(branch.getFormalParameters(), alreadyDefinedBranch.getFormalParameters())) {
+                                                indexOfMatchingParameterBranch = i;
+                                                break;
+                                            }
+                                        }
+
+                                        //TODO: WHEN PICKING SUPERCLASSES, ENSURE THEY HAVE COMPATIBLE FUNCTIONS
+                                        if(mode == MemberParentMode.OVERRIDE) {
+                                            if(indexOfMatchingParameterBranch == -1) {
+                                                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + functionName + ": couldn't find existing branch with parameter types: " + branch.getFormalParameters().toString(), entry, ctx);
+                                            }
+                                            if(alreadyDefinedSupplier.getDefiningClass() == classObject) {
+                                                throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Cannot override " + functionName + ": a branch with the same parameter types is already defined in the same class: " + branch.getFormalParameters().toString(), entry, ctx);
+                                            }
+
+                                            //OK: All requirements met
+
+                                            //OK: Good to override
+                                            allBranches.remove(alreadyDefinedBranches.get(indexOfMatchingParameterBranch));
+                                            allBranches.add(branch);
+
+                                        } else if(mode == MemberParentMode.OVERLOAD) {
+                                            if(indexOfMatchingParameterBranch > -1) {
+                                                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot overload " + functionName + ": a branch with the same parameter types is already defined in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ": " + branch.getFormalParameters().toString(), entry, ctx);
+                                            }
+
+                                            //OK: All requirements met
+
+                                            //OK: Good to overload
+                                            allBranches.add(branch);
+                                        }
                                     }
-                                });
+                                    InstanceFunctionSupplier functionSupplier =
+                                            new InstanceFunctionSupplier(finalClassObject, entry, functionName, allBranches)
+                                                    .setVisibility(memberVisibility)
+                                                    .setModifiers(modifiers);
+
+                                    classObject.putInstanceMember(functionName, functionSupplier);
+
+                                    //TODO check return type constraints of branches
+                                    //TODO check visibility
+                                }
                             }
                         } else {
-                            classObject.setConstructor(memberVisibility, thiz -> new TridentUserMethod(functionName, branches, finalClassObject.innerContext, thiz));
+                            classObject.setConstructor(memberVisibility, thiz -> new TridentUserMethod(functionName, branches, finalClassObject.prepareFunctionContext(thiz), thiz));
                         }
                         break;
                     }
@@ -276,6 +374,24 @@ public class CustomClass implements TypeHandler<CustomClass> {
     public void setConstructor(Symbol.SymbolVisibility visibility, Function<CustomClassObject, TridentMethod> supplier) {
         constructorVisibility = visibility;
         constructorSupplier = supplier;
+    }
+
+    public InstanceMemberSupplier getInstanceMemberSupplier(String name) {
+        for(CustomClass cls : getInheritanceTree()) {
+            InstanceMemberSupplier supplier = cls.instanceMemberSuppliers.get(name);
+            if(supplier != null) return supplier;
+        }
+        return null;
+    }
+
+    private ISymbolContext prepareFunctionContext(CustomClassObject thiz) {
+        ISymbolContext innerFrame = new SymbolContext(this.innerContext);
+        if(thiz != null) {
+            for(Symbol instanceSym : thiz.instanceMembers.values()) {
+                innerFrame.put(instanceSym);
+            }
+        }
+        return innerFrame;
     }
 
     @Override
@@ -394,17 +510,12 @@ public class CustomClass implements TypeHandler<CustomClass> {
 
                 for(CustomClass cls : getInheritanceTree()) {
                     for(InstanceMemberSupplier symbolSupplier : cls.instanceMemberSuppliers.values()) {
-                        created.putMemberIfAbsent(symbolSupplier.constructSymbol(created));
+                        if(!created.containsMember(symbolSupplier.getName()))
+                            created.putMemberIfAbsent(symbolSupplier.constructSymbol(created));
                     }
                 }
 
                 if(constructorSupplier != null) {
-
-                    ISymbolContext innerFrame = new SymbolContext(this.innerContext);
-                    for(Symbol instanceSym : created.instanceMembers.values()) {
-                        innerFrame.put(instanceSym);
-                    }
-
                     constructorSupplier.apply(created).safeCall(params, patterns, pattern2, ctx2);
                     for(Symbol field : created.instanceMembers.values()) {
                         if(field.isFinal() && field.maySet()) {
@@ -442,7 +553,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
                         if("*".equals(rawMemberName)) {
                             //wildcard, forward all functions into the instance
                             for(InstanceMemberSupplier forwardTypeMemberSupplier : forwardTargetType.instanceMemberSuppliers.values()) {
-                                if(forwardTypeMemberSupplier.isFunction() && forwardTargetType.hasAccess(innerContext, forwardTypeMemberSupplier.getVisibility())) {
+                                if(forwardTypeMemberSupplier instanceof InstanceFunctionSupplier && forwardTargetType.hasAccess(innerContext, forwardTypeMemberSupplier.getVisibility())) {
                                     Debug.log("forwarded: " + forwardTypeMemberSupplier.getName());
                                     Symbol forwardedSym = new Symbol(forwardTypeMemberSupplier.getName(), forwardVisibility);
                                     Symbol targetFunctionSymbol = ((CustomClassObject) targetSym.getValue()).instanceMembers.get(forwardTypeMemberSupplier.getName());
@@ -456,7 +567,7 @@ public class CustomClass implements TypeHandler<CustomClass> {
                             if(forwardTypeMemberSupplier == null) {
                                 throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + rawMemberName + "' does not exist in the forward target", rawMember, ctx2);
                             }
-                            if(forwardTypeMemberSupplier.isFunction()) {
+                            if(forwardTypeMemberSupplier instanceof InstanceFunctionSupplier) {
                                 if(forwardTargetType.hasAccess(innerContext, forwardTypeMemberSupplier.getVisibility())) {
                                     Debug.log("forwarded: " + forwardTypeMemberSupplier.getName());
                                     Symbol forwardedSym = new Symbol(forwardTypeMemberSupplier.getName(), forwardVisibility);
@@ -516,10 +627,84 @@ public class CustomClass implements TypeHandler<CustomClass> {
     }
 
     private interface InstanceMemberSupplier {
+        CustomClass getDefiningClass();
         String getName();
         Symbol constructSymbol(CustomClassObject thiz);
 
-        boolean isFunction();
         Symbol.SymbolVisibility getVisibility();
+    }
+
+    private static abstract class InstanceFieldSupplier implements InstanceMemberSupplier {
+        private final VariableInstruction.SymbolDeclaration decl;
+
+        public InstanceFieldSupplier(VariableInstruction.SymbolDeclaration decl) {
+            this.decl = decl;
+        }
+
+        public VariableInstruction.SymbolDeclaration getDecl() {
+            return decl;
+        }
+    }
+
+    private static class InstanceFunctionSupplier implements InstanceMemberSupplier {
+        private CustomClass definingClass;
+        private TokenPattern<?> definingPattern;
+        private String functionName;
+
+        private Symbol.SymbolVisibility visibility = Symbol.SymbolVisibility.LOCAL;
+        private VariableInstruction.SymbolModifierMap modifiers;
+
+        private ArrayList<TridentMethodBranch> branches;
+
+        public InstanceFunctionSupplier(CustomClass definingClass, TokenPattern<?> pattern, String functionName, ArrayList<TridentMethodBranch> branches) {
+            this.definingClass = definingClass;
+            this.definingPattern = pattern;
+            this.functionName = functionName;
+            this.branches = branches;
+        }
+
+        public InstanceFunctionSupplier setVisibility(Symbol.SymbolVisibility visibility) {
+            this.visibility = visibility;
+            return this;
+        }
+
+        public InstanceFunctionSupplier setModifiers(VariableInstruction.SymbolModifierMap modifiers) {
+            this.modifiers = modifiers;
+            return this;
+        }
+
+        @Override
+        public String getName() {
+            return functionName;
+        }
+
+        @Override
+        public Symbol constructSymbol(CustomClassObject thiz) {
+            TridentMethod method = createFunction(thiz);
+            Symbol sym = new Symbol(functionName, visibility);
+            sym.setTypeConstraints(new TypeConstraints(TridentTypeManager.getHandlerForHandledClass(TridentMethod.class), false));
+            sym.setClassFunction();
+            sym.setValue(method);
+            return sym;
+        }
+
+        @Override
+        public Symbol.SymbolVisibility getVisibility() {
+            return visibility;
+        }
+
+        public TridentMethod createFunction(CustomClassObject thiz) {
+            ISymbolContext innerFrame = definingClass.prepareFunctionContext(thiz);
+            return new TridentUserMethod(functionName, branches, innerFrame, thiz);
+        }
+
+        @Override
+        public CustomClass getDefiningClass() {
+            return definingClass;
+        }
+
+        public VariableInstruction.SymbolModifierMap getModifiers() {
+            return modifiers;
+        }
     }
 }

@@ -49,6 +49,8 @@ import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -61,7 +63,7 @@ public class CommonParsers {
         return parseEntityReference(id, ctx, false);
     }
 
-    public static Object parseEntityReference(TokenPattern<?> id, ISymbolContext ctx, boolean acceptNBT) {
+    public static Object parseEntityReference(@NotNull TokenPattern<?> id, ISymbolContext ctx, boolean acceptNBT) {
         if(id.getName().equals("ENTITY_ID_TAGGED")) return parseEntityReference(((TokenStructure)id).getContents(), ctx);
         if(id.getName().equals("ENTITY_ID_WRAPPER")) return parseEntityReference(id.find("ENTITY_ID"), ctx);
         if(id.getName().equals("ABSTRACT_RESOURCE")) return parseTag(id.find("RESOURCE_NAME"), ctx, EntityType.CATEGORY, g -> g.entity, g -> g.entityTypeTags);
@@ -86,9 +88,11 @@ public class CommonParsers {
             return parseType(result, id, ctx, EntityType.CATEGORY);
         } else return parseType(id, ctx, EntityType.CATEGORY);
     }
+    @Contract("null, _ -> null")
     public static Type parseItemType(TokenPattern<?> id, ISymbolContext ctx) {
         return parseType(id, ctx, ItemType.CATEGORY);
     }
+    @Contract("null, _ -> null")
     public static Type parseBlockType(TokenPattern<?> id, ISymbolContext ctx) {
         return parseType(id, ctx, BlockType.CATEGORY);
     }
@@ -147,6 +151,7 @@ public class CommonParsers {
         }
     }
 
+    @Contract("null, _, _, _, _ -> null")
     public static Type parseTag(TokenPattern<?> id, ISymbolContext ctx, String category, TypeGroupPicker typePicker, TagGroupPicker tagPicker) {
         if(id == null) return null;
         boolean isTag = id.find("") != null;
@@ -172,6 +177,7 @@ public class CommonParsers {
         return type;
     }
 
+    @Contract("null, _ -> null")
     public static String parseFunctionPath(TokenPattern<?> id, ISymbolContext ctx) {
         if(id == null) return null;
         String flat = id.find("RAW_RESOURCE_LOCATION").flatten(false);
@@ -202,7 +208,7 @@ public class CommonParsers {
         return flat;
     }
 
-    public static TridentUtil.ResourceLocation parseResourceLocation(String str, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static TridentUtil.ResourceLocation parseResourceLocation(@NotNull String str, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(str.equals("/")) {
             return ctx.getWritingFile().getResourceLocation();
         }
@@ -239,6 +245,7 @@ public class CommonParsers {
         return loc;
     }
 
+    @Contract("null, _ -> null")
     public static Type parseFunctionTag(TokenStructure pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
 
@@ -283,7 +290,7 @@ public class CommonParsers {
         return type;
     }
 
-    public static ItemTag parseItemTag(TokenPattern<?> id, ISymbolContext ctx) {
+    public static ItemTag parseItemTag(@NotNull TokenPattern<?> id, @NotNull ISymbolContext ctx) {
         TridentUtil.ResourceLocation tagLoc = new TridentUtil.ResourceLocation(id.flattenTokens().get(0).value);
         ItemTag returned = ctx.getCompiler().getModule().getNamespace(tagLoc.namespace).tags.itemTags.get(tagLoc.body);
         if(returned == null) {
@@ -292,7 +299,7 @@ public class CommonParsers {
         return returned;
     }
 
-    public static BlockTag parseBlockTag(TokenPattern<?> id, ISymbolContext ctx) {
+    public static BlockTag parseBlockTag(@NotNull TokenPattern<?> id, @NotNull ISymbolContext ctx) {
         TridentUtil.ResourceLocation tagLoc = new TridentUtil.ResourceLocation(id.flattenTokens().get(0).value);
         BlockTag returned = ctx.getCompiler().getModule().getNamespace(tagLoc.namespace).tags.blockTags.get(tagLoc.body);
         if(returned == null) {
@@ -453,6 +460,7 @@ public class CommonParsers {
         }
     }
 
+    @Contract("null, _ -> null")
     public static Blockstate parseBlockstate(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
         TokenPattern<?> rawList = pattern.find("BLOCKSTATE_LIST");
@@ -473,7 +481,7 @@ public class CommonParsers {
         return blockstate;
     }
 
-    public static IntegerRange parseIntRange(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static IntegerRange parseIntRange(@NotNull TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
             if(variable != null) {
@@ -501,7 +509,7 @@ public class CommonParsers {
         }
     }
 
-    public static DoubleRange parseRealRange(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static DoubleRange parseRealRange(@NotNull TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             TokenPattern<?> variable = pattern.find("INTERPOLATION_BLOCK");
             if(variable != null) {
@@ -529,6 +537,7 @@ public class CommonParsers {
         }
     }
 
+    @Contract("null, _ -> null")
     public static Objective parseObjective(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
         TokenPattern<?> inner = pattern.find("IDENTIFIER_A");
@@ -542,6 +551,7 @@ public class CommonParsers {
         }
     }
 
+    @Contract("null, _, _ -> null")
     public static Objective parseObjective(String objName, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(objName == null) return null;
         validateIdentifierA(objName, pattern, ctx);
@@ -553,7 +563,7 @@ public class CommonParsers {
         }
     }
 
-    public static String parseStringLiteralOrIdentifierA(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static String parseStringLiteralOrIdentifierA(@NotNull TokenPattern<?> pattern, ISymbolContext ctx) {
         while (true) {
             switch (pattern.getName()) {
                 case "STRING_LITERAL_OR_IDENTIFIER_A":
@@ -578,10 +588,13 @@ public class CommonParsers {
     /**
      * CommonParsers should not be instantiated.
      * */
+    @Contract(pure = true)
     private CommonParsers() {
     }
 
-    public static TimeSpan parseTime(TokenPattern<?> time, ISymbolContext ctx) {
+    @NotNull
+    @Contract("_, _ -> new")
+    public static TimeSpan parseTime(@NotNull TokenPattern<?> time, ISymbolContext ctx) {
         try {
             String raw = time.flatten(false);
             TimeSpan.Units units = TimeSpan.Units.TICKS;
@@ -602,7 +615,7 @@ public class CommonParsers {
         }
     }
 
-    public static Object parseAnything(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static Object parseAnything(@NotNull TokenPattern<?> pattern, ISymbolContext ctx) {
         switch(pattern.getName()) {
             case "INTERPOLATION_BLOCK":
             case "LINE_SAFE_INTERPOLATION_VALUE":
@@ -668,7 +681,8 @@ public class CommonParsers {
         }
     }
 
-    public static Type guessEntityType(Entity entity, ISymbolContext ctx) {
+    @Nullable
+    public static Type guessEntityType(Entity entity, @NotNull ISymbolContext ctx) {
         TypeDictionary dict = ctx.getCompiler().getModule().minecraft.types.entity;
         if(entity instanceof PlayerName) return dict.get("player");
         if(entity instanceof Selector) {
@@ -679,7 +693,8 @@ public class CommonParsers {
         } else throw new IllegalArgumentException("entity");
     }
 
-    public static NumericNBTType getNumericType(Object body, NBTPath path, ISymbolContext ctx, TokenPattern<?> pattern, boolean strict) {
+    @Nullable
+    public static NumericNBTType getNumericType(Object body, NBTPath path, @NotNull ISymbolContext ctx, TokenPattern<?> pattern, boolean strict) {
 
         PathContext context = new PathContext().setIsSetting(true).setProtocol(body instanceof Entity ? PathProtocol.ENTITY : body instanceof CoordinateSet ? PathProtocol.BLOCK_ENTITY : STORAGE, body instanceof Entity ? guessEntityType((Entity) body, ctx) : body instanceof TridentUtil.ResourceLocation ? body.toString() : null);
 
@@ -708,6 +723,7 @@ public class CommonParsers {
         }
     }
 
+    @Contract("null, _ -> null")
     public static TridentUtil.ResourceLocation parseResourceLocation(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
 
@@ -832,7 +848,7 @@ public class CommonParsers {
         return modifiers;
     }
 
-    public static Collection<ExecuteModifier> parseModifier(TokenPattern<?> rawModifier, ISymbolContext ctx, ExceptionCollector collector) {
+    public static Collection<ExecuteModifier> parseModifier(@NotNull TokenPattern<?> rawModifier, ISymbolContext ctx, ExceptionCollector collector) {
         ModifierParser parser = AnalyzerManager.getAnalyzer(ModifierParser.class, rawModifier.flattenTokens().get(0).value);
         if(parser != null) {
             return parser.parse(rawModifier, ctx);
@@ -845,7 +861,7 @@ public class CommonParsers {
     }
 
     //Must always return a VALID pointer
-    public static PointerObject parsePointer(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static PointerObject parsePointer(@NotNull TokenPattern<?> pattern, ISymbolContext ctx) {
         while (true) {
             switch (pattern.getName()) {
                 case "POINTER":
@@ -890,7 +906,9 @@ public class CommonParsers {
         }
     }
 
-    public static LocalScore parseScore(TokenPattern<?> pattern, ISymbolContext ctx) {
+    @NotNull
+    @Contract("_, _ -> new")
+    public static LocalScore parseScore(@NotNull TokenPattern<?> pattern, ISymbolContext ctx) {
         while (true) {
             switch (pattern.getName()) {
                 case "SCORE":
@@ -955,7 +973,7 @@ public class CommonParsers {
         }
     }
 
-    private static void parsePointerHead(PointerObject pointer, TokenPattern<?> pattern, ISymbolContext ctx) {
+    private static void parsePointerHead(PointerObject pointer, @NotNull TokenPattern<?> pattern, ISymbolContext ctx) {
         switch (pattern.getName()) {
             case "POINTER_HEAD": {
                 parsePointerHead(pointer, ((TokenStructure) pattern).getContents(), ctx);
@@ -990,6 +1008,7 @@ public class CommonParsers {
         }
     }
 
+    @NotNull
     public static String parseQuotedString(String str, TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             return CommandUtils.parseQuotedString(str);

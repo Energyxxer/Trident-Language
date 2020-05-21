@@ -16,6 +16,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class InterpolationManager {
         InterpolationManager.nextFunctionName = nextFunctionName;
     }
 
+    @Contract("null, _ -> null")
     public static TypeHandler parseType(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
         return parse(pattern, ctx, false, TypeHandler.class);
@@ -431,6 +433,7 @@ public class InterpolationManager {
     }
 
     //TODO: Rework this to use variable type handlers instead of classes
+    @Contract("null, _, _, _ -> null")
     public static Object cast(Object obj, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(obj == null) return null;
         if("primitive(string)".equals(TridentTypeManager.getInternalTypeIdentifierForType(targetType))) {
@@ -453,6 +456,7 @@ public class InterpolationManager {
         return handler;
     }
 
+    @Contract("null -> null")
     private static Object sanitizeObject(Object obj) {
         if(obj == null) return null;
         if(obj.getClass().isArray()) {
