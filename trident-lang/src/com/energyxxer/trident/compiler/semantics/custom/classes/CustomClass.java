@@ -50,8 +50,6 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     private ClassMethodSymbolContext innerStaticContext;
     private String typeIdentifier;
 
-    private ArrayList<TokenPattern<?>> forwardEntries = new ArrayList<>();
-
     private CustomClass(String name) {
         this.name = name;
     }
@@ -249,10 +247,6 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                         } else {
                             classObject.setConstructor(memberVisibility, thiz -> new TridentUserFunction(functionName, branches, finalClassObject.prepareFunctionContext(thiz), thiz));
                         }
-                        break;
-                    }
-                    case "CLASS_FORWARD": {
-                        classObject.forwardEntries.add(entry);
                         break;
                     }
                     case "CLASS_OVERRIDE": {
@@ -471,66 +465,6 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                     }
                 }
 
-                for(TokenPattern<?> entry : forwardEntries) {
-                    String forwardTargetName = entry.find("FORWARD_TARGET_NAME").flatten(false);
-                    Symbol.SymbolVisibility forwardVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), ctx, Symbol.SymbolVisibility.LOCAL);
-
-                    Symbol targetSym = created.getSymbol(forwardTargetName);
-                    if(targetSym == null) {
-                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Unknown symbol '" + forwardTargetName + "'", entry, ctx2);
-                    }
-                    if(!targetSym.isFinal()) {
-                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + forwardTargetName + "' is not final.", entry, ctx2);
-                    }
-                    if(targetSym.getValue() == null) {
-                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + forwardTargetName + "' is not initialized.", entry, ctx2);
-                    }
-                    CustomClass forwardTargetType;
-                    if(targetSym.getTypeConstraints() != null && targetSym.getTypeConstraints().getHandler() instanceof CustomClass) {
-                        forwardTargetType = ((CustomClass) targetSym.getTypeConstraints().getHandler());
-                    } else {
-                        throw new TridentException(TridentException.Source.TYPE_ERROR, "The type of symbol '" + forwardTargetName + "' is not constrained to a class type", entry, ctx2);
-                    }
-
-
-
-                    /*TokenList memberList = ((TokenList) entry.find("FORWARD_MEMBER_NAMES"));
-                    for(TokenPattern<?> rawMember : memberList.searchByName("FORWARD_MEMBER_NAME")) {
-                        String rawMemberName = rawMember.flatten(false);
-                        if("*".equals(rawMemberName)) {
-                            //wildcard, forward all functions into the instance
-                            for(InstanceMemberSupplier forwardTypeMemberSupplier : forwardTargetType.instanceMemberSuppliers.values()) {
-                                if(forwardTypeMemberSupplier instanceof InstanceFunctionSupplier && forwardTargetType.hasAccess(innerStaticContext, forwardTypeMemberSupplier.getVisibility())) {
-                                    Debug.log("forwarded: " + forwardTypeMemberSupplier.getName());
-                                    Symbol forwardedSym = new Symbol(forwardTypeMemberSupplier.getName(), forwardVisibility);
-                                    Symbol targetFunctionSymbol = ((CustomClassObject) targetSym.getValue()).instanceMembers.get(forwardTypeMemberSupplier.getName());
-                                    forwardedSym.setValue((TridentFunction) (params1, patterns1, pattern1, ctx1) -> ((TridentFunction) targetFunctionSymbol.getValue()).safeCall(params1, patterns1, pattern1, ctx1));
-                                    forwardedSym.setFinalAndLock();
-                                    created.putMemberIfAbsent(((CustomClassObject) targetSym.getValue()).instanceMembers.get(forwardTypeMemberSupplier.getName()));
-                                }
-                            }
-                        } else {
-                            InstanceMemberSupplier forwardTypeMemberSupplier = forwardTargetType.instanceMemberSuppliers.get(rawMemberName);
-                            if(forwardTypeMemberSupplier == null) {
-                                throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + rawMemberName + "' does not exist in the forward target", rawMember, ctx2);
-                            }
-                            if(forwardTypeMemberSupplier instanceof InstanceFunctionSupplier) {
-                                if(forwardTargetType.hasAccess(innerStaticContext, forwardTypeMemberSupplier.getVisibility())) {
-                                    Debug.log("forwarded: " + forwardTypeMemberSupplier.getName());
-                                    Symbol forwardedSym = new Symbol(forwardTypeMemberSupplier.getName(), forwardVisibility);
-                                    Symbol targetFunctionSymbol = ((CustomClassObject) targetSym.getValue()).instanceMembers.get(forwardTypeMemberSupplier.getName());
-                                    forwardedSym.setValue((TridentFunction) (params1, patterns1, pattern1, ctx1) -> ((TridentFunction) targetFunctionSymbol.getValue()).safeCall(params1, patterns1, pattern1, ctx1));
-                                    forwardedSym.setFinalAndLock();
-                                    created.putMemberIfAbsent(((CustomClassObject) targetSym.getValue()).instanceMembers.get(forwardTypeMemberSupplier.getName()));
-                                } else {
-                                    throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + rawMemberName + "' has " + forwardTypeMemberSupplier.getVisibility().toString().toLowerCase() + " access in " + forwardTargetType.getClassTypeIdentifier(), rawMember, ctx2);
-                                }
-                            } else {
-                                throw new TridentException(TridentException.Source.TYPE_ERROR, "The forward member must be a function", rawMember, ctx2);
-                            }
-                        }
-                    }*/
-                }
                 return created;
             };
         } else {
