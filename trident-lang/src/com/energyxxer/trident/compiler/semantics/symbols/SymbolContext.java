@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.semantics.symbols;
 
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public class SymbolContext implements ISymbolContext {
         this.parentScope = parentScope;
     }
 
-    public Symbol search(@NotNull String name, ISymbolContext from) {
+    public Symbol search(@NotNull String name, ISymbolContext from, ActualParameterList params) {
         Symbol inMap = table.get(name);
         if(inMap != null &&
                 (inMap.getVisibility() != Symbol.SymbolVisibility.PRIVATE || from == this ||
@@ -31,8 +32,8 @@ public class SymbolContext implements ISymbolContext {
         ) {
             return table.get(name);
         }
-        else if(parentScope != null) return parentScope.search(name, from);
-        else return getGlobalContext().search(name, from);
+        else if(parentScope != null) return parentScope.search(name, from, params);
+        else return getGlobalContext().search(name, from, params);
     }
 
     public @NotNull TridentCompiler getCompiler() {

@@ -13,15 +13,19 @@ import com.energyxxer.trident.compiler.semantics.BinaryExpression;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ParameterizedMemberHolder;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.function.Supplier;
 
 public class InterpolationManager {
 
@@ -43,9 +47,9 @@ public class InterpolationManager {
     }
 
     public static <T> T parse(TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable, Class<T> expected) {
-        Object obj = parse(pattern, ctx, false);
+        Object obj = parse(pattern, ctx, false, (Supplier<ActualParameterList>) null);
         if(nullable && obj == null) return null;
-        return TridentMethod.HelperMethods.assertOfClass(obj, pattern, ctx, expected);
+        return TridentFunction.HelperMethods.assertOfClass(obj, pattern, ctx, expected);
     }
 
     public static Object parse(TokenPattern<?> pattern, ISymbolContext ctx, Class... expected) {
@@ -53,18 +57,23 @@ public class InterpolationManager {
     }
 
     public static Object parse(TokenPattern<?> pattern, ISymbolContext ctx, boolean nullable, Class... expected) {
-        Object obj = parse(pattern, ctx, false);
+        Object obj = parse(pattern, ctx, false, (Supplier<ActualParameterList>) null);
         if(nullable && obj == null) return null;
-        return TridentMethod.HelperMethods.assertOfClass(obj, pattern, ctx, expected);
+        return TridentFunction.HelperMethods.assertOfClass(obj, pattern, ctx, expected);
     }
 
     @Nullable
     public static Object parse(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return parse(pattern, ctx, false);
+        return parse(pattern, ctx, false, (Supplier<ActualParameterList>) null);
     }
 
     @Nullable
     public static Object parse(TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        return parse(pattern, ctx, keepSymbol, (Supplier<ActualParameterList>) null);
+    }
+
+    @Nullable
+    private static Object parse(TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol, Supplier<ActualParameterList> followingFunctionParams) {
         while (true) {
             if (pattern == null) return null;
             //TridentCompiler compiler = file.getCompiler();
@@ -89,11 +98,11 @@ public class InterpolationManager {
                     continue;
                 }
                 case "VARIABLE_NAME": {
-                    Symbol symbol = ctx.search(pattern.flatten(false), ctx);
+                    Symbol symbol = ctx.search(pattern.flatten(false), ctx, followingFunctionParams != null ? followingFunctionParams.get() : null);
                     if (symbol == null) {
                         throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' is not defined", pattern, ctx);
                     }
-                    return keepSymbol ? symbol : sanitizeObject(symbol.getValue());
+                    return keepSymbol || symbol instanceof ClassMethodFamily.ClassMethodSymbol ? symbol : sanitizeObject(symbol.getValue());
                 }
                 case "RAW_INTEGER": {
                     try {
@@ -194,15 +203,15 @@ public class InterpolationManager {
                             return innerFile.getResourceLocation();
                         }
                         case "DYNAMIC_FUNCTION": {
-                            return new TridentUserMethod(nextFunctionName, Collections.singletonList(TridentMethodBranch.parseDynamicFunction(choice, ctx)), ctx, nextThis);
+                            return new TridentUserFunction(nextFunctionName, Collections.singletonList(TridentFunctionBranch.parseDynamicFunction(choice, ctx)), ctx, nextThis);
                         }
                         case "OVERLOADED_FUNCTION": {
                             TokenList implementations = (TokenList) choice.find("OVERLOADED_FUNCTION_IMPLEMENTATIONS");
-                            ArrayList<TridentMethodBranch> branches = new ArrayList<>();
+                            ArrayList<TridentFunctionBranch> branches = new ArrayList<>();
                             for(TokenPattern<?> branch : implementations.getContents()) {
-                                branches.add(TridentMethodBranch.parseDynamicFunction(branch, ctx));
+                                branches.add(TridentFunctionBranch.parseDynamicFunction(branch, ctx));
                             }
-                            return new TridentUserMethod(nextFunctionName, branches, ctx, nextThis);
+                            return new TridentUserFunction(nextFunctionName, branches, ctx, nextThis);
                         }
                         default:
                             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + choice.getName() + "'", choice, ctx);
@@ -215,26 +224,12 @@ public class InterpolationManager {
                     return null;
                 }
                 case "INTERPOLATION_CHAIN": {
-                    TokenPattern<?> toBlame = pattern.find("ROOT_INTERPOLATION_VALUE");
-                    TokenList accessors = (TokenList) pattern.find("MEMBER_ACCESSES");
-                    Object parent = parse(toBlame, ctx, keepSymbol && accessors == null);
-
-                    if (accessors != null) {
-                        int i = accessors.getContents().length - 1;
-                        for (TokenPattern<?> accessor : accessors.getContents()) {
-                            EObject.assertNotNull(parent, toBlame, ctx);
-                            parent = parseAccessor(parent, toBlame, accessor, ctx, keepSymbol && i == 0);
-                            toBlame = accessor;
-                            i--;
-                        }
-                    }
-
-                    return parent;
+                    return parseAccessorChain(pattern, ctx, keepSymbol);
                 }
                 case "CONSTRUCTOR_CALL": {
                     TypeHandler<?> handler = parseType(pattern.find("INTERPOLATION_TYPE"), ctx);
 
-                    TridentMethod constructor = handler.getConstructor(pattern, ctx);
+                    TridentFunction constructor = handler.getConstructor(pattern, ctx);
 
                     if (constructor == null) {
                         throw new TridentException(TridentException.Source.TYPE_ERROR, "There is no constructor for type '" + TridentTypeManager.getTypeIdentifierForType(handler) + "'", pattern.find("INTERPOLATION_TYPE"), ctx);
@@ -368,71 +363,143 @@ public class InterpolationManager {
         }
     }
 
+    private static TokenPattern<?> sanitizeMemberAccessPattern(@NotNull TokenPattern<?> pattern) {
+        while(pattern.getName().equals("MEMBER_ACCESS")) {
+            pattern = ((TokenStructure) pattern).getContents();
+        }
+        return pattern;
+    }
+
+    private static Object parseAccessorChain(TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        TokenPattern<?> toBlame = pattern.find("ROOT_INTERPOLATION_VALUE");
+        TokenList accessorList = (TokenList) pattern.find("MEMBER_ACCESSES");
+
+        if (accessorList != null) {
+            TokenPattern<?>[] accessors = accessorList.getContents();
+            for(int i = 0; i < accessors.length; i++) {
+                accessors[i] = sanitizeMemberAccessPattern(accessors[i]);
+            }
+
+            ActualParameterList[] firstAccessorParameters = new ActualParameterList[] {null};
+
+            Object parent = parse(toBlame, ctx, false, () -> {
+                TokenPattern<?> firstAccessor = accessors[0];
+                if(firstAccessor.getName().equals("METHOD_CALL")) {
+                    ActualParameterList parameterList = parseActualParameterList(firstAccessor, ctx);
+                    firstAccessorParameters[0] = parameterList;
+                    return parameterList;
+                }
+                return null;
+            });
+
+            if(firstAccessorParameters[0] != null) {
+                //Evaluated first accessor, gotta be a function
+
+                if(parent instanceof ClassMethodFamily.ClassMethodSymbol) {
+                    parent = sanitizeObject(((ClassMethodFamily.ClassMethodSymbol) parent).safeCall(firstAccessorParameters[0].getValues().toArray(), firstAccessorParameters[0].getPatterns().toArray(new TokenPattern<?>[0]), accessors[0], ctx));
+                    toBlame = accessors[0];
+                } else if (parent instanceof TridentFunction) {
+                    parent = sanitizeObject(((TridentFunction) parent).safeCall(firstAccessorParameters[0].getValues().toArray(), firstAccessorParameters[0].getPatterns().toArray(new TokenPattern<?>[0]), accessors[0], ctx));
+                    toBlame = accessors[0];
+                } else {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "This is not a function", toBlame, ctx);
+                }
+            }
+
+            for (int i = firstAccessorParameters[0] == null ? 0 : 1; i < accessors.length; i++) {
+                TokenPattern<?> accessor = accessors[i];
+                EObject.assertNotNull(parent, toBlame, ctx);
+
+                if(parent instanceof ParameterizedMemberHolder && i+1 < accessors.length && accessor.getName().equals("MEMBER_KEY") && accessors[i+1].getName().equals("METHOD_CALL")) {
+                    ActualParameterList paramList = parseActualParameterList(accessors[i+1], ctx);
+
+                    Object member = ((ParameterizedMemberHolder) parent).getMemberForParameters(accessor.find("SYMBOL_NAME").flatten(false), accessor, paramList, ctx, false);
+
+                    EObject.assertNotNull(member, toBlame, ctx);
+
+                    if(member instanceof ClassMethodFamily.ClassMethodSymbol) {
+                        parent = sanitizeObject(((ClassMethodFamily.ClassMethodSymbol) member).safeCall(paramList.getValues().toArray(), paramList.getPatterns().toArray(new TokenPattern<?>[0]), accessor, ctx));
+                        toBlame = accessor;
+                    } else if (member instanceof TridentFunction) {
+                        parent = sanitizeObject(((TridentFunction) member).safeCall(paramList.getValues().toArray(), paramList.getPatterns().toArray(new TokenPattern<?>[0]), accessor, ctx));
+                        toBlame = accessor;
+                    } else {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "This is not a function", toBlame, ctx);
+                    }
+
+                    i++;
+                    continue;
+                }
+
+                parent = parseAccessor(parent, toBlame, accessor, ctx, keepSymbol && (i == accessors.length-1));
+                toBlame = accessor;
+            }
+
+            return parent;
+        }
+        return parse(toBlame, ctx, keepSymbol);
+    }
+
     @SuppressWarnings("unchecked")
     private static Object parseAccessor(Object parent, TokenPattern<?> parentPattern, TokenPattern<?> accessorPattern, ISymbolContext ctx, boolean keepSymbol) {
-        while (true) {
-            if (accessorPattern.getName().equals("MEMBER_ACCESS")) {
-                accessorPattern = ((TokenStructure) accessorPattern).getContents();
-                continue;
+        //expect sanitized accessor pattern
+        EObject.assertNotNull(parent, parentPattern, ctx);
+        switch (accessorPattern.getName()) {
+            case "MEMBER_KEY": {
+                String memberName = accessorPattern.find("SYMBOL_NAME").flatten(false);
+                TypeHandler handler = getHandlerForObject(parent, parentPattern, ctx);
+                while (true) {
+                    try {
+                        return sanitizeObject(handler.getMember(parent, memberName, accessorPattern, ctx, keepSymbol));
+                    } catch (MemberNotFoundException x) {
+                        if ((handler = handler.getSuperType()) == null) {
+                            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member '" + memberName + "' of " + TridentTypeManager.getTypeIdentifierForObject(parent), accessorPattern, ctx);
+                        }
+                    }
+                }
             }
-            EObject.assertNotNull(parent, parentPattern, ctx);
-            switch (accessorPattern.getName()) {
-                case "MEMBER_KEY": {
-                    String memberName = accessorPattern.find("SYMBOL_NAME").flatten(false);
-                    TypeHandler handler = getHandlerForObject(parent, parentPattern, ctx);
-                    while (true) {
-                        try {
-                            return sanitizeObject(handler.getMember(parent, memberName, accessorPattern, ctx, keepSymbol));
-                        } catch (MemberNotFoundException x) {
-                            if ((handler = handler.getSuperType()) == null) {
-                                throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member '" + memberName + "' of " + TridentTypeManager.getTypeIdentifierForObject(parent), accessorPattern, ctx);
-                            }
+            case "MEMBER_INDEX": {
+                Object index = parse(accessorPattern.find("INDEX.INTERPOLATION_VALUE"), ctx);
+                TypeHandler handler = getHandlerForObject(parent, parentPattern, ctx);
+                while (true) {
+                    try {
+                        return sanitizeObject(handler.getIndexer(parent, index, accessorPattern, ctx, keepSymbol));
+                    } catch (MemberNotFoundException x) {
+                        if ((handler = handler.getSuperType()) == null) {
+                            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member for index " + index + " of " + TridentTypeManager.getTypeIdentifierForObject(parent), accessorPattern, ctx);
                         }
                     }
                 }
-                case "MEMBER_INDEX": {
-                    Object index = parse(accessorPattern.find("INDEX.INTERPOLATION_VALUE"), ctx);
-                    TypeHandler handler = getHandlerForObject(parent, parentPattern, ctx);
-                    while (true) {
-                        try {
-                            return sanitizeObject(handler.getIndexer(parent, index, accessorPattern, ctx, keepSymbol));
-                        } catch (MemberNotFoundException x) {
-                            if ((handler = handler.getSuperType()) == null) {
-                                throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve member for index " + index + " of " + TridentTypeManager.getTypeIdentifierForObject(parent), accessorPattern, ctx);
-                            }
-                        }
-                    }
+            }
+            case "METHOD_CALL": {
+                if (parent instanceof TridentFunction) {
+                    ActualParameterList paramList = parseActualParameterList(accessorPattern, ctx);
+
+                    return sanitizeObject(((TridentFunction) parent).safeCall(paramList.getValues().toArray(), paramList.getPatterns().toArray(new TokenPattern<?>[0]), accessorPattern, ctx));
+                } else {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "This is not a function", parentPattern, ctx);
                 }
-                case "METHOD_CALL": {
-                    if (parent instanceof TridentMethod) {
-
-                        ArrayList<Object> params = new ArrayList<>();
-                        ArrayList<TokenPattern<?>> patterns = new ArrayList<>();
-
-                        TokenList paramList = (TokenList) accessorPattern.find("PARAMETERS");
-
-                        if (paramList != null) {
-                            for (TokenPattern<?> rawParam : paramList.getContents()) {
-                                if (rawParam.getName().equals("INTERPOLATION_VALUE")) {
-                                    params.add(parse(rawParam, ctx, keepSymbol));
-                                    patterns.add(rawParam);
-                                }
-                            }
-                        }
-
-                        return sanitizeObject(((TridentMethod) parent).safeCall(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), accessorPattern, ctx));
-                    } else {
-                        throw new TridentException(TridentException.Source.TYPE_ERROR, "This is not a method", parentPattern, ctx);
-                    }
-                }
-                default: {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + accessorPattern.getName() + "'", accessorPattern, ctx);
-                }
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + accessorPattern.getName() + "'", accessorPattern, ctx);
             }
         }
     }
 
-    //TODO: Rework this to use variable type handlers instead of classes
+    private static ActualParameterList parseActualParameterList(TokenPattern<?> pattern, ISymbolContext ctx) {
+        TokenList paramList = (TokenList) pattern.find("PARAMETERS");
+        if(paramList == null) return new ActualParameterList(Collections.emptyList(), Collections.emptyList(), pattern);
+        ArrayList<Object> params = new ArrayList<>();
+        ArrayList<TokenPattern<?>> patterns = new ArrayList<>();
+        for (TokenPattern<?> rawParam : paramList.getContents()) {
+            if (rawParam.getName().equals("INTERPOLATION_VALUE")) {
+                params.add(parse(rawParam, ctx, false));
+                patterns.add(rawParam);
+            }
+        }
+        return new ActualParameterList(params, patterns, pattern);
+    }
+
     @Contract("null, _, _, _ -> null")
     public static Object cast(Object obj, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(obj == null) return null;
@@ -466,7 +533,7 @@ public class InterpolationManager {
     }
 
     public static String castToString(Object obj) {
-        if(obj instanceof TridentMethod && !(obj instanceof TridentUserMethod)) {
+        if(obj instanceof TridentFunction && !(obj instanceof TridentUserFunction)) {
             return "<internal function>";
         } else if(obj instanceof TypeHandler && ((TypeHandler) obj).isStaticHandler()) {
             return "type_definition<" + ((TypeHandler) obj).getTypeIdentifier() + ">";
@@ -476,7 +543,7 @@ public class InterpolationManager {
     }
 
     public static String castToString(Object obj, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(obj instanceof TridentMethod && !(obj instanceof TridentUserMethod)) {
+        if(obj instanceof TridentFunction && !(obj instanceof TridentUserFunction)) {
             return "<internal function>";
         } else if(obj instanceof TypeHandler && ((TypeHandler) obj).isStaticHandler()) {
             return "type_definition<" + ((TypeHandler) obj).getTypeIdentifier() + ">";

@@ -16,7 +16,7 @@ import com.google.gson.stream.MalformedJsonException;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeMethodBranch.nativeMethodsToFunction;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 @AnalyzerMember(key = "JSON")
 public class JsonLib implements DefaultLibraryProvider {
@@ -27,9 +27,9 @@ public class JsonLib implements DefaultLibraryProvider {
         globalCtx.put(new Symbol("JSON", Symbol.SymbolVisibility.GLOBAL, jsonLib));
 
         try {
-            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerContext(), JsonLib.class.getMethod("parse", String.class)));
+            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("parse", String.class)));
             jsonLib.putStaticFunction(nativeMethodsToFunction(
-                    jsonLib.getInnerContext(),
+                    jsonLib.getInnerStaticContext(),
                     JsonLib.class.getMethod("stringify", String.class),
                     JsonLib.class.getMethod("stringify", Boolean.class),
                     JsonLib.class.getMethod("stringify", Integer.class),

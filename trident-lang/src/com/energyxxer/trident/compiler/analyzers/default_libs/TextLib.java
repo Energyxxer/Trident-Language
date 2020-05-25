@@ -11,7 +11,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeMethodBranch.nativeMethodsToFunction;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 @AnalyzerMember(key = "Text")
 public class TextLib implements DefaultLibraryProvider {
@@ -24,7 +24,7 @@ public class TextLib implements DefaultLibraryProvider {
         globalCtx.put(new Symbol("Text", Symbol.SymbolVisibility.GLOBAL, tlib));
 
         try {
-            tlib.putStaticFunction(nativeMethodsToFunction(tlib.getInnerContext(), TextLib.class.getMethod("parse", String.class, ISymbolContext.class, TokenPattern.class)));
+            tlib.putStaticFunction(nativeMethodsToFunction(tlib.getInnerStaticContext(), TextLib.class.getMethod("parse", String.class, ISymbolContext.class, TokenPattern.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }

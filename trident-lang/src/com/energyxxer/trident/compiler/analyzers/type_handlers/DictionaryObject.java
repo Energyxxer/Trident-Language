@@ -18,9 +18,9 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
 
     static {
         try {
-            members.put("merge", new MethodWrapper<>(DictionaryObject.class.getMethod("merge", DictionaryObject.class)));
-            members.put("remove", new MethodWrapper<>(DictionaryObject.class.getMethod("remove", String.class)));
-            members.put("clear", new MethodWrapper<>(DictionaryObject.class.getMethod("clear")));
+            members.put("merge", new NativeMethodWrapper<>(DictionaryObject.class.getMethod("merge", DictionaryObject.class)));
+            members.put("remove", new NativeMethodWrapper<>(DictionaryObject.class.getMethod("remove", String.class)));
+            members.put("clear", new NativeMethodWrapper<>(DictionaryObject.class.getMethod("clear")));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -36,11 +36,11 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
         }
         if(!keepSymbol && !dict.map.containsKey(member)) {
             if(member.equals("map")) {
-                return (TridentMethod) (params, patterns, pattern1, file1) -> {
+                return (TridentFunction) (params, patterns, pattern1, file1) -> {
                     if (params.length < 1) {
                         throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1, ctx);
                     }
-                    TridentUserMethod func = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], file1, TridentUserMethod.class);
+                    TridentUserFunction func = TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], file1, TridentUserFunction.class);
 
                     DictionaryObject newDict = new DictionaryObject();
 
@@ -68,7 +68,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
     @Override
     public Object getIndexer(DictionaryObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
-        String key = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
+        String key = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         return getMember(object, key, pattern, ctx, keepSymbol);
     }
 

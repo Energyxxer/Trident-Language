@@ -54,7 +54,7 @@ public class TridentTypeManager {
         registerTypeHandler(DictionaryObject.STATIC_HANDLER);
         registerTypeHandler(ListObject.STATIC_HANDLER);
         registerTypeHandler(TridentException.STATIC_HANDLER);
-        registerTypeHandler(TridentMethod.STATIC_HANDLER);
+        registerTypeHandler(TridentFunction.STATIC_HANDLER);
 
         registerTypeHandler(TYPE_HANDLER_TYPE_HANDLER = new TypeHandlerTypeHandler());
     }

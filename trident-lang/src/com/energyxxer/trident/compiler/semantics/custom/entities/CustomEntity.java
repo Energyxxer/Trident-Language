@@ -26,7 +26,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.selectors.TypeArgumentParser;
 import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
@@ -131,7 +131,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
         }
         switch (member) {
             case "getSettingNBT":
-                return (TridentMethod) (params, patterns, pattern1, file1) -> {
+                return (TridentFunction) (params, patterns, pattern1, file1) -> {
                     TagCompound nbt = new TagCompound();
                     if (this.getBaseType() != null) {
                         nbt.add(new TagString("id", this.getBaseType().toString()));
@@ -140,7 +140,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                     return nbt;
                 };
             case "getMatchingNBT":
-                return (TridentMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagList("Tags", new TagString(idTag)));
+                return (TridentFunction) (params, patterns, pattern1, file1) -> new TagCompound(new TagList("Tags", new TagString(idTag)));
             case "idTag":
                 return idTag;
             case "baseType":
@@ -152,7 +152,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
     @Override
     public Object getIndexer(CustomEntity object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
-        String indexStr = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
+        String indexStr = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         if(members.containsKey(indexStr)) {
             Symbol sym = members.get(indexStr);
             return keepSymbol ? sym : sym.getValue();

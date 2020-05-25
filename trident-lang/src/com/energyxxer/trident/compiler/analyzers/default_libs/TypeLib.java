@@ -15,7 +15,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import java.util.Collection;
 import java.util.Map;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeMethodBranch.nativeMethodsToFunction;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 @AnalyzerMember(key = "Types")
 public class TypeLib implements DefaultLibraryProvider {
@@ -26,8 +26,8 @@ public class TypeLib implements DefaultLibraryProvider {
         globalCtx.put(new Symbol("Block", Symbol.SymbolVisibility.GLOBAL, block));
 
         try {
-            block.putStaticFunction(nativeMethodsToFunction(block.getInnerContext(), "exists", TypeLib.class.getMethod("blockExists", TridentUtil.ResourceLocation.class, ISymbolContext.class)));
-            block.putStaticFunction(nativeMethodsToFunction(block.getInnerContext(), "getAll", TypeLib.class.getMethod("getAllBlocks", ISymbolContext.class)));
+            block.putStaticFunction(nativeMethodsToFunction(block.getInnerStaticContext(), "exists", TypeLib.class.getMethod("blockExists", TridentUtil.ResourceLocation.class, ISymbolContext.class)));
+            block.putStaticFunction(nativeMethodsToFunction(block.getInnerStaticContext(), "getAll", TypeLib.class.getMethod("getAllBlocks", ISymbolContext.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -38,8 +38,8 @@ public class TypeLib implements DefaultLibraryProvider {
 
 
         try {
-            item.putStaticFunction(nativeMethodsToFunction(item.getInnerContext(), "exists", TypeLib.class.getMethod("itemExists", TridentUtil.ResourceLocation.class, ISymbolContext.class)));
-            item.putStaticFunction(nativeMethodsToFunction(item.getInnerContext(), "getAll", TypeLib.class.getMethod("getAllItems", ISymbolContext.class)));
+            item.putStaticFunction(nativeMethodsToFunction(item.getInnerStaticContext(), "exists", TypeLib.class.getMethod("itemExists", TridentUtil.ResourceLocation.class, ISymbolContext.class)));
+            item.putStaticFunction(nativeMethodsToFunction(item.getInnerStaticContext(), "getAll", TypeLib.class.getMethod("getAllItems", ISymbolContext.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -48,8 +48,8 @@ public class TypeLib implements DefaultLibraryProvider {
         minecraftTypes.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
         globalCtx.put(new Symbol("MinecraftTypes", Symbol.SymbolVisibility.GLOBAL, minecraftTypes));
         try {
-            minecraftTypes.putStaticFunction(nativeMethodsToFunction(minecraftTypes.getInnerContext(), TypeLib.class.getMethod("getDefinitionsForCategory", String.class, ISymbolContext.class)));
-            minecraftTypes.putStaticFunction(nativeMethodsToFunction(minecraftTypes.getInnerContext(),
+            minecraftTypes.putStaticFunction(nativeMethodsToFunction(minecraftTypes.getInnerStaticContext(), TypeLib.class.getMethod("getDefinitionsForCategory", String.class, ISymbolContext.class)));
+            minecraftTypes.putStaticFunction(nativeMethodsToFunction(minecraftTypes.getInnerStaticContext(),
                     TypeLib.class.getMethod("exists", String.class, TridentUtil.ResourceLocation.class, ISymbolContext.class),
                     TypeLib.class.getMethod("exists", String.class, String.class, ISymbolContext.class)
             ));
@@ -57,10 +57,10 @@ public class TypeLib implements DefaultLibraryProvider {
             e.printStackTrace();
         }
 
-        globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (TridentMethod) (params, patterns, pattern, file) ->
+        globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (TridentFunction) (params, patterns, pattern, file) ->
                 TridentTypeManager.getStaticHandlerForObject(params[0])
         ));
-        globalCtx.put(new Symbol("isInstance", Symbol.SymbolVisibility.GLOBAL, new MethodWrapper<>("isInstance", (instance, params) -> {
+        globalCtx.put(new Symbol("isInstance", Symbol.SymbolVisibility.GLOBAL, new NativeMethodWrapper<>("isInstance", (instance, params) -> {
             params[1] = ((String) params[1]).trim();
             TypeHandler handler = TridentTypeManager.getPrimitiveHandlerForShorthand((String) params[1]);
             if(params[0] == null) return "null".equals(params[1]);

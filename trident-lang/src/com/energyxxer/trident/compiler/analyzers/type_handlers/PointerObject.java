@@ -84,7 +84,7 @@ public class PointerObject implements TypeHandler<PointerObject> {
                 break;
             }
             case "isLegal": {
-                return new MethodWrapper<>("isLegal", (instance, params) -> isLegal());
+                return new NativeMethodWrapper<>("isLegal", (instance, params) -> isLegal());
             }
         }
         if(valid && !keepSymbol) {

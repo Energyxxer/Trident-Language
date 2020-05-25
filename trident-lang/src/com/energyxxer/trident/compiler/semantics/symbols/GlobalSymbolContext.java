@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.semantics.symbols;
 
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public class GlobalSymbolContext implements ISymbolContext {
     }
 
     @Override
-    public Symbol search(@NotNull String name, ISymbolContext from) {
+    public Symbol search(@NotNull String name, ISymbolContext from, ActualParameterList params) {
         return map.get(name);
     }
 

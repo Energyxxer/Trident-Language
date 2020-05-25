@@ -3,14 +3,14 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 import com.energyxxer.commodore.functionlogic.nbt.TagString;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 public class TagStringTypeHandler implements TypeHandler<TagString> {
-    private static final TridentMethod CONSTRUCTOR = new MethodWrapper<>(
+    private static final TridentFunction CONSTRUCTOR = new NativeMethodWrapper<>(
             "new tag_string",
             ((instance, params) -> new TagString(params[0] == null ? "" : (String) params[0])),
             String.class
@@ -47,7 +47,7 @@ public class TagStringTypeHandler implements TypeHandler<TagString> {
     }
 
     @Override
-    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 }

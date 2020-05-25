@@ -21,26 +21,26 @@ public class StringTypeHandler implements TypeHandler<String> {
 
     static {
         try {
-            members.put("substring", new MethodWrapper<String>("substring", (instance, params) -> instance.substring((int)params[0], params[1] != null ? (int)params[1] : instance.length()), Integer.class, Integer.class).setNullable(1));
-            members.put("indexOf", new MethodWrapper<>(String.class.getMethod("indexOf", String.class)));
-            members.put("lastIndexOf", new MethodWrapper<>(String.class.getMethod("lastIndexOf", String.class)));
-            members.put("split", new MethodWrapper<String>("split", (instance, params) -> instance.split(Pattern.quote((String) params[0]), params[1] != null ? (int)params[1] : 0), String.class, Integer.class).setNullable(1));
-            members.put("splitRegex", new MethodWrapper<String>("splitRegex", (instance, params) -> instance.split(((String) params[0]), params[1] != null ? (int)params[1] : 0), String.class, Integer.class).setNullable(1));
-            members.put("replace", new MethodWrapper<>(String.class.getMethod("replace", CharSequence.class, CharSequence.class)));
-            members.put("replaceRegex", new MethodWrapper<>(String.class.getMethod("replaceAll", String.class, String.class)));
-            members.put("replaceFirst", new MethodWrapper<>("replaceFirst", (instance, params) -> instance.replaceFirst((String)params[0], (String)params[1]), String.class, String.class));
-            members.put("toLowerCase", new MethodWrapper<>("toLowerCase", (instance, params) -> instance.toLowerCase(Locale.ENGLISH)));
-            members.put("toUpperCase", new MethodWrapper<>("toUpperCase", (instance, params) -> instance.toUpperCase(Locale.ENGLISH)));
-            members.put("trim", new MethodWrapper<>(String.class.getMethod("trim")));
-            members.put("startsWith", new MethodWrapper<>(String.class.getMethod("startsWith", String.class)));
-            members.put("endsWith", new MethodWrapper<>(String.class.getMethod("endsWith", String.class)));
-            members.put("contains", new MethodWrapper<>(String.class.getMethod("contains", CharSequence.class)));
-            members.put("matches", new MethodWrapper<>(String.class.getMethod("matches", String.class)));
-            members.put("isEmpty", new MethodWrapper<>(String.class.getMethod("isEmpty")));
-            members.put("isWhitespace", new MethodWrapper<>("isWhitespace", (instance, params) -> Character.isWhitespace(instance.charAt(0))));
-            members.put("isDigit", new MethodWrapper<>("isDigit", (instance, params) -> Character.isDigit(instance.charAt(0))));
-            members.put("isLetter", new MethodWrapper<>("isLetter", (instance, params) -> Character.isLetter(instance.charAt(0))));
-            members.put("isLetterOrDigit", new MethodWrapper<>("isLetterOrDigit", (instance, params) -> Character.isLetterOrDigit(instance.charAt(0))));
+            members.put("substring", new NativeMethodWrapper<String>("substring", (instance, params) -> instance.substring((int)params[0], params[1] != null ? (int)params[1] : instance.length()), Integer.class, Integer.class).setNullable(1));
+            members.put("indexOf", new NativeMethodWrapper<>(String.class.getMethod("indexOf", String.class)));
+            members.put("lastIndexOf", new NativeMethodWrapper<>(String.class.getMethod("lastIndexOf", String.class)));
+            members.put("split", new NativeMethodWrapper<String>("split", (instance, params) -> instance.split(Pattern.quote((String) params[0]), params[1] != null ? (int)params[1] : 0), String.class, Integer.class).setNullable(1));
+            members.put("splitRegex", new NativeMethodWrapper<String>("splitRegex", (instance, params) -> instance.split(((String) params[0]), params[1] != null ? (int)params[1] : 0), String.class, Integer.class).setNullable(1));
+            members.put("replace", new NativeMethodWrapper<>(String.class.getMethod("replace", CharSequence.class, CharSequence.class)));
+            members.put("replaceRegex", new NativeMethodWrapper<>(String.class.getMethod("replaceAll", String.class, String.class)));
+            members.put("replaceFirst", new NativeMethodWrapper<>("replaceFirst", (instance, params) -> instance.replaceFirst((String)params[0], (String)params[1]), String.class, String.class));
+            members.put("toLowerCase", new NativeMethodWrapper<>("toLowerCase", (instance, params) -> instance.toLowerCase(Locale.ENGLISH)));
+            members.put("toUpperCase", new NativeMethodWrapper<>("toUpperCase", (instance, params) -> instance.toUpperCase(Locale.ENGLISH)));
+            members.put("trim", new NativeMethodWrapper<>(String.class.getMethod("trim")));
+            members.put("startsWith", new NativeMethodWrapper<>(String.class.getMethod("startsWith", String.class)));
+            members.put("endsWith", new NativeMethodWrapper<>(String.class.getMethod("endsWith", String.class)));
+            members.put("contains", new NativeMethodWrapper<>(String.class.getMethod("contains", CharSequence.class)));
+            members.put("matches", new NativeMethodWrapper<>(String.class.getMethod("matches", String.class)));
+            members.put("isEmpty", new NativeMethodWrapper<>(String.class.getMethod("isEmpty")));
+            members.put("isWhitespace", new NativeMethodWrapper<>("isWhitespace", (instance, params) -> Character.isWhitespace(instance.charAt(0))));
+            members.put("isDigit", new NativeMethodWrapper<>("isDigit", (instance, params) -> Character.isDigit(instance.charAt(0))));
+            members.put("isLetter", new NativeMethodWrapper<>("isLetter", (instance, params) -> Character.isLetter(instance.charAt(0))));
+            members.put("isLetterOrDigit", new NativeMethodWrapper<>("isLetterOrDigit", (instance, params) -> Character.isLetterOrDigit(instance.charAt(0))));
 
             members.put("length", new FieldWrapper<>(String::length));
         } catch (NoSuchMethodException e) {
@@ -58,7 +58,7 @@ public class StringTypeHandler implements TypeHandler<String> {
 
     @Override
     public Object getIndexer(String object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        int realIndex = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
+        int realIndex = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
         if(realIndex < 0 || realIndex >= object.length()) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index, pattern, ctx);
         }

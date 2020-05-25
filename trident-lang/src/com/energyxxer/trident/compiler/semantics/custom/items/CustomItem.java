@@ -19,7 +19,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
@@ -145,7 +145,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
         }
         switch (member) {
             case "getSlotNBT":
-                return (TridentMethod) (params, patterns, pattern1, file1) -> {
+                return (TridentFunction) (params, patterns, pattern1, file1) -> {
                     TagCompound nbt = new TagCompound(
                             new TagString("id", ((CustomItem) this).getBaseType().toString()),
                             new TagByte("Count", 1));
@@ -157,16 +157,16 @@ public class CustomItem implements TypeHandler<CustomItem> {
                     return nbt;
                 };
             case "getItemTag":
-                return (TridentMethod) (params, patterns, pattern1, file1) -> {
+                return (TridentFunction) (params, patterns, pattern1, file1) -> {
                     if (((CustomItem) this).getDefaultNBT() != null) {
                         return ((CustomItem) this).getDefaultNBT().clone();
                     }
                     return new TagCompound();
                 };
             case "getMatchingNBT":
-                return (TridentMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
+                return (TridentFunction) (params, patterns, pattern1, file1) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
             case "getItem":
-                return (TridentMethod) (params, patterns, pattern1, file1) -> new Item(baseType, defaultNBT);
+                return (TridentFunction) (params, patterns, pattern1, file1) -> new Item(baseType, defaultNBT);
             case "baseType":
                 return baseType != null ? new TridentUtil.ResourceLocation(baseType.toString()) : null;
             case "itemCode":
@@ -178,7 +178,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
     @Override
     public Object getIndexer(CustomItem object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
-        String indexStr = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
+        String indexStr = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         if(members.containsKey(indexStr)) {
             Symbol sym = members.get(indexStr);
             return keepSymbol ? sym : sym.getValue();

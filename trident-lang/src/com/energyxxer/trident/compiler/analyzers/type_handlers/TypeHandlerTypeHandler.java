@@ -10,7 +10,7 @@ public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
     private final Object of;
 
     public TypeHandlerTypeHandler() {
-        of = new MethodWrapper<>("of", ((instance, params) -> of(params[0])), Object.class).createForInstance(null);
+        of = new NativeMethodWrapper<>("of", ((instance, params) -> of(params[0])), Object.class).createForInstance(null);
     }
 
     @Override
@@ -18,7 +18,7 @@ public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
         if("of".equals(member)) {
             return of;
         } else if("isInstance".equals(member)) {
-            return new MethodWrapper<>("isInstance", ((instance, params) -> object.isInstance(params[0])), Object.class).createForInstance(null);
+            return new NativeMethodWrapper<>("isInstance", ((instance, params) -> object.isInstance(params[0])), Object.class).createForInstance(null);
         }
         throw new MemberNotFoundException();
     }

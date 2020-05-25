@@ -6,7 +6,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.HashMap;
@@ -17,10 +17,10 @@ public class EntityTypeHandler implements TypeHandler<Entity> {
 
     static {
         try {
-            members.put("isPlayerName", new MethodWrapper<>("isPlayerName", (instance, params) -> instance instanceof PlayerName));
-            members.put("isPlayer", new MethodWrapper<>(Entity.class.getMethod("isPlayer")));
-            members.put("isUnknownType", new MethodWrapper<>(Entity.class.getMethod("isUnknownType")));
-            members.put("getLimit", new MethodWrapper<>(Entity.class.getMethod("getLimit")));
+            members.put("isPlayerName", new NativeMethodWrapper<>("isPlayerName", (instance, params) -> instance instanceof PlayerName));
+            members.put("isPlayer", new NativeMethodWrapper<>(Entity.class.getMethod("isPlayer")));
+            members.put("isUnknownType", new NativeMethodWrapper<>(Entity.class.getMethod("isUnknownType")));
+            members.put("getLimit", new NativeMethodWrapper<>(Entity.class.getMethod("getLimit")));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }

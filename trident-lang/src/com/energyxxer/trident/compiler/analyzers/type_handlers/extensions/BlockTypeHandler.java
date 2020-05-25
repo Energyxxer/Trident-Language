@@ -12,7 +12,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -22,7 +22,7 @@ import java.util.Map;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.block.Block")
 public class BlockTypeHandler implements TypeHandler<Block> {
-    public static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructBlock(params, patterns, pattern, ctx);
+    public static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructBlock(params, patterns, pattern, ctx);
 
     @Override
     public Object getMember(Block object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -85,14 +85,14 @@ public class BlockTypeHandler implements TypeHandler<Block> {
     }
 
     @Override
-    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 
     private static Block constructBlock(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         CommandModule module = ctx.getCompiler().getModule();
         if(params.length == 0 || params[0] == null) return new Block(module.minecraft.types.block.get("air"));
-        TridentUtil.ResourceLocation loc = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
+        TridentUtil.ResourceLocation loc = TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
         Namespace ns = module.getNamespace(loc.namespace);
 
         Type type;

@@ -11,16 +11,14 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
-
 @AnalyzerMember(key = "com.energyxxer.commodore.item.Item")
 public class ItemTypeHandler implements TypeHandler<Item> {
-    private static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructItem(params, patterns, pattern, ctx);
+    private static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructItem(params, patterns, pattern, ctx);
 
     @Override
     public Object getMember(Item object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -37,7 +35,7 @@ public class ItemTypeHandler implements TypeHandler<Item> {
             AutoPropertySymbol property = new AutoPropertySymbol<>("itemTag", TagCompound.class, object::getNBT, object::setNbt);
             return keepSymbol ? property : property.getValue();
         } else if(member.equals("getSlotNBT")) {
-            return (TridentMethod) (params, patterns, pattern1, file1) -> getSlotNBT(object);
+            return (TridentFunction) (params, patterns, pattern1, file1) -> getSlotNBT(object);
         }
         throw new MemberNotFoundException();
     }
@@ -76,14 +74,14 @@ public class ItemTypeHandler implements TypeHandler<Item> {
     }
 
     @Override
-    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 
     private static Item constructItem(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         CommandModule module = ctx.getCompiler().getModule();
         if(params.length == 0 || params[0] == null) return new Item(module.minecraft.types.item.get("air"));
-        TridentUtil.ResourceLocation loc = TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
+        TridentUtil.ResourceLocation loc = TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
         Namespace ns = module.getNamespace(loc.namespace);
 
         Type type;

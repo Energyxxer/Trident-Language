@@ -13,14 +13,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "com.energyxxer.trident.compiler.TridentUtil$ResourceLocation")
 public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLocation> {
     private static HashMap<String, MemberWrapper<TridentUtil.ResourceLocation>> members = new HashMap<>();
 
     static {
-        members.put("subLoc", new MethodWrapper<>("subLoc", (instance, params) -> {
+        members.put("subLoc", new NativeMethodWrapper<>("subLoc", (instance, params) -> {
             TridentUtil.ResourceLocation newLoc = new TridentUtil.ResourceLocation("a:b");
             newLoc.namespace = instance.namespace;
             newLoc.isTag = instance.isTag;
@@ -37,14 +37,14 @@ public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLoca
             case "namespace": return object.namespace;
             case "isTag": return object.isTag;
             case "body": return object.body;
-            case "resolve": return (TridentMethod) (params, patterns, pattern1, ctx1) -> {
+            case "resolve": return (TridentFunction) (params, patterns, pattern1, ctx1) -> {
                 if(params.length < 1) {
                     throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'resolve' requires at least 1 parameter, instead found " + params.length, pattern, ctx);
                 }
 
                 Object param = assertOfClass(params[0], patterns[0], ctx1, String.class, TridentUtil.ResourceLocation.class);
 
-                String delimiter = (params.length > 1 && params[1] != null) ? TridentMethod.HelperMethods.assertOfClass(params[1], patterns[1], ctx1, String.class) : "/";
+                String delimiter = (params.length > 1 && params[1] != null) ? TridentFunction.HelperMethods.assertOfClass(params[1], patterns[1], ctx1, String.class) : "/";
 
                 String other = delimiter + (param instanceof TridentUtil.ResourceLocation ? ((TridentUtil.ResourceLocation) param).body : ((String) param));
 
@@ -66,7 +66,7 @@ public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLoca
 
     @Override
     public Object getIndexer(TridentUtil.ResourceLocation object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        int realIndex = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
+        int realIndex = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
 
         String[] parts = object.getParts();
 
@@ -99,26 +99,26 @@ public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLoca
     }
 
     @Override
-    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 
-    private static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> {
+    private static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> {
         if (params.length < 1) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'new resource' requires at least 2 parameters, instead found " + params.length, pattern, ctx);
         }
 
-        TridentMethod.HelperMethods.assertOfClass(params[0], patterns[0], ctx, String.class);
+        TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], ctx, String.class);
         if(params.length == 1) {
             return CommonParsers.parseResourceLocation(((String) params[0]), patterns[0], ctx);
         }
 
-        TridentMethod.HelperMethods.assertOfClass(params[1], patterns[1], ctx, ListObject.class);
+        TridentFunction.HelperMethods.assertOfClass(params[1], patterns[1], ctx, ListObject.class);
         ListObject list = ((ListObject) params[1]);
 
         String delimiter = "/";
         if(params.length >= 3) {
-            TridentMethod.HelperMethods.assertOfClass(params[2], patterns[2], ctx, String.class);
+            TridentFunction.HelperMethods.assertOfClass(params[2], patterns[2], ctx, String.class);
             delimiter = (String) params[2];
         }
 

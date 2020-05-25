@@ -2,7 +2,7 @@ package com.energyxxer.trident.compiler.semantics;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperandType;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.Operator;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperatorHandler;
@@ -74,6 +74,6 @@ public class BinaryExpression implements ILazyValue {
         if(expected == Object.class) {
             return (T) result;
         }
-        return TridentMethod.HelperMethods.assertOfClass(result, pattern, ctx, expected);
+        return TridentFunction.HelperMethods.assertOfClass(result, pattern, ctx, expected);
     }
 }

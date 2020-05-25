@@ -3,16 +3,16 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 import com.energyxxer.commodore.functionlogic.nbt.TagLong;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction.HelperMethods.assertOfClass;
 
 public class TagLongTypeHandler implements TypeHandler<TagLong> {
-    static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructTagLong(params, patterns, pattern, ctx);
+    static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructTagLong(params, patterns, pattern, ctx);
 
     @Override
     public Object getMember(TagLong object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -51,7 +51,7 @@ public class TagLongTypeHandler implements TypeHandler<TagLong> {
     }
 
     @Override
-    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 

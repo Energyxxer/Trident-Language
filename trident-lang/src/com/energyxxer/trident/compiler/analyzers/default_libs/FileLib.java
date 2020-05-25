@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeMethodBranch.nativeMethodsToFunction;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 @AnalyzerMember(key = "File")
 public class FileLib implements DefaultLibraryProvider {
@@ -24,19 +24,19 @@ public class FileLib implements DefaultLibraryProvider {
         fileLib.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
         globalCtx.put(new Symbol("File", Symbol.SymbolVisibility.GLOBAL, fileLib));
 
-        CustomClass in = new CustomClass("in", "trident-util:native", fileLib.getInnerContext());
+        CustomClass in = new CustomClass("in", "trident-util:native", fileLib.getInnerStaticContext());
         in.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
         fileLib.putStaticFinalMember("in", in);
 
-        CustomClass out = new CustomClass("out", "trident-util:native", fileLib.getInnerContext());
+        CustomClass out = new CustomClass("out", "trident-util:native", fileLib.getInnerStaticContext());
         out.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
         fileLib.putStaticFinalMember("out", out);
 
 
         try {
-            in.putStaticFunction(nativeMethodsToFunction(in.getInnerContext(), FileLib.class.getMethod("read", String.class, ISymbolContext.class)));
-            out.putStaticFunction(nativeMethodsToFunction(out.getInnerContext(), FileLib.class.getMethod("writeResource", String.class, String.class, ISymbolContext.class)));
-            out.putStaticFunction(nativeMethodsToFunction(out.getInnerContext(), FileLib.class.getMethod("writeData", String.class, String.class, ISymbolContext.class)));
+            in.putStaticFunction(nativeMethodsToFunction(in.getInnerStaticContext(), FileLib.class.getMethod("read", String.class, ISymbolContext.class)));
+            out.putStaticFunction(nativeMethodsToFunction(out.getInnerStaticContext(), FileLib.class.getMethod("writeResource", String.class, String.class, ISymbolContext.class)));
+            out.putStaticFunction(nativeMethodsToFunction(out.getInnerStaticContext(), FileLib.class.getMethod("writeData", String.class, String.class, ISymbolContext.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }

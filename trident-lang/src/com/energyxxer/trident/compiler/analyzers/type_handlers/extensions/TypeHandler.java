@@ -2,8 +2,8 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.Iterator;
@@ -62,7 +62,7 @@ public interface TypeHandler<T> {
         return null;
     }
 
-    default TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    default TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return null;
     }
 

@@ -2,7 +2,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -54,7 +54,7 @@ public class TypeConstraints {
     }
 
     public Object adjustValue(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(handler != null) value = TridentMethod.HelperMethods.convertToType(value, pattern, ctx, nullable, handler);
+        if(handler != null) value = TridentFunction.HelperMethods.convertToType(value, pattern, ctx, nullable, handler);
         return value;
     }
 

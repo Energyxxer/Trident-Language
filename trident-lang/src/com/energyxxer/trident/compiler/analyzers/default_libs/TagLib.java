@@ -14,7 +14,7 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeMethodBranch.nativeMethodsToFunction;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 @AnalyzerMember(key = "Tags")
 public class TagLib implements DefaultLibraryProvider {
@@ -25,9 +25,9 @@ public class TagLib implements DefaultLibraryProvider {
         globalCtx.put(new Symbol("Tags", Symbol.SymbolVisibility.GLOBAL, tagLib));
 
         try {
-            tagLib.putStaticFunction(nativeMethodsToFunction(tagLib.getInnerContext(), TagLib.class.getMethod("createTag", String.class, TridentUtil.ResourceLocation.class, ListObject.class, ISymbolContext.class)));
-            tagLib.putStaticFunction(nativeMethodsToFunction(tagLib.getInnerContext(), TagLib.class.getMethod("exists", String.class, TridentUtil.ResourceLocation.class, ISymbolContext.class)));
-            tagLib.putStaticFunction(nativeMethodsToFunction(tagLib.getInnerContext(), TagLib.class.getMethod("tagContainsValue", String.class, TridentUtil.ResourceLocation.class, TridentUtil.ResourceLocation.class, ISymbolContext.class)));
+            tagLib.putStaticFunction(nativeMethodsToFunction(tagLib.getInnerStaticContext(), TagLib.class.getMethod("createTag", String.class, TridentUtil.ResourceLocation.class, ListObject.class, ISymbolContext.class)));
+            tagLib.putStaticFunction(nativeMethodsToFunction(tagLib.getInnerStaticContext(), TagLib.class.getMethod("exists", String.class, TridentUtil.ResourceLocation.class, ISymbolContext.class)));
+            tagLib.putStaticFunction(nativeMethodsToFunction(tagLib.getInnerStaticContext(), TagLib.class.getMethod("tagContainsValue", String.class, TridentUtil.ResourceLocation.class, TridentUtil.ResourceLocation.class, ISymbolContext.class)));
         } catch(NoSuchMethodException e) {
             e.printStackTrace();
         }

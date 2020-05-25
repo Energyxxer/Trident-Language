@@ -133,7 +133,7 @@ public class LoopInstruction implements Instruction {
                                 try {
                                     boolean hasNext = it.hasNext();
                                     if (hasNext) {
-                                        ctx.search(varName, ctx).setValue(it.next());
+                                        ctx.search(varName, ctx, null).setValue(it.next());
                                     }
                                     return hasNext;
                                 } catch (ConcurrentModificationException x) {

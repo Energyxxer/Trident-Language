@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -9,12 +10,14 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.HashMap;
 
-public class CustomClassObject implements TypeHandler<CustomClassObject>, ContextualToString {
+public class CustomClassObject implements TypeHandler<CustomClassObject>, ParameterizedMemberHolder, ContextualToString {
     private final CustomClass type;
     final HashMap<String, Symbol> instanceMembers = new HashMap<>();
+    final ClassInstanceMethodTable instanceMethods;
 
     public CustomClassObject(CustomClass type) {
         this.type = type;
+        this.instanceMethods = new ClassInstanceMethodTable(this);
     }
 
     @Override
@@ -36,6 +39,21 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Contex
     }
 
     @Override
+    public Object getMemberForParameters(String memberName, TokenPattern<?> pattern, ActualParameterList params, ISymbolContext ctx, boolean keepSymbol) {
+        Object foundClassMethod = instanceMethods.findAndWrap(memberName, params, pattern, ctx);
+        if(foundClassMethod == null) {
+            try {
+                foundClassMethod = getMember(this, memberName, pattern, ctx, keepSymbol);
+            } catch(MemberNotFoundException ignore) {
+            }
+        }
+        if(foundClassMethod == null) {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve function or method '" + memberName + "' of " + TridentTypeManager.getTypeIdentifierForObject(this), pattern, ctx);
+        }
+        return foundClassMethod;
+    }
+
+    @Override
     public Object getIndexer(CustomClassObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
     }
@@ -43,7 +61,7 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Contex
     @Override
     public Object cast(CustomClassObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         for(CustomClass type : type.getInheritanceTree()) {
-            TridentUserMethod castMethod = type.explicitCasts.get(targetType);
+            TridentUserFunction castMethod = type.explicitCasts.get(targetType);
             if(castMethod != null) {
                 return castMethod.safeCall(new Object[] {object}, new TokenPattern[] {pattern}, pattern, ctx);
             }
@@ -54,7 +72,7 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Contex
     @Override
     public Object coerce(CustomClassObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         for(CustomClass type : type.getInheritanceTree()) {
-            TridentUserMethod castMethod = type.implicitCasts.get(targetType);
+            TridentUserFunction castMethod = type.implicitCasts.get(targetType);
             if(castMethod != null) {
                 return castMethod.safeCall(new Object[] {object}, new TokenPattern[] {pattern}, pattern, ctx);
             }
@@ -106,14 +124,14 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Contex
 
     @Override
     public String toString() {
-        return super.toString();
+        return "<instance of " + type + "; " + System.identityHashCode(this) + ">";
     }
 
     public String contextualToString(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(instanceMembers.containsKey("toString")) {
             Symbol toStringSymbol = instanceMembers.get("toString");
-            if(toStringSymbol.getValue() instanceof TridentMethod) {
-                return String.valueOf(((TridentMethod) toStringSymbol.getValue()).safeCall(new Object[0], new TokenPattern<?>[0], pattern, ctx));
+            if(toStringSymbol.getValue() instanceof TridentFunction) {
+                return String.valueOf(((TridentFunction) toStringSymbol.getValue()).safeCall(new Object[0], new TokenPattern<?>[0], pattern, ctx));
             }
         }
         return toString();
@@ -131,5 +149,9 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Contex
 
     public Symbol getSymbol(String name) {
         return instanceMembers.get(name);
+    }
+
+    public ClassInstanceMethodTable getInstanceMethods() {
+        return instanceMethods;
     }
 }

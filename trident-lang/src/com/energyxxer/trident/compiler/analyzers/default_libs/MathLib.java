@@ -6,7 +6,7 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeMethodBranch.nativeMethodsToFunction;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 @AnalyzerMember(key = "Math")
 public class MathLib implements DefaultLibraryProvider {
@@ -32,31 +32,31 @@ public class MathLib implements DefaultLibraryProvider {
                     Math.class.getMethod("abs", int.class),
                     Math.class.getMethod("abs", double.class)
             ));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("floor", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("ceil", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("round", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("floorDiv", int.class, int.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("floorMod", int.class, int.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("signum", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("sin", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("cos", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("tan", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("sinh", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("cosh", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("tanh", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("asin", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("acos", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("atan", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("atan2", double.class, double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("log", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("log10", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), MathLib.class.getMethod("log2", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("toRadians", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("toDegrees", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("sqrt", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("cbrt", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(), Math.class.getMethod("exp", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerContext(),
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("floor", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("ceil", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("round", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("floorDiv", int.class, int.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("floorMod", int.class, int.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("signum", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("sin", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("cos", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("tan", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("sinh", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("cosh", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("tanh", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("asin", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("acos", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("atan", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("atan2", double.class, double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("log", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("log10", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), MathLib.class.getMethod("log2", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("toRadians", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("toDegrees", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("sqrt", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("cbrt", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("exp", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(),
                     Math.class.getMethod("random"),
                     MathLib.class.getMethod("random", double.class, double.class)
             ));
@@ -74,19 +74,19 @@ public class MathLib implements DefaultLibraryProvider {
         try {
             integer.putStaticFinalMember("MIN_VALUE", Integer.MIN_VALUE);
             integer.putStaticFinalMember("MAX_VALUE", Integer.MAX_VALUE);
-            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerContext(),
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(),
                     Integer.class.getMethod("parseInt", String.class),
                     Integer.class.getMethod("parseInt", String.class, int.class)
             ));
-            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerContext(),
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(),
                     Integer.class.getMethod("parseUnsignedInt", String.class),
                     Integer.class.getMethod("parseUnsignedInt", String.class, int.class)
             ));
-            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerContext(),
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(),
                     Integer.class.getMethod("toString", int.class),
                     Integer.class.getMethod("toString", int.class, int.class)
             ));
-            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerContext(),
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(),
                     Integer.class.getMethod("toUnsignedString", int.class),
                     Integer.class.getMethod("toUnsignedString", int.class, int.class)
             ));
@@ -104,11 +104,11 @@ public class MathLib implements DefaultLibraryProvider {
             real.putStaticFinalMember("MIN_POSITIVE_VALUE", Double.MIN_VALUE);
             real.putStaticFinalMember("Infinity", Double.POSITIVE_INFINITY);
             real.putStaticFinalMember("NaN", Double.NaN);
-            real.putStaticFunction(nativeMethodsToFunction(real.getInnerContext(), "parseReal", Double.class.getMethod("parseDouble", String.class)));
-            real.putStaticFunction(nativeMethodsToFunction(real.getInnerContext(), Double.class.getMethod("isFinite", double.class)));
-            real.putStaticFunction(nativeMethodsToFunction(real.getInnerContext(), Double.class.getMethod("isInfinite", double.class)));
-            real.putStaticFunction(nativeMethodsToFunction(real.getInnerContext(), Double.class.getMethod("isNaN", double.class)));
-            real.putStaticFunction(nativeMethodsToFunction(real.getInnerContext(), Double.class.getMethod("toString", double.class)));
+            real.putStaticFunction(nativeMethodsToFunction(real.getInnerStaticContext(), "parseReal", Double.class.getMethod("parseDouble", String.class)));
+            real.putStaticFunction(nativeMethodsToFunction(real.getInnerStaticContext(), Double.class.getMethod("isFinite", double.class)));
+            real.putStaticFunction(nativeMethodsToFunction(real.getInnerStaticContext(), Double.class.getMethod("isInfinite", double.class)));
+            real.putStaticFunction(nativeMethodsToFunction(real.getInnerStaticContext(), Double.class.getMethod("isNaN", double.class)));
+            real.putStaticFunction(nativeMethodsToFunction(real.getInnerStaticContext(), Double.class.getMethod("toString", double.class)));
         } catch(NoSuchMethodException e) {
             e.printStackTrace();
         }

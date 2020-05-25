@@ -6,7 +6,7 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeMethodBranch.nativeMethodsToFunction;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 @AnalyzerMember(key = "Character")
 public class CharacterLib implements DefaultLibraryProvider {
@@ -15,14 +15,14 @@ public class CharacterLib implements DefaultLibraryProvider {
         CustomClass clib = new CustomClass("Character", "trident-util:native", globalCtx);
         clib.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
         try {
-            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerContext(), CharacterLib.class.getMethod("fromCodePoint", int.class)));
-            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerContext(), CharacterLib.class.getMethod("toCodePoint", String.class)));
-            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerContext(), CharacterLib.class.getMethod("getName", String.class)));
-            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerContext(), CharacterLib.class.getMethod("isLetter", String.class)));
-            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerContext(), CharacterLib.class.getMethod("isDigit", String.class)));
-            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerContext(), CharacterLib.class.getMethod("isWhitespace", String.class)));
-            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerContext(), CharacterLib.class.getMethod("isUpperCase", String.class)));
-            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerContext(), CharacterLib.class.getMethod("isLowerCase", String.class)));
+            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerStaticContext(), CharacterLib.class.getMethod("fromCodePoint", int.class)));
+            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerStaticContext(), CharacterLib.class.getMethod("toCodePoint", String.class)));
+            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerStaticContext(), CharacterLib.class.getMethod("getName", String.class)));
+            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerStaticContext(), CharacterLib.class.getMethod("isLetter", String.class)));
+            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerStaticContext(), CharacterLib.class.getMethod("isDigit", String.class)));
+            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerStaticContext(), CharacterLib.class.getMethod("isWhitespace", String.class)));
+            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerStaticContext(), CharacterLib.class.getMethod("isUpperCase", String.class)));
+            clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerStaticContext(), CharacterLib.class.getMethod("isLowerCase", String.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }

@@ -7,7 +7,7 @@ import com.energyxxer.trident.compiler.analyzers.default_libs.CoordinatesLib;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.HashMap;
@@ -17,7 +17,7 @@ public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
     private static HashMap<String, MemberWrapper<CoordinateSet>> members = new HashMap<>();
 
     static {
-        members.put("getMagnitude", new MethodWrapper<>("getMagnitude", (instance, params) -> {
+        members.put("getMagnitude", new NativeMethodWrapper<>("getMagnitude", (instance, params) -> {
             switch((int)params[0]) {
                 case CoordinatesLib.AXIS_X: {
                     return instance.getX().getCoord();
@@ -33,7 +33,7 @@ public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
                 }
             }
         }, Integer.class));
-        members.put("getCoordinateType", new MethodWrapper<>("getCoordinateType", (instance, params) -> {
+        members.put("getCoordinateType", new NativeMethodWrapper<>("getCoordinateType", (instance, params) -> {
             switch((int)params[0]) {
                 case CoordinatesLib.AXIS_X: {
                     return CoordinatesLib.coordTypeToConstant(instance.getX().getType());
@@ -49,7 +49,7 @@ public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
                 }
             }
         }, Integer.class));
-        members.put("deriveMagnitude", new MethodWrapper<CoordinateSet>("deriveMagnitude", (instance, params) -> {
+        members.put("deriveMagnitude", new NativeMethodWrapper<CoordinateSet>("deriveMagnitude", (instance, params) -> {
             double magnitude = ((double) params[0]);
             if(params[1] == null) {
                 return new CoordinateSet(
@@ -73,7 +73,7 @@ public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
                 }
             }
         }, Double.class, Integer.class).setNullable(1));
-        members.put("deriveCoordinateType", new MethodWrapper<CoordinateSet>("deriveCoordinateType", (instance, params) -> {
+        members.put("deriveCoordinateType", new NativeMethodWrapper<CoordinateSet>("deriveCoordinateType", (instance, params) -> {
             Coordinate.Type type = CoordinatesLib.constantToCoordType((String) params[0]);
             if(params[1] == null || type == Coordinate.Type.LOCAL || instance.getX().getType() == Coordinate.Type.LOCAL) {
                 return new CoordinateSet(

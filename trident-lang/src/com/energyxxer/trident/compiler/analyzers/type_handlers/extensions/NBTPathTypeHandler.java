@@ -6,24 +6,24 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentMethod.HelperMethods.assertOfClass;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction.HelperMethods.assertOfClass;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.nbt.path.NBTPath")
 public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
-    private static final TridentMethod CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructNBTPath(params, patterns, pattern, ctx);
+    private static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructNBTPath(params, patterns, pattern, ctx);
 
     private static HashMap<String, MemberWrapper<NBTPath>> members = new HashMap<>();
 
     static {
-        members.put("resolveKey", new MethodWrapper<NBTPath>("resolveKey", (instance, params) -> {
+        members.put("resolveKey", new NativeMethodWrapper<NBTPath>("resolveKey", (instance, params) -> {
             ArrayList<NBTPathNode> nodes = new ArrayList<>();
             for (NBTPath subPath : instance) {
                 nodes.add(subPath.getNode());
@@ -31,7 +31,7 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
             nodes.add(new NBTPathKey((String) params[0], (TagCompound) params[1]));
             return new NBTPath(nodes.toArray(new NBTPathNode[0]));
         }, String.class, TagCompound.class).setNullable(1));
-        members.put("resolveIndex", new MethodWrapper<>("resolveIndex", (instance, params) -> {
+        members.put("resolveIndex", new NativeMethodWrapper<>("resolveIndex", (instance, params) -> {
             ArrayList<NBTPathNode> nodes = new ArrayList<>();
             for (NBTPath subPath : instance) {
                 nodes.add(subPath.getNode());
@@ -39,7 +39,7 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
             nodes.add(new NBTPathIndex((int) params[0]));
             return new NBTPath(nodes.toArray(new NBTPathNode[0]));
         }, Integer.class));
-        members.put("resolveListMatch", new MethodWrapper<NBTPath>("resolveListMatch", (instance, params) -> {
+        members.put("resolveListMatch", new NativeMethodWrapper<NBTPath>("resolveListMatch", (instance, params) -> {
             ArrayList<NBTPathNode> nodes = new ArrayList<>();
             for (NBTPath subPath : instance) {
                 nodes.add(subPath.getNode());
@@ -77,7 +77,7 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
     }
 
     @Override
-    public TridentMethod getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 
@@ -96,7 +96,7 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
         if(obj instanceof String) {
             TagCompound compoundMatch = null;
             if(params.length >= 2 && params[1] != null) {
-                compoundMatch = TridentMethod.HelperMethods.assertOfClass(params[1], patterns[1], ctx, TagCompound.class);
+                compoundMatch = TridentFunction.HelperMethods.assertOfClass(params[1], patterns[1], ctx, TagCompound.class);
             }
             return new NBTPath(new NBTPathKey((String) obj, compoundMatch));
         }

@@ -17,7 +17,7 @@ public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
 
     static {
         try {
-            members.put("merge", new MethodWrapper<>(TagCompound.class.getMethod("merge", TagCompound.class)));
+            members.put("merge", new NativeMethodWrapper<>(TagCompound.class.getMethod("merge", TagCompound.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -27,7 +27,7 @@ public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
     public Object getMember(TagCompound object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(object.contains(member)) return object.get(member);
         if(member.equals("toDictionary")) {
-            return new MethodWrapper<TagCompound>("toDictionary", ((instance, params) -> NBTToDictionary.convert(instance, pattern, ctx))).createForInstance(object);
+            return new NativeMethodWrapper<TagCompound>("toDictionary", ((instance, params) -> NBTToDictionary.convert(instance, pattern, ctx))).createForInstance(object);
         }
         MemberWrapper<TagCompound> result = members.get(member);
         if(result == null) return null;
@@ -36,7 +36,7 @@ public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
 
     @Override
     public Object getIndexer(TagCompound object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        String key = TridentMethod.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
+        String key = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         if(object.contains(key)) return object.get(key);
         else return null;
     }
