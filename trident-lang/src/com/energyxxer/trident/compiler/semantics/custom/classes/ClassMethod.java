@@ -6,6 +6,7 @@ import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstructio
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ClassMethod {
@@ -16,6 +17,14 @@ public class ClassMethod {
     private List<FormalParameter> formalParameters;
     private Symbol.SymbolVisibility visibility;
     private VariableInstruction.SymbolModifierMap modifiers;
+
+    public ClassMethod(String name, CustomClass definingClass) {
+        this.name = name;
+        this.definingClass = definingClass;
+        this.definingPattern = null;
+        this.function = null;
+        this.formalParameters = Collections.emptyList();
+    }
 
     public ClassMethod(CustomClass definingClass, TokenPattern<?> definingPattern, TridentUserFunction function) {
         this.name = function.getFunctionName();

@@ -19,7 +19,6 @@ import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.function.Function;
 
 import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
 
@@ -38,11 +37,10 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     final LinkedHashMap<TypeHandler, TridentUserFunction> explicitCasts = new LinkedHashMap<>();
     final LinkedHashMap<TypeHandler, TridentUserFunction> implicitCasts = new LinkedHashMap<>();
 
-    final ClassMethodTable staticMethods = new ClassMethodTable(this);
+    private final ClassMethodTable staticMethods = new ClassMethodTable(this);
     final ClassMethodTable instanceMethods = new ClassMethodTable(this);
 
-    private Function<CustomClassObject, TridentFunction> constructorSupplier = null;
-    private Symbol.SymbolVisibility constructorVisibility = Symbol.SymbolVisibility.LOCAL;
+    private ClassMethodFamily constructorFamily = null;
 
     private TridentFile definitionFile;
     private ISymbolContext definitionContext;
@@ -233,7 +231,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                                     new TridentUserFunction(
                                             functionName,
                                             branches,
-                                            finalClassObject.prepareFunctionContext(null),
+                                            finalClassObject.prepareFunctionContext(),
                                             null
                                     )
                             ).setVisibility(memberVisibility).setModifiers(modifiers);
@@ -245,7 +243,23 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                                 classObject.instanceMethods.put(method, mode, entry, ctx);
                             }
                         } else {
-                            classObject.setConstructor(memberVisibility, thiz -> new TridentUserFunction(functionName, branches, finalClassObject.prepareFunctionContext(thiz), thiz));
+                            ClassMethod method = new ClassMethod(
+                                    finalClassObject,
+                                    entry,
+                                    new TridentUserFunction(
+                                            functionName,
+                                            branches,
+                                            finalClassObject.prepareFunctionContext(),
+                                            null
+                                    )
+                            ).setVisibility(memberVisibility).setModifiers(modifiers);
+
+                            if(classObject.constructorFamily == null) {
+                                classObject.constructorFamily = new ClassMethodFamily("new");
+                            }
+                            classObject.constructorFamily.putOverload(method, mode, entry, ctx);
+
+                            //classObject.setConstructor(memberVisibility, thiz -> new TridentUserFunction(functionName, branches, finalClassObject.prepareFunctionContext(), thiz));
                         }
                         break;
                     }
@@ -279,7 +293,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 new TridentUserFunction(
                         value.getFunctionName(),
                         value.getBranches(),
-                        this.prepareFunctionContext(null),
+                        this.prepareFunctionContext(),
                         null
                 )
         ).setVisibility(Symbol.SymbolVisibility.PUBLIC);
@@ -304,9 +318,18 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         instanceMemberSuppliers.put(name, symSupplier);
     }
 
-    public void setConstructor(Symbol.SymbolVisibility visibility, Function<CustomClassObject, TridentFunction> supplier) {
-        constructorVisibility = visibility;
-        constructorSupplier = supplier;
+    public void setNoConstructor() {
+        constructorFamily = new ClassMethodFamily("new");
+        ClassMethod method = new ClassMethod("new", this).setVisibility(Symbol.SymbolVisibility.PRIVATE);
+        method.setModifiers(new VariableInstruction.SymbolModifierMap());
+        method.getModifiers().setModifier(Symbol.SymbolModifier.FINAL);
+
+        constructorFamily.putOverload(
+                method,
+                MemberParentMode.FORCE,
+                null,
+                null
+        );
     }
 
     public InstanceMemberSupplier getInstanceMemberSupplier(String name) {
@@ -317,14 +340,8 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         return null;
     }
 
-    private ISymbolContext prepareFunctionContext(CustomClassObject thiz) {
-        ISymbolContext innerFrame = new SymbolContext(this.innerStaticContext);
-        if(thiz != null) {
-            for(Symbol instanceSym : thiz.instanceMembers.values()) {
-                innerFrame.put(instanceSym);
-            }
-        }
-        return innerFrame;
+    private ISymbolContext prepareFunctionContext() {
+        return new SymbolContext(this.innerStaticContext);
     }
 
     @Override
@@ -445,31 +462,28 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     @Override
     public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         assertComplete(pattern, ctx);
-        if(ctx == null || hasAccess(ctx, constructorVisibility)) {
-            return (params, patterns, pattern2, ctx2) -> {
-                CustomClassObject created = new CustomClassObject(this);
+        return (params, patterns, pattern2, ctx2) -> {
+            CustomClassObject created = new CustomClassObject(this);
 
-                for(CustomClass cls : getInheritanceTree()) {
-                    for(InstanceMemberSupplier symbolSupplier : cls.instanceMemberSuppliers.values()) {
-                        if(!created.containsMember(symbolSupplier.getName()))
-                            created.putMemberIfAbsent(symbolSupplier.constructSymbol(created));
+            for(CustomClass cls : getInheritanceTree()) {
+                for(InstanceMemberSupplier symbolSupplier : cls.instanceMemberSuppliers.values()) {
+                    if(!created.containsMember(symbolSupplier.getName()))
+                        created.putMemberIfAbsent(symbolSupplier.constructSymbol(created));
+                }
+            }
+
+            if(constructorFamily != null) {
+                ClassMethodFamily.ClassMethodSymbol pickedConstructor = constructorFamily.pickOverloadSymbol(new ActualParameterList(Arrays.asList(params), Arrays.asList(patterns), pattern2), pattern2, ctx, created);
+                pickedConstructor.safeCall(params, patterns, pattern2, ctx2);
+                for(Symbol field : created.instanceMembers.values()) {
+                    if(field.isFinal() && field.maySet()) {
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Final symbol '" + field.getName() + "' was not initialized in constructor.", pattern, ctx2);
                     }
                 }
+            }
 
-                if(constructorSupplier != null) {
-                    constructorSupplier.apply(created).safeCall(params, patterns, pattern2, ctx2);
-                    for(Symbol field : created.instanceMembers.values()) {
-                        if(field.isFinal() && field.maySet()) {
-                            throw new TridentException(TridentException.Source.TYPE_ERROR, "Final symbol '" + field.getName() + "' was not initialized in constructor.", pattern, ctx2);
-                        }
-                    }
-                }
-
-                return created;
-            };
-        } else {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Constructor has " + constructorVisibility.toString().toLowerCase() + " access in " + getClassTypeIdentifier(), pattern, ctx);
-        }
+            return created;
+        };
     }
 
     public ISymbolContext getDeclaringContext() {

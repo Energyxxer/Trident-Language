@@ -13,7 +13,7 @@ public class CharacterLib implements DefaultLibraryProvider {
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         CustomClass clib = new CustomClass("Character", "trident-util:native", globalCtx);
-        clib.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
+        clib.setNoConstructor();
         try {
             clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerStaticContext(), CharacterLib.class.getMethod("fromCodePoint", int.class)));
             clib.putStaticFunction(nativeMethodsToFunction(clib.getInnerStaticContext(), CharacterLib.class.getMethod("toCodePoint", String.class)));

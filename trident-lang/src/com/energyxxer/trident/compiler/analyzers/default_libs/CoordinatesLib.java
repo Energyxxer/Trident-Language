@@ -22,7 +22,7 @@ public class CoordinatesLib implements DefaultLibraryProvider {
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         CustomClass coord = new CustomClass("Coordinates", "trident-util:native", globalCtx);
-        coord.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
+        coord.setNoConstructor();
 
         coord.putStaticFinalMember("ABSOLUTE", COORDINATE_TYPE_ABSOLUTE);
         coord.putStaticFinalMember("RELATIVE", COORDINATE_TYPE_RELATIVE);
@@ -32,7 +32,7 @@ public class CoordinatesLib implements DefaultLibraryProvider {
 
 
         CustomClass axis = new CustomClass("Axis", "trident-util:native", globalCtx);
-        axis.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
+        axis.setNoConstructor();
 
         axis.putStaticFinalMember("X", AXIS_X);
         axis.putStaticFinalMember("Y", AXIS_Y);

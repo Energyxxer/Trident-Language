@@ -22,7 +22,7 @@ public class TypeLib implements DefaultLibraryProvider {
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         CustomClass block = new CustomClass("Block", "trident-util:native", globalCtx);
-        block.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
+        block.setNoConstructor();
         globalCtx.put(new Symbol("Block", Symbol.SymbolVisibility.GLOBAL, block));
 
         try {
@@ -33,7 +33,7 @@ public class TypeLib implements DefaultLibraryProvider {
         }
 
         CustomClass item = new CustomClass("Item", "trident-util:native", globalCtx);
-        item.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
+        item.setNoConstructor();
         globalCtx.put(new Symbol("Item", Symbol.SymbolVisibility.GLOBAL, item));
 
 
@@ -45,7 +45,7 @@ public class TypeLib implements DefaultLibraryProvider {
         }
 
         CustomClass minecraftTypes = new CustomClass("MinecraftTypes", "trident-util:native", globalCtx);
-        minecraftTypes.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
+        minecraftTypes.setNoConstructor();
         globalCtx.put(new Symbol("MinecraftTypes", Symbol.SymbolVisibility.GLOBAL, minecraftTypes));
         try {
             minecraftTypes.putStaticFunction(nativeMethodsToFunction(minecraftTypes.getInnerStaticContext(), TypeLib.class.getMethod("getDefinitionsForCategory", String.class, ISymbolContext.class)));

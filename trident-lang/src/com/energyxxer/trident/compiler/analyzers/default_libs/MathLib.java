@@ -15,7 +15,7 @@ public class MathLib implements DefaultLibraryProvider {
     @SuppressWarnings("unchecked")
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         CustomClass math = new CustomClass("Math", "trident-util:native", globalCtx);
-        math.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
+        math.setNoConstructor();
         globalCtx.put(new Symbol("Math", Symbol.SymbolVisibility.GLOBAL, math));
 
         try {
@@ -68,7 +68,7 @@ public class MathLib implements DefaultLibraryProvider {
         }
 
         CustomClass integer = new CustomClass("Integer", "trident-util:native", globalCtx);
-        integer.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
+        integer.setNoConstructor();
         globalCtx.put(new Symbol("Integer", Symbol.SymbolVisibility.GLOBAL, integer));
 
         try {
@@ -95,7 +95,7 @@ public class MathLib implements DefaultLibraryProvider {
         }
 
         CustomClass real = new CustomClass("Real", "trident-util:native", globalCtx);
-        real.setConstructor(Symbol.SymbolVisibility.PRIVATE, null);
+        real.setNoConstructor();
         globalCtx.put(new Symbol("Real", Symbol.SymbolVisibility.GLOBAL, real));
 
         try {
