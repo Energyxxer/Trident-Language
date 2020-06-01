@@ -9,7 +9,17 @@ import java.util.Objects;
 
 public class Symbol {
     public enum SymbolVisibility {
-        GLOBAL, PUBLIC, LOCAL, PRIVATE
+        GLOBAL(4), PUBLIC(3), LOCAL(2), PRIVATE(1);
+
+        private final int visibilityIndex;
+
+        SymbolVisibility(int visibilityIndex) {
+            this.visibilityIndex = visibilityIndex;
+        }
+
+        public int getVisibilityIndex() {
+            return visibilityIndex;
+        }
     }
 
     public enum SymbolModifier {

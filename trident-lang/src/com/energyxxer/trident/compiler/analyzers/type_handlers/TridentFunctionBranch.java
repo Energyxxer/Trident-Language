@@ -11,6 +11,8 @@ import java.util.Collection;
 
 public abstract class TridentFunctionBranch {
     protected ArrayList<FormalParameter> formalParameters = new ArrayList<>();
+    protected TypeConstraints returnConstraints;
+    protected boolean shouldCoerce = true;
 
     public TridentFunctionBranch(Collection<FormalParameter> formalParameters) {
         this.formalParameters.addAll(formalParameters);
@@ -38,5 +40,19 @@ public abstract class TridentFunctionBranch {
 
     public abstract Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext declaringCtx, ISymbolContext callingCtx, Object thisObject);
 
+    public TypeConstraints getReturnConstraints() {
+        return returnConstraints;
+    }
 
+    public void setReturnConstraints(TypeConstraints returnConstraints) {
+        this.returnConstraints = returnConstraints;
+    }
+
+    public boolean isShouldCoerce() {
+        return shouldCoerce;
+    }
+
+    public void setShouldCoerce(boolean shouldCoerce) {
+        this.shouldCoerce = shouldCoerce;
+    }
 }

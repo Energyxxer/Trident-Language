@@ -5,7 +5,9 @@ import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClassObject;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.util.logger.Debug;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -19,6 +21,19 @@ public class TridentNativeFunctionBranch extends TridentFunctionBranch {
     public TridentNativeFunctionBranch(Method method) {
         super(createFormalParameters(method));
         this.method = method;
+
+        Class<?> returnType = TridentFunction.HelperMethods.sanitizeClass(method.getReturnType());
+        TypeHandler correspondingHandler = TridentTypeManager.getHandlerForHandledClass(returnType);
+        if(correspondingHandler == null && returnType != Object.class) {
+            Debug.log("Could not create return constraints for method '" + method + "': Did not find appropriate TypeHandler instance.");
+        }
+        boolean nullable = true;
+
+        if(method.isAnnotationPresent(NativeMethodWrapper.TridentNotNullReturn.class)) {
+            nullable = false;
+        }
+
+        this.returnConstraints = new TypeConstraints(correspondingHandler, nullable);
     }
 
     private static Collection<FormalParameter> createFormalParameters(Method method) {
@@ -28,15 +43,19 @@ public class TridentNativeFunctionBranch extends TridentFunctionBranch {
         for(Parameter param : parameterJavaTypes) {
             Class<?> paramType = param.getType();
             paramType = TridentFunction.HelperMethods.sanitizeClass(paramType);
-            if(paramType == TokenPattern.class || paramType == ISymbolContext.class) {
-                //Reserved for calling pattern and context
+            if(paramType == TokenPattern.class || paramType == ISymbolContext.class || paramType == CustomClassObject.class) {
+                //Reserved for calling pattern, context and this
                 continue;
             }
             TypeHandler correspondingHandler = TridentTypeManager.getHandlerForHandledClass(paramType);
             if(correspondingHandler == null && paramType != Object.class) {
                 throw new IllegalArgumentException("Could not create formal parameter for type '" + paramType.getName() + "'; Did not find appropriate TypeHandler instance.");
             }
-            params.add(new FormalParameter(param.getName(), new TypeConstraints(correspondingHandler, correspondingHandler == null)));
+            boolean nullable = correspondingHandler == null;
+            if(!nullable) {
+                nullable = param.getAnnotation(NativeMethodWrapper.TridentNullableArg.class) != null;
+            }
+            params.add(new FormalParameter(param.getName(), new TypeConstraints(correspondingHandler, nullable)));
         }
         return params;
     }
@@ -62,6 +81,11 @@ public class TridentNativeFunctionBranch extends TridentFunctionBranch {
                 j--;
                 continue;
             }
+            if(method.getParameterTypes()[i] == CustomClassObject.class) {
+                actualParams[i] = thisObject;
+                j--;
+                continue;
+            }
             FormalParameter formalParameter = formalParameters.get(j);
             if(i < params.length) {
                 actualParams[i] = params[i];
@@ -74,25 +98,32 @@ public class TridentNativeFunctionBranch extends TridentFunctionBranch {
             }
         }
 
+        Object returnValue;
         try {
-            return method.invoke(null, actualParams);
+            returnValue = method.invoke(null, actualParams);
         } catch (IllegalAccessException x) {
             throw new TridentException(TridentException.Source.IMPOSSIBLE, x.toString(), pattern, callingCtx);
         } catch (InvocationTargetException x) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.getTargetException().getMessage(), pattern, callingCtx);
         }
-    }
 
-    public static TridentUserFunction nativeMethodsToFunction(ISymbolContext ctx, Method... overloads) {
-        return nativeMethodsToFunction(ctx, null, overloads);
-    }
-
-    public static TridentUserFunction nativeMethodsToFunction(ISymbolContext ctx, String name, Method... overloads) {
-        ArrayList<TridentFunctionBranch> branches = new ArrayList<>();
-        for(Method met : overloads) {
-            if(name == null) name = met.getName();
-            branches.add(new TridentNativeFunctionBranch(met));
+        if(returnConstraints != null) {
+            if(shouldCoerce) {
+                returnConstraints.validate(returnValue, null, callingCtx);
+                returnValue = returnConstraints.adjustValue(returnValue, pattern, callingCtx);
+            } else {
+                returnConstraints.validateExact(returnValue, null, callingCtx);
+            }
         }
-        return new TridentUserFunction(name, branches, ctx, null);
+        return returnValue;
+    }
+
+    public static TridentUserFunction nativeMethodsToFunction(ISymbolContext ctx, Method met) {
+        return nativeMethodsToFunction(ctx, null, met);
+    }
+
+    public static TridentUserFunction nativeMethodsToFunction(ISymbolContext ctx, String name, Method met) {
+        if(name == null) name = met.getName();
+        return new TridentUserFunction(name, new TridentNativeFunctionBranch(met), ctx, null);
     }
 }

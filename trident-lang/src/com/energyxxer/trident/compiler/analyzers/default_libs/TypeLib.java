@@ -49,28 +49,29 @@ public class TypeLib implements DefaultLibraryProvider {
         globalCtx.put(new Symbol("MinecraftTypes", Symbol.SymbolVisibility.GLOBAL, minecraftTypes));
         try {
             minecraftTypes.putStaticFunction(nativeMethodsToFunction(minecraftTypes.getInnerStaticContext(), TypeLib.class.getMethod("getDefinitionsForCategory", String.class, ISymbolContext.class)));
-            minecraftTypes.putStaticFunction(nativeMethodsToFunction(minecraftTypes.getInnerStaticContext(),
-                    TypeLib.class.getMethod("exists", String.class, TridentUtil.ResourceLocation.class, ISymbolContext.class),
-                    TypeLib.class.getMethod("exists", String.class, String.class, ISymbolContext.class)
-            ));
+            minecraftTypes.putStaticFunction(nativeMethodsToFunction(minecraftTypes.getInnerStaticContext(), TypeLib.class.getMethod("exists", String.class, TridentUtil.ResourceLocation.class, ISymbolContext.class)));
+            minecraftTypes.putStaticFunction(nativeMethodsToFunction(minecraftTypes.getInnerStaticContext(), TypeLib.class.getMethod("exists", String.class, String.class, ISymbolContext.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
 
-        globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, (TridentFunction) (params, patterns, pattern, file) ->
-                TridentTypeManager.getStaticHandlerForObject(params[0])
-        ));
-        globalCtx.put(new Symbol("isInstance", Symbol.SymbolVisibility.GLOBAL, new NativeMethodWrapper<>("isInstance", (instance, params) -> {
-            params[1] = ((String) params[1]).trim();
-            TypeHandler handler = TridentTypeManager.getPrimitiveHandlerForShorthand((String) params[1]);
-            if(params[0] == null) return "null".equals(params[1]);
-            if(handler == null) {
-                throw new IllegalArgumentException("Illegal primitive data type name '" + params[1] + "'");
-            }
-            return handler.isInstance(params[0]);
-        }, Object.class, String.class).setNullable(0).createForInstance(null)));
-
+        try {
+            globalCtx.put(new Symbol("isInstance", Symbol.SymbolVisibility.GLOBAL, nativeMethodsToFunction(globalCtx, TypeLib.class.getMethod("isInstance", Object.class, String.class))));
+            globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, nativeMethodsToFunction(globalCtx, TridentTypeManager.class.getMethod("getStaticHandlerForObject", Object.class))));
+        } catch(NoSuchMethodException e) {
+            e.printStackTrace();
+        }
         globalCtx.put(new Symbol("type_definition", Symbol.SymbolVisibility.GLOBAL, TridentTypeManager.getTypeHandlerTypeHandler()));
+    }
+
+    public static boolean isInstance(@NativeMethodWrapper.TridentNullableArg Object obj, String typeName) {
+        typeName = typeName.trim();
+        TypeHandler handler = TridentTypeManager.getPrimitiveHandlerForShorthand(typeName);
+        if(obj == null) return "null".equals(typeName);
+        if(handler == null) {
+            throw new IllegalArgumentException("Illegal primitive data type name '" + typeName + "'");
+        }
+        return handler.isInstance(obj);
     }
 
     public static boolean blockExists(TridentUtil.ResourceLocation loc, ISymbolContext ctx) {

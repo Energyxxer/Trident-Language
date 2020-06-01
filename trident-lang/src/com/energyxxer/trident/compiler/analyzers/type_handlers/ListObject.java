@@ -144,19 +144,19 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
         return content.get(index).getValue();
     }
 
-    public void add(@NativeMethodWrapper.TridentNullable Object object) {
+    public void add(@NativeMethodWrapper.TridentNullableArg Object object) {
         content.add(new Symbol(content.size() + "", Symbol.SymbolVisibility.GLOBAL, object));
     }
 
-    public void insert(@NativeMethodWrapper.TridentNullable Object object, Integer index) {
+    public void insert(@NativeMethodWrapper.TridentNullableArg Object object, Integer index) {
         content.add(index, new Symbol(content.size() + "", Symbol.SymbolVisibility.GLOBAL, object));
     }
 
-    public boolean contains(@NativeMethodWrapper.TridentNullable Object object) {
+    public boolean contains(@NativeMethodWrapper.TridentNullableArg Object object) {
         return content.stream().anyMatch(s -> Objects.equals(s.getValue(), object));
     }
 
-    public int indexOf(@NativeMethodWrapper.TridentNullable Object object) {
+    public int indexOf(@NativeMethodWrapper.TridentNullableArg Object object) {
         int index = 0;
         for(Symbol sym : content) {
             if(Objects.equals(sym.getValue(), object)) return index;
@@ -165,7 +165,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
         return -1;
     }
 
-    public int lastIndexOf(@NativeMethodWrapper.TridentNullable Object object) {
+    public int lastIndexOf(@NativeMethodWrapper.TridentNullableArg Object object) {
         int index = size()-1;
         for (Iterator<Symbol> it = new ArrayDeque<>(content).descendingIterator(); it.hasNext(); ) {
             Symbol sym = it.next();

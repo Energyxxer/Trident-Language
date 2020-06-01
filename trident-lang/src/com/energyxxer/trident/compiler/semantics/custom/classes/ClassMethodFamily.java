@@ -3,8 +3,10 @@ package com.energyxxer.trident.compiler.semantics.custom.classes;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
 import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunctionBranch;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -15,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class ClassMethodFamily {
     private final String name;
-    private final ArrayList<ClassMethod> overloads = new ArrayList<>();
+    private final ArrayList<ClassMethod> implementations = new ArrayList<>();
 
     public ClassMethodFamily(String name) {
         this.name = name;
@@ -28,12 +30,11 @@ public class ClassMethodFamily {
     public TridentUserFunction pickOverload(ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx) {
         ArrayList<ClassMethod> bestScoreBranchMatches = new ArrayList<>();
         double bestScore = -1;
-        boolean foundSameLengthMatch = false;
 
         //TridentFunctionBranch bestPick = null;
         //boolean bestPickFullyMatched = false;
 
-        for(ClassMethod method : overloads) {
+        for(ClassMethod method : implementations) {
             List<FormalParameter> branchParams = method.getFormalParameters();
             boolean branchMatched = true;
             double score = 0;
@@ -55,14 +56,10 @@ public class ClassMethodFamily {
             else {
                 score = 4;
             }*/
-            boolean firstSameLengthMatch = !foundSameLengthMatch && branchParams.size() == params.getValues().size();
-            if(branchMatched && score >= bestScore || firstSameLengthMatch) {
-                if(score != bestScore || firstSameLengthMatch) bestScoreBranchMatches.clear();
-                if(!foundSameLengthMatch || branchParams.size() == params.getValues().size()) {
-                    bestScore = score;
-                    bestScoreBranchMatches.add(method);
-                    if(firstSameLengthMatch) foundSameLengthMatch = true;
-                }
+            if(branchMatched && score >= bestScore) {
+                if(score != bestScore) bestScoreBranchMatches.clear();
+                bestScore = score;
+                bestScoreBranchMatches.add(method);
             }
         }
         if(bestScoreBranchMatches.isEmpty()) {
@@ -77,7 +74,7 @@ public class ClassMethodFamily {
                 sb.setLength(sb.length()-2);
             }
             StringBuilder overloads = new StringBuilder();
-            for(ClassMethod method : this.overloads) {
+            for(ClassMethod method : this.implementations) {
                 overloads.append("\n    ").append(name).append("(");
                 overloads.append(method.getFormalParameters().toString().substring(1));
                 overloads.setLength(overloads.length()-1);
@@ -106,37 +103,63 @@ public class ClassMethodFamily {
         if(mode != CustomClass.MemberParentMode.FORCE) {
             if(mode == CustomClass.MemberParentMode.CREATE && existing != null) {
                 if(existing.getDefiningClass() == method.getDefiningClass()) {
-                    throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate method '" + name + "': it's already defined with the same parameter types in the same class", pattern, ctx);
+                    throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate method '" + existing + "': it's already defined with the same parameter types in the same class", pattern, ctx);
                 } else {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Method '" + name + "' is already defined in inherited class " + existing.getDefiningClass().getTypeIdentifier() + " with the same parameter types. Use the 'override' keyword to replace it", pattern, ctx);
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Method '" + existing + "' is already defined in inherited class " + existing.getDefiningClass().getTypeIdentifier() + " with the same parameter types. Use the 'override' keyword to replace it", pattern, ctx);
                 }
             }
             if(existing == null && mode == CustomClass.MemberParentMode.OVERRIDE) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + name + ": couldn't find existing overload with parameter types: " + method.getFormalParameters().toString(), pattern, ctx);
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + existing + ": couldn't find existing overload with parameter types: " + method.getFormalParameters().toString(), pattern, ctx);
             }
 
-            if(existing != null && mode == CustomClass.MemberParentMode.OVERRIDE && existing.getDefiningClass() == method.getDefiningClass()) {
-                throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Cannot override " + name + ": a branch with the same parameter types is already defined in the same class: " + existing.getFormalParameters().toString(), pattern, ctx);
+            if(existing != null) {
+                if(mode == CustomClass.MemberParentMode.OVERRIDE && existing.getDefiningClass() == method.getDefiningClass()) {
+                    throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Cannot override " + existing + ": a branch with the same parameter types is already defined in the same class", pattern, ctx);
+                }
+
+                if(existing.getModifiers() != null && existing.getModifiers().hasModifier(Symbol.SymbolModifier.FINAL)) {
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override '" + existing + "': it's defined as final in " + existing.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                }
+
+                //Check visibility
+                Symbol.SymbolVisibility existingVisibility = existing.getVisibility();
+                Symbol.SymbolVisibility newVisibility = method.getVisibility();
+
+                if(!method.getDefiningClass().hasAccess(ctx, existingVisibility)) {
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override '" + existing + "': it has " + existingVisibility.toString().toLowerCase() + " access in " + existing.getDefiningClass().getTypeIdentifier() + "; not accessible from " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                }
+                if(newVisibility.getVisibilityIndex() < existingVisibility.getVisibilityIndex()) {
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override '" + existing + "': attempting to assign weaker access privileges '" + newVisibility.toString().toLowerCase() + "', was '" + existingVisibility.toString().toLowerCase() + "'", pattern, ctx);
+                }
+
+                //Check return types
+                TridentFunctionBranch existingBranch = existing.getFunction().getBranch();
+                TridentFunctionBranch newBranch = method.getFunction().getBranch();
+                TypeConstraints existingReturnConstraints = existingBranch.getReturnConstraints();
+                TypeConstraints newReturnConstraints = newBranch.getReturnConstraints();
+                if(!TypeConstraints.constraintAContainsB(existingReturnConstraints, newReturnConstraints)) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot override " + existing + " due to incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                }
             }
 
-            if(existing != null && existing.getModifiers().hasModifier(Symbol.SymbolModifier.FINAL)) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override function '" + name + "': it's defined as final in " + existing.getDefiningClass().getTypeIdentifier(), pattern, ctx);
-            }
+
+            //if(existing != null && existing.getFunction().getBranch())
         }
-        if(existing != null) overloads.remove(existing);
-        overloads.add(method);
-
-        //TODO check return type constraints of branches
-        //TODO check visibility
+        if(existing != null) implementations.remove(existing);
+        implementations.add(method);
     }
 
     public ClassMethod findOverloadForParameters(List<FormalParameter> types) {
-        for(ClassMethod method : overloads) {
+        for(ClassMethod method : implementations) {
             if(FormalParameter.parameterListEquals(method.getFormalParameters(), types)) {
                 return method;
             }
         }
         return null;
+    }
+
+    public ArrayList<ClassMethod> getImplementations() {
+        return implementations;
     }
 
     public static class ClassMethodSymbol extends Symbol {

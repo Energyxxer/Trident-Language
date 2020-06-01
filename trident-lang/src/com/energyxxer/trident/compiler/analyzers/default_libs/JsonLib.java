@@ -6,6 +6,7 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
@@ -28,21 +29,12 @@ public class JsonLib implements DefaultLibraryProvider {
 
         try {
             jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("parse", String.class)));
-            jsonLib.putStaticFunction(nativeMethodsToFunction(
-                    jsonLib.getInnerStaticContext(),
-                    JsonLib.class.getMethod("stringify", String.class),
-                    JsonLib.class.getMethod("stringify", Boolean.class),
-                    JsonLib.class.getMethod("stringify", Integer.class),
-                    JsonLib.class.getMethod("stringify", Double.class),
-                    JsonLib.class.getMethod("stringify", ListObject.class),
-                    JsonLib.class.getMethod("stringify", DictionaryObject.class),
-                    JsonLib.class.getMethod("stringify", String.class, boolean.class),
-                    JsonLib.class.getMethod("stringify", Boolean.class, boolean.class),
-                    JsonLib.class.getMethod("stringify", Integer.class, boolean.class),
-                    JsonLib.class.getMethod("stringify", Double.class, boolean.class),
-                    JsonLib.class.getMethod("stringify", ListObject.class, boolean.class),
-                    JsonLib.class.getMethod("stringify", DictionaryObject.class, boolean.class)
-            ));
+            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", String.class, Boolean.class)));
+            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", Boolean.class, Boolean.class)));
+            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", Integer.class, Boolean.class)));
+            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", Double.class, Boolean.class)));
+            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", ListObject.class, Boolean.class)));
+            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", DictionaryObject.class, Boolean.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -55,55 +47,32 @@ public class JsonLib implements DefaultLibraryProvider {
         return parseJson(asJson);
     }
 
-    public static Object stringify(String obj) {
-        return stringify(obj, false);
-    }
-
-    public static Object stringify(String obj, boolean prettyPrinting) {
+    public static Object stringify(String obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
         return stringify((Object) obj, prettyPrinting);
     }
 
-    public static Object stringify(Integer obj) {
-        return stringify(obj, false);
-    }
-
-    public static Object stringify(Integer obj, boolean prettyPrinting) {
+    public static Object stringify(Integer obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
         return stringify((Object) obj, prettyPrinting);
     }
 
-    public static Object stringify(Double obj) {
-        return stringify(obj, false);
-    }
-
-    public static Object stringify(Double obj, boolean prettyPrinting) {
+    public static Object stringify(Double obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
         return stringify((Object) obj, prettyPrinting);
     }
 
-    public static Object stringify(Boolean obj) {
-        return stringify(obj, false);
-    }
-
-    public static Object stringify(Boolean obj, boolean prettyPrinting) {
+    public static Object stringify(Boolean obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
         return stringify((Object) obj, prettyPrinting);
     }
 
-    public static Object stringify(ListObject obj) {
-        return stringify(obj, false);
-    }
-
-    public static Object stringify(ListObject obj, boolean prettyPrinting) {
+    public static Object stringify(ListObject obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
         return stringify((Object) obj, prettyPrinting);
     }
 
-    public static Object stringify(DictionaryObject obj) {
-        return stringify(obj, false);
-    }
-
-    public static Object stringify(DictionaryObject obj, boolean prettyPrinting) {
+    public static Object stringify(DictionaryObject obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
         return stringify((Object) obj, prettyPrinting);
     }
 
-    public static Object stringify(Object param, boolean prettyPrinting) {
+    public static Object stringify(Object param, Boolean prettyPrinting) {
+        if(prettyPrinting == null) prettyPrinting = false;
         GsonBuilder gb = new GsonBuilder();
         if(prettyPrinting) gb.setPrettyPrinting();
         return gb.create().toJson(toJson(param, null, true));

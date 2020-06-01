@@ -74,4 +74,16 @@ public interface TypeHandler<T> {
         if(isStaticHandler()) return TridentTypeManager.getTypeHandlerTypeHandler();
         return TridentTypeManager.getPrimitiveHandlerForShorthand(getTypeIdentifier());
     }
+
+    default boolean isSubType(TypeHandler<?> other) {
+        if(other == null) return false;
+        TypeHandler<?> superType = other;
+        while(superType != null) {
+            if(this == superType) {
+                return true;
+            }
+            superType = superType.getSuperType();
+        }
+        return false;
+    }
 }

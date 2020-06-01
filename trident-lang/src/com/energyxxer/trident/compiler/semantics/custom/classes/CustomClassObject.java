@@ -8,6 +8,7 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
+import java.util.Collections;
 import java.util.HashMap;
 
 public class CustomClassObject implements TypeHandler<CustomClassObject>, ParameterizedMemberHolder, ContextualToString {
@@ -128,13 +129,13 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
     }
 
     public String contextualToString(TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(instanceMembers.containsKey("toString")) {
-            Symbol toStringSymbol = instanceMembers.get("toString");
-            if(toStringSymbol.getValue() instanceof TridentFunction) {
-                return String.valueOf(((TridentFunction) toStringSymbol.getValue()).safeCall(new Object[0], new TokenPattern<?>[0], pattern, ctx));
-            }
+        Object foundClassMethod = instanceMethods.findAndWrap("toString", new ActualParameterList(Collections.emptyList(), Collections.emptyList(), pattern), pattern, ctx);
+        if(foundClassMethod == null) return toString();
+        if(foundClassMethod instanceof ClassMethodFamily.ClassMethodSymbol) {
+            return (String) ((ClassMethodFamily.ClassMethodSymbol) foundClassMethod).safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
+        } else {
+            return (String) ((TridentFunction) foundClassMethod).safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
         }
-        return toString();
     }
 
     @Override

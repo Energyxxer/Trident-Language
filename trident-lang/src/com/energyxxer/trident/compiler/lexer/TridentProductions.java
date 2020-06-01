@@ -127,7 +127,6 @@ public class TridentProductions {
 
     private final LazyTokenPatternMatch FORMAL_PARAMETERS;
     private final LazyTokenPatternMatch DYNAMIC_FUNCTION;
-    private final LazyTokenPatternMatch OVERLOADED_FUNCTION;
 
     private final LazyTokenPatternMatch TYPE_CONSTRAINTS;
     private final LazyTokenPatternMatch INFERRABLE_TYPE_CONSTRAINTS;
@@ -327,20 +326,13 @@ public class TridentProductions {
             ).setName("FORMAL_PARAMETERS");
 
             DYNAMIC_FUNCTION = group(FORMAL_PARAMETERS, TYPE_CONSTRAINTS, ANONYMOUS_INNER_FUNCTION).setName("DYNAMIC_FUNCTION");
-            OVERLOADED_FUNCTION = group(
-                    brace("("),
-                    symbol("?"),
-                    list(group(FORMAL_PARAMETERS, TYPE_CONSTRAINTS, ANONYMOUS_INNER_FUNCTION)).setName("OVERLOADED_FUNCTION_IMPLEMENTATIONS"),
-                    brace(")")
-            ).setName("OVERLOADED_FUNCTION");
 
             ROOT_INTERPOLATION_VALUE.add(
                     group(
                             literal("function").setName("VALUE_WRAPPER_KEY").addProcessor(startClosure),
                             choice(
                                     ANONYMOUS_INNER_FUNCTION,
-                                    DYNAMIC_FUNCTION,
-                                    OVERLOADED_FUNCTION
+                                    DYNAMIC_FUNCTION
                             ).setName("NEW_FUNCTION_SPLIT").setGreedy(true)
 //                            optional(FORMAL_PARAMETERS, TYPE_CONSTRAINTS).setName("FORMAL_PARAMETERS_OPT"),
 //                            ANONYMOUS_INNER_FUNCTION
@@ -498,6 +490,7 @@ public class TridentProductions {
                     })).setName("REQUIRE_DIRECTIVE"));
             directiveBody.add(group(literal("meta_tag").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION).addTags(TridentSuggestionTags.RESOURCE)).setName("META_TAG_DIRECTIVE"));
             directiveBody.add(group(literal("priority").setName("DIRECTIVE_LABEL"), real()).setName("PRIORITY_DIRECTIVE"));
+            directiveBody.add(group(literal("breaking").setName("DIRECTIVE_LABEL")).setName("BREAKING_DIRECTIVE"));
             directiveBody.add(group(literal("language_level").setName("DIRECTIVE_LABEL"), integer()).setName("LANGUAGE_LEVEL_DIRECTIVE"));
             directiveBody.add(group(literal("metadata").setName("DIRECTIVE_LABEL"), DICTIONARY).setName("METADATA_DIRECTIVE"));
         }
@@ -2283,7 +2276,7 @@ public class TridentProductions {
 
             LazyTokenStructureMatch classBodyEntry = choice(
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER"),
-                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), choice(DYNAMIC_FUNCTION, OVERLOADED_FUNCTION).setName("CLASS_FUNCTION_SPLIT").setGreedy(true)).setName("CLASS_FUNCTION"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), DYNAMIC_FUNCTION).setName("CLASS_FUNCTION"),
                     group(literal("override").setOptional(), choice("explicit", "implicit").setName("CLASS_TRANSFORM_TYPE"), brace("<"), INTERPOLATION_TYPE, brace(">"), DYNAMIC_FUNCTION).setName("CLASS_OVERRIDE"),
                     COMMENT_S
             ).setName("CLASS_BODY_ENTRY").setGreedy(true);

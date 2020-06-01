@@ -49,4 +49,12 @@ public class ClassMethodTable {
     public Collection<ClassMethodFamily> getAllFamilies() {
         return methods.values();
     }
+
+    public void putAll(ClassMethodTable otherTable) {
+        for(ClassMethodFamily methodFamily : otherTable.methods.values()) {
+            for(ClassMethod method : methodFamily.getImplementations()) {
+                put(method, CustomClass.MemberParentMode.FORCE, null, null);
+            }
+        }
+    }
 }

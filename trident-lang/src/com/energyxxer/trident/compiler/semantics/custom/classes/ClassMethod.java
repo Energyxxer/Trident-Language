@@ -5,6 +5,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
 import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -15,7 +16,7 @@ public class ClassMethod {
     private final TokenPattern<?> definingPattern;
     private final TridentUserFunction function;
     private List<FormalParameter> formalParameters;
-    private Symbol.SymbolVisibility visibility;
+    private @NotNull Symbol.SymbolVisibility visibility = Symbol.SymbolVisibility.LOCAL;
     private VariableInstruction.SymbolModifierMap modifiers;
 
     public ClassMethod(String name, CustomClass definingClass) {
@@ -32,7 +33,7 @@ public class ClassMethod {
         this.definingPattern = definingPattern;
         this.function = function;
 
-        this.formalParameters = function.getBranches().get(0).getFormalParameters();
+        this.formalParameters = function.getBranch().getFormalParameters();
     }
 
     public CustomClass getDefiningClass() {

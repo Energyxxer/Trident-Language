@@ -21,8 +21,11 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMemberHolder {
+    private static final CustomClass BASE_CLASS = new CustomClass();
+
     enum MemberParentMode {
         CREATE, OVERRIDE, FORCE
     }
@@ -47,6 +50,28 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     private ClassMethodSymbolContext innerStaticContext;
     private String typeIdentifier;
+
+    //Constructor exclusively for base class
+    private CustomClass() {
+        this.name = "BASE CLASS";
+        this.definitionContext = null;
+        this.definitionFile = null;
+        this.innerStaticContext = null;
+        this.typeIdentifier = "<base class>";
+        this.complete = true;
+
+        try {
+            ClassMethod baseToStringMethod = new ClassMethod(this, null, nativeMethodsToFunction(null, "toString", CustomClass.class.getMethod("defaultToString", CustomClassObject.class)));
+            baseToStringMethod.setVisibility(Symbol.SymbolVisibility.PUBLIC);
+            this.instanceMethods.put(baseToStringMethod, MemberParentMode.FORCE, null, null);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static @NativeMethodWrapper.TridentNotNullReturn String defaultToString(@NativeMethodWrapper.TridentThisArg CustomClassObject obj) {
+        return obj.toString();
+    }
 
     private CustomClass(String name) {
         this.name = name;
@@ -94,6 +119,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
         ArrayList<CustomClass> oldSuperClasses = classObject.superClasses;
         classObject.superClasses = new ArrayList<>();
+        classObject.superClasses.add(BASE_CLASS);
         if(pattern.find("CLASS_INHERITS") != null) {
             TokenList inheritsList = ((TokenList) pattern.find("CLASS_INHERITS.SUPERCLASS_LIST"));
             for(TokenPattern<?> rawParent : inheritsList.searchByName("INTERPOLATION_TYPE")) {
@@ -113,7 +139,12 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             if(oldSuperClasses != null && !classObject.superClasses.containsAll(oldSuperClasses)) {
                 throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Incomplete definition promised to extend " + oldSuperClasses + "; not all inherited in the complete definition.", pattern.tryFind("CLASS_INHERITS"), ctx);
             }
+
             classObject.complete = true;
+            for(CustomClass superClass : classObject.getInheritanceTree()) {
+                if(superClass == classObject) continue;
+                classObject.instanceMethods.putAll(superClass.instanceMethods);
+            }
         }
 
         if(isCompleteDefinition && bodyEntryList != null) {
@@ -205,24 +236,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
                         Symbol.SymbolVisibility memberVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), classObject.definitionContext, Symbol.SymbolVisibility.LOCAL);
 
-                        ArrayList<TridentFunctionBranch> branches = new ArrayList<>();
-
-                        TokenPattern<?> choice = ((TokenStructure)entry.find("CLASS_FUNCTION_SPLIT")).getContents();
-                        switch(choice.getName()) {
-                            case "DYNAMIC_FUNCTION": {
-                                branches.add(TridentFunctionBranch.parseDynamicFunction(choice, ctx));
-                                break;
-                            }
-                            case "OVERLOADED_FUNCTION": {
-                                TokenList implementations = (TokenList) choice.find("OVERLOADED_FUNCTION_IMPLEMENTATIONS");
-                                for(TokenPattern<?> branch : implementations.getContents()) {
-                                    branches.add(TridentFunctionBranch.parseDynamicFunction(branch, ctx));
-                                }
-                                break;
-                            }
-                            default:
-                                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + choice.getName() + "'", choice, ctx);
-                        }
+                        TridentFunctionBranch branch = TridentFunctionBranch.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), ctx);
 
                         if(!isConstructor) {
                             ClassMethod method = new ClassMethod(
@@ -230,7 +244,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                                     entry,
                                     new TridentUserFunction(
                                             functionName,
-                                            branches,
+                                            branch,
                                             finalClassObject.prepareFunctionContext(),
                                             null
                                     )
@@ -248,7 +262,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                                     entry,
                                     new TridentUserFunction(
                                             functionName,
-                                            branches,
+                                            branch,
                                             finalClassObject.prepareFunctionContext(),
                                             null
                                     )
@@ -267,7 +281,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                         boolean implicit = "implicit".equals(entry.find("CLASS_TRANSFORM_TYPE").flatten(false));
                         TypeHandler toType = InterpolationManager.parseType(entry.find("INTERPOLATION_TYPE"), classObject.getInnerStaticContext());
                         TridentFunctionBranch branch = TridentFunctionBranch.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), classObject.getInnerStaticContext());
-                        TridentUserFunction function = new TridentUserFunction(toType.getTypeIdentifier(), Collections.singletonList(branch), classObject.getInnerStaticContext(), null);
+                        TridentUserFunction function = new TridentUserFunction(toType.getTypeIdentifier(), branch, classObject.getInnerStaticContext(), null);
                         ((TridentUserFunctionBranch) branch).setReturnConstraints(new TypeConstraints(toType, false));
                         if(implicit) ((TridentUserFunctionBranch) branch).setShouldCoerce(false);
                         LinkedHashMap<TypeHandler, TridentUserFunction> castMap = implicit ? classObject.implicitCasts : classObject.explicitCasts;
@@ -286,13 +300,12 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     }
 
     public void putStaticFunction(TridentUserFunction value) {
-        //TODO: Change all multi-branch calls to multiple put calls with one branch each
         ClassMethod method = new ClassMethod(
                 this,
                 null,
                 new TridentUserFunction(
                         value.getFunctionName(),
-                        value.getBranches(),
+                        value.getBranch(),
                         this.prepareFunctionContext(),
                         null
                 )
@@ -321,8 +334,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     public void setNoConstructor() {
         constructorFamily = new ClassMethodFamily("new");
         ClassMethod method = new ClassMethod("new", this).setVisibility(Symbol.SymbolVisibility.PRIVATE);
-        method.setModifiers(new VariableInstruction.SymbolModifierMap());
-        method.getModifiers().setModifier(Symbol.SymbolModifier.FINAL);
+        method.setModifiers(new VariableInstruction.SymbolModifierMap().setModifier(Symbol.SymbolModifier.FINAL));
 
         constructorFamily.putOverload(
                 method,
@@ -423,6 +435,11 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     @Override
     public boolean canCoerce(Object object, TypeHandler into) {
         return TridentTypeManager.getTypeHandlerTypeHandler().canCoerce(object, into);
+    }
+
+    @Override
+    public boolean isSubType(TypeHandler<?> other) {
+        return other instanceof CustomClass && ((CustomClass) other).getInheritanceTree().contains(this);
     }
 
     @Override

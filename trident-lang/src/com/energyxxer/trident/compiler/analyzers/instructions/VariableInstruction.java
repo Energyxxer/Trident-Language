@@ -60,8 +60,9 @@ public class VariableInstruction implements Instruction {
             return (modifiers & mod.getBit()) > 0;
         }
 
-        public void setModifier(Symbol.SymbolModifier mod) {
+        public SymbolModifierMap setModifier(Symbol.SymbolModifier mod) {
             setModifier(mod, null, null);
+            return this;
         }
 
         public void setModifier(Symbol.SymbolModifier mod, TokenPattern<?> pattern, ISymbolContext ctx) {

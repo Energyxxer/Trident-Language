@@ -19,22 +19,16 @@ public class MathLib implements DefaultLibraryProvider {
         globalCtx.put(new Symbol("Math", Symbol.SymbolVisibility.GLOBAL, math));
 
         try {
-            math.putStaticFunction(nativeMethodsToFunction(globalCtx, Math.class.getMethod("pow", double.class, double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(globalCtx,
-                    Math.class.getMethod("min", int.class, int.class),
-                    Math.class.getMethod("min", double.class, double.class)
-            ));
-            math.putStaticFunction(nativeMethodsToFunction(globalCtx,
-                    Math.class.getMethod("max", int.class, int.class),
-                    Math.class.getMethod("max", double.class, double.class)
-            ));
-            math.putStaticFunction(nativeMethodsToFunction(globalCtx,
-                    Math.class.getMethod("abs", int.class),
-                    Math.class.getMethod("abs", double.class)
-            ));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("pow", double.class, double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("min", int.class, int.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("min", double.class, double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("max", int.class, int.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("max", double.class, double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("abs", int.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("abs", double.class)));
             math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("floor", double.class)));
             math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("ceil", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("round", double.class)));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), MathLib.class.getMethod("round", double.class)));
             math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("floorDiv", int.class, int.class)));
             math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("floorMod", int.class, int.class)));
             math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("signum", double.class)));
@@ -56,11 +50,8 @@ public class MathLib implements DefaultLibraryProvider {
             math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("sqrt", double.class)));
             math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("cbrt", double.class)));
             math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("exp", double.class)));
-            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(),
-                    Math.class.getMethod("random"),
-                    MathLib.class.getMethod("random", double.class, double.class)
-            ));
-
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), Math.class.getMethod("random")));
+            math.putStaticFunction(nativeMethodsToFunction(math.getInnerStaticContext(), MathLib.class.getMethod("random", double.class, double.class)));
             math.putStaticFinalMember("PI", Math.PI);
             math.putStaticFinalMember("E", Math.E);
         } catch (NoSuchMethodException e) {
@@ -74,22 +65,14 @@ public class MathLib implements DefaultLibraryProvider {
         try {
             integer.putStaticFinalMember("MIN_VALUE", Integer.MIN_VALUE);
             integer.putStaticFinalMember("MAX_VALUE", Integer.MAX_VALUE);
-            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(),
-                    Integer.class.getMethod("parseInt", String.class),
-                    Integer.class.getMethod("parseInt", String.class, int.class)
-            ));
-            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(),
-                    Integer.class.getMethod("parseUnsignedInt", String.class),
-                    Integer.class.getMethod("parseUnsignedInt", String.class, int.class)
-            ));
-            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(),
-                    Integer.class.getMethod("toString", int.class),
-                    Integer.class.getMethod("toString", int.class, int.class)
-            ));
-            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(),
-                    Integer.class.getMethod("toUnsignedString", int.class),
-                    Integer.class.getMethod("toUnsignedString", int.class, int.class)
-            ));
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(), Integer.class.getMethod("parseInt", String.class)));
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(), Integer.class.getMethod("parseInt", String.class, int.class)));
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(), Integer.class.getMethod("parseUnsignedInt", String.class)));
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(), Integer.class.getMethod("parseUnsignedInt", String.class, int.class)));
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(), Integer.class.getMethod("toString", int.class)));
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(), Integer.class.getMethod("toString", int.class, int.class)));
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(), Integer.class.getMethod("toUnsignedString", int.class)));
+            integer.putStaticFunction(nativeMethodsToFunction(integer.getInnerStaticContext(), Integer.class.getMethod("toUnsignedString", int.class, int.class)));
         } catch(NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -112,6 +95,10 @@ public class MathLib implements DefaultLibraryProvider {
         } catch(NoSuchMethodException e) {
             e.printStackTrace();
         }
+    }
+
+    public static double round(double a) {
+        return Math.round(a);
     }
 
     public static double log2(double a) {

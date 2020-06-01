@@ -30,10 +30,11 @@ public class TridentTypeManager {
         registerTypeHandler(new RealTypeHandler());
         registerTypeHandler(new ResourceTypeHandler());
         registerTypeHandler(new StringTypeHandler());
-        registerTypeHandler(new TagCompoundTypeHandler());
+        TagCompoundTypeHandler tagCompoundHandler = new TagCompoundTypeHandler();
+        registerTypeHandler(tagCompoundHandler);
+        PRIMITIVE_HANDLERS.put("nbt", tagCompoundHandler);
         registerTypeHandler(new TagListTypeHandler());
         registerTypeHandler(new TextComponentTypeHandler());
-        registerTypeHandler(new NBTAliasTypeHandler());
         registerTypeHandler(new TagByteTypeHandler());
         registerTypeHandler(new TagShortTypeHandler());
         registerTypeHandler(new TagIntTypeHandler());
@@ -135,7 +136,7 @@ public class TridentTypeManager {
         return TYPE_HANDLER_TYPE_HANDLER;
     }
 
-    public static TypeHandler getStaticHandlerForObject(Object obj) {
+    public static TypeHandler getStaticHandlerForObject(@NativeMethodWrapper.TridentNullableArg Object obj) {
         TypeHandler handler = getHandlerForObject(obj);
         if(handler != obj) return handler;
         if(handler.isStaticHandler()) {

@@ -50,6 +50,7 @@ public class TridentFile extends SymbolContext {
     private final TridentUtil.ResourceLocation location;
 
     private boolean compileOnly = false;
+    private boolean breaking = false;
     private float priority = 0;
     private boolean valid = true;
 
@@ -135,6 +136,10 @@ public class TridentFile extends SymbolContext {
                     }
                     case "PRIORITY_DIRECTIVE": {
                         this.priority = (float) CommonParsers.parseDouble(directiveBody.find("REAL"), this);
+                        break;
+                    }
+                    case "BREAKING_DIRECTIVE": {
+                        this.breaking = true;
                         break;
                     }
                     case "METADATA_DIRECTIVE": {
@@ -361,15 +366,17 @@ public class TridentFile extends SymbolContext {
                             resolveEntry(inner, parent, appendTo, compileOnly);
                         } catch(TridentException x) {
                             if(compiler.getTryStack().isEmpty()) {
+                                if(!popCall) throw x;
                                 x.expandToUncaught();
                                 compiler.getReport().addNotice(x.getNotice());
-                                if(x.isBreaking()) break;
+                                if(x.isBreaking() || parentFile.breaking) break;
                             } else if(compiler.getTryStack().isRecovering()) {
                                 queuedExceptions.add(x);
                             } else if(compiler.getTryStack().isBreaking()) {
                                 throw x;
                             }
                         } catch(TridentException.Grouped gx) {
+                            Debug.log("Queued " + gx.getExceptions().size() + " exceptions in " + parentFile.getResourceLocation());
                             queuedExceptions.addAll(gx.getExceptions());
                         }
                     }
@@ -377,6 +384,7 @@ public class TridentFile extends SymbolContext {
             }
             if(!queuedExceptions.isEmpty()) {
                 TridentException.Grouped ex = new TridentException.Grouped(queuedExceptions);
+                Debug.log("Throwing a group of " + queuedExceptions.size() + " exceptions in " + parentFile.getResourceLocation());
                 queuedExceptions = null;
                 throw ex;
             }
@@ -385,20 +393,27 @@ public class TridentFile extends SymbolContext {
                 try {
                     parentFile.postProcessingActions.remove(postProcessingActionStartIndex).run();
                 }  catch(TridentException x) {
+                    Debug.log("Caught a lone exception in post processing actions");
                     if(compiler.getTryStack().isEmpty()) {
                         x.expandToUncaught();
                         compiler.getReport().addNotice(x.getNotice());
+                        if(x.isBreaking() || parentFile.breaking) {
+                            Debug.log("Broke at TridentFile:403");
+                            break;
+                        }
                     } else {
                         if(queuedExceptions == null) queuedExceptions = new ArrayList<>();
                         queuedExceptions.add(x);
                     }
                 } catch(TridentException.Grouped gx) {
+                    Debug.log("Caught a group of " + gx.getExceptions().size() + " exceptions in " + parentFile.getResourceLocation());
                     if(queuedExceptions == null) queuedExceptions = new ArrayList<>();
                     queuedExceptions.addAll(gx.getExceptions());
                 }
             }
 
             if(queuedExceptions != null && !queuedExceptions.isEmpty()) {
+                Debug.log("" + queuedExceptions.size() + " queued exceptions in " + parentFile.getResourceLocation());
                 for(TridentException x : queuedExceptions) {
                     x.expandToUncaught();
                     compiler.getReport().addNotice(x.getNotice());

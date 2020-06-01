@@ -7,14 +7,11 @@ import com.energyxxer.trident.compiler.semantics.CallStack;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class TridentUserFunction implements TridentFunction {
-    private List<TridentFunctionBranch> branches;
+    private TridentFunctionBranch branch;
     private ISymbolContext declaringContext;
     private Object thisObject;
     private String functionName = "<anonymous function>";
@@ -24,10 +21,10 @@ public class TridentUserFunction implements TridentFunction {
         this.thisObject = thisObject;
         if(functionName != null) this.functionName = functionName;
 
-        branches = Collections.singletonList(new TridentUserFunctionBranch(formalParameters, functionPattern, returnConstraints));
+        this.branch = new TridentUserFunctionBranch(formalParameters, functionPattern, returnConstraints);
     }
-    public TridentUserFunction(String functionName, Collection<TridentFunctionBranch> branches, ISymbolContext declaringContext, Object thisObject) {
-        this.branches = new ArrayList<>(branches);
+    public TridentUserFunction(String functionName, TridentFunctionBranch branch, ISymbolContext declaringContext, Object thisObject) {
+        this.branch = branch;
         this.declaringContext = declaringContext;
         this.thisObject = thisObject;
         if(functionName != null) this.functionName = functionName;
@@ -35,90 +32,22 @@ public class TridentUserFunction implements TridentFunction {
 
     @Override
     public Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-        TridentFunctionBranch branch = pickBranch(params, patterns, pattern, ctx);
-
         TokenPattern<?> functionPattern = branch.getFunctionPattern();
 
-        ctx.getCompiler().getCallStack().push(new CallStack.Call(functionName, functionPattern, declaringContext.getStaticParentFile(), pattern));
+        if(declaringContext != null) ctx.getCompiler().getCallStack().push(new CallStack.Call(functionName, functionPattern, declaringContext.getStaticParentFile(), pattern));
 
         try {
             return branch.call(params, patterns, pattern, declaringContext, ctx, thisObject);
         } catch(StackOverflowError x) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Stack Overflow Error", pattern, ctx);
         } finally {
-            ctx.getCompiler().getCallStack().pop();
+            if(declaringContext != null) ctx.getCompiler().getCallStack().pop();
         }
-    }
-
-    private TridentFunctionBranch pickBranch(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-        ArrayList<TridentFunctionBranch> bestScoreBranchMatches = new ArrayList<>();
-        double bestScore = -1;
-        boolean foundSameLengthMatch = false;
-
-        //TridentFunctionBranch bestPick = null;
-        //boolean bestPickFullyMatched = false;
-
-        for(TridentFunctionBranch branch : branches) {
-            List<FormalParameter> branchParams = branch.getFormalParameters();
-            boolean branchMatched = true;
-            double score = 0;
-            for(int i = 0; i < branchParams.size() && branchMatched; i++) {
-                FormalParameter formalParam = branchParams.get(i);
-                Object actualParam = null;
-                if(i < params.length) actualParam = params[i];
-                int paramScore = 1;
-                if(formalParam.getConstraints() != null) {
-                    paramScore = formalParam.getConstraints().rateMatch(actualParam);
-                }
-                if(paramScore == 0) {
-                    branchMatched = false;
-                    score = 0;
-                }
-                score += paramScore;
-            }
-            /*if(!branchParams.isEmpty()) score /= branchParams.size();
-            else {
-                score = 4;
-            }*/
-            boolean firstSameLengthMatch = !foundSameLengthMatch && branchParams.size() == params.length;
-            if(branchMatched && score >= bestScore || firstSameLengthMatch) {
-                if(score != bestScore || firstSameLengthMatch) bestScoreBranchMatches.clear();
-                if(!foundSameLengthMatch || branchParams.size() == params.length) {
-                    bestScore = score;
-                    bestScoreBranchMatches.add(branch);
-                    if(firstSameLengthMatch) foundSameLengthMatch = true;
-                }
-            }
-        }
-        if(bestScoreBranchMatches.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            boolean any = false;
-            for(Object obj : params) {
-                sb.append(TridentTypeManager.getTypeIdentifierForObject(obj));
-                sb.append(", ");
-                any = true;
-            }
-            if(any) {
-                sb.setLength(sb.length()-2);
-            }
-            StringBuilder overloads = new StringBuilder();
-            for(TridentFunctionBranch branch : branches) {
-                overloads.append("\n    ").append(functionName).append("(");
-                overloads.append(branch.getFormalParameters().toString().substring(1));
-                overloads.setLength(overloads.length()-1);
-                overloads.append(")");
-            }
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Overload not found for parameter types: (" + sb.toString() + ")\nValid overloads are:" + overloads.toString(), pattern, ctx);
-        }
-        if(bestScoreBranchMatches.size() > 1) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Ambiguous call between: " + bestScoreBranchMatches.stream().map(b -> b.getFormalParameters().toString()).collect(Collectors.joining(", ")), pattern, ctx);
-        }
-        return bestScoreBranchMatches.get(0);
     }
 
     @Override
     public Object getMember(TridentFunction object, String member, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
-        if(member.equals("formalParameters")) return branches.size() == 1 ? new ListObject(branches.get(0).getFormalParameters().stream().map(p -> p.getConstraints().getHandler()).collect(Collectors.toList())) : null;
+        if(member.equals("formalParameters")) return new ListObject(branch.getFormalParameters().stream().map(p -> p.getConstraints().getHandler()).collect(Collectors.toList()));
         if(member.equals("declaringFile")) return declaringContext.getStaticParentFile().getResourceLocation();
         throw new MemberNotFoundException();
     }
@@ -131,12 +60,12 @@ public class TridentUserFunction implements TridentFunction {
         this.thisObject = thisObject;
     }
 
-    public List<TridentFunctionBranch> getBranches() {
-        return branches;
-    }
-
     @Override
     public String toString() {
-        return "<function(" + (branches.size() == 1 ? branches.get(0).getFormalParameters().stream().map(Object::toString).collect(Collectors.joining(", ")) : "?") + ")>";
+        return "<function(" + (branch.getFormalParameters().stream().map(Object::toString).collect(Collectors.joining(", "))) + ")>";
+    }
+
+    public TridentFunctionBranch getBranch() {
+        return branch;
     }
 }

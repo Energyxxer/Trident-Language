@@ -15,7 +15,15 @@ public class NativeMethodWrapper<T> implements MemberWrapper<T> {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
-    public @interface TridentNullable {
+    public @interface TridentNullableArg {
+    }
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface TridentThisArg {
+    }
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public @interface TridentNotNullReturn {
     }
 
     private final String methodName;
@@ -38,7 +46,7 @@ public class NativeMethodWrapper<T> implements MemberWrapper<T> {
         int i = 0;
         for(Annotation[] param : method.getParameterAnnotations()) {
             for(Annotation annot : param) {
-                if(annot.annotationType() == TridentNullable.class) {
+                if(annot.annotationType() == TridentNullableArg.class) {
                     nullables[i] = true;
                     break;
                 }

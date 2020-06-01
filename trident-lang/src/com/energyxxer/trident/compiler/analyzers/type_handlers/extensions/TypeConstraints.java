@@ -131,10 +131,29 @@ public class TypeConstraints {
         if(a == b) return true;
         if(
                 (a == null && b.isNullConstraint()) ||
-                (b == null && a.isNullConstraint())
+                        (b == null && a.isNullConstraint())
         ) {
             return true;
         }
         return a != null && a.equals(b);
+    }
+
+    public static boolean constraintAContainsB(TypeConstraints a, TypeConstraints b) {
+        if(constraintsEqual(a, b)) return true;
+
+        if(a == null || a.isNullConstraint() || a == b) return true;
+        if(b == null || b.isNullConstraint()) return false;
+
+        TypeHandler<?> handlerA = a.getHandler();
+        TypeHandler<?> handlerB = b.getHandler();
+
+        return typeAContainsB(handlerA, handlerB) && (a.isNullable() || !b.isNullable());
+    }
+
+    private static boolean typeAContainsB(TypeHandler<?> a, TypeHandler<?> b) {
+        if(a == null || a == b) return true;
+        if(b == null) return false;
+
+        return a.isSubType(b);
     }
 }

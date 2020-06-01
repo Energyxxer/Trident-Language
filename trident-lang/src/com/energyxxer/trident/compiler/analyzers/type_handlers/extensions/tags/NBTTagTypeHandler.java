@@ -37,6 +37,6 @@ public class NBTTagTypeHandler implements TypeHandler<NBTTag> {
 
     @Override
     public String getTypeIdentifier() {
-        return "nbt_tag";
+        return "nbt_value";
     }
 }
