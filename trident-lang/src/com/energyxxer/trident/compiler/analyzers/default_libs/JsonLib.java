@@ -129,7 +129,7 @@ public class JsonLib implements DefaultLibraryProvider {
         if(obj instanceof DictionaryObject) {
             JsonObject jObj = new JsonObject();
             for(Map.Entry<String, Symbol> elem : ((DictionaryObject) obj).entrySet()) {
-                JsonElement result = toJson(elem.getValue().getValue(), filter, skipUnknownTypes);
+                JsonElement result = toJson(elem.getValue().getValue(null, null), filter, skipUnknownTypes);
                 if(result != null) jObj.add(elem.getKey(), result);
             }
             return jObj;

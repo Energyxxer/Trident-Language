@@ -203,27 +203,27 @@ public interface OperatorHandler<A, B> {
             handlers.put("~ primitive(int)", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> ~a);
 
             handlers.put("symbol ++", (Symbol a, Object nl, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object oldValue = a.getValue();
-                Object result = perform(a.getValue(), Operator.ADD, 1, pattern, ctx);
+                Object oldValue = a.getValue(pattern, ctx);
+                Object result = perform(a.getValue(pattern, ctx), Operator.ADD, 1, pattern, ctx);
                 a.safeSetValue(result, pattern, ctx);
                 return oldValue;
             });
             handlers.put("symbol --", (Symbol a, Object nl, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object oldValue = a.getValue();
-                Object result = perform(a.getValue(), Operator.SUBTRACT, 1, pattern, ctx);
+                Object oldValue = a.getValue(pattern, ctx);
+                Object result = perform(a.getValue(pattern, ctx), Operator.SUBTRACT, 1, pattern, ctx);
                 a.safeSetValue(result, pattern, ctx);
                 return oldValue;
             });
 
             handlers.put("++ symbol", (Object nl, Symbol a, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(), Operator.ADD, 1, pattern, ctx);
+                Object result = perform(a.getValue(pattern, ctx), Operator.ADD, 1, pattern, ctx);
                 a.safeSetValue(result, pattern, ctx);
-                return a.getValue();
+                return a.getValue(pattern, ctx);
             });
             handlers.put("-- symbol", (Object nl, Symbol a, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(), Operator.SUBTRACT, 1, pattern, ctx);
+                Object result = perform(a.getValue(pattern, ctx), Operator.SUBTRACT, 1, pattern, ctx);
                 a.safeSetValue(result, pattern, ctx);
-                return a.getValue();
+                return a.getValue(pattern, ctx);
             });
 
             handlers.put("symbol = *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
@@ -232,31 +232,31 @@ public interface OperatorHandler<A, B> {
             });
 
             handlers.put("symbol += *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(), Operator.ADD, b, pattern, ctx);
+                Object result = perform(a.getValue(pattern, ctx), Operator.ADD, b, pattern, ctx);
                 a.safeSetValue(result, pattern, ctx);
                 return result;
             });
 
             handlers.put("symbol -= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(), Operator.SUBTRACT, b, pattern, ctx);
+                Object result = perform(a.getValue(pattern, ctx), Operator.SUBTRACT, b, pattern, ctx);
                 a.safeSetValue(result, pattern, ctx);
                 return result;
             });
 
             handlers.put("symbol *= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(), Operator.MULTIPLY, b, pattern, ctx);
+                Object result = perform(a.getValue(pattern, ctx), Operator.MULTIPLY, b, pattern, ctx);
                 a.safeSetValue(result, pattern, ctx);
                 return result;
             });
 
             handlers.put("symbol /= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(), Operator.DIVIDE, b, pattern, ctx);
+                Object result = perform(a.getValue(pattern, ctx), Operator.DIVIDE, b, pattern, ctx);
                 a.safeSetValue(result, pattern, ctx);
                 return result;
             });
 
             handlers.put("symbol %= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(), Operator.MODULO, b, pattern, ctx);
+                Object result = perform(a.getValue(pattern, ctx), Operator.MODULO, b, pattern, ctx);
                 a.safeSetValue(result, pattern, ctx);
                 return result;
             });

@@ -30,10 +30,10 @@ public class ItemTypeHandler implements TypeHandler<Item> {
                     throw new TridentException(TridentException.Source.COMMAND_ERROR, value + " is not a valid item type", pattern, ctx);
                 }
             });
-            return keepSymbol ? property : property.getValue();
+            return keepSymbol ? property : property.getValue(pattern, ctx);
         } else if(member.equals("itemTag")) {
             AutoPropertySymbol property = new AutoPropertySymbol<>("itemTag", TagCompound.class, object::getNBT, object::setNbt);
-            return keepSymbol ? property : property.getValue();
+            return keepSymbol ? property : property.getValue(pattern, ctx);
         } else if(member.equals("getSlotNBT")) {
             return (TridentFunction) (params, patterns, pattern1, file1) -> getSlotNBT(object);
         }

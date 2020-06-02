@@ -141,7 +141,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
         if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
         if(members.containsKey(member)) {
             Symbol sym = members.get(member);
-            return keepSymbol ? sym : sym.getValue();
+            return keepSymbol ? sym : sym.getValue(pattern, ctx);
         }
         switch (member) {
             case "getSlotNBT":
@@ -181,7 +181,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
         String indexStr = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         if(members.containsKey(indexStr)) {
             Symbol sym = members.get(indexStr);
-            return keepSymbol ? sym : sym.getValue();
+            return keepSymbol ? sym : sym.getValue(pattern, ctx);
         } else if(keepSymbol) {
             Symbol sym;
             members.put(indexStr, sym = new Symbol(indexStr, Symbol.SymbolVisibility.LOCAL, null));

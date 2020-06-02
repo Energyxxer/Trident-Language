@@ -31,7 +31,7 @@ public abstract class TridentFunctionBranch {
         TokenList paramNames = (TokenList) pattern.find("FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
         if (paramNames != null) {
             for (TokenPattern<?> param : paramNames.searchByName("FORMAL_PARAMETER")) {
-                formalParams.add(new FormalParameter(param.find("FORMAL_PARAMETER_NAME").flatten(false), TypeConstraints.parseConstraints(param.find("TYPE_CONSTRAINTS"), ctx)));
+                formalParams.add(FormalParameter.create(param, ctx));
             }
         }
 

@@ -46,7 +46,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
 
                     try {
                         for (Map.Entry<String, Symbol> entry : dict.entrySet()) {
-                            newDict.put(entry.getKey(), func.safeCall(new Object[]{entry.getKey(), entry.getValue().getValue()}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
+                            newDict.put(entry.getKey(), func.safeCall(new Object[]{entry.getKey(), entry.getValue().getValue(pattern, ctx)}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
                         }
                     } catch(ConcurrentModificationException x) {
                         throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
@@ -62,7 +62,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
             }
         }
         Symbol elem = dict.map.get(member);
-        return keepSymbol || elem == null ? elem : elem.getValue();
+        return keepSymbol || elem == null ? elem : elem.getValue(pattern, ctx);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
     }
 
     public Object get(String key) {
-        return map.containsKey(key) ? map.get(key).getValue() : null;
+        return map.containsKey(key) ? map.get(key).getValue(null, null) : null;
     }
 
     public boolean containsKey(String key) {
@@ -131,10 +131,10 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
     public DictionaryObject merge(DictionaryObject other) {
         DictionaryObject newDict = new DictionaryObject();
         for(Map.Entry<String, Symbol> entry : this.entrySet()) {
-            newDict.put(entry.getKey(), entry.getValue().getValue());
+            newDict.put(entry.getKey(), entry.getValue().getValue(null, null));
         }
         for(Map.Entry<String, Symbol> entry : other.entrySet()) {
-            newDict.put(entry.getKey(), entry.getValue().getValue());
+            newDict.put(entry.getKey(), entry.getValue().getValue(null, null));
         }
         return newDict;
     }
@@ -142,10 +142,10 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
     public DictionaryObject shallowMerge(DictionaryObject other) {
         DictionaryObject newDict = new DictionaryObject();
         for(Map.Entry<String, Symbol> entry : this.entrySet()) {
-            newDict.put(entry.getKey(), entry.getValue().getValue());
+            newDict.put(entry.getKey(), entry.getValue().getValue(null, null));
         }
         for(Map.Entry<String, Symbol> entry : other.entrySet()) {
-            newDict.put(entry.getKey(), entry.getValue().getValue());
+            newDict.put(entry.getKey(), entry.getValue().getValue(null, null));
         }
         return newDict;
     }
@@ -166,7 +166,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
                 Map.Entry<String, Symbol> entry = it.next();
                 DictionaryObject dict = new DictionaryObject();
                 dict.put("key", entry.getKey());
-                dict.put("value", entry.getValue().getValue());
+                dict.put("value", entry.getValue().getValue(null, null));
                 return dict;
             }
         };
@@ -178,7 +178,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
             return "{ ...circular... }";
         }
         toStringRecursion.push(this);
-        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue()))).collect(Collectors.joining(", ")) + "}";
+        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue(null, null) instanceof String ? "\"" + s.getValue(null, null) + "\"" : InterpolationManager.castToString(s.getValue(null, null)))).collect(Collectors.joining(", ")) + "}";
         toStringRecursion.pop();
         return str;
     }
@@ -188,7 +188,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
             return "{ ...circular... }";
         }
         toStringRecursion.push(this);
-        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue(), pattern, ctx))).collect(Collectors.joining(", ")) + "}";
+        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue(pattern, ctx) instanceof String ? "\"" + s.getValue(pattern, ctx) + "\"" : InterpolationManager.castToString(s.getValue(pattern, ctx), pattern, ctx))).collect(Collectors.joining(", ")) + "}";
         toStringRecursion.pop();
         return str;
     }

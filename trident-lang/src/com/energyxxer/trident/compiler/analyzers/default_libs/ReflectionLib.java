@@ -96,7 +96,7 @@ public class ReflectionLib implements DefaultLibraryProvider {
     public static DictionaryObject getVisibleSymbols(ISymbolContext ctx) {
         DictionaryObject dict = new DictionaryObject();
         for(Symbol sym : ctx.collectVisibleSymbols(new HashMap<>(), ctx).values()) {
-            dict.put(sym.getName(), sym.getValue());
+            dict.put(sym.getName(), sym.getValue(null, ctx));
         }
         return dict;
     }
@@ -111,7 +111,7 @@ public class ReflectionLib implements DefaultLibraryProvider {
 
     public static Object getSymbol(String name, ISymbolContext ctx) {
         Symbol sym = ctx.search(name, ctx, null);
-        if(sym != null) return sym.getValue();
+        if(sym != null) return sym.getValue(null, ctx);
         return null;
     }
 

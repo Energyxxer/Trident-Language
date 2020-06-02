@@ -5,6 +5,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
@@ -26,8 +27,9 @@ import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNat
 public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMemberHolder {
     private static final CustomClass BASE_CLASS = new CustomClass();
 
+
     enum MemberParentMode {
-        CREATE, OVERRIDE, FORCE, INHERIT
+        CREATE, OVERRIDE, FORCE, INHERIT;
     }
 
     private boolean complete = false;
@@ -42,6 +44,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     private final ClassMethodTable staticMethods = new ClassMethodTable(this);
     final ClassMethodTable instanceMethods = new ClassMethodTable(this);
+    private final ClassIndexerFamily indexers = new ClassIndexerFamily();
 
     private ClassMethodFamily constructorFamily = null;
 
@@ -144,6 +147,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             for(CustomClass superClass : classObject.getInheritanceTree()) {
                 if(superClass == classObject) continue;
                 classObject.instanceMethods.putAll(superClass.instanceMethods, pattern.find("CLASS_NAME"), ctx);
+                classObject.indexers.putAll(superClass.indexers, pattern.find("CLASS_NAME"), ctx);
             }
             if(bodyEntryList != null) {
                 for(TokenPattern<?> entry : bodyEntryList.getContents()) {
@@ -177,11 +181,6 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                                     } else if(alreadyDefinedSupplier.getDefiningClass() == classObject) {
                                         throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Cannot override member '" + decl.getName() + "': it's already defined in the same class", entry, ctx);
                                     }
-                                /*if(alreadyDefinedSupplier instanceof InstanceFunctionSupplier) {
-                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override a function with a field: Function '" + decl.getName() + "' found in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
-                                }*/
-                                    //We know it's a field;
-                                    //Check finality
                                     if(((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().hasModifier(Symbol.SymbolModifier.FINAL)) {
                                         throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': it's defined as final in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
                                     } else if(decl.hasModifier(Symbol.SymbolModifier.FINAL)) {
@@ -270,9 +269,52 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                                     classObject.constructorFamily = new ClassMethodFamily("new");
                                 }
                                 classObject.constructorFamily.putOverload(method, mode, entry, ctx);
-
-                                //classObject.setConstructor(memberVisibility, thiz -> new TridentUserFunction(functionName, branches, finalClassObject.prepareFunctionContext(), thiz));
                             }
+                            break;
+                        }
+                        case "CLASS_INDEXER": {
+                            Symbol.SymbolVisibility defaultVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), classObject.definitionContext, Symbol.SymbolVisibility.LOCAL);
+                            MemberParentMode mode = MemberParentMode.CREATE;
+                            if(entry.find("MEMBER_PARENT_MODE") != null) {
+                                mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
+                            }
+
+                            FormalParameter indexParam = FormalParameter.create(entry.find("FORMAL_PARAMETER"), ctx);
+
+                            TridentUserFunctionBranch getterBranch = new TridentUserFunctionBranch(Collections.singletonList(indexParam), entry.find("CLASS_GETTER.ANONYMOUS_INNER_FUNCTION"), TypeConstraints.parseConstraints(entry.find("CLASS_GETTER.TYPE_CONSTRAINTS"), ctx));
+                            Symbol.SymbolVisibility getterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_GETTER.SYMBOL_VISIBILITY"), classObject.definitionContext, defaultVisibility);
+                            TridentUserFunction getter = new TridentUserFunction(
+                                    "<indexer getter>",
+                                    getterBranch,
+                                    finalClassObject.prepareFunctionContext(),
+                                    null
+                            );
+
+                            TridentUserFunction setter = null;
+                            Symbol.SymbolVisibility setterVisibility = Symbol.SymbolVisibility.LOCAL;
+                            if(entry.find("CLASS_SETTER") != null) {
+                                setterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_SETTER.SYMBOL_VISIBILITY"), classObject.definitionContext, defaultVisibility);
+                                TridentUserFunctionBranch setterBranch = new TridentUserFunctionBranch(Arrays.asList(indexParam, FormalParameter.create(entry.find("CLASS_SETTER.FORMAL_PARAMETER"), ctx)), entry.find("CLASS_SETTER.ANONYMOUS_INNER_FUNCTION"), null);
+                                setter = new TridentUserFunction(
+                                        "<indexer setter>",
+                                        setterBranch,
+                                        finalClassObject.prepareFunctionContext(),
+                                        null
+                                );
+                            }
+
+                            if(getterVisibility.getVisibilityIndex() > defaultVisibility.getVisibilityIndex()) {
+                                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Getter access privileges must not be more accessible than the indexer's. Indexer access: '" + defaultVisibility.toString().toLowerCase() + "', Getter access: " + getterVisibility.toString().toLowerCase(), entry.tryFind("CLASS_GETTER.SYMBOL_VISIBILITY"), ctx);
+                            }
+                            if(setter != null && setterVisibility.getVisibilityIndex() > defaultVisibility.getVisibilityIndex()) {
+                                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Setter access privileges must not be more accessible than the indexer's. Indexer access: '" + defaultVisibility.toString().toLowerCase() + "', Setter access: " + setterVisibility.toString().toLowerCase(), entry.tryFind("CLASS_SETTER.SYMBOL_VISIBILITY"), ctx);
+                            }
+
+                            ClassIndexer indexer = new ClassIndexer(classObject, entry, indexParam, getter, setter);
+                            indexer.setGetterVisibility(getterVisibility);
+                            indexer.setSetterVisibility(setterVisibility);
+
+                            classObject.indexers.put(indexer, mode, entry, ctx);
                             break;
                         }
                         case "CLASS_OVERRIDE": {
@@ -280,8 +322,8 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                             TypeHandler toType = InterpolationManager.parseType(entry.find("INTERPOLATION_TYPE"), classObject.getInnerStaticContext());
                             TridentFunctionBranch branch = TridentFunctionBranch.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), classObject.getInnerStaticContext());
                             TridentUserFunction function = new TridentUserFunction(toType.getTypeIdentifier(), branch, classObject.getInnerStaticContext(), null);
-                            ((TridentUserFunctionBranch) branch).setReturnConstraints(new TypeConstraints(toType, false));
-                            if(implicit) ((TridentUserFunctionBranch) branch).setShouldCoerce(false);
+                            branch.setReturnConstraints(new TypeConstraints(toType, false));
+                            if(implicit) branch.setShouldCoerce(false);
                             LinkedHashMap<TypeHandler, TridentUserFunction> castMap = implicit ? classObject.implicitCasts : classObject.explicitCasts;
                             castMap.put(toType, function);
                             break;
@@ -297,6 +339,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             }
 
             classObject.instanceMethods.checkClashingInheritedMethodsResolved(pattern.find("CLASS_NAME"), ctx);
+            classObject.indexers.checkClashingInheritedIndexersResolved(classObject, pattern.find("CLASS_NAME"), ctx);
         }
 
     }
@@ -365,7 +408,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             Symbol sym = object.staticMembers.get(member);
 
             if(object.hasAccess(ctx, sym.getVisibility())) {
-                return keepSymbol ? sym : sym.getValue();
+                return keepSymbol ? sym : sym.getValue(pattern, ctx);
             } else {
                 throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + object.getClassTypeIdentifier(), pattern, ctx);
             }
@@ -538,6 +581,10 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     public String getClassName() {
         return name;
+    }
+
+    public ClassIndexer getIndexer() {
+        return indexers.get();
     }
 
     private interface InstanceMemberSupplier {

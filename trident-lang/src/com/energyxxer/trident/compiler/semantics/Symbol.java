@@ -17,6 +17,18 @@ public class Symbol {
             this.visibilityIndex = visibilityIndex;
         }
 
+        public static SymbolVisibility min(SymbolVisibility a, SymbolVisibility b) {
+            if(a == null) return b;
+            if(b == null) return a;
+            return a.getVisibilityIndex() < b.getVisibilityIndex() ? a : b;
+        }
+
+        public static SymbolVisibility max(SymbolVisibility a, SymbolVisibility b) {
+            if(a == null) return b;
+            if(b == null) return a;
+            return a.getVisibilityIndex() > b.getVisibilityIndex() ? a : b;
+        }
+
         public int getVisibilityIndex() {
             return visibilityIndex;
         }
@@ -78,7 +90,7 @@ public class Symbol {
     }
 
     @Nullable
-    public Object getValue() {
+    public Object getValue(TokenPattern<?> pattern, ISymbolContext ctx) {
         return value;
     }
 

@@ -71,7 +71,7 @@ public class TridentProductions {
     private final LazyTokenStructureMatch NBT_VALUE = new LazyTokenStructureMatch("NBT_VALUE");
 
     private final LazyTokenStructureMatch NBT_PATH = new LazyTokenStructureMatch("NBT_PATH");
-    
+
     private final LazyTokenStructureMatch SINGLE_COORDINATE = new LazyTokenStructureMatch("SINGLE_COORDINATE");
     private final LazyTokenStructureMatch ABSOLUTE_COORDINATE = new LazyTokenStructureMatch("ABSOLUTE_COORDINATE");
     private final LazyTokenStructureMatch RELATIVE_COORDINATE = new LazyTokenStructureMatch("RELATIVE_COORDINATE");
@@ -125,6 +125,7 @@ public class TridentProductions {
     private final LazyTokenStructureMatch ROOT_INTERPOLATION_TYPE;
     private final LazyTokenStructureMatch INTERPOLATION_TYPE;
 
+    private final LazyTokenGroupMatch FORMAL_PARAMETER;
     private final LazyTokenPatternMatch FORMAL_PARAMETERS;
     private final LazyTokenPatternMatch DYNAMIC_FUNCTION;
 
@@ -319,9 +320,11 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(group(brace("("), INTERPOLATION_VALUE, brace(")").addProcessor(clearMemberListProcessor)).setName("PARENTHESIZED_VALUE"));
             ROOT_INTERPOLATION_VALUE.add(group(ofType(NULL)).setName("NULL_VALUE"));
 
+            FORMAL_PARAMETER = group(identifierX().setName("FORMAL_PARAMETER_NAME"), TYPE_CONSTRAINTS).setName("FORMAL_PARAMETER");
+
             FORMAL_PARAMETERS = group(
                     brace("("),
-                    list(group(identifierX().setName("FORMAL_PARAMETER_NAME"), TYPE_CONSTRAINTS).setName("FORMAL_PARAMETER"), comma()).setOptional().setName("FORMAL_PARAMETER_LIST"),
+                    list(FORMAL_PARAMETER, comma()).setOptional().setName("FORMAL_PARAMETER_LIST"),
                     brace(")")
             ).setName("FORMAL_PARAMETERS");
 
@@ -2274,9 +2277,13 @@ public class TridentProductions {
                     brace("}")
             ).setOptional().setName("ITEM_DECLARATION_BODY");
 
+            LazyTokenPatternMatch classGetter = group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("get"), TYPE_CONSTRAINTS, ANONYMOUS_INNER_FUNCTION).setName("CLASS_GETTER");
+            LazyTokenPatternMatch classSetter = group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("set"), brace("("), FORMAL_PARAMETER, brace(")"), ANONYMOUS_INNER_FUNCTION).setName("CLASS_SETTER").setOptional();
+
             LazyTokenStructureMatch classBodyEntry = choice(
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER"),
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), DYNAMIC_FUNCTION).setName("CLASS_FUNCTION"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("this"), brace("["), FORMAL_PARAMETER, brace("]"), brace("{"), classGetter, classSetter, brace("}")).setName("CLASS_INDEXER"),
                     group(literal("override").setOptional(), choice("explicit", "implicit").setName("CLASS_TRANSFORM_TYPE"), brace("<"), INTERPOLATION_TYPE, brace(">"), DYNAMIC_FUNCTION).setName("CLASS_OVERRIDE"),
                     COMMENT_S
             ).setName("CLASS_BODY_ENTRY").setGreedy(true);

@@ -8,6 +8,7 @@ import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -27,7 +28,7 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
             Symbol sym = instanceMembers.get(member);
 
             if(type.hasAccess(ctx, sym.getVisibility())) {
-                return keepSymbol ? sym : sym.getValue();
+                return keepSymbol ? sym : sym.getValue(pattern, ctx);
             } else {
                 throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + type.getClassTypeIdentifier(), pattern, ctx);
             }
@@ -56,6 +57,14 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
 
     @Override
     public Object getIndexer(CustomClassObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(type.getIndexer() != null) {
+            ClassIndexerSymbol sym = type.getIndexer().createSymbol(this, index);
+            if(keepSymbol) {
+                return sym;
+            } else {
+                return sym.getValue(pattern, ctx);
+            }
+        }
         throw new MemberNotFoundException();
     }
 
@@ -154,5 +163,9 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
 
     public ClassInstanceMethodTable getInstanceMethods() {
         return instanceMethods;
+    }
+
+    public Collection<Symbol> getMemberSymbols() {
+        return instanceMembers.values();
     }
 }

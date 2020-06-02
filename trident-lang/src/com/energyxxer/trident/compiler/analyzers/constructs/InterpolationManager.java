@@ -102,7 +102,7 @@ public class InterpolationManager {
                     if (symbol == null) {
                         throw new TridentException(TridentException.Source.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' is not defined", pattern, ctx);
                     }
-                    return keepSymbol || symbol instanceof ClassMethodFamily.ClassMethodSymbol ? symbol : sanitizeObject(symbol.getValue());
+                    return keepSymbol || symbol instanceof ClassMethodFamily.ClassMethodSymbol ? symbol : sanitizeObject(symbol.getValue(pattern, ctx));
                 }
                 case "RAW_INTEGER": {
                     try {

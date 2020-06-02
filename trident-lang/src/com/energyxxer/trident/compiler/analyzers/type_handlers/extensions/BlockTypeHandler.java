@@ -22,7 +22,7 @@ import java.util.Map;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.block.Block")
 public class BlockTypeHandler implements TypeHandler<Block> {
-    public static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructBlock(params, patterns, pattern, ctx);
+    public static final TridentFunction CONSTRUCTOR = BlockTypeHandler::constructBlock;
 
     @Override
     public Object getMember(Block object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -34,11 +34,11 @@ public class BlockTypeHandler implements TypeHandler<Block> {
                     throw new TridentException(TridentException.Source.COMMAND_ERROR, value + " is not a valid block type", pattern, ctx);
                 }
             });
-            return keepSymbol ? property : property.getValue();
+            return keepSymbol ? property : property.getValue(pattern, ctx);
         }
         if(member.equals("blockTag")) {
             AutoPropertySymbol property = new AutoPropertySymbol<>("blockTag", TagCompound.class, object::getNBT, object::setNbt);
-            return keepSymbol ? property : property.getValue();
+            return keepSymbol ? property : property.getValue(pattern, ctx);
         }
         if(member.equals("blockState")) {
             AutoPropertySymbol<DictionaryObject> property = new AutoPropertySymbol<>("blockState", DictionaryObject.class, () -> {
@@ -53,13 +53,13 @@ public class BlockTypeHandler implements TypeHandler<Block> {
             }, value -> {
                 Blockstate newState = new Blockstate();
                 for (Map.Entry<String, Symbol> a : value.entrySet()) {
-                    if(a.getValue().getValue() != null) {
-                        newState.put(a.getKey(), InterpolationManager.castToString(a.getValue().getValue(), pattern, ctx));
+                    if(a.getValue().getValue(pattern, ctx) != null) {
+                        newState.put(a.getKey(), InterpolationManager.castToString(a.getValue().getValue(pattern, ctx), pattern, ctx));
                     }
                 }
                 object.setBlockstate(newState);
             });
-            return keepSymbol ? property : property.getValue();
+            return keepSymbol ? property : property.getValue(pattern, ctx);
         }
         throw new MemberNotFoundException();
     }

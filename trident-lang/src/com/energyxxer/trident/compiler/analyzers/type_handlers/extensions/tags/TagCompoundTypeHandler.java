@@ -110,7 +110,7 @@ public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
             TagCompound compound = new TagCompound();
 
             for(Map.Entry<String, Symbol> obj : ((DictionaryObject) params[0]).entrySet()) {
-                NBTTag content = constructNBT(new Object[] {obj.getValue().getValue(), skipIncompatibleTypes}, new TokenPattern[] {patterns[0], pattern}, pattern, ctx);
+                NBTTag content = constructNBT(new Object[] {obj.getValue().getValue(pattern, ctx), skipIncompatibleTypes}, new TokenPattern[] {patterns[0], pattern}, pattern, ctx);
                 if(content != null) {
                     content.setName(obj.getKey());
                     compound.add(content);

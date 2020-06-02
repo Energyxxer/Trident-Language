@@ -42,6 +42,9 @@ public class TridentUserFunctionBranch extends TridentFunctionBranch {
             for(ClassMethodFamily family : ((CustomClassObject) thisObject).getInstanceMethods().getMethodTable().getAllFamilies()) {
                 ((ClassMethodSymbolContext) innerFrame).putClassFunction(family);
             }
+            for(Symbol sym : ((CustomClassObject) thisObject).getMemberSymbols()) {
+                innerFrame.put(sym);
+            }
         } else {
             innerFrame = new SymbolContext(declaringCtx);
         }

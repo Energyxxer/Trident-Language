@@ -66,7 +66,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
                 try {
                     int i = 0;
                     for (Symbol sym : content) {
-                        newList.add(func.safeCall(new Object[]{sym.getValue(), i}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
+                        newList.add(func.safeCall(new Object[]{sym.getValue(pattern, ctx), i}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
                         i++;
                     }
                 } catch(ConcurrentModificationException x) {
@@ -88,9 +88,9 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
                 try {
                     int i = 0;
                     for (Symbol sym : content) {
-                        Object obj = func.safeCall(new Object[]{sym.getValue(), i}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1);
+                        Object obj = func.safeCall(new Object[]{sym.getValue(pattern, ctx), i}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1);
                         if(Boolean.TRUE.equals(obj)) {
-                            newList.add(sym.getValue());
+                            newList.add(sym.getValue(pattern, ctx));
                         }
                         i++;
                     }
@@ -117,7 +117,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
         }
 
         Symbol elem = object.content.get(realIndex);
-        return keepSymbol || elem == null ? elem : elem.getValue();
+        return keepSymbol || elem == null ? elem : elem.getValue(pattern, ctx);
     }
 
     @SuppressWarnings("unchecked")
@@ -141,7 +141,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
     }
 
     public Object get(int index) {
-        return content.get(index).getValue();
+        return content.get(index).getValue(null, null);
     }
 
     public void add(@NativeMethodWrapper.TridentNullableArg Object object) {
@@ -153,13 +153,13 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
     }
 
     public boolean contains(@NativeMethodWrapper.TridentNullableArg Object object) {
-        return content.stream().anyMatch(s -> Objects.equals(s.getValue(), object));
+        return content.stream().anyMatch(s -> Objects.equals(s.getValue(null, null), object));
     }
 
     public int indexOf(@NativeMethodWrapper.TridentNullableArg Object object) {
         int index = 0;
         for(Symbol sym : content) {
-            if(Objects.equals(sym.getValue(), object)) return index;
+            if(Objects.equals(sym.getValue(null, null), object)) return index;
             index++;
         }
         return -1;
@@ -169,7 +169,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
         int index = size()-1;
         for (Iterator<Symbol> it = new ArrayDeque<>(content).descendingIterator(); it.hasNext(); ) {
             Symbol sym = it.next();
-            if(Objects.equals(sym.getValue(), object)) return index;
+            if(Objects.equals(sym.getValue(null, null), object)) return index;
             index--;
         }
         return -1;
@@ -199,7 +199,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
 
             @Override
             public Object next() {
-                return it.next().getValue();
+                return it.next().getValue(null, null);
             }
         };
     }
@@ -210,7 +210,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
             return "[ ...circular... ]";
         }
         toStringRecursion.push(this);
-        String str = "[" + content.stream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue())).collect(Collectors.joining(", "))  + "]";
+        String str = "[" + content.stream().map((Symbol s) -> s.getValue(null, null) instanceof String ? "\"" + s.getValue(null, null) + "\"" : InterpolationManager.castToString(s.getValue(null, null))).collect(Collectors.joining(", "))  + "]";
         toStringRecursion.pop();
         return str;
     }
@@ -220,7 +220,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
             return "[ ...circular... ]";
         }
         toStringRecursion.push(this);
-        String str = "[" + content.stream().map((Symbol s) -> s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue(), pattern, ctx)).collect(Collectors.joining(", ")) + "]";
+        String str = "[" + content.stream().map((Symbol s) -> s.getValue(pattern, ctx) instanceof String ? "\"" + s.getValue(pattern, ctx) + "\"" : InterpolationManager.castToString(s.getValue(pattern, ctx), pattern, ctx)).collect(Collectors.joining(", ")) + "]";
         toStringRecursion.pop();
         return str;
     }

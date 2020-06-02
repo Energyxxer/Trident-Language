@@ -1,6 +1,8 @@
 package com.energyxxer.trident.compiler.analyzers.constructs;
 
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
+import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.List;
 import java.util.Objects;
@@ -56,5 +58,9 @@ public class FormalParameter {
             }
         }
         return true;
+    }
+
+    public static FormalParameter create(TokenPattern<?> pattern, ISymbolContext ctx) {
+        return new FormalParameter(pattern.find("FORMAL_PARAMETER_NAME").flatten(false), TypeConstraints.parseConstraints(pattern.find("TYPE_CONSTRAINTS"), ctx));
     }
 }
