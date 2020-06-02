@@ -376,7 +376,6 @@ public class TridentFile extends SymbolContext {
                                 throw x;
                             }
                         } catch(TridentException.Grouped gx) {
-                            Debug.log("Queued " + gx.getExceptions().size() + " exceptions in " + parentFile.getResourceLocation());
                             queuedExceptions.addAll(gx.getExceptions());
                         }
                     }
@@ -384,7 +383,6 @@ public class TridentFile extends SymbolContext {
             }
             if(!queuedExceptions.isEmpty()) {
                 TridentException.Grouped ex = new TridentException.Grouped(queuedExceptions);
-                Debug.log("Throwing a group of " + queuedExceptions.size() + " exceptions in " + parentFile.getResourceLocation());
                 queuedExceptions = null;
                 throw ex;
             }
@@ -393,12 +391,10 @@ public class TridentFile extends SymbolContext {
                 try {
                     parentFile.postProcessingActions.remove(postProcessingActionStartIndex).run();
                 }  catch(TridentException x) {
-                    Debug.log("Caught a lone exception in post processing actions");
                     if(compiler.getTryStack().isEmpty()) {
                         x.expandToUncaught();
                         compiler.getReport().addNotice(x.getNotice());
                         if(x.isBreaking() || parentFile.breaking) {
-                            Debug.log("Broke at TridentFile:403");
                             break;
                         }
                     } else {
@@ -406,14 +402,12 @@ public class TridentFile extends SymbolContext {
                         queuedExceptions.add(x);
                     }
                 } catch(TridentException.Grouped gx) {
-                    Debug.log("Caught a group of " + gx.getExceptions().size() + " exceptions in " + parentFile.getResourceLocation());
                     if(queuedExceptions == null) queuedExceptions = new ArrayList<>();
                     queuedExceptions.addAll(gx.getExceptions());
                 }
             }
 
             if(queuedExceptions != null && !queuedExceptions.isEmpty()) {
-                Debug.log("" + queuedExceptions.size() + " queued exceptions in " + parentFile.getResourceLocation());
                 for(TridentException x : queuedExceptions) {
                     x.expandToUncaught();
                     compiler.getReport().addNotice(x.getNotice());

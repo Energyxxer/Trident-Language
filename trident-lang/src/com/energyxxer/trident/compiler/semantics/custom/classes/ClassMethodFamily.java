@@ -10,6 +10,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeCo
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.util.logger.Debug;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,8 @@ import java.util.stream.Collectors;
 public class ClassMethodFamily {
     private final String name;
     private final ArrayList<ClassMethod> implementations = new ArrayList<>();
+
+    private final ArrayList<ClashingInheritedMethods> clashingInheritedMethods = new ArrayList<>();
 
     public ClassMethodFamily(String name) {
         this.name = name;
@@ -103,13 +106,21 @@ public class ClassMethodFamily {
         if(mode != CustomClass.MemberParentMode.FORCE) {
             if(mode == CustomClass.MemberParentMode.CREATE && existing != null) {
                 if(existing.getDefiningClass() == method.getDefiningClass()) {
-                    throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate method '" + existing + "': it's already defined with the same parameter types in the same class", pattern, ctx);
+                    throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate method " + existing + ": it's already defined with the same parameter types in the same class", pattern, ctx);
                 } else {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Method '" + existing + "' is already defined in inherited class " + existing.getDefiningClass().getTypeIdentifier() + " with the same parameter types. Use the 'override' keyword to replace it", pattern, ctx);
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Method " + existing + " is already defined in inherited class " + existing.getDefiningClass().getTypeIdentifier() + " with the same parameter types. Use the 'override' keyword to replace it", pattern, ctx);
+                }
+            }
+            if(mode == CustomClass.MemberParentMode.INHERIT && existing != null) {
+                if(existing.getDefiningClass() == method.getDefiningClass()) {
+                    Debug.log("Skipping " + method + " since defined in same class: " + method.getDefiningClass());
+                } else {
+                    //Make note for later
+                    registerClashingMethods(existing, method);
                 }
             }
             if(existing == null && mode == CustomClass.MemberParentMode.OVERRIDE) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + existing + ": couldn't find existing overload with parameter types: " + method.getFormalParameters().toString(), pattern, ctx);
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + method + ": couldn't find existing overload with parameter types: " + method.getFormalParameters().toString(), pattern, ctx);
             }
 
             if(existing != null) {
@@ -118,7 +129,11 @@ public class ClassMethodFamily {
                 }
 
                 if(existing.getModifiers() != null && existing.getModifiers().hasModifier(Symbol.SymbolModifier.FINAL)) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override '" + existing + "': it's defined as final in " + existing.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                    if(mode == CustomClass.MemberParentMode.INHERIT) {
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": it's defined as final in " + existing.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                    } else {
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + existing + ": it's defined as final in " + existing.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                    }
                 }
 
                 //Check visibility
@@ -126,10 +141,18 @@ public class ClassMethodFamily {
                 Symbol.SymbolVisibility newVisibility = method.getVisibility();
 
                 if(!method.getDefiningClass().hasAccess(ctx, existingVisibility)) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override '" + existing + "': it has " + existingVisibility.toString().toLowerCase() + " access in " + existing.getDefiningClass().getTypeIdentifier() + "; not accessible from " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                    if(mode == CustomClass.MemberParentMode.INHERIT) {
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": it has " + existingVisibility.toString().toLowerCase() + " access in " + existing.getDefiningClass().getTypeIdentifier() + "; not accessible from " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                    } else {
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + existing + ": it has " + existingVisibility.toString().toLowerCase() + " access in " + existing.getDefiningClass().getTypeIdentifier() + "; not accessible from " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                    }
                 }
                 if(newVisibility.getVisibilityIndex() < existingVisibility.getVisibilityIndex()) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override '" + existing + "': attempting to assign weaker access privileges '" + newVisibility.toString().toLowerCase() + "', was '" + existingVisibility.toString().toLowerCase() + "'", pattern, ctx);
+                    if(mode == CustomClass.MemberParentMode.INHERIT) {
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": attempting to assign weaker access privileges '" + newVisibility.toString().toLowerCase() + "', was '" + existingVisibility.toString().toLowerCase() + "'", pattern, ctx);
+                    } else {
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + existing + ": attempting to assign weaker access privileges '" + newVisibility.toString().toLowerCase() + "', was '" + existingVisibility.toString().toLowerCase() + "'", pattern, ctx);
+                    }
                 }
 
                 //Check return types
@@ -137,9 +160,15 @@ public class ClassMethodFamily {
                 TridentFunctionBranch newBranch = method.getFunction().getBranch();
                 TypeConstraints existingReturnConstraints = existingBranch.getReturnConstraints();
                 TypeConstraints newReturnConstraints = newBranch.getReturnConstraints();
+
+                if(mode == CustomClass.MemberParentMode.INHERIT && !TypeConstraints.constraintsEqual(existingReturnConstraints, newReturnConstraints)) {
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": Incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                }
+
                 if(!TypeConstraints.constraintAContainsB(existingReturnConstraints, newReturnConstraints)) {
                     throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot override " + existing + " due to incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
                 }
+
             }
 
 
@@ -156,6 +185,26 @@ public class ClassMethodFamily {
             }
         }
         return null;
+    }
+
+    private void registerClashingMethods(ClassMethod existing, ClassMethod method) {
+        for(ClashingInheritedMethods clashingMethods : clashingInheritedMethods) {
+            if(clashingMethods.matches(method)) {
+                clashingMethods.addMethod(method);
+                return;
+            }
+        }
+        //Could not find registered clashes, add both existing and method
+        clashingInheritedMethods.add(new ClashingInheritedMethods(existing, method));
+    }
+
+    public void checkClashingInheritedMethodsResolved(CustomClass resolvingClass, TokenPattern<?> pattern, ISymbolContext ctx) {
+        for(ClashingInheritedMethods clashingMethods : clashingInheritedMethods) {
+            if(findOverloadForParameters(clashingMethods.getFormalParameters()).getDefiningClass() != resolvingClass) {
+                //Did not change
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Method '" + clashingMethods + "' is defined in multiple inherited classes: " + clashingMethods.getMethods().stream().map(m -> m.getDefiningClass().getTypeIdentifier()).collect(Collectors.joining(", ")) + ". Override it in the class body", pattern, ctx);
+            }
+        }
     }
 
     public ArrayList<ClassMethod> getImplementations() {
@@ -185,6 +234,39 @@ public class ClassMethodFamily {
             Object returnValue = pickedOverload.safeCall(params, patterns, pattern, ctx);
             pickedOverload.setThisObject(null);
             return returnValue;
+        }
+    }
+
+    private static class ClashingInheritedMethods {
+        List<FormalParameter> formalParameters;
+        List<ClassMethod> methods;
+
+        public ClashingInheritedMethods(ClassMethod a, ClassMethod b) {
+            methods = new ArrayList<>();
+            methods.add(a);
+            methods.add(b);
+            formalParameters = a.getFormalParameters();
+        }
+
+        public void addMethod(ClassMethod method) {
+            methods.add(method);
+        }
+
+        public boolean matches(ClassMethod method) {
+            return FormalParameter.parameterListEquals(formalParameters, method.getFormalParameters());
+        }
+
+        public List<FormalParameter> getFormalParameters() {
+            return formalParameters;
+        }
+
+        public List<ClassMethod> getMethods() {
+            return methods;
+        }
+
+        @Override
+        public String toString() {
+            return methods.get(0).toString();
         }
     }
 }

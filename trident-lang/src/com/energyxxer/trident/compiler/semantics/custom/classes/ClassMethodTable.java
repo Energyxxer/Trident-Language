@@ -50,11 +50,17 @@ public class ClassMethodTable {
         return methods.values();
     }
 
-    public void putAll(ClassMethodTable otherTable) {
+    public void putAll(ClassMethodTable otherTable, TokenPattern<?> blame, ISymbolContext ctx) {
         for(ClassMethodFamily methodFamily : otherTable.methods.values()) {
             for(ClassMethod method : methodFamily.getImplementations()) {
-                put(method, CustomClass.MemberParentMode.FORCE, null, null);
+                put(method, CustomClass.MemberParentMode.INHERIT, blame, ctx);
             }
+        }
+    }
+
+    public void checkClashingInheritedMethodsResolved(TokenPattern<?> pattern, ISymbolContext ctx) {
+        for(ClassMethodFamily family : methods.values()) {
+            family.checkClashingInheritedMethodsResolved(type, pattern, ctx);
         }
     }
 }

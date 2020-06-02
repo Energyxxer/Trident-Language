@@ -27,7 +27,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     private static final CustomClass BASE_CLASS = new CustomClass();
 
     enum MemberParentMode {
-        CREATE, OVERRIDE, FORCE
+        CREATE, OVERRIDE, FORCE, INHERIT
     }
 
     private boolean complete = false;
@@ -143,160 +143,162 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             classObject.complete = true;
             for(CustomClass superClass : classObject.getInheritanceTree()) {
                 if(superClass == classObject) continue;
-                classObject.instanceMethods.putAll(superClass.instanceMethods);
+                classObject.instanceMethods.putAll(superClass.instanceMethods, pattern.find("CLASS_NAME"), ctx);
             }
-        }
-
-        if(isCompleteDefinition && bodyEntryList != null) {
-            for(TokenPattern<?> entry : bodyEntryList.getContents()) {
-                entry = ((TokenStructure)entry).getContents();
-                switch(entry.getName()) {
-                    case "CLASS_MEMBER": {
-                        VariableInstruction.SymbolDeclaration decl = parseSymbolDeclaration(entry, classObject.definitionContext);
-                        decl.preParseConstraints();
-                        MemberParentMode mode = MemberParentMode.CREATE;
-                        if(entry.find("MEMBER_PARENT_MODE") != null) {
-                            mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
-                        }
-
-                        if(decl.hasModifier(Symbol.SymbolModifier.STATIC)) {
-                            if(mode != MemberParentMode.CREATE) {
-                                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a static member", entry.find("MEMBER_PARENT_MODE"), ctx);
+            if(bodyEntryList != null) {
+                for(TokenPattern<?> entry : bodyEntryList.getContents()) {
+                    entry = ((TokenStructure)entry).getContents();
+                    switch(entry.getName()) {
+                        case "CLASS_MEMBER": {
+                            VariableInstruction.SymbolDeclaration decl = parseSymbolDeclaration(entry, classObject.definitionContext);
+                            decl.preParseConstraints();
+                            MemberParentMode mode = MemberParentMode.CREATE;
+                            if(entry.find("MEMBER_PARENT_MODE") != null) {
+                                mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
                             }
-                            classObject.putStaticMember(decl.getName(), decl.getSupplier().get());
-                        } else {
-                            if(mode == MemberParentMode.CREATE) {
-                                InstanceMemberSupplier alreadyDefinedSupplier = classObject.getInstanceMemberSupplier(decl.getName());
-                                if(alreadyDefinedSupplier != null && alreadyDefinedSupplier.getDefiningClass() == classObject) {
-                                    throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate member '" + decl.getName() + "': it's already defined in the same class", entry, ctx);
-                                } if(alreadyDefinedSupplier != null) {
-                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Member '" + decl.getName() + "' is already defined in inherited class " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ". Use the 'override' keyword to change its default value", entry, ctx);
+
+                            if(decl.hasModifier(Symbol.SymbolModifier.STATIC)) {
+                                if(mode != MemberParentMode.CREATE) {
+                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a static member", entry.find("MEMBER_PARENT_MODE"), ctx);
                                 }
-                            } else if(mode == MemberParentMode.OVERRIDE) {
-                                InstanceMemberSupplier alreadyDefinedSupplier = classObject.getInstanceMemberSupplier(decl.getName());
-                                if(alreadyDefinedSupplier == null) {
-                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override member '" + decl.getName() + "': not found in any of the inherited classes", entry, ctx);
-                                } else if(alreadyDefinedSupplier.getDefiningClass() == classObject) {
-                                    throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Cannot override member '" + decl.getName() + "': it's already defined in the same class", entry, ctx);
-                                }
+                                classObject.putStaticMember(decl.getName(), decl.getSupplier().get());
+                            } else {
+                                if(mode == MemberParentMode.CREATE) {
+                                    InstanceMemberSupplier alreadyDefinedSupplier = classObject.getInstanceMemberSupplier(decl.getName());
+                                    if(alreadyDefinedSupplier != null && alreadyDefinedSupplier.getDefiningClass() == classObject) {
+                                        throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate member '" + decl.getName() + "': it's already defined in the same class", entry, ctx);
+                                    } if(alreadyDefinedSupplier != null) {
+                                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Member '" + decl.getName() + "' is already defined in inherited class " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ". Use the 'override' keyword to change its default value", entry, ctx);
+                                    }
+                                } else if(mode == MemberParentMode.OVERRIDE) {
+                                    InstanceMemberSupplier alreadyDefinedSupplier = classObject.getInstanceMemberSupplier(decl.getName());
+                                    if(alreadyDefinedSupplier == null) {
+                                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override member '" + decl.getName() + "': not found in any of the inherited classes", entry, ctx);
+                                    } else if(alreadyDefinedSupplier.getDefiningClass() == classObject) {
+                                        throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Cannot override member '" + decl.getName() + "': it's already defined in the same class", entry, ctx);
+                                    }
                                 /*if(alreadyDefinedSupplier instanceof InstanceFunctionSupplier) {
                                     throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override a function with a field: Function '" + decl.getName() + "' found in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
                                 }*/
-                                //We know it's a field;
-                                //Check finality
-                                if(((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().hasModifier(Symbol.SymbolModifier.FINAL)) {
-                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': it's defined as final in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
-                                } else if(decl.hasModifier(Symbol.SymbolModifier.FINAL)) {
-                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "' with a final member", entry, ctx);
+                                    //We know it's a field;
+                                    //Check finality
+                                    if(((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().hasModifier(Symbol.SymbolModifier.FINAL)) {
+                                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': it's defined as final in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
+                                    } else if(decl.hasModifier(Symbol.SymbolModifier.FINAL)) {
+                                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "' with a final member", entry, ctx);
+                                    }
+
+                                    TypeConstraints thisConstraints = decl.getConstraint(null);
+                                    TypeConstraints otherConstraints = ((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().getConstraint(null);
+                                    if (!TypeConstraints.constraintsEqual(thisConstraints, otherConstraints)) {
+                                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': Mismatch of type constraints. Defined in superclass " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ": " + otherConstraints + "; Found: " + thisConstraints, entry, ctx);
+                                    }
                                 }
 
-                                TypeConstraints thisConstraints = decl.getConstraint(null);
-                                TypeConstraints otherConstraints = ((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().getConstraint(null);
-                                if (!TypeConstraints.constraintsEqual(thisConstraints, otherConstraints)) {
-                                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': Mismatch of type constraints. Defined in superclass " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ": " + otherConstraints + "; Found: " + thisConstraints, entry, ctx);
-                                }
+                                classObject.putInstanceMember(decl.getName(), new InstanceFieldSupplier(decl) {
+                                    @Override
+                                    public String getName() {
+                                        return decl.getName();
+                                    }
+
+                                    @Override
+                                    public Symbol constructSymbol(CustomClassObject thiz) {
+                                        return decl.getSupplier().get();
+                                    }
+
+                                    @Override
+                                    public Symbol.SymbolVisibility getVisibility() {
+                                        return decl.getVisibility();
+                                    }
+
+                                    @Override
+                                    public CustomClass getDefiningClass() {
+                                        return finalClassObject;
+                                    }
+                                });
+                            }
+                            break;
+                        }
+                        case "CLASS_FUNCTION": {
+                            String functionName = entry.find("SYMBOL_NAME").flatten(false);
+                            boolean isConstructor = "new".equals(functionName);
+                            VariableInstruction.SymbolModifierMap modifiers = VariableInstruction.SymbolModifierMap.createFromList(((TokenList) entry.find("SYMBOL_MODIFIER_LIST")), ctx);
+                            MemberParentMode mode = MemberParentMode.CREATE;
+                            if(entry.find("MEMBER_PARENT_MODE") != null) {
+                                mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
                             }
 
-                            classObject.putInstanceMember(decl.getName(), new InstanceFieldSupplier(decl) {
-                                @Override
-                                public String getName() {
-                                    return decl.getName();
+                            if(isConstructor && modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
+                                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "'static' modifier not allowed here", entry.find("SYMBOL_MODIFIER_LIST.LITERAL_STATIC"), classObject.definitionContext);
+                            }
+
+                            Symbol.SymbolVisibility memberVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), classObject.definitionContext, Symbol.SymbolVisibility.LOCAL);
+
+                            TridentFunctionBranch branch = TridentFunctionBranch.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), ctx);
+
+                            if(!isConstructor) {
+                                ClassMethod method = new ClassMethod(
+                                        finalClassObject,
+                                        entry,
+                                        new TridentUserFunction(
+                                                functionName,
+                                                branch,
+                                                finalClassObject.prepareFunctionContext(),
+                                                null
+                                        )
+                                ).setVisibility(memberVisibility).setModifiers(modifiers);
+
+                                if(modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
+                                    classObject.staticMethods.put(method, mode, entry, ctx);
+                                    classObject.innerStaticContext.putClassFunction(classObject.staticMethods.getFamily(functionName));
+                                } else {
+                                    classObject.instanceMethods.put(method, mode, entry, ctx);
                                 }
-
-                                @Override
-                                public Symbol constructSymbol(CustomClassObject thiz) {
-                                    return decl.getSupplier().get();
-                                }
-
-                                @Override
-                                public Symbol.SymbolVisibility getVisibility() {
-                                    return decl.getVisibility();
-                                }
-
-                                @Override
-                                public CustomClass getDefiningClass() {
-                                    return finalClassObject;
-                                }
-                            });
-                        }
-                        break;
-                    }
-                    case "CLASS_FUNCTION": {
-                        String functionName = entry.find("SYMBOL_NAME").flatten(false);
-                        boolean isConstructor = "new".equals(functionName);
-                        VariableInstruction.SymbolModifierMap modifiers = VariableInstruction.SymbolModifierMap.createFromList(((TokenList) entry.find("SYMBOL_MODIFIER_LIST")), ctx);
-                        MemberParentMode mode = MemberParentMode.CREATE;
-                        if(entry.find("MEMBER_PARENT_MODE") != null) {
-                            mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
-                        }
-
-                        if(isConstructor && modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
-                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "'static' modifier not allowed here", entry.find("SYMBOL_MODIFIER_LIST.LITERAL_STATIC"), classObject.definitionContext);
-                        }
-
-                        Symbol.SymbolVisibility memberVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), classObject.definitionContext, Symbol.SymbolVisibility.LOCAL);
-
-                        TridentFunctionBranch branch = TridentFunctionBranch.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), ctx);
-
-                        if(!isConstructor) {
-                            ClassMethod method = new ClassMethod(
-                                    finalClassObject,
-                                    entry,
-                                    new TridentUserFunction(
-                                            functionName,
-                                            branch,
-                                            finalClassObject.prepareFunctionContext(),
-                                            null
-                                    )
-                            ).setVisibility(memberVisibility).setModifiers(modifiers);
-
-                            if(modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
-                                classObject.staticMethods.put(method, mode, entry, ctx);
-                                classObject.innerStaticContext.putClassFunction(classObject.staticMethods.getFamily(functionName));
                             } else {
-                                classObject.instanceMethods.put(method, mode, entry, ctx);
-                            }
-                        } else {
-                            ClassMethod method = new ClassMethod(
-                                    finalClassObject,
-                                    entry,
-                                    new TridentUserFunction(
-                                            functionName,
-                                            branch,
-                                            finalClassObject.prepareFunctionContext(),
-                                            null
-                                    )
-                            ).setVisibility(memberVisibility).setModifiers(modifiers);
+                                ClassMethod method = new ClassMethod(
+                                        finalClassObject,
+                                        entry,
+                                        new TridentUserFunction(
+                                                functionName,
+                                                branch,
+                                                finalClassObject.prepareFunctionContext(),
+                                                null
+                                        )
+                                ).setVisibility(memberVisibility).setModifiers(modifiers);
 
-                            if(classObject.constructorFamily == null) {
-                                classObject.constructorFamily = new ClassMethodFamily("new");
-                            }
-                            classObject.constructorFamily.putOverload(method, mode, entry, ctx);
+                                if(classObject.constructorFamily == null) {
+                                    classObject.constructorFamily = new ClassMethodFamily("new");
+                                }
+                                classObject.constructorFamily.putOverload(method, mode, entry, ctx);
 
-                            //classObject.setConstructor(memberVisibility, thiz -> new TridentUserFunction(functionName, branches, finalClassObject.prepareFunctionContext(), thiz));
+                                //classObject.setConstructor(memberVisibility, thiz -> new TridentUserFunction(functionName, branches, finalClassObject.prepareFunctionContext(), thiz));
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case "CLASS_OVERRIDE": {
-                        boolean implicit = "implicit".equals(entry.find("CLASS_TRANSFORM_TYPE").flatten(false));
-                        TypeHandler toType = InterpolationManager.parseType(entry.find("INTERPOLATION_TYPE"), classObject.getInnerStaticContext());
-                        TridentFunctionBranch branch = TridentFunctionBranch.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), classObject.getInnerStaticContext());
-                        TridentUserFunction function = new TridentUserFunction(toType.getTypeIdentifier(), branch, classObject.getInnerStaticContext(), null);
-                        ((TridentUserFunctionBranch) branch).setReturnConstraints(new TypeConstraints(toType, false));
-                        if(implicit) ((TridentUserFunctionBranch) branch).setShouldCoerce(false);
-                        LinkedHashMap<TypeHandler, TridentUserFunction> castMap = implicit ? classObject.implicitCasts : classObject.explicitCasts;
-                        castMap.put(toType, function);
-                        break;
-                    }
-                    case "COMMENT": {
-                        break;
-                    }
-                    default: {
-                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, ctx);
+                        case "CLASS_OVERRIDE": {
+                            boolean implicit = "implicit".equals(entry.find("CLASS_TRANSFORM_TYPE").flatten(false));
+                            TypeHandler toType = InterpolationManager.parseType(entry.find("INTERPOLATION_TYPE"), classObject.getInnerStaticContext());
+                            TridentFunctionBranch branch = TridentFunctionBranch.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), classObject.getInnerStaticContext());
+                            TridentUserFunction function = new TridentUserFunction(toType.getTypeIdentifier(), branch, classObject.getInnerStaticContext(), null);
+                            ((TridentUserFunctionBranch) branch).setReturnConstraints(new TypeConstraints(toType, false));
+                            if(implicit) ((TridentUserFunctionBranch) branch).setShouldCoerce(false);
+                            LinkedHashMap<TypeHandler, TridentUserFunction> castMap = implicit ? classObject.implicitCasts : classObject.explicitCasts;
+                            castMap.put(toType, function);
+                            break;
+                        }
+                        case "COMMENT": {
+                            break;
+                        }
+                        default: {
+                            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, ctx);
+                        }
                     }
                 }
             }
+
+            classObject.instanceMethods.checkClashingInheritedMethodsResolved(pattern.find("CLASS_NAME"), ctx);
         }
+
     }
 
     public void putStaticFunction(TridentUserFunction value) {
