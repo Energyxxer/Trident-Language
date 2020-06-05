@@ -7,6 +7,7 @@ import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
@@ -23,8 +24,10 @@ public class ExecuteParser implements SimpleCommandParser {
         ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) pattern.find("MODIFIER_LIST")), ctx);
         modifiers.addAll(0, ctx.getWritingFile().getWritingModifiers());
 
-        TokenPattern<?> rawCommand = pattern.find("CHAINED_COMMAND.COMMAND");
-        if(rawCommand != null) {
+        TokenPattern<?> rawEnd = pattern.find("EXECUTE_END");
+        TokenPattern<?> rawCommand;
+        if(rawEnd != null && (rawCommand = ((TokenStructure) rawEnd).getContents()).getName().equals("CHAINED_COMMAND")) {
+            rawCommand = rawCommand.find("COMMAND");
             CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, rawCommand.flattenTokens().get(0).value);
             if(parser != null) {
                 Collection<Command> commands = parser.parse((TokenPattern<?>) (rawCommand.getContents()), ctx, modifiers);

@@ -1364,10 +1364,13 @@ public class TridentProductions {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "execute"),
                     list(MODIFIER).setOptional(true).setName("MODIFIER_LIST"),
-                    optional(
-                            literal("run"),
-                            COMMAND
-                    ).setName("CHAINED_COMMAND").addTags("cspn:Chained Command")
+                    choice(
+                            literal("noop"),
+                            group(
+                                    literal("run"),
+                                    COMMAND
+                            ).setName("CHAINED_COMMAND").addTags("cspn:Chained Command")
+                    ).setName("EXECUTE_END").setOptional()
             ));
         }
         //endregion
