@@ -340,6 +340,12 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
             classObject.instanceMethods.checkClashingInheritedMethodsResolved(pattern.find("CLASS_NAME"), ctx);
             classObject.indexers.checkClashingInheritedIndexersResolved(classObject, pattern.find("CLASS_NAME"), ctx);
+
+            for(Symbol field : classObject.staticMembers.values()) {
+                if(field.isFinal() && field.maySet()) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Final static symbol '" + field.getName() + "' was not initialized.", pattern, ctx);
+                }
+            }
         }
 
     }
