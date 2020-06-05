@@ -1430,6 +1430,7 @@ public class TridentProductions {
             MODIFIER.add(group(
                     choice(matchItem(MODIFIER_HEADER, "if"), matchItem(MODIFIER_HEADER, "unless")).setName("HEADER"),
                     choice(
+                            group(SELECTOR).setName("SELECTOR_CONDITION"),
                             group(literal("entity"), ENTITY).setName("ENTITY_CONDITION"),
                             group(literal("predicate"), noToken().addTags("cspn:Predicate"), RESOURCE_LOCATION_S).setName("PREDICATE_CONDITION"),
                             group(literal("block"), COORDINATE_SET, BLOCK_TAGGED).setName("BLOCK_CONDITION"),
