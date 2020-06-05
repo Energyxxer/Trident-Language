@@ -5,7 +5,7 @@ import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerGroup(
-        classes="CharacterLib,CoordinatesLib,FileLib,JsonLib,MathLib,ReflectionLib,TagLib,TextLib,TypeLib"
+        classes="CharacterLib,CoordinatesLib,FileLib,JsonLib,MathLib,ReflectionLib,ProjectLib,TagLib,TextLib,TypeLib"
 )
 public interface DefaultLibraryProvider {
     void populate(ISymbolContext globalCtx, TridentCompiler compiler);

@@ -17,7 +17,7 @@ public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
     public Object getMember(TypeHandler object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if("of".equals(member)) {
             return of;
-        } else if("isInstance".equals(member)) {
+        } else if("is".equals(member)) {
             return new NativeMethodWrapper<>("isInstance", ((instance, params) -> object.isInstance(params[0])), Object.class).createForInstance(null);
         }
         throw new MemberNotFoundException();
