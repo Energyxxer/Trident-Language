@@ -2479,7 +2479,7 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(keyword("do"), instructionKeyword("if"), brace("("), group(INTERPOLATION_VALUE).setName("CONDITION").addTags("cspn:Condition"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), optional(keyword("else"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("ELSE_CLAUSE"))
+                    group(keyword("do").setOptional(), instructionKeyword("if"), brace("("), group(INTERPOLATION_VALUE).setName("CONDITION").addTags("cspn:Condition"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), optional(keyword("else"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("ELSE_CLAUSE"))
             );
         }
 
