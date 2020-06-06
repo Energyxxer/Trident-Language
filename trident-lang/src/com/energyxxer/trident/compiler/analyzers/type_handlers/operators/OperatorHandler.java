@@ -263,6 +263,36 @@ public interface OperatorHandler<A, B> {
                 a.safeSetValue(result, pattern, ctx);
                 return result;
             });
+
+            handlers.put("symbol &= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(pattern, ctx), Operator.BITWISE_AND, b, pattern, ctx);
+                a.safeSetValue(result, pattern, ctx);
+                return result;
+            });
+
+            handlers.put("symbol ^= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(pattern, ctx), Operator.BITWISE_XOR, b, pattern, ctx);
+                a.safeSetValue(result, pattern, ctx);
+                return result;
+            });
+
+            handlers.put("symbol |= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(pattern, ctx), Operator.BITWISE_OR, b, pattern, ctx);
+                a.safeSetValue(result, pattern, ctx);
+                return result;
+            });
+
+            handlers.put("symbol <<= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(pattern, ctx), Operator.BIT_SHIFT_LEFT, b, pattern, ctx);
+                a.safeSetValue(result, pattern, ctx);
+                return result;
+            });
+
+            handlers.put("symbol >>= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(pattern, ctx), Operator.BIT_SHIFT_RIGHT, b, pattern, ctx);
+                a.safeSetValue(result, pattern, ctx);
+                return result;
+            });
         }
 
         public static boolean equals(Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) {

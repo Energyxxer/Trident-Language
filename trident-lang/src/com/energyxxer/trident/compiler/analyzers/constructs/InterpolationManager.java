@@ -106,7 +106,22 @@ public class InterpolationManager {
                 }
                 case "RAW_INTEGER": {
                     try {
-                        return Integer.parseInt(pattern.flatten(false));
+                        String raw = pattern.flatten(false);
+                        if(raw.toLowerCase().startsWith("0x")) {
+                            long asLong = Long.parseLong(raw.substring(2), 16);
+                            if(Long.highestOneBit(asLong) <= (long)Integer.MAX_VALUE+1) {
+                                return (int) asLong;
+                            }
+                            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Integer out of range", pattern, ctx);
+                        } else if(raw.toLowerCase().startsWith("0b")) {
+                            long asLong = Long.parseLong(raw.substring(2), 2);
+                            if(Long.highestOneBit(asLong) <= (long)Integer.MAX_VALUE+1) {
+                                return (int) asLong;
+                            }
+                            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Integer out of range", pattern, ctx);
+                        } else {
+                            return Integer.parseInt(raw);
+                        }
                     } catch (NumberFormatException x) {
                         throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Integer out of range", pattern, ctx);
                     }

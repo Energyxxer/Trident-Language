@@ -30,7 +30,7 @@ public class TridentLexerProfile extends LexerProfile {
     public static final String IDENTIFIER_C_REGEX = "\\S+";
     public static final String IDENTIFIER_D_REGEX = "[a-zA-Z0-9_\\-+]+";
 
-    public static final Pattern NUMBER_REGEX = Pattern.compile("([+-]?(?:\\d*(\\.\\d+)|\\d+))([bdfsL]?)", Pattern.CASE_INSENSITIVE);
+    public static final Pattern NUMBER_REGEX = Pattern.compile("(?:0x[0-9a-f]+)|(?:0b[01]+)|(?:([+-]?(?:\\d*(\\.\\d+)|\\d+))([bdfsL]?))", Pattern.CASE_INSENSITIVE);
     public static final Pattern SHORT_NUMBER_REGEX = Pattern.compile("[+-]?\\d*(\\.\\d+)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern TIME_REGEX = Pattern.compile("(\\d*(\\.\\d+)|\\d+)[tsd]?");
 
@@ -74,7 +74,7 @@ public class TridentLexerProfile extends LexerProfile {
                     int length = matcher.end();
                     if(length <= 0) return new ScannerContextResponse(false);
 
-                    TokenType obtainedType = Character.isLetter(str.charAt(length-1)) ? TridentTokens.TYPED_NUMBER : ((str.substring(0, length).contains(".")) ? TridentTokens.REAL_NUMBER : TridentTokens.INTEGER_NUMBER);
+                    TokenType obtainedType = length >= 2 && Character.isLetter(str.charAt(length-1)) && ((length == 2) == (Character.isLetter(str.charAt(1)))) ? TridentTokens.TYPED_NUMBER : ((str.substring(0, length).contains(".")) ? TridentTokens.REAL_NUMBER : TridentTokens.INTEGER_NUMBER);
 
                     if(type == TYPED_NUMBER) obtainedType = type;
                     else if(type == REAL_NUMBER && obtainedType == INTEGER_NUMBER) obtainedType = REAL_NUMBER;
@@ -638,7 +638,7 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new StringMatchLexerContext(SYMBOL, "*", "<=", ">=", "<", ">", "!=", "=", "$", ";", "?"));
         contexts.add(new StringMatchLexerContext(ARROW, "->"));
 
-        contexts.add(new StringMatchLexerContext(COMPILER_OPERATOR, "+=", "-=", "*=", "/=", "%=", "+", "-", "*", "/", "%", "<=", ">=", "<<", ">>", "<", ">", "==", "!=", "=", "&&", "||", "&", "|", "^"));
+        contexts.add(new StringMatchLexerContext(COMPILER_OPERATOR, "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=", "+", "-", "*", "/", "%", "<=", ">=", "<<=", ">>=", "<<", ">>", "<", ">", "==", "!=", "=", "&&", "||", "&", "|", "^"));
         contexts.add(new StringMatchLexerContext(COMPILER_POSTFIX_OPERATOR, "++", "--"));
         contexts.add(new StringMatchLexerContext(COMPILER_PREFIX_OPERATOR, "++", "--", "+", "-", "~", "!"));
 

@@ -55,10 +55,10 @@ public class ClassMethodFamily {
                 }
                 score += paramScore;
             }
-            /*if(!branchParams.isEmpty()) score /= branchParams.size();
+            if(!branchParams.isEmpty()) score /= branchParams.size();
             else {
                 score = 4;
-            }*/
+            }
             if(branchMatched && score >= bestScore) {
                 if(score != bestScore) bestScoreBranchMatches.clear();
                 bestScore = score;
@@ -85,11 +85,22 @@ public class ClassMethodFamily {
             }
             throw new TridentException(TridentException.Source.TYPE_ERROR, "Overload not found for parameter types: (" + sb.toString() + ")\nValid overloads are:" + overloads.toString(), pattern, ctx);
         }
+        ClassMethod bestMatch = bestScoreBranchMatches.get(0);
         if(bestScoreBranchMatches.size() > 1) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Ambiguous call between: " + bestScoreBranchMatches.stream().map(b -> b.getFormalParameters().toString()).collect(Collectors.joining(", ")), pattern, ctx);
+            int sameLengthMatches = 0;
+            for(ClassMethod branch : bestScoreBranchMatches) {
+                if(branch.getFormalParameters().size() == params.size()) {
+                    bestMatch = branch;
+                    sameLengthMatches++;
+                }
+            }
+            if(sameLengthMatches > 1) {
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Ambiguous call between: " + bestScoreBranchMatches.stream().filter(b->b.getFormalParameters().size() == params.size()).map(b -> b.getFormalParameters().toString()).collect(Collectors.joining(", ")), pattern, ctx);
+            } else if(sameLengthMatches < 1) {
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Ambiguous call between: " + bestScoreBranchMatches.stream().map(b -> b.getFormalParameters().toString()).collect(Collectors.joining(", ")), pattern, ctx);
+            }
         }
 
-        ClassMethod bestMatch = bestScoreBranchMatches.get(0);
         if(!bestMatch.getDefiningClass().hasAccess(ctx, bestMatch.getVisibility())) {
             throw new TridentException(TridentException.Source.TYPE_ERROR, bestMatch + " has " + bestMatch.getVisibility().toString().toLowerCase() + " access in " + bestMatch.getDefiningClass().getClassTypeIdentifier(), pattern, ctx);
         }

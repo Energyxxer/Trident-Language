@@ -50,8 +50,11 @@ public enum Operator {
     MULTIPLY_THEN_ASSIGN("*=", 99, BINARY, OperationOrder.RTL, VARIABLE),
     DIVIDE_THEN_ASSIGN("/=", 99, BINARY, OperationOrder.RTL, VARIABLE),
     MODULO_THEN_ASSIGN("%=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    AND_THEN_ASSIGN("&=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    OR_THEN_ASSIGN("|=", 99, BINARY, OperationOrder.RTL, VARIABLE);
+    BITWISE_AND_THEN_ASSIGN("&=", 99, BINARY, OperationOrder.RTL, VARIABLE),
+    BITWISE_XOR_THEN_ASSIGN("^=", 99, BINARY, OperationOrder.RTL, VARIABLE),
+    BITWISE_OR_THEN_ASSIGN("|=", 99, BINARY, OperationOrder.RTL, VARIABLE),
+    BIT_SHIFT_LEFT_THEN_ASSIGN("<<=", 99, BINARY, OperationOrder.RTL, VARIABLE),
+    BIT_SHIFT_RIGHT_THEN_ASSIGN(">>=", 99, BINARY, OperationOrder.RTL, VARIABLE);
 
     private String symbol;
     private int precedence;
