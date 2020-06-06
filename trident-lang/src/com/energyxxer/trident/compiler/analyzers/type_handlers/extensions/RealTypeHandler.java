@@ -7,9 +7,6 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.NBTTagTypeHandler;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.TagDoubleTypeHandler;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.TagFloatTypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "java.lang.Double")
@@ -37,13 +34,8 @@ public class RealTypeHandler implements TypeHandler<Double> {
     }
 
     @Override
-    public boolean canCoerce(Object object, TypeHandler into) {
-        return object instanceof Double && (
-                    into instanceof RealRangeTypeHandler ||
-                    into instanceof NBTTagTypeHandler ||
-                    into instanceof TagFloatTypeHandler ||
-                    into instanceof TagDoubleTypeHandler
-        );
+    public boolean isInstance(Object obj) {
+        return obj instanceof Double;
     }
 
     @Override

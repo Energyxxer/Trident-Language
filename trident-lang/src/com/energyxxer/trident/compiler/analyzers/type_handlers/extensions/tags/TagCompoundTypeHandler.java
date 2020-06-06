@@ -26,6 +26,7 @@ public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
     static {
         try {
             members.put("merge", new NativeMethodWrapper<>(TagCompound.class.getMethod("merge", TagCompound.class)));
+            members.put("remove", new NativeMethodWrapper<>(TagCompound.class.getMethod("remove", String.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }

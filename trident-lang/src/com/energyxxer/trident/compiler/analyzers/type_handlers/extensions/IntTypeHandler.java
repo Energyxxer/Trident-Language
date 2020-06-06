@@ -7,7 +7,6 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.*;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "java.lang.Integer")
@@ -51,16 +50,7 @@ public class IntTypeHandler implements TypeHandler<Integer> {
     @Override
     public boolean canCoerce(Object object, TypeHandler into) {
         return object instanceof Integer && (
-                    into instanceof RealTypeHandler ||
-                    into instanceof RealRangeTypeHandler ||
-                    into instanceof IntRangeTypeHandler ||
-                    into instanceof NBTTagTypeHandler ||
-                    into instanceof TagIntTypeHandler ||
-                    into instanceof TagByteTypeHandler ||
-                    into instanceof TagShortTypeHandler ||
-                    into instanceof TagFloatTypeHandler ||
-                    into instanceof TagDoubleTypeHandler ||
-                    into instanceof TagLongTypeHandler
+                    into instanceof RealTypeHandler
         );
     }
 

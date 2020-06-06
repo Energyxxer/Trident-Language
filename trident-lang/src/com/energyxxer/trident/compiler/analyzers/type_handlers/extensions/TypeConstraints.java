@@ -77,7 +77,7 @@ public class TypeConstraints {
     }
 
     public boolean verify(Object value) {
-        return (value != null || nullable) && (value == null || handler == null || handler.isInstance(value));
+        return (value != null || nullable) && (value == null || handler == null || handler.isInstance(value) || TridentTypeManager.getHandlerForObject(value).canCoerce(value, handler));
     }
 
     public TypeHandler<?> getHandler() {
