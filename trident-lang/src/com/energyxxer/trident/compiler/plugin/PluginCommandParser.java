@@ -15,10 +15,11 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.commands.SummonParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
 import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -192,7 +193,7 @@ public class PluginCommandParser {
             case "NUMERIC_DATA_TYPE":
             case "TRAILING_STRING":
             case "ANCHOR": return pattern.flatten(false);
-            default: return null;
+            default: throw new TridentException(TridentException.Source.IMPOSSIBLE, "Don't know how to store this into a variable: '" + pattern.getName() + "'", pattern, ctx);
         }
     }
 
