@@ -17,24 +17,25 @@ public class TridentTypeManager {
 
     static {
 
-        registerTypeHandler(new BlockTypeHandler());
+        registerTypeHandler(new NullTypeHandler());
         registerTypeHandler(new BooleanTypeHandler());
+        registerTypeHandler(new IntTypeHandler());
+        registerTypeHandler(new RealTypeHandler());
+        registerTypeHandler(new StringTypeHandler());
+        registerTypeHandler(new ResourceTypeHandler());
+        registerTypeHandler(new TextComponentTypeHandler());
         registerTypeHandler(new CoordinateTypeHandler());
+        registerTypeHandler(new RotationTypeHandler());
+        registerTypeHandler(new BlockTypeHandler());
         registerTypeHandler(new EntityTypeHandler());
         registerTypeHandler(new IntRangeTypeHandler());
-        registerTypeHandler(new IntTypeHandler());
         registerTypeHandler(new ItemTypeHandler());
         registerTypeHandler(new NBTPathTypeHandler());
-        registerTypeHandler(new NullTypeHandler());
         registerTypeHandler(new RealRangeTypeHandler());
-        registerTypeHandler(new RealTypeHandler());
-        registerTypeHandler(new ResourceTypeHandler());
-        registerTypeHandler(new StringTypeHandler());
         TagCompoundTypeHandler tagCompoundHandler = new TagCompoundTypeHandler();
         registerTypeHandler(tagCompoundHandler);
         PRIMITIVE_HANDLERS.put("nbt", tagCompoundHandler);
         registerTypeHandler(new TagListTypeHandler());
-        registerTypeHandler(new TextComponentTypeHandler());
         registerTypeHandler(new TagByteTypeHandler());
         registerTypeHandler(new TagShortTypeHandler());
         registerTypeHandler(new TagIntTypeHandler());
@@ -58,6 +59,8 @@ public class TridentTypeManager {
         registerTypeHandler(TridentFunction.STATIC_HANDLER);
 
         registerTypeHandler(TYPE_HANDLER_TYPE_HANDLER = new TypeHandlerTypeHandler());
+
+
     }
 
     public static void registerTypeHandler(TypeHandler<?> handler) {

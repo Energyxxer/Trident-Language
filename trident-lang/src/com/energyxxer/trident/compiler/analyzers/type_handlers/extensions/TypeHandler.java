@@ -12,6 +12,7 @@ import java.util.Iterator;
         classes="BlockTypeHandler," +
                 "BooleanTypeHandler," +
                 "CoordinateTypeHandler," +
+                "RotationTypeHandler," +
                 "EntityTypeHandler," +
                 "IntRangeTypeHandler," +
                 "IntTypeHandler," +

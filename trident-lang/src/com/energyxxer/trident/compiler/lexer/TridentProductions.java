@@ -80,6 +80,7 @@ public class TridentProductions {
     private final LazyTokenStructureMatch MIXABLE_COORDINATE = new LazyTokenStructureMatch("MIXABLE_COORDINATE");
     private final LazyTokenStructureMatch COORDINATE_SET = new LazyTokenStructureMatch("COORDINATE_SET");
     private final LazyTokenStructureMatch TWO_COORDINATE_SET = new LazyTokenStructureMatch("TWO_COORDINATE_SET");
+    private final LazyTokenStructureMatch ROTATION = new LazyTokenStructureMatch("ROTATION");
 
     private final LazyTokenStructureMatch BLOCKSTATE = new LazyTokenStructureMatch("BLOCKSTATE");
     private final LazyTokenStructureMatch BLOCK = new LazyTokenStructureMatch("BLOCK");
@@ -311,6 +312,7 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_value").setName("VALUE_WRAPPER_KEY"), brace("<"), NBT_VALUE, brace(">")).setName("WRAPPED_NBT_VALUE"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_path").setName("VALUE_WRAPPER_KEY"), brace("<"), NBT_PATH, brace(">")).setName("WRAPPED_NBT_PATH"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("coordinates").setName("VALUE_WRAPPER_KEY"), brace("<"), COORDINATE_SET, brace(">")).setName("WRAPPED_COORDINATE"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("rotation").setName("VALUE_WRAPPER_KEY"), brace("<"), ROTATION, brace(">")).setName("WRAPPED_ROTATION"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("int_range").setName("VALUE_WRAPPER_KEY"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("real_range").setName("VALUE_WRAPPER_KEY"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("resource").setName("VALUE_WRAPPER_KEY"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
@@ -979,7 +981,7 @@ public class TridentProductions {
                                                                             group(noToken().addTags("cspn:Facing Entity"), literal("entity"), ENTITY, anchor().setOptional())
                                                                     )
                                                             ).setName("FACING_CLAUSE"),
-                                                            TWO_COORDINATE_SET
+                                                            ROTATION
                                                     ).setOptional().setName("ROTATION_OPTION").addTags("cspn:Rotation")
                                             ),
                                             ENTITY,
@@ -1996,10 +1998,12 @@ public class TridentProductions {
                 g.append(MIXABLE_COORDINATE);
                 g.append(MIXABLE_COORDINATE);
                 TWO_COORDINATE_SET.add(g);
+                ROTATION.add(g);
             }
 
             COORDINATE_SET.add(INTERPOLATION_BLOCK);
             TWO_COORDINATE_SET.add(INTERPOLATION_BLOCK);
+            ROTATION.add(INTERPOLATION_BLOCK);
         }
         //endregion
         //endregion
@@ -2353,7 +2357,7 @@ public class TridentProductions {
                                                     }
                                                 }
                                             }),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), optional(colon(), list(INTERPOLATION_TYPE, comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST")).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("final").setOptional(), literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), optional(colon(), list(INTERPOLATION_TYPE, comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST")).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
                                                     TokenPattern<?> namePattern = p.find("CLASS_NAME");
@@ -2771,6 +2775,7 @@ public class TridentProductions {
             case "NBT_PATH": return NBT_PATH;
             case "COORDINATE_SET": return COORDINATE_SET;
             case "TWO_COORDINATE_SET": return TWO_COORDINATE_SET;
+            case "ROTATION": return ROTATION;
             case "BLOCK": return BLOCK;
             case "BLOCK_TAGGED": return BLOCK_TAGGED;
             case "ITEM": return ITEM;

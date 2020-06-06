@@ -25,6 +25,11 @@ public class NativeMethodWrapper<T> implements MemberWrapper<T> {
     @Target(ElementType.METHOD)
     public @interface TridentNotNullReturn {
     }
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface TridentClassObjectArgument {
+        String classIdentifier();
+    }
 
     private final String methodName;
     private final Invoker<T> invoker;

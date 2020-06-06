@@ -168,4 +168,8 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
     public Collection<Symbol> getMemberSymbols() {
         return instanceMembers.values();
     }
+
+    public Object forceGetMember(String key) {
+        return instanceMembers.get(key).getValue(null, null);
+    }
 }

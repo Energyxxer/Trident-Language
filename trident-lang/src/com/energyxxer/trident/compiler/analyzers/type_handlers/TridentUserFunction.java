@@ -68,4 +68,22 @@ public class TridentUserFunction implements TridentFunction {
     public TridentFunctionBranch getBranch() {
         return branch;
     }
+
+    public static class FixedThisFunction implements TridentFunction {
+        private final TridentUserFunction function;
+        private final Object thisObject;
+
+        public FixedThisFunction(TridentUserFunction function, Object thisObject) {
+            this.function = function;
+            this.thisObject = thisObject;
+        }
+
+        @Override
+        public Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+            function.setThisObject(thisObject);
+            Object returnValue = function.call(params, patterns, pattern, ctx);
+            function.setThisObject(null);
+            return returnValue;
+        }
+    }
 }

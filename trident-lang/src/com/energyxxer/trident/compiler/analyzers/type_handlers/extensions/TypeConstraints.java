@@ -5,8 +5,10 @@ import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -18,9 +20,18 @@ public class TypeConstraints {
     private TypeHandler<?> handler = null;
     private boolean nullable = true;
 
+    private String classIdentifier = null;
+
     public TypeConstraints(TypeHandler<?> handler, boolean nullable) {
         this.handler = handler;
         this.nullable = nullable;
+    }
+
+    public TypeConstraints(@NotNull String classIdentifier, boolean nullable) {
+        this.nullable = nullable;
+        this.classIdentifier = classIdentifier;
+
+        CustomClass.registerStringIdentifiedClassListener(classIdentifier, cls -> handler = cls);
     }
 
     public static TypeConstraints parseConstraintsInfer(TokenPattern<?> pattern, ISymbolContext ctx, Object value) {
@@ -50,7 +61,7 @@ public class TypeConstraints {
                 return null;
             }
         }
-        return new TypeConstraints(null, true);
+        return new TypeConstraints((TypeHandler<?>) null, true);
     }
 
     public Object adjustValue(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {

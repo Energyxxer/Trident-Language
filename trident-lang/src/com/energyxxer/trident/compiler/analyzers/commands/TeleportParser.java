@@ -91,7 +91,7 @@ public class TeleportParser implements SimpleCommandParser {
                                 }
                                 break;
                             }
-                            case "TWO_COORDINATE_SET": {
+                            case "ROTATION": {
                                 facing = new RotationFacing(CoordinateParser.parseRotation(rotationOption, ctx));
                                 break;
                             }

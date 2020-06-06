@@ -806,7 +806,8 @@ public class TridentCompiler extends AbstractProcess {
             dummyModule.minecraft.types.structure.create("Village");
             dummyModule.minecraft.types.fluid.create("water");
 
-            libraries.add(new Library("trident-util/functions/native.tdn", read("/trident_utils/datapack/data/trident-util/functions/native.tdn"), true));
+            libraries.add(new Library("trident-util/functions/native.tdn", read("/trident_utils/datapack/data/trident-util/functions/native_compiler.tdn"), Library.Availability.COMPILER_ONLY));
+            libraries.add(new Library("trident-util/functions/native.tdn", read("/trident_utils/datapack/data/trident-util/functions/native_summary.tdn"), Library.Availability.SUMMARY_ONLY));
             libraries.add(new Library("trident-util/functions/type_checking.tdn", read("/trident_utils/datapack/data/trident-util/functions/type_checking.tdn")));
             libraries.add(new Library("trident-util/functions/generators.tdn", read("/trident_utils/datapack/data/trident-util/functions/generators.tdn")));
             libraries.add(new Library("trident-util/functions/shared.tdn", read("/trident_utils/datapack/data/trident-util/functions/shared.tdn")));
@@ -816,7 +817,7 @@ public class TridentCompiler extends AbstractProcess {
 
         static void populate(ArrayList<String> ownFiles, HashMap<String, ParsingSignature> filePatterns) {
             for(Library lib : libraries) {
-                if(lib.summaryOnly) continue;
+                if(!lib.availability.compiler) continue;
                 ownFiles.add(lib.path);
                 filePatterns.put(lib.path, lib.signature);
             }
@@ -824,6 +825,7 @@ public class TridentCompiler extends AbstractProcess {
 
         static void summarize(TridentProjectSummary summary) {
             for(Library lib : libraries) {
+                if(!lib.availability.summary) continue;
                 summary.store(null, lib.fileSummary);
                 lib.fileSummary.setParentSummary(summary);
             }
@@ -848,17 +850,28 @@ public class TridentCompiler extends AbstractProcess {
         }
 
         private static class Library {
+            public enum Availability {
+                COMPILER_ONLY(true, false), SUMMARY_ONLY(false, true), BOTH(true, true);
+                private final boolean compiler;
+                private final boolean summary;
+
+                Availability(boolean compiler, boolean summary) {
+                    this.compiler = compiler;
+                    this.summary = summary;
+                }
+            }
+
             String path;
             TokenPattern<?> pattern;
             ParsingSignature signature;
             TridentSummaryModule fileSummary;
-            boolean summaryOnly;
+            Availability availability;
 
             public Library(String path, String content) {
-                this(path, content, false);
+                this(path, content, Availability.BOTH);
             }
 
-            public Library(String path, String content, boolean summaryOnly) {
+            public Library(String path, String content, Availability availability) {
                 this.path = path;
 
                 Path relPath = Paths.get(path);
@@ -879,7 +892,7 @@ public class TridentCompiler extends AbstractProcess {
 
                 this.signature = new ParsingSignature(content.hashCode(), pattern, null);
 
-                this.summaryOnly = summaryOnly;
+                this.availability = availability;
             }
         }
     }

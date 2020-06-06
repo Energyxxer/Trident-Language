@@ -159,6 +159,9 @@ public class InterpolationManager {
                 case "WRAPPED_COORDINATE": {
                     return CoordinateParser.parse(pattern.find("COORDINATE_SET"), ctx);
                 }
+                case "WRAPPED_ROTATION": {
+                    return CoordinateParser.parseRotation(pattern.find("ROTATION"), ctx);
+                }
                 case "WRAPPED_INT_RANGE": {
                     return CommonParsers.parseIntRange(pattern.find("INTEGER_NUMBER_RANGE"), ctx);
                 }

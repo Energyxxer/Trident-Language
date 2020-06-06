@@ -19,7 +19,7 @@ public class RotatedParser implements SimpleModifierParser {
             case "ENTITY_BRANCH": {
                 return new ExecuteRotatedAsEntity(EntityParser.parseEntity(branch.find("ENTITY"), ctx));
             }
-            case "TWO_COORDINATE_SET": {
+            case "ROTATION": {
                 return CoordinateParser.parseRotation(branch, ctx);
             }
             default: {

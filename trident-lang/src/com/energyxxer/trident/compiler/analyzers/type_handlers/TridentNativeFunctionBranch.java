@@ -43,19 +43,33 @@ public class TridentNativeFunctionBranch extends TridentFunctionBranch {
         for(Parameter param : parameterJavaTypes) {
             Class<?> paramType = param.getType();
             paramType = TridentFunction.HelperMethods.sanitizeClass(paramType);
-            if(paramType == TokenPattern.class || paramType == ISymbolContext.class || paramType == CustomClassObject.class) {
+            if(paramType == TokenPattern.class || paramType == ISymbolContext.class || param.isAnnotationPresent(NativeMethodWrapper.TridentThisArg.class)) {
                 //Reserved for calling pattern, context and this
                 continue;
             }
             TypeHandler correspondingHandler = TridentTypeManager.getHandlerForHandledClass(paramType);
-            if(correspondingHandler == null && paramType != Object.class) {
+            if(correspondingHandler == null && paramType != Object.class && paramType != CustomClassObject.class) {
                 throw new IllegalArgumentException("Could not create formal parameter for type '" + paramType.getName() + "'; Did not find appropriate TypeHandler instance.");
             }
+
             boolean nullable = correspondingHandler == null;
+
+            NativeMethodWrapper.TridentClassObjectArgument classConstraintAnnot = param.getAnnotation(NativeMethodWrapper.TridentClassObjectArgument.class);
+            String classIdentifier = null;
+            if(classConstraintAnnot != null) {
+                classIdentifier = classConstraintAnnot.classIdentifier();
+                nullable = false;
+            }
+
             if(!nullable) {
                 nullable = param.getAnnotation(NativeMethodWrapper.TridentNullableArg.class) != null;
             }
-            params.add(new FormalParameter(param.getName(), new TypeConstraints(correspondingHandler, nullable)));
+
+            if(classIdentifier == null) {
+                params.add(new FormalParameter(param.getName(), new TypeConstraints(correspondingHandler, nullable)));
+            } else {
+                params.add(new FormalParameter(param.getName(), new TypeConstraints(classIdentifier, nullable)));
+            }
         }
         return params;
     }
@@ -81,7 +95,7 @@ public class TridentNativeFunctionBranch extends TridentFunctionBranch {
                 j--;
                 continue;
             }
-            if(method.getParameterTypes()[i] == CustomClassObject.class) {
+            if(method.getParameters()[i].isAnnotationPresent(NativeMethodWrapper.TridentThisArg.class)) {
                 actualParams[i] = thisObject;
                 j--;
                 continue;

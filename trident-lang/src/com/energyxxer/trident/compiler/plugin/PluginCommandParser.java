@@ -144,7 +144,12 @@ public class PluginCommandParser {
             case "NBT_LIST": return NBTParser.parseValue(pattern, ctx);
             case "NBT_PATH": return NBTParser.parsePath(pattern, ctx);
             case "COORDINATE_SET":
-            case "TWO_COORDINATE_SET": return CoordinateParser.parse(pattern, ctx);
+            case "TWO_COORDINATE_SET": {
+                return CoordinateParser.parse(pattern, ctx);
+            }
+            case "ROTATION": {
+                return CoordinateParser.parseRotation(pattern, ctx);
+            }
             case "BLOCK_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseBlockType(pattern, ctx).toString());
             case "ITEM_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseItemType(pattern, ctx).toString());
             case "ENTITY_ID":

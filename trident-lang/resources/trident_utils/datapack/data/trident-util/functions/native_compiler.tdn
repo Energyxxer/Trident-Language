@@ -1,0 +1,45 @@
+@on compile
+@breaking
+
+define global final class Axis {
+    public static final var X : Axis = new Axis(0)
+    public static final var Y : Axis = new Axis(1)
+    public static final var Z : Axis = new Axis(2)
+    private final var index : int
+    private new(index : int) {
+        eval this.index = index
+    }
+}
+
+define global final class CoordinateType {
+    public static final var ABSOLUTE : CoordinateType = new CoordinateType(0, "")
+    public static final var RELATIVE : CoordinateType = new CoordinateType(1, "~")
+    public static final var LOCAL : CoordinateType = new CoordinateType(2, "^")
+
+    private final var index : int
+    public final var prefix : string
+
+    private new(index : int, prefix : string) {
+        eval this.index = index
+        eval this.prefix = prefix
+    }
+}
+
+define global final class RotationType {
+    public static final var ABSOLUTE : RotationType = new RotationType(0, "")
+    public static final var RELATIVE : RotationType = new RotationType(1, "~")
+
+    private final var index : int
+    public final var prefix : string
+
+    private new(index : int, prefix : string) {
+        eval this.index = index
+        eval this.prefix = prefix
+    }
+}
+
+define global final class Coordinates {
+    public static final var ABSOLUTE : CoordinateType = CoordinateType.ABSOLUTE
+    public static final var RELATIVE : CoordinateType = CoordinateType.RELATIVE
+    public static final var LOCAL : CoordinateType = CoordinateType.LOCAL
+}

@@ -10,7 +10,6 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeCo
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-import com.energyxxer.util.logger.Debug;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -123,9 +122,7 @@ public class ClassMethodFamily {
                 }
             }
             if(mode == CustomClass.MemberParentMode.INHERIT && existing != null) {
-                if(existing.getDefiningClass() == method.getDefiningClass()) {
-                    Debug.log("Skipping " + method + " since defined in same class: " + method.getDefiningClass());
-                } else {
+                if(existing.getDefiningClass() != method.getDefiningClass()) {
                     //Make note for later
                     registerClashingMethods(existing, method);
                 }
