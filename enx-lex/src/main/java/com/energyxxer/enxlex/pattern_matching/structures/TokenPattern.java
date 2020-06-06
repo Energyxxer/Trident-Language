@@ -66,11 +66,6 @@ public abstract class TokenPattern<T> {
         return name;
     }
 
-	public TokenPattern addTag(String newTag) {
-		tags.add(newTag);
-		return this;
-	}
-
 	public TokenPattern addTags(List<String> newTags) {
 		tags.addAll(newTags);
 		return this;

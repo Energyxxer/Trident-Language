@@ -447,6 +447,7 @@ public class TridentFile extends SymbolContext {
                             for(TridentPlugin plugin : parent.getCompiler().getWorker().output.transitivePlugins) {
                                 CommandDefinition def = plugin.getCommand(commandName);
                                 if(def != null) {
+                                    Debug.log("Found command analyzer for '" + commandName + "': " + def);
                                     new PluginCommandParser().handleCommand(def, commandPattern, modifiers, parent, appendTo);
                                     found = true;
                                     break;

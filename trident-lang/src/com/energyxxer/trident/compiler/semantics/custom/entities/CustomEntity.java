@@ -59,6 +59,13 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
     private boolean fullyDeclared = false;
     private HashMap<String, Symbol> members = new HashMap<>();
 
+    //EMPTY OBJECT FOR STATIC HANDLER
+    private CustomEntity() {
+        id = null;
+        baseType = null;
+        defaultNBT = new TagCompound();
+    }
+
     public CustomEntity(String id, @Nullable Type baseType, ISymbolContext ctx) {
         this.id = id;
         this.baseType = baseType;

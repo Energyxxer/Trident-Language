@@ -1,10 +1,8 @@
 package com.energyxxer.trident.compiler.analyzers.constructs;
 
-import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperandType;

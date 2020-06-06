@@ -1,22 +1,12 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
-import com.energyxxer.commodore.block.Block;
-import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
-import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.commodore.functionlogic.nbt.*;
-import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
-import com.energyxxer.commodore.item.Item;
-import com.energyxxer.commodore.textcomponents.TextComponent;
-import com.energyxxer.commodore.util.DoubleRange;
-import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-import java.util.*;
+import java.util.Iterator;
 
 @AnalyzerGroup(
         classes="BlockTypeHandler," +

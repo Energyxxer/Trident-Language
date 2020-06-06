@@ -78,43 +78,43 @@ public interface OperatorHandler<A, B> {
         }
 
         static {
-            handlers.put("java.lang.Integer + java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a + b);
-            handlers.put("java.lang.Double + java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a + b);
-            handlers.put("java.lang.Integer + java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a + b);
-            handlers.put("java.lang.Double + java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a + b);
+            handlers.put("primitive(int) + primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a + b);
+            handlers.put("primitive(real) + primitive(int)", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a + b);
+            handlers.put("primitive(int) + primitive(real)", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a + b);
+            handlers.put("primitive(real) + primitive(real)", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a + b);
 
-            handlers.put("java.lang.Integer - java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a - b);
-            handlers.put("java.lang.Double - java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a - b);
-            handlers.put("java.lang.Integer - java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a - b);
-            handlers.put("java.lang.Double - java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a - b);
+            handlers.put("primitive(int) - primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a - b);
+            handlers.put("primitive(real) - primitive(int)", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a - b);
+            handlers.put("primitive(int) - primitive(real)", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a - b);
+            handlers.put("primitive(real) - primitive(real)", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a - b);
 
-            handlers.put("java.lang.Integer * java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a * b);
-            handlers.put("java.lang.Double * java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a * b);
-            handlers.put("java.lang.Integer * java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a * b);
-            handlers.put("java.lang.Double * java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a * b);
+            handlers.put("primitive(int) * primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a * b);
+            handlers.put("primitive(real) * primitive(int)", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a * b);
+            handlers.put("primitive(int) * primitive(real)", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a * b);
+            handlers.put("primitive(real) * primitive(real)", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a * b);
 
-            handlers.put("java.lang.Integer / java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("primitive(int) / primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 try {
                     return a / b;
                 } catch(ArithmeticException ex) {
                     throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
                 }
             });
-            handlers.put("java.lang.Double / java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("primitive(real) / primitive(int)", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 try {
                     return a / b;
                 } catch(ArithmeticException ex) {
                     throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
                 }
             });
-            handlers.put("java.lang.Integer / java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("primitive(int) / primitive(real)", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 try {
                     return a / b;
                 } catch(ArithmeticException ex) {
                     throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
                 }
             });
-            handlers.put("java.lang.Double / java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("primitive(real) / primitive(real)", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 try {
                     return a / b;
                 } catch(ArithmeticException ex) {
@@ -122,28 +122,28 @@ public interface OperatorHandler<A, B> {
                 }
             });
 
-            handlers.put("java.lang.Integer % java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("primitive(int) % primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 try {
                     return a % b;
                 } catch(ArithmeticException ex) {
                     throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
                 }
             });
-            handlers.put("java.lang.Double % java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("primitive(real) % primitive(int)", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 try {
                     return a % b;
                 } catch(ArithmeticException ex) {
                     throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
                 }
             });
-            handlers.put("java.lang.Integer % java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("primitive(int) % primitive(real)", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 try {
                     return a % b;
                 } catch(ArithmeticException ex) {
                     throw new TridentException(TridentException.Source.ARITHMETIC_ERROR, ex.getMessage(), pattern, ctx);
                 }
             });
-            handlers.put("java.lang.Double % java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("primitive(real) % primitive(real)", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 try {
                     return a % b;
                 } catch(ArithmeticException ex) {
@@ -151,32 +151,29 @@ public interface OperatorHandler<A, B> {
                 }
             });
 
-            handlers.put("java.lang.Integer > java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a > b);
-            handlers.put("java.lang.Double > java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a > b);
-            handlers.put("java.lang.Integer > java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a > b);
-            handlers.put("java.lang.Double > java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a > b);
+            handlers.put("primitive(int) > primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a > b);
+            handlers.put("primitive(real) > primitive(int)", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a > b);
+            handlers.put("primitive(int) > primitive(real)", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a > b);
+            handlers.put("primitive(real) > primitive(real)", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a > b);
 
-            handlers.put("java.lang.Integer >= java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a >= b);
-            handlers.put("java.lang.Double >= java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a >= b);
-            handlers.put("java.lang.Integer >= java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a >= b);
-            handlers.put("java.lang.Double >= java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a >= b);
+            handlers.put("primitive(int) >= primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a >= b);
+            handlers.put("primitive(real) >= primitive(int)", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a >= b);
+            handlers.put("primitive(int) >= primitive(real)", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a >= b);
+            handlers.put("primitive(real) >= primitive(real)", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a >= b);
 
-            handlers.put("java.lang.Integer < java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a < b);
-            handlers.put("java.lang.Double < java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a < b);
-            handlers.put("java.lang.Integer < java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a < b);
-            handlers.put("java.lang.Double < java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a < b);
+            handlers.put("primitive(int) < primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a < b);
+            handlers.put("primitive(real) < primitive(int)", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a < b);
+            handlers.put("primitive(int) < primitive(real)", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a < b);
+            handlers.put("primitive(real) < primitive(real)", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a < b);
 
-            handlers.put("java.lang.Integer <= java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a <= b);
-            handlers.put("java.lang.Double <= java.lang.Integer", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a <= b);
-            handlers.put("java.lang.Integer <= java.lang.Double", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a <= b);
-            handlers.put("java.lang.Double <= java.lang.Double", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a <= b);
+            handlers.put("primitive(int) <= primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a <= b);
+            handlers.put("primitive(real) <= primitive(int)", (Double a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a <= b);
+            handlers.put("primitive(int) <= primitive(real)", (Integer a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a <= b);
+            handlers.put("primitive(real) <= primitive(real)", (Double a, Double b, TokenPattern<?> pattern, ISymbolContext ctx) -> a <= b);
 
-            handlers.put("java.lang.Integer & java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a & b);
-            handlers.put("java.lang.Integer | java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a | b);
-            handlers.put("java.lang.Integer ^ java.lang.Integer", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a ^ b);
-
-            //handlers.put("java.lang.Boolean && java.lang.Boolean", (Boolean a, Boolean b, TokenPattern<?> pattern, ISymbolContext ctx) -> a && b);
-            //handlers.put("java.lang.Boolean || java.lang.Boolean", (Boolean a, Boolean b, TokenPattern<?> pattern, ISymbolContext ctx) -> a || b);
+            handlers.put("primitive(int) & primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a & b);
+            handlers.put("primitive(int) | primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a | b);
+            handlers.put("primitive(int) ^ primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a ^ b);
 
             handlers.put("primitive(int) << primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a << b);
             handlers.put("primitive(int) >> primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a >> b);
@@ -186,7 +183,7 @@ public interface OperatorHandler<A, B> {
                 if(!realA) return false;
                 return b.getValue(Boolean.class);
             });
-            handlers.put("com.energyxxer.trident.compiler.semantics.ILazyValue || com.energyxxer.trident.compiler.semantics.ILazyValue", (ILazyValue a, ILazyValue b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("lazy || lazy", (ILazyValue a, ILazyValue b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 Boolean realA = a.getValue(Boolean.class);
                 if(realA) return true;
                 return b.getValue(Boolean.class);
@@ -201,12 +198,12 @@ public interface OperatorHandler<A, B> {
             handlers.put("* == *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> equals(a,b, pattern, ctx));
             handlers.put("* != *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> !equals(a,b, pattern, ctx));
 
-            handlers.put("- java.lang.Integer", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> -a);
-            handlers.put("- java.lang.Double", (Object nl, Double a, TokenPattern<?> pattern, ISymbolContext ctx) -> -a);
-            handlers.put("+ java.lang.Integer", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> a);
-            handlers.put("+ java.lang.Double", (Object nl, Double a, TokenPattern<?> pattern, ISymbolContext ctx) -> a);
-            handlers.put("! java.lang.Boolean", (Object nl, Boolean a, TokenPattern<?> pattern, ISymbolContext ctx) -> !a);
-            handlers.put("~ java.lang.Integer", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> ~a);
+            handlers.put("- primitive(int)", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> -a);
+            handlers.put("- primitive(real)", (Object nl, Double a, TokenPattern<?> pattern, ISymbolContext ctx) -> -a);
+            handlers.put("+ primitive(int)", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> a);
+            handlers.put("+ primitive(real)", (Object nl, Double a, TokenPattern<?> pattern, ISymbolContext ctx) -> a);
+            handlers.put("! primitive(boolean)", (Object nl, Boolean a, TokenPattern<?> pattern, ISymbolContext ctx) -> !a);
+            handlers.put("~ primitive(int)", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> ~a);
 
             handlers.put("symbol ++", (Symbol a, Object nl, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 Object oldValue = a.getValue(pattern, ctx);
@@ -232,8 +229,8 @@ public interface OperatorHandler<A, B> {
                 return a.getValue(pattern, ctx);
             });
 
-            handlers.put("com.energyxxer.trident.compiler.semantics.Symbol = *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                a.setValue(b);
+            handlers.put("symbol = *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                a.safeSetValue(b, pattern, ctx);
                 return b;
             });
 

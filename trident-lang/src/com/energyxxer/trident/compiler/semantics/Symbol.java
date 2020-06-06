@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class Symbol {
-
     public enum SymbolVisibility {
         GLOBAL(4), PUBLIC(3), LOCAL(2), PRIVATE(1);
 
@@ -48,7 +47,6 @@ public class Symbol {
     }
 
     private String name;
-
     private final SymbolVisibility visibility;
     private Object value;
     private boolean maySet = true;

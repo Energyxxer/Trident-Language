@@ -191,9 +191,7 @@ public class TokenList extends TokenPattern<TokenPattern<?>[]> {
 	public void validate() {
 		if(this.name != null && this.name.length() > 0) this.tags.add(name);
 		patterns.forEach(p -> {
-			for(String tag : this.tags) {
-				if(!tag.startsWith("__")) p.addTag(tag);
-			}
+			p.addTags(this.tags);
 			p.validate();
 		});
 	}

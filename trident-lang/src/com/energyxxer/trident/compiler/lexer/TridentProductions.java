@@ -23,7 +23,6 @@ import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.lexer.summaries.SummarySymbol;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
-import com.energyxxer.trident.compiler.plugin.TDNMetaBuilder;
 import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.util.StringBounds;
@@ -2832,6 +2831,6 @@ public class TridentProductions {
     }
 
     public void registerCustomCommand(String commandHeader, LazyTokenPatternMatch pattern) {
-        COMMAND.add(group(matchItem(COMMAND_HEADER, commandHeader).setName("CUSTOM_COMMAND_HEADER"), pattern).addTags(TDNMetaBuilder.PLUGIN_CREATED_COMMAND_TAG));
+        COMMAND.add(group(matchItem(COMMAND_HEADER, commandHeader).setName("CUSTOM_COMMAND_HEADER"), pattern));
     }
 }
