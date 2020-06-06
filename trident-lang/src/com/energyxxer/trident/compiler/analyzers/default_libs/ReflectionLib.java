@@ -7,72 +7,51 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.HashMap;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 @AnalyzerMember(key = "Reflection")
 public class ReflectionLib implements DefaultLibraryProvider {
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
-        DictionaryObject reflect = new DictionaryObject();
-
-        reflect.put("getFilesWithTag",
-                new MethodWrapper<>("getFilesWithTag", ((instance, params) -> getFilesWithTag(((TridentUtil.ResourceLocation) params[0]), compiler.getRootCompiler())), TridentUtil.ResourceLocation.class).createForInstance(null));
-        reflect.put("getFilesWithMetaTag",
-                new MethodWrapper<>("getFilesWithMetaTag", ((instance, params) -> getFilesWithMetaTag(((TridentUtil.ResourceLocation) params[0]), compiler.getRootCompiler())), TridentUtil.ResourceLocation.class).createForInstance(null));
-        reflect.put("getMetadata",
-                new MethodWrapper<>("getMetadata", ((instance, params) -> getMetadata(((TridentUtil.ResourceLocation) params[0]), compiler.getRootCompiler())), TridentUtil.ResourceLocation.class).createForInstance(null));
-        reflect.put("getCurrentFile", (VariableMethod) (params, patterns, pattern, ctx) -> ctx.getStaticParentFile().getResourceLocation());
-        reflect.put("getWritingFile", (VariableMethod) (params, patterns, pattern, ctx) -> ctx.getWritingFile().getResourceLocation());
-        reflect.put("getSymbol", (VariableMethod) (params, patterns, pattern, ctx) -> {
-            if(params.length < 1) {
-                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'getSymbol' requires 1 parameters, instead found " + params.length, pattern, ctx);
-            }
-            String symbolName = assertOfType(params[0], patterns[0], ctx, String.class);
-            Symbol sym = ctx.search(symbolName, ctx);
-            if(sym != null) return sym.getValue();
-            return null;
-        });
-        reflect.put("getVisibleSymbols", (VariableMethod) (params, patterns, pattern, ctx) -> getVisibleSymbols(ctx));
-        reflect.put("insertToFile", (VariableMethod) this::insertToFile);
-        reflect.put("getDefinedObjectives", (VariableMethod) (params, patterns, pattern, ctx) -> {
-            DictionaryObject objectives = new DictionaryObject();
-            for(Objective objective : ctx.getCompiler().getModule().getObjectiveManager().getAll()) {
-                DictionaryObject entry = new DictionaryObject();
-                entry.put("name", objective.getName());
-                entry.put("criterion", objective.getType());
-                entry.put("displayName", objective.getDisplayName());
-                objectives.put(objective.getName(), entry);
-            }
-            return objectives;
-        });
+        CustomClass reflect = new CustomClass("Reflection", "trident-util:native", globalCtx);
+        reflect.setNoConstructor();
         globalCtx.put(new Symbol("Reflection", Symbol.SymbolVisibility.GLOBAL, reflect));
+
+        try {
+            reflect.putStaticFunction(nativeMethodsToFunction(reflect.getInnerStaticContext(), ReflectionLib.class.getMethod("getFilesWithTag", TridentUtil.ResourceLocation.class, ISymbolContext.class)));
+            reflect.putStaticFunction(nativeMethodsToFunction(reflect.getInnerStaticContext(), ReflectionLib.class.getMethod("getFilesWithMetaTag", TridentUtil.ResourceLocation.class, ISymbolContext.class)));
+            reflect.putStaticFunction(nativeMethodsToFunction(reflect.getInnerStaticContext(), ReflectionLib.class.getMethod("getMetadata", TridentUtil.ResourceLocation.class, ISymbolContext.class)));
+            reflect.putStaticFunction(nativeMethodsToFunction(reflect.getInnerStaticContext(), ReflectionLib.class.getMethod("getCurrentFile", ISymbolContext.class)));
+            reflect.putStaticFunction(nativeMethodsToFunction(reflect.getInnerStaticContext(), ReflectionLib.class.getMethod("getWritingFile", ISymbolContext.class)));
+            reflect.putStaticFunction(nativeMethodsToFunction(reflect.getInnerStaticContext(), ReflectionLib.class.getMethod("getSymbol", String.class, ISymbolContext.class)));
+            reflect.putStaticFunction(nativeMethodsToFunction(reflect.getInnerStaticContext(), ReflectionLib.class.getMethod("getVisibleSymbols", ISymbolContext.class)));
+            reflect.putStaticFunction(nativeMethodsToFunction(reflect.getInnerStaticContext(), ReflectionLib.class.getMethod("insertToFile", TridentUtil.ResourceLocation.class, TridentFunction.class, TokenPattern.class, ISymbolContext.class)));
+            reflect.putStaticFunction(nativeMethodsToFunction(reflect.getInnerStaticContext(), ReflectionLib.class.getMethod("getDefinedObjectives", ISymbolContext.class)));
+        } catch(NoSuchMethodException e) {
+            e.printStackTrace();
+        }
     }
 
-    private Object insertToFile(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(params.length < 2) {
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'insertToFile' requires 2 parameters, instead found " + params.length, pattern, ctx);
-        }
-        TridentUtil.ResourceLocation fileLoc = assertOfType(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
-        VariableMethod func = assertOfType(params[1], patterns[1], ctx, VariableMethod.class);
-        if(fileLoc.isTag) throw new IllegalArgumentException("Cannot insert instructions to a tag: " + fileLoc);
+    public static Object insertToFile(TridentUtil.ResourceLocation targetFunction, TridentFunction writer, TokenPattern<?> callingPattern, ISymbolContext ctx) {
+        if(targetFunction.isTag) throw new IllegalArgumentException("Cannot insert instructions to a tag: " + targetFunction);
 
-        TridentFile file = ctx.getCompiler().getFile(fileLoc);
+        TridentFile file = ctx.getCompiler().getRootCompiler().getFile(targetFunction);
         if(file == null) {
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "File '" + fileLoc + "' does not exist", pattern, ctx);
+            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "File '" + targetFunction + "' does not exist", callingPattern, ctx);
         }
 
         ctx.getCompiler().pushWritingFile(file);
         try {
-            func.safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
+            writer.safeCall(new Object[0], new TokenPattern[0], callingPattern, ctx);
         } finally {
             ctx.getCompiler().popWritingFile();
         }
@@ -80,9 +59,9 @@ public class ReflectionLib implements DefaultLibraryProvider {
         return null;
     }
 
-    private DictionaryObject getMetadata(TridentUtil.ResourceLocation fileLoc, TridentCompiler compiler) {
+    public static DictionaryObject getMetadata(TridentUtil.ResourceLocation fileLoc, ISymbolContext ctx) {
         if(fileLoc.isTag) throw new IllegalArgumentException("Cannot get metadata of a tag: " + fileLoc);
-        TridentFile file = compiler.getFile(fileLoc);
+        TridentFile file = ctx.getCompiler().getRootCompiler().getFile(fileLoc);
         if(file == null) {
             throw new IllegalArgumentException("File '" + fileLoc + "' does not exist");
         } else {
@@ -90,11 +69,11 @@ public class ReflectionLib implements DefaultLibraryProvider {
         }
     }
 
-    private ListObject getFilesWithTag(TridentUtil.ResourceLocation tag, TridentCompiler compiler) {
+    public static ListObject getFilesWithTag(TridentUtil.ResourceLocation tag, ISymbolContext ctx) {
         tag = new TridentUtil.ResourceLocation(tag.toString());
         tag.isTag = false;
         ListObject list = new ListObject();
-        for(TridentFile file : compiler.getAllFiles()) {
+        for(TridentFile file : ctx.getCompiler().getRootCompiler().getAllFiles()) {
             if(file.getTags().contains(tag)) {
                 list.add(file.getResourceLocation());
             }
@@ -102,11 +81,11 @@ public class ReflectionLib implements DefaultLibraryProvider {
         return list;
     }
 
-    private ListObject getFilesWithMetaTag(TridentUtil.ResourceLocation tag, TridentCompiler compiler) {
+    public static ListObject getFilesWithMetaTag(TridentUtil.ResourceLocation tag, ISymbolContext ctx) {
         tag = new TridentUtil.ResourceLocation(tag.toString());
         tag.isTag = false;
         ListObject list = new ListObject();
-        for(TridentFile file : compiler.getAllFiles()) {
+        for(TridentFile file : ctx.getCompiler().getRootCompiler().getAllFiles()) {
             if(file.getMetaTags().contains(tag)) {
                 list.add(file.getResourceLocation());
             }
@@ -114,11 +93,37 @@ public class ReflectionLib implements DefaultLibraryProvider {
         return list;
     }
 
-    private DictionaryObject getVisibleSymbols(ISymbolContext ctx) {
+    public static DictionaryObject getVisibleSymbols(ISymbolContext ctx) {
         DictionaryObject dict = new DictionaryObject();
         for(Symbol sym : ctx.collectVisibleSymbols(new HashMap<>(), ctx).values()) {
-            dict.put(sym.getName(), sym.getValue());
+            dict.put(sym.getName(), sym.getValue(null, ctx));
         }
         return dict;
+    }
+
+    public static TridentUtil.ResourceLocation getCurrentFile(ISymbolContext ctx) {
+        return ctx.getStaticParentFile().getResourceLocation();
+    }
+
+    public static TridentUtil.ResourceLocation getWritingFile(ISymbolContext ctx) {
+        return ctx.getWritingFile().getResourceLocation();
+    }
+
+    public static Object getSymbol(String name, ISymbolContext ctx) {
+        Symbol sym = ctx.search(name, ctx, null);
+        if(sym != null) return sym.getValue(null, ctx);
+        return null;
+    }
+
+    public static Object getDefinedObjectives(ISymbolContext ctx) {
+        DictionaryObject objectives = new DictionaryObject();
+        for(Objective objective : ctx.getCompiler().getRootCompiler().getModule().getObjectiveManager().getAll()) {
+            DictionaryObject entry = new DictionaryObject();
+            entry.put("name", objective.getName());
+            entry.put("criterion", objective.getType());
+            entry.put("displayName", objective.getDisplayName());
+            objectives.put(objective.getName(), entry);
+        }
+        return objectives;
     }
 }

@@ -2,7 +2,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -11,17 +11,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
-
-public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, Iterable<Object> {
+public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable<Object>, ContextualToString {
+    public static final DictionaryObject STATIC_HANDLER = new DictionaryObject();
     private static Stack<DictionaryObject> toStringRecursion = new Stack<>();
     private static HashMap<String, MemberWrapper<DictionaryObject>> members = new HashMap<>();
 
     static {
         try {
-            members.put("merge", new MethodWrapper<>(DictionaryObject.class.getMethod("merge", DictionaryObject.class)));
-            members.put("remove", new MethodWrapper<>(DictionaryObject.class.getMethod("remove", String.class)));
-            members.put("clear", new MethodWrapper<>(DictionaryObject.class.getMethod("clear")));
+            members.put("merge", new NativeMethodWrapper<>(DictionaryObject.class.getMethod("merge", DictionaryObject.class)));
+            members.put("remove", new NativeMethodWrapper<>(DictionaryObject.class.getMethod("remove", String.class)));
+            members.put("clear", new NativeMethodWrapper<>(DictionaryObject.class.getMethod("clear")));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -31,22 +30,23 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
 
     @Override
     public Object getMember(DictionaryObject dict, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(dict, member, pattern, ctx, keepSymbol);
         if(keepSymbol && !dict.map.containsKey(member)) {
             put(member, null);
         }
         if(!keepSymbol && !dict.map.containsKey(member)) {
             if(member.equals("map")) {
-                return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                return (TridentFunction) (params, patterns, pattern1, file1) -> {
                     if (params.length < 1) {
                         throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1, ctx);
                     }
-                    FunctionMethod func = assertOfType(params[0], patterns[0], file1, FunctionMethod.class);
+                    TridentUserFunction func = TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], file1, TridentUserFunction.class);
 
                     DictionaryObject newDict = new DictionaryObject();
 
                     try {
                         for (Map.Entry<String, Symbol> entry : dict.entrySet()) {
-                            newDict.put(entry.getKey(), func.safeCall(new Object[]{entry.getKey(), entry.getValue().getValue()}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
+                            newDict.put(entry.getKey(), func.safeCall(new Object[]{entry.getKey(), entry.getValue().getValue(pattern, ctx)}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
                         }
                     } catch(ConcurrentModificationException x) {
                         throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
@@ -62,18 +62,20 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
             }
         }
         Symbol elem = dict.map.get(member);
-        return keepSymbol || elem == null ? elem : elem.getValue();
+        return keepSymbol || elem == null ? elem : elem.getValue(pattern, ctx);
     }
 
     @Override
     public Object getIndexer(DictionaryObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        String key = assertOfType(index, pattern, ctx, String.class);
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
+        String key = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         return getMember(object, key, pattern, ctx, keepSymbol);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <F> F cast(DictionaryObject object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(DictionaryObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 
@@ -91,7 +93,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
     }
 
     public Object get(String key) {
-        return map.containsKey(key) ? map.get(key).getValue() : null;
+        return map.containsKey(key) ? map.get(key).getValue(null, null) : null;
     }
 
     public boolean containsKey(String key) {
@@ -129,10 +131,10 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
     public DictionaryObject merge(DictionaryObject other) {
         DictionaryObject newDict = new DictionaryObject();
         for(Map.Entry<String, Symbol> entry : this.entrySet()) {
-            newDict.put(entry.getKey(), entry.getValue().getValue());
+            newDict.put(entry.getKey(), entry.getValue().getValue(null, null));
         }
         for(Map.Entry<String, Symbol> entry : other.entrySet()) {
-            newDict.put(entry.getKey(), entry.getValue().getValue());
+            newDict.put(entry.getKey(), entry.getValue().getValue(null, null));
         }
         return newDict;
     }
@@ -140,10 +142,10 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
     public DictionaryObject shallowMerge(DictionaryObject other) {
         DictionaryObject newDict = new DictionaryObject();
         for(Map.Entry<String, Symbol> entry : this.entrySet()) {
-            newDict.put(entry.getKey(), entry.getValue().getValue());
+            newDict.put(entry.getKey(), entry.getValue().getValue(null, null));
         }
         for(Map.Entry<String, Symbol> entry : other.entrySet()) {
-            newDict.put(entry.getKey(), entry.getValue().getValue());
+            newDict.put(entry.getKey(), entry.getValue().getValue(null, null));
         }
         return newDict;
     }
@@ -164,7 +166,7 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
                 Map.Entry<String, Symbol> entry = it.next();
                 DictionaryObject dict = new DictionaryObject();
                 dict.put("key", entry.getKey());
-                dict.put("value", entry.getValue().getValue());
+                dict.put("value", entry.getValue().getValue(null, null));
                 return dict;
             }
         };
@@ -176,8 +178,28 @@ public class DictionaryObject implements VariableTypeHandler<DictionaryObject>, 
             return "{ ...circular... }";
         }
         toStringRecursion.push(this);
-        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue() instanceof String ? "\"" + s.getValue() + "\"" : InterpolationManager.castToString(s.getValue()))).collect(Collectors.joining(", ")) + "}";
+        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue(null, null) instanceof String ? "\"" + s.getValue(null, null) + "\"" : InterpolationManager.castToString(s.getValue(null, null)))).collect(Collectors.joining(", ")) + "}";
         toStringRecursion.pop();
         return str;
+    }
+
+    public String contextualToString(TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(toStringRecursion.contains(this)) {
+            return "{ ...circular... }";
+        }
+        toStringRecursion.push(this);
+        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue(pattern, ctx) instanceof String ? "\"" + s.getValue(pattern, ctx) + "\"" : InterpolationManager.castToString(s.getValue(pattern, ctx), pattern, ctx))).collect(Collectors.joining(", ")) + "}";
+        toStringRecursion.pop();
+        return str;
+    }
+
+    @Override
+    public Class<DictionaryObject> getHandledClass() {
+        return DictionaryObject.class;
+    }
+
+    @Override
+    public String getTypeIdentifier() {
+        return "dictionary";
     }
 }

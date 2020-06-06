@@ -34,7 +34,7 @@ public class RawParser implements ModifierParser {
             if(elem instanceof String) {
                 if(!((String) elem).isEmpty()) modifiers.add(new RawExecuteModifier(((String) elem)));
             } else {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot turn an object of type " + VariableTypeHandler.Static.getShorthandForObject(elem) + " into a string for a raw execute modifier", pattern.find("RAW_MODIFIER_VALUE"), ctx);
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot turn an object of type " + TridentTypeManager.getTypeIdentifierForObject(elem) + " into a string for a raw execute modifier", pattern.find("RAW_MODIFIER_VALUE"), ctx);
             }
         }
         return modifiers;

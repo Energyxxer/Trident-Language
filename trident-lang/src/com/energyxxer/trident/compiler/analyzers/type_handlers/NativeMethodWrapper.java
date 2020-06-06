@@ -8,14 +8,22 @@ import java.lang.annotation.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class MethodWrapper<T> implements MemberWrapper<T> {
+public class NativeMethodWrapper<T> implements MemberWrapper<T> {
     public interface Invoker<T> {
         Object invoke(T instance, Object... params) throws Exception;
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
-    public @interface TridentNullable {
+    public @interface TridentNullableArg {
+    }
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface TridentThisArg {
+    }
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public @interface TridentNotNullReturn {
     }
 
     private final String methodName;
@@ -24,11 +32,11 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
     private final boolean[] nullables;
     private int requiredSize;
 
-    public MethodWrapper(Method method) {
+    public NativeMethodWrapper(Method method) {
         this(method.getName(), method);
     }
 
-    public MethodWrapper(String methodName, Method method) {
+    public NativeMethodWrapper(String methodName, Method method) {
         this.methodName = methodName;
         this.invoker = method::invoke;
         this.paramTypes = method.getParameterTypes();
@@ -38,7 +46,7 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
         int i = 0;
         for(Annotation[] param : method.getParameterAnnotations()) {
             for(Annotation annot : param) {
-                if(annot.annotationType() == TridentNullable.class) {
+                if(annot.annotationType() == TridentNullableArg.class) {
                     nullables[i] = true;
                     break;
                 }
@@ -47,7 +55,7 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
         }
     }
 
-    public MethodWrapper(String methodName, Invoker<T> invoker, Class<?>... paramTypes) {
+    public NativeMethodWrapper(String methodName, Invoker<T> invoker, Class<?>... paramTypes) {
         this.methodName = methodName;
         this.invoker = invoker;
         this.paramTypes = paramTypes;
@@ -55,7 +63,7 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
         requiredSize = paramTypes.length;
     }
 
-    public MethodWrapper<T> setNullable(int index) {
+    public NativeMethodWrapper<T> setNullable(int index) {
         nullables[index] = true;
         requiredSize = paramTypes.length;
         for(int i = requiredSize - 1; i >= 0; i--) {
@@ -65,7 +73,7 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
         return this;
     }
 
-    public VariableMethod createForInstance(T instance) {
+    public TridentFunction createForInstance(T instance) {
         return (params, patterns, pattern, file) -> {
             file.getCompiler().getCallStack().push(new CallStack.Call(methodName, null, null, pattern));
             try {
@@ -76,12 +84,12 @@ public class MethodWrapper<T> implements MemberWrapper<T> {
                 for (Class<?> cls : paramTypes) {
                     if (i < requiredSize) {
                         if (params[i] != null || !nullables[i])
-                            params[i] = VariableMethod.HelperMethods.assertOfType(params[i], patterns[i], file, cls);
+                            params[i] = TridentFunction.HelperMethods.assertOfClass(params[i], patterns[i], file, cls);
                     } else { //if we reach this, the remaining parameter types are nullable
                         if (i >= params.length) break;
                         if (i < paramTypes.length) { //param is present
                             if (params[i] != null) {
-                                params[i] = VariableMethod.HelperMethods.assertOfType(params[i], patterns[i], file, cls);
+                                params[i] = TridentFunction.HelperMethods.assertOfClass(params[i], patterns[i], file, cls);
                             }
                         } else break;
                     }

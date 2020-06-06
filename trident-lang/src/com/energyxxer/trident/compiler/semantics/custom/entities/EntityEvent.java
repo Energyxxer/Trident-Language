@@ -4,16 +4,21 @@ import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
 
-public class EntityEvent implements VariableTypeHandler<EntityEvent> {
+public class EntityEvent implements TypeHandler<EntityEvent> {
+    public static final EntityEvent STATIC_HANDLER = new EntityEvent();
+
     private TridentUtil.ResourceLocation location;
     private Function function;
+
+    public EntityEvent() {}
 
     public EntityEvent(TridentUtil.ResourceLocation location, Function function) {
         this.location = location;
@@ -22,17 +27,20 @@ public class EntityEvent implements VariableTypeHandler<EntityEvent> {
 
     @Override
     public Object getMember(EntityEvent object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
         if("function".equals(member)) return location;
         throw new MemberNotFoundException();
     }
 
     @Override
     public Object getIndexer(EntityEvent object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
         throw new MemberNotFoundException();
     }
 
     @Override
-    public <F> F cast(EntityEvent object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(EntityEvent object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 
@@ -63,5 +71,15 @@ public class EntityEvent implements VariableTypeHandler<EntityEvent> {
         }
         EntityEvent event = new EntityEvent(functionLoc, function);
         ctx.put(new Symbol(eventName, Symbol.SymbolVisibility.LOCAL, event));
+    }
+
+    @Override
+    public Class<EntityEvent> getHandledClass() {
+        return EntityEvent.class;
+    }
+
+    @Override
+    public String getTypeIdentifier() {
+        return "entity_event";
     }
 }

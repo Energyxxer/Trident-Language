@@ -6,7 +6,8 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.enxlex.report.StackTrace;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +17,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class TridentException extends RuntimeException implements VariableTypeHandler<TridentException> {
+public class TridentException extends RuntimeException implements TypeHandler<TridentException> {
+
+    public static final TypeHandler<?> STATIC_HANDLER = new TridentException();
 
     public enum Source {
         TYPE_ERROR("Type Error"),
@@ -98,6 +101,7 @@ public class TridentException extends RuntimeException implements VariableTypeHa
 
     @Override
     public Object getMember(TridentException object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
         switch(member) {
             case "message": return notice.getMessage();
             case "extendedMessage": return notice.getExtendedMessage();
@@ -111,11 +115,13 @@ public class TridentException extends RuntimeException implements VariableTypeHa
 
     @Override
     public Object getIndexer(TridentException object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
         throw new MemberNotFoundException();
     }
 
     @Override
-    public <F> F cast(TridentException object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public Object cast(TridentException object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 
@@ -183,5 +189,15 @@ public class TridentException extends RuntimeException implements VariableTypeHa
             }
             throw new TridentException(Source.COMMAND_ERROR, ex.getMessage(), defaultPattern, ctx);
         }
+    }
+
+    @Override
+    public Class<TridentException> getHandledClass() {
+        return TridentException.class;
+    }
+
+    @Override
+    public String getTypeIdentifier() {
+        return "exception";
     }
 }

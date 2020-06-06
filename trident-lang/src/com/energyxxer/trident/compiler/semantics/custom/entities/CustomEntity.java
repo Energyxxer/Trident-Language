@@ -24,9 +24,11 @@ import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.selectors.TypeArgumentParser;
+import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -43,10 +45,11 @@ import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 import static com.energyxxer.trident.compiler.analyzers.commands.SummonParser.requestComponents;
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
 import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger.REPLACE;
 
-public class CustomEntity implements VariableTypeHandler<CustomEntity> {
+public class CustomEntity implements TypeHandler<CustomEntity> {
+    public static final CustomEntity STATIC_HANDLER = new CustomEntity();
     private final String id;
     @Nullable
     private final Type baseType;
@@ -114,13 +117,14 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
     @Override
     public Object getMember(CustomEntity object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
         if(members.containsKey(member)) {
             Symbol sym = members.get(member);
-            return keepSymbol ? sym : sym.getValue();
+            return keepSymbol ? sym : sym.getValue(pattern, ctx);
         }
         switch (member) {
             case "getSettingNBT":
-                return (VariableMethod) (params, patterns, pattern1, file1) -> {
+                return (TridentFunction) (params, patterns, pattern1, file1) -> {
                     TagCompound nbt = new TagCompound();
                     if (this.getBaseType() != null) {
                         nbt.add(new TagString("id", this.getBaseType().toString()));
@@ -129,7 +133,7 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                     return nbt;
                 };
             case "getMatchingNBT":
-                return (VariableMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagList("Tags", new TagString(idTag)));
+                return (TridentFunction) (params, patterns, pattern1, file1) -> new TagCompound(new TagList("Tags", new TagString(idTag)));
             case "idTag":
                 return idTag;
             case "baseType":
@@ -140,10 +144,11 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
 
     @Override
     public Object getIndexer(CustomEntity object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        String indexStr = assertOfType(index, pattern, ctx, String.class);
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
+        String indexStr = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
         if(members.containsKey(indexStr)) {
             Symbol sym = members.get(indexStr);
-            return keepSymbol ? sym : sym.getValue();
+            return keepSymbol ? sym : sym.getValue(pattern, ctx);
         } else if(keepSymbol) {
             Symbol sym;
             members.put(indexStr, sym = new Symbol(indexStr, Symbol.SymbolVisibility.LOCAL, null));
@@ -152,7 +157,8 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     }
 
     @Override
-    public <F> F cast(CustomEntity object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext file) {
+    public Object cast(CustomEntity object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 
@@ -429,13 +435,12 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
                                 break;
                             }
                             case "ENTITY_FIELD": {
-                                String fieldName = entry.find("FIELD_NAME").flatten(false);
-                                Object value = InterpolationManager.parse(((TokenStructure) entry.find("FIELD_VALUE")).getContents(), ctx);
-                                Symbol sym = new Symbol(fieldName, Symbol.SymbolVisibility.LOCAL, value);
+                                VariableInstruction.SymbolDeclaration decl = parseSymbolDeclaration(entry, ctx);
+
                                 if (entityDecl != null) {
-                                    entityDecl.members.put(fieldName, sym);
+                                    entityDecl.members.put(decl.getName(), decl.getSupplier().get());
                                 } else {
-                                    ctx.put(sym);
+                                    ctx.put(decl.getSupplier().get());
                                 }
                                 break;
                             }
@@ -469,5 +474,15 @@ public class CustomEntity implements VariableTypeHandler<CustomEntity> {
     @Override
     public String toString() {
         return "[Custom Entity: " + id + "]";
+    }
+
+    @Override
+    public Class<CustomEntity> getHandledClass() {
+        return CustomEntity.class;
+    }
+
+    @Override
+    public String getTypeIdentifier() {
+        return "custom_entity";
     }
 }

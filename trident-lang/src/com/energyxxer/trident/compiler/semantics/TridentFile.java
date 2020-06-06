@@ -24,6 +24,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.plugin.CommandDefinition;
 import com.energyxxer.trident.compiler.plugin.PluginCommandParser;
 import com.energyxxer.trident.compiler.plugin.TridentPlugin;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ImportedSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
@@ -49,6 +50,7 @@ public class TridentFile extends SymbolContext {
     private final TridentUtil.ResourceLocation location;
 
     private boolean compileOnly = false;
+    private boolean breaking = false;
     private float priority = 0;
     private boolean valid = true;
 
@@ -134,6 +136,10 @@ public class TridentFile extends SymbolContext {
                     }
                     case "PRIORITY_DIRECTIVE": {
                         this.priority = (float) CommonParsers.parseDouble(directiveBody.find("REAL"), this);
+                        break;
+                    }
+                    case "BREAKING_DIRECTIVE": {
+                        this.breaking = true;
                         break;
                     }
                     case "METADATA_DIRECTIVE": {
@@ -360,9 +366,10 @@ public class TridentFile extends SymbolContext {
                             resolveEntry(inner, parent, appendTo, compileOnly);
                         } catch(TridentException x) {
                             if(compiler.getTryStack().isEmpty()) {
+                                if(!popCall) throw x;
                                 x.expandToUncaught();
                                 compiler.getReport().addNotice(x.getNotice());
-                                if(x.isBreaking()) break;
+                                if(x.isBreaking() || parentFile.breaking) break;
                             } else if(compiler.getTryStack().isRecovering()) {
                                 queuedExceptions.add(x);
                             } else if(compiler.getTryStack().isBreaking()) {
@@ -387,6 +394,9 @@ public class TridentFile extends SymbolContext {
                     if(compiler.getTryStack().isEmpty()) {
                         x.expandToUncaught();
                         compiler.getReport().addNotice(x.getNotice());
+                        if(x.isBreaking() || parentFile.breaking) {
+                            break;
+                        }
                     } else {
                         if(queuedExceptions == null) queuedExceptions = new ArrayList<>();
                         queuedExceptions.add(x);
@@ -504,5 +514,20 @@ public class TridentFile extends SymbolContext {
 
     public File getDeclaringFSFile() {
         return pattern.getFile();
+    }
+
+    private HashMap<String, CustomClass> definedInnerClasses = null;
+
+    public void registerInnerClass(CustomClass cls, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(definedInnerClasses == null) definedInnerClasses = new HashMap<>();
+        if(definedInnerClasses.containsKey(cls.getClassName())) {
+            throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Class '" + cls.getTypeIdentifier() + "' already exists", pattern, ctx);
+        }
+        definedInnerClasses.put(cls.getClassName(), cls);
+    }
+
+    public CustomClass getClassForName(String className) {
+        if(definedInnerClasses == null) return null;
+        return definedInnerClasses.get(className);
     }
 }
