@@ -51,14 +51,6 @@ public class CustomItem implements TypeHandler<CustomItem> {
     private boolean fullyDeclared = false;
     private HashMap<String, Symbol> members = new HashMap<>();
 
-    //EMPTY OBJECT FOR STATIC HANDLER
-    private CustomItem() {
-        id = null;
-        namespace = null;
-        baseType = null;
-        defaultNBT = new TagCompound();
-    }
-
     public CustomItem(String id, Type baseType, ISymbolContext ctx) {
         this.id = id;
         this.namespace = ctx.getStaticParentFile().getNamespace().getName();

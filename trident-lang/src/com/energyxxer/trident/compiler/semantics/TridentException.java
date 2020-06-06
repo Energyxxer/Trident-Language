@@ -48,10 +48,6 @@ public class TridentException extends RuntimeException implements TypeHandler<Tr
     private TokenPattern<?> cause;
     private boolean breaking = false;
 
-    //EMPTY OBJECT FOR STATIC HANDLER
-    private TridentException() {
-    }
-
     public TridentException(Source source, String message, @NotNull TokenPattern<?> cause, ISymbolContext ctx) {
         this(source, message, cause, ctx.getCompiler().getCallStack().getView(cause));
     }

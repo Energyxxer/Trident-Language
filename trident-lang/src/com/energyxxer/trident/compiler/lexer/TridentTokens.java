@@ -66,8 +66,6 @@ public class TridentTokens {
             IDENTIFIER_TYPE_X,
             //Java identifiers without the reserved words
             IDENTIFIER_TYPE_Y,
-            //primitive types
-            PRIMITIVE_TYPE,
             //minecraft:trident/resource_locations
             RESOURCE_LOCATION,
             //Control tokens (zero-width):
