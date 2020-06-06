@@ -568,17 +568,22 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     public boolean hasAccess(ISymbolContext ctx, Symbol.SymbolVisibility visibility) {
         return visibility == Symbol.SymbolVisibility.PUBLIC ||
-                (visibility == Symbol.SymbolVisibility.LOCAL && getDeclaringFile().getDeclaringFSFile().equals(ctx.getDeclaringFSFile())) ||
+                (visibility == Symbol.SymbolVisibility.LOCAL && (getDeclaringFile().getDeclaringFSFile().equals(ctx.getDeclaringFSFile()) || isProtectedAncestor(ctx))) ||
                 (visibility == Symbol.SymbolVisibility.PRIVATE && ctx.isAncestor(this.innerStaticContext));
+    }
+
+    public boolean isProtectedAncestor(ISymbolContext ctx) {
+        for(CustomClass cls : getInheritanceTree()) {
+            if(ctx.isAncestor(cls.innerStaticContext)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public boolean isStaticHandler() {
         return true;
-    }
-
-    public Object forceInstantiate() {
-        return null;
     }
 
     public boolean isComplete() {

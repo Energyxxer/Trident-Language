@@ -6,13 +6,6 @@ local var assertType = function(obj, type) {
     }
 }
 
-local var assertObjectType = function(obj, objType) {
-    eval assertType(obj, "dictionary")
-    do if(obj.objectType() != objType) {
-        throw "Expected dictionary of meta type " + objType + ", instead got " + obj.objectType()
-    }
-}
-
 local var assertDualTypes = function(obj, type0, type1) {
     do if(!isInstance(obj, type0) && !isInstance(obj, type1)) {
         throw "Expected " + type0 + " or " + type1 + ", instead got " + typeOf(obj)
