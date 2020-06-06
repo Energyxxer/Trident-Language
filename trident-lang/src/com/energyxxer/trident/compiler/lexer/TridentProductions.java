@@ -385,7 +385,7 @@ public class TridentProductions {
                     group(brace("(").addProcessor(clearMemberListProcessor).addProcessor(startClosure), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("METHOD_CALL").addProcessor(clearMemberListProcessor).addProcessor(endComplexValue)
             ).setName("MEMBER_ACCESS");
 
-            LazyTokenGroupMatch INTERPOLATION_CHAIN = group(ROOT_INTERPOLATION_VALUE, list(MEMBER_ACCESS).setOptional().setName("MEMBER_ACCESSES")).setName("INTERPOLATION_CHAIN");
+            LazyTokenGroupMatch INTERPOLATION_CHAIN = group(ROOT_INTERPOLATION_VALUE, list(MEMBER_ACCESS).setOptional().setName("MEMBER_ACCESSES"), choice(group(keyword("is"), INTERPOLATION_TYPE).setName("INTERPOLATION_CHAIN_TAIL_IS"), group(keyword("as"), INTERPOLATION_TYPE).setName("INTERPOLATION_CHAIN_TAIL_AS")).setOptional().setName("INTERPOLATION_CHAIN_TAIL")).setName("INTERPOLATION_CHAIN");
 
 
             LazyTokenStructureMatch MEMBER_TYPE_ACCESS = choice(

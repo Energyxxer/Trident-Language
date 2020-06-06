@@ -432,6 +432,20 @@ public class InterpolationManager {
 
             return parent;
         }
+
+        TokenPattern<?> rawTail = pattern.find("INTERPOLATION_CHAIN_TAIL");
+        if(rawTail != null) {
+            TypeHandler<?> type = parseType(rawTail.find("INTERPOLATION_TYPE"), ctx);
+
+            switch(((TokenStructure) rawTail).getContents().getName()) {
+                case "INTERPOLATION_CHAIN_TAIL_IS":
+                    return type.isInstance(parse(toBlame, ctx, false));
+                case "INTERPOLATION_CHAIN_TAIL_AS":
+                    return castOrCoerce(parse(toBlame, ctx, false), type, pattern, ctx, false);
+                default:
+                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + ((TokenStructure)rawTail).getContents().getName() + "'", rawTail, ctx);
+            }
+        }
         return parse(toBlame, ctx, keepSymbol);
     }
 
@@ -497,6 +511,11 @@ public class InterpolationManager {
 
     @Contract("null, _, _, _ -> null")
     public static Object cast(Object obj, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        return cast(obj, targetType, pattern, ctx, true);
+    }
+
+    @Contract("null, _, _, _, _ -> null")
+    public static Object cast(Object obj, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx, boolean failureException) {
         if(obj == null) return null;
         if("primitive(string)".equals(TridentTypeManager.getInternalTypeIdentifierForType(targetType))) {
             return castToString(obj, pattern, ctx);
@@ -506,8 +525,32 @@ public class InterpolationManager {
         try {
             return sourceType.cast(obj, targetType, pattern, ctx);
         } catch(ClassCastException x) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Unable to cast " + TridentTypeManager.getTypeIdentifierForObject(obj) + " to type " + targetType.getTypeIdentifier(), pattern, ctx);
+            if(failureException) {
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "Unable to cast " + TridentTypeManager.getTypeIdentifierForObject(obj) + " to type " + targetType.getTypeIdentifier(), pattern, ctx);
+            }
+            return null;
         }
+    }
+
+    @Contract("null, _, _, _ -> null")
+    public static Object castOrCoerce(Object obj, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        return castOrCoerce(obj, targetType, pattern, ctx, true);
+    }
+
+    @Contract("null, _, _, _, _ -> null")
+    public static Object castOrCoerce(Object obj, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx, boolean failureException) {
+        if(obj == null) return null;
+        Object cast = cast(obj, targetType, pattern, ctx, false);
+        if(cast != null) return cast;
+
+        TypeHandler sourceType = getHandlerForObject(obj, pattern, ctx);
+        if(sourceType.canCoerce(obj, targetType)) {
+            return sourceType.coerce(obj, targetType, pattern, ctx);
+        }
+        if(failureException) {
+            throw new TridentException(TridentException.Source.TYPE_ERROR, "Unable to cast or coerce " + TridentTypeManager.getTypeIdentifierForObject(obj) + " to type " + targetType.getTypeIdentifier(), pattern, ctx);
+        }
+        return null;
     }
 
     public static TypeHandler getHandlerForObject(Object value, TokenPattern<?> pattern, ISymbolContext ctx) {
