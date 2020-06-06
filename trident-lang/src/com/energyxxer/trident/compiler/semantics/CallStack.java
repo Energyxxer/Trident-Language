@@ -50,7 +50,7 @@ public class CallStack {
         for(int i = stack.size()-1; i >= 0; i--) {
             Call call = stack.get(i);
             TokenPattern<?> calledBy = i < stack.size()-1 ? stack.get(i+1).calledBy : leaf;
-            elements.add(new StackTrace.StackTraceElement("at " + (call.calledFile != null ? call.calledFile.getResourceLocation() : "<internal function>") + " ~ " + call.calledFunction, calledBy));
+            elements.add(new StackTrace.StackTraceElement("at " + call.calledFile.getResourceLocation() + " ~ " + call.calledFunction, calledBy));
         }
         return new StackTrace(elements);
     }

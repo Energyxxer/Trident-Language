@@ -1,9 +1,12 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
-import com.energyxxer.commodore.functionlogic.nbt.TagString;
+import com.energyxxer.commodore.functionlogic.entity.Entity;
+import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.commodore.textcomponents.StringTextComponent;
+import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
@@ -15,32 +18,34 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
+
 @AnalyzerMember(key = "java.lang.String")
-public class StringTypeHandler implements TypeHandler<String> {
+public class StringTypeHandler implements VariableTypeHandler<String> {
     private static HashMap<String, MemberWrapper<String>> members = new HashMap<>();
 
     static {
         try {
-            members.put("substring", new NativeMethodWrapper<String>("substring", (instance, params) -> instance.substring((int)params[0], params[1] != null ? (int)params[1] : instance.length()), Integer.class, Integer.class).setNullable(1));
-            members.put("indexOf", new NativeMethodWrapper<>(String.class.getMethod("indexOf", String.class)));
-            members.put("lastIndexOf", new NativeMethodWrapper<>(String.class.getMethod("lastIndexOf", String.class)));
-            members.put("split", new NativeMethodWrapper<String>("split", (instance, params) -> instance.split(Pattern.quote((String) params[0]), params[1] != null ? (int)params[1] : 0), String.class, Integer.class).setNullable(1));
-            members.put("splitRegex", new NativeMethodWrapper<String>("splitRegex", (instance, params) -> instance.split(((String) params[0]), params[1] != null ? (int)params[1] : 0), String.class, Integer.class).setNullable(1));
-            members.put("replace", new NativeMethodWrapper<>(String.class.getMethod("replace", CharSequence.class, CharSequence.class)));
-            members.put("replaceRegex", new NativeMethodWrapper<>(String.class.getMethod("replaceAll", String.class, String.class)));
-            members.put("replaceFirst", new NativeMethodWrapper<>("replaceFirst", (instance, params) -> instance.replaceFirst((String)params[0], (String)params[1]), String.class, String.class));
-            members.put("toLowerCase", new NativeMethodWrapper<>("toLowerCase", (instance, params) -> instance.toLowerCase(Locale.ENGLISH)));
-            members.put("toUpperCase", new NativeMethodWrapper<>("toUpperCase", (instance, params) -> instance.toUpperCase(Locale.ENGLISH)));
-            members.put("trim", new NativeMethodWrapper<>(String.class.getMethod("trim")));
-            members.put("startsWith", new NativeMethodWrapper<>(String.class.getMethod("startsWith", String.class)));
-            members.put("endsWith", new NativeMethodWrapper<>(String.class.getMethod("endsWith", String.class)));
-            members.put("contains", new NativeMethodWrapper<>(String.class.getMethod("contains", CharSequence.class)));
-            members.put("matches", new NativeMethodWrapper<>(String.class.getMethod("matches", String.class)));
-            members.put("isEmpty", new NativeMethodWrapper<>(String.class.getMethod("isEmpty")));
-            members.put("isWhitespace", new NativeMethodWrapper<>("isWhitespace", (instance, params) -> Character.isWhitespace(instance.charAt(0))));
-            members.put("isDigit", new NativeMethodWrapper<>("isDigit", (instance, params) -> Character.isDigit(instance.charAt(0))));
-            members.put("isLetter", new NativeMethodWrapper<>("isLetter", (instance, params) -> Character.isLetter(instance.charAt(0))));
-            members.put("isLetterOrDigit", new NativeMethodWrapper<>("isLetterOrDigit", (instance, params) -> Character.isLetterOrDigit(instance.charAt(0))));
+            members.put("substring", new MethodWrapper<String>("substring", (instance, params) -> instance.substring((int)params[0], params[1] != null ? (int)params[1] : instance.length()), Integer.class, Integer.class).setNullable(1));
+            members.put("indexOf", new MethodWrapper<>(String.class.getMethod("indexOf", String.class)));
+            members.put("lastIndexOf", new MethodWrapper<>(String.class.getMethod("lastIndexOf", String.class)));
+            members.put("split", new MethodWrapper<String>("split", (instance, params) -> instance.split(Pattern.quote((String) params[0]), params[1] != null ? (int)params[1] : 0), String.class, Integer.class).setNullable(1));
+            members.put("splitRegex", new MethodWrapper<String>("splitRegex", (instance, params) -> instance.split(((String) params[0]), params[1] != null ? (int)params[1] : 0), String.class, Integer.class).setNullable(1));
+            members.put("replace", new MethodWrapper<>(String.class.getMethod("replace", CharSequence.class, CharSequence.class)));
+            members.put("replaceRegex", new MethodWrapper<>(String.class.getMethod("replaceAll", String.class, String.class)));
+            members.put("replaceFirst", new MethodWrapper<>("replaceFirst", (instance, params) -> instance.replaceFirst((String)params[0], (String)params[1]), String.class, String.class));
+            members.put("toLowerCase", new MethodWrapper<>("toLowerCase", (instance, params) -> instance.toLowerCase(Locale.ENGLISH)));
+            members.put("toUpperCase", new MethodWrapper<>("toUpperCase", (instance, params) -> instance.toUpperCase(Locale.ENGLISH)));
+            members.put("trim", new MethodWrapper<>(String.class.getMethod("trim")));
+            members.put("startsWith", new MethodWrapper<>(String.class.getMethod("startsWith", String.class)));
+            members.put("endsWith", new MethodWrapper<>(String.class.getMethod("endsWith", String.class)));
+            members.put("contains", new MethodWrapper<>(String.class.getMethod("contains", CharSequence.class)));
+            members.put("matches", new MethodWrapper<>(String.class.getMethod("matches", String.class)));
+            members.put("isEmpty", new MethodWrapper<>(String.class.getMethod("isEmpty")));
+            members.put("isWhitespace", new MethodWrapper<>("isWhitespace", (instance, params) -> Character.isWhitespace(instance.charAt(0))));
+            members.put("isDigit", new MethodWrapper<>("isDigit", (instance, params) -> Character.isDigit(instance.charAt(0))));
+            members.put("isLetter", new MethodWrapper<>("isLetter", (instance, params) -> Character.isLetter(instance.charAt(0))));
+            members.put("isLetterOrDigit", new MethodWrapper<>("isLetterOrDigit", (instance, params) -> Character.isLetterOrDigit(instance.charAt(0))));
 
             members.put("length", new FieldWrapper<>(String::length));
         } catch (NoSuchMethodException e) {
@@ -58,7 +63,7 @@ public class StringTypeHandler implements TypeHandler<String> {
 
     @Override
     public Object getIndexer(String object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        int realIndex = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
+        int realIndex = assertOfType(index, pattern, ctx, Integer.class);
         if(realIndex < 0 || realIndex >= object.length()) {
             throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index, pattern, ctx);
         }
@@ -66,27 +71,36 @@ public class StringTypeHandler implements TypeHandler<String> {
         return object.charAt(realIndex) + "";
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object cast(String object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        switch(TridentTypeManager.getInternalTypeIdentifierForType(targetType)) {
-            case "primitive(nbt_value)":
-            case "primitive(tag_string)":
-                return new TagString(object);
-            case "primitive(entity)": {
-                if(object.isEmpty()) {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names cannot be empty", pattern, ctx);
-                } else if(object.contains(" ")) {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names may not contain whitespaces", pattern, ctx);
-                } else {
-                    return new PlayerName(object);
-                }
+    public <F> F cast(String object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(targetType == NBTTag.class || targetType == TagString.class) {
+            return (F) new TagString(object);
+        }
+        if(targetType == Entity.class) {
+            if(object.isEmpty()) {
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names cannot be empty", pattern, ctx);
+            } else if(object.contains(" ")) {
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names may not contain whitespaces", pattern, ctx);
+            } else {
+                return (F) new PlayerName(object);
             }
-            case "primitive(resource)":
-                return CommonParsers.parseResourceLocation(object, pattern, ctx);
-            case "primitive(text_component)":
-                return new StringTextComponent(object);
+        }
+        if(targetType == TridentUtil.ResourceLocation.class) {
+            TridentUtil.ResourceLocation loc = CommonParsers.parseResourceLocation(object, pattern, ctx);
+            return (F) loc;
+        }
+        if(targetType == TextComponent.class) {
+            return (F) new StringTextComponent(object);
         }
         throw new ClassCastException();
+    }
+
+    @Override
+    public Object coerce(String object, Class targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(targetType == TagString.class) return new TagString(object);
+        if(targetType == TextComponent.class) return new StringTextComponent(object);
+        return null;
     }
 
     @Override
@@ -105,15 +119,5 @@ public class StringTypeHandler implements TypeHandler<String> {
                 return "" + str.charAt(i++);
             }
         };
-    }
-
-    @Override
-    public Class<String> getHandledClass() {
-        return String.class;
-    }
-
-    @Override
-    public String getTypeIdentifier() {
-        return "string";
     }
 }

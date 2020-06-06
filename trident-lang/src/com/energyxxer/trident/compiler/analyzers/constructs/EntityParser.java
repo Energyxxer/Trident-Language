@@ -73,34 +73,32 @@ public class EntityParser {
 
     public static Entity parseEntity(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
-        while("ENTITY".equals(pattern.getName())) {
-            pattern = ((TokenStructure) pattern).getContents();
-        }
-        switch(pattern.getName()) {
+        TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
+        switch(inner.getName()) {
             case "SELECTOR":
-                return parseSelector(pattern, ctx);
-            case "PLAYER_NAME": return new PlayerName(CommonParsers.parseIdentifierB(pattern.find("IDENTIFIER_B"), ctx));
+                return parseSelector(inner, ctx);
+            case "PLAYER_NAME": return new PlayerName(CommonParsers.parseIdentifierB(inner.find("IDENTIFIER_B"), ctx));
             case "ENTITY_VARIABLE": {
-                Object symbol = InterpolationManager.parse(pattern.find("INTERPOLATION_BLOCK"), ctx, Entity.class, String.class);
+                Object symbol = InterpolationManager.parse(inner.find("INTERPOLATION_BLOCK"), ctx, Entity.class, String.class);
                 if(symbol instanceof String && !TridentLexerProfile.IDENTIFIER_B_REGEX.matcher((String) symbol).matches()) {
                     throw new TridentException(TridentException.Source.COMMAND_ERROR, "The string '" + symbol + "' is not a valid argument here", pattern, ctx);
                 }
                 Entity entity = symbol instanceof Entity ? (Entity) symbol : new PlayerName(((String) symbol));
-                EObject.assertNotNull(entity, pattern.find("INTERPOLATION_BLOCK"), ctx);
-                if(pattern.find("APPENDED_ARGUMENTS") != null) {
+                EObject.assertNotNull(entity, inner.find("INTERPOLATION_BLOCK"), ctx);
+                if(inner.find("APPENDED_ARGUMENTS") != null) {
                     if(!(entity instanceof Selector)) {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The entity contained in this variable does not support selector arguments", pattern, ctx);
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The entity contained in this variable does not support selector arguments", inner, ctx);
                     }
 
                     Selector copy = ((Selector) entity).clone();
 
-                    TokenList argList = (TokenList) pattern.find("APPENDED_ARGUMENTS.SELECTOR_ARGUMENT_LIST");
+                    TokenList argList = (TokenList) inner.find("APPENDED_ARGUMENTS.SELECTOR_ARGUMENT_LIST");
                     if(argList != null) parseSelectorArguments(argList, copy, pattern, ctx);
 
                     return copy;
                 } else return entity;
             } default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
             }
         }
     }

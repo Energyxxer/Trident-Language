@@ -10,51 +10,37 @@ public enum Operator {
     //USED ON OPERATIONS
     INCREMENT("++", 0, UNARY_ANY, OperationOrder.LTR, VARIABLE),
     DECREMENT("--", 0, UNARY_ANY, OperationOrder.LTR, VARIABLE),
-
-    NOT("!", 1, UNARY_LEFT, OperationOrder.RTL, VALUE),
-    NEGATE_UNARY("-", 1, UNARY_LEFT, OperationOrder.LTR, VALUE),
-    PLUS_UNARY("+", 1, UNARY_LEFT, OperationOrder.LTR, VALUE),
-    BITWISE_NOT("~", 1, UNARY_LEFT, OperationOrder.RTL, VALUE),
-
-    MULTIPLY("*", 2, BINARY, OperationOrder.LTR, VALUE),
-    DIVIDE("/", 2, BINARY, OperationOrder.LTR, VALUE),
-    MODULO("%", 2, BINARY, OperationOrder.LTR, VALUE),
-
-    ADD("+", 3, BINARY, OperationOrder.LTR, VALUE),
-    SUBTRACT("-", 3, BINARY, OperationOrder.LTR, VALUE),
-
-    BIT_SHIFT_LEFT("<<", 4, BINARY, OperationOrder.LTR, VALUE),
-    BIT_SHIFT_RIGHT(">>", 4, BINARY, OperationOrder.LTR, VALUE),
-
-    LESS_THAN("<", 5, BINARY, OperationOrder.LTR, VALUE),
-    LESS_THAN_OR_EQUAL("<=", 5, BINARY, OperationOrder.LTR, VALUE),
-    GREATER_THAN(">", 5, BINARY, OperationOrder.LTR, VALUE),
-    GREATER_THAN_OR_EQUAL(">=", 5, BINARY, OperationOrder.LTR, VALUE),
-
-    EQUAL("==", 6, BINARY, OperationOrder.LTR, VALUE),
-    NOT_EQUAL("!=", 6, BINARY, OperationOrder.LTR, VALUE),
-
-    BITWISE_AND("&", 7, BINARY, OperationOrder.LTR, VALUE),
-
-    BITWISE_XOR("^", 8, BINARY, OperationOrder.LTR, VALUE),
-
-    BITWISE_OR("|", 9, BINARY, OperationOrder.LTR, VALUE),
-
-    AND("&&", 10, BINARY, OperationOrder.LTR, VALUE),
-    OR("||", 11, BINARY, OperationOrder.LTR, VALUE),
-
+    NEGATE_UNARY("-", 2, UNARY_LEFT, OperationOrder.LTR, VALUE),
+    PLUS_UNARY("+", 2, UNARY_LEFT, OperationOrder.LTR, VALUE), //why would you need this one
+    NOT("!", 0, UNARY_LEFT, OperationOrder.RTL, VALUE),
+    BITWISE_NOT("~", 0, UNARY_LEFT, OperationOrder.RTL, VALUE),
+    MULTIPLY("*", 1, BINARY, OperationOrder.LTR, VALUE),
+    DIVIDE("/", 1, BINARY, OperationOrder.LTR, VALUE),
+    MODULO("%", 1, BINARY, OperationOrder.LTR, VALUE),
+    ADD("+", 2, BINARY, OperationOrder.LTR, VALUE),
+    SUBTRACT("-", 2, BINARY, OperationOrder.LTR, VALUE),
+    LESS_THAN("<", 3, BINARY, OperationOrder.LTR, VALUE),
+    LESS_THAN_OR_EQUAL("<=", 3, BINARY, OperationOrder.LTR, VALUE),
+    GREATER_THAN(">", 3, BINARY, OperationOrder.LTR, VALUE),
+    GREATER_THAN_OR_EQUAL(">=", 3, BINARY, OperationOrder.LTR, VALUE),
+    EQUAL("==", 4, BINARY, OperationOrder.LTR, VALUE),
+    NOT_EQUAL("!=", 4, BINARY, OperationOrder.LTR, VALUE),
+    AND("&&", 5, BINARY, OperationOrder.LTR, VALUE),
+    OR("||", 6, BINARY, OperationOrder.LTR, VALUE),
+    //BITWISE
+    BITWISE_AND("&", 5, BINARY, OperationOrder.LTR, VALUE),
+    BITWISE_OR("|", 6, BINARY, OperationOrder.LTR, VALUE),
+    BITWISE_XOR("^", 5, BINARY, OperationOrder.LTR, VALUE),
     //USED BY THE EXPRESSION PARSER INSTEAD OF THE EXPRESSION HANDLER
-    ASSIGN("=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    ADD_THEN_ASSIGN("+=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    SUBTRACT_THEN_ASSIGN("-=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    MULTIPLY_THEN_ASSIGN("*=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    DIVIDE_THEN_ASSIGN("/=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    MODULO_THEN_ASSIGN("%=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    BITWISE_AND_THEN_ASSIGN("&=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    BITWISE_XOR_THEN_ASSIGN("^=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    BITWISE_OR_THEN_ASSIGN("|=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    BIT_SHIFT_LEFT_THEN_ASSIGN("<<=", 99, BINARY, OperationOrder.RTL, VARIABLE),
-    BIT_SHIFT_RIGHT_THEN_ASSIGN(">>=", 99, BINARY, OperationOrder.RTL, VARIABLE);
+    INSTANCEOF("instanceof", 3, BINARY, OperationOrder.LTR, VARIABLE),
+    ASSIGN("=", 8, BINARY, OperationOrder.RTL, VARIABLE),
+    ADD_THEN_ASSIGN("+=", 8, BINARY, OperationOrder.RTL, VARIABLE),
+    SUBTRACT_THEN_ASSIGN("-=", 8, BINARY, OperationOrder.RTL, VARIABLE),
+    MULTIPLY_THEN_ASSIGN("*=", 8, BINARY, OperationOrder.RTL, VARIABLE),
+    DIVIDE_THEN_ASSIGN("/=", 8, BINARY, OperationOrder.RTL, VARIABLE),
+    MODULO_THEN_ASSIGN("%=", 8, BINARY, OperationOrder.RTL, VARIABLE),
+    AND_THEN_ASSIGN("&=", 8, BINARY, OperationOrder.RTL, VARIABLE),
+    OR_THEN_ASSIGN("|=", 8, BINARY, OperationOrder.RTL, VARIABLE);
 
     private String symbol;
     private int precedence;

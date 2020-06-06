@@ -4,7 +4,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.*;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
@@ -78,102 +78,96 @@ public class LoopInstruction implements Instruction {
 
     @SuppressWarnings("unchecked")
     private LoopHeader parseHeader(TokenPattern<?> pattern, ISymbolContext ctx) {
-        while (true) {
-            switch (pattern.getName()) {
-                case "LOOP_HEADER":
-                case "FOR_HEADER": {
-                    pattern = ((TokenStructure) pattern).getContents();
-                    continue;
-                }
-                case "CLASSICAL_FOR": {
-                    TokenPattern<?> initialization = pattern.find("FOR_HEADER_INITIALIZATION.INTERPOLATION_VALUE");
-                    TokenPattern<?> initializationVariableDecl = pattern.find("FOR_HEADER_INITIALIZATION.VARIABLE_DECLARATION");
-                    TokenPattern<?> condition = pattern.find("FOR_HEADER_CONDITION.INTERPOLATION_VALUE");
-                    TokenPattern<?> iteration = pattern.find("FOR_HEADER_ITERATION.INTERPOLATION_VALUE");
-                    return new LoopHeader() {
-                        @Override
-                        public void initialize() {
-                            if (initializationVariableDecl != null) {
-                                new VariableInstruction().run(initializationVariableDecl, ctx);
-                            } else {
-                                InterpolationManager.parse(initialization, ctx);
-                            }
+        switch(pattern.getName()) {
+            case "LOOP_HEADER":
+            case "FOR_HEADER": {
+                return parseHeader(((TokenStructure) pattern).getContents(), ctx);
+            }
+            case "CLASSICAL_FOR": {
+                TokenPattern<?> initialization = pattern.find("FOR_HEADER_INITIALIZATION.INTERPOLATION_VALUE");
+                TokenPattern<?> initializationVariableDecl = pattern.find("FOR_HEADER_INITIALIZATION.VARIABLE_DECLARATION");
+                TokenPattern<?> condition = pattern.find("FOR_HEADER_CONDITION.INTERPOLATION_VALUE");
+                TokenPattern<?> iteration = pattern.find("FOR_HEADER_ITERATION.INTERPOLATION_VALUE");
+                return new LoopHeader() {
+                    @Override
+                    public void initialize() {
+                        if(initializationVariableDecl != null) {
+                            new VariableInstruction().run(initializationVariableDecl, ctx);
+                        } else {
+                            InterpolationManager.parse(initialization, ctx);
                         }
-
-                        @Override
-                        public boolean condition() {
-                            Object returnValue = InterpolationManager.parse(condition, ctx);
-                            if (returnValue != null && returnValue.getClass() == Boolean.class)
-                                return (boolean) returnValue;
-                            throw new TridentException(TridentException.Source.TYPE_ERROR, "Required boolean in 'for' condition", condition, ctx);
-                        }
-
-                        @Override
-                        public void iterate() {
-                            InterpolationManager.parse(iteration, ctx);
-                        }
-                    };
-                }
-                case "ITERATOR_FOR": {
-                    String varName = pattern.find("VARIABLE_NAME").flatten(false);
-                    Object iterable = InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), ctx);
-                    TypeHandler handler = InterpolationManager.getHandlerForObject(iterable, pattern, ctx);
-                    Iterator it;
-                    if ((it = handler.getIterator(iterable)) != null) {
-                        if (!it.hasNext()) return null;
-                        TokenPattern<?> finalPattern = pattern;
-                        return new LoopHeader() {
-                            @Override
-                            public void initialize() {
-                                ctx.put(new Symbol(varName, Symbol.SymbolVisibility.GLOBAL, null));
-                            }
-
-                            @Override
-                            public boolean condition() {
-                                try {
-                                    boolean hasNext = it.hasNext();
-                                    if (hasNext) {
-                                        ctx.search(varName, ctx, null).setValue(it.next());
-                                    }
-                                    return hasNext;
-                                } catch (ConcurrentModificationException x) {
-                                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Concurrent modification", finalPattern, ctx);
-                                }
-                            }
-
-                            @Override
-                            public void iterate() {
-                            }
-                        };
-                    } else {
-                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Required iterable in 'for' iterator", pattern.find("INTERPOLATION_VALUE"), ctx);
                     }
-                }
-                case "WHILE_HEADER": {
-                    TokenPattern<?> condition = pattern.find("INTERPOLATION_VALUE");
+
+                    @Override
+                    public boolean condition() {
+                        Object returnValue = InterpolationManager.parse(condition, ctx);
+                        if(returnValue != null && returnValue.getClass() == Boolean.class) return (boolean)returnValue;
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Required boolean in 'for' condition", condition, ctx);
+                    }
+
+                    @Override
+                    public void iterate() {
+                        InterpolationManager.parse(iteration, ctx);
+                    }
+                };
+            }
+            case "ITERATOR_FOR": {
+                String varName = pattern.find("VARIABLE_NAME").flatten(false);
+                Object iterable = InterpolationManager.parse(pattern.find("INTERPOLATION_VALUE"), ctx);
+                VariableTypeHandler handler = InterpolationManager.getHandlerForObject(iterable, pattern, ctx, true);
+                Iterator it;
+                if(handler != null && (it = handler.getIterator(iterable)) != null) {
+                    if(!it.hasNext()) return null;
                     return new LoopHeader() {
                         @Override
                         public void initialize() {
-
+                            ctx.put(new Symbol(varName, Symbol.SymbolVisibility.GLOBAL, null));
                         }
 
                         @Override
                         public boolean condition() {
-                            Object returnValue = InterpolationManager.parse(condition, ctx);
-                            if (returnValue != null && returnValue.getClass() == Boolean.class)
-                                return (boolean) returnValue;
-                            throw new TridentException(TridentException.Source.TYPE_ERROR, "Required boolean in 'while' condition", condition, ctx);
+                            try {
+                                boolean hasNext = it.hasNext();
+                                if (hasNext) {
+                                    ctx.search(varName, ctx).setValue(it.next());
+                                }
+                                return hasNext;
+                            } catch(ConcurrentModificationException x) {
+                                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
+                            }
                         }
 
                         @Override
                         public void iterate() {
-
                         }
                     };
+                } else {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Required iterable in 'for' iterator", pattern.find("INTERPOLATION_VALUE"), ctx);
                 }
-                default: {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
-                }
+            }
+            case "WHILE_HEADER": {
+                TokenPattern<?> condition = pattern.find("INTERPOLATION_VALUE");
+                return new LoopHeader() {
+                    @Override
+                    public void initialize() {
+
+                    }
+
+                    @Override
+                    public boolean condition() {
+                        Object returnValue = InterpolationManager.parse(condition, ctx);
+                        if(returnValue != null && returnValue.getClass() == Boolean.class) return (boolean)returnValue;
+                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Required boolean in 'while' condition", condition, ctx);
+                    }
+
+                    @Override
+                    public void iterate() {
+
+                    }
+                };
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
             }
         }
     }

@@ -5,7 +5,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.selectors.SelectorAr
 import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.analyzers.instructions.Instruction;
 import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.criteria.ScoreEventCriteriaHandler;
 import com.energyxxer.util.logger.Debug;
 
@@ -28,7 +28,7 @@ public class AnalyzerManager {
             cacheGroup(ModifierParser.class);
             cacheGroup(ScoreEventCriteriaHandler.class);
             cacheGroup(SelectorArgumentParser.class);
-            cacheGroup(TypeHandler.class);
+            cacheGroup(VariableTypeHandler.class);
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
             e.printStackTrace();
         }

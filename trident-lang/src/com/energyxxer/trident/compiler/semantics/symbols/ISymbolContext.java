@@ -2,7 +2,6 @@ package com.energyxxer.trident.compiler.semantics.symbols;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentCompiler;
-import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
 import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -16,7 +15,7 @@ public interface ISymbolContext {
 
     ISymbolContext getParent();
 
-    Symbol search(@NotNull String name, ISymbolContext from, ActualParameterList params);
+    Symbol search(@NotNull String name, ISymbolContext from);
 
     @NotNull TridentCompiler getCompiler();
 
@@ -62,13 +61,4 @@ public interface ISymbolContext {
     }
 
     HashMap<String, Symbol> collectVisibleSymbols(HashMap<String, Symbol> list, ISymbolContext from);
-
-    default boolean isAncestor(ISymbolContext ancestor) {
-        ISymbolContext thiz = this;
-        while(thiz != null) {
-            if(thiz == ancestor) return true;
-            thiz = thiz.getParent();
-        }
-        return false;
-    }
 }

@@ -36,7 +36,7 @@ public class GameLogParser implements CommandParser {
 
         commands.add(new FunctionCommand(fetchFile.getFunction()));
 
-        TextComponent message = objectToTextComponent(InterpolationManager.parse(pattern.find("LINE_SAFE_INTERPOLATION_VALUE"), ctx), pattern, ctx);
+        TextComponent message = objectToTextComponent(InterpolationManager.parse(pattern.find("LINE_SAFE_INTERPOLATION_VALUE"), ctx));
         String key = pattern.find("DEBUG_GROUP").flatten(false);
 
         commands.add(fetchFile.getTellrawCommandFor(key, message, pattern, ctx));
@@ -44,7 +44,7 @@ public class GameLogParser implements CommandParser {
         return commands;
     }
 
-    private static TextComponent objectToTextComponent(Object obj, TokenPattern<?> pattern, ISymbolContext ctx) {
+    private static TextComponent objectToTextComponent(Object obj) {
         if(toStringRecursion.contains(obj)) {
             return new StringTextComponent("...recursive...");
         }
@@ -58,11 +58,11 @@ public class GameLogParser implements CommandParser {
             toStringRecursion.push(obj);
             ListTextComponent list = new ListTextComponent();
             for(Object inner : ((ListObject) obj)) {
-                list.append(objectToTextComponent(inner, pattern, ctx));
+                list.append(objectToTextComponent(inner));
             }
             return list;
         } else {
-            return new StringTextComponent(InterpolationManager.castToString(obj, pattern, ctx));
+            return new StringTextComponent(InterpolationManager.castToString(obj));
         }
     }
 }

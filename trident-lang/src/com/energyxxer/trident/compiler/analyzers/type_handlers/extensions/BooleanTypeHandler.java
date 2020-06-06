@@ -6,7 +6,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundExc
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "java.lang.Boolean")
-public class BooleanTypeHandler implements TypeHandler<Boolean> {
+public class BooleanTypeHandler implements VariableTypeHandler<Boolean> {
     @Override
     public Object getMember(Boolean object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
@@ -19,17 +19,7 @@ public class BooleanTypeHandler implements TypeHandler<Boolean> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object cast(Boolean object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public <F> F cast(Boolean object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
-    }
-
-    @Override
-    public Class<Boolean> getHandledClass() {
-        return Boolean.class;
-    }
-
-    @Override
-    public String getTypeIdentifier() {
-        return "boolean";
     }
 }

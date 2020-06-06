@@ -2,568 +2,475 @@
 @require trident-util:type_checking
 
 local var rangeToObj = function(value) {
-    if(value is int) {
-        if(value.min == value.max && value.min != null) return value.min
+    do if(isInstance(value, "int_range") || isInstance(value, "real_range")) {
         var range = value
         eval value = {}
-        if(range.min != null) eval value.min = range.min
-        if(range.max != null) eval value.max = range.max
-        return value
+        do if(range.min != null) eval value.min = range.min
+        do if(range.max != null) eval value.max = range.max
     }
-    if(value is real_range) {
-        if(value.min == value.max && value.min != null) return value.min
-        var range = value
-        eval value = {}
-        if(range.min != null) eval value.min = range.min
-        if(range.max != null) eval value.max = range.max
-        return value
-    }
-    if(value is real) {
-        return value
-    }
+    return value
 }
 
-define local class JSONSerializable {
-    public var serialized
-
-    public serializeToJSON() {
-        throw "serializeToJSON not implemented by " + type_definition.of(this)
-    }
-
-    public static fullySerialize(obj) {
-        if(obj is JSONSerializable) {
-            eval obj = obj.serializeToJSON()
-        }
-
-        if(obj is dictionary) {
-            for(entry in obj) {
-                eval obj[entry.key] = fullySerialize(entry.value)
-            }
-        } else if(obj is list) {
-            for(var i = 0; i < obj.length; i++) {
-                eval obj[i] = fullySerialize(obj[i])
+var SelfBuilder = function(obj) {
+    do if(obj._sb_buildData == null) eval obj._sb_buildData = {}
+    do if(obj._sb_buildLocation == null) eval obj._sb_buildLocation = function() {return obj}
+    do if(obj._sb_build == null) eval obj._sb_build = function() {
+        for(property in obj._sb_buildData) {
+            eval obj._sb_buildLocation(property.key)[property.key] = property.value
+            do if(isInstance(property.value, "list")) {
+                for(element in property.value) {
+                    do if(isInstance(element, "dictionary") && isInstance(element._sb_build, "function")) {
+                        eval element._sb_build()
+                    }
+                }
+            } else do if(isInstance(property.value, "dictionary") && isInstance(property.value._sb_build, "function")) {
+                eval property.value._sb_build()
             }
         }
-
+        eval obj._sb_buildData = null
+        eval obj._sb_buildLocation = null
+        eval obj._sb_build = null
         return obj
     }
+    return obj
 }
 
-define private class Distance
-define private class Location
-define private class Entity
-define private class Effect
-define private class Item
-define private class Enchantment
-define private class Block
-define private class Fluid
-
-define private class Entity : JSONSerializable {
-    var output = {}
-
-    public type(type : resource) {
-        if(type.isTag && !Tags.exists("entity", type)) throw "Given tag '" + type + "' does not exist as an entity tag"
-        if(!type.isTag && !MinecraftTypes.exists("entity", type)) throw "Given type '" + type + "' does not exist as an entity type"
-        eval this.output.type = type
-        return this
-    }
-    public distance(distance : Distance) {
-        eval output.distance = distance
-        return this
-    }
-    public location(location : Location) {
-        eval output.location = location
-        return this
-    }
-    public effect(obj : Effect) {
-        return effects([obj])
-    }
-    public effects(obj : list) {
-        if(this.output.effects == null) eval this.output.effects = {}
-        for(element in obj) {
-            var effect : Effect = element
-            var effectSerialized = ((JSONSerialization) effect).serialized
-            eval this.output.effects[(string)effectSerialized.id] = effectSerialized
-            eval effectSerialized.id = null
-        }
-        return this
-    }
-    public nbt(tag : nbt) {
-        if(this.output.nbt == null) eval this.output.nbt = nbt<{}>
-        eval this.output.nbt = this.output.nbt.merge(tag)
-        return this
-    }
-    public isOnFire(bool : boolean) {
-        if(this.output.flags == null) eval this.output.flags = {}
-        eval this.output.flags.is_on_fire = bool
-        return this
-    }
-    public isSneaking(bool : boolean) {
-        if(this.output.flags == null) eval this.output.flags = {}
-        eval this.output.flags.is_sneaking = bool
-        return this
-    }
-    public isSprinting(bool : boolean) {
-        if(this.output.flags == null) eval this.output.flags = {}
-        eval this.output.flags.is_sprinting = bool
-        return this
-    }
-    public isSwimming(bool : boolean) {
-        if(this.output.flags == null) eval this.output.flags = {}
-        eval this.output.flags.is_swimming = bool
-        return this
-    }
-    public isBaby(bool : boolean) {
-        if(this.output.flags == null) eval this.output.flags = {}
-        eval this.output.flags.is_baby = bool
-        return this
-    }
-    public equipment(slot : string, itm : item) {
-        return equipment(slot, new Shared.Item(itm))
-    }
-    public equipment(slot : string, itm : custom_item) {
-        return equipment(slot, new Shared.Item(itm))
-    }
-    public equipment(slot : string, itm : Item) {
-        if(this.output.equipment == null) eval this.output.equipment = {}
-        eval assertOneOf(slot, ["mainhand", "offhand", "head", "chest", "legs", "feet"])
-        eval this.output.equipment[slot] = itm
-        return this
-    }
-    public team(teamName : string) {
-        eval this.output.team = teamName
-        return this
-    }
-    public level(value : int) {
-        if(this.output.player == null) eval this.output.player = {}
-        eval this.output.player.level = value
-        return this
-    }
-    public level(value : int_range) {
-        if(this.output.player == null) eval this.output.player = {}
-        eval this.output.player.level = rangeToObj(value)
-        return this
-    }
-    public gamemode(gamemode : string) {
-        if(this.output.player == null) eval this.output.player = {}
-        if(!MinecraftTypes.exists("gamemode", gamemode)) throw "Given type '" + gamemode + "' does not exist as a gamemode type"
-        eval this.output.player.gamemode = gamemode
-        return this
-    }
-    public matchStats(base : string, criterion : string, value : int_range) {
-        eval assertOneOf(base, ["minecraft:custom", "minecraft:crafted", "minecraft:used", "minecraft:broken", "minecraft:mined", "minecraft:killed", "minecraft:picked_up", "minecraft:dropped", "minecraft:killed_by", "killedByTeam", "teamkill"])
-        if(this.output.player == null) eval this.output.player = {}
-        if(this.output.player.stats == null) eval this.output.player.stats = []
-        eval this.output.player.stats.add({type: base, stat: criterion, value: rangeToObj(value)})
-        return this
-    }
-    public matchRecipes(id : resource, value : boolean) {
-        return matchRecipes((string) resource, value)
-    }
-    public matchRecipes(id : string, value : boolean) {
-        if(this.output.player == null) eval this.output.player = {}
-        if(this.output.player.recipes == null) eval this.output.player.recipes = {}
-        eval this.output.player.recipes[id] = value
-        return this
-    }
-    public catType(texture : resource) {
-        eval this.output.catType = texture
-        return this
-    }
-
-    public override serializeToJSON() {
-        if(Project.getTargetVersion()[1] < 16 && output.player != null) {
-            # From 1.16 onwards, player-related conditions belong inside a "player" sub object
-            # This reverses that for pre-1.16 projects
-            for(entry in output.player) {
-                eval output[entry.key] = entry.value
-            }
-            eval output.player = null
-        }
-        return output
-    }
-}
-
-define private class Distance : JSONSerializable {
-    var output = {}
-
-    public x(value : real_range) {
-        eval this.output.x = rangeToObj(value)
-        return this
-    }
-
-    public y(value : real_range) {
-        eval this.output.y = rangeToObj(value)
-        return this
-    }
-
-    public z(value : real_range) {
-        eval this.output.z = rangeToObj(value)
-        return this
-    }
-
-    public absolute(value : real_range) {
-        eval this.output.absolute = rangeToObj(value)
-        return this
-    }
-
-    public horizontal(value : real_range) {
-        eval this.output.horizontal = rangeToObj(value)
-        return this
-    }
-
-    public override serializeToJSON() {
-        return output
-    }
-}
-
-define private class Location : JSONSerializable {
-    var output = {}
-
-    public block(obj : Block) {
-        eval this.output.block = obj
-        return this
-    }
-
-    public fluid(obj : Fluid) {
-        eval this.output.fluid = obj
-        return this
-    }
-
-    public biome(biome : resource) {
-        if(!MinecraftTypes.exists("biome", biome)) throw "Given type '" + biome + "' does not exist as a biome type"
-        eval this.output.biome = biome
-        return this
-    }
-
-    public light(value : int_range) {
-        eval this.output.light = {
-            "light": rangeToObj(value)
-        }
-        return this
-    }
-
-    public posX(value : real_range) {
-        if(this.output.position == null) eval this.output.position = {}
-        eval this.output.position.x = rangeToObj(value)
-        return this
-    }
-
-    public posY(value : real_range) {
-        if(this.output.position == null) eval this.output.position = {}
-        eval this.output.position.y = rangeToObj(value)
-        return this
-    }
-
-    public posZ(value : real_range) {
-        if(this.output.position == null) eval this.output.position = {}
-        eval this.output.position.z = rangeToObj(value)
-        return this
-    }
-
-    public feature(feature : string) {
-        eval feature = feature.toLowerCase()
-        var valid = false
-        for(def in MinecraftTypes.getDefinitionsForCategory("structure")) {
-            if(def.key.toLowerCase() == feature) {
-                eval valid = true
-                break
-            }
-        }
-        if(!valid) throw "Given type '" + feature + "' does not exist as a structure type"
-        eval this.output.feature = feature
-        return this
-    }
-
-    public dimension(dimension : resource) {
-        if(!MinecraftTypes.exists("dimension", dimension)) throw "Given type '" + dimension + "' does not exist as a dimension type"
-        eval this.output.dimension = dimension
-        return this
-    }
-
-    public override serializeToJSON() {
-        return output
-    }
-}
-
-define private class Effect : JSONSerializable {
-    var output = {}
-
-    public new(type : resource) {
-        if(!MinecraftTypes.exists("effect", type)) throw "Given type '" + type + "' does not exist as an effect type"
-        eval output.id = type
-    }
-
-    public amplifier(value : int_range) {
-        eval this.output.amplifier = rangeToObj(value)
-        return this
-    }
-
-    public duration(value : int_range) {
-        eval this.output.duration = rangeToObj(value)
-        return this
-    }
-
-    public ambient(bool : boolean) {
-        eval this.output.ambient = bool
-        return this
-    }
-
-    public visible(bool : boolean) {
-        eval this.output.visible = bool
-        return this
-    }
-
-    public override serializeToJSON() {
-        return output
-    }
-}
-
-define private class Item : JSONSerializable {
-    var output = {}
-
-    public new() {}
-
-    public new(base : custom_item) {
-        eval this.type(base.baseType)
-        eval this.nbt(base.getItemTag())
-    }
-
-    public new(base : item) {
-        if(base.itemType.isTag) {
-            eval this.tag(base.itemType)
-        } else {
-            eval this.type(base.itemType)
-        }
-        if(base.itemTag != null) {
-            eval this.nbt(base.itemTag)
-        }
-    }
-
-    public type(type : resource) {
-        if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
-        if(!MinecraftTypes.exists("item", type)) throw "Given type '" + type + "' does not exist as an item type"
-        eval this.output.item = type
-        eval this.output.tag = null
-        return this
-    }
-
-    public tag(type : resource) {
-        if(!type.isTag) throw "Given location '" + type + "' is a type, expected a tag"
-        if(!Tags.exists("item", type)) throw "Given tag '" + type + "' does not exist as an item tag"
-        eval this.output.tag = ((string)type).substring(1)
-        eval this.output.item = null
-        return this
-    }
-
-    public durability(value : int_range) {
-        eval this.output.durability = rangeToObj(value)
-        return this
-    }
-
-    public count(value : int_range) {
-        eval this.output.count = rangeToObj(value)
-        return this
-    }
-
-    public potion(type : resource) {
-        if(!MinecraftTypes.exists("potion", type)) throw "Given type '" + type + "' does not exist as a potion type"
-        eval this.output.potion = type
-        return this
-    }
-
-    public enchantments(obj : Enchantment) {
-        return effects([obj])
-    }
-    public enchantments (enchantments : list) {
-        if(this.output.enchantments == null) eval this.output.enchantments = []
-        for(enchantment in enchantments) {
-            eval this.output.enchantments.add((Enchantment)enchantment)
-        }
-        return this
-    }
-
-    public storedEnchantments(obj : Enchantment) {
-        return effects([obj])
-    }
-    public storedEnchantments(enchantments : list) {
-        if(this.output.stored_enchantments == null) eval this.output.stored_enchantments = []
-        for(enchantment in enchantments) {
-            eval this.output.stored_enchantments.add((Enchantment)enchantment)
-        }
-        return this
-    }
-
-    public nbt(tag : nbt) {
-        if(this.output.nbt == null) eval this.output.nbt = nbt<{}>
-        eval this.output.nbt = this.output.nbt.merge(tag)
-        return this
-    }
-
-    public override serializeToJSON() {
-        return output
-    }
-}
-
-define private class Enchantment : JSONSerializable {
-    var output = {}
-
-    public new(base : resource) {
-        eval this.id(base)
-    }
-
-    public id(type : resource) {
-        if(!MinecraftTypes.exists("enchantment", type)) throw "Given type '" + type + "' does not exist as an enchantment type"
-        eval this.output.enchantment = type
-        return this
-    }
-
-    public levels(value : int_range) {
-        eval this.output.levels = rangeToObj(value)
-        return this
-    }
-
-    public override serializeToJSON() {
-        return output
-    }
-}
-
-define private class Block : JSONSerializable {
-    var output = {}
-
-    public new(base : block?) {
-        if(base != null) {
-            if(base.blockType.isTag) {
-                eval this.tag(base.blockType)
-            } else {
-                eval this.type(base.blockType)
-            }
-            var state = base.blockState
-            if(state != null) {
-                for(entry in state) {
-                    eval this.state(entry.key, entry.value)
+var Shared = {
+    Entity: function() {
+        return SelfBuilder({
+            objectType: function() {return "Shared.Entity"},
+            type: function(type) {
+                eval assertType(type, "resource")
+                do if(type.isTag && !Tags.exists("entity", type)) throw "Given tag '" + type + "' does not exist as an entity tag"
+                do if(!type.isTag && !MinecraftTypes.exists("entity", type)) throw "Given type '" + type + "' does not exist as an entity type"
+                eval this._sb_buildData.type = type
+                return this
+            },
+            distance: function(obj) {
+                eval assertObjectType(obj, "Shared.Distance")
+                eval this._sb_buildData.distance = obj
+                return this
+            },
+            location: function(obj) {
+                eval assertObjectType(obj, "Shared.Location")
+                eval this._sb_buildData.location = obj
+                return this
+            },
+            effects: function(obj) {
+                do if(!isInstance(obj, "list")) {
+                    eval obj = [obj]
                 }
+                do if(this._sb_buildData.effects == null) eval this._sb_buildData.effects = {_sb_build:function(){
+                    for(entry in this) {
+                        do if(isInstance(entry.value, "dictionary")) eval entry.value._sb_build()
+                    }
+                }}
+                for(element in obj) {
+                    eval assertObjectType(element, "Shared.Effect")
+                    eval this._sb_buildData.effects[(string)element.id] = element
+                    eval element.id = null
+                }
+                return this
+            },
+            nbt: function(tag) {
+                eval assertType(tag, "nbt")
+                do if(this._sb_buildData.nbt == null) eval this._sb_buildData.nbt = nbt<{}>
+                eval this._sb_buildData.nbt = this._sb_buildData.nbt.merge(tag)
+                return this
+            },
+            isOnFire: function(bool) {
+                eval assertType(bool, "boolean")
+                do if(this._sb_buildData.flags == null) eval this._sb_buildData.flags = {}
+                eval this._sb_buildData.flags.is_on_fire = bool
+                return this
+            },
+            isSneaking: function(bool) {
+                eval assertType(bool, "boolean")
+                do if(this._sb_buildData.flags == null) eval this._sb_buildData.flags = {}
+                eval this._sb_buildData.flags.is_sneaking = bool
+                return this
+            },
+            isSprinting: function(bool) {
+                eval assertType(bool, "boolean")
+                do if(this._sb_buildData.flags == null) eval this._sb_buildData.flags = {}
+                eval this._sb_buildData.flags.is_sprinting = bool
+                return this
+            },
+            isSwimming: function(bool) {
+                eval assertType(bool, "boolean")
+                do if(this._sb_buildData.flags == null) eval this._sb_buildData.flags = {}
+                eval this._sb_buildData.flags.is_swimming = bool
+                return this
+            },
+            isBaby: function(bool) {
+                eval assertType(bool, "boolean")
+                do if(this._sb_buildData.flags == null) eval this._sb_buildData.flags = {}
+                eval this._sb_buildData.flags.is_baby = bool
+                return this
+            },
+            equipment: function(slot, itm) {
+                do if(this._sb_buildData.equipment == null) eval this._sb_buildData.equipment = {
+                    _sb_build: function() {
+                        for(entry in this) {
+                            do if(isInstance(entry.value, "dictionary") && entry.value._sb_build != null) eval entry.value._sb_build()
+                        }
+                    }
+                }
+                do if(slot == null && itm == null) {
+                    return this
+                }
+                eval assertType(slot, "string")
+                eval assertOneOf(slot, ["mainhand", "offhand", "head", "chest", "legs", "feet"])
+                eval assertTypes(itm, ["item", "custom_item", "dictionary"])
+
+                do if(isInstance(itm, "item") || isInstance(itm, "custom_item")) {
+                    eval itm = Shared.Item(itm)
+                } else {
+                    eval assertObjectType(itm, "Shared.Item")
+                }
+                
+                eval this._sb_buildData.equipment[slot] = itm
+                return this
+            },
+            team: function(teamName) {
+                eval assertType(teamName, "string")
+                eval this._sb_buildData.team = teamName
+                return this
+            },
+            level: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.level = rangeToObj(value)
+                return this
+            },
+            gamemode: function(gamemode) {
+                eval assertType(gamemode, "string")
+                do if(!MinecraftTypes.exists("gamemode", gamemode)) throw "Given type '" + type + "' does not exist as a gamemode type"
+                eval this._sb_buildData.gamemode = gamemode
+                return this
+            },
+            matchStats: function(base, criterion, value) {
+                eval assertType(base, "string")
+                eval assertType(criterion, "string")
+                eval assertDualTypes(value, "int", "int_range")
+                eval assertOneOf(base, ["minecraft:custom", "minecraft:crafted", "minecraft:used", "minecraft:broken", "minecraft:mined", "minecraft:killed", "minecraft:picked_up", "minecraft:dropped", "minecraft:killed_by", "killedByTeam", "teamkill"])
+                do if(this._sb_buildData.stats == null) eval this._sb_buildData.stats = []
+                eval this._sb_buildData.stats.add({type:base,stat:criterion,value:rangeToObj(value)})
+                return this
+            },
+            matchRecipes: function(id, value) {
+                do if(this._sb_buildData.recipes == null) eval this._sb_buildData.recipes = {}
+                eval assertDualTypes(id, "string", "resource")
+                eval assertType(value, "boolean")
+                eval this._sb_buildData.recipes[id] = (string)value
+                return this
+            },
+            catType: function(texture) {
+                eval assertType(texture, "resource")
+                eval this._sb_buildData.catType = texture
+                return this
             }
-            if(base.blockTag != null) {
-                eval this.nbt(base.blockTag)
+        })
+    },
+    Distance: function() {
+        return SelfBuilder({
+            objectType: function() {return "Shared.Distance"},
+            x: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval this._sb_buildData.x = rangeToObj(value)
+                return this
+            },
+            y: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval this._sb_buildData.y = rangeToObj(value)
+                return this
+            },
+            z: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval this._sb_buildData.z = rangeToObj(value)
+                return this
+            },
+            absolute: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval this._sb_buildData.absolute = rangeToObj(value)
+                return this
+            },
+            horizontal: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval this._sb_buildData.horizontal = rangeToObj(value)
+                return this
             }
-        }
-    }
-
-    public type(type : resource) {
-        if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
-        if(!MinecraftTypes.exists("block", type)) throw "Given type '" + type + "' does not exist as a block type"
-        eval this.output.block = type
-        eval this.output.tag = null
-        return this
-    }
-
-    public tag(type : resource) {
-        if(!type.isTag) throw "Given location '" + type + "' is a type, expected a tag"
-        if(!Tags.exists("block", type)) throw "Given tag '" + type + "' does not exist as a block tag"
-        eval this.output.tag = ((string)type).substring(1)
-        eval this.output.block = null
-        return this
-    }
-
-    public state(key : string, value : int_range) {
-        if(this.output.state == null) eval this.output.state = {}
-        eval this.output.state[key] = rangeToObj(value)
-        return this
-    }
-
-    public state(key : string, value : boolean) {
-        if(this.output.state == null) eval this.output.state = {}
-        eval this.output.state[key] = value
-        return this
-    }
-
-    public state(key : string, value : string) {
-        if(this.output.state == null) eval this.output.state = {}
-        eval this.output.state[key] = value
-        return this
-    }
-
-    public nbt(tag : nbt) {
-        if(this.output.nbt == null) eval this.output.nbt = nbt<{}>
-        eval this.output.nbt = this.output.nbt.merge(tag)
-        return this
-    }
-
-    public override serializeToJSON() {
-        return output
-    }
-}
-
-define private class Fluid : JSONSerializable {
-    var output = {}
-
-    public new(base : resource?) {
-        if(base != null) {
-            if(base.isTag) {
-                eval this.tag(base)
+        })
+    },
+    Location: function() {
+        return SelfBuilder({
+            objectType: function() {return "Shared.Location"},
+            block: function(obj) {
+                eval assertObjectType(obj, "Shared.Block")
+                eval this._sb_buildData["block"] = obj
+                return this
+            },
+            fluid: function(obj) {
+                eval assertObjectType(obj, "Shared.Fluid")
+                eval this._sb_buildData["fluid"] = obj
+                return this
+            },
+            biome: function(biome) {
+                eval assertType(biome, "resource")
+                do if(!MinecraftTypes.exists("biome", biome)) throw "Given type '" + biome + "' does not exist as a biome type"
+                eval this._sb_buildData.biome = biome
+                return this
+            },
+            light: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.light = {
+                    "light": rangeToObj(value)
+                }
+                return this
+            },
+            posX: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval value = rangeToObj(value)
+                do if(this._sb_buildData.position == null) eval this._sb_buildData.position = {}
+                eval this._sb_buildData.position.x = value
+                return this
+            },
+            posY: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval value = rangeToObj(value)
+                do if(this._sb_buildData.position == null) eval this._sb_buildData.position = {}
+                eval this._sb_buildData.position.y = value
+                return this
+            },
+            posZ: function(value) {
+                eval assertDualTypes(value, "real", "real_range")
+                eval value = rangeToObj(value)
+                do if(this._sb_buildData.position == null) eval this._sb_buildData.position = {}
+                eval this._sb_buildData.position.z = value
+                return this
+            },
+            feature: function(feature) {
+                eval assertType(feature, "string")
+                eval feature = feature.toLowerCase()
+                var valid = false
+                for(def in MinecraftTypes.getDefinitionsForCategory("structure")) {
+                    do if(def.key.toLowerCase() == feature) {
+                        eval valid = true
+                        break
+                    }
+                }
+                do if(!valid) throw "Given type '" + feature + "' does not exist as a structure type"
+                eval this._sb_buildData.feature = feature.toLowerCase()
+                return this
+            },
+            dimension: function(dimension) {
+                eval assertType(dimension, "resource")
+                do if(!MinecraftTypes.exists("dimension", dimension)) throw "Given type '" + dimension + "' does not exist as a dimension type"
+                eval this._sb_buildData.dimension = dimension
+                return this
+            }
+        })
+    },
+    Effect: function(type) {
+        eval assertType(type, "resource")
+        do if(!MinecraftTypes.exists("effect", type)) throw "Given type '" + type + "' does not exist as an effect type"
+        return SelfBuilder({
+            objectType: function() {return "Shared.Effect"},
+            id: type,
+            amplifier: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.amplifier = rangeToObj(value)
+                return this
+            },
+            duration: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.duration = rangeToObj(value)
+                return this
+            },
+            ambient: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.ambient = bool
+                return this
+            },
+            visible: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.visible = bool
+                return this
+            }
+        })
+    },
+    Item: function(base) {
+        var obj = SelfBuilder({
+            objectType: function() {return "Shared.Item"},
+            type: function(type) {
+                eval assertType(type, "resource")
+                do if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
+                do if(!MinecraftTypes.exists("item", type)) throw "Given type '" + type + "' does not exist as an item type"
+                eval this._sb_buildData.type = type
+                eval this._sb_buildData.tag = null
+                return this
+            },
+            tag: function(type) {
+                eval assertType(type, "resource")
+                do if(!type.isTag) throw "Given location '" + type + "' is a type, expected a tag"
+                do if(!Tags.exists("item", type)) throw "Given tag '" + type + "' does not exist as an item tag"
+                eval this._sb_buildData.tag = ((string)type).substring(1)
+                eval this._sb_buildData.type = null
+                return this
+            },
+            durability: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.durability = rangeToObj(value)
+                return this
+            },
+            count: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.count = rangeToObj(value)
+                return this
+            },
+            potion: function(type) {
+                eval assertType(type, "resource")
+                do if(!MinecraftTypes.exists("potion", type)) throw "Given type '" + type + "' does not exist as a potion type"
+                eval this._sb_buildData.potion = type
+                return this
+            },
+            enchantments: function(enchantments) {
+                do if(!isInstance(enchantments, "list")) {
+                    eval enchantments = [enchantments]
+                }
+                do if(this._sb_buildData.enchantments == null) eval this._sb_buildData.enchantments = []
+                for(enchantment in enchantments) {
+                    eval assertObjectType(enchantment, "Shared.Enchantment")
+                    eval this._sb_buildData.enchantments.add(enchantment)
+                }
+                return this
+            },
+            storedEnchantments: function(enchantments) {
+                do if(!isInstance(enchantments, "list")) {
+                    eval enchantments = [enchantments]
+                }
+                do if(this._sb_buildData.stored_enchantments == null) eval this._sb_buildData.stored_enchantments = []
+                for(enchantment in enchantments) {
+                    eval assertObjectType(enchantment, "Shared.Enchantment")
+                    eval this._sb_buildData.stored_enchantments.add(enchantment)
+                }
+                return this
+            },
+            nbt: function(tag) {
+                eval assertType(tag, "nbt")
+                do if(this._sb_buildData.nbt == null) eval this._sb_buildData.nbt = nbt<{}>
+                eval this._sb_buildData.nbt = this._sb_buildData.nbt.merge(tag)
+                return this
+            }
+        })
+        do if(base != null) {
+            eval assertDualTypes(base, "item", "custom_item")
+            do if(isInstance(base, "custom_item")) eval base = item<${base.baseType}${base.getItemTag()}>
+            do if(base.itemType.isTag) {
+                eval obj = obj.tag(base.itemType)
             } else {
-                eval this.type(base)
+                eval obj = obj.type(base.itemType)
+            }
+            do if(base.itemTag != null) {
+                eval obj = obj.nbt(base.itemTag)
             }
         }
+        return obj
+    },
+    Enchantment: function(base) {
+        var obj = SelfBuilder({
+            objectType: function() {return "Shared.Enchantment"},
+            id: function(type) {
+                eval assertType(type, "resource")
+                do if(!MinecraftTypes.exists("enchantment", type)) throw "Given type '" + type + "' does not exist as an enchantment type"
+                eval this._sb_buildData.enchantment = type
+                return this
+            },
+            levels: function(value) {
+                eval assertDualTypes(value, "int", "int_range")
+                eval this._sb_buildData.levels = rangeToObj(value)
+                return this
+            }
+        })
+        do if(base != null) {
+            eval obj.id(base)
+        }
+        return obj
+    },
+    Block: function(base) {
+        var obj = SelfBuilder({
+            objectType: function() {return "Shared.Block"},
+            type: function(type) {
+                eval assertType(type, "resource")
+                do if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
+                do if(!MinecraftTypes.exists("block", type)) throw "Given type '" + type + "' does not exist as a block type"
+                eval this._sb_buildData["block"] = type
+                return this
+            },
+            tag: function(type) {
+                eval assertType(type, "resource")
+                do if(!type.isTag) throw "Given location '" + type + "' is a type, expected a tag"
+                do if(!Tags.exists("block", type)) throw "Given tag '" + type + "' does not exist as a block tag"
+                eval this._sb_buildData.tag = ((string)type).substring(1)
+                return this
+            },
+            state: function(key, value) {
+                eval assertType(key, "string")
+                do if(this._sb_buildData.state == null) eval this._sb_buildData.state = {}
+                do if(isInstance(value, "string") || isInstance(value, "boolean") || isInstance(value, "int") || isInstance(value, "int_range")) {
+                    eval this._sb_buildData.state[key] = rangeToObj(value)
+                } else {
+                    throw "Expected string, boolean, int or int_range, instead got " + typeOf(obj)
+                }
+                return this
+            },
+            nbt: function(tag) {
+                eval assertType(tag, "nbt")
+                do if(this._sb_buildData.nbt == null) eval this._sb_buildData.nbt = nbt<{}>
+                eval this._sb_buildData.nbt = this._sb_buildData.nbt.merge(tag)
+                return this
+            }
+        })
+        do if(base != null) {
+            eval assertType(base, "block")
+            eval obj = obj.type(base.blockType)
+            do if(base.blockTag != null) {
+                eval obj = obj.nbt(base.blockTag)
+            }
+        }
+        return obj
+    },
+    Fluid: function(base) {
+        var obj = SelfBuilder({
+            objectType: function() {return "Shared.Fluid"},
+            type: function(type) {
+                eval assertType(type, "resource")
+                do if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
+                do if(!MinecraftTypes.exists("fluid", type)) throw "Given type '" + type + "' does not exist as a fluid type"
+                eval this._sb_buildData["fluid"] = type
+                return this
+            },
+            tag: function(type) {
+                eval assertType(type, "resource")
+                do if(!type.isTag) throw "Given location '" + type + "' is a type, expected a tag"
+                do if(!Tags.exists("fluid", type)) throw "Given tag '" + type + "' does not exist as a fluid tag"
+                eval this._sb_buildData.tag = ((string)type).substring(1)
+                return this
+            },
+            state: function(key, value) {
+                eval assertType(key, "string")
+                do if(this._sb_buildData.state == null) eval this._sb_buildData.state = {}
+                do if(isInstance(value, "string") || isInstance(value, "boolean") || isInstance(value, "int") || isInstance(value, "int_range")) {
+                    eval this._sb_buildData.state[key] = rangeToObj(value)
+                } else {
+                    throw "Expected string, boolean, int or int_range, instead got " + typeOf(obj)
+                }
+                return this
+            }
+        })
+        do if(base != null) {
+            eval assertType(base, "resource")
+            eval obj = obj.type(base)
+        }
+        return obj
     }
-
-    public type(type : resource) {
-        if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
-        if(!MinecraftTypes.exists("fluid", type)) throw "Given type '" + type + "' does not exist as a fluid type"
-        eval this.output.fluid = type
-        eval this.output.tag = null
-        return this
-    }
-
-    public tag(type : resource) {
-        if(!type.isTag) throw "Given location '" + type + "' is a type, expected a tag"
-        if(!Tags.exists("fluid", type)) throw "Given tag '" + type + "' does not exist as a fluid tag"
-        eval this.output.tag = ((string)type).substring(1)
-        eval this.output.fluid = null
-        return this
-    }
-
-    public state(key : string, value : int_range) {
-        if(this.output.state == null) eval this.output.state = {}
-        eval this.output.state[key] = rangeToObj(value)
-        return this
-    }
-    public state(key : string, value : boolean) {
-        if(this.output.state == null) eval this.output.state = {}
-        eval this.output.state[key] = value
-        return this
-    }
-    public state(key : string, value : string) {
-        if(this.output.state == null) eval this.output.state = {}
-        eval this.output.state[key] = value
-        return this
-    }
-
-    public override serializeToJSON() {
-        return output
-    }
-}
-
-define class Shared {
-    public static final var Distance = Distance
-    public static final var Location = Location
-    public static final var Entity = Entity
-    public static final var Effect = Effect
-    public static final var Item = Item
-    public static final var Enchantment = Enchantment
-    public static final var Block = Block
-    public static final var Fluid = Fluid
-
-    # For backwards compatibility:
-    public static Distance() {return new Distance()}
-    public static Location() {return new Location()}
-    public static Entity() {return new Entity()}
-    public static Effect(type : resource) {return new Effect(type)}
-    public static Item() {return new Item(base)}
-    public static Item(base : item) {return new Item(base)}
-    public static Item(base : custom_item) {return new Item(base)}
-    public static Enchantment(base : resource) {return new Enchantment(base)}
-    public static Block(base : block?) {return new Block(base)}
-    public static Fluid(base : resource?) {return new Fluid(base)}
 }

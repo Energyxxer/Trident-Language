@@ -12,7 +12,7 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 public class LogInstruction implements Instruction {
     @Override
     public void run(TokenPattern<?> pattern, ISymbolContext ctx) {
-        String message = InterpolationManager.castToString(InterpolationManager.parse(pattern.find("LINE_SAFE_INTERPOLATION_VALUE"), ctx), pattern, ctx);
+        String message = String.valueOf(InterpolationManager.parse(pattern.find("LINE_SAFE_INTERPOLATION_VALUE"), ctx));
         NoticeType type;
 
         switch(pattern.find("NOTICE_GROUP").flatten(false)) {

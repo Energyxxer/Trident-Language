@@ -20,8 +20,7 @@ public class TridentLexerProfile extends LexerProfile {
     public static final Lazy<TridentLexerProfile> INSTANCE = new Lazy<>(TridentLexerProfile::new);
 
     public static final HashMap<TokenType, LexerContext> usefulContexts = new HashMap<>();
-    private static final List<String> allPrimitiveTypes = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "tag_byte", "tag_short", "tag_int", "tag_float", "tag_double", "tag_long", "tag_string", "tag_compound", "tag_list", "tag_int_array", "tag_byte_array", "tag_long_array", "nbt_path", "coordinates", "resource", "int_range", "real_range", "function", "pointer", "dictionary", "list", "exception", "custom_item", "custom_entity", "entity_event", "type_definition");
-    private static final List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "tag_byte", "tag_short", "tag_int", "tag_float", "tag_double", "tag_long", "tag_string", "tag_compound", "tag_list", "tag_int_array", "tag_byte_array", "tag_long_array", "nbt_path", "coordinates", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "public", "global", "case", "switch", "default", "component", "implements", "pointer", "true", "false", "class", "static", "final", "type_definition", "this");
+    private static final List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "tag_byte", "tag_short", "tag_int", "tag_float", "tag_double", "tag_long", "tag_string", "tag_compound", "tag_list", "tag_int_array", "tag_byte_array", "tag_long_array", "nbt_path", "coordinate", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "global", "case", "switch", "default", "component", "implements", "pointer", "true", "false");
 
     public static final Pattern IDENTIFIER_A_REGEX = Pattern.compile("[a-zA-Z0-9._\\-+]+");
     public static final Pattern IDENTIFIER_B_REGEX = Pattern.compile("[^@\\s]\\S*");
@@ -30,7 +29,7 @@ public class TridentLexerProfile extends LexerProfile {
     public static final String IDENTIFIER_C_REGEX = "\\S+";
     public static final String IDENTIFIER_D_REGEX = "[a-zA-Z0-9_\\-+]+";
 
-    public static final Pattern NUMBER_REGEX = Pattern.compile("(?:0x[0-9a-f]+)|(?:0b[01]+)|(?:([+-]?(?:\\d*(\\.\\d+)|\\d+))([bdfsL]?))", Pattern.CASE_INSENSITIVE);
+    public static final Pattern NUMBER_REGEX = Pattern.compile("([+-]?(?:\\d*(\\.\\d+)|\\d+))([bdfsL]?)", Pattern.CASE_INSENSITIVE);
     public static final Pattern SHORT_NUMBER_REGEX = Pattern.compile("[+-]?\\d*(\\.\\d+)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern TIME_REGEX = Pattern.compile("(\\d*(\\.\\d+)|\\d+)[tsd]?");
 
@@ -74,7 +73,7 @@ public class TridentLexerProfile extends LexerProfile {
                     int length = matcher.end();
                     if(length <= 0) return new ScannerContextResponse(false);
 
-                    TokenType obtainedType = length >= 2 && Character.isLetter(str.charAt(length-1)) && ((length == 2) == (Character.isLetter(str.charAt(1)))) ? TridentTokens.TYPED_NUMBER : ((str.substring(0, length).contains(".")) ? TridentTokens.REAL_NUMBER : TridentTokens.INTEGER_NUMBER);
+                    TokenType obtainedType = Character.isLetter(str.charAt(length-1)) ? TridentTokens.TYPED_NUMBER : ((str.substring(0, length).contains(".")) ? TridentTokens.REAL_NUMBER : TridentTokens.INTEGER_NUMBER);
 
                     if(type == TYPED_NUMBER) obtainedType = type;
                     else if(type == REAL_NUMBER && obtainedType == INTEGER_NUMBER) obtainedType = REAL_NUMBER;
@@ -563,41 +562,13 @@ public class TridentLexerProfile extends LexerProfile {
                     i++;
                 }
                 str = str.substring(0, i);
-                if(i > 0) return new ScannerContextResponse(true, str, type);
+                if(i > 0 && !reservedWords.contains(str)) return new ScannerContextResponse(true, str, type);
                 return new ScannerContextResponse(false);
             }
 
             @Override
             public Collection<TokenType> getHandledTypes() {
                 return Collections.singletonList(IDENTIFIER_TYPE_X);
-            }
-        });
-
-        contexts.add(new LexerContext() {
-
-            @Override
-            public ScannerContextResponse analyze(String str, LexerProfile profile) {
-                return new ScannerContextResponse(false);
-            }
-
-            @Override
-            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
-                int i = 0;
-                while(i < str.length() && (
-                        (i == 0 && str.substring(i,i+1).matches("[a-zA-Z_]")
-                                ||
-                                (i > 0 && str.substring(i,i+1).matches("[a-zA-Z0-9_]"))
-                        ))) {
-                    i++;
-                }
-                str = str.substring(0, i);
-                if(i > 0 && allPrimitiveTypes.contains(str)) return new ScannerContextResponse(true, str, type);
-                return new ScannerContextResponse(false);
-            }
-
-            @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(PRIMITIVE_TYPE);
             }
         });
 
@@ -629,7 +600,7 @@ public class TridentLexerProfile extends LexerProfile {
             }
         });
 
-        contexts.add(new StringMatchLexerContext(KEYWORD, "var", "define", "do", "while", "within", "using", "eval", "as", "append", "for", "in", "switch", "function", "if", "else", "try", "catch", "throw", "tdndebug", "switch", "case", "default", "implements", "log", "break", "return", "continue", "is"));
+        contexts.add(new StringMatchLexerContext(KEYWORD, "var", "define", "do", "while", "within", "using", "eval", "as", "append", "for", "in", "switch", "function", "if", "else", "try", "catch", "throw", "tdndebug", "switch", "case", "default", "implements", "log", "break", "return", "continue"));
         contexts.add(new StringMatchLexerContext(CUSTOM_COMMAND_KEYWORD, "isset", "update"));
         contexts.add(new StringMatchLexerContext(BOOLEAN, "true", "false"));
         contexts.add(new IdentifierLexerContext(COMMAND_HEADER, "[a-zA-Z0-9._\\-+]"));
@@ -638,7 +609,7 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new StringMatchLexerContext(SYMBOL, "*", "<=", ">=", "<", ">", "!=", "=", "$", ";"));
         contexts.add(new StringMatchLexerContext(ARROW, "->"));
 
-        contexts.add(new StringMatchLexerContext(COMPILER_OPERATOR, "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=", "+", "-", "*", "/", "%", "<=", ">=", "<<=", ">>=", "<<", ">>", "<", ">", "==", "!=", "=", "&&", "||", "&", "|", "^"));
+        contexts.add(new StringMatchLexerContext(COMPILER_OPERATOR, "+=", "-=", "*=", "/=", "%=", "+", "-", "*", "/", "%", "<=", ">=", "<", ">", "==", "!=", "=", "&&", "||", "&", "|", "^"));
         contexts.add(new StringMatchLexerContext(COMPILER_POSTFIX_OPERATOR, "++", "--"));
         contexts.add(new StringMatchLexerContext(COMPILER_PREFIX_OPERATOR, "++", "--", "+", "-", "~", "!"));
 

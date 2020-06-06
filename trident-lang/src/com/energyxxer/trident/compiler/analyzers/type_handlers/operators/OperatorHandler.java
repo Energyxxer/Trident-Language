@@ -2,8 +2,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.operators;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.ILazyValue;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -11,8 +10,6 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.HashMap;
 import java.util.Objects;
-
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager.getInternalTypeIdentifierForObject;
 
 public interface OperatorHandler<A, B> {
 
@@ -26,8 +23,8 @@ public interface OperatorHandler<A, B> {
             OperatorType operatorType = operator.getOperatorType();
             
             if(operatorType == OperatorType.BINARY) {
-                String idA = a != null ? getInternalTypeIdentifierForObject(a) : "*";
-                String idB = b != null ? getInternalTypeIdentifierForObject(b) : "*";
+                String idA = a != null ? VariableTypeHandler.Static.getIdentifierForClass(a.getClass()) : "*";
+                String idB = b != null ? VariableTypeHandler.Static.getIdentifierForClass(b.getClass()) : "*";
                 OperatorHandler handler = handlers.get(idA + " " + operator.getSymbol() + " " + idB);
 
                 if (handler == null) handler = handlers.get(idA + " " + operator.getSymbol() + " *");
@@ -42,8 +39,8 @@ public interface OperatorHandler<A, B> {
                 return handler.perform(a, b, pattern, ctx);
             } else if(operatorType == OperatorType.UNARY_ANY || operatorType == OperatorType.UNARY_LEFT || operatorType == OperatorType.UNARY_RIGHT) {
                 OperatorHandler handler = null;
-                String idA = a != null ? getInternalTypeIdentifierForObject(a) : "*";
-                String idB = b != null ? getInternalTypeIdentifierForObject(b) : "*";
+                String idA = a != null ? VariableTypeHandler.Static.getIdentifierForClass(a.getClass()) : "*";
+                String idB = b != null ? VariableTypeHandler.Static.getIdentifierForClass(b.getClass()) : "*";
 
                 if(operatorType == OperatorType.UNARY_LEFT) {
                     handler = handlers.get(operator.getSymbol() + " " + idB);
@@ -178,10 +175,7 @@ public interface OperatorHandler<A, B> {
             //handlers.put("java.lang.Boolean && java.lang.Boolean", (Boolean a, Boolean b, TokenPattern<?> pattern, ISymbolContext ctx) -> a && b);
             //handlers.put("java.lang.Boolean || java.lang.Boolean", (Boolean a, Boolean b, TokenPattern<?> pattern, ISymbolContext ctx) -> a || b);
 
-            handlers.put("primitive(int) << primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a << b);
-            handlers.put("primitive(int) >> primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a >> b);
-
-            handlers.put("lazy && lazy", (ILazyValue a, ILazyValue b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+            handlers.put("com.energyxxer.trident.compiler.semantics.ILazyValue && com.energyxxer.trident.compiler.semantics.ILazyValue", (ILazyValue a, ILazyValue b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 Boolean realA = a.getValue(Boolean.class);
                 if(!realA) return false;
                 return b.getValue(Boolean.class);
@@ -192,14 +186,14 @@ public interface OperatorHandler<A, B> {
                 return b.getValue(Boolean.class);
             });
 
-            handlers.put("primitive(string) + primitive(string)", (OperatorHandler<String, String>) (s, str, pattern, compiler) -> s.concat(str));
-            handlers.put("primitive(string) + *", (String a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                String converted = InterpolationManager.castToString(b, pattern, ctx);
+            handlers.put("java.lang.String + java.lang.String", (OperatorHandler<String, String>) (s, str, pattern, compiler) -> s.concat(str));
+            handlers.put("java.lang.String + *", (String a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                String converted = InterpolationManager.cast(b, String.class, pattern, ctx);
                 return a + converted;
             });
 
-            handlers.put("* == *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> equals(a,b, pattern, ctx));
-            handlers.put("* != *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> !equals(a,b, pattern, ctx));
+            handlers.put("* == *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> Objects.equals(a,b));
+            handlers.put("* != *", (Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> !Objects.equals(a,b));
 
             handlers.put("- java.lang.Integer", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> -a);
             handlers.put("- java.lang.Double", (Object nl, Double a, TokenPattern<?> pattern, ISymbolContext ctx) -> -a);
@@ -208,28 +202,28 @@ public interface OperatorHandler<A, B> {
             handlers.put("! java.lang.Boolean", (Object nl, Boolean a, TokenPattern<?> pattern, ISymbolContext ctx) -> !a);
             handlers.put("~ java.lang.Integer", (Object nl, Integer a, TokenPattern<?> pattern, ISymbolContext ctx) -> ~a);
 
-            handlers.put("symbol ++", (Symbol a, Object nl, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object oldValue = a.getValue(pattern, ctx);
-                Object result = perform(a.getValue(pattern, ctx), Operator.ADD, 1, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
+            handlers.put("com.energyxxer.trident.compiler.semantics.Symbol ++", (Symbol a, Object nl, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object oldValue = a.getValue();
+                Object result = perform(a.getValue(), Operator.ADD, 1, pattern, ctx);
+                a.setValue(result);
                 return oldValue;
             });
-            handlers.put("symbol --", (Symbol a, Object nl, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object oldValue = a.getValue(pattern, ctx);
-                Object result = perform(a.getValue(pattern, ctx), Operator.SUBTRACT, 1, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
+            handlers.put("com.energyxxer.trident.compiler.semantics.Symbol --", (Symbol a, Object nl, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object oldValue = a.getValue();
+                Object result = perform(a.getValue(), Operator.SUBTRACT, 1, pattern, ctx);
+                a.setValue(result);
                 return oldValue;
             });
 
-            handlers.put("++ symbol", (Object nl, Symbol a, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.ADD, 1, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
-                return a.getValue(pattern, ctx);
+            handlers.put("++ com.energyxxer.trident.compiler.semantics.Symbol", (Object nl, Symbol a, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(), Operator.ADD, 1, pattern, ctx);
+                a.setValue(result);
+                return a.getValue();
             });
-            handlers.put("-- symbol", (Object nl, Symbol a, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.SUBTRACT, 1, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
-                return a.getValue(pattern, ctx);
+            handlers.put("-- com.energyxxer.trident.compiler.semantics.Symbol", (Object nl, Symbol a, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(), Operator.SUBTRACT, 1, pattern, ctx);
+                a.setValue(result);
+                return a.getValue();
             });
 
             handlers.put("com.energyxxer.trident.compiler.semantics.Symbol = *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
@@ -237,87 +231,35 @@ public interface OperatorHandler<A, B> {
                 return b;
             });
 
-            handlers.put("symbol += *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.ADD, b, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
+            handlers.put("com.energyxxer.trident.compiler.semantics.Symbol += *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(), Operator.ADD, b, pattern, ctx);
+                a.setValue(result);
                 return result;
             });
 
-            handlers.put("symbol -= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.SUBTRACT, b, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
+            handlers.put("com.energyxxer.trident.compiler.semantics.Symbol -= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(), Operator.SUBTRACT, b, pattern, ctx);
+                a.setValue(result);
                 return result;
             });
 
-            handlers.put("symbol *= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.MULTIPLY, b, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
+            handlers.put("com.energyxxer.trident.compiler.semantics.Symbol *= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(), Operator.MULTIPLY, b, pattern, ctx);
+                a.setValue(result);
                 return result;
             });
 
-            handlers.put("symbol /= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.DIVIDE, b, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
+            handlers.put("com.energyxxer.trident.compiler.semantics.Symbol /= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(), Operator.DIVIDE, b, pattern, ctx);
+                a.setValue(result);
                 return result;
             });
 
-            handlers.put("symbol %= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.MODULO, b, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
+            handlers.put("com.energyxxer.trident.compiler.semantics.Symbol %= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
+                Object result = perform(a.getValue(), Operator.MODULO, b, pattern, ctx);
+                a.setValue(result);
                 return result;
             });
-
-            handlers.put("symbol &= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.BITWISE_AND, b, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
-                return result;
-            });
-
-            handlers.put("symbol ^= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.BITWISE_XOR, b, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
-                return result;
-            });
-
-            handlers.put("symbol |= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.BITWISE_OR, b, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
-                return result;
-            });
-
-            handlers.put("symbol <<= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.BIT_SHIFT_LEFT, b, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
-                return result;
-            });
-
-            handlers.put("symbol >>= *", (Symbol a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
-                Object result = perform(a.getValue(pattern, ctx), Operator.BIT_SHIFT_RIGHT, b, pattern, ctx);
-                a.safeSetValue(result, pattern, ctx);
-                return result;
-            });
-        }
-
-        public static boolean equals(Object a, Object b, TokenPattern<?> pattern, ISymbolContext ctx) {
-            if(a == b) return true;
-            if((a == null) != (b == null)) return false;
-            if(Objects.equals(a, b)) return true;
-
-            TypeHandler aType = TridentTypeManager.getHandlerForObject(a);
-            TypeHandler bType = TridentTypeManager.getHandlerForObject(b);
-
-            //Try coercing a to b's type
-            if(aType.canCoerce(a, bType) && equalsNoCoercion(aType.coerce(a, bType, pattern, ctx), b)) {
-                return true;
-            }
-            //Try coercing b to a's type
-            return bType.canCoerce(b, aType) && equalsNoCoercion(a, bType.coerce(b, aType, pattern, ctx));
-        }
-
-        public static boolean equalsNoCoercion(Object a, Object b) {
-            if(a == b) return true;
-            if((a == null) != (b == null)) return false;
-            return Objects.equals(a, b);
         }
     }
 }

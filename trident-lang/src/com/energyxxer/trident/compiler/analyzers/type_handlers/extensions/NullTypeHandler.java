@@ -4,7 +4,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
-public class NullTypeHandler implements TypeHandler<Object> {
+public class NullTypeHandler implements VariableTypeHandler<Object> {
     @Override
     public Object getMember(Object object, String member, TokenPattern pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
@@ -17,22 +17,7 @@ public class NullTypeHandler implements TypeHandler<Object> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object cast(Object object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public <F> F cast(Object object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         return null;
-    }
-
-    @Override
-    public Class<Object> getHandledClass() {
-        return null;
-    }
-
-    @Override
-    public String getTypeIdentifier() {
-        return "null";
-    }
-
-    @Override
-    public boolean isInstance(Object obj) {
-        return true;
     }
 }

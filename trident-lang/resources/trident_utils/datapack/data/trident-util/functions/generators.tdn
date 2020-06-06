@@ -42,7 +42,13 @@ private var _generateFunctionTree = function(root, interval, splits, nodeFunctio
     }
 }
 
-var generateFunctionTree = function(root : resource, interval : int_range, splits : int, nodeFunction : function, leafFunction : function) {
+var generateFunctionTree = function(root, interval, splits, nodeFunction, leafFunction) {
+    eval assertType(root, "resource")
+    eval assertType(interval, "int_range")
+    eval assertType(splits, "int")
+    eval assertType(nodeFunction, "function")
+    eval assertType(leafFunction, "function")
+
     var usefulInterval = interval
 
     var intervalSize = (int)Math.pow(splits, Math.ceil(Math.log(interval.range) / Math.log(splits)))

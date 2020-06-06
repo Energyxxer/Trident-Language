@@ -28,29 +28,26 @@ import static com.energyxxer.trident.extensions.EJsonElement.*;
 public class TextParser {
 
     public static TextComponent parseTextComponent(TokenPattern<?> pattern, ISymbolContext ctx) {
-        while (true) {
-            if (pattern == null) return null;
-            switch (pattern.getName()) {
-                case "TEXT_COMPONENT": {
-                    pattern = ((TokenStructure) pattern).getContents();
-                    continue;
+        if(pattern == null) return null;
+        switch(pattern.getName()) {
+            case "TEXT_COMPONENT": {
+                return parseTextComponent(((TokenStructure)pattern).getContents(), ctx);
+            }
+            case "INTERPOLATION_BLOCK": {
+                TextComponent result = InterpolationManager.parse(pattern, ctx, TextComponent.class);
+                EObject.assertNotNull(result, pattern, ctx);
+                return result;
+            }
+            case "JSON_ROOT":
+            case "JSON_ELEMENT": {
+                try {
+                    return parseTextComponent(JsonParser.parseJson(pattern, ctx), ctx, pattern, TextComponentContext.CHAT);
+                } finally {
+                    JsonParser.clearCache();
                 }
-                case "INTERPOLATION_BLOCK": {
-                    TextComponent result = InterpolationManager.parse(pattern, ctx, TextComponent.class);
-                    EObject.assertNotNull(result, pattern, ctx);
-                    return result;
-                }
-                case "JSON_ROOT":
-                case "JSON_ELEMENT": {
-                    try {
-                        return parseTextComponent(JsonParser.parseJson(pattern, ctx), ctx, pattern, TextComponentContext.CHAT);
-                    } finally {
-                        JsonParser.clearCache();
-                    }
-                }
-                default: {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown text component production: '" + pattern.getName() + "'", pattern, ctx);
-                }
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown text component production: '" + pattern.getName() + "'", pattern, ctx);
             }
         }
     }

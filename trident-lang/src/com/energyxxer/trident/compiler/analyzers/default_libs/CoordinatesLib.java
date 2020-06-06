@@ -3,8 +3,8 @@ package com.energyxxer.trident.compiler.analyzers.default_libs;
 import com.energyxxer.commodore.functionlogic.coordinates.Coordinate;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 @AnalyzerMember(key = "Coordinates")
@@ -21,22 +21,20 @@ public class CoordinatesLib implements DefaultLibraryProvider {
 
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
-        CustomClass coord = new CustomClass("Coordinates", "trident-util:native", globalCtx);
-        coord.setNoConstructor();
+        DictionaryObject coord = new DictionaryObject();
 
-        coord.putStaticFinalMember("ABSOLUTE", COORDINATE_TYPE_ABSOLUTE);
-        coord.putStaticFinalMember("RELATIVE", COORDINATE_TYPE_RELATIVE);
-        coord.putStaticFinalMember("LOCAL",    COORDINATE_TYPE_LOCAL);
+        coord.put("ABSOLUTE", COORDINATE_TYPE_ABSOLUTE);
+        coord.put("RELATIVE", COORDINATE_TYPE_RELATIVE);
+        coord.put("LOCAL",    COORDINATE_TYPE_LOCAL);
 
         globalCtx.put(new Symbol("Coordinates", Symbol.SymbolVisibility.GLOBAL, coord));
 
 
-        CustomClass axis = new CustomClass("Axis", "trident-util:native", globalCtx);
-        axis.setNoConstructor();
+        DictionaryObject axis = new DictionaryObject();
 
-        axis.putStaticFinalMember("X", AXIS_X);
-        axis.putStaticFinalMember("Y", AXIS_Y);
-        axis.putStaticFinalMember("Z", AXIS_Z);
+        axis.put("X", AXIS_X);
+        axis.put("Y", AXIS_Y);
+        axis.put("Z", AXIS_Z);
 
         globalCtx.put(new Symbol("Axis", Symbol.SymbolVisibility.GLOBAL, axis));
     }

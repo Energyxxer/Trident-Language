@@ -7,7 +7,7 @@ import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Objects;
 
-public class PointerObject implements TypeHandler<PointerObject> {
+public class PointerObject implements VariableTypeHandler<PointerObject> {
 
     public static final int WRONG_TARGET_TYPE = 1;
     public static final int WRONG_MEMBER_TYPE = 2;
@@ -84,11 +84,11 @@ public class PointerObject implements TypeHandler<PointerObject> {
                 break;
             }
             case "isLegal": {
-                return new NativeMethodWrapper<>("isLegal", (instance, params) -> isLegal());
+                return new MethodWrapper<>("isLegal", (instance, params) -> isLegal());
             }
         }
         if(valid && !keepSymbol) {
-            returnValue = ((Symbol) returnValue).getValue(pattern, ctx);
+            returnValue = ((Symbol) returnValue).getValue();
         }
         if(valid) return returnValue;
         throw new MemberNotFoundException();
@@ -99,14 +99,14 @@ public class PointerObject implements TypeHandler<PointerObject> {
     }
 
     public int getErrorCode() {
-        if(!(target.getValue(null, null) instanceof Entity || target.getValue(null, null) instanceof CoordinateSet || target.getValue(null, null) instanceof TridentUtil.ResourceLocation)) return WRONG_TARGET_TYPE;
-        if(!(member.getValue(null, null) instanceof String || member.getValue(null, null) instanceof NBTPath)) return WRONG_MEMBER_TYPE;
-        if(target.getValue(null, null) instanceof TridentUtil.ResourceLocation && ((TridentUtil.ResourceLocation) target.getValue(null, null)).isTag) return TARGET_NOT_STANDALONE;
-        if(member.getValue(null, null) instanceof String &&
-                (((String) member.getValue(null, null)).length() > 16 ||
-                        !TridentLexerProfile.IDENTIFIER_A_REGEX.matcher((String) member.getValue(null, null)).matches()))
+        if(!(target.getValue() instanceof Entity || target.getValue() instanceof CoordinateSet || target.getValue() instanceof TridentUtil.ResourceLocation)) return WRONG_TARGET_TYPE;
+        if(!(member.getValue() instanceof String || member.getValue() instanceof NBTPath)) return WRONG_MEMBER_TYPE;
+        if(target.getValue() instanceof TridentUtil.ResourceLocation && ((TridentUtil.ResourceLocation) target.getValue()).isTag) return TARGET_NOT_STANDALONE;
+        if(member.getValue() instanceof String &&
+                (((String) member.getValue()).length() > 16 ||
+                        !TridentLexerProfile.IDENTIFIER_A_REGEX.matcher((String) member.getValue()).matches()))
             return ILLEGAL_OBJECTIVE_NAME;
-        if(member.getValue(null, null) instanceof String && !(target.getValue(null, null) instanceof Entity)) return ILLEGAL_TYPE_COMBINATION;
+        if(member.getValue() instanceof String && !(target.getValue() instanceof Entity)) return ILLEGAL_TYPE_COMBINATION;
         return 0;
     }
 
@@ -115,7 +115,7 @@ public class PointerObject implements TypeHandler<PointerObject> {
     }
 
     public Object getTarget() {
-        return target.getValue(null, null);
+        return target.getValue();
     }
 
     public void setMember(Object newMember) {
@@ -123,7 +123,7 @@ public class PointerObject implements TypeHandler<PointerObject> {
     }
 
     public Object getMember() {
-        return member.getValue(null, null);
+        return member.getValue();
     }
 
     public void setScale(double newScale) {
@@ -149,24 +149,24 @@ public class PointerObject implements TypeHandler<PointerObject> {
     }
 
     @Override
-    public Object cast(PointerObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public <F> F cast(PointerObject object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
     @Override
     public String toString() {
-        boolean surround = target.getValue(null, null) instanceof CoordinateSet;
+        boolean surround = target.getValue() instanceof CoordinateSet;
         StringBuilder sb = new StringBuilder();
         if(surround) sb.append('(');
-        sb.append(target.getValue(null, null));
+        sb.append(target.getValue());
         if(surround) sb.append(')');
-        sb.append(member.getValue(null, null) instanceof NBTPath ? (target.getValue(null, null) instanceof TridentUtil.ResourceLocation ? "~" : ".") : "->");
-        sb.append(member.getValue(null, null));
+        sb.append(member.getValue() instanceof NBTPath ? (target.getValue() instanceof TridentUtil.ResourceLocation ? "~" : ".") : "->");
+        sb.append(member.getValue());
         if(scale != 1) {
             sb.append(" * ");
             sb.append(CommandUtils.numberToPlainString(scale));
         }
-        if(member.getValue(null, null) instanceof NBTPath) {
+        if(member.getValue() instanceof NBTPath) {
             sb.append(" (");
             sb.append(numericType);
             sb.append(")");
@@ -176,11 +176,11 @@ public class PointerObject implements TypeHandler<PointerObject> {
 
     public PointerObject validate(TokenPattern<?> pattern, ISymbolContext ctx) {
         switch(getErrorCode()) {
-            case WRONG_TARGET_TYPE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer target type: " + TridentTypeManager.getTypeIdentifierForObject(target.getValue(pattern, ctx)), pattern, ctx);
-            case WRONG_MEMBER_TYPE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer member type: " + TridentTypeManager.getTypeIdentifierForObject(member.getValue(pattern, ctx)), pattern, ctx);
-            case ILLEGAL_OBJECTIVE_NAME: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal objective name: '" + member.getValue(pattern, ctx) + "'", pattern, ctx);
-            case ILLEGAL_TYPE_COMBINATION: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer type combination: " + (target.getValue(pattern, ctx) instanceof CoordinateSet ? "Coordinate" : "Storage") + " and Objective", pattern, ctx);
-            case TARGET_NOT_STANDALONE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer target: Storage spaces can't be tags: '" + target.getValue(pattern, ctx) + "'", pattern, ctx);
+            case WRONG_TARGET_TYPE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer target type: " + VariableTypeHandler.Static.getShorthandForObject(target.getValue()), pattern, ctx);
+            case WRONG_MEMBER_TYPE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer member type: " + VariableTypeHandler.Static.getShorthandForObject(member.getValue()), pattern, ctx);
+            case ILLEGAL_OBJECTIVE_NAME: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal objective name: '" + member.getValue() + "'", pattern, ctx);
+            case ILLEGAL_TYPE_COMBINATION: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer type combination: " + (target.getValue() instanceof CoordinateSet ? "Coordinate" : "Storage") + " and Objective", pattern, ctx);
+            case TARGET_NOT_STANDALONE: throw new TridentException(TridentException.Source.TYPE_ERROR, "Illegal pointer target: Storage spaces can't be tags: '" + target.getValue() + "'", pattern, ctx);
         }
         return this;
     }
@@ -191,23 +191,13 @@ public class PointerObject implements TypeHandler<PointerObject> {
         if (o == null || getClass() != o.getClass()) return false;
         PointerObject that = (PointerObject) o;
         return Double.compare(that.scale, scale) == 0 &&
-                Objects.equals(target.getValue(null, null), that.target.getValue(null, null)) &&
-                Objects.equals(member.getValue(null, null), that.member.getValue(null, null)) &&
+                Objects.equals(target.getValue(), that.target.getValue()) &&
+                Objects.equals(member.getValue(), that.member.getValue()) &&
                 Objects.equals(numericType, that.numericType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(target.getValue(null, null), member.getValue(null, null), scale, numericType);
-    }
-
-    @Override
-    public Class<PointerObject> getHandledClass() {
-        return PointerObject.class;
-    }
-
-    @Override
-    public String getTypeIdentifier() {
-        return "pointer";
+        return Objects.hash(target.getValue(), member.getValue(), scale, numericType);
     }
 }

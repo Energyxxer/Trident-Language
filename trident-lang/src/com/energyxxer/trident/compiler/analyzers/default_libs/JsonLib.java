@@ -6,10 +6,11 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.MethodWrapper;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
+import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.google.gson.*;
 import com.google.gson.stream.MalformedJsonException;
@@ -17,65 +18,43 @@ import com.google.gson.stream.MalformedJsonException;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
-
 @AnalyzerMember(key = "JSON")
 public class JsonLib implements DefaultLibraryProvider {
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
-        CustomClass jsonLib = new CustomClass("JSON", "trident-util:native", globalCtx);
-        jsonLib.setNoConstructor();
-        globalCtx.put(new Symbol("JSON", Symbol.SymbolVisibility.GLOBAL, jsonLib));
+        DictionaryObject block = new DictionaryObject();
 
-        try {
-            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("parse", String.class)));
-            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", String.class, Boolean.class)));
-            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", Boolean.class, Boolean.class)));
-            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", Integer.class, Boolean.class)));
-            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", Double.class, Boolean.class)));
-            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", ListObject.class, Boolean.class)));
-            jsonLib.putStaticFunction(nativeMethodsToFunction(jsonLib.getInnerStaticContext(), JsonLib.class.getMethod("stringify", DictionaryObject.class, Boolean.class)));
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-    }
+        block.put("parse",
+                new MethodWrapper<>("parse", ((instance, params) -> {
+                    String raw = (String) params[0];
+                    if(raw.isEmpty()) return null;
+                    JsonElement asJson = new Gson().fromJson(raw, JsonElement.class);
+                    if(asJson.isJsonPrimitive() && asJson.getAsJsonPrimitive().isString() && !(raw.startsWith("\"") || raw.startsWith("'"))) throw new MalformedJsonException("Use JsonReader.setLenient(true) to accept malformed JSON at line 1 column 1 path $");
+                    return parseJson(asJson);
+                }), String.class).createForInstance(null));
+        block.put("stringify",
+                (VariableMethod) (params, patterns, pattern, ctx) -> {
+                    if(params.length < 1) {
+                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'stringify' requires 1 parameter, instead found " + params.length, pattern, ctx);
+                    }
+                    boolean prettyPrinting = false;
 
-    public static Object parse(String raw) throws MalformedJsonException {
-        if(raw.isEmpty()) return null;
-        JsonElement asJson = new Gson().fromJson(raw, JsonElement.class);
-        if(asJson.isJsonPrimitive() && asJson.getAsJsonPrimitive().isString() && !(raw.startsWith("\"") || raw.startsWith("'"))) throw new MalformedJsonException("Use JsonReader.setLenient(true) to accept malformed JSON at line 1 column 1 path $");
-        return parseJson(asJson);
-    }
+                    if(params.length >= 2) {
+                        prettyPrinting = VariableMethod.HelperMethods.assertOfType(params[1], patterns[1], ctx, Boolean.class);
+                    }
 
-    public static Object stringify(String obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
-        return stringify((Object) obj, prettyPrinting);
-    }
+                    Object param = VariableMethod.HelperMethods.assertOfType(params[0], patterns[0], ctx, String.class, Integer.class, Double.class, Boolean.class, ListObject.class, DictionaryObject.class);
 
-    public static Object stringify(Integer obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
-        return stringify((Object) obj, prettyPrinting);
-    }
+                    GsonBuilder gb = new GsonBuilder();
+                    if(prettyPrinting) gb.setPrettyPrinting();
 
-    public static Object stringify(Double obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
-        return stringify((Object) obj, prettyPrinting);
-    }
-
-    public static Object stringify(Boolean obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
-        return stringify((Object) obj, prettyPrinting);
-    }
-
-    public static Object stringify(ListObject obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
-        return stringify((Object) obj, prettyPrinting);
-    }
-
-    public static Object stringify(DictionaryObject obj, @NativeMethodWrapper.TridentNullableArg Boolean prettyPrinting) {
-        return stringify((Object) obj, prettyPrinting);
-    }
-
-    public static Object stringify(Object param, Boolean prettyPrinting) {
-        if(prettyPrinting == null) prettyPrinting = false;
-        GsonBuilder gb = new GsonBuilder();
-        if(prettyPrinting) gb.setPrettyPrinting();
-        return gb.create().toJson(toJson(param, null, true));
+                    try {
+                        return gb.create().toJson(toJson(param, null, true));
+                    } catch(IllegalArgumentException x) {
+                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.getMessage(), pattern, ctx);
+                    }
+                });
+        globalCtx.put(new Symbol("JSON", Symbol.SymbolVisibility.GLOBAL, block));
     }
 
     public static Object parseJson(JsonElement elem) {
@@ -129,13 +108,13 @@ public class JsonLib implements DefaultLibraryProvider {
         if(obj instanceof DictionaryObject) {
             JsonObject jObj = new JsonObject();
             for(Map.Entry<String, Symbol> elem : ((DictionaryObject) obj).entrySet()) {
-                JsonElement result = toJson(elem.getValue().getValue(null, null), filter, skipUnknownTypes);
+                JsonElement result = toJson(elem.getValue().getValue(), filter, skipUnknownTypes);
                 if(result != null) jObj.add(elem.getKey(), result);
             }
             return jObj;
         }
         JsonElement applied = filter != null ? filter.apply(obj) : null;
-        if(applied == null && !skipUnknownTypes) throw new IllegalArgumentException("Cannot convert object of type '" + TridentTypeManager.getTypeIdentifierForObject(obj) + "' to a JSON element");
+        if(applied == null && !skipUnknownTypes) throw new IllegalArgumentException("Cannot convert object of type '" + VariableTypeHandler.Static.getShorthandForObject(obj) + "' to a JSON element");
         return applied;
     }
 

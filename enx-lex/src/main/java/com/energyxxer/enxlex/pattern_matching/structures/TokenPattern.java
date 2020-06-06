@@ -4,7 +4,6 @@ import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.StringLocation;
-import com.sun.istack.internal.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,14 +22,6 @@ public abstract class TokenPattern<T> {
 	public abstract List<TokenPattern<?>> deepSearchByName(String name);
 
 	public abstract TokenPattern<?> find(String path);
-
-	@NotNull public TokenPattern<?> tryFind(String path) {
-		TokenPattern<?> rv = find(path);
-		if(rv == null) {
-			rv = this;
-		}
-		return rv;
-	}
 
 	public abstract String flatten(boolean separate);
 

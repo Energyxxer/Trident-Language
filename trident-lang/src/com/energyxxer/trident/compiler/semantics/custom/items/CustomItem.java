@@ -17,11 +17,9 @@ import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
-import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.VariableTypeHandler;
 import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
@@ -36,12 +34,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
-import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.VariableMethod.HelperMethods.assertOfType;
 import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger.REPLACE;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
 
-public class CustomItem implements TypeHandler<CustomItem> {
-    public static final CustomItem STATIC_HANDLER = new CustomItem();
+public class CustomItem implements VariableTypeHandler<CustomItem> {
     private final String id;
     private final String namespace;
     private final Type baseType;
@@ -129,15 +126,14 @@ public class CustomItem implements TypeHandler<CustomItem> {
 
 
     @Override
-    public Object getMember(CustomItem object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
+    public Object getMember(CustomItem object, String member, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
         if(members.containsKey(member)) {
             Symbol sym = members.get(member);
-            return keepSymbol ? sym : sym.getValue(pattern, ctx);
+            return keepSymbol ? sym : sym.getValue();
         }
         switch (member) {
             case "getSlotNBT":
-                return (TridentFunction) (params, patterns, pattern1, file1) -> {
+                return (VariableMethod) (params, patterns, pattern1, file1) -> {
                     TagCompound nbt = new TagCompound(
                             new TagString("id", ((CustomItem) this).getBaseType().toString()),
                             new TagByte("Count", 1));
@@ -149,16 +145,16 @@ public class CustomItem implements TypeHandler<CustomItem> {
                     return nbt;
                 };
             case "getItemTag":
-                return (TridentFunction) (params, patterns, pattern1, file1) -> {
+                return (VariableMethod) (params, patterns, pattern1, file1) -> {
                     if (((CustomItem) this).getDefaultNBT() != null) {
                         return ((CustomItem) this).getDefaultNBT().clone();
                     }
                     return new TagCompound();
                 };
             case "getMatchingNBT":
-                return (TridentFunction) (params, patterns, pattern1, file1) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
+                return (VariableMethod) (params, patterns, pattern1, file1) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
             case "getItem":
-                return (TridentFunction) (params, patterns, pattern1, file1) -> new Item(baseType, defaultNBT);
+                return (VariableMethod) (params, patterns, pattern1, file1) -> new Item(baseType, defaultNBT);
             case "baseType":
                 return baseType != null ? new TridentUtil.ResourceLocation(baseType.toString()) : null;
             case "itemCode":
@@ -169,11 +165,10 @@ public class CustomItem implements TypeHandler<CustomItem> {
 
     @Override
     public Object getIndexer(CustomItem object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
-        String indexStr = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
+        String indexStr = assertOfType(index, pattern, ctx, String.class);
         if(members.containsKey(indexStr)) {
             Symbol sym = members.get(indexStr);
-            return keepSymbol ? sym : sym.getValue(pattern, ctx);
+            return keepSymbol ? sym : sym.getValue();
         } else if(keepSymbol) {
             Symbol sym;
             members.put(indexStr, sym = new Symbol(indexStr, Symbol.SymbolVisibility.LOCAL, null));
@@ -182,8 +177,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
     }
 
     @Override
-    public Object cast(CustomItem object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
+    public <F> F cast(CustomItem object, Class<F> targetType, TokenPattern<?> pattern, ISymbolContext file) {
         throw new ClassCastException();
     }
 
@@ -358,12 +352,13 @@ public class CustomItem implements TypeHandler<CustomItem> {
                             break;
                         }
                         case "ITEM_FIELD": {
-                            VariableInstruction.SymbolDeclaration decl = parseSymbolDeclaration(entry, ctx);
-
-                            if (itemDecl != null) {
-                                itemDecl.members.put(decl.getName(), decl.getSupplier().get());
+                            String fieldName = entry.find("FIELD_NAME").flatten(false);
+                            Object value = InterpolationManager.parse(((TokenStructure) entry.find("FIELD_VALUE")).getContents(), ctx);
+                            Symbol sym = new Symbol(fieldName, Symbol.SymbolVisibility.LOCAL, value);
+                            if(itemDecl != null) {
+                                itemDecl.members.put(fieldName, sym);
                             } else {
-                                ctx.put(decl.getSupplier().get());
+                                ctx.put(sym);
                             }
                             break;
                         }
@@ -387,16 +382,6 @@ public class CustomItem implements TypeHandler<CustomItem> {
             collector.end();
             if(itemDecl != null) itemDecl.endDeclaration();
         }
-    }
-
-    @Override
-    public Class<CustomItem> getHandledClass() {
-        return CustomItem.class;
-    }
-
-    @Override
-    public String getTypeIdentifier() {
-        return "custom_item";
     }
 
     public int getItemIdHash() {

@@ -3,305 +3,259 @@
 
 private var generatedPredicates = {}
 
-define class Predicate : JSONSerializable {
-    public var output = {}
-
-    public new() {}
-    public new(startingOutput : dictionary) {
-        eval this.output = startingOutput
-    }
-
-    public inverted() {
-        return Predicate.inverted(this)
-    }
-
-    public static randomChance(chance : real) {
-        return new Predicate({
-            "condition": "minecraft:random_chance",
-            "chance": chance
-        })
-    }
-
-    public static randomChanceWithLooting(chance : real, lootingMultiplier : real) {
-        return new Predicate({
-            "condition": "minecraft:random_chance_with_looting",
-            "chance": chance,
-            "looting_multiplier": lootingMultiplier
-        })
-    }
-
-    public static killedByPlayer() {
-        return new Predicate({
-            "condition": "minecraft:killed_by_player"
-        })
-    }
-
-    public static timeCheck(value : int, period : int?) {
-        return new Predicate({
-            "condition": "minecraft:time_check",
-            "value": value,
-            "period": period
-        })
-    }
-    public static timeCheck(value : int_range, period : int?) {
-        return new Predicate({
-            "condition": "minecraft:time_check",
-            "value": rangeToObj(value),
-            "period": period
-        })
-    }
-
-    public static inverted(term : Predicate) {
-        var rv = new Predicate({
-            "condition": "minecraft:inverted",
-            term: term
-        })
-        eval rv.inverted = function() {return term}
-    }
-
-    public static entityProperties() {
-        return new EntityPropertiesPredicate()
-    }
-
-    public static locationCheck() {
-        return new LocationCheckPredicate()
-    }
-
-    public static entityScores() {
-        return new EntityScoresPredicate()
-    }
-
-    public static weatherCheck() {
-        return new WeatherCheckPredicate()
-    }
-
-    public static damageSourceProperties() {
-        return new DamageSourcePropertiesPredicate()
-    }
-
-    public static tableBonus(enchantment : resource, chanceTable : list) {
-        if(!MinecraftTypes.exists("enchantment", enchantment)) throw "Given type '" + enchantment + "' does not exist as an enchantment type"
-        for(chance in chanceTable) {
-            if(!(chance is int || chance is real)) {
-                throw "Expected real in list, instead got " + type_definition.of(chance)
-            }
+private var newPredicate = function(obj) {
+    eval SelfBuilder(obj)
+    eval obj.objectType = function() {return "Predicate"}
+    do if(obj.inverted == null) {
+        eval obj.inverted = function() {
+            return Predicate.inverted(obj)
         }
-        return new Predicate({
-            "condition": "minecraft:table_bonus",
-            "enchantment": enchantment,
-            "chances": chanceTable
-        })
     }
-
-    public static reference(loc : resource) {
-        return new Predicate({
-            "condition": "minecraft:reference",
-            "name": loc
-        })
-    }
-
-    public static alternative(terms : list) {
-
-        for(term in terms) {
-            if(!(term is Predicate)) {
-                throw "Expected Predicate in list, instead got " + type_definition.of(chance)
-            }
-        }
-
-        var obj = new Predicate({
-            "condition": "minecraft:alternative",
-            "terms": terms
-        })
-
-        return obj
-    }
-
-    public export(loc : resource?) {
-        if(loc == null) {
+    eval obj.export = function(loc) {
+        do if(loc == null) {
             var ns = Reflection.getWritingFile().namespace
-            if(generatedPredicates[ns] == null) eval generatedPredicates[ns] = 0
+            do if(generatedPredicates[ns] == null) eval generatedPredicates[ns] = 0
             eval loc = new resource(ns, ["trident-generated", "predicate", (string) generatedPredicates[ns]])
             eval generatedPredicates[ns]++
         }
+        eval assertType(loc, "resource")
 
-        var output = JSONSerializable.fullySerialize(this)
+        eval obj._sb_build()
 
         eval File.out.writeData(
             "data/" + loc.namespace + "/predicates/" + loc.body + ".json",
-            JSON.stringify(output, true)
+            JSON.stringify(obj, true)
         )
 
         return loc
     }
-
-    public override serializeToJSON() {
-        return {}
-    }
+    return obj
 }
 
-define private class EntityPredicate : Predicate {
-
-    local var entity = "this"
-
-    public which(wh : string) {
-        eval assertOneOf(wh, ["this", "killer", "killer_player", "player"])
-        eval entity = wh
-        return this
+private var newEntityPredicate = function(obj) {
+    eval newPredicate(obj)
+    eval obj.which = function(which) {
+        eval assertType(which, "string")
+        eval assertOneOf(which, ["this", "killer", "killer_player", "player"])
+        eval obj["entity"] = which
+        return obj
     }
-
-    public override serializeToJSON() {
-        return output
-    }
+    return obj
 }
 
-define private class EntityPropertiesPredicate : EntityPredicate, Shared.Entity {
-
-    public override serializeToJSON() {
-        return {
-            "condition": "minecraft:entity_properties",
-            "entity": entity,
-            "predicate": output
+var Predicate = {
+    randomChance: function(chance) {
+        eval assertType(chance, "real")
+        return newPredicate({
+            "condition": "minecraft:random_chance",
+            "chance": chance
+        })
+    },
+    randomChanceWithLooting: function(chance, lootingMultiplier) {
+        eval assertType(chance, "real")
+        eval assertType(lootingMultiplier, "real")
+        return newPredicate({
+            "condition": "minecraft:random_chance_with_looting",
+            "chance": chance,
+            "looting_multiplier": lootingMultiplier
+        })
+    },
+    killedByPlayer: function() {
+        return newPredicate({
+            "condition": "minecraft:killed_by_player"
+        })
+    },
+    entityProperties: function() {
+        var obj = Shared.Entity()
+        eval obj["condition"] = "minecraft:entity_properties"
+        eval obj.predicate = {}
+        eval obj._sb_buildLocation = function() {
+            return obj.predicate
         }
-    }
-}
-
-define private class EntityScoresPredicate : EntityPredicate {
-
-    private var scores = null
-
-    public score(objective : string, value : int) {
-        return scoreRaw(objective, value)
-    }
-
-    public score(objective : string, value : int_range) {
-        return scoreRaw(objective, rangeToObj(value))
-    }
-
-    private scoreRaw(objective : string, value) {
-        if(scores == null) eval scores = {}
-        eval scores[objective] = value
-        return this
-    }
-
-    public override serializeToJSON() {
-        return {
+        return newEntityPredicate(obj).which("this")
+    },
+    locationCheck: function() {
+        var obj = Shared.Location()
+        eval obj["condition"] = "minecraft:location_check"
+        eval obj.predicate = {}
+        eval obj._sb_buildLocation = function(key) {
+            do if(key.startsWith("offset")) return obj
+            return obj.predicate
+        }
+        
+        eval obj.offsetX = function(value) {
+            eval assertType(value, "real")
+            eval obj._sb_buildData.offsetX = value
+            return obj
+        }
+        eval obj.offsetY = function(value) {
+            eval assertType(value, "real")
+            eval obj._sb_buildData.offsetY = value
+            return obj
+        }
+        eval obj.offsetZ = function(value) {
+            eval assertType(value, "real")
+            eval obj._sb_buildData.offsetZ = value
+            return obj
+        }
+        
+        return newPredicate(obj)
+    },
+    timeCheck: function(value, period) {
+        eval assertDualTypes(value, "int", "int_range")
+        eval value = rangeToObj(value)
+        
+        do if(period != null) {
+            eval assertType(period, "int")
+        }
+        return newPredicate({
+            "condition": "minecraft:time_check",
+            "value": value,
+            "period": period
+        })
+    },
+    weatherCheck: function() {
+        return newPredicate({
+            "condition": "minecraft:weather_check",
+            raining: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.raining = bool
+                return this
+            },
+            thundering: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.thundering = bool
+                return this
+            }
+        })
+    },
+    damageSourceProperties: function() {
+        return newPredicate({
+            "condition": "minecraft:damage_source_properties",
+            predicate: {},
+            _sb_buildLocation: function() {
+                return this.predicate
+            },
+            bypassesArmor: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.bypasses_armor = bool
+                return this
+            },
+            bypassesInvulnerability: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.bypasses_invulnerability = bool
+                return this
+            },
+            bypassesMagic: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.bypasses_magic = bool
+                return this
+            },
+            isExplosion: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.is_explosion = bool
+                return this
+            },
+            isFire: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.is_fire = bool
+                return this
+            },
+            isMagic: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.is_magic = bool
+                return this
+            },
+            isProjectile: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.is_projectile = bool
+                return this
+            },
+            isLightning: function(bool) {
+                eval assertType(bool, "boolean")
+                eval this._sb_buildData.is_lightning = bool
+                return this
+            },
+            sourceEntity: function(enty) {
+                eval assertObjectType(enty, "Shared.Entity")
+                eval this._sb_buildData.source_entity = enty
+                return this
+            },
+            directEntity: function(enty) {
+                eval assertObjectType(enty, "Shared.Entity")
+                eval this._sb_buildData.direct_entity = enty
+                return this
+            }
+        })
+    },
+    tableBonus: function(enchantment, chanceTable) {
+        eval assertType(enchantment, "resource")
+        do if(!MinecraftTypes.exists("enchantment", enchantment)) throw "Given type '" + enchantment + "' does not exist as an enchantment type"
+        eval assertType(chanceTable, "list")
+        for(chance in chanceTable) {
+            eval assertType(chance, "real")
+        }
+        return newPredicate({
+            "condition": "minecraft:table_bonus",
+            "enchantment": enchantment,
+            "chances": chanceTable
+        })
+    },
+    entityScores: function() {
+        return newEntityPredicate({
             "condition": "minecraft:entity_scores",
-            "entity": entity,
-            "scores": scores
+            score: function(objective, value) {
+                eval assertType(objective, "string")
+                eval assertDualTypes(value, "int", "int_range")
+                eval value = rangeToObj(value)
+                do if(this._sb_buildData.scores == null) eval this._sb_buildData.scores = {}
+                eval this._sb_buildData.scores[objective] = value
+                return this
+            }
+        })
+    },
+    reference: function(loc) {
+        eval assertType(loc, "resource")
+        return newPredicate({
+            "condition": "minecraft:reference",
+            "name": loc
+        })
+    },
+    alternative: function(terms) {
+        eval assertType(terms, "list")
+        
+        var obj = newPredicate({
+            "condition": "minecraft:alternative",
+            terms: [],
+            _sb_build: function() {
+                eval this._sb_buildData = null
+                for(term in this.terms) {
+                    eval term._sb_build()
+                }
+            }
+        })
+        
+        for(term in terms) {
+            eval assertObjectType(term, "Predicate")
+            
+            eval obj.terms.add(term)
         }
-    }
-}
-
-define private class LocationCheckPredicate : Predicate, Shared.Location {
-
-    private var offsetX : real? = null
-    private var offsetY : real? = null
-    private var offsetZ : real? = null
-
-    public offsetX(value : real) {
-        eval this.offsetX = value
-        return this
-    }
-
-    public offsetY(value : real) {
-        eval this.offsetY = value
-        return this
-    }
-
-    public offsetZ(value : real) {
-        eval this.offsetZ = value
-        return this
-    }
-
-    public override serializeToJSON() {
-        return {
-            "condition": "minecraft:location_check",
-            "predicate": output,
-            "offsetX": offsetX,
-            "offsetY": offsetY,
-            "offsetZ": offsetZ
-        }
-    }
-}
-
-define private class WeatherCheckPredicate : Predicate {
-
-    private override var output = {
-        "condition": "minecraft:weather_check"
-    }
-
-    public raining(value : boolean) {
-        eval this.output.raining = value
-        return this
-    }
-
-    public thundering(value : boolean) {
-        eval this.output.thundering = value
-        return this
-    }
-
-    public override serializeToJSON() {
-        return output
-    }
-}
-
-define private class DamageSourcePropertiesPredicate : Predicate {
-
-    private override var output = {
-        "condition": "minecraft:damage_source_properties"
-    }
-
-    public bypassesArmor(value : boolean) {
-        eval this.output.bypasses_armor = value
-        return this
-    }
-
-    public bypassesInvulnerability(value : boolean) {
-        eval this.output.bypasses_invulnerability = value
-        return this
-    }
-
-    public bypassesMagic(value : boolean) {
-        eval this.output.bypasses_magic = value
-        return this
-    }
-
-    public isExplosion(value : boolean) {
-        eval this.output.is_explosion = value
-        return this
-    }
-
-    public isFire(value : boolean) {
-        eval this.output.is_fire = value
-        return this
-    }
-
-    public isMagic(value : boolean) {
-        eval this.output.is_magic = value
-        return this
-    }
-
-    public isProjectile(value : boolean) {
-        eval this.output.is_projectile = value
-        return this
-    }
-
-    public isLightning(value : boolean) {
-        eval this.output.is_lightning = value
-        return this
-    }
-
-    public sourceEntity(value : Shared.Entity) {
-        eval this.output.source_entity = value
-        return this
-    }
-
-    public directEntity(value : Shared.Entity) {
-        eval this.output.direct_entity = value
-        return this
-    }
-
-    public override serializeToJSON() {
-        return output
+        
+        return obj
+    },
+    inverted: function(term) {
+        eval assertObjectType(term, "Predicate")
+        
+        return newPredicate({
+            "condition": "minecraft:inverted",
+            term: term,
+            inverted: function() {
+                return term
+            },
+            _sb_build: function() {
+                eval this._sb_buildData = null
+                eval this.term._sb_build()
+            }
+        })
     }
 }

@@ -1,7 +1,5 @@
 package com.energyxxer.trident.compiler.semantics;
 
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +25,7 @@ public class AutoPropertySymbol<T> extends Symbol {
     }
 
     @Override
-    public @Nullable Object getValue(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public @Nullable Object getValue() {
         return getter.get();
     }
 

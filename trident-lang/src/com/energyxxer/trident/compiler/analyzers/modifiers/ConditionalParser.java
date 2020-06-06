@@ -41,9 +41,6 @@ public class ConditionalParser implements SimpleModifierParser {
                 loc.assertStandalone(subject.find("RESOURCE_LOCATION"), ctx);
                 return new ExecuteConditionPredicate(conditionType, new PredicateReference(ctx.getCompiler().getModule().getNamespace(loc.namespace), loc.body));
             }
-            case "SELECTOR_CONDITION": {
-                return new ExecuteConditionEntity(conditionType, EntityParser.parseEntity(subject.find("SELECTOR"), ctx));
-            }
             case "ENTITY_CONDITION": {
                 return new ExecuteConditionEntity(conditionType, EntityParser.parseEntity(subject.find("ENTITY"), ctx));
             }

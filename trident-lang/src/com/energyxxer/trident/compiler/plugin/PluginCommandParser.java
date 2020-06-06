@@ -15,7 +15,7 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.commands.SummonParser;
 import com.energyxxer.trident.compiler.analyzers.constructs.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.FunctionMethod;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -105,7 +105,7 @@ public class PluginCommandParser {
                 return file.getResourceLocation();
             }
             case "ANONYMOUS_INNER_FUNCTION": {
-                return new TridentUserFunction(pattern, ctx, Collections.emptyList(), null, null, null);
+                return new FunctionMethod(pattern, ctx, Collections.emptyList(), null, null);
             }
             case "MODIFIER": {
                 Collection<ExecuteModifier> modifiers = CommonParsers.parseModifier(pattern, ctx, null);
