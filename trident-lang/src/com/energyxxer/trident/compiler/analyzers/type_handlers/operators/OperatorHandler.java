@@ -175,6 +175,9 @@ public interface OperatorHandler<A, B> {
             handlers.put("primitive(int) | primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a | b);
             handlers.put("primitive(int) ^ primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a ^ b);
 
+            handlers.put("primitive(int) << primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a << b);
+            handlers.put("primitive(int) >> primitive(int)", (Integer a, Integer b, TokenPattern<?> pattern, ISymbolContext ctx) -> a >> b);
+
             handlers.put("lazy && lazy", (ILazyValue a, ILazyValue b, TokenPattern<?> pattern, ISymbolContext ctx) -> {
                 Boolean realA = a.getValue(Boolean.class);
                 if(!realA) return false;
