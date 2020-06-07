@@ -147,9 +147,8 @@ public class PluginCommandParser {
             case "TWO_COORDINATE_SET": {
                 return CoordinateParser.parse(pattern, ctx);
             }
-            case "ROTATION": {
-                return CoordinateParser.parseRotation(pattern, ctx);
-            }
+            case "ROTATION": return CoordinateParser.parseRotation(pattern, ctx);
+            case "UUID": return CommonParsers.parseUUID(pattern, ctx);
             case "BLOCK_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseBlockType(pattern, ctx).toString());
             case "ITEM_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseItemType(pattern, ctx).toString());
             case "ENTITY_ID":

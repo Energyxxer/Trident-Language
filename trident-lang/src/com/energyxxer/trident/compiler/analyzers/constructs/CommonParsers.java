@@ -681,6 +681,27 @@ public class CommonParsers {
         }
     }
 
+    public static UUID parseUUID(TokenPattern<?> pattern, ISymbolContext ctx) {
+        TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
+        switch(inner.getName()) {
+            case "RAW_UUID": {
+                try {
+                    return UUID.fromString(inner.flatten(false));
+                } catch(NumberFormatException x) {
+                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Invalid UUID: " + inner.flatten(false), pattern, ctx);
+                }
+            }
+            case "INTERPOLATION_BLOCK": {
+                UUID result = InterpolationManager.parse(inner, ctx, UUID.class);
+                EObject.assertNotNull(result, inner, ctx);
+                return result;
+            }
+            default: {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, ctx);
+            }
+        }
+    }
+
     public static double parseDouble(TokenPattern<?> pattern, ISymbolContext ctx) {
         TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
         switch(inner.getName()) {

@@ -90,6 +90,8 @@ public class TridentProductions {
 
     private final LazyTokenStructureMatch PARTICLE = new LazyTokenStructureMatch("PARTICLE");
 
+    private final LazyTokenStructureMatch UUID = new LazyTokenStructureMatch("UUID");
+
     private final LazyTokenGroupMatch NEW_ENTITY_LITERAL;
 
     private final LazyTokenStructureMatch BLOCK_ID = new LazyTokenStructureMatch("BLOCK_ID");
@@ -313,6 +315,7 @@ public class TridentProductions {
             ROOT_INTERPOLATION_VALUE.add(group(literal("nbt_path").setName("VALUE_WRAPPER_KEY"), brace("<"), NBT_PATH, brace(">")).setName("WRAPPED_NBT_PATH"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("coordinates").setName("VALUE_WRAPPER_KEY"), brace("<"), COORDINATE_SET, brace(">")).setName("WRAPPED_COORDINATE"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("rotation").setName("VALUE_WRAPPER_KEY"), brace("<"), ROTATION, brace(">")).setName("WRAPPED_ROTATION"));
+            ROOT_INTERPOLATION_VALUE.add(group(literal("uuid").setName("VALUE_WRAPPER_KEY"), brace("<"), UUID, brace(">")).setName("WRAPPED_UUID"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("int_range").setName("VALUE_WRAPPER_KEY"), brace("<"), INTEGER_NUMBER_RANGE, brace(">")).setName("WRAPPED_INT_RANGE"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("real_range").setName("VALUE_WRAPPER_KEY"), brace("<"), REAL_NUMBER_RANGE, brace(">")).setName("WRAPPED_REAL_RANGE"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("resource").setName("VALUE_WRAPPER_KEY"), brace("<"), RESOURCE_LOCATION_TAGGED, brace(">")).setName("WRAPPED_RESOURCE"));
@@ -514,6 +517,9 @@ public class TridentProductions {
 
         TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white", "reset").setName("TEXT_COLOR");
         TEXT_COLOR.addTags("cspn:Text Color");
+
+        UUID.add(ofType(TridentTokens.UUID).setName("RAW_UUID"));
+        UUID.add(INTERPOLATION_BLOCK);
 
         ENTITY.add(PLAYER_NAME);
         ENTITY.add(SELECTOR);
@@ -2776,6 +2782,7 @@ public class TridentProductions {
             case "COORDINATE_SET": return COORDINATE_SET;
             case "TWO_COORDINATE_SET": return TWO_COORDINATE_SET;
             case "ROTATION": return ROTATION;
+            case "UUID": return UUID;
             case "BLOCK": return BLOCK;
             case "BLOCK_TAGGED": return BLOCK_TAGGED;
             case "ITEM": return ITEM;

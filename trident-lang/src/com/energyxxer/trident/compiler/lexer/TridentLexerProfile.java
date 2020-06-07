@@ -34,6 +34,8 @@ public class TridentLexerProfile extends LexerProfile {
     public static final Pattern SHORT_NUMBER_REGEX = Pattern.compile("[+-]?\\d*(\\.\\d+)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern TIME_REGEX = Pattern.compile("(\\d*(\\.\\d+)|\\d+)[tsd]?");
 
+    public static final Pattern UUID_REGEX = Pattern.compile("[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]", Pattern.CASE_INSENSITIVE);
+
     static {
         usefulContexts.put(RESOURCE_LOCATION, new ResourceLocationContext(Namespace.ALLOWED_NAMESPACE_REGEX.replace("+",""), Function.ALLOWED_PATH_REGEX.replace("+",""), RESOURCE_LOCATION));
     }
@@ -117,6 +119,30 @@ public class TridentLexerProfile extends LexerProfile {
             @Override
             public Collection<TokenType> getHandledTypes() {
                 return Collections.singleton(SHORT_REAL_NUMBER);
+            }
+        });
+
+        //UUIDs
+        contexts.add(new LexerContext() {
+
+            @Override
+            public ScannerContextResponse analyze(String str, LexerProfile profile) {
+                return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+                Matcher matcher = UUID_REGEX.matcher(str);
+
+                if(matcher.lookingAt() && matcher.end() > 0) {
+                    int length = matcher.end();
+                    return new ScannerContextResponse(true, str.substring(0,length), UUID);
+                } else return new ScannerContextResponse(false);
+            }
+
+            @Override
+            public Collection<TokenType> getHandledTypes() {
+                return Collections.singleton(UUID);
             }
         });
 

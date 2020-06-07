@@ -162,6 +162,9 @@ public class InterpolationManager {
                 case "WRAPPED_ROTATION": {
                     return CoordinateParser.parseRotation(pattern.find("ROTATION"), ctx);
                 }
+                case "WRAPPED_UUID": {
+                    return CommonParsers.parseUUID(pattern.find("UUID"), ctx);
+                }
                 case "WRAPPED_INT_RANGE": {
                     return CommonParsers.parseIntRange(pattern.find("INTEGER_NUMBER_RANGE"), ctx);
                 }

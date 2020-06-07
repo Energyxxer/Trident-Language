@@ -22,6 +22,8 @@ public class TridentTokens {
             TILDE, CARET,
             // 0, 0.1, .1, 0.1f, 5t
             INTEGER_NUMBER, REAL_NUMBER, SHORT_REAL_NUMBER, TYPED_NUMBER, TIME,
+            // 1-1-1-1-1
+            UUID,
             // literally anything with or without spaces that doesn't begin with a $
             VERBATIM_COMMAND,
             // /
