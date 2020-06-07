@@ -23,7 +23,7 @@ public class ReflectionLib implements DefaultLibraryProvider {
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         CustomClass reflect = new CustomClass("Reflection", "trident-util:native", globalCtx);
-        reflect.setNoConstructor();
+        reflect.seal();
         globalCtx.put(new Symbol("Reflection", Symbol.SymbolVisibility.GLOBAL, reflect));
 
         try {

@@ -24,7 +24,7 @@ public class JsonLib implements DefaultLibraryProvider {
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         CustomClass jsonLib = new CustomClass("JSON", "trident-util:native", globalCtx);
-        jsonLib.setNoConstructor();
+        jsonLib.seal();
         globalCtx.put(new Symbol("JSON", Symbol.SymbolVisibility.GLOBAL, jsonLib));
 
         try {

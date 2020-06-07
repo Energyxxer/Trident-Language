@@ -26,11 +26,11 @@ import static com.energyxxer.trident.compiler.analyzers.instructions.VariableIns
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMemberHolder {
-    private static final CustomClass BASE_CLASS = new CustomClass();
+    public static final CustomClass BASE_CLASS = new CustomClass();
 
     private static final HashMap<String, ArrayList<Consumer<CustomClass>>> stringIdentifiedClassListeners = new HashMap<>();
 
-    enum MemberParentMode {
+    public enum MemberParentMode {
         CREATE, OVERRIDE, FORCE, INHERIT;
     }
 
@@ -416,7 +416,8 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         instanceMemberSuppliers.put(name, symSupplier);
     }
 
-    public void setNoConstructor() {
+    public void seal() {
+        this.setFinal(true);
         constructorFamily = new ClassMethodFamily("new");
         ClassMethod method = new ClassMethod("new", this).setVisibility(Symbol.SymbolVisibility.PRIVATE);
         method.setModifiers(new VariableInstruction.SymbolModifierMap().setModifier(Symbol.SymbolModifier.FINAL));
@@ -427,6 +428,15 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 null,
                 null
         );
+    }
+
+    public void setFinal(boolean _final) {
+        this._final = _final;
+    }
+
+    public ClassMethodFamily createConstructorFamily() {
+        constructorFamily = new ClassMethodFamily("new");
+        return constructorFamily;
     }
 
     public InstanceMemberSupplier getInstanceMemberSupplier(String name) {
@@ -588,6 +598,17 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         };
     }
 
+    public CustomClassObject forceInstantiate() {
+        CustomClassObject created = new CustomClassObject(this);
+        for(CustomClass cls : getInheritanceTree()) {
+            for(InstanceMemberSupplier symbolSupplier : cls.instanceMemberSuppliers.values()) {
+                if(!created.containsMember(symbolSupplier.getName()))
+                    created.putMemberIfAbsent(symbolSupplier.constructSymbol(created));
+            }
+        }
+        return created;
+    }
+
     public ISymbolContext getDeclaringContext() {
         return definitionContext;
     }
@@ -613,6 +634,10 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             }
         }
         return false;
+    }
+
+    public ClassMethodTable getInstanceMethods() {
+        return instanceMethods;
     }
 
     @Override

@@ -21,7 +21,7 @@ public class TagLib implements DefaultLibraryProvider {
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         CustomClass tagLib = new CustomClass("Tags", "trident-util:native", globalCtx);
-        tagLib.setNoConstructor();
+        tagLib.seal();
         globalCtx.put(new Symbol("Tags", Symbol.SymbolVisibility.GLOBAL, tagLib));
 
         try {

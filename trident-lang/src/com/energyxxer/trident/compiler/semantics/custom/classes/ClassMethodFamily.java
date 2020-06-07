@@ -3,6 +3,7 @@ package com.energyxxer.trident.compiler.semantics.custom.classes;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
 import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunctionBranch;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
@@ -12,10 +13,11 @@ import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ClassMethodFamily {
+public class ClassMethodFamily implements TridentFunction {
     private final String name;
     private final ArrayList<ClassMethod> implementations = new ArrayList<>();
 
@@ -217,6 +219,12 @@ public class ClassMethodFamily {
 
     public ArrayList<ClassMethod> getImplementations() {
         return implementations;
+    }
+
+    @Override
+    public Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+        ClassMethodFamily.ClassMethodSymbol pickedConstructor = this.pickOverloadSymbol(new ActualParameterList(Arrays.asList(params), Arrays.asList(patterns), pattern), pattern, ctx, null);
+        return pickedConstructor.safeCall(params, patterns, pattern, ctx);
     }
 
     public static class ClassMethodSymbol extends Symbol {

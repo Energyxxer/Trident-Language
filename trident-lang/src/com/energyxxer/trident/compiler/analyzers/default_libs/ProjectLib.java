@@ -17,7 +17,7 @@ public class ProjectLib implements DefaultLibraryProvider {
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         CustomClass project = new CustomClass("Project", "trident-util:native", globalCtx);
-        project.setNoConstructor();
+        project.seal();
         globalCtx.put(new Symbol("Project", Symbol.SymbolVisibility.GLOBAL, project));
 
         try {

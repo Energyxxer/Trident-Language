@@ -20,7 +20,7 @@ public class TextLib implements DefaultLibraryProvider {
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         CustomClass tlib = new CustomClass("Text", "trident-util:native", globalCtx);
-        tlib.setNoConstructor();
+        tlib.seal();
         globalCtx.put(new Symbol("Text", Symbol.SymbolVisibility.GLOBAL, tlib));
 
         try {

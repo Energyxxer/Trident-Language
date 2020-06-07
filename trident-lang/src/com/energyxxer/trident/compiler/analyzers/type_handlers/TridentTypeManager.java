@@ -26,6 +26,7 @@ public class TridentTypeManager {
         registerTypeHandler(new TextComponentTypeHandler());
         registerTypeHandler(new CoordinateTypeHandler());
         registerTypeHandler(new RotationTypeHandler());
+        registerTypeHandler(new UUIDTypeHandler());
         registerTypeHandler(new BlockTypeHandler());
         registerTypeHandler(new EntityTypeHandler());
         registerTypeHandler(new IntRangeTypeHandler());

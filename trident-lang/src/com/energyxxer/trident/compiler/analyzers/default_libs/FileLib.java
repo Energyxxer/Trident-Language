@@ -21,15 +21,15 @@ public class FileLib implements DefaultLibraryProvider {
     @Override
     public void populate(ISymbolContext globalCtx, TridentCompiler compiler) {
         CustomClass fileLib = new CustomClass("File", "trident-util:native", globalCtx);
-        fileLib.setNoConstructor();
+        fileLib.seal();
         globalCtx.put(new Symbol("File", Symbol.SymbolVisibility.GLOBAL, fileLib));
 
         CustomClass in = new CustomClass("in", "trident-util:native", fileLib.getInnerStaticContext());
-        in.setNoConstructor();
+        in.seal();
         fileLib.putStaticFinalMember("in", in);
 
         CustomClass out = new CustomClass("out", "trident-util:native", fileLib.getInnerStaticContext());
-        out.setNoConstructor();
+        out.seal();
         fileLib.putStaticFinalMember("out", out);
 
 

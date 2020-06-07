@@ -15,6 +15,7 @@ import java.util.HashMap;
 public class CustomClassObject implements TypeHandler<CustomClassObject>, ParameterizedMemberHolder, ContextualToString {
     private final CustomClass type;
     final HashMap<String, Symbol> instanceMembers = new HashMap<>();
+    private HashMap<String, Object> hiddenData = null;
     final ClassInstanceMethodTable instanceMethods;
 
     public CustomClassObject(CustomClass type) {
@@ -171,5 +172,14 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
 
     public Object forceGetMember(String key) {
         return instanceMembers.get(key).getValue(null, null);
+    }
+
+    public void putHidden(String key, Object value) {
+        if(hiddenData == null) hiddenData = new HashMap<>();
+        hiddenData.put(key, value);
+    }
+
+    public Object getHidden(String key) {
+        return hiddenData.get(key);
     }
 }
