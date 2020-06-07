@@ -48,7 +48,7 @@ public class CoordinateParser {
                 default:
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + pattern.getName() + "'", pattern, ctx);
             }
-            return x != null && y != null && z != null ? new CoordinateSet(x, y, z) : null;
+            return new CoordinateSet(x, y, z);
         }
     }
 
@@ -82,6 +82,9 @@ public class CoordinateParser {
 
     public static Rotation parseRotation(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
+        if(pattern.getName().equals("INTERPOLATION_BLOCK")) {
+            return InterpolationManager.parse(pattern, ctx, Rotation.class);
+        }
         TokenPattern<?>[] tuple = ((TokenGroup) pattern.getContents()).getContents();
         RotationUnit yaw =  parseRotationUnit(tuple[0], ctx);
         RotationUnit pitch = parseRotationUnit(tuple[1], ctx);

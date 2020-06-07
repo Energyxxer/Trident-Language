@@ -22,8 +22,18 @@ public class SpreadPlayersParser implements SimpleCommandParser {
         double maxRange = CommonParsers.parseDouble(pattern.find("MAX_RANGE"), ctx);
         boolean respectTeams = pattern.find("RESPECT_TEAMS").flatten(false).equals("true");
         Entity entity = EntityParser.parseEntity(pattern.find("ENTITY"), ctx);
+
+        Integer under = null;
+        if(pattern.find("UNDER_CLAUSE") != null) {
+            under = CommonParsers.parseInt(pattern.find("UNDER_CLAUSE.MAX_HEIGHT"), ctx);
+        }
+
         try {
-            return new SpreadPlayersCommand(entity, pos, spreadDistance, maxRange, respectTeams);
+            if(under != null) {
+                return new SpreadPlayersCommand(entity, pos, spreadDistance, maxRange, respectTeams, under);
+            } else {
+                return new SpreadPlayersCommand(entity, pos, spreadDistance, maxRange, respectTeams);
+            }
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))

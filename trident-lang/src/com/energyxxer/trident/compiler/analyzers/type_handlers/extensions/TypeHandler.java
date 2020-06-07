@@ -1,18 +1,18 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerGroup;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.Iterator;
 
-@AnalyzerGroup(
+/*@AnalyzerGroup(
         classes="BlockTypeHandler," +
                 "BooleanTypeHandler," +
                 "CoordinateTypeHandler," +
                 "RotationTypeHandler," +
+                "UUIDTypeHandler," +
                 "EntityTypeHandler," +
                 "IntRangeTypeHandler," +
                 "IntTypeHandler," +
@@ -26,7 +26,7 @@ import java.util.Iterator;
                 "tags.TagCompoundTypeHandler," +
                 "tags.TagListTypeHandler," +
                 "TextComponentTypeHandler"
-)
+)*/
 public interface TypeHandler<T> {
     Object getMember(T object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol);
 
@@ -87,4 +87,6 @@ public interface TypeHandler<T> {
         }
         return false;
     }
+
+    default void staticTypeSetup() {}
 }

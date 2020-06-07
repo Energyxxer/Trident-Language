@@ -5,6 +5,7 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.*
 import com.energyxxer.trident.compiler.semantics.ILazyValue;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
@@ -61,7 +62,10 @@ public class TridentTypeManager {
 
         registerTypeHandler(TYPE_HANDLER_TYPE_HANDLER = new TypeHandlerTypeHandler());
 
-
+        CustomClass.staticSetup();
+        for(TypeHandler<?> handler : PRIMITIVE_HANDLERS.values()) {
+            handler.staticTypeSetup();
+        }
     }
 
     public static void registerTypeHandler(TypeHandler<?> handler) {
@@ -148,4 +152,6 @@ public class TridentTypeManager {
         }
         return handler.getStaticHandler();
     }
+
+    public static void initialize() {}
 }

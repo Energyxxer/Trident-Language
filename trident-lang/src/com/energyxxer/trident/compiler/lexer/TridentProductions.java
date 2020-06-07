@@ -7,6 +7,7 @@ import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.*;
+import com.energyxxer.commodore.versioning.ThreeNumberVersion;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
@@ -102,6 +103,7 @@ public class TridentProductions {
     private final LazyTokenStructureMatch PARTICLE_ID = new LazyTokenStructureMatch("PARTICLE_ID");
     private final LazyTokenStructureMatch ENCHANTMENT_ID = new LazyTokenStructureMatch("ENCHANTMENT_ID");
     private final LazyTokenStructureMatch DIMENSION_ID = new LazyTokenStructureMatch("DIMENSION_ID");
+    private final LazyTokenStructureMatch ATTRIBUTE_ID = new LazyTokenStructureMatch("ATTRIBUTE_ID");
     private final LazyTokenStructureMatch BIOME_ID = new LazyTokenStructureMatch("BIOME_ID");
     private final LazyTokenStructureMatch SLOT_ID = new LazyTokenStructureMatch("SLOT_ID");
 
@@ -520,6 +522,7 @@ public class TridentProductions {
 
         UUID.add(ofType(TridentTokens.UUID).setName("RAW_UUID"));
         UUID.add(INTERPOLATION_BLOCK);
+        UUID.addTags("cspn:UUID");
 
         ENTITY.add(PLAYER_NAME);
         ENTITY.add(SELECTOR);
@@ -633,6 +636,33 @@ public class TridentProductions {
         //region seed
         {
             COMMAND.add(matchItem(COMMAND_HEADER, "seed"));
+        }
+        //endregion
+        //region attribute
+        {
+            if(((ThreeNumberVersion) module.getSettingsManager().getTargetVersion()).getMinor() >= 16) {
+                COMMAND.add(group(
+                        matchItem(COMMAND_HEADER, "attribute"),
+                        ENTITY,
+                        ATTRIBUTE_ID,
+                        choice(
+                                group(literal("get"), real().setOptional().setName("SCALE").addTags("cspn:Scale")).setName("ATTRIBUTE_GET"),
+                                group(literal("base"),
+                                        choice(
+                                                group(literal("get"), real().setOptional().setName("SCALE").addTags("cspn:Scale")).setName("ATTRIBUTE_BASE_GET"),
+                                                group(literal("set"), real().setName("VALUE").addTags("cspn:Value")).setName("ATTRIBUTE_BASE_SET")
+                                        ).setName("SUBCOMMAND")
+                                ).setName("ATTRIBUTE_BASE"),
+                                group(literal("modifier"),
+                                        choice(
+                                                group(literal("add"), UUID, group(STRING_LITERAL_OR_IDENTIFIER_A).setName("ATTRIBUTE_MODIFIER_NAME").addTags("cspn:Attribute Modifier Name"), real().setName("VALUE").addTags("cspn:Attribute Modifier Value"), choice("add", "multiply", "multiply_base").setName("ATTRIBUTE_MODIFIER_OPERATION")).setName("ATTRIBUTE_MODIFIER_ADD"),
+                                                group(literal("value"), literal("get"), UUID, real().setOptional().setName("SCALE").addTags("cspn:Scale")).setName("ATTRIBUTE_MODIFIER_GET"),
+                                                group(literal("remove"), UUID).setName("ATTRIBUTE_BASE_SET")
+                                        ).setName("SUBCOMMAND")
+                                ).setName("ATTRIBUTE_MODIFIER")
+                        ).setName("SUBCOMMAND")
+                ));
+            }
         }
         //endregion
         //region give
@@ -940,6 +970,7 @@ public class TridentProductions {
                     noToken().addTags("cspn:XZ Position"), TWO_COORDINATE_SET,
                     real().setName("SPREAD_DISTANCE").addTags("cspn:Spread Distance"),
                     real().setName("MAX_RANGE").addTags("cspn:Max Range"),
+                    optional(literal("under"), integer().setName("MAX_HEIGHT").addTags("cspn:Max Height")).setName("UNDER_CLAUSE"),
                     rawBoolean().setName("RESPECT_TEAMS").addTags(SuggestionTags.ENABLED, "cspn:Respect Teams?"),
                     ENTITY
             ));
@@ -2030,6 +2061,7 @@ public class TridentProductions {
                 Boolean usesNamespace = null;
                 for(TypeDictionary dict : namespace.types.getAllDictionaries()) {
                     LazyTokenStructureMatch typeName = struct("TYPE_NAME");
+                    boolean any = false;
                     String category = dict.getCategory();
                     if(!categoryMap.containsKey(category)) {
                         categoryMap.put(category, struct(category.toUpperCase() + "_ID"));
@@ -2041,9 +2073,10 @@ public class TridentProductions {
                             name = ((AliasType)type).getAliasName();
                         }
                         typeName.add(identifierA(name).addTags(SuggestionTags.LITERAL_SORT, (category.equals(BlockType.CATEGORY) || category.equals(ItemType.CATEGORY) || category.equals(EntityType.CATEGORY)) ? SuggestionTags.DISABLED : SuggestionTags.ENABLED));
+                        any = true;
                         usesNamespace = type.useNamespace();
                     }
-                    if(usesNamespace != null) {
+                    if(any) {
                         categoryMap.get(category).add((usesNamespace ? group(namespaceGroup, typeName) : group(typeName)).setName(category.toUpperCase() + "_ID_DEFAULT"));
                     }
                 }
@@ -2053,6 +2086,7 @@ public class TridentProductions {
             DIFFICULTY.add(categoryMap.get(DifficultyType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Difficulty");
             GAMEMODE.add(categoryMap.get(GamemodeType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Gamemode");
             DIMENSION_ID.add(categoryMap.get(DimensionType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Dimension");
+            ATTRIBUTE_ID.add(categoryMap.get(AttributeType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Attribute");
             BIOME_ID.add(categoryMap.get(BiomeType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Biome");
 
             BLOCK_ID.add(categoryMap.get(BlockType.CATEGORY).addTags(SuggestionTags.DISABLED)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BLOCK);

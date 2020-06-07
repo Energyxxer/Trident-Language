@@ -17,7 +17,7 @@ import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNat
 
 @AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet")
 public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
-    private static HashMap<String, TridentUserFunction> members = new HashMap<>();
+    private static HashMap<String, TridentUserFunction> members;
 
     private static CustomClassObject COORDINATE_TYPE_ABSOLUTE;
     private static CustomClassObject COORDINATE_TYPE_RELATIVE;
@@ -27,7 +27,10 @@ public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
     public static CustomClassObject AXIS_Y;
     public static CustomClassObject AXIS_Z;
 
-    static {
+    @Override
+    public void staticTypeSetup() {
+        if(members != null) return;
+        members = new HashMap<>();
         try {
             members.put("getMagnitude", nativeMethodsToFunction(null, CoordinateTypeHandler.class.getMethod("getMagnitude", CustomClassObject.class, CoordinateSet.class)));
             members.put("getCoordinateType", nativeMethodsToFunction(null, CoordinateTypeHandler.class.getMethod("getCoordinateType", CustomClassObject.class, CoordinateSet.class)));

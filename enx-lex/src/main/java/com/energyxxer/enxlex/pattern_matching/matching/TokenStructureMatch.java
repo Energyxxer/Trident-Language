@@ -48,7 +48,9 @@ public class TokenStructureMatch extends TokenPatternMatch {
 
 		TokenMatchResponse longestMatch = null;
 
-		if(entries.isEmpty()) throw new IllegalStateException("Cannot attempt match; TokenStructureMatch '" + this.name + "' is empty.");
+		if(entries.isEmpty()) {
+			return new TokenMatchResponse(false, null, 0, this, null);
+		}
 		for (TokenPatternMatch entry : entries) {
 			List<Token> subList = tokens.subList(0,tokens.size());
 			MethodInvocation newInvoc = new MethodInvocation(entry, "match", new String[]{"List<Token>"}, new Object[]{subList});

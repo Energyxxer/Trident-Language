@@ -21,6 +21,7 @@ import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNat
 @AnalyzerMember(key = "java.util.UUID")
 public class UUIDTypeHandler implements TypeHandler<UUID> {
     private static ClassMethodFamily constructorFamily;
+    private static boolean setup = false;
 
     public static UUID constructUUID() {
         return constructUUID(RandomLib.PROJECT_RANDOM);
@@ -44,12 +45,15 @@ public class UUIDTypeHandler implements TypeHandler<UUID> {
         return UUID.fromString(str);
     }
 
-    static {
+    @Override
+    public void staticTypeSetup() {
+        if(setup) return;
+        setup = true;
         constructorFamily = new ClassMethodFamily("new");
         try {
-            constructorFamily.putOverload(new ClassMethod(CustomClass.BASE_CLASS, null, nativeMethodsToFunction(null, UUIDTypeHandler.class.getMethod("constructUUID"))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
-            constructorFamily.putOverload(new ClassMethod(CustomClass.BASE_CLASS, null, nativeMethodsToFunction(null, UUIDTypeHandler.class.getMethod("constructUUID", String.class))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
-            constructorFamily.putOverload(new ClassMethod(CustomClass.BASE_CLASS, null, nativeMethodsToFunction(null, UUIDTypeHandler.class.getMethod("constructUUID", CustomClassObject.class))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, UUIDTypeHandler.class.getMethod("constructUUID"))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, UUIDTypeHandler.class.getMethod("constructUUID", String.class))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, UUIDTypeHandler.class.getMethod("constructUUID", CustomClassObject.class))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }

@@ -17,12 +17,16 @@ import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNat
 
 @AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.rotation.Rotation")
 public class RotationTypeHandler implements TypeHandler<Rotation> {
-    private static HashMap<String, TridentUserFunction> members = new HashMap<>();
+    private static HashMap<String, TridentUserFunction> members;
 
     private static CustomClassObject ROTATION_TYPE_ABSOLUTE;
     private static CustomClassObject ROTATION_TYPE_RELATIVE;
 
-    static {
+    @Override
+    public void staticTypeSetup() {
+        if(members != null) return;
+        members = new HashMap<>();
+
         CustomClass.registerStringIdentifiedClassListener("trident-util:native@RotationType", customClass -> {
             ROTATION_TYPE_ABSOLUTE = (CustomClassObject) customClass.forceGetMember("ABSOLUTE");
             ROTATION_TYPE_RELATIVE = (CustomClassObject) customClass.forceGetMember("RELATIVE");

@@ -19,6 +19,7 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
@@ -164,6 +165,7 @@ public class TridentCompiler extends AbstractProcess {
         this.setProgress("Initializing analyzers");
 
         AnalyzerManager.initialize();
+        TridentTypeManager.initialize();
 
         this.setProgress("Reading project settings file");
 

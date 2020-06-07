@@ -17,6 +17,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ClassMethodSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -26,7 +27,7 @@ import static com.energyxxer.trident.compiler.analyzers.instructions.VariableIns
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMemberHolder {
-    public static final CustomClass BASE_CLASS = new CustomClass();
+    private static CustomClass BASE_CLASS = null;
 
     private static final HashMap<String, ArrayList<Consumer<CustomClass>>> stringIdentifiedClassListeners = new HashMap<>();
 
@@ -701,6 +702,16 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             for(Consumer<CustomClass> listener : listeners) {
                 listener.accept(cls);
             }
+        }
+    }
+
+    public static @NotNull CustomClass getBaseClass() {
+        return BASE_CLASS;
+    }
+
+    public static void staticSetup() {
+        if(BASE_CLASS == null) {
+            BASE_CLASS = new CustomClass();
         }
     }
 }
