@@ -8,6 +8,8 @@ import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.defaults.*;
 import com.energyxxer.commodore.versioning.ThreeNumberVersion;
+import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
+import com.energyxxer.commodore.versioning.compatibility.VersionFeatures;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
@@ -970,7 +972,7 @@ public class TridentProductions {
                     noToken().addTags("cspn:XZ Position"), TWO_COORDINATE_SET,
                     real().setName("SPREAD_DISTANCE").addTags("cspn:Spread Distance"),
                     real().setName("MAX_RANGE").addTags("cspn:Max Range"),
-                    optional(literal("under"), integer().setName("MAX_HEIGHT").addTags("cspn:Max Height")).setName("UNDER_CLAUSE"),
+                    versionLimited(module, "command.spreadplayers.under", false, optional(literal("under"), integer().setName("MAX_HEIGHT").addTags("cspn:Max Height")).setName("UNDER_CLAUSE")),
                     rawBoolean().setName("RESPECT_TEAMS").addTags(SuggestionTags.ENABLED, "cspn:Respect Teams?"),
                     ENTITY
             ));
@@ -2077,7 +2079,7 @@ public class TridentProductions {
                         usesNamespace = type.useNamespace();
                     }
                     if(any) {
-                        categoryMap.get(category).add((usesNamespace ? group(namespaceGroup, typeName) : group(typeName)).setName(category.toUpperCase() + "_ID_DEFAULT"));
+                        categoryMap.get(category).add((usesNamespace ? group(resourceLocationFixer, namespaceGroup, typeName) : group(typeName)).setName(category.toUpperCase() + "_ID_DEFAULT"));
                     }
                 }
             }
@@ -2241,7 +2243,7 @@ public class TridentProductions {
             }
 
         } catch (Exception x) {
-            throw new RuntimeException("Error in loading standard definition pack for Minecraft Java Edition 1.14: " + x.getClass() + ": " + x.getMessage());
+            throw new RuntimeException("Error in creating version-specific syntax: " + x.getClass() + ": " + x.getMessage());
         }
         //endregion
 
@@ -2739,7 +2741,7 @@ public class TridentProductions {
         if(options.length == 0) throw new IllegalArgumentException("Need one or more options for choice");
         LazyTokenStructureMatch s = struct("CHOICE");
         for(LazyTokenPatternMatch option : options) {
-            s.add(option);
+            if(option != null) s.add(option);
         }
         return s;
     }
@@ -2760,7 +2762,7 @@ public class TridentProductions {
     private static LazyTokenGroupMatch group(LazyTokenPatternMatch... items) {
         LazyTokenGroupMatch g = new LazyTokenGroupMatch();
         for(LazyTokenPatternMatch item : items) {
-            g.append(item);
+            if(item != null) g.append(item);
         }
         return g;
     }
@@ -2794,6 +2796,15 @@ public class TridentProductions {
             case "private": return Symbol.SymbolVisibility.PRIVATE;
             default: return defaultValue;
         }
+    }
+
+    private static LazyTokenPatternMatch versionLimited(CommandModule module, String key, boolean defaultValue, LazyTokenPatternMatch match) {
+        VersionFeatures featureMap = VersionFeatureManager.getFeaturesForVersion(module.getSettingsManager().getTargetVersion());
+        boolean available = defaultValue;
+        if(featureMap != null) {
+            available = featureMap.getBoolean(key, defaultValue);
+        }
+        return available ? match : null;
     }
 
     public LazyTokenPatternMatch getStructureByName(String name) {
@@ -2831,6 +2842,7 @@ public class TridentProductions {
             case "PARTICLE_ID": return PARTICLE_ID;
             case "ENCHANTMENT_ID": return ENCHANTMENT_ID;
             case "DIMENSION_ID": return DIMENSION_ID;
+            case "ATTRIBUTE_ID": return ATTRIBUTE_ID;
             case "BIOME_ID": return BIOME_ID;
             case "SLOT_ID": return SLOT_ID;
             case "GAMEMODE": return GAMEMODE;

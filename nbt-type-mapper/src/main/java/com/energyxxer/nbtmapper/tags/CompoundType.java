@@ -43,7 +43,8 @@ public class CompoundType extends DataType implements DeepDataType {
                 } else { //end of path
                     searchLeafTypes(type, response, parent, true);
                 }
-            } else if(context.isSetting() && volatileTypes.containsKey(key)) {
+            }
+            if(context.isSetting() && volatileTypes.containsKey(key)) {
                 DataType type = volatileTypes.get(key);
                 if(path.hasNext()) {
                     if(type instanceof DeepDataType) {
@@ -54,7 +55,8 @@ public class CompoundType extends DataType implements DeepDataType {
                 } else {
                     searchLeafTypes(type, response, parent, true);
                 }
-            } else if(defaultType != null) {
+            }
+            if(defaultType != null) {
                 searchLeafTypes(defaultType, response, parent, false);
             }
         }

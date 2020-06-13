@@ -30,7 +30,7 @@ public class TridentLexerProfile extends LexerProfile {
     public static final String IDENTIFIER_C_REGEX = "\\S+";
     public static final String IDENTIFIER_D_REGEX = "[a-zA-Z0-9_\\-+]+";
 
-    public static final Pattern NUMBER_REGEX = Pattern.compile("(?:0x[0-9a-f]+)|(?:0b[01]+)|(?:([+-]?(?:\\d*(\\.\\d+)|\\d+))([bdfsL]?))", Pattern.CASE_INSENSITIVE);
+    public static final Pattern NUMBER_REGEX = Pattern.compile("(?:0x[0-9a-f]+)|(?:0b[01]+)|(?:([+-]?(?:\\d*(\\.\\d+)|\\d+)(?:E[+-]\\d+)?)([bdfsL]?))", Pattern.CASE_INSENSITIVE);
     public static final Pattern SHORT_NUMBER_REGEX = Pattern.compile("[+-]?\\d*(\\.\\d+)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern TIME_REGEX = Pattern.compile("(\\d*(\\.\\d+)|\\d+)[tsd]?");
 

@@ -281,6 +281,12 @@ define private class Location : JSONSerializable {
         return this
     }
 
+    public smokey(value : boolean) {
+        if(Project.getTargetVersion()[1] < 16) throw "Location property 'smokey' is only available for versions 1.16 and up"
+        eval this.output.smokey = value
+        return this
+    }
+
     public override serializeToJSON() {
         return output
     }

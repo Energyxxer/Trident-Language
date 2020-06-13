@@ -96,12 +96,14 @@ public class TridentTypeManager {
     }
 
     public static TypeHandler<?> getHandlerForHandlerClass(Class handlerClass) {
+        if(handlerClass == null) return null;
         for(TypeHandler<?> handler : PRIMITIVE_HANDLERS.values()) {
             if(handler.getClass() == handlerClass) return handler;
         }
         return null;
     }
     public static TypeHandler<?> getHandlerForHandledClass(Class handlingClass) {
+        if(handlingClass == null) return null;
         for(TypeHandler<?> handler : PRIMITIVE_HANDLERS.values()) {
             if(handler.getHandledClass() == handlingClass) return handler;
         }

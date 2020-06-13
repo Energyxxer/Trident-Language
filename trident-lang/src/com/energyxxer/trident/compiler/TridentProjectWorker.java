@@ -168,10 +168,8 @@ public class TridentProjectWorker {
 
                 if(categoryEntry.getValue().isJsonObject()) {
                     for(Map.Entry<String, JsonElement> entry : categoryEntry.getValue().getAsJsonObject().entrySet()) {
-                        TridentUtil.ResourceLocation alias = TridentUtil.ResourceLocation.createStrict(entry.getKey());
-                        TridentUtil.ResourceLocation real = TridentUtil.ResourceLocation.createStrict(entry.getValue().getAsString());
-                        if(alias == null) continue;
-                        if(real == null) continue;
+                        TridentUtil.ResourceLocation alias = new TridentUtil.ResourceLocation(entry.getKey());
+                        TridentUtil.ResourceLocation real = new TridentUtil.ResourceLocation(entry.getValue().getAsString());
 
                         module.getNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasType(c, ns, n, module.getNamespace(real.namespace), real.body), alias.body);
                         Debug.log("Created alias '" + alias + "' for '" + real + "'");

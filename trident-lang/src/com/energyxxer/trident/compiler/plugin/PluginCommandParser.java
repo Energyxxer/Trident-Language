@@ -161,6 +161,7 @@ public class PluginCommandParser {
             case "PARTICLE_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseType(pattern, ctx, ParticleType.CATEGORY).toString());
             case "ENCHANTMENT_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseType(pattern, ctx, EnchantmentType.CATEGORY).toString());
             case "DIMENSION_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseType(pattern, ctx, DimensionType.CATEGORY).toString());
+            case "ATTRIBUTE_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseType(pattern, ctx, AttributeType.CATEGORY).toString());
             case "BIOME_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseType(pattern, ctx, BiomeType.CATEGORY).toString());
             case "SLOT_ID": return CommonParsers.parseType(pattern, ctx, ItemSlot.CATEGORY).toString();
             case "GAMEMODE": return CommonParsers.parseType(pattern, ctx, GamemodeType.CATEGORY).toString();
