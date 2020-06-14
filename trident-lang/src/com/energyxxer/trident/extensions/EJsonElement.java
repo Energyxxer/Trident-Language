@@ -18,6 +18,12 @@ public class EJsonElement {
                 null;
     }
 
+    public static Integer getAsIntegerOrNull(JsonElement thiz) {
+        return (thiz != null && thiz.isJsonPrimitive() && thiz.getAsJsonPrimitive().isNumber()) ?
+                thiz.getAsInt() :
+                null;
+    }
+
     public static JsonObject getAsJsonObjectOrNull(JsonElement thiz) {
         return (thiz != null && thiz.isJsonObject()) ?
                 thiz.getAsJsonObject() :

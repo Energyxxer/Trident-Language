@@ -8,11 +8,18 @@ import com.energyxxer.commodore.textcomponents.*;
 import com.energyxxer.commodore.textcomponents.events.ClickEvent;
 import com.energyxxer.commodore.textcomponents.events.HoverEvent;
 import com.energyxxer.commodore.textcomponents.events.InsertionEvent;
+import com.energyxxer.commodore.textcomponents.events.hover.ContentHoverEvent;
+import com.energyxxer.commodore.textcomponents.events.hover.ShowEntityHoverEvent;
+import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.TypeNotFoundException;
+import com.energyxxer.commodore.types.defaults.FontReference;
+import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.default_libs.JsonLib;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
@@ -22,6 +29,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.UUID;
+
+import static com.energyxxer.commodore.types.TypeAssert.assertItem;
 import static com.energyxxer.trident.compiler.util.Using.using;
 import static com.energyxxer.trident.extensions.EJsonElement.*;
 
@@ -140,11 +150,35 @@ public class TextParser {
                 try {
                     using(getAsStringOrNull(obj.get("color")))
                             .notIfNull()
-                            .run(t -> style.setColor(TextColor.valueOf(t.toUpperCase())))
+                            .run(t -> {
+                                TextColor color = TextColor.valueOf(t.toUpperCase());
+                                if(color == null) {
+                                    throw new IllegalArgumentException();
+                                } else {
+                                    style.setColor(color);
+                                }
+                            })
                             .otherwise(t -> delegate.report("Expected string in 'color'", obj.get("color")));
                 } catch(IllegalArgumentException x) {
                     delegate.report("Illegal text color '" + getAsStringOrNull(obj.get("color")) + "'",
                             "Unknown text color '" + getAsStringOrNull(obj.get("color")) + "'", obj.get("color"));
+                }
+            }
+            if(obj.has("font")) {
+                try {
+                    using(getAsStringOrNull(obj.get("font")))
+                            .notIfNull()
+                            .run(t -> {
+                                TridentUtil.ResourceLocation fontLoc = TridentUtil.ResourceLocation.createStrict(t);
+                                if(fontLoc != null) {
+                                    style.setFont(ctx.getCompiler().getModule().getNamespace(fontLoc.namespace).types.getDictionary(FontReference.CATEGORY).getOrCreate(fontLoc.body));
+                                } else {
+                                    throw new IllegalArgumentException(t);
+                                }
+                            })
+                            .otherwise(t -> delegate.report("Expected string in 'font'", obj.get("font")));
+                } catch(IllegalArgumentException x) {
+                    delegate.report("Illegal font resource location '" + getAsStringOrNull(obj.get("font")) + "'", obj.get("font"));
                 }
             }
             if(obj.has("bold")) {
@@ -220,7 +254,88 @@ public class TextParser {
                                 TextComponent value = (parseTextComponent(v, ctx, pattern, TextComponentContext.TOOLTIP));
                                 component[0].addEvent(new HoverEvent(action, value));
                             }
-                        }).otherwise(v -> delegate.report("Missing hover event value", e));
+                        }).otherwise(v -> {
+                            if(VersionFeatureManager.getBoolean("textcomponent.hover_event.content")) {
+                                using(e.get("content")).notIfNull().run(c -> {
+                                    switch(action) {
+                                        case SHOW_TEXT: {
+                                            TextComponent value = (parseTextComponent(c, ctx, pattern, TextComponentContext.TOOLTIP));
+                                            component[0].addEvent(new HoverEvent(action, value));
+                                            break;
+                                        }
+                                        case SHOW_ITEM: {
+                                            TridentUtil.ResourceLocation[] itemIdToShow = new TridentUtil.ResourceLocation[] {null};
+                                            int[] count = new int[] {1};
+                                            String[] rawTag = new String[] {null};
+
+                                            if(c.isJsonPrimitive() && c.getAsJsonPrimitive().isString()) {
+                                                itemIdToShow[0] = TridentUtil.ResourceLocation.createStrict(c.getAsString());
+                                            } else {
+                                                using(getAsJsonObjectOrNull(c)).notIfNull()
+                                                        .run(i -> {
+                                                            using(getAsStringOrNull(i.get("id"))).notIfNull()
+                                                                    .run(rawId -> itemIdToShow[0] = new TridentUtil.ResourceLocation(rawId))
+                                                                    .otherwise(ignore -> delegate.report("Expected string in 'id'", i));
+                                                            if(i.has("count")) {
+                                                                using(getAsIntegerOrNull(i.get("count"))).notIfNull()
+                                                                        .run(lambdaCount -> count[0] = lambdaCount)
+                                                                        .otherwise(ignore -> delegate.report("Expected integer in 'count'", i.get("count")));
+                                                            }
+                                                            if(i.has("tag")) {
+                                                                using(getAsStringOrNull(i.get("tag"))).notIfNull()
+                                                                        .run(lambdaRawTag -> rawTag[0] = lambdaRawTag)
+                                                                        .otherwise(ignore -> delegate.report("Expected string in 'tag'", i.get("tag")));
+                                                            }
+                                                        }).otherwise(i -> delegate.report("Expected string or object in 'content' for show_item hover event", c));
+                                            }
+
+                                            if(itemIdToShow[0] != null) {
+                                                try {
+                                                    Type itemType = ctx.getCompiler().getModule().getNamespace(itemIdToShow[0].namespace).types.item.get(itemIdToShow[0].body);
+                                                    component[0].addEvent(new RawShowItemHoverEvent(itemType, count[0], rawTag[0]));
+                                                } catch(TypeNotFoundException x) {
+                                                    delegate.report("Illegal item type: " + itemIdToShow[0], c);
+                                                }
+                                            }
+                                            break;
+                                        }
+                                        case SHOW_ENTITY: {
+                                            TridentUtil.ResourceLocation[] entityIdToShow = new TridentUtil.ResourceLocation[] {null};
+                                            UUID[] id = new UUID[] {null};
+                                            TextComponent[] name = new TextComponent[] {null};
+
+                                            using(getAsJsonObjectOrNull(c)).notIfNull()
+                                                    .run(i -> {
+                                                        using(getAsStringOrNull(i.get("type"))).notIfNull()
+                                                                .run(rawId -> entityIdToShow[0] = new TridentUtil.ResourceLocation(rawId))
+                                                                .otherwise(ignore -> delegate.report("Expected string in 'type'", i));
+                                                        if(i.has("id")) {
+                                                            using(getAsStringOrNull(i.get("id"))).notIfNull()
+                                                                    .except(IllegalArgumentException.class, (x, xobj) -> delegate.report("Illegal UUID", "Invalid UUID", i.get("id")))
+                                                                    .run(rawId -> id[0] = UUID.fromString(rawId))
+                                                                    .otherwise(ignore -> delegate.report("Expected string in 'id'", i.get("id")));
+                                                        }
+                                                        if(i.has("name")) {
+                                                            name[0] = parseTextComponent(i.get("name"), ctx, pattern, TextComponentContext.TOOLTIP);
+                                                        }
+                                                    }).otherwise(i -> delegate.report("Expected object in 'content' for show_entity hover event", c));
+
+                                            if(entityIdToShow[0] != null) {
+                                                try {
+                                                    Type entityType = ctx.getCompiler().getModule().getNamespace(entityIdToShow[0].namespace).types.entity.get(entityIdToShow[0].body);
+                                                    component[0].addEvent(new ShowEntityHoverEvent(entityType, id[0], name[0]));
+                                                } catch(TypeNotFoundException x) {
+                                                    delegate.report("Illegal entity type: " + entityIdToShow[0], c);
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }).otherwise(c -> delegate.report("Missing hover event content or value", e));
+                            } else {
+                                delegate.report("Missing hover event value", e);
+                            }
+                        });
                     }).otherwise(a -> delegate.report("Missing hover event action", e));
                 });
             }
@@ -392,6 +507,37 @@ public class TextParser {
         @Override
         public void assertAvailable() {
 
+        }
+    }
+
+    static class RawShowItemHoverEvent extends ContentHoverEvent {
+        private final @NotNull Type type;
+        private final int count;
+        private final String rawTag;
+
+        public RawShowItemHoverEvent(@NotNull Type type, int count, String rawTag) {
+            this.type = type;
+            this.count = count;
+            this.rawTag = rawTag;
+
+            assertItem(type);
+        }
+
+        @Override
+        public String toString() {
+            String content = "\"" + CommandUtils.escape(type.toString()) + "\"";
+            if(count != 1 || rawTag != null) {
+                content = "{\"id\":" + content;
+                if(count != 1) {
+                    content += ",\"count\":" + count;
+                }
+                if(rawTag != null) {
+                    content += ",\"tag\":\"" + CommandUtils.escape(rawTag) + "\"";
+                }
+                content += "}";
+            }
+
+            return "\"hoverEvent\":{\"action\":\"show_item\",\"contents\":" + content + "}";
         }
     }
 }

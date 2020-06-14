@@ -477,7 +477,11 @@ public class TridentFile extends SymbolContext {
                 }
             }
         } catch(CommodoreException x) {
-            throw new TridentException(TridentException.Source.IMPOSSIBLE, "Commodore Exception of type " + x.getSource() + ": " + x.getMessage(), inner, parent);
+            if(x.getSource() == CommodoreException.Source.VERSION_ERROR) {
+                throw new TridentException(TridentException.Source.COMMAND_ERROR, x.getSource() + ": " + x.getMessage(), inner, parent);
+            } else {
+                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Commodore Exception of type " + x.getSource() + ": " + x.getMessage(), inner, parent);
+            }
         }
     }
 

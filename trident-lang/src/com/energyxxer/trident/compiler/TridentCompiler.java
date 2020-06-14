@@ -211,6 +211,7 @@ public class TridentCompiler extends AbstractProcess {
         this.setProgress("Importing vanilla definitions");
 
         module = worker.output.module;
+        module.setSettingsActive();
 
         report.addNotices(worker.report.getAllNotices());
         if(report.hasErrors()) {
