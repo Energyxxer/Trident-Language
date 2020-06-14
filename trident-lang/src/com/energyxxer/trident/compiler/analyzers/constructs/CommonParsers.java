@@ -96,7 +96,12 @@ public class CommonParsers {
     public static Type parseBlockType(TokenPattern<?> id, ISymbolContext ctx) {
         return parseType(id, ctx, BlockType.CATEGORY);
     }
+
     public static Type parseType(Object obj, TokenPattern<?> pattern, ISymbolContext ctx, String category) {
+        return parseType(obj, pattern, ctx, category, false);
+    }
+
+    public static Type parseType(Object obj, TokenPattern<?> pattern, ISymbolContext ctx, String category, boolean createIfMissing) {
         String str;
         TridentUtil.ResourceLocation loc;
         if(obj instanceof String) {
@@ -108,7 +113,8 @@ public class CommonParsers {
         }
         if(!loc.isTag) {
             try {
-                return ctx.getCompiler().getModule().getTypeManager(loc.namespace).getDictionary(category).get(loc.body);
+                TypeDictionary dict = ctx.getCompiler().getModule().getTypeManager(loc.namespace).getDictionary(category);
+                return createIfMissing ? dict.getOrCreate(loc.body) : dict.get(loc.body);
             } catch(TypeNotFoundException x) {
                 throw new TridentException(TridentException.Source.COMMAND_ERROR, "No such type '" + str + "' for category '" + category + "'", pattern, ctx);
             }
@@ -126,8 +132,14 @@ public class CommonParsers {
             }
         }
     }
+
     @Contract("null, _, _ -> null")
     public static Type parseType(TokenPattern<?> id, ISymbolContext ctx, String category) {
+        return parseType(id, ctx, category, false);
+    }
+
+    @Contract("null, _, _, _ -> null")
+    public static Type parseType(TokenPattern<?> id, ISymbolContext ctx, String category, boolean createIfMissing) {
         while (true) {
             if (id == null) return null;
             if (id.getName().endsWith("_ID") && id instanceof TokenStructure) {
@@ -138,13 +150,16 @@ public class CommonParsers {
                 case "INTERPOLATION_BLOCK":
                     Object result = InterpolationManager.parse(((TokenStructure) id).getContents(), ctx, TridentUtil.ResourceLocation.class, String.class);
                     EObject.assertNotNull(result, id, ctx);
-                    return parseType(result, id, ctx, category);
+                    return parseType(result, id, ctx, category, createIfMissing);
                 case "STRING_LITERAL":
-                    return parseType(parseStringLiteral(id, ctx), id, ctx, category);
+                    return parseType(parseStringLiteral(id, ctx), id, ctx, category, createIfMissing);
+                case "RESOURCE_LOCATION":
+                    return parseType(parseResourceLocation(id, ctx), id, ctx, category, createIfMissing);
                 default:
                     if (id.getName().endsWith("_DEFAULT") || id.getName().endsWith("_ID")) {
                         TridentUtil.ResourceLocation typeLoc = new TridentUtil.ResourceLocation(id);
-                        return ctx.getCompiler().getModule().getTypeManager(typeLoc.namespace).getDictionary(category).get(typeLoc.body);
+                        TypeDictionary dict = ctx.getCompiler().getModule().getTypeManager(typeLoc.namespace).getDictionary(category);
+                        return createIfMissing ? dict.getOrCreate(typeLoc.body) : dict.get(typeLoc.body);
                     }
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + id.getName() + "'", id, ctx);
             }

@@ -2088,6 +2088,9 @@ public class TridentProductions {
             DIFFICULTY.add(categoryMap.get(DifficultyType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Difficulty");
             GAMEMODE.add(categoryMap.get(GamemodeType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Gamemode");
             DIMENSION_ID.add(categoryMap.get(DimensionType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Dimension");
+            if(checkVersionFeature(module, "custom_dimensions", false)) {
+                DIMENSION_ID.add(RESOURCE_LOCATION_S);
+            }
             ATTRIBUTE_ID.add(categoryMap.get(AttributeType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Attribute");
             BIOME_ID.add(categoryMap.get(BiomeType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Biome");
 
@@ -2799,12 +2802,16 @@ public class TridentProductions {
     }
 
     private static LazyTokenPatternMatch versionLimited(CommandModule module, String key, boolean defaultValue, LazyTokenPatternMatch match) {
+        return checkVersionFeature(module, key, defaultValue) ? match : null;
+    }
+
+    private static boolean checkVersionFeature(CommandModule module, String key, boolean defaultValue) {
         VersionFeatures featureMap = VersionFeatureManager.getFeaturesForVersion(module.getSettingsManager().getTargetVersion());
         boolean available = defaultValue;
         if(featureMap != null) {
             available = featureMap.getBoolean(key, defaultValue);
         }
-        return available ? match : null;
+        return available;
     }
 
     public LazyTokenPatternMatch getStructureByName(String name) {
