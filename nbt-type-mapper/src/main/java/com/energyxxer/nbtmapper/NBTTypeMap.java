@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.function.BiConsumer;
 
 public class NBTTypeMap {
     public final NBTTypeMap.Parsing parsing = this.new Parsing();
@@ -142,7 +143,7 @@ public class NBTTypeMap {
     }
 
     public class Parsing {
-        public void parseNBTTMFile(File file, String content) {
+        public void parseNBTTMFile(File file, String content, BiConsumer<String, DataType> consumer) {
             TokenStream ts = new TokenStream();
             LazyLexer lex = new LazyLexer(ts, NBTTMProductions.FILE);
             lex.tokenizeParse(file, content, new NBTTMLexerProfile(module));
@@ -161,11 +162,15 @@ public class NBTTypeMap {
 
                             DataType type = parseType(entry.find("ROOT_TYPE.TYPE"));
 
-                            addType(typeName, type);
+                            consumer.accept(typeName, type);
                         }
                     }
                 }
             }
+        }
+
+        public void parseNBTTMFile(File file, String content) {
+            parseNBTTMFile(file, content, NBTTypeMap.this::addType);
         }
 
         private DataType parseType(TokenPattern<?> pattern) {
@@ -266,6 +271,14 @@ public class NBTTypeMap {
                 return CommandUtils.parseQuotedString(raw);
             }
             return raw;
+        }
+
+        public void parsePack(File rootFile, NBTTypeMapPack pack) {
+            File toBlame = pack.getRootFile();
+            if(toBlame == null) toBlame = rootFile;
+            for(String rawContent : pack.getAllFileContents()) {
+                parseNBTTMFile(toBlame, rawContent, NBTTypeMap.this::addType);
+            }
         }
     }
 }

@@ -424,7 +424,7 @@ public class TridentFile extends SymbolContext {
 
     public static void resolveEntry(TokenPattern<?> inner, ISymbolContext parent, FunctionSection appendTo, boolean compileOnly) {
         TridentCompiler compiler = parent.getCompiler();
-        boolean exportComments = compiler.getProperties().get("export-comments") == null || compiler.getProperties().get("export-comments").getAsBoolean();
+        boolean exportComments = compiler.getResources().exportComments;
         try {
             switch (inner.getName()) {
                 case "COMMAND_WRAPPER":

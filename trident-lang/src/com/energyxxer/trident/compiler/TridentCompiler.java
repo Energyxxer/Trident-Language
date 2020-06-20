@@ -17,6 +17,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.nbtmapper.NBTTypeMap;
+import com.energyxxer.nbtmapper.NBTTypeMapPack;
 import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
@@ -48,12 +49,13 @@ import static com.energyxxer.trident.extensions.EJsonElement.getAsStringOrNull;
 public class TridentCompiler extends AbstractProcess {
 
     public static final String PROJECT_FILE_NAME = ".tdnproj";
+    public static final String PROJECT_BUILD_FILE_NAME = ".tdnbuild";
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
     public static final String TRIDENT_LANGUAGE_VERSION = "1.1.3";
 
     //Resources
     private TridentProjectWorker worker;
-    private TridentCompilerResources resources;
+    private TridentBuildData resources;
     private NBTTypeMap typeMap;
     private boolean workerHasWorked = false;
 
@@ -140,11 +142,11 @@ public class TridentCompiler extends AbstractProcess {
         return worker;
     }
 
-    public void setResources(TridentCompilerResources resources) {
+    public void setResources(TridentBuildData resources) {
         this.resources = resources;
     }
 
-    public TridentCompilerResources getResources() {
+    public TridentBuildData getResources() {
         return resources;
     }
 
@@ -195,23 +197,18 @@ public class TridentCompiler extends AbstractProcess {
             defaultNamespace = properties.get("default-namespace").getAsString().trim();
         }
 
-        if(properties.has("resources-output") && properties.get("resources-output").isJsonPrimitive() && properties.get("resources-output").getAsJsonPrimitive().isString()) {
-            resourcePack = new ResourcePackGenerator(this, newFileObject(properties.get("resources-output").getAsString()));
+        if(resources.resourcePackOutput != null) {
+            resourcePack = new ResourcePackGenerator(this, resources.resourcePackOutput);
         }
 
         if(properties.has("anonymous-function-name") && properties.get("anonymous-function-name").isJsonPrimitive() && properties.get("anonymous-function-name").getAsJsonPrimitive().isString()) {
             anonymousFunctionTemplate = properties.get("anonymous-function-name").getAsString();
         }
 
-        VersionFeatureManager.setActiveFeatureMap(resources.featureMap);
-
-        TridentCompilerResources resources = this.resources.shallowClone();
-        if(resources.definitionPacks == null) resources.definitionPacks = resources.defaultDefinitionPacks;
 
         this.setProgress("Importing vanilla definitions");
 
         module = worker.output.module;
-        module.setSettingsActive();
 
         report.addNotices(worker.report.getAllNotices());
         if(report.hasErrors()) {
@@ -221,9 +218,9 @@ public class TridentCompiler extends AbstractProcess {
 
         typeMap = new NBTTypeMap(module);
 
-        if(resources.rawTypeMaps != null) {
-            for(String rawContent : resources.rawTypeMaps) {
-                typeMap.parsing.parseNBTTMFile(rootDir, rawContent);
+        if(resources.typeMapPacks != null) {
+            for(NBTTypeMapPack pack : resources.typeMapPacks) {
+                typeMap.parsing.parsePack(rootDir, pack);
             }
         } else {
             typeMap.parsing.parseNBTTMFile(rootDir, Resources.defaults.get("common.nbttm"));
@@ -281,6 +278,9 @@ public class TridentCompiler extends AbstractProcess {
                 subCompiler.setRerouteRoot(true);
             }
         }
+
+        VersionFeatureManager.setActiveFeatureMap(resources.featureMap);
+        module.setSettingsActive();
 
         Resources.populate(ownFiles, filePatterns);
 
@@ -353,9 +353,9 @@ public class TridentCompiler extends AbstractProcess {
 
         updateProgress(-1);
         this.setProgress("Generating data pack");
-        if(properties.has("datapack-output") && properties.get("datapack-output").isJsonPrimitive() && properties.get("datapack-output").getAsJsonPrimitive().isString()) {
+        if(resources.dataPackOutput != null) {
             try {
-                File dataOut = newFileObject(properties.get("datapack-output").getAsString());
+                File dataOut = resources.dataPackOutput;
                 this.dataSubFolderNames.add("data");
                 for(Exportable exportable : module.exportables) {
                     if(exportable.shouldExport() && exportable.getExportPath() != null) {
@@ -364,7 +364,7 @@ public class TridentCompiler extends AbstractProcess {
                         dataSubFolderNames.add(firstName);
                     }
                 }
-                if(JsonTraverser.INSTANCE.reset(properties).get("clear-datapack-output").asBoolean(false)) {
+                if(resources.cleanDataPackOutput) {
                     for(String subFolder : this.dataSubFolderNames) {
                         Debug.log("Clearing folder: " + subFolder);
                         recursivelyDelete(dataOut.toPath().resolve(subFolder).toFile());
@@ -382,8 +382,8 @@ public class TridentCompiler extends AbstractProcess {
         this.setProgress("Generating resource pack");
         try {
             if(resourcePack != null) {
-                if(JsonTraverser.INSTANCE.reset(properties).get("clear-resources-output").asBoolean(false)) {
-                    File resourceOut = newFileObject(properties.get("resources-output").getAsString());
+                if(resources.cleanResourcePackOutput) {
+                    File resourceOut = resources.resourcePackOutput;
                     this.resourceSubFolderNames.add("assets");
                     for(Exportable exportable : resourcePack.exportables) {
                         if(exportable.shouldExport() && exportable.getExportPath() != null) {
@@ -484,7 +484,7 @@ public class TridentCompiler extends AbstractProcess {
                         outResourceCache.put(relPath, new ParsingSignature(hashCode));
 
                         if(resourcePack.getOutputType() == ModulePackGenerator.OutputType.ZIP
-                                || JsonTraverser.INSTANCE.reset(properties).get("clear-resources-output").asBoolean(false)
+                                || resources.cleanResourcePackOutput
                                 || !Objects.equals(inResourceCache.get(relPath), new ParsingSignature(hashCode))) {
                             resourcePack.exportables.add(new RawExportable(relPath, data));
                         }

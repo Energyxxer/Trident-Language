@@ -6,14 +6,23 @@ import com.google.gson.JsonObject;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.Map;
 
 public class JsonTraverser {
     public static final JsonTraverser INSTANCE = new JsonTraverser(null);
 
+    private JsonElement root;
     private JsonElement head;
 
-    public JsonTraverser(JsonElement head) {
-        this.head = head;
+    public JsonTraverser(JsonElement root) {
+        this.root = root;
+        this.head = root;
+    }
+
+    public JsonTraverser reset() {
+        this.head = root;
+        return this;
     }
 
     public JsonTraverser reset(JsonElement newHead) {
@@ -43,6 +52,16 @@ public class JsonTraverser {
     public JsonArray asJsonArray() {
         if(head != null && head.isJsonArray()) return (JsonArray) head;
         return null;
+    }
+
+    public Iterable<Map.Entry<String, JsonElement>> iterateAsObject() {
+        if(head != null && head.isJsonObject()) return head.getAsJsonObject().entrySet();
+        return Collections.emptyList();
+    }
+
+    public Iterable<JsonElement> iterateAsArray() {
+        if(head != null && head.isJsonArray()) return head.getAsJsonArray();
+        return Collections.emptyList();
     }
 
     public String asString() {

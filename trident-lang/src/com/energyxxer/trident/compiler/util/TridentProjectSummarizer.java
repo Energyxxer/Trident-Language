@@ -1,9 +1,7 @@
 package com.energyxxer.trident.compiler.util;
 
-import com.energyxxer.commodore.defpacks.DefinitionPack;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
-import com.energyxxer.commodore.standard.StandardDefinitionPacks;
 import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.tags.TagGroup;
 import com.energyxxer.commodore.types.Type;
@@ -12,8 +10,8 @@ import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.summary.ProjectSummarizer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.ParsingSignature;
+import com.energyxxer.trident.compiler.TridentBuildData;
 import com.energyxxer.trident.compiler.TridentCompiler;
-import com.energyxxer.trident.compiler.TridentCompilerResources;
 import com.energyxxer.trident.compiler.TridentProjectWorker;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
@@ -41,7 +39,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
     private File rootDir;
     private Path dataPath;
     private Thread thread;
-    private TridentCompilerResources resources;
+    private TridentBuildData resources;
     private CommandModule module;
     private HashMap<String, ParsingSignature> filePatterns = new HashMap<>();
 
@@ -51,11 +49,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
     private TridentProjectWorker worker;
     private boolean workerHasWorked = false;
 
-    public TridentProjectSummarizer(File rootDir) {
-        this(rootDir, new TridentCompilerResources() {{this.definitionPacks = new DefinitionPack[] {StandardDefinitionPacks.MINECRAFT_JAVA_LATEST_RELEASE};}});
-    }
-
-    public TridentProjectSummarizer(File rootDir, TridentCompilerResources resources) {
+    public TridentProjectSummarizer(File rootDir, TridentBuildData resources) {
         this.rootDir = rootDir;
         this.dataPath = rootDir.toPath().resolve("datapack").resolve("data");
         this.resources = resources;
@@ -99,9 +93,6 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
             logException(x);
             return;
         }
-
-        TridentCompilerResources resources = this.resources.shallowClone();
-        if(resources.definitionPacks == null) resources.definitionPacks = resources.defaultDefinitionPacks;
 
         worker.setup.setupModule = true;
         worker.setup.setupDependencies = true;

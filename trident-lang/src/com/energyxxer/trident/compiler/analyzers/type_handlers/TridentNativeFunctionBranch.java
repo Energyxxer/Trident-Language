@@ -24,7 +24,7 @@ public class TridentNativeFunctionBranch extends TridentFunctionBranch {
 
         Class<?> returnType = TridentFunction.HelperMethods.sanitizeClass(method.getReturnType());
         TypeHandler correspondingHandler = TridentTypeManager.getHandlerForHandledClass(returnType);
-        if(correspondingHandler == null && returnType != Object.class && returnType != null) {
+        if(correspondingHandler == null && returnType != Object.class && returnType != Void.TYPE) {
             Debug.log("Could not create return constraints for method '" + method + "': Did not find appropriate TypeHandler instance for class: " + returnType);
         }
         boolean nullable = true;

@@ -29,7 +29,7 @@ import static com.energyxxer.trident.compiler.TridentCompiler.PROJECT_FILE_NAME;
 public class TridentProjectWorker {
     public final File rootDir;
 
-    private TridentCompilerResources resources;
+    private TridentBuildData resources;
     public final Setup setup;
     public final Output output;
 
@@ -49,9 +49,6 @@ public class TridentProjectWorker {
         if(setup.useReport) {
             report = new CompilerReport();
         }
-
-        resources = resources.shallowClone();
-        if(resources.definitionPacks == null) resources.definitionPacks = resources.defaultDefinitionPacks;
 
         if(setup.setupProperties) {
             try {
@@ -131,7 +128,7 @@ public class TridentProjectWorker {
                 if(rawElement.isJsonPrimitive() && rawElement.getAsJsonPrimitive().isString()) {
                     String element = rawElement.getAsString();
                     if(element.equals("DEFAULT")) {
-                        toImport.addAll(Arrays.asList(resources.definitionPacks));
+                        toImport.addAll(Arrays.asList(resources.defaultDefinitionPacks));
                     } else {
                         File pathToPack = rootDir.toPath().resolve("defpacks").resolve(element).toFile();
                         File pathToZip = new File(pathToPack.getPath() + ".zip");
@@ -155,7 +152,7 @@ public class TridentProjectWorker {
                 }
             }
         } else {
-            toImport.addAll(Arrays.asList(resources.definitionPacks));
+            toImport.addAll(Arrays.asList(resources.defaultDefinitionPacks));
         }
 
         for(DefinitionPack defpack : toImport) {
@@ -291,11 +288,11 @@ public class TridentProjectWorker {
         }
     }
 
-    public TridentCompilerResources getResources() {
+    public TridentBuildData getResources() {
         return resources;
     }
 
-    public void setResources(TridentCompilerResources resources) {
+    public void setResources(TridentBuildData resources) {
         this.resources = resources;
     }
 

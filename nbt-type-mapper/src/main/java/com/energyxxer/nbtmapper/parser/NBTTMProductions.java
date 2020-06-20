@@ -18,7 +18,7 @@ public class NBTTMProductions {
 
         LazyTokenStructureMatch FLAG = struct("FLAG");
         FLAG.add(ofType(IDENTIFIER)); //boolean, text_component, resource_location...
-        FLAG.add(group(matchItem(IDENTIFIER, "type"), brace("("), ofType(HASH).setOptional().setName("IS_TAG"), ofType(DEFINITION_CATEGORY).setName("DEFINITION_CATEGORY"), brace(")")).setName("TYPE_FLAG"));
+        FLAG.add(group(matchItem(IDENTIFIER, "type"), brace("("), ofType(HASH).setOptional().setName("IS_TAG"), ofType(IDENTIFIER).setName("DEFINITION_CATEGORY"), brace(")")).setName("TYPE_FLAG"));
         FLAG.add(group(matchItem(IDENTIFIER, "one_of"), brace("("), list(ofType(STRING_LITERAL).setName("OPTION"), comma()).setName("OPTION_LIST"), brace(")")).setName("ONE_OF_FLAG"));
 
         LazyTokenPatternMatch FLAGS = group(brace("("), list(FLAG, comma()).setName("FLAG_LIST"), brace(")")).setOptional().setName("FLAGS");
