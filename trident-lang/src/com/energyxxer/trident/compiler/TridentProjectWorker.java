@@ -84,7 +84,7 @@ public class TridentProjectWorker {
             try {
                 setupProductions();
             } catch(IOException x) {
-                logException(x, "Error while importing vanilla definitions: ");
+                logException(x, "Error while creating language syntax: ");
                 return;
             }
         }
@@ -93,7 +93,7 @@ public class TridentProjectWorker {
             try {
                 setupPlugins();
             } catch(IOException x) {
-                logException(x, "Error while importing vanilla definitions: ");
+                logException(x, "Error while setting up plugins: ");
                 return;
             }
         }

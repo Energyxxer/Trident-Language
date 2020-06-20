@@ -104,7 +104,7 @@ define class Predicate : JSONSerializable {
 
         for(term in terms) {
             if(!(term is Predicate)) {
-                throw "Expected Predicate in list, instead got " + type_definition.of(chance)
+                throw "Expected Predicate in list, instead got " + type_definition.of(term)
             }
         }
 
