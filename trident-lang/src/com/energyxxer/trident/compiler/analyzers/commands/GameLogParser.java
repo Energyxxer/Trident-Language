@@ -25,7 +25,7 @@ public class GameLogParser implements CommandParser {
 
     @Override
     public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> modifiers) {
-        if(!ctx.getCompiler().getResources().exportGameLog) return null;
+        if(!ctx.getCompiler().getBuildConfig().exportGameLog) return null;
         ctx.assertLanguageLevel(3, "The gamelog command is", pattern);
 
         ArrayList<Command> commands = new ArrayList<>();

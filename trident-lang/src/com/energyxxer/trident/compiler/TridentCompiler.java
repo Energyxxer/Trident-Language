@@ -55,7 +55,7 @@ public class TridentCompiler extends AbstractProcess {
 
     //Resources
     private TridentProjectWorker worker;
-    private TridentBuildData resources;
+    private TridentBuildConfiguration buildConfig;
     private NBTTypeMap typeMap;
     private boolean workerHasWorked = false;
 
@@ -142,12 +142,12 @@ public class TridentCompiler extends AbstractProcess {
         return worker;
     }
 
-    public void setResources(TridentBuildData resources) {
-        this.resources = resources;
+    public void setBuildConfig(TridentBuildConfiguration buildConfig) {
+        this.buildConfig = buildConfig;
     }
 
-    public TridentBuildData getResources() {
-        return resources;
+    public TridentBuildConfiguration getBuildConfig() {
+        return buildConfig;
     }
 
     private void runCompilation() {
@@ -175,7 +175,7 @@ public class TridentCompiler extends AbstractProcess {
         worker.setup.setupModule = true;
         worker.setup.setupProductions = true;
         worker.setup.useReport = true;
-        worker.setResources(resources);
+        worker.setBuildConfig(buildConfig);
 
         try {
             if(!workerHasWorked) worker.work();
@@ -197,8 +197,8 @@ public class TridentCompiler extends AbstractProcess {
             defaultNamespace = properties.get("default-namespace").getAsString().trim();
         }
 
-        if(resources.resourcePackOutput != null) {
-            resourcePack = new ResourcePackGenerator(this, resources.resourcePackOutput);
+        if(buildConfig.resourcePackOutput != null) {
+            resourcePack = new ResourcePackGenerator(this, buildConfig.resourcePackOutput);
         }
 
         if(properties.has("anonymous-function-name") && properties.get("anonymous-function-name").isJsonPrimitive() && properties.get("anonymous-function-name").getAsJsonPrimitive().isString()) {
@@ -218,8 +218,8 @@ public class TridentCompiler extends AbstractProcess {
 
         typeMap = new NBTTypeMap(module);
 
-        if(resources.typeMapPacks != null) {
-            for(NBTTypeMapPack pack : resources.typeMapPacks) {
+        if(buildConfig.typeMapPacks != null) {
+            for(NBTTypeMapPack pack : buildConfig.typeMapPacks) {
                 typeMap.parsing.parsePack(rootDir, pack);
             }
         } else {
@@ -279,7 +279,7 @@ public class TridentCompiler extends AbstractProcess {
             }
         }
 
-        VersionFeatureManager.setActiveFeatureMap(resources.featureMap);
+        VersionFeatureManager.setActiveFeatureMap(buildConfig.featureMap);
         module.setSettingsActive();
 
         Resources.populate(ownFiles, filePatterns);
@@ -353,9 +353,9 @@ public class TridentCompiler extends AbstractProcess {
 
         updateProgress(-1);
         this.setProgress("Generating data pack");
-        if(resources.dataPackOutput != null) {
+        if(buildConfig.dataPackOutput != null) {
             try {
-                File dataOut = resources.dataPackOutput;
+                File dataOut = buildConfig.dataPackOutput;
                 this.dataSubFolderNames.add("data");
                 for(Exportable exportable : module.exportables) {
                     if(exportable.shouldExport() && exportable.getExportPath() != null) {
@@ -364,7 +364,7 @@ public class TridentCompiler extends AbstractProcess {
                         dataSubFolderNames.add(firstName);
                     }
                 }
-                if(resources.cleanDataPackOutput) {
+                if(buildConfig.cleanDataPackOutput) {
                     for(String subFolder : this.dataSubFolderNames) {
                         Debug.log("Clearing folder: " + subFolder);
                         recursivelyDelete(dataOut.toPath().resolve(subFolder).toFile());
@@ -382,8 +382,8 @@ public class TridentCompiler extends AbstractProcess {
         this.setProgress("Generating resource pack");
         try {
             if(resourcePack != null) {
-                if(resources.cleanResourcePackOutput) {
-                    File resourceOut = resources.resourcePackOutput;
+                if(buildConfig.cleanResourcePackOutput) {
+                    File resourceOut = buildConfig.resourcePackOutput;
                     this.resourceSubFolderNames.add("assets");
                     for(Exportable exportable : resourcePack.exportables) {
                         if(exportable.shouldExport() && exportable.getExportPath() != null) {
@@ -484,7 +484,7 @@ public class TridentCompiler extends AbstractProcess {
                         outResourceCache.put(relPath, new ParsingSignature(hashCode));
 
                         if(resourcePack.getOutputType() == ModulePackGenerator.OutputType.ZIP
-                                || resources.cleanResourcePackOutput
+                                || buildConfig.cleanResourcePackOutput
                                 || !Objects.equals(inResourceCache.get(relPath), new ParsingSignature(hashCode))) {
                             resourcePack.exportables.add(new RawExportable(relPath, data));
                         }

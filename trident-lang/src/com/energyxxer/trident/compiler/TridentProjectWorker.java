@@ -29,7 +29,7 @@ import static com.energyxxer.trident.compiler.TridentCompiler.PROJECT_FILE_NAME;
 public class TridentProjectWorker {
     public final File rootDir;
 
-    private TridentBuildData resources;
+    private TridentBuildConfiguration buildConfig;
     public final Setup setup;
     public final Output output;
 
@@ -128,7 +128,7 @@ public class TridentProjectWorker {
                 if(rawElement.isJsonPrimitive() && rawElement.getAsJsonPrimitive().isString()) {
                     String element = rawElement.getAsString();
                     if(element.equals("DEFAULT")) {
-                        toImport.addAll(Arrays.asList(resources.defaultDefinitionPacks));
+                        toImport.addAll(Arrays.asList(buildConfig.defaultDefinitionPacks));
                     } else {
                         File pathToPack = rootDir.toPath().resolve("defpacks").resolve(element).toFile();
                         File pathToZip = new File(pathToPack.getPath() + ".zip");
@@ -143,8 +143,8 @@ public class TridentProjectWorker {
 
                         if(input != null) {
                             toImport.add(new DefinitionPack(input));
-                        } else if(resources.definitionPackAliases != null && resources.definitionPackAliases.containsKey(element)) {
-                            toImport.add(resources.definitionPackAliases.get(element));
+                        } else if(buildConfig.definitionPackAliases != null && buildConfig.definitionPackAliases.containsKey(element)) {
+                            toImport.add(buildConfig.definitionPackAliases.get(element));
                         } else {
                             throw new FileNotFoundException("Could not find folder nor zip at path '" + pathToPack + "'");
                         }
@@ -152,7 +152,7 @@ public class TridentProjectWorker {
                 }
             }
         } else {
-            toImport.addAll(Arrays.asList(resources.defaultDefinitionPacks));
+            toImport.addAll(Arrays.asList(buildConfig.defaultDefinitionPacks));
         }
 
         for(DefinitionPack defpack : toImport) {
@@ -190,7 +190,7 @@ public class TridentProjectWorker {
                         TridentProjectWorker dependency = new TridentProjectWorker(newFileObject(dependencyPath));
                         dependency.dependencyInfo = new DependencyInfo();
                         dependency.setup.copyValuesFrom(this.setup);
-                        dependency.resources = resources;
+                        dependency.buildConfig = buildConfig;
                         if(obj.has("export") && obj.get("export").isJsonPrimitive() && obj.get("export").getAsJsonPrimitive().isBoolean()) {
                             dependency.dependencyInfo.doExport = obj.get("export").getAsBoolean();
                         }
@@ -249,8 +249,8 @@ public class TridentProjectWorker {
 
                     if(input != null) {
                         plugins.add(new TridentPlugin(input, sourceFile));
-                    } else if(resources.pluginAliases != null && resources.pluginAliases.containsKey(element)) {
-                        plugins.add(resources.pluginAliases.get(element));
+                    } else if(buildConfig.pluginAliases != null && buildConfig.pluginAliases.containsKey(element)) {
+                        plugins.add(buildConfig.pluginAliases.get(element));
                     } else {
                         throw new FileNotFoundException("Could not find folder nor zip at path '" + pathToPack + "'");
                     }
@@ -288,12 +288,12 @@ public class TridentProjectWorker {
         }
     }
 
-    public TridentBuildData getResources() {
-        return resources;
+    public TridentBuildConfiguration getBuildConfig() {
+        return buildConfig;
     }
 
-    public void setResources(TridentBuildData resources) {
-        this.resources = resources;
+    public void setBuildConfig(TridentBuildConfiguration buildConfig) {
+        this.buildConfig = buildConfig;
     }
 
     public DependencyInfo getDependencyInfo() {
@@ -302,7 +302,7 @@ public class TridentProjectWorker {
 
     public TridentCompiler createCompiler() {
         TridentCompiler compiler = new TridentCompiler(this);
-        compiler.setResources(resources);
+        compiler.setBuildConfig(buildConfig);
         if(dependencyInfo != null) {
             compiler.setDependencyMode(dependencyInfo.mode);
         }

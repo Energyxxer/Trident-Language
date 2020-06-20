@@ -24,7 +24,7 @@ import java.util.Map;
 
 import static com.energyxxer.trident.compiler.TridentCompiler.newFileObject;
 
-public class TridentBuildData {
+public class TridentBuildConfiguration {
     public DefinitionPack[] defaultDefinitionPacks;
     public Map<String, DefinitionPack> definitionPackAliases;
     public VersionFeatures featureMap;
@@ -42,8 +42,8 @@ public class TridentBuildData {
     public String[] postActions;
 
     //NO NEED FOR CLONE ANYMORE
-    /*public TridentBuildData shallowClone() {
-        TridentBuildData copy = new TridentBuildData();
+    /*public TridentBuildConfiguration shallowClone() {
+        TridentBuildConfiguration copy = new TridentBuildConfiguration();
         copy.defaultDefinitionPacks = this.defaultDefinitionPacks;
         copy.definitionPackAliases = this.definitionPackAliases;
         copy.featureMap = this.featureMap;

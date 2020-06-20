@@ -10,7 +10,7 @@ import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.summary.ProjectSummarizer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.pattern_matching.ParsingSignature;
-import com.energyxxer.trident.compiler.TridentBuildData;
+import com.energyxxer.trident.compiler.TridentBuildConfiguration;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentProjectWorker;
 import com.energyxxer.trident.compiler.TridentUtil;
@@ -39,7 +39,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
     private File rootDir;
     private Path dataPath;
     private Thread thread;
-    private TridentBuildData resources;
+    private TridentBuildConfiguration buildConfig;
     private CommandModule module;
     private HashMap<String, ParsingSignature> filePatterns = new HashMap<>();
 
@@ -49,10 +49,10 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
     private TridentProjectWorker worker;
     private boolean workerHasWorked = false;
 
-    public TridentProjectSummarizer(File rootDir, TridentBuildData resources) {
+    public TridentProjectSummarizer(File rootDir, TridentBuildConfiguration buildConfig) {
         this.rootDir = rootDir;
         this.dataPath = rootDir.toPath().resolve("datapack").resolve("data");
-        this.resources = resources;
+        this.buildConfig = buildConfig;
 
         this.worker = new TridentProjectWorker(rootDir);
         this.workerHasWorked = false;
@@ -61,7 +61,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
     public TridentProjectSummarizer(TridentProjectWorker worker) {
         this.rootDir = worker.rootDir;
         this.dataPath = rootDir.toPath().resolve("datapack").resolve("data");
-        this.resources = worker.getResources();
+        this.buildConfig = worker.getBuildConfig();
 
         this.worker = worker;
         this.workerHasWorked = true;
@@ -96,7 +96,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
 
         worker.setup.setupModule = true;
         worker.setup.setupDependencies = true;
-        worker.setResources(resources);
+        worker.setBuildConfig(buildConfig);
 
         try {
             if(!workerHasWorked) worker.work();

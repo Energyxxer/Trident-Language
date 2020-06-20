@@ -39,11 +39,11 @@ public class Main {
             buildFile = newFileObject(args[1], rootDir);
         }
 
-        TridentBuildData resources = new TridentBuildData();
+        TridentBuildConfiguration resources = new TridentBuildConfiguration();
         resources.populateFromJson(buildFile, rootDir);
 
         TridentCompiler c = new TridentCompiler(rootDir);
-        c.setResources(resources);
+        c.setBuildConfig(resources);
 
         c.addProgressListener((process) -> {
             StringBuilder line = new StringBuilder(process.getStatus());
