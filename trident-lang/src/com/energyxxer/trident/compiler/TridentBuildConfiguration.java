@@ -38,9 +38,6 @@ public class TridentBuildConfiguration {
     public boolean exportComments = false;
     public boolean exportGameLog = true;
 
-    public String[] preActions;
-    public String[] postActions;
-
     //NO NEED FOR CLONE ANYMORE
     /*public TridentBuildConfiguration shallowClone() {
         TridentBuildConfiguration copy = new TridentBuildConfiguration();
@@ -65,21 +62,21 @@ public class TridentBuildConfiguration {
         //No Trident classes should
     }*/
 
-    public void populateFromProjectRoot(File projectRootFile) throws IOException {
-        populateFromJson(projectRootFile.toPath().resolve(TridentCompiler.PROJECT_BUILD_FILE_NAME).toFile(), projectRootFile);
+    public JsonObject populateFromProjectRoot(File projectRootFile) throws IOException {
+        return populateFromJson(projectRootFile.toPath().resolve(TridentCompiler.PROJECT_BUILD_FILE_NAME).toFile(), projectRootFile);
     }
 
-    public void populateFromJson(File buildJsonFile) throws IOException {
-        populateFromJson(buildJsonFile, buildJsonFile.getParentFile());
+    public JsonObject populateFromJson(File buildJsonFile) throws IOException {
+        return populateFromJson(buildJsonFile, buildJsonFile.getParentFile());
     }
 
-    public void populateFromJson(File buildJsonFile, File rootDir) throws IOException {
+    public JsonObject populateFromJson(File buildJsonFile, File rootDir) throws IOException {
         try(JsonReader jsonReader = new JsonReader(new FileReader(buildJsonFile))) {
-            populateFromJson((JsonObject) new Gson().fromJson(jsonReader, JsonObject.class), rootDir);
+            return populateFromJson((JsonObject) new Gson().fromJson(jsonReader, JsonObject.class), rootDir);
         }
     }
 
-    public void populateFromJson(JsonObject root, File rootDir) throws IOException {
+    public JsonObject populateFromJson(JsonObject root, File rootDir) throws IOException {
         JsonTraverser traverser = new JsonTraverser(root);
 
         //Input Resources
@@ -169,34 +166,7 @@ public class TridentBuildConfiguration {
         this.exportComments = traverser.reset().get("output").get("export-comments").asBoolean(this.exportComments);
         this.exportGameLog = traverser.reset().get("output").get("export-gamelog").asBoolean(this.exportGameLog);
 
-
-        //Actions
-
-        if(this.preActions == null) {
-            ArrayList<String> preActions = new ArrayList<>();
-            for(JsonElement rawCommand : traverser.reset().get("actions").get("pre").iterateAsArray()) {
-                if(rawCommand.isJsonPrimitive() && rawCommand.getAsJsonPrimitive().isString()) {
-                    String command = rawCommand.getAsString();
-                    if(!command.isEmpty()) {
-                        preActions.add(command);
-                    }
-                }
-            }
-            this.preActions = preActions.toArray(new String[0]);
-        }
-
-        if(this.postActions == null) {
-            ArrayList<String> postActions = new ArrayList<>();
-            for(JsonElement rawCommand : traverser.reset().get("actions").get("post").iterateAsArray()) {
-                if(rawCommand.isJsonPrimitive() && rawCommand.getAsJsonPrimitive().isString()) {
-                    String command = rawCommand.getAsString();
-                    if(!command.isEmpty()) {
-                        postActions.add(command);
-                    }
-                }
-            }
-            this.postActions = postActions.toArray(new String[0]);
-        }
+        return root;
     }
 
     private static DefinitionPack retrieveDefinitionPackForFile(String pathToPack, File rootDir, Map<String, DefinitionPack> aliases) throws IOException {

@@ -12,6 +12,7 @@ public abstract class AbstractProcess {
     private boolean complete = false;
     private boolean successful = false;
 
+    private ArrayList<StartListener> startListeners = new ArrayList<>();
     private ArrayList<ProgressListener> progressListeners = new ArrayList<>();
     private ArrayList<CompletionListener> completionListeners = new ArrayList<>();
 
@@ -54,6 +55,12 @@ public abstract class AbstractProcess {
         invokeProgressUpdate();
     }
 
+    protected void invokeStart() {
+        for(StartListener startListener : startListeners) {
+            startListener.onStart(this);
+        }
+    }
+
     protected void invokeProgressUpdate() {
         for(ProgressListener progressListener : progressListeners) {
             progressListener.onProgress(this);
@@ -66,8 +73,17 @@ public abstract class AbstractProcess {
         for(CompletionListener completionListener : completionListeners) {
             completionListener.onCompletion(this, success);
         }
+        startListeners.clear();
         progressListeners.clear();
         completionListeners.clear();
+    }
+
+    public void addStartListener(StartListener listener) {
+        startListeners.add(listener);
+    }
+
+    public void removeStartListener(StartListener listener) {
+        startListeners.remove(listener);
     }
 
     public void addProgressListener(ProgressListener listener) {

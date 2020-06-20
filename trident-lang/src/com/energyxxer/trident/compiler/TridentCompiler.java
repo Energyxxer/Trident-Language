@@ -164,6 +164,8 @@ public class TridentCompiler extends AbstractProcess {
             }
         }
 
+        invokeStart();
+
         this.setProgress("Initializing analyzers");
 
         AnalyzerManager.initialize();
