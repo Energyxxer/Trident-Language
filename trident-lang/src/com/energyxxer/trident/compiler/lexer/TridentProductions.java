@@ -349,7 +349,7 @@ public class TridentProductions {
                             ).setName("NEW_FUNCTION_SPLIT").setGreedy(true)
 //                            optional(FORMAL_PARAMETERS, TYPE_CONSTRAINTS).setName("FORMAL_PARAMETERS_OPT"),
 //                            ANONYMOUS_INNER_FUNCTION
-                    ).setName("NEW_FUNCTION").addProcessor(endComplexValue).addProcessor((p, l) -> {
+                    ).setName("NEW_FUNCTION").addProcessor(endComplexValue).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);}).addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
                             TokenList paramList = (TokenList) p.find("FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
                             if(paramList != null) {
