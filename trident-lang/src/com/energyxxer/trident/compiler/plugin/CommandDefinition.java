@@ -13,13 +13,15 @@ import java.io.File;
 import java.io.IOException;
 
 public class CommandDefinition {
+    private final TridentPlugin definingPlugin;
     private final String commandName;
     private final String rawSyntaxFile;
     private final String rawHandlerFile;
     private TokenPattern<?> rawSyntaxPattern;
     private TokenPattern<?> rawHandlerPattern;
 
-    public CommandDefinition(String commandName, String rawSyntaxFile, String rawHandlerFile) {
+    public CommandDefinition(TridentPlugin definingPlugin, String commandName, String rawSyntaxFile, String rawHandlerFile) {
+        this.definingPlugin = definingPlugin;
         this.commandName = commandName;
         this.rawSyntaxFile = rawSyntaxFile;
         this.rawHandlerFile = rawHandlerFile;
@@ -61,7 +63,7 @@ public class CommandDefinition {
         } catch(TDNMetaBuilder.TDNMetaException x) {
             throw new IOException("Parsing error in TDNMeta file: " + x.getErrorMessage() + "; Caused by: " + x.getCausedBy().getLocation());
         }
-        productions.registerCustomCommand(commandName, builder.getReturnValue());
+        productions.registerCustomCommand(definingPlugin.getName(), commandName, builder.getReturnValue());
     }
 
     public String getCommandName() {

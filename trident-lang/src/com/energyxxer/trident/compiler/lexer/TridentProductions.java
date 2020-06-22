@@ -21,12 +21,15 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.enxlex.suggestions.ComplexSuggestion;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.lexer.summaries.SummarySymbol;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.plugin.TDNMetaBuilder;
+import com.energyxxer.trident.compiler.plugin.TridentPlugin;
 import com.energyxxer.trident.compiler.semantics.AliasType;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.util.StringBounds;
@@ -140,9 +143,11 @@ public class TridentProductions {
     private final LazyTokenPatternMatch TYPE_CONSTRAINTS;
     private final LazyTokenPatternMatch INFERRABLE_TYPE_CONSTRAINTS;
 
+    private final LazyTokenStructureMatch PLUGIN_NAME = struct("PLUGIN_NAME");
+
 
     private final LazyTokenStructureMatch POINTER;
-    private final LazyTokenPatternMatch resourceLocationFixer = ofType(NO_TOKEN).setName("_RLCF").setOptional().addFailProcessor((p, l) -> {
+    private static final LazyTokenPatternMatch resourceLocationFixer = ofType(NO_TOKEN).setName("_RLCF").setOptional().addFailProcessor((p, l) -> {
         if(l.getSuggestionModule() != null) {
             if(((LazyLexer) l).getCurrentIndex() <= l.getSuggestionModule().getSuggestionIndex()+1) {
                 int targetIndex = ((LazyLexer) l).getLookingIndexTrimmed();
@@ -506,6 +511,9 @@ public class TridentProductions {
             directiveBody.add(group(literal("breaking").setName("DIRECTIVE_LABEL")).setName("BREAKING_DIRECTIVE"));
             directiveBody.add(group(literal("language_level").setName("DIRECTIVE_LABEL"), integer()).setName("LANGUAGE_LEVEL_DIRECTIVE"));
             directiveBody.add(group(literal("metadata").setName("DIRECTIVE_LABEL"), DICTIONARY).setName("METADATA_DIRECTIVE"));
+            directiveBody.add(group(literal("using_plugin").setName("DIRECTIVE_LABEL"), group(PLUGIN_NAME).addProcessor((p, lx) -> {
+                importPlugin(p.flatten(false), p, lx);
+            })).setName("USING_PLUGIN_DIRECTIVE"));
         }
 
         {
@@ -516,7 +524,8 @@ public class TridentProductions {
                             ((TridentSummaryModule) lx.getSummaryModule()).lockDirectives();
                         }
                     }), ofType(EMPTY_TOKEN).setName("FILE_START_MARKER"), l).addProcessor(surroundBlock));
-            FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l,ofType(TokenType.END_OF_FILE)));
+
+            FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l,ofType(TokenType.END_OF_FILE)).addProcessor((p, lx) -> {uninstallCommands();}).addFailProcessor((len, lx) -> {uninstallCommands();}));
         }
 
         TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white", "reset").setName("TEXT_COLOR");
@@ -2902,7 +2911,68 @@ public class TridentProductions {
         }
     }
 
-    public void registerCustomCommand(String commandHeader, LazyTokenPatternMatch pattern) {
-        COMMAND.add(group(matchItem(COMMAND_HEADER, commandHeader).setName("CUSTOM_COMMAND_HEADER"), pattern).addTags(TDNMetaBuilder.PLUGIN_CREATED_COMMAND_TAG));
+    private ArrayList<CustomCommandProduction> customCommands;
+
+    public void registerPlugin(TridentPlugin plugin) {
+        PLUGIN_NAME.add(literal(plugin.getName()));
+    }
+
+    public void registerCustomCommand(String pluginName, String commandHeader, LazyTokenPatternMatch pattern) {
+        if(customCommands == null) customCommands = new ArrayList<>();
+        CustomCommandProduction commandProduction = new CustomCommandProduction(pluginName, commandHeader, pattern);
+        customCommands.add(commandProduction);
+        commandProduction.registerNamespacedCommand(COMMAND);
+    }
+    private void uninstallCommands() {
+        if(customCommands != null) {
+            for(CustomCommandProduction customCommand : customCommands) {
+                customCommand.uninstallImportedCommand(COMMAND);
+            }
+        }
+    }
+
+    public void importPlugin(String name, TokenPattern<?> p, Lexer lx) {
+        boolean any = false;
+        if(customCommands != null) {
+            for(CustomCommandProduction customCommand : customCommands) {
+                if(customCommand.pluginName.equals(name)) {
+                    customCommand.registerImportedCommand(COMMAND);
+                    any = true;
+                }
+            }
+        }
+        if(!any && p != null && lx != null) {
+            lx.getNotices().add(new Notice(NoticeType.WARNING, "Plugin '" + name + "' has no commands to import.", p));
+        }
+    }
+
+    private static class CustomCommandProduction {
+        String pluginName;
+        String commandHeader;
+        LazyTokenPatternMatch pattern;
+
+        private final LazyTokenPatternMatch namespacedPattern;
+        private final LazyTokenPatternMatch importedPattern;
+
+        public CustomCommandProduction(String pluginName, String commandHeader, LazyTokenPatternMatch pattern) {
+            this.pluginName = pluginName;
+            this.commandHeader = commandHeader;
+            this.pattern = pattern;
+
+            this.namespacedPattern = group(resourceLocationFixer, matchItem(COMMAND_HEADER, pluginName + ":" + commandHeader).setName("CUSTOM_COMMAND_HEADER"), pattern).addTags(TDNMetaBuilder.PLUGIN_CREATED_COMMAND_TAG);
+            this.importedPattern = group(matchItem(COMMAND_HEADER, commandHeader).setName("CUSTOM_COMMAND_HEADER"), pattern).addTags(TDNMetaBuilder.PLUGIN_CREATED_COMMAND_TAG);
+        }
+
+        public void registerNamespacedCommand(LazyTokenStructureMatch COMMAND) {
+            COMMAND.add(namespacedPattern);
+        }
+
+        public void registerImportedCommand(LazyTokenStructureMatch COMMAND) {
+            COMMAND.add(importedPattern);
+        }
+
+        public void uninstallImportedCommand(LazyTokenStructureMatch COMMAND) {
+            COMMAND.remove(importedPattern);
+        }
     }
 }

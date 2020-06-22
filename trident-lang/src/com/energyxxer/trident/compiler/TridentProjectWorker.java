@@ -248,7 +248,11 @@ public class TridentProjectWorker {
                     }
 
                     if(input != null) {
-                        plugins.add(new TridentPlugin(input, sourceFile));
+                        String pluginName = sourceFile.getName();
+                        if(pluginName.endsWith(".zip")) {
+                            pluginName = pluginName.substring(0, pluginName.length()- ".zip".length());
+                        }
+                        plugins.add(new TridentPlugin(pluginName, input, sourceFile));
                     } else if(buildConfig.pluginAliases != null && buildConfig.pluginAliases.containsKey(element)) {
                         plugins.add(buildConfig.pluginAliases.get(element));
                     } else {
@@ -270,7 +274,7 @@ public class TridentProjectWorker {
 
         if(setup.setupProductions) {
             for(TridentPlugin p : transitivePlugins) {
-                p.populateProductions(output.productions);
+                p.populateProductions(output.productions, output.properties);
             }
         }
     }

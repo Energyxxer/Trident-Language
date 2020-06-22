@@ -123,7 +123,11 @@ public class TridentBuildConfiguration {
                 String value = rawValue.getAsString();
 
                 File file = newFileObject(value, rootDir);
-                pluginAliases.put(key, new TridentPlugin(retrieveCompoundInputForFile(file), file));
+                String pluginName = file.getName();
+                if(pluginName.endsWith(".zip")) {
+                    pluginName = pluginName.substring(0, pluginName.length()- ".zip".length());
+                }
+                pluginAliases.put(key, new TridentPlugin(pluginName, retrieveCompoundInputForFile(file), file));
             }
             this.pluginAliases = pluginAliases;
         }

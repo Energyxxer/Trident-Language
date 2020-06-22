@@ -150,6 +150,8 @@ public class TridentFile extends SymbolContext {
                         }
                         break;
                     }
+                    case "USING_PLUGIN_DIRECTIVE":
+                        break;
                     default: {
                         getCompiler().getReport().addNotice(new Notice(NoticeType.DEBUG, "Unknown directive type '" + directiveBody.getName() + "'", directiveBody));
                     }

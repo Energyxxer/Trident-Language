@@ -5,7 +5,9 @@ import com.energyxxer.enxlex.lexical_analysis.EagerLexer;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
+import com.energyxxer.trident.compiler.util.JsonTraverser;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -13,6 +15,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 
 public class TridentPlugin {
+    private final String name;
     @NotNull
     private final Gson gson;
     @NotNull
@@ -22,7 +25,8 @@ public class TridentPlugin {
 
     private HashMap<String, CommandDefinition> customCommands = new HashMap<>();
 
-    public TridentPlugin(@NotNull CompoundInput source, File sourceFile) {
+    public TridentPlugin(String name, @NotNull CompoundInput source, File sourceFile) {
+        this.name = name;
         this.loaded = false;
         this.source = source;
         this.gson = new Gson();
@@ -83,22 +87,34 @@ public class TridentPlugin {
             }
             syntaxStr = sb.toString();
         }
-        CommandDefinition command = new CommandDefinition(commandName, syntaxStr, handlerStr);
+        CommandDefinition command = new CommandDefinition(this, commandName, syntaxStr, handlerStr);
 
         command.parseSyntaxFile(eagerLexer, sourceFile.resolve(syntaxPath).toFile());
         customCommands.put(commandName, command);
     }
 
-    public void populateProductions(TridentProductions productions) throws IOException {
+    public void populateProductions(TridentProductions productions, JsonObject projectProperties) throws IOException {
         load();
+        productions.registerPlugin(this);
         this.lazyLexer = new LazyLexer(new TokenStream(false), productions.FILE);
         for(CommandDefinition command : customCommands.values()) {
             command.parseHandlerFile(lazyLexer, sourceFile.resolve("commands/" + command.getCommandName() + "/handler.tdn").toFile());
             command.createSyntax(productions);
         }
+
+        if(JsonTraverser.INSTANCE.reset(projectProperties).get("using-all-plugins").asBoolean(true)) {
+            productions.importPlugin(this.getName(), null, null);
+        }
     }
 
-    public CommandDefinition getCommand(String name) {
-        return customCommands.get(name);
+    public CommandDefinition getCommand(String commandName) {
+        if(commandName.startsWith(this.name + ":")) {
+            commandName = commandName.substring(this.name.length()+1);
+        }
+        return customCommands.get(commandName);
+    }
+
+    public String getName() {
+        return name;
     }
 }

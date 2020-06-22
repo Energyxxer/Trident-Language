@@ -39,7 +39,7 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
     }
 
     public LazyTokenStructureMatch add(LazyTokenPatternMatch g) {
-        entries.add(g);
+        if(!entries.contains(g)) entries.add(g);
         return this;
     }
 
@@ -53,7 +53,10 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
 
         TokenMatchResponse longestMatch = null;
 
-        if(entries.isEmpty()) throw new IllegalStateException("Cannot attempt match; TokenStructureMatch '" + this.name + "' is empty.");
+        if(entries.isEmpty()) {
+            //throw new IllegalStateException("Cannot attempt match; TokenStructureMatch '" + this.name + "' is empty.");
+            return new TokenMatchResponse(false, null, 0, this, null);
+        }
         for (LazyTokenPatternMatch entry : entries) {
             lexer.setCurrentIndex(index);
 
@@ -134,5 +137,9 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
 
     public boolean getGreedy() {
         return greedy;
+    }
+
+    public void remove(LazyTokenPatternMatch pattern) {
+        entries.remove(pattern);
     }
 }
