@@ -1,7 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.StringTypeHandler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -42,20 +41,6 @@ public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
     @Override
     public Object cast(TypeHandler object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
-    }
-
-    @Override
-    public Object coerce(TypeHandler object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(isInstance(object) && targetType instanceof StringTypeHandler) {
-            return object.getTypeIdentifier();
-        }
-        return null;
-    }
-
-    @Override
-    public boolean canCoerce(Object object, TypeHandler into) {
-        //Backwards compatibility with checking typeOf() against a string
-        return isInstance(object) && into instanceof StringTypeHandler;
     }
 
     @Override

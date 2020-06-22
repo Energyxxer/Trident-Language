@@ -125,7 +125,6 @@ public class TridentException extends RuntimeException implements TypeHandler<Tr
 
     @Override
     public Object cast(TridentException object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 

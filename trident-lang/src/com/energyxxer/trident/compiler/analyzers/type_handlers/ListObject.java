@@ -123,7 +123,6 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
     @SuppressWarnings("unchecked")
     @Override
     public Object cast(ListObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 

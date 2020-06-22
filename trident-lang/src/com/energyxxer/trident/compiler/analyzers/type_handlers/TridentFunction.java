@@ -51,6 +51,11 @@ public interface TridentFunction extends TypeHandler<TridentFunction> {
     }
 
     @Override
+    default boolean isSelfHandler() {
+        return true;
+    }
+
+    @Override
     default String getTypeIdentifier() {
         return "function";
     }

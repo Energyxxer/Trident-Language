@@ -191,7 +191,6 @@ public class CustomItem implements TypeHandler<CustomItem> {
 
     @Override
     public Object cast(CustomItem object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 

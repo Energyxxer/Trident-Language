@@ -57,7 +57,7 @@ public class TypeLib implements DefaultLibraryProvider {
 
         try {
             globalCtx.put(new Symbol("isInstance", Symbol.SymbolVisibility.GLOBAL, nativeMethodsToFunction(globalCtx, TypeLib.class.getMethod("isInstance", Object.class, String.class))));
-            globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, nativeMethodsToFunction(globalCtx, TridentTypeManager.class.getMethod("getStaticHandlerForObject", Object.class))));
+            globalCtx.put(new Symbol("typeOf", Symbol.SymbolVisibility.GLOBAL, nativeMethodsToFunction(globalCtx, TridentTypeManager.class.getMethod("getTypeIdentifierForObject", Object.class))));
         } catch(NoSuchMethodException e) {
             e.printStackTrace();
         }

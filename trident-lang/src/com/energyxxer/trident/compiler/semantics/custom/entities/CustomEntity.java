@@ -165,7 +165,6 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
 
     @Override
     public Object cast(CustomEntity object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 

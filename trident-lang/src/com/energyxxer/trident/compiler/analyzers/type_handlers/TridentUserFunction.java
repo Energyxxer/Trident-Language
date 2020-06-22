@@ -47,7 +47,13 @@ public class TridentUserFunction implements TridentFunction {
 
     @Override
     public Object getMember(TridentFunction object, String member, TokenPattern<?> pattern, ISymbolContext file, boolean keepSymbol) {
-        if(member.equals("formalParameters")) return new ListObject(branch.getFormalParameters().stream().map(p -> p.getConstraints().getHandler()).collect(Collectors.toList()));
+        if(member.equals("formalParameters")) return new ListObject(branch.getFormalParameters().stream().map(p -> {
+            DictionaryObject entry = new DictionaryObject();
+            entry.put("name", p.getName());
+            entry.put("type", p.getConstraints().getHandler());
+            entry.put("nullable", p.getConstraints().isNullable());
+            return entry;
+        }).collect(Collectors.toList()));
         if(member.equals("declaringFile")) return declaringContext.getStaticParentFile().getResourceLocation();
         throw new MemberNotFoundException();
     }

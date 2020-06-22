@@ -72,10 +72,8 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
         return getMember(object, key, pattern, ctx, keepSymbol);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object cast(DictionaryObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 
