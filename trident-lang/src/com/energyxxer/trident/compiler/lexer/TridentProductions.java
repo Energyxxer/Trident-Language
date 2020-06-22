@@ -1519,7 +1519,7 @@ public class TridentProductions {
                     matchItem(MODIFIER_HEADER, "rotated"),
                     choice(
                             group(literal("as").setOptional(), ENTITY).setName("ENTITY_BRANCH"),
-                            TWO_COORDINATE_SET
+                            ROTATION
                     ).addTags("cspn:Rotation")
             ));
         }
@@ -2285,13 +2285,15 @@ public class TridentProductions {
             );
         }
 
+        LazyTokenPatternMatch SYMBOL_MODIFIER_LIST = list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST");
+
         {
             LazyTokenStructureMatch entityBodyEntry = choice(
                     group(literal("default"), literal("nbt"), NBT_COMPOUND).setName("DEFAULT_NBT"),
                     group(literal("default"), literal("passengers"), brace("["), list(NEW_ENTITY_LITERAL, comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
                     group(literal("default"), literal("health"), real().setName("HEALTH").addTags("cspn:Health")).setName("DEFAULT_HEALTH"),
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
-                    group(literal("var"), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), identifierX().setName("SYMBOL_NAME").addTags("cspn:Field Name"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("ENTITY_FIELD"),
+                    group(literal("var"), SYMBOL_MODIFIER_LIST, identifierX().setName("SYMBOL_NAME").addTags("cspn:Field Name"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("ENTITY_FIELD"),
                     group(literal("eval"), LINE_SAFE_INTERPOLATION_VALUE).setName("ENTITY_EVAL"),
                     group(literal("on"), group(INTERPOLATION_VALUE).setName("EVENT_NAME"), list(MODIFIER).setOptional().setName("EVENT_MODIFIERS"), literal("function"),
                             OPTIONAL_NAME_INNER_FUNCTION).setName("ENTITY_EVENT_IMPLEMENTATION"),
@@ -2320,7 +2322,7 @@ public class TridentProductions {
                     group(literal("default"), literal("name"), TEXT_COMPONENT).setName("DEFAULT_NAME"),
                     group(literal("default"), literal("lore"), brace("["), list(TEXT_COMPONENT, comma()).setOptional().setName("LORE_LIST"), brace("]")).setName("DEFAULT_LORE"),
                     COMMENT_S,
-                    group(literal("var"), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), identifierX().setName("SYMBOL_NAME").addTags("cspn:Field Name"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("ITEM_FIELD"),
+                    group(literal("var"), SYMBOL_MODIFIER_LIST, identifierX().setName("SYMBOL_NAME").addTags("cspn:Field Name"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(LINE_SAFE_INTERPOLATION_VALUE, INTERPOLATION_BLOCK).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("ITEM_FIELD"),
                     group(literal("eval"), LINE_SAFE_INTERPOLATION_VALUE).setName("ITEM_EVAL")
             );
             itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_ITEM_BODY);
@@ -2335,8 +2337,8 @@ public class TridentProductions {
             LazyTokenPatternMatch classSetter = group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("set"), brace("("), FORMAL_PARAMETER, brace(")"), ANONYMOUS_INNER_FUNCTION).setName("CLASS_SETTER").setOptional();
 
             LazyTokenStructureMatch classBodyEntry = choice(
-                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER"),
-                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), DYNAMIC_FUNCTION).setName("CLASS_FUNCTION"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), DYNAMIC_FUNCTION).setName("CLASS_FUNCTION"),
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("this"), brace("["), FORMAL_PARAMETER, brace("]"), brace("{"), classGetter, classSetter, brace("}")).setName("CLASS_INDEXER"),
                     group(literal("override").setOptional(), choice("explicit", "implicit").setName("CLASS_TRANSFORM_TYPE"), brace("<"), INTERPOLATION_TYPE, brace(">"), DYNAMIC_FUNCTION).setName("CLASS_OVERRIDE"),
                     COMMENT_S
@@ -2402,7 +2404,7 @@ public class TridentProductions {
                                                     }
                                                 }
                                             }),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("final").setOptional(), literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), optional(colon(), list(INTERPOLATION_TYPE, comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST")).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), optional(colon(), list(INTERPOLATION_TYPE, comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST")).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
                                                     TokenPattern<?> namePattern = p.find("CLASS_NAME");
@@ -2501,7 +2503,7 @@ public class TridentProductions {
 
         {
             LazyTokenPatternMatch FOR_HEADER = choice(
-                    group(identifierX().setName("VARIABLE_NAME").addTags("cspn:Iterator Name"), keyword("in"), noToken().addTags("cspn:Iterable"), INTERPOLATION_VALUE).setName("ITERATOR_FOR"),
+                    group(identifierX().setName("VARIABLE_NAME").addTags("cspn:Iterator Name"), instructionKeyword("in", false), noToken().addTags("cspn:Iterable"), INTERPOLATION_VALUE).setName("ITERATOR_FOR"),
                     group(choice(INTERPOLATION_VALUE, group(VARIABLE_DECLARATION)).setOptional().setName("FOR_HEADER_INITIALIZATION").addTags("cspn:Initialization"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_CONDITION").addTags("cspn:Loop Condition"), symbol(";"), optional(INTERPOLATION_VALUE).setName("FOR_HEADER_ITERATION").addTags("cspn:Iteration Expression")).setName("CLASSICAL_FOR")
             ).setName("LOOP_HEADER");
 
@@ -2533,7 +2535,7 @@ public class TridentProductions {
 
         {
             INSTRUCTION.add(
-                    group(keyword("do").setOptional(), instructionKeyword("if"), brace("("), group(INTERPOLATION_VALUE).setName("CONDITION").addTags("cspn:Condition"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), optional(keyword("else"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("ELSE_CLAUSE"))
+                    group(keyword("do").setOptional(), instructionKeyword("if"), brace("("), group(INTERPOLATION_VALUE).setName("CONDITION").addTags("cspn:Condition"), brace(")"), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK"), optional(instructionKeyword("else", false), choice(ANONYMOUS_INNER_FUNCTION, ENTRY).setName("EXECUTION_BLOCK")).setName("ELSE_CLAUSE"))
             );
         }
 
@@ -2543,8 +2545,8 @@ public class TridentProductions {
                             brace("{"),
                             list(
                                     group(
-                                            choice(keyword("default"), group(keyword("case"), INTERPOLATION_VALUE)).setName("CASE_BRANCH"), colon(),
-                                            choice(list(ENTRY).setName("BRACELESS_BLOCK"), ANONYMOUS_INNER_FUNCTION).setOptional().setName("CASE_BLOCK")
+                                            choice(instructionKeyword("default", false), group(instructionKeyword("case", false), INTERPOLATION_VALUE)).setName("CASE_BRANCH"), colon(),
+                                            choice(ANONYMOUS_INNER_FUNCTION).setOptional().setName("CASE_BLOCK")
                                     )
                             ).setOptional().setName("SWITCH_CASES"),
                             brace("}")
@@ -2615,6 +2617,10 @@ public class TridentProductions {
     }
 
     private static LazyTokenItemMatch instructionKeyword(String text) {
+        return instructionKeyword(text, true);
+    }
+
+    private static LazyTokenItemMatch instructionKeyword(String text, boolean updateContext) {
         LazyTokenItemMatch item = keyword(text).setName("INSTRUCTION_KEYWORD");
         item.addTags(TridentSuggestionTags.TAG_INSTRUCTION);
         return item;

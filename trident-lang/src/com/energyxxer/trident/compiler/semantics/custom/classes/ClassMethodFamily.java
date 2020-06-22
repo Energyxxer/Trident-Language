@@ -42,6 +42,7 @@ public class ClassMethodFamily implements TridentFunction {
             List<FormalParameter> branchParams = method.getFormalParameters();
             boolean branchMatched = true;
             double score = 0;
+            int paramsCompared = branchParams.size();
             for(int i = 0; i < branchParams.size() && branchMatched; i++) {
                 FormalParameter formalParam = branchParams.get(i);
                 Object actualParam = null;
@@ -56,9 +57,17 @@ public class ClassMethodFamily implements TridentFunction {
                 }
                 score += paramScore;
             }
-            if(!branchParams.isEmpty()) score /= branchParams.size();
+            if(branchMatched) {
+                for(int i = branchParams.size(); i < params.size(); i++) {
+                    score += 1;
+                    paramsCompared++;
+                    //More parameters than asked for
+                }
+            }
+
+            if(paramsCompared != 0) score /= paramsCompared;
             else {
-                score = 4;
+                score = params.size() == 0 ? 5 : 2;
             }
             if(branchMatched && score >= bestScore) {
                 if(score != bestScore) bestScoreBranchMatches.clear();

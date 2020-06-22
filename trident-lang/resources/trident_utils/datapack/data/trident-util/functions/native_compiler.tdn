@@ -3,39 +3,58 @@
 @breaking
 
 define global final class Axis {
-    public static final var X : Axis = new Axis(0)
-    public static final var Y : Axis = new Axis(1)
-    public static final var Z : Axis = new Axis(2)
+    public static final var X : Axis = new Axis(0, "Axis.X")
+    public static final var Y : Axis = new Axis(1, "Axis.Y")
+    public static final var Z : Axis = new Axis(2, "Axis.Z")
     private final var index : int
-    private new(index : int) {
+    private final var name : string
+
+    private new(index : int, name : string) {
         eval this.index = index
+        eval this.name = name
+    }
+
+    public override toString() : string {
+        return name
     }
 }
 
 define global final class CoordinateType {
-    public static final var ABSOLUTE : CoordinateType = new CoordinateType(0, "")
-    public static final var RELATIVE : CoordinateType = new CoordinateType(1, "~")
-    public static final var LOCAL : CoordinateType = new CoordinateType(2, "^")
+    public static final var ABSOLUTE : CoordinateType = new CoordinateType(0, "", "CoordinateType.ABSOLUTE")
+    public static final var RELATIVE : CoordinateType = new CoordinateType(1, "~", "CoordinateType.RELATIVE")
+    public static final var LOCAL : CoordinateType = new CoordinateType(2, "^", "CoordinateType.LOCAL")
 
     private final var index : int
     public final var prefix : string
+    private final var name : string
 
-    private new(index : int, prefix : string) {
+    private new(index : int, prefix : string, name : string) {
         eval this.index = index
         eval this.prefix = prefix
+        eval this.name = name
+    }
+
+    public override toString() : string {
+        return name
     }
 }
 
 define global final class RotationType {
-    public static final var ABSOLUTE : RotationType = new RotationType(0, "")
-    public static final var RELATIVE : RotationType = new RotationType(1, "~")
+    public static final var ABSOLUTE : RotationType = new RotationType(0, "", "RotationType.ABSOLUTE")
+    public static final var RELATIVE : RotationType = new RotationType(1, "~", "RotationType.RELATIVE")
 
     private final var index : int
     public final var prefix : string
+    private final var name : string
 
-    private new(index : int, prefix : string) {
+    private new(index : int, prefix : string, name : string) {
         eval this.index = index
         eval this.prefix = prefix
+        eval this.name = name
+    }
+
+    public override toString() : string {
+        return name
     }
 }
 

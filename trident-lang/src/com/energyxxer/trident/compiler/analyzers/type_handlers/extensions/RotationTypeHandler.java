@@ -65,7 +65,7 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
         switch(index) {
             case 0: return rot.getPitch().getMagnitude();
             case 1: return rot.getYaw().getMagnitude();
-            case 2: throw new IllegalArgumentException("Invalid rotation axis argument '" + axis + "'");
+            case 2: throw new IllegalArgumentException("Invalid rotation axis argument 'Axis.Z'");
         }
         throw new IllegalArgumentException("Impossible Internal Exception: Invalid index for Axis object: " + index + ". Please report as soon as possible");
     }
@@ -75,7 +75,7 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
         switch(index) {
             case 0: return rotTypeToConstant(rot.getPitch().getType());
             case 1: return rotTypeToConstant(rot.getYaw().getType());
-            case 2: throw new IllegalArgumentException("Invalid rotation axis argument '" + axis + "'");
+            case 2: throw new IllegalArgumentException("Invalid rotation axis argument 'Axis.Z'");
         }
         throw new IllegalArgumentException("Impossible Internal Exception: Invalid index for Axis object: " + index + ". Please report as soon as possible");
     }
@@ -144,7 +144,7 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
         switch((int)cons.forceGetMember("index")) {
             case 0: return RotationUnit.Type.ABSOLUTE;
             case 1: return RotationUnit.Type.RELATIVE;
-            default: throw new IllegalArgumentException("Invalid axis argument '" + cons + "'. Use constants RotationType.ABSOLUTE, RotationType.RELATIVE and RotationType.LOCAL to specify a rotation type.");
+            default: throw new IllegalArgumentException("Invalid rotation type argument '" + cons + "'. Use constants RotationType.ABSOLUTE, RotationType.RELATIVE and RotationType.LOCAL to specify a rotation type.");
         }
     }
 }

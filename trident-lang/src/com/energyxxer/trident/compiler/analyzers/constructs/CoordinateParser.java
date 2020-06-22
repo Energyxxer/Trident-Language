@@ -82,10 +82,11 @@ public class CoordinateParser {
 
     public static Rotation parseRotation(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
+        pattern = ((TokenStructure) pattern).getContents();
         if(pattern.getName().equals("INTERPOLATION_BLOCK")) {
             return InterpolationManager.parse(pattern, ctx, Rotation.class);
         }
-        TokenPattern<?>[] tuple = ((TokenGroup) pattern.getContents()).getContents();
+        TokenPattern<?>[] tuple = ((TokenGroup) pattern).getContents();
         RotationUnit yaw =  parseRotationUnit(tuple[0], ctx);
         RotationUnit pitch = parseRotationUnit(tuple[1], ctx);
         return new Rotation(yaw, pitch);

@@ -5,12 +5,19 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.String
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
+
 public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
 
-    private final Object of;
+    private TridentUserFunction of;
+    private TridentUserFunction is;
 
     public TypeHandlerTypeHandler() {
-        of = new NativeMethodWrapper<>("of", ((instance, params) -> of(params[0])), Object.class).createForInstance(null);
+        try {
+            of = nativeMethodsToFunction(null, TypeHandlerTypeHandler.class.getMethod("of", Object.class));
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -18,12 +25,12 @@ public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
         if("of".equals(member)) {
             return of;
         } else if("is".equals(member)) {
-            return new NativeMethodWrapper<>("isInstance", ((instance, params) -> object.isInstance(params[0])), Object.class).createForInstance(null);
+            return new NativeMethodWrapper<>("is", ((instance, params) -> object.isInstance(params[0])), Object.class).setNullable(0).createForInstance(null);
         }
         throw new MemberNotFoundException();
     }
 
-    public static TypeHandler of(Object obj) {
+    public static TypeHandler of(@NativeMethodWrapper.TridentNullableArg Object obj) {
         return TridentTypeManager.getStaticHandlerForObject(obj);
     }
 

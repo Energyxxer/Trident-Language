@@ -5,7 +5,11 @@ import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
+import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.nio.file.Paths;
@@ -14,10 +18,27 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction.HelperMethods.assertOfClass;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 @AnalyzerMember(key = "com.energyxxer.trident.compiler.TridentUtil$ResourceLocation")
 public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLocation> {
     private static HashMap<String, MemberWrapper<TridentUtil.ResourceLocation>> members = new HashMap<>();
+
+    private static ClassMethodFamily constructorFamily;
+    private static boolean setup = false;
+
+    @Override
+    public void staticTypeSetup() {
+        if(setup) return;
+        setup = true;
+        constructorFamily = new ClassMethodFamily("new");
+        try {
+            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, ResourceTypeHandler.class.getMethod("constructResource", String.class, TokenPattern.class, ISymbolContext.class))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, ResourceTypeHandler.class.getMethod("constructResource", String.class, ListObject.class, String.class, TokenPattern.class, ISymbolContext.class))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
 
     static {
         members.put("subLoc", new NativeMethodWrapper<>("subLoc", (instance, params) -> {
@@ -100,45 +121,34 @@ public class ResourceTypeHandler implements TypeHandler<TridentUtil.ResourceLoca
 
     @Override
     public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return CONSTRUCTOR;
+        return constructorFamily;
     }
 
-    private static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> {
-        if (params.length < 1) {
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'new resource' requires at least 2 parameters, instead found " + params.length, pattern, ctx);
-        }
+    public static TridentUtil.ResourceLocation constructResource(String whole, TokenPattern<?> pattern, ISymbolContext ctx) {
+        return CommonParsers.parseResourceLocation(whole, pattern, ctx);
+    }
 
-        TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], ctx, String.class);
-        if(params.length == 1) {
-            return CommonParsers.parseResourceLocation(((String) params[0]), patterns[0], ctx);
-        }
+    public static TridentUtil.ResourceLocation constructResource(String namespace, ListObject parts, @NativeMethodWrapper.TridentNullableArg String delimiter, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(delimiter == null) delimiter = "/";
 
-        TridentFunction.HelperMethods.assertOfClass(params[1], patterns[1], ctx, ListObject.class);
-        ListObject list = ((ListObject) params[1]);
-
-        String delimiter = "/";
-        if(params.length >= 3) {
-            TridentFunction.HelperMethods.assertOfClass(params[2], patterns[2], ctx, String.class);
-            delimiter = (String) params[2];
-        }
-
-        StringBuilder body = new StringBuilder((String)params[0]);
+        StringBuilder body = new StringBuilder(namespace);
         body.append(":");
         int i = 0;
-        for(Object part : list) {
+        for(Object part : parts) {
             if(part instanceof String) {
                 body.append(part);
             } else if(part instanceof TridentUtil.ResourceLocation) {
                 body.append(((TridentUtil.ResourceLocation) part).body);
             } else {
-                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected string or resource in the list, instead got: " + part + " at index " + i, patterns[1], ctx);
+                throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Expected string or resource in the list, instead got: " + part + " at index " + i, pattern, ctx);
             }
-            if(i < ((ListObject) params[1]).size()-1) {
+            if(i < parts.size()-1) {
                 body.append(delimiter);
             }
             i++;
         }
 
         return CommonParsers.parseResourceLocation(body.toString(), pattern, ctx);
-    };
+    }
+
 }

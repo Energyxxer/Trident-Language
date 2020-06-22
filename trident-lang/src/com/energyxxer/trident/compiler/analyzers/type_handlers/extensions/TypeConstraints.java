@@ -108,19 +108,20 @@ public class TypeConstraints {
         return (handler != null ? TridentTypeManager.getTypeIdentifierForType(handler) : "*") + (nullable ? "?" : "");
     }
 
-    //4: exact match
-    //3: subtype match
-    //2: coercion match
-    //1: null match
+    //5: exact match
+    //4: subtype match
+    //3: coercion match
+    //2: null match
+    //1: overfill match
     //0: no match
     public int rateMatch(Object value) {
-        if(value == null && nullable) return 1;
-        if(handler == null && value != null) return 4;
+        if(value == null && nullable) return 2;
+        if(handler == null && value != null) return 5;
         if(!verify(value)) return 0;
         TypeHandler objectTypeHandler = TridentTypeManager.getStaticHandlerForObject(value);
-        if(objectTypeHandler == handler) return 4;
-        if(handler.isInstance(value)) return 3;
-        if(objectTypeHandler.canCoerce(value, handler)) return 2;
+        if(objectTypeHandler == handler) return 5;
+        if(handler.isInstance(value)) return 4;
+        if(objectTypeHandler.canCoerce(value, handler)) return 3;
         return 0;
     }
 

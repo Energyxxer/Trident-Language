@@ -44,10 +44,10 @@ public class SwitchInstruction implements Instruction {
                         if (executionBlock != null) {
                             executionBlock = ((TokenStructure) executionBlock).getContents();
                             switch (executionBlock.getName()) {
-                                case "BRACELESS_BLOCK": {
+                                /*case "BRACELESS_BLOCK": {
                                     TridentFile.resolveEntryListIntoSection(((TokenList) executionBlock), innerFrame, innerFrame.getWritingFile().getFunction());
                                     break;
-                                }
+                                }*/
                                 case "ANONYMOUS_INNER_FUNCTION": {
                                     TridentFile.resolveInnerFileIntoSection(executionBlock, innerFrame, innerFrame.getWritingFile().getFunction());
                                     break;

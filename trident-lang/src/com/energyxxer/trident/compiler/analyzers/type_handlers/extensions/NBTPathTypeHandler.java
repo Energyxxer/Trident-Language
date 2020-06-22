@@ -8,19 +8,38 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundExc
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberWrapper;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction.HelperMethods.assertOfClass;
+import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
 
 @AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.nbt.path.NBTPath")
 public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
-    private static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructNBTPath(params, patterns, pattern, ctx);
-
     private static HashMap<String, MemberWrapper<NBTPath>> members = new HashMap<>();
+
+    private static ClassMethodFamily constructorFamily;
+    private static boolean setup = false;
+
+    @Override
+    public void staticTypeSetup() {
+        if(setup) return;
+        setup = true;
+        constructorFamily = new ClassMethodFamily("new");
+        try {
+            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, NBTPathTypeHandler.class.getMethod("constructNBTPath"))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, NBTPathTypeHandler.class.getMethod("constructNBTPath", int.class))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, NBTPathTypeHandler.class.getMethod("constructNBTPath", String.class, TagCompound.class))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, NBTPathTypeHandler.class.getMethod("constructNBTPath", TagCompound.class, Boolean.class))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
 
     static {
         members.put("resolveKey", new NativeMethodWrapper<NBTPath>("resolveKey", (instance, params) -> {
@@ -78,29 +97,27 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
 
     @Override
     public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return CONSTRUCTOR;
+        return constructorFamily;
     }
 
-    private static NBTPath constructNBTPath(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(params.length == 0 || params[0] == null) return new NBTPath(new NBTListMatch());
+    public static NBTPath constructNBTPath() {
+        return new NBTPath(new NBTListMatch());
+    }
 
-        Object obj = assertOfClass(params[0], patterns[0], ctx, String.class, Integer.class, TagCompound.class);
-        if(obj instanceof TagCompound) {
-            boolean wrapInList = params.length >= 2 && params[1] instanceof Boolean && ((Boolean) params[1]);
-            if(wrapInList) {
-                return new NBTPath(new NBTListMatch((TagCompound) obj));
-            } else {
-                return new NBTPath(new NBTPathCompoundRoot((TagCompound) obj));
-            }
+    public static NBTPath constructNBTPath(String key, @NativeMethodWrapper.TridentNullableArg TagCompound compoundMatch) {
+        return new NBTPath(new NBTPathKey(key, compoundMatch));
+    }
+
+    public static NBTPath constructNBTPath(TagCompound compound, @NativeMethodWrapper.TridentNullableArg Boolean wrapInList) {
+        if(wrapInList == null) wrapInList = false;
+        if(wrapInList) {
+            return new NBTPath(new NBTListMatch(compound));
+        } else {
+            return new NBTPath(new NBTPathCompoundRoot(compound));
         }
-        if(obj instanceof String) {
-            TagCompound compoundMatch = null;
-            if(params.length >= 2 && params[1] != null) {
-                compoundMatch = TridentFunction.HelperMethods.assertOfClass(params[1], patterns[1], ctx, TagCompound.class);
-            }
-            return new NBTPath(new NBTPathKey((String) obj, compoundMatch));
-        }
-        if(obj instanceof Integer) return new NBTPath(new NBTPathIndex((int) obj));
-        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
+    }
+
+    public static NBTPath constructNBTPath(int listIndex) {
+        return new NBTPath(new NBTPathIndex(listIndex));
     }
 }

@@ -46,6 +46,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     final LinkedHashMap<TypeHandler, TridentUserFunction> implicitCasts = new LinkedHashMap<>();
 
     private boolean _final = false;
+    private boolean _static = false;
 
     private final ClassMethodTable staticMethods = new ClassMethodTable(this);
     final ClassMethodTable instanceMethods = new ClassMethodTable(this);
@@ -104,12 +105,14 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         TokenList bodyEntryList = (TokenList) pattern.find("CLASS_DECLARATION_BODY.CLASS_BODY_ENTRIES");
         boolean isCompleteDefinition = pattern.find("CLASS_DECLARATION_BODY") != null;
 
-        boolean _final = pattern.find("LITERAL_FINAL") != null;
+        VariableInstruction.SymbolModifierMap modifierMap = VariableInstruction.SymbolModifierMap.createFromList(((TokenList) pattern.find("SYMBOL_MODIFIER_LIST")), ctx);
+        boolean _static = modifierMap.hasModifier(Symbol.SymbolModifier.STATIC);
+        boolean _final = modifierMap.hasModifier(Symbol.SymbolModifier.FINAL);
 
         CustomClass classObject = ctx.getStaticParentFile().getClassForName(className);
         if(classObject != null) {
             if(classObject.isComplete()) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot modify definition of class '" + classObject.getTypeIdentifier() + "': Class is already complete", pattern.find("CLASS_NAME"), ctx);
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot modify definition of class '" + classObject.getTypeIdentifier() + "': Class is already complete.", pattern.find("CLASS_NAME"), ctx);
             }
         } else {
             classObject = new CustomClass(className);
@@ -117,6 +120,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             classObject.definitionContext = ctx;
             classObject.innerStaticContext = new ClassMethodSymbolContext(ctx, null);
             classObject.typeIdentifier = classObject.definitionFile.getResourceLocation() + "@" + classObject.name;
+            classObject._static = _static;
             classObject._final = _final;
 
             ctx.getStaticParentFile().registerInnerClass(classObject, pattern, ctx);
@@ -134,8 +138,8 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             for(TokenPattern<?> rawParent : inheritsList.searchByName("INTERPOLATION_TYPE")) {
                 TypeHandler parentType = InterpolationManager.parseType(rawParent, ctx);
                 if(parentType instanceof CustomClass) {
-                    if(((CustomClass) parentType)._final) {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot inherit a final class: " + parentType, rawParent, ctx);
+                    if(((CustomClass) parentType)._final || ((CustomClass) parentType)._static) {
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot inherit a static or final class: " + parentType, rawParent, ctx);
                     }
                     if(classObject.superClasses.contains(parentType)) {
                         throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicated superclass: " + ((CustomClass) parentType).typeIdentifier, rawParent, ctx);
@@ -143,7 +147,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                         classObject.superClasses.add((CustomClass) parentType);
                     }
                 } else {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + parentType.getTypeIdentifier() + "' is not a class type", rawParent, ctx);
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + parentType.getTypeIdentifier() + "' is not a class type.", rawParent, ctx);
                 }
             }
         }
@@ -153,7 +157,10 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             }
 
             if(_final != classObject._final) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Incomplete definition promised to make " + classObject + " " + (classObject._final ? "not" : "") + " final; such was not true in the complete definition.", pattern.tryFind("LITERAL_FINAL"), ctx);
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Incomplete definition promised to make " + classObject + " " + (classObject._final ? "not" : "") + " final; such was not true in the complete definition.", pattern.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
+            }
+            if(_static != classObject._static) {
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Incomplete definition promised to make " + classObject + " " + (classObject._static ? "not" : "") + " static; such was not true in the complete definition.", pattern.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
             }
 
             classObject.complete = true;
@@ -207,28 +214,31 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
                 if(decl.hasModifier(Symbol.SymbolModifier.STATIC)) {
                     if(mode != MemberParentMode.CREATE) {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a static member", entry.find("MEMBER_PARENT_MODE"), ctx);
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a static field.", entry.find("MEMBER_PARENT_MODE"), ctx);
                     }
                     this.putStaticMember(decl.getName(), decl.getSupplier().get());
                 } else {
+                    if(_static) {
+                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have instance field.", entry, ctx);
+                    }
                     if(mode == MemberParentMode.CREATE) {
                         InstanceMemberSupplier alreadyDefinedSupplier = this.getInstanceMemberSupplier(decl.getName());
                         if(alreadyDefinedSupplier != null && alreadyDefinedSupplier.getDefiningClass() == this) {
-                            throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate member '" + decl.getName() + "': it's already defined in the same class", entry, ctx);
+                            throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate field '" + decl.getName() + "': it's already defined in the same class.", entry, ctx);
                         } if(alreadyDefinedSupplier != null) {
-                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Member '" + decl.getName() + "' is already defined in inherited class " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ". Use the 'override' keyword to change its default value", entry, ctx);
+                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Member '" + decl.getName() + "' is already defined in inherited class " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ". Use the 'override' keyword to change its default value.", entry, ctx);
                         }
                     } else if(mode == MemberParentMode.OVERRIDE) {
                         InstanceMemberSupplier alreadyDefinedSupplier = this.getInstanceMemberSupplier(decl.getName());
                         if(alreadyDefinedSupplier == null) {
-                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override member '" + decl.getName() + "': not found in any of the inherited classes", entry, ctx);
+                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': not found in any of the inherited classes.", entry, ctx);
                         } else if(alreadyDefinedSupplier.getDefiningClass() == this) {
-                            throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Cannot override member '" + decl.getName() + "': it's already defined in the same class", entry, ctx);
+                            throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Cannot override field '" + decl.getName() + "': it's already defined in the same class.", entry, ctx);
                         }
                         if(((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().hasModifier(Symbol.SymbolModifier.FINAL)) {
                             throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': it's defined as final in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
                         } else if(decl.hasModifier(Symbol.SymbolModifier.FINAL)) {
-                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "' with a final member", entry, ctx);
+                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "' with a final field.", entry, ctx);
                         }
 
                         TypeConstraints thisConstraints = decl.getConstraint(null);
@@ -267,6 +277,9 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 if(!shouldParseStatic && modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
                     return true;
                 }
+                if(_static && !modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have instance methods.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
+                }
                 String functionName = entry.find("SYMBOL_NAME").flatten(false);
                 boolean isConstructor = "new".equals(functionName);
                 MemberParentMode mode = MemberParentMode.CREATE;
@@ -275,7 +288,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 }
 
                 if(isConstructor && modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "'static' modifier not allowed here", entry.find("SYMBOL_MODIFIER_LIST.LITERAL_STATIC"), this.definitionContext);
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "'static' modifier not allowed here.", entry.find("SYMBOL_MODIFIER_LIST.LITERAL_STATIC"), this.definitionContext);
                 }
 
                 Symbol.SymbolVisibility memberVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), this.definitionContext, Symbol.SymbolVisibility.LOCAL);
@@ -320,6 +333,9 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 break;
             }
             case "CLASS_INDEXER": {
+                if(_static) {
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have indexers.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
+                }
                 Symbol.SymbolVisibility defaultVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), this.definitionContext, Symbol.SymbolVisibility.LOCAL);
                 MemberParentMode mode = MemberParentMode.CREATE;
                 if(entry.find("MEMBER_PARENT_MODE") != null) {
@@ -365,6 +381,9 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 break;
             }
             case "CLASS_OVERRIDE": {
+                if(_static) {
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have type cast overrides.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
+                }
                 boolean implicit = "implicit".equals(entry.find("CLASS_TRANSFORM_TYPE").flatten(false));
                 TypeHandler toType = InterpolationManager.parseType(entry.find("INTERPOLATION_TYPE"), this.getInnerStaticContext());
                 TridentFunctionBranch branch = TridentFunctionBranch.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), this.getInnerStaticContext());
@@ -419,20 +438,15 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     public void seal() {
         this.setFinal(true);
-        constructorFamily = new ClassMethodFamily("new");
-        ClassMethod method = new ClassMethod("new", this).setVisibility(Symbol.SymbolVisibility.PRIVATE);
-        method.setModifiers(new VariableInstruction.SymbolModifierMap().setModifier(Symbol.SymbolModifier.FINAL));
-
-        constructorFamily.putOverload(
-                method,
-                MemberParentMode.FORCE,
-                null,
-                null
-        );
+        this.setStatic(true);
     }
 
     public void setFinal(boolean _final) {
         this._final = _final;
+    }
+
+    public void setStatic(boolean _static) {
+        this._static = _static;
     }
 
     public ClassMethodFamily createConstructorFamily() {
@@ -575,6 +589,9 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     @Override
     public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         assertComplete(pattern, ctx);
+        if(_static) {
+            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class '" + getClassTypeIdentifier() + "' is static; cannot be instantiated.", pattern, ctx);
+        }
         return (params, patterns, pattern2, ctx2) -> {
             CustomClassObject created = new CustomClassObject(this);
 
