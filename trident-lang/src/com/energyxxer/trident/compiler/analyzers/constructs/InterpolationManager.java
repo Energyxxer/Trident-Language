@@ -390,6 +390,7 @@ public class InterpolationManager {
         TokenPattern<?> toBlame = pattern.find("ROOT_INTERPOLATION_VALUE");
         TokenList accessorList = (TokenList) pattern.find("MEMBER_ACCESSES");
 
+        Object parent;
         if (accessorList != null) {
             TokenPattern<?>[] accessors = accessorList.getContents();
             for(int i = 0; i < accessors.length; i++) {
@@ -398,7 +399,7 @@ public class InterpolationManager {
 
             ActualParameterList[] firstAccessorParameters = new ActualParameterList[] {null};
 
-            Object parent = parse(toBlame, ctx, false, () -> {
+            parent = parse(toBlame, ctx, false, () -> {
                 TokenPattern<?> firstAccessor = accessors[0];
                 if(firstAccessor.getName().equals("METHOD_CALL")) {
                     ActualParameterList parameterList = parseActualParameterList(firstAccessor, ctx);
@@ -451,7 +452,8 @@ public class InterpolationManager {
                 toBlame = accessor;
             }
 
-            return parent;
+        } else {
+            parent = parse(toBlame, ctx, keepSymbol);
         }
 
         TokenPattern<?> rawTail = pattern.find("INTERPOLATION_CHAIN_TAIL");
@@ -460,14 +462,14 @@ public class InterpolationManager {
 
             switch(((TokenStructure) rawTail).getContents().getName()) {
                 case "INTERPOLATION_CHAIN_TAIL_IS":
-                    return type.isInstance(parse(toBlame, ctx, false));
+                    return type.isInstance(parent);
                 case "INTERPOLATION_CHAIN_TAIL_AS":
-                    return castOrCoerce(parse(toBlame, ctx, false), type, pattern, ctx, false);
+                    return castOrCoerce(parent, type, pattern, ctx, false);
                 default:
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + ((TokenStructure)rawTail).getContents().getName() + "'", rawTail, ctx);
             }
         }
-        return parse(toBlame, ctx, keepSymbol);
+        return parent;
     }
 
     @SuppressWarnings("unchecked")
