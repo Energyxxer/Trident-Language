@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.lexer.summaries;
 
 import com.energyxxer.enxlex.lexical_analysis.summary.SummaryModule;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ public interface SummaryElement {
 
     void updateIndices(Function<Integer, Integer> h);
 
+    void collectSubSymbolsForPath(String[] path, int pathStart, ArrayList<SummarySymbol> list, TridentUtil.ResourceLocation fromFile, int inFileIndex);
+
     default void collectSymbolsVisibleAt(int index, ArrayList<SummarySymbol> list, boolean fromSameFile) {
 
     }
@@ -26,6 +29,4 @@ public interface SummaryElement {
     default Symbol.SymbolVisibility getVisibility() {
         return Symbol.SymbolVisibility.LOCAL;
     }
-
-    void collectSubSymbolsForPath(String[] path, int pathStart, ArrayList<SummarySymbol> list);
 }

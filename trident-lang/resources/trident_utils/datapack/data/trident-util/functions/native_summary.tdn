@@ -1,136 +1,133 @@
 @on compile
 
-global var typeOf = 0
-global var isInstance = 0
-
-global var Axis = {
-    X: 0,
-    Y: 0,
-    Z: 0
+define global final class Axis {
+    public static final var X : Axis = null
+    public static final var Y : Axis = null
+    public static final var Z : Axis = null
 }
 
-global var CoordinateType = {
-    ABSOLUTE: 0,
-    RELATIVE: 0,
-    LOCAL: 0
+define global final class CoordinateType {
+    public static final var ABSOLUTE : CoordinateType = null
+    public static final var RELATIVE : CoordinateType = null
+    public static final var LOCAL : CoordinateType = null
 }
 
-global var RotationType = {
-    ABSOLUTE: 0,
-    RELATIVE: 0
+define global final class RotationType {
+    public static final var ABSOLUTE : RotationType = null
+    public static final var RELATIVE : RotationType = null
 }
 
-global var Block = {
-    exists: 0,
-    getAll: 0
+define global static final class Block {
+    public static exists() {}
+    public static getAll() {}
 }
 
-global var Character = {
-    fromCodePoint: 0,
-    toCodePoint: 0,
-    getName: 0,
-    isLetter: 0,
-    isDigit: 0,
-    isWhitespace: 0,
-    isUpperCase: 0,
-    isLowerCase: 0
+define global static final class Character {
+    public static fromCodePoint() {}
+    public static toCodePoint() {}
+    public static getName() {}
+    public static isLetter() {}
+    public static isDigit() {}
+    public static isWhitespace() {}
+    public static isUpperCase() {}
+    public static isLowerCase() {}
 }
 
-global var Item = {
-    exists: 0,
-    getAll: 0
+define global static final class Item {
+    public static exists() {}
+    public static getAll() {}
 }
 
-global var Tags = {
-    createTag: 0,
-    tagContainsValue: 0
+define global static final class Tags {
+    public static createTag() {}
+    public static tagContainsValue() {}
 }
 
-global var MinecraftTypes = {
-    getDefinitionsForCategory: 0,
-    exists: 0
+define global static final class MinecraftTypes {
+    public static getDefinitionsForCategory() {}
+    public static exists() {}
 }
 
-global var Text = {
-    parse: 0
+define global static final class Text {
+    public static parse() {}
 }
 
-global var Real = {
-    Infinity: 0,
-    NaN: 0,
-    MIN_VALUE: 0,
-    MAX_VALUE: 0,
-    MIN_POSITIVE_VALUE: 0,
-    parseReal: 0,
-    isFinite: 0,
-    isNaN: 0,
-    toString: 0
+define global static final class Real {
+    public static Infinity() {}
+    public static NaN() {}
+    public static MIN_VALUE() {}
+    public static MAX_VALUE() {}
+    public static MIN_POSITIVE_VALUE() {}
+    public static parseReal() {}
+    public static isFinite() {}
+    public static isNaN() {}
+    public static toString() {}
 }
 
-global var Integer = {
-    MIN_VALUE: 0,
-    MAX_VALUE: 0,
-    parseInt: 0,
-    toString: 0
+define global static final class Integer {
+    public static MIN_VALUE() {}
+    public static MAX_VALUE() {}
+    public static parseInt() {}
+    public static toString() {}
 }
 
-global var JSON = {
-    parse: 0,
-    stringify: 0
+define global static final class JSON {
+    public static parse() {}
+    public static stringify() {}
 }
 
-global var Reflection = {
-    getMetadata: 0,
-    getFilesWithTag: 0,
-    getFilesWithMetaTag: 0,
-    insertToFile: 0,
-    getCurrentFile: 0,
-    getWritingFile: 0,
-    getSymbol: 0,
-    getVisibleSymbols: 0,
-    getDefinedObjectives: 0
+define global static final class Reflection {
+    public static getMetadata() {}
+    public static getFilesWithTag() {}
+    public static getFilesWithMetaTag() {}
+    public static insertToFile() {}
+    public static getCurrentFile() {}
+    public static getWritingFile() {}
+    public static getSymbol() {}
+    public static getVisibleSymbols() {}
+    public static getDefinedObjectives() {}
 }
 
-global var File = {
-    in: {
+define global static final class File {
+    public static final var in = {
         read: 0
-    },
-    out: {
+    }
+    public static final var out = {
         writeData: 0,
         writeResource: 0
     }
 }
 
-global var Math = {
-    PI: 0,
-    E: 0,
-    pow: 0,
-    min: 0,
-    max: 0,
-    abs: 0,
-    floor: 0,
-    ceil: 0,
-    round: 0,
-    floorMod: 0,
-    floorDiv: 0,
-    sin: 0,
-    cos: 0,
-    tan: 0,
-    sinh: 0,
-    cosh: 0,
-    tanh: 0,
-    asin: 0,
-    acos: 0,
-    atan: 0,
-    atan2: 0,
-    toRadians: 0,
-    toDegrees: 0,
-    log: 0,
-    log10: 0,
-    log2: 0,
-    sqrt: 0,
-    cbrt: 0,
-    exp: 0,
-    signum: 0,
-    random: 0
+define global static final class Math {
+    public static PI() {}
+    public static E() {}
+    public static pow() {}
+    public static min() {}
+    public static max() {}
+    public static abs() {}
+    public static floor() {}
+    public static ceil() {}
+    public static round() {}
+    public static floorMod() {}
+    public static floorDiv() {}
+    public static sin() {}
+    public static cos() {}
+    public static tan() {}
+    public static sinh() {}
+    public static cosh() {}
+    public static tanh() {}
+    public static asin() {}
+    public static acos() {}
+    public static atan() {}
+    public static atan2() {}
+    public static toRadians() {}
+    public static toDegrees() {}
+    public static log() {}
+    public static log10() {}
+    public static log2() {}
+    public static sqrt() {}
+    public static cbrt() {}
+    public static exp() {}
+    public static signum() {}
+    public static random() {}
 }

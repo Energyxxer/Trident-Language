@@ -102,7 +102,7 @@ public class TridentSummaryModule extends SummaryModule {
 
         for(SummarySymbol sym : rootSymbols) {
             if(sym.getName().equals(path[0])) {
-                sym.collectSubSymbolsForPath(path, 0, list);
+                sym.collectSubSymbolsForPath(path, 0, list, this.getFileLocation(), index);
             }
         }
 

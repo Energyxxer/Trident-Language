@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.lexer.summaries;
 
 import com.energyxxer.enxlex.lexical_analysis.summary.SummaryModule;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 
 import java.util.ArrayList;
@@ -83,6 +84,9 @@ public class SummaryBlock implements SummaryElement {
             SummaryElement elem = subElements.get(i);
             if(elem.getStartIndex() < start) continue;
             if(elem.getStartIndex() >= end) break;
+            if(elem instanceof SummarySymbol && ((SummarySymbol) elem).isField()) {
+                ((SummarySymbol) elem).setFieldScope(start, end);
+            }
             if(sub == null) sub = new SummaryBlock(parentSummary, start, end, associatedSymbol);
             sub.putElement(elem);
             subElements.remove(i);
@@ -116,19 +120,19 @@ public class SummaryBlock implements SummaryElement {
     }
 
     @Override
-    public void collectSubSymbolsForPath(String[] path, int pathStart, ArrayList<SummarySymbol> list) {
+    public void collectSubSymbolsForPath(String[] path, int pathStart, ArrayList<SummarySymbol> list, TridentUtil.ResourceLocation fromFile, int inFileIndex) {
         if(pathStart == path.length) {
             if(associatedSymbol != null) {
                 list.add(associatedSymbol);
             }
         } else if(pathStart == path.length-1) {
             for(SummaryElement elem : subElements) {
-                elem.collectSubSymbolsForPath(path, path.length, list);
+                elem.collectSubSymbolsForPath(path, path.length, list, fromFile, inFileIndex);
             }
         } else {
             for(SummaryElement elem : subElements) {
                 if(path[pathStart+1].equals(elem.getName())) {
-                    elem.collectSubSymbolsForPath(path, pathStart+1, list);
+                    elem.collectSubSymbolsForPath(path, pathStart+1, list, fromFile, inFileIndex);
                 }
             }
         }

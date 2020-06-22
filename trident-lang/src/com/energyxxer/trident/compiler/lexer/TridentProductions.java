@@ -345,30 +345,28 @@ public class TridentProductions {
                     brace(")")
             ).setName("FORMAL_PARAMETERS");
 
-            DYNAMIC_FUNCTION = group(FORMAL_PARAMETERS, TYPE_CONSTRAINTS, ANONYMOUS_INNER_FUNCTION).setName("DYNAMIC_FUNCTION");
+            DYNAMIC_FUNCTION = group(noToken().addFailProcessor((a, l) -> startClosure.accept(null, l)), FORMAL_PARAMETERS, TYPE_CONSTRAINTS, ANONYMOUS_INNER_FUNCTION).setName("DYNAMIC_FUNCTION").addProcessor(endComplexValue).addFailProcessor((n, l) -> endComplexValue.accept(null, l)).addProcessor((p, l) -> {
+                if(l.getSummaryModule() != null) {
+                    TokenList paramList = (TokenList) p.find("FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
+                    if(paramList != null) {
+                        for(TokenPattern<?> paramPattern : paramList.searchByName("FORMAL_PARAMETER")) {
+                            SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), paramPattern.find("FORMAL_PARAMETER_NAME").flatten(false), p.find("ANONYMOUS_INNER_FUNCTION").getStringLocation().index+1);
+                            sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
+                            sym.setVisibility(Symbol.SymbolVisibility.LOCAL);
+                            ((TridentSummaryModule) l.getSummaryModule()).peek().putLateElement(sym);
+                        }
+                    }
+                }
+            });
 
             ROOT_INTERPOLATION_VALUE.add(
                     group(
-                            literal("function").setName("VALUE_WRAPPER_KEY").addProcessor(startClosure),
+                            literal("function").setName("VALUE_WRAPPER_KEY"),
                             choice(
                                     ANONYMOUS_INNER_FUNCTION,
                                     DYNAMIC_FUNCTION
                             ).setName("NEW_FUNCTION_SPLIT").setGreedy(true)
-//                            optional(FORMAL_PARAMETERS, TYPE_CONSTRAINTS).setName("FORMAL_PARAMETERS_OPT"),
-//                            ANONYMOUS_INNER_FUNCTION
-                    ).setName("NEW_FUNCTION").addProcessor(endComplexValue).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);}).addProcessor((p, l) -> {
-                        if(l.getSummaryModule() != null) {
-                            TokenList paramList = (TokenList) p.find("FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
-                            if(paramList != null) {
-                                for(TokenPattern<?> paramName : paramList.searchByName("FORMAL_PARAMETER_NAME")) {
-                                    SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), paramName.flatten(false), p.find("ANONYMOUS_INNER_FUNCTION").getStringLocation().index+1);
-                                    sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
-                                    sym.setVisibility(Symbol.SymbolVisibility.LOCAL);
-                                    ((TridentSummaryModule) l.getSummaryModule()).peek().putLateElement(sym);
-                                }
-                            }
-                        }
-                    }));
+                    ).setName("NEW_FUNCTION"));
             ROOT_INTERPOLATION_VALUE.add(group(literal("new").setName("VALUE_WRAPPER_KEY"), INTERPOLATION_TYPE, brace("("), list(INTERPOLATION_VALUE, comma()).setOptional().setName("PARAMETERS"), brace(")")).setName("CONSTRUCTOR_CALL"));
 
             ROOT_INTERPOLATION_TYPE.add(
@@ -2228,22 +2226,6 @@ public class TridentProductions {
                 }
             }
 
-            // DIMENSION_ID:{_ID_DEFAULT:( NAMESPACE:(<LITERAL_NAMESPACE: "<namespace>">,<SYMBOL:":">) TYPE_NAME:{<overworld>|<the_nether>|<the_end>} )}
-
-            /*for(Namespace namespace : module.getAllNamespaces()) {
-                for(Type type : namespace.types.slot.list()) {
-                    String[] parts = type.getName().split("\\.");
-
-                    LazyTokenGroupMatch g = new LazyTokenGroupMatch();
-
-                    for (int i = 0; i < parts.length; i++) {
-                        g.append(literal(parts[i]));
-                        if (i < parts.length - 1) g.append(dot());
-                    }
-
-                    SLOT_ID.add(g);
-                }
-            }*/
             {
                 ENTITY_ID_TAGGED.add(group(resourceLocationFixer, ENTITY_ID).setName("ENTITY_ID_WRAPPER"));
                 LazyTokenGroupMatch g2 = new LazyTokenGroupMatch().setName("ABSTRACT_RESOURCE");
@@ -2350,13 +2332,29 @@ public class TridentProductions {
             LazyTokenPatternMatch classSetter = group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("set"), brace("("), FORMAL_PARAMETER, brace(")"), ANONYMOUS_INNER_FUNCTION).setName("CLASS_SETTER").setOptional();
 
             LazyTokenStructureMatch classBodyEntry = choice(
-                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER").addProcessor(
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER")
+                    .addProcessor(
                             (p, lx) -> {
                                 if(p.find("MEMBER_PARENT_MODE") != null && p.find("SYMBOL_MODIFIER_LIST") != null && p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                                     lx.getNotices().add(new Notice(NoticeType.ERROR, "Cannot override a static member", p.find("MEMBER_PARENT_MODE")));
                                 }
                             }
-                    ),
+                    ).addProcessor((p, l) -> {
+                        if(l.getSummaryModule() != null) {
+                            String fieldName = p.find("SYMBOL_NAME").flatten(false);
+                            SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), fieldName, p.find("SYMBOL_NAME").getStringLocation().index);
+                            sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.LOCAL));
+                            sym.addTag(TridentSuggestionTags.TAG_FIELD);
+                            if(p.find("SYMBOL_MODIFIER_LIST") != null && p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
+                                sym.setStaticField(true);
+                            } else {
+                                sym.setInstanceField(true);
+                            }
+                            if(!sym.hasSubBlock()) {
+                                ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
+                            }
+                        }
+                    }),
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), DYNAMIC_FUNCTION).setName("CLASS_FUNCTION").addProcessor(
                             (p, lx) -> {
                                 boolean overriding = p.find("MEMBER_PARENT_MODE") != null;
@@ -2373,7 +2371,22 @@ public class TridentProductions {
                                     }
                                 }
                             }
-                    ),
+                    ).addProcessor((p, l) -> {
+                        if(l.getSummaryModule() != null) {
+                            String methodName = p.find("SYMBOL_NAME").flatten(false);
+                            SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), methodName, p.find("SYMBOL_NAME").getStringLocation().index);
+                            sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.LOCAL));
+                            sym.addTag(TridentSuggestionTags.TAG_METHOD);
+                            if(p.find("SYMBOL_MODIFIER_LIST") != null && p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
+                                sym.setStaticField(true);
+                            } else {
+                                sym.setInstanceField(true);
+                            }
+                            if(!sym.hasSubBlock()) {
+                                ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
+                            }
+                        }
+                    }),
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("this"), brace("["), FORMAL_PARAMETER, brace("]"), brace("{"), classGetter, classSetter, brace("}")).setName("CLASS_INDEXER"),
                     group(literal("override").setOptional(), choice("explicit", "implicit").setName("CLASS_TRANSFORM_TYPE"), brace("<"), INTERPOLATION_TYPE, brace(">"), ANONYMOUS_INNER_FUNCTION).setName("CLASS_OVERRIDE"),
                     COMMENT_S
@@ -2381,10 +2394,10 @@ public class TridentProductions {
             itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_CLASS_BODY);
 
             LazyTokenPatternMatch classBody = group(
-                    brace("{"),
+                    brace("{").addProcessor(startComplexValue),
                     list(classBodyEntry).setOptional().setName("CLASS_BODY_ENTRIES"),
                     brace("}")
-            ).setOptional().setName("CLASS_DECLARATION_BODY");
+            ).setOptional().setName("CLASS_DECLARATION_BODY").addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);});
 
             INSTRUCTION.add(
                     group(instructionKeyword("define"),
@@ -2471,17 +2484,26 @@ public class TridentProductions {
                                                     }
                                                 }
                                             }),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), optional(colon(), list(INTERPOLATION_TYPE, comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST").addProcessor((p, l) -> checkDuplicates(((TokenList) p), "Duplicate superclass", l))).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
-                                            .addProcessor((p, l) -> {
-                                                if(l.getSummaryModule() != null) {
-                                                    TokenPattern<?> namePattern = p.find("CLASS_NAME");
-                                                    String name = namePattern.flatten(false);
-                                                    SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), name, p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_VARIABLE);
-                                                    sym.addTag(TridentSuggestionTags.TAG_CLASS);
-                                                    sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.GLOBAL));
-                                                    ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
-                                                }
-                                            }),
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("class"),
+                                            group(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME")
+                                                    .addProcessor((p, l) -> {
+                                                            if(l.getSummaryModule() != null) {
+                                                                SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), p.getStringLocation().index);
+                                                                sym.addTag(TridentSuggestionTags.TAG_CLASS);
+                                                                sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
+                                                                ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
+                                                            }
+                                                    }),
+                                            optional(colon(), list(INTERPOLATION_TYPE, comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST").addProcessor((p, l) -> checkDuplicates(((TokenList) p), "Duplicate superclass", l))).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
+                                                    .addProcessor((p, l) -> {
+                                                        if(l.getSummaryModule() != null) {
+                                                            SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
+                                                            sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.LOCAL));
+                                                            if(!sym.hasSubBlock()) {
+                                                                ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
+                                                            }
+                                                        }
+                                                    }),
                                     group(literal("function"), INNER_FUNCTION).setName("DEFINE_FUNCTION")
                             )
                     )
@@ -2868,6 +2890,7 @@ public class TridentProductions {
         if(pattern == null) return defaultValue;
         switch(pattern.flatten(false)) {
             case "global": return Symbol.SymbolVisibility.GLOBAL;
+            case "public": return Symbol.SymbolVisibility.PUBLIC;
             case "local": return Symbol.SymbolVisibility.LOCAL;
             case "private": return Symbol.SymbolVisibility.PRIVATE;
             default: return defaultValue;

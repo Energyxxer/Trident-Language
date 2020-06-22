@@ -49,4 +49,6 @@ public class TridentSuggestionTags {
     public static final String TAG_CUSTOM_ITEM = "cst:custom_item";
     public static final String TAG_CLASS = "cst:class";
     public static final String TAG_OBJECTIVE = "cst:objective";
+    public static final String TAG_FIELD = "cst:class_field";
+    public static final String TAG_METHOD = "cst:class_method";
 }
