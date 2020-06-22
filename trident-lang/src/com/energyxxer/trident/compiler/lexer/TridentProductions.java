@@ -37,6 +37,7 @@ import com.energyxxer.util.logger.Debug;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -145,6 +146,7 @@ public class TridentProductions {
 
     private final LazyTokenStructureMatch PLUGIN_NAME = struct("PLUGIN_NAME");
 
+    private final HashSet<String> duplicateCheck = new HashSet<>();
 
     private final LazyTokenStructureMatch POINTER;
     private static final LazyTokenPatternMatch resourceLocationFixer = ofType(NO_TOKEN).setName("_RLCF").setOptional().addFailProcessor((p, l) -> {
@@ -2294,7 +2296,9 @@ public class TridentProductions {
             );
         }
 
-        LazyTokenPatternMatch SYMBOL_MODIFIER_LIST = list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST");
+        LazyTokenPatternMatch SYMBOL_MODIFIER_LIST = list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST").addProcessor(
+                (p, lx) -> checkDuplicates(((TokenList) p), "Duplicate modifier", lx)
+        );
 
         {
             LazyTokenStructureMatch entityBodyEntry = choice(
@@ -2346,8 +2350,30 @@ public class TridentProductions {
             LazyTokenPatternMatch classSetter = group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("set"), brace("("), FORMAL_PARAMETER, brace(")"), ANONYMOUS_INNER_FUNCTION).setName("CLASS_SETTER").setOptional();
 
             LazyTokenStructureMatch classBodyEntry = choice(
-                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER"),
-                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), DYNAMIC_FUNCTION).setName("CLASS_FUNCTION"),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER").addProcessor(
+                            (p, lx) -> {
+                                if(p.find("MEMBER_PARENT_MODE") != null && p.find("SYMBOL_MODIFIER_LIST") != null && p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
+                                    lx.getNotices().add(new Notice(NoticeType.ERROR, "Cannot override a static member", p.find("MEMBER_PARENT_MODE")));
+                                }
+                            }
+                    ),
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), identifierX()).setName("SYMBOL_NAME"), DYNAMIC_FUNCTION).setName("CLASS_FUNCTION").addProcessor(
+                            (p, lx) -> {
+                                boolean overriding = p.find("MEMBER_PARENT_MODE") != null;
+                                boolean _static = p.find("SYMBOL_MODIFIER_LIST") != null && p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static");
+                                if(overriding && _static) {
+                                    lx.getNotices().add(new Notice(NoticeType.ERROR, "Cannot override a static member", p.find("MEMBER_PARENT_MODE")));
+                                }
+                                if(p.find("SYMBOL_NAME").flatten(false).equals("new")) {
+                                    if(overriding) {
+                                        lx.getNotices().add(new Notice(NoticeType.ERROR, "Cannot override a constructor", p.find("MEMBER_PARENT_MODE")));
+                                    }
+                                    if(_static) {
+                                        lx.getNotices().add(new Notice(NoticeType.ERROR, "'static' modifier not allowed here", p.find("SYMBOL_MODIFIER_LIST")));
+                                    }
+                                }
+                            }
+                    ),
                     group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("this"), brace("["), FORMAL_PARAMETER, brace("]"), brace("{"), classGetter, classSetter, brace("}")).setName("CLASS_INDEXER"),
                     group(literal("override").setOptional(), choice("explicit", "implicit").setName("CLASS_TRANSFORM_TYPE"), brace("<"), INTERPOLATION_TYPE, brace(">"), ANONYMOUS_INNER_FUNCTION).setName("CLASS_OVERRIDE"),
                     COMMENT_S
@@ -2370,7 +2396,13 @@ public class TridentProductions {
                                                 }
                                             }),
                                     group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("entity"), choice(
-                                            group(choice(identifierA(), identifierX().addTags("cspn:Entity Name"), literal("default")).setName("ENTITY_NAME").addTags("cspn:Entity Type Name"), choice(symbol("*"), ENTITY_ID_TAGGED).setName("ENTITY_BASE").addTags("cspn:Base Type")).setName("CONCRETE_ENTITY_DECLARATION"),
+                                            group(choice(identifierA(), identifierX().addTags("cspn:Entity Name"), literal("default")).setName("ENTITY_NAME").addTags("cspn:Entity Type Name"), choice(symbol("*"), ENTITY_ID_TAGGED).setName("ENTITY_BASE").addTags("cspn:Base Type")).setName("CONCRETE_ENTITY_DECLARATION").addProcessor(
+                                                    (p, lx) -> {
+                                                        if("*".equals(p.find("ENTITY_BASE").flatten(false)) && !"default".equals(p.find("ENTITY_NAME").flatten(false))) {
+                                                            lx.getNotices().add(new Notice(NoticeType.ERROR, "The wildcard entity base may only be used on default entities", p.find("ENTITY_BASE")));
+                                                        }
+                                                    }
+                                            ),
                                             group(literal("component"), choice(identifierA(), identifierX()).setName("ENTITY_NAME").addTags("cspn:Component Name")).setName("ABSTRACT_ENTITY_DECLARATION")
                                     ).setName("ENTITY_DECLARATION_HEADER"), optional(keyword("implements"), list(INTERPOLATION_VALUE, comma()).setName("COMPONENT_LIST").addTags("cspn:Implemented Components")).setName("IMPLEMENTED_COMPONENTS"), entityBody).setName("DEFINE_ENTITY")
                                             .addProcessor((p, l) -> {
@@ -2385,6 +2417,19 @@ public class TridentProductions {
                                                         sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.GLOBAL));
                                                         if(p.find("ENTITY_DECLARATION_HEADER.LITERAL_COMPONENT") != null) sym.addTag(TridentSuggestionTags.TAG_ENTITY_COMPONENT);
                                                         ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
+                                                    } else {
+                                                        if(p.find("IMPLEMENTED_COMPONENTS") != null) {
+                                                            l.getNotices().add(new Notice(NoticeType.ERROR, "Default entities may not implement components", p.find("IMPLEMENTED_COMPONENTS")));
+                                                        }
+
+                                                        TokenList body = (TokenList) p.find("ENTITY_DECLARATION_BODY.ENTITY_BODY_ENTRIES");
+                                                        if(body != null) {
+                                                            for(TokenPattern<?> entry : body.getContents()) {
+                                                                if(((TokenStructure) entry).getContents().getName().startsWith("DEFAULT_")) {
+                                                                    l.getNotices().add(new Notice(NoticeType.ERROR, "Default properties are not allowed for default entities", entry));
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }),
@@ -2410,10 +2455,23 @@ public class TridentProductions {
                                                         sym.addTag(TridentSuggestionTags.TAG_CUSTOM_ITEM);
                                                         sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.GLOBAL));
                                                         ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
+                                                    } else {
+                                                        if(p.find("CUSTOM_MODEL_DATA") != null) {
+                                                            l.getNotices().add(new Notice(NoticeType.ERROR, "Default items don't support custom model data specifiers", p.find("CUSTOM_MODEL_DATA")));
+                                                        }
+
+                                                        TokenList body = (TokenList) p.find("ITEM_DECLARATION_BODY.ITEM_BODY_ENTRIES");
+                                                        if(body != null) {
+                                                            for(TokenPattern<?> entry : body.getContents()) {
+                                                                if(((TokenStructure) entry).getContents().getName().startsWith("DEFAULT_")) {
+                                                                    l.getNotices().add(new Notice(NoticeType.ERROR, "Default properties are not allowed for default items", entry));
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }),
-                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), optional(colon(), list(INTERPOLATION_TYPE, comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST")).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
+                                    group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("class"), choice(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME"), optional(colon(), list(INTERPOLATION_TYPE, comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST").addProcessor((p, l) -> checkDuplicates(((TokenList) p), "Duplicate superclass", l))).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
                                                     TokenPattern<?> namePattern = p.find("CLASS_NAME");
@@ -2908,6 +2966,17 @@ public class TridentProductions {
             case "IDENTIFIER_Y": return identifierY();
             case "TRAILING_STRING": return ofType(TRAILING_STRING).setName("TRAILING_STRING");
             default: return null;
+        }
+    }
+
+    private void checkDuplicates(TokenList list, String message, Lexer lx) {
+        if(lx == null) return;
+        duplicateCheck.clear();
+        for(TokenPattern<?> entry : list.getContents()) {
+            if(entry.getName().equals("COMMA")) continue;
+            if(!duplicateCheck.add(entry.flatten(false))) {
+                lx.getNotices().add(new Notice(NoticeType.ERROR, message + " '" + entry.flatten(false) + "'", entry));
+            }
         }
     }
 

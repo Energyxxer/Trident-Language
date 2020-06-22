@@ -382,7 +382,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             }
             case "CLASS_OVERRIDE": {
                 if(_static) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have type cast overrides.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
+                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have type conversion definitions.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
                 }
                 boolean implicit = "implicit".equals(entry.find("CLASS_TRANSFORM_TYPE").flatten(false));
                 TypeHandler toType = InterpolationManager.parseType(entry.find("INTERPOLATION_TYPE"), this.getInnerStaticContext());

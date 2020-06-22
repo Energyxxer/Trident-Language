@@ -55,6 +55,7 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
 
         if(entries.isEmpty()) {
             //throw new IllegalStateException("Cannot attempt match; TokenStructureMatch '" + this.name + "' is empty.");
+            invokeFailProcessors(0, lexer);
             return new TokenMatchResponse(false, null, 0, this, null);
         }
         for (LazyTokenPatternMatch entry : entries) {

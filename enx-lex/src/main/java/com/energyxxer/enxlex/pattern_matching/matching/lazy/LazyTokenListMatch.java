@@ -179,6 +179,8 @@ public class LazyTokenListMatch extends LazyTokenPatternMatch {
         st.pop();
         if(!hasMatched) {
             invokeFailProcessors(length, lexer);
+        } else {
+            invokeProcessors(list, lexer);
         }
         return new TokenMatchResponse(hasMatched, faultyToken, length, expected, list);
     }
