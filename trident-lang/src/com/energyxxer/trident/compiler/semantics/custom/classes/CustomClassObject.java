@@ -74,7 +74,8 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
         for(CustomClass type : type.getInheritanceTree()) {
             TridentUserFunction castMethod = type.explicitCasts.get(targetType);
             if(castMethod != null) {
-                return castMethod.safeCall(new Object[] {object}, new TokenPattern[] {pattern}, pattern, ctx);
+                castMethod.setThisObject(object);
+                return castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
             }
         }
         throw new ClassCastException();
@@ -85,7 +86,8 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
         for(CustomClass type : type.getInheritanceTree()) {
             TridentUserFunction castMethod = type.implicitCasts.get(targetType);
             if(castMethod != null) {
-                return castMethod.safeCall(new Object[] {object}, new TokenPattern[] {pattern}, pattern, ctx);
+                castMethod.setThisObject(object);
+                return castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
             }
         }
         return null;

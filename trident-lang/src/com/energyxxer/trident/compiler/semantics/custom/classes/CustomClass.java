@@ -386,9 +386,8 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 }
                 boolean implicit = "implicit".equals(entry.find("CLASS_TRANSFORM_TYPE").flatten(false));
                 TypeHandler toType = InterpolationManager.parseType(entry.find("INTERPOLATION_TYPE"), this.getInnerStaticContext());
-                TridentFunctionBranch branch = TridentFunctionBranch.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), this.getInnerStaticContext());
+                TridentFunctionBranch branch = new TridentUserFunctionBranch(Collections.emptyList(), entry.find("ANONYMOUS_INNER_FUNCTION"), new TypeConstraints(toType, false));
                 TridentUserFunction function = new TridentUserFunction(toType.getTypeIdentifier(), branch, this.getInnerStaticContext(), null);
-                branch.setReturnConstraints(new TypeConstraints(toType, false));
                 if(implicit) branch.setShouldCoerce(false);
                 LinkedHashMap<TypeHandler, TridentUserFunction> castMap = implicit ? this.implicitCasts : this.explicitCasts;
                 castMap.put(toType, function);

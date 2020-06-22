@@ -538,14 +538,14 @@ public class InterpolationManager {
     @Contract("null, _, _, _, _ -> null")
     public static Object cast(Object obj, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx, boolean failureException) {
         if(obj == null) return null;
-        if("primitive(string)".equals(TridentTypeManager.getInternalTypeIdentifierForType(targetType))) {
-            return castToString(obj, pattern, ctx);
-        }
         if(targetType.isInstance(obj)) return obj;
         TypeHandler sourceType = getHandlerForObject(obj, pattern, ctx);
         try {
             return sourceType.cast(obj, targetType, pattern, ctx);
         } catch(ClassCastException x) {
+            if("primitive(string)".equals(TridentTypeManager.getInternalTypeIdentifierForType(targetType))) {
+                return castToString(obj, pattern, ctx);
+            }
             if(failureException) {
                 throw new TridentException(TridentException.Source.TYPE_ERROR, "Unable to cast " + TridentTypeManager.getTypeIdentifierForObject(obj) + " to type " + targetType.getTypeIdentifier(), pattern, ctx);
             }
