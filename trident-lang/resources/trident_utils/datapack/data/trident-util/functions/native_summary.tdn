@@ -53,11 +53,11 @@ define global static final class Text {
 }
 
 define global static final class Real {
-    public static Infinity() {}
-    public static NaN() {}
-    public static MIN_VALUE() {}
-    public static MAX_VALUE() {}
-    public static MIN_POSITIVE_VALUE() {}
+    public static final var Infinity : real = 0
+    public static final var NaN : real = 0
+    public static final var MIN_VALUE : real = 0
+    public static final var MAX_VALUE : real = 0
+    public static final var MIN_POSITIVE_VALUE : real = 0
     public static parseReal() {}
     public static isFinite() {}
     public static isNaN() {}
@@ -65,8 +65,8 @@ define global static final class Real {
 }
 
 define global static final class Integer {
-    public static MIN_VALUE() {}
-    public static MAX_VALUE() {}
+    public static final var MIN_VALUE : int = 0
+    public static final var MAX_VALUE : int = 0
     public static parseInt() {}
     public static toString() {}
 }
@@ -99,8 +99,8 @@ define global static final class File {
 }
 
 define global static final class Math {
-    public static PI() {}
-    public static E() {}
+    public static final var PI : real = 0
+    public static final var E : real = 0
     public static pow() {}
     public static min() {}
     public static max() {}
