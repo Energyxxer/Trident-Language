@@ -1,16 +1,19 @@
 package com.energyxxer.trident.compiler.analyzers.commands;
 
 import com.energyxxer.commodore.functionlogic.commands.Command;
-import com.energyxxer.commodore.functionlogic.commands.CommandGroup;
 import com.energyxxer.commodore.functionlogic.commands.EmptyCommand;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
+import com.energyxxer.commodore.functionlogic.functions.FunctionSection;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.plugin.CommandDefinition;
+import com.energyxxer.trident.compiler.plugin.PluginCommandParser;
+import com.energyxxer.trident.compiler.plugin.TridentPlugin;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 
@@ -28,22 +31,27 @@ public class ExecuteParser implements SimpleCommandParser {
         TokenPattern<?> rawCommand;
         if(rawEnd != null && (rawCommand = ((TokenStructure) rawEnd).getContents()).getName().equals("CHAINED_COMMAND")) {
             rawCommand = rawCommand.find("COMMAND");
-            CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, rawCommand.flattenTokens().get(0).value);
-            if(parser != null) {
-                Collection<Command> commands = parser.parse((TokenPattern<?>) (rawCommand.getContents()), ctx, modifiers);
-                if(!commands.isEmpty()) {
-                    if(commands.size() == 1) {
-                        return new ExecuteCommand(commands.toArray(new Command[0])[0], modifiers);
-                    } else {
-                        CommandGroup group = new CommandGroup(ctx.getWritingFile().getFunction());
-                        for(Command command : commands) {
-                            group.append(command);
-                        }
-                        return new ExecuteCommand(group, modifiers);
-                    }
+            String commandName = rawCommand.flattenTokens().get(0).value;
+            FunctionSection appendTo = ctx.getWritingFile().getFunction();
+            CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandName);
+            if (parser != null) {
+                Collection<Command> commands = parser.parse(((TokenStructure) rawCommand).getContents(), ctx, modifiers);
+                modifiers.addAll(0, ctx.getWritingFile().getWritingModifiers());
+                for(Command command : commands) {
+                    if (modifiers.isEmpty()) appendTo.append(command);
+                    else appendTo.append(new ExecuteCommand(command, modifiers));
                 }
             } else {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + rawCommand.flattenTokens().get(0).value + "'", rawCommand, ctx);
+                boolean found = false;
+                for(TridentPlugin plugin : ctx.getCompiler().getWorker().output.transitivePlugins) {
+                    CommandDefinition def = plugin.getCommand(commandName);
+                    if(def != null) {
+                        new PluginCommandParser().handleCommand(def, rawCommand, modifiers, ctx, appendTo);
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found) throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + commandName + "'", rawCommand, ctx);
             }
         }
         return new ExecuteCommand(new EmptyCommand(), modifiers);
