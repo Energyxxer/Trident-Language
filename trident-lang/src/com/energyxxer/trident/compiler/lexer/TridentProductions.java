@@ -2332,7 +2332,12 @@ public class TridentProductions {
             LazyTokenPatternMatch classSetter = group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("set"), brace("("), FORMAL_PARAMETER, brace(")"), ANONYMOUS_INNER_FUNCTION).setName("CLASS_SETTER").setOptional();
 
             LazyTokenStructureMatch classBodyEntry = choice(
-                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("var"), identifierX().setName("SYMBOL_NAME"), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER")
+                    group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("var"), identifierX().setName("SYMBOL_NAME").addProcessor((p, l) -> {
+                        if(l.getSummaryModule() != null) {
+                            SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), p.getStringLocation().index);
+                            ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
+                        }
+                    }), INFERRABLE_TYPE_CONSTRAINTS, optional(equals(), choice(INTERPOLATION_VALUE).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER")
                     .addProcessor(
                             (p, lx) -> {
                                 if(p.find("MEMBER_PARENT_MODE") != null && p.find("SYMBOL_MODIFIER_LIST") != null && p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
@@ -2341,10 +2346,10 @@ public class TridentProductions {
                             }
                     ).addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
-                            String fieldName = p.find("SYMBOL_NAME").flatten(false);
-                            SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), fieldName, p.find("SYMBOL_NAME").getStringLocation().index);
+                            SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
                             sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), Symbol.SymbolVisibility.LOCAL));
                             sym.addTag(TridentSuggestionTags.TAG_FIELD);
+
                             if(p.find("SYMBOL_MODIFIER_LIST") != null && p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                                 sym.setStaticField(true);
                             } else {
