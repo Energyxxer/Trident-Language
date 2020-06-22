@@ -50,6 +50,20 @@ public class ClassIndexerFamily {
             }
         }
 
+        if(!oldIndexer.getDefiningClass().hasAccess(ctx, oldIndexer.getGetterVisibility())) {
+            if(mode == CustomClass.MemberParentMode.INHERIT) {
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + oldIndexer + ": Getter has " + oldIndexer.getGetterVisibility().toString().toLowerCase() + " access in " + oldIndexer.getDefiningClass().getTypeIdentifier() + "; not accessible from " + newIndexer.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+            } else {
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + oldIndexer + ": Getter has " + oldIndexer.getGetterVisibility().toString().toLowerCase() + " access in " + oldIndexer.getDefiningClass().getTypeIdentifier() + "; not accessible from " + newIndexer.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+            }
+        }
+        if(oldIndexer.getSetterFunction() != null && !oldIndexer.getDefiningClass().hasAccess(ctx, oldIndexer.getSetterVisibility())) {
+            if(mode == CustomClass.MemberParentMode.INHERIT) {
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + oldIndexer + ": Setter has " + oldIndexer.getSetterVisibility().toString().toLowerCase() + " access in " + oldIndexer.getDefiningClass().getTypeIdentifier() + "; not accessible from " + newIndexer.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+            } else {
+                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + oldIndexer + ": Setter has " + oldIndexer.getSetterVisibility().toString().toLowerCase() + " access in " + oldIndexer.getDefiningClass().getTypeIdentifier() + "; not accessible from " + newIndexer.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+            }
+        }
         if(mode == CustomClass.MemberParentMode.INHERIT) {
             if(!TypeConstraints.constraintsEqual(newIndexer.getIndexParameter().getConstraints(), oldIndexer.getIndexParameter().getConstraints())) {
                 throw new TridentException(TridentException.Source.TYPE_ERROR, "Clashing inherited implementations of " + oldIndexer + ": incompatible index parameter constraints.\n    Constraint:        " + oldIndexer.getIndexParameter().getConstraints() + " in " + oldIndexer.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newIndexer.getIndexParameter().getConstraints() + " in " + newIndexer.getDefiningClass().getTypeIdentifier(), pattern, ctx);
