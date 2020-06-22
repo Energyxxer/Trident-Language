@@ -57,12 +57,11 @@ public class ClassMethodFamily implements TridentFunction {
                 }
                 score += paramScore;
             }
-            if(branchMatched) {
-                for(int i = branchParams.size(); i < params.size(); i++) {
-                    score += 1;
-                    paramsCompared++;
-                    //More parameters than asked for
-                }
+            if(branchMatched && branchParams.size() < params.size()) {
+                score += (params.size() - branchParams.size());
+                paramsCompared += (params.size() - branchParams.size());
+                branchMatched = false;
+                //More parameters than asked for, deny this overload.
             }
 
             if(paramsCompared != 0) score /= paramsCompared;
