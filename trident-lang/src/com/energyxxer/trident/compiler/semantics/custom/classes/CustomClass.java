@@ -674,7 +674,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         return indexers.get();
     }
 
-    private interface InstanceMemberSupplier {
+    interface InstanceMemberSupplier {
         CustomClass getDefiningClass();
         String getName();
         Symbol constructSymbol(CustomClassObject thiz);

@@ -132,7 +132,7 @@ public class ClassMethodFamily implements TridentFunction {
                 }
             }
             if(mode == CustomClass.MemberParentMode.INHERIT && existing != null) {
-                if(existing.getDefiningClass() != method.getDefiningClass()) {
+                if(existing.getDefiningClass() != method.getDefiningClass() && existing.getDefiningClass() != CustomClass.getBaseClass()) {
                     //Make note for later
                     registerClashingMethods(existing, method);
                 }

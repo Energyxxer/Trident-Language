@@ -28,10 +28,12 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
         if(instanceMembers.containsKey(member)) {
             Symbol sym = instanceMembers.get(member);
 
-            if(type.hasAccess(ctx, sym.getVisibility())) {
+            CustomClass fieldDefiningClass = type.getInstanceMemberSupplier(member).getDefiningClass();
+
+            if(fieldDefiningClass.hasAccess(ctx, sym.getVisibility())) {
                 return keepSymbol ? sym : sym.getValue(pattern, ctx);
             } else {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + type.getClassTypeIdentifier(), pattern, ctx);
+                throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + fieldDefiningClass.getClassTypeIdentifier(), pattern, ctx);
             }
         }
         throw new MemberNotFoundException();

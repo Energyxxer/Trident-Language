@@ -36,11 +36,11 @@ public class ClassIndexerFamily {
         ClassIndexer oldIndexer = indexer;
 
         if(mode == CustomClass.MemberParentMode.INHERIT) {
-            if(oldIndexer.getDefiningClass() == newIndexer.getDefiningClass()) {
-                Debug.log("Skipping " + newIndexer + " since defined in same class: " + newIndexer.getDefiningClass());
-            } else {
+            if(oldIndexer.getDefiningClass() != newIndexer.getDefiningClass() && oldIndexer.getDefiningClass() != CustomClass.getBaseClass()) {
                 //Make note for later
                 registerClashingIndexers(oldIndexer, newIndexer);
+            } else {
+                Debug.log("Skipping " + newIndexer + " since defined in same class: " + newIndexer.getDefiningClass());
             }
         } else {
             if(oldIndexer.getDefiningClass() == newIndexer.getDefiningClass()) {
