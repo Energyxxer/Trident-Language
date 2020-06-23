@@ -52,6 +52,13 @@ define global static final class Text {
     public static parse() {}
 }
 
+define global static final class Project {
+    public static getTargetVersion() {}
+    public static getFeatureBoolean() {}
+    public static getFeatureInt() {}
+    public static getFeatureString() {}
+}
+
 define global static final class Real {
     public static final var Infinity : real = 0
     public static final var NaN : real = 0
@@ -69,6 +76,8 @@ define global static final class Integer {
     public static final var MAX_VALUE : int = 0
     public static parseInt() {}
     public static toString() {}
+    public static parseUnsignedInt() {}
+    public static toUnsignedString() {}
 }
 
 define global static final class JSON {

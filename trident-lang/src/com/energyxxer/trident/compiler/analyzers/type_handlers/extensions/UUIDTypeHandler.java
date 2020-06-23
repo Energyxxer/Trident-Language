@@ -1,11 +1,13 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
+import com.energyxxer.commodore.functionlogic.nbt.TagIntArray;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.default_libs.RandomLib;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
@@ -71,6 +73,18 @@ public class UUIDTypeHandler implements TypeHandler<UUID> {
 
     @Override
     public Object cast(UUID object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        String targetTypeIdentifier = TridentTypeManager.getInternalTypeIdentifierForType(targetType);
+        switch(targetTypeIdentifier) {
+            case "primitive(nbt_value)":
+            case "primitive(tag_int_array)": {
+                int[] ints = new int[4];
+                ints[0] = (int) (object.getMostSignificantBits() >> 32);
+                ints[1] = (int) (object.getMostSignificantBits());
+                ints[2] = (int) (object.getLeastSignificantBits() >> 32);
+                ints[3] = (int) (object.getLeastSignificantBits());
+                return new TagIntArray("", ints);
+            }
+        }
         throw new ClassCastException();
     }
 
