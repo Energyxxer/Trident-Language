@@ -74,15 +74,21 @@ public class StringTypeHandler implements TypeHandler<String> {
                 return new TagString(object);
             case "primitive(entity)": {
                 if(object.isEmpty()) {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names cannot be empty", pattern, ctx);
+                    throw new ClassCastException("Player names cannot be empty");
+                    //throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names cannot be empty", pattern, ctx);
                 } else if(object.contains(" ")) {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names may not contain whitespaces", pattern, ctx);
+                    throw new ClassCastException("Player names may not contain whitespace");
+                    //throw new TridentException(TridentException.Source.COMMAND_ERROR, "Player names may not contain whitespaces", pattern, ctx);
                 } else {
                     return new PlayerName(object);
                 }
             }
             case "primitive(resource)":
-                return CommonParsers.parseResourceLocation(object, pattern, ctx);
+                try {
+                    return CommonParsers.parseResourceLocation(object, pattern, ctx);
+                } catch(TridentException x) {
+                    throw new ClassCastException(x.getNotice().getMessage());
+                }
             case "primitive(text_component)":
                 return new StringTextComponent(object);
         }

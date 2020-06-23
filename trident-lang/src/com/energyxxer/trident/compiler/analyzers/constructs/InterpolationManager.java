@@ -549,7 +549,11 @@ public class InterpolationManager {
                 return castToString(obj, pattern, ctx);
             }
             if(failureException) {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "Unable to cast " + TridentTypeManager.getTypeIdentifierForObject(obj) + " to type " + targetType.getTypeIdentifier(), pattern, ctx);
+                if(x.getMessage() != null) {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Couldn't cast '" + obj + "' to type " + targetType.getTypeIdentifier() + ": " + x.getMessage(), pattern, ctx);
+                } else {
+                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Unable to cast " + TridentTypeManager.getTypeIdentifierForObject(obj) + " to type " + targetType.getTypeIdentifier(), pattern, ctx);
+                }
             }
             return null;
         }
