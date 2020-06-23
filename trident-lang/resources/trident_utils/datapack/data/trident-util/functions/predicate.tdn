@@ -6,23 +6,25 @@ private var generatedPredicates = {}
 define class Predicate : JSONSerializable {
     public var output = {}
 
+    private var isInverted = false
+
     public new() {}
     public new(startingOutput : dictionary) {
         eval this.output = startingOutput
     }
 
-    public inverted() {
+    public inverted() : Predicate {
         return Predicate.inverted(this)
     }
 
-    public static randomChance(chance : real) {
+    public static randomChance(chance : real) : Predicate {
         return new Predicate({
             "condition": "minecraft:random_chance",
             "chance": chance
         })
     }
 
-    public static randomChanceWithLooting(chance : real, lootingMultiplier : real) {
+    public static randomChanceWithLooting(chance : real, lootingMultiplier : real) : Predicate {
         return new Predicate({
             "condition": "minecraft:random_chance_with_looting",
             "chance": chance,
@@ -30,20 +32,20 @@ define class Predicate : JSONSerializable {
         })
     }
 
-    public static killedByPlayer() {
+    public static killedByPlayer() : Predicate {
         return new Predicate({
             "condition": "minecraft:killed_by_player"
         })
     }
 
-    public static timeCheck(value : int, period : int?) {
+    public static timeCheck(value : int, period : int?) : Predicate {
         return new Predicate({
             "condition": "minecraft:time_check",
             "value": value,
             "period": period
         })
     }
-    public static timeCheck(value : int_range, period : int?) {
+    public static timeCheck(value : int_range, period : int?) : Predicate {
         return new Predicate({
             "condition": "minecraft:time_check",
             "value": rangeToObj(value),
@@ -51,35 +53,39 @@ define class Predicate : JSONSerializable {
         })
     }
 
-    public static inverted(term : Predicate) {
+    public static inverted(term : Predicate) : Predicate {
+        if(term.isInverted) {
+            return term.output.term
+        }
         var rv = new Predicate({
             "condition": "minecraft:inverted",
             term: term
         })
-        eval rv.inverted = function() {return term}
+        eval rv.isInverted = true
+        return rv
     }
 
-    public static entityProperties() {
+    public static entityProperties() : Predicate {
         return new EntityPropertiesPredicate()
     }
 
-    public static locationCheck() {
+    public static locationCheck() : Predicate {
         return new LocationCheckPredicate()
     }
 
-    public static entityScores() {
+    public static entityScores() : Predicate {
         return new EntityScoresPredicate()
     }
 
-    public static weatherCheck() {
+    public static weatherCheck() : Predicate {
         return new WeatherCheckPredicate()
     }
 
-    public static damageSourceProperties() {
+    public static damageSourceProperties() : Predicate {
         return new DamageSourcePropertiesPredicate()
     }
 
-    public static tableBonus(enchantment : resource, chanceTable : list) {
+    public static tableBonus(enchantment : resource, chanceTable : list) : Predicate {
         if(!MinecraftTypes.exists("enchantment", enchantment)) throw "Given type '" + enchantment + "' does not exist as an enchantment type"
         for(chance in chanceTable) {
             if(!(chance is int || chance is real)) {
@@ -93,15 +99,14 @@ define class Predicate : JSONSerializable {
         })
     }
 
-    public static reference(loc : resource) {
+    public static reference(loc : resource) : Predicate {
         return new Predicate({
             "condition": "minecraft:reference",
             "name": loc
         })
     }
 
-    public static alternative(terms : list) {
-
+    public static alternative(terms : list) : Predicate {
         for(term in terms) {
             if(!(term is Predicate)) {
                 throw "Expected Predicate in list, instead got " + type_definition.of(term)
@@ -116,7 +121,7 @@ define class Predicate : JSONSerializable {
         return obj
     }
 
-    public export(loc : resource?) {
+    public export(loc : resource?) : Predicate {
         if(loc == null) {
             var ns = Reflection.getWritingFile().namespace
             if(generatedPredicates[ns] == null) eval generatedPredicates[ns] = 0
@@ -135,7 +140,7 @@ define class Predicate : JSONSerializable {
     }
 
     public override serializeToJSON() {
-        return {}
+        return output
     }
 }
 
@@ -143,7 +148,7 @@ define private class EntityPredicate : Predicate {
 
     local var entity = "this"
 
-    public which(wh : string) {
+    public which(wh : string) : Predicate {
         eval assertOneOf(wh, ["this", "killer", "killer_player", "player"])
         eval entity = wh
         return this
@@ -169,15 +174,15 @@ define private class EntityScoresPredicate : EntityPredicate {
 
     private var scores = null
 
-    public score(objective : string, value : int) {
+    public score(objective : string, value : int) : Predicate {
         return scoreRaw(objective, value)
     }
 
-    public score(objective : string, value : int_range) {
+    public score(objective : string, value : int_range) : Predicate {
         return scoreRaw(objective, rangeToObj(value))
     }
 
-    private scoreRaw(objective : string, value) {
+    private scoreRaw(objective : string, value) : Predicate {
         if(scores == null) eval scores = {}
         eval scores[objective] = value
         return this
@@ -198,17 +203,17 @@ define private class LocationCheckPredicate : Predicate, Shared.Location {
     private var offsetY : real? = null
     private var offsetZ : real? = null
 
-    public offsetX(value : real) {
+    public offsetX(value : real) : Predicate {
         eval this.offsetX = value
         return this
     }
 
-    public offsetY(value : real) {
+    public offsetY(value : real) : Predicate {
         eval this.offsetY = value
         return this
     }
 
-    public offsetZ(value : real) {
+    public offsetZ(value : real) : Predicate {
         eval this.offsetZ = value
         return this
     }
@@ -230,12 +235,12 @@ define private class WeatherCheckPredicate : Predicate {
         "condition": "minecraft:weather_check"
     }
 
-    public raining(value : boolean) {
+    public raining(value : boolean) : Predicate {
         eval this.output.raining = value
         return this
     }
 
-    public thundering(value : boolean) {
+    public thundering(value : boolean) : Predicate {
         eval this.output.thundering = value
         return this
     }
@@ -251,52 +256,52 @@ define private class DamageSourcePropertiesPredicate : Predicate {
         "condition": "minecraft:damage_source_properties"
     }
 
-    public bypassesArmor(value : boolean) {
+    public bypassesArmor(value : boolean) : Predicate {
         eval this.output.bypasses_armor = value
         return this
     }
 
-    public bypassesInvulnerability(value : boolean) {
+    public bypassesInvulnerability(value : boolean) : Predicate {
         eval this.output.bypasses_invulnerability = value
         return this
     }
 
-    public bypassesMagic(value : boolean) {
+    public bypassesMagic(value : boolean) : Predicate {
         eval this.output.bypasses_magic = value
         return this
     }
 
-    public isExplosion(value : boolean) {
+    public isExplosion(value : boolean) : Predicate {
         eval this.output.is_explosion = value
         return this
     }
 
-    public isFire(value : boolean) {
+    public isFire(value : boolean) : Predicate {
         eval this.output.is_fire = value
         return this
     }
 
-    public isMagic(value : boolean) {
+    public isMagic(value : boolean) : Predicate {
         eval this.output.is_magic = value
         return this
     }
 
-    public isProjectile(value : boolean) {
+    public isProjectile(value : boolean) : Predicate {
         eval this.output.is_projectile = value
         return this
     }
 
-    public isLightning(value : boolean) {
+    public isLightning(value : boolean) : Predicate {
         eval this.output.is_lightning = value
         return this
     }
 
-    public sourceEntity(value : Shared.Entity) {
+    public sourceEntity(value : Shared.Entity) : Predicate {
         eval this.output.source_entity = value
         return this
     }
 
-    public directEntity(value : Shared.Entity) {
+    public directEntity(value : Shared.Entity) : Predicate {
         eval this.output.direct_entity = value
         return this
     }
