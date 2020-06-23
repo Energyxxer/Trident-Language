@@ -41,8 +41,16 @@ public class IntTypeHandler implements TypeHandler<Integer> {
 
     @Override
     public Object coerce(Integer object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if("primitive(real)".equals(TridentTypeManager.getInternalTypeIdentifierForType(targetType))) {
-            return object.doubleValue();
+        switch(TridentTypeManager.getInternalTypeIdentifierForType(targetType)) {
+            case "primitive(real)": {
+                return object.doubleValue();
+            }
+            case "primitive(int_range)": {
+                return new IntegerRange(object, object);
+            }
+            case "primitive(real_range)": {
+                return new DoubleRange(object.doubleValue(), object.doubleValue());
+            }
         }
         return null;
     }
@@ -50,7 +58,9 @@ public class IntTypeHandler implements TypeHandler<Integer> {
     @Override
     public boolean canCoerce(Object object, TypeHandler into) {
         return object instanceof Integer && (
-                    into instanceof RealTypeHandler
+                into instanceof RealTypeHandler ||
+                into instanceof IntRangeTypeHandler ||
+                into instanceof RealRangeTypeHandler
         );
     }
 

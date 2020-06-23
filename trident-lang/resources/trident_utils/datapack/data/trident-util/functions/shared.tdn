@@ -2,7 +2,7 @@
 @require trident-util:type_checking
 
 local var rangeToObj = function(value) {
-    if(value is int) {
+    if(value is int_range || value is real_range) {
         if(value.min == value.max && value.min != null) return value.min
         var range = value
         eval value = {}
@@ -10,17 +10,7 @@ local var rangeToObj = function(value) {
         if(range.max != null) eval value.max = range.max
         return value
     }
-    if(value is real_range) {
-        if(value.min == value.max && value.min != null) return value.min
-        var range = value
-        eval value = {}
-        if(range.min != null) eval value.min = range.min
-        if(range.max != null) eval value.max = range.max
-        return value
-    }
-    if(value is real) {
-        return value
-    }
+    return value
 }
 
 define local class JSONSerializable {
@@ -75,7 +65,7 @@ define private class Entity : JSONSerializable {
         eval output.location = location
         return this
     }
-    public effect(obj : Effect) {
+    public effects(obj : Effect) {
         return effects([obj])
     }
     public effects(obj : list) {
@@ -134,11 +124,6 @@ define private class Entity : JSONSerializable {
         eval this.output.team = teamName
         return this
     }
-    public level(value : int) {
-        if(this.output.player == null) eval this.output.player = {}
-        eval this.output.player.level = value
-        return this
-    }
     public level(value : int_range) {
         if(this.output.player == null) eval this.output.player = {}
         eval this.output.player.level = rangeToObj(value)
@@ -150,8 +135,9 @@ define private class Entity : JSONSerializable {
         eval this.output.player.gamemode = gamemode
         return this
     }
+    private static final var STAT_BASES : list = ["minecraft:custom", "minecraft:crafted", "minecraft:used", "minecraft:broken", "minecraft:mined", "minecraft:killed", "minecraft:picked_up", "minecraft:dropped", "minecraft:killed_by", "killedByTeam", "teamkill"]
     public matchStats(base : string, criterion : string, value : int_range) {
-        eval assertOneOf(base, ["minecraft:custom", "minecraft:crafted", "minecraft:used", "minecraft:broken", "minecraft:mined", "minecraft:killed", "minecraft:picked_up", "minecraft:dropped", "minecraft:killed_by", "killedByTeam", "teamkill"])
+        eval assertOneOf(base, STAT_BASES)
         if(this.output.player == null) eval this.output.player = {}
         if(this.output.player.stats == null) eval this.output.player.stats = []
         eval this.output.player.stats.add({type: base, stat: criterion, value: rangeToObj(value)})
@@ -551,7 +537,7 @@ define private class Fluid : JSONSerializable {
     }
 }
 
-define class Shared {
+define static final class Shared {
     public static final var Distance = Distance
     public static final var Location = Location
     public static final var Entity = Entity

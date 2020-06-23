@@ -34,6 +34,19 @@ public class RealTypeHandler implements TypeHandler<Double> {
     }
 
     @Override
+    public Object coerce(Double object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if ("primitive(real_range)".equals(TridentTypeManager.getInternalTypeIdentifierForType(targetType))) {
+            return new DoubleRange(object, object);
+        }
+        return null;
+    }
+
+    @Override
+    public boolean canCoerce(Object object, TypeHandler into) {
+        return object instanceof Double && (into instanceof RealRangeTypeHandler);
+    }
+
+    @Override
     public boolean isInstance(Object obj) {
         return obj instanceof Double;
     }
