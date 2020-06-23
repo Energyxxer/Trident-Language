@@ -10,15 +10,21 @@ public class StackTrace {
     public static class StackTraceElement {
         String message;
         TokenPattern<?> pattern;
+        String fileMessage = null;
 
-        public StackTraceElement(String message, TokenPattern<?> pattern) {
+        public StackTraceElement(String message, TokenPattern<?> pattern, String fileMessage) {
             this.message = message;
             this.pattern = pattern;
+            this.fileMessage = fileMessage;
         }
 
         @Override
         public String toString() {
-            return message + " (" + pattern.getFile().getName() + ":" + pattern.getStringLocation().line + ")";
+            String fileMessage = this.fileMessage;
+            if(fileMessage == null) {
+                fileMessage = pattern.getFile().getName() + ":" + pattern.getStringLocation().line;
+            }
+            return message + " (" + fileMessage + ")";
         }
 
         public String getMessage() {
@@ -27,6 +33,10 @@ public class StackTrace {
 
         public TokenPattern<?> getPattern() {
             return pattern;
+        }
+
+        public String getFileMessage() {
+            return fileMessage;
         }
     }
 

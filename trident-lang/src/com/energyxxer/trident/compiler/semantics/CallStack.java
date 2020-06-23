@@ -2,6 +2,7 @@ package com.energyxxer.trident.compiler.semantics;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.StackTrace;
+import com.energyxxer.trident.compiler.TridentCompiler;
 
 import java.util.ArrayList;
 import java.util.Stack;
@@ -50,7 +51,7 @@ public class CallStack {
         for(int i = stack.size()-1; i >= 0; i--) {
             Call call = stack.get(i);
             TokenPattern<?> calledBy = i < stack.size()-1 ? stack.get(i+1).calledBy : leaf;
-            elements.add(new StackTrace.StackTraceElement("at " + (call.calledFile != null ? call.calledFile.getResourceLocation() : "<internal function>") + " ~ " + call.calledFunction, calledBy));
+            elements.add(new StackTrace.StackTraceElement("at " + (call.calledFile != null ? call.calledFile.getResourceLocation() : "<internal function>") + " ~ " + call.calledFunction, calledBy, calledBy.getFile().equals(TridentCompiler.LIBRARY_TOKEN_FILE) ? "standard library file" : null));
         }
         return new StackTrace(elements);
     }

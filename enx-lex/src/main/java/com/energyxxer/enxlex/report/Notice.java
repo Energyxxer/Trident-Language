@@ -3,6 +3,8 @@ package com.energyxxer.enxlex.report;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 
+import java.io.File;
+
 /**
  * Created by User on 5/15/2017.
  */
@@ -140,5 +142,9 @@ public class Notice {
     public Notice setStackTrace(StackTrace stackTrace) {
         this.stackTrace = stackTrace;
         return this;
+    }
+
+    public void pointToFile(File file) {
+        this.group = this.filePath = file.toString();
     }
 }

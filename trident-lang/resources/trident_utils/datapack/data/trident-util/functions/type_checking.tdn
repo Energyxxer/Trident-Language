@@ -1,25 +1,25 @@
 @on compile
 
-local var assertType = function(obj, type) {
+local var assertType = function(obj, type : string) {
     do if(!isInstance(obj, type)) {
         throw "Expected " + type + ", instead got " + typeOf(obj)
     }
 }
 
-local var assertDualTypes = function(obj, type0, type1) {
+local var assertDualTypes = function(obj, type0 : string, type1 : string) {
     do if(!isInstance(obj, type0) && !isInstance(obj, type1)) {
         throw "Expected " + type0 + " or " + type1 + ", instead got " + typeOf(obj)
     }
 }
 
-local var assertTypes = function(obj, types) {
+local var assertTypes = function(obj, types : list) {
     for(type in types) {
         do if(isInstance(obj, type)) return
     }
     throw "Expected " + types + ", instead got " + typeOf(obj)
 }
 
-local var assertOneOf = function(obj, validTypes) {
+local var assertOneOf = function(obj, validTypes : list) {
     for(valid in validTypes) {
         do if(obj == valid) return
     }

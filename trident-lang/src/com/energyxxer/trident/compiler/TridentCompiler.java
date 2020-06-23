@@ -785,6 +785,7 @@ public class TridentCompiler extends AbstractProcess {
         }
         return folder.delete();
     }
+    public static final File LIBRARY_TOKEN_FILE = new File(System.getProperty("user.home"));
 
     private static class Resources {
         public static final HashMap<String, String> defaults = new HashMap<>();
@@ -855,6 +856,7 @@ public class TridentCompiler extends AbstractProcess {
         }
 
         private static class Library {
+
             public enum Availability {
                 COMPILER_ONLY(true, false), SUMMARY_ONLY(false, true), BOTH(true, true);
                 private final boolean compiler;
@@ -887,7 +889,7 @@ public class TridentCompiler extends AbstractProcess {
                 TokenStream ts = new TokenStream();
                 LazyLexer lex = new LazyLexer(ts, new TridentProductions(dummyModule).FILE);
                 lex.setSummaryModule(fileSummary);
-                lex.tokenizeParse(new File(System.getProperty("user.home")), content, new TridentLexerProfile());
+                lex.tokenizeParse(LIBRARY_TOKEN_FILE, content, new TridentLexerProfile());
 
                 if(!lex.getMatchResponse().matched) {
                     throw new RuntimeException("Native lib threw an error on parse: " + lex.getMatchResponse().getErrorMessage());

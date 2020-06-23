@@ -5,12 +5,14 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.enxlex.report.StackTrace;
+import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -71,6 +73,14 @@ public class TridentException extends RuntimeException implements TypeHandler<Tr
         }
 
         this.notice = new Notice(NoticeType.ERROR, message, message, cause).setStackTrace(stackTrace);
+
+        for(StackTrace.StackTraceElement frame : stackTrace.getElements()) {
+            File file = frame.getPattern().getFile();
+            if(!file.equals(TridentCompiler.LIBRARY_TOKEN_FILE)) {
+                notice.pointToFile(file);
+                break;
+            }
+        }
         this.cause = cause;
     }
 
