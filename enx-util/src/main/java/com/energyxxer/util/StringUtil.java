@@ -1,7 +1,6 @@
 package com.energyxxer.util;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 
@@ -48,16 +47,14 @@ public class StringUtil {
 	}
 	
 	public static String stringFromBoolMap(HashMap<String, Object> m) {
-		String s = "";
+		StringBuilder s = new StringBuilder();
 		Set<String> set = m.keySet();
-		Iterator<String> setI = set.iterator();
-		while(setI.hasNext()) {
-			String key = setI.next();
-			if(m.get(key) == Boolean.valueOf(true)) {
-				s += key;
+		for (String key : set) {
+			if (m.get(key) == Boolean.valueOf(true)) {
+				s.append(key);
 			}
 		}
-		return s.trim();
+		return s.toString().trim();
 	}
 
 	public static String repeat(String str, int amount) {
@@ -71,16 +68,17 @@ public class StringUtil {
 	public static String getInitials(String s) {
 		StringBuilder initials = new StringBuilder();
 
-		char lastChar = 0;
+		char prevChar = 0;
 		for(int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
 			if(i == 0) {
-				initials.append(s.charAt(i));
-			} else if(Character.isUpperCase(s.charAt(i))) {
-				initials.append(s.charAt(i));
-			} else if((lastChar == '_' || lastChar == '-') && Character.isAlphabetic(s.charAt(i))) {
-				initials.append(s.charAt(i));
+				initials.append(c);
+			} else if(Character.isUpperCase(c)) {
+				initials.append(c);
+			} else if((prevChar == '_' || prevChar == '-' || Character.isWhitespace(prevChar)) && Character.isAlphabetic(c)) {
+				initials.append(c);
 			}
-			lastChar = s.charAt(i);
+			prevChar = c;
 		}
 		return initials.toString().toUpperCase();
 	}
@@ -92,11 +90,11 @@ public class StringUtil {
 	}
 
 	public static String getRandomString(int len) {
-		String s = "";
+		StringBuilder s = new StringBuilder();
 		for (int i = 0; i < len; i++) {
-			s += getRandomChar();
+			s.append(getRandomChar());
 		}
-		return s;
+		return s.toString();
 	}
 
 	public static int getSequenceCount(String str, String pattern) {
