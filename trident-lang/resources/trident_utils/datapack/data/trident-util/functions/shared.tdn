@@ -14,8 +14,6 @@ local var rangeToObj = function(value) {
 }
 
 define local class JSONSerializable {
-    public var serialized
-
     public serializeToJSON() {
         throw "serializeToJSON not implemented by " + type_definition.of(this)
     }
@@ -72,7 +70,7 @@ define private class Entity : JSONSerializable {
         if(this.output.effects == null) eval this.output.effects = {}
         for(element in obj) {
             var effect : Effect = element
-            var effectSerialized = ((JSONSerialization) effect).serialized
+            var effectSerialized = JSONSerializable.fullySerialize(effect)
             eval this.output.effects[(string)effectSerialized.id] = effectSerialized
             eval effectSerialized.id = null
         }
@@ -206,12 +204,12 @@ define private class Distance : JSONSerializable {
 define private class Location : JSONSerializable {
     var output = {}
 
-    public block(obj : Block) {
+    public block(block : Block) {
         eval this.output.block = obj
         return this
     }
 
-    public fluid(obj : Fluid) {
+    public fluid(fluid : Fluid) {
         eval this.output.fluid = obj
         return this
     }
@@ -291,7 +289,7 @@ define private class Effect : JSONSerializable {
         return this
     }
 
-    public duration(value : int_range) {
+    public duration(ticks : int_range) {
         eval this.output.duration = rangeToObj(value)
         return this
     }
@@ -316,9 +314,13 @@ define private class Item : JSONSerializable {
 
     public new() {}
 
-    public new(base : custom_item) {
+    public new(base : custom_item, allData : boolean?) {
         eval this.type(base.baseType)
-        eval this.nbt(base.getItemTag())
+        if(allData == true) {
+            eval this.nbt(base.getItemTag())
+        } else {
+            eval this.nbt(base.getMatchingNBT())
+        }
     }
 
     public new(base : item) {
@@ -400,8 +402,8 @@ define private class Item : JSONSerializable {
 define private class Enchantment : JSONSerializable {
     var output = {}
 
-    public new(base : resource) {
-        eval this.id(base)
+    public new(base : resource?) {
+        if(base != null) eval this.id(base)
     }
 
     public id(type : resource) {
@@ -552,10 +554,10 @@ define static final class Shared {
     public static Location() {return new Location()}
     public static Entity() {return new Entity()}
     public static Effect(type : resource) {return new Effect(type)}
-    public static Item() {return new Item(base)}
+    public static Item() {return new Item()}
     public static Item(base : item) {return new Item(base)}
-    public static Item(base : custom_item) {return new Item(base)}
-    public static Enchantment(base : resource) {return new Enchantment(base)}
+    public static Item(base : custom_item, allData : boolean?) {return new Item(base, allData)}
+    public static Enchantment(base : resource?) {return new Enchantment(base)}
     public static Block(base : block?) {return new Block(base)}
     public static Fluid(base : resource?) {return new Fluid(base)}
 }
