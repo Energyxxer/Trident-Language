@@ -67,17 +67,17 @@ public class ResourcePackGenerator {
             zipStream = new ZipOutputStream(new FileOutputStream(rootFile));
         }
 
-        progressDelta = exportables.isEmpty() ? 1 : 1f/(exportables.size());
+        try {
+            progressDelta = exportables.isEmpty() ? 1 : 1f/(exportables.size());
 
-        //createPackMcmeta();
-
-        for(Exportable exportable : exportables) {
-            if(exportable.shouldExport()) {
-                createFile(exportable.getExportPath(), exportable.getContents());
+            for(Exportable exportable : exportables) {
+                if(exportable.shouldExport()) {
+                    createFile(exportable.getExportPath(), exportable.getContents());
+                }
             }
+        } finally {
+            if(zipStream != null) zipStream.close();
         }
-
-        if(zipStream != null) zipStream.close();
     }
 
     private void createFile(@Nullable String path, @Nullable byte[] contents) throws IOException {

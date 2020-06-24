@@ -87,13 +87,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
             }
         }
 
-        try {
-            properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + TridentCompiler.PROJECT_FILE_NAME)), JsonObject.class);
-        } catch(JsonSyntaxException | IOException x) {
-            logException(x);
-            return;
-        }
-
+        worker.setup.setupProperties = true;
         worker.setup.setupModule = true;
         worker.setup.setupDependencies = true;
         worker.setBuildConfig(buildConfig);
@@ -105,6 +99,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
             return;
         }
 
+        properties = worker.output.properties;
         module = worker.output.module;
 
         for(TridentProjectWorker subWorker : worker.output.dependencies) {
@@ -248,8 +243,8 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
                     if(relPath.getNameCount() >= 2) {
                         if(relPath.getNameCount() == 2 && file.getName().equals("sounds.json")) {
                             String namespace = relPath.getName(0).toString();
-                            try {
-                                JsonObject soundsjson = new Gson().fromJson(new FileReader(file), JsonObject.class);
+                            try(FileReader fr = new FileReader(file)) {
+                                JsonObject soundsjson = new Gson().fromJson(fr, JsonObject.class);
                                 for(String body : soundsjson.keySet()) {
                                     summary.addSoundEvent(new TridentUtil.ResourceLocation(namespace + ":" + body));
                                 }

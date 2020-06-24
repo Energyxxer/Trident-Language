@@ -51,8 +51,8 @@ public class TridentProjectWorker {
         }
 
         if(setup.setupProperties) {
-            try {
-                output.properties = new Gson().fromJson(new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME)), JsonObject.class);
+            try(FileReader fr = new FileReader(new File(rootDir.getPath() + File.separator + PROJECT_FILE_NAME))) {
+                output.properties = new Gson().fromJson(fr, JsonObject.class);
             } catch(JsonSyntaxException x) {
                 logException(new IOException(x.getMessage()), "Error while reading project settings: ");
                 return;

@@ -536,8 +536,8 @@ public class TridentCompiler extends AbstractProcess {
                 Debug.log("Created tag " + tag);
 
                 JsonObject obj;
-                try {
-                    obj = gson.fromJson(new FileReader(file), JsonObject.class);
+                try(FileReader fr = new FileReader(file)) {
+                    obj = gson.fromJson(fr, JsonObject.class);
                 } catch(JsonSyntaxException x) {
                     report.addNotice(new Notice(NoticeType.ERROR, "Invalid JSON in " + group.getCategory().toLowerCase() + " tag '" + tag + "': " + x.getMessage(), new Token("", file, new StringLocation(0))));
                     continue;

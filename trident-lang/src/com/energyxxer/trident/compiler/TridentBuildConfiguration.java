@@ -109,7 +109,9 @@ public class TridentBuildConfiguration {
         if(this.featureMap == null) {
             String featureMapPath = traverser.reset().get("input-resources").get("feature-map").asString();
             if(featureMapPath != null) {
-                this.featureMap = VersionFeatureManager.parseFeatureMap(new FileReader(newFileObject(featureMapPath, rootDir)));
+                try(FileReader fr = new FileReader(newFileObject(featureMapPath, rootDir))) {
+                    this.featureMap = VersionFeatureManager.parseFeatureMap(fr);
+                }
             }
         }
 

@@ -40,22 +40,25 @@ public class TridentPlugin {
         if(this.loaded) return;
         this.source.open();
 
-        this.eagerLexer = new EagerLexer(new TokenStream(false));
+        try {
+            this.eagerLexer = new EagerLexer(new TokenStream(false));
 
-        InputStream clis = source.get("commands/");
-        if(clis != null) {
-            try(BufferedReader br = new BufferedReader(new InputStreamReader(clis))) {
+            InputStream clis = source.get("commands/");
+            if(clis != null) {
+                try(BufferedReader br = new BufferedReader(new InputStreamReader(clis))) {
 
-                String commandName;
-                while ((commandName = br.readLine()) != null) {
-                    loadCommandsFolder(commandName);
-                    eagerLexer.getStream().tokens.clear();
+                    String commandName;
+                    while ((commandName = br.readLine()) != null) {
+                        loadCommandsFolder(commandName);
+                        eagerLexer.getStream().tokens.clear();
+                    }
                 }
             }
-        }
 
-        this.loaded = true;
-        this.source.close();
+            this.loaded = true;
+        } finally {
+            this.source.close();
+        }
     }
 
     private void loadCommandsFolder(String commandName) throws IOException {
