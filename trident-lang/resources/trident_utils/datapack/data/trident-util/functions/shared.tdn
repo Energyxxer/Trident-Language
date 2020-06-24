@@ -154,6 +154,11 @@ define private class Entity : JSONSerializable {
         eval this.output.catType = texture
         return this
     }
+    public isInOpenWater(bool : boolean) {
+        if(this.output.fishing_hook == null) eval this.output.fishing_hook = {}
+        eval this.output.fishing_hook.in_open_water = bool
+        return this
+    }
 
     public override serializeToJSON() {
         if(Project.getTargetVersion()[1] < 16 && output.player != null) {

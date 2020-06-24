@@ -156,6 +156,9 @@ public class TextParser {
                                     throw new IllegalArgumentException();
                                 } else {
                                     style.setColor(color);
+                                    if(color == TextColor.RESET && VersionFeatureManager.getBoolean("textcomponent.hex_color")) {
+                                        ctx.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "The color 'reset' is no longer functional in 1.16", pattern));
+                                    }
                                 }
                             })
                             .otherwise(t -> delegate.report("Expected string in 'color'", obj.get("color")));
@@ -171,7 +174,7 @@ public class TextParser {
                             .run(t -> {
                                 TridentUtil.ResourceLocation fontLoc = TridentUtil.ResourceLocation.createStrict(t);
                                 if(fontLoc != null) {
-                                    style.setFont(ctx.getCompiler().getModule().getNamespace(fontLoc.namespace).types.getDictionary(FontReference.CATEGORY).getOrCreate(fontLoc.body));
+                                    style.setFont(new FontReference(ctx.getCompiler().getModule().getNamespace(fontLoc.namespace), fontLoc.body));
                                 } else {
                                     throw new IllegalArgumentException(t);
                                 }

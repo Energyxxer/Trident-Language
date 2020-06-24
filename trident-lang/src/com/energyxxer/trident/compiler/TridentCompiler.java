@@ -566,7 +566,7 @@ public class TridentCompiler extends AbstractProcess {
                                 created = new FunctionReference(module.getNamespace(loc.namespace), loc.body);
                             } else {
                                 try {
-                                    created = module.getNamespace(loc.namespace).getTypeManager().createDictionary(group.getCategory(), true).get(loc.body);
+                                    created = module.getNamespace(loc.namespace).getTypeManager().getOrCreateDictionary(group.getCategory(), true).get(loc.body);
                                 } catch(TypeNotFoundException x) {
                                     report.addNotice(new Notice(NoticeType.WARNING, "Invalid value in " + group.getCategory().toLowerCase() + " tag '" + tag + "': " + loc + " is not a valid " + group.getCategory().toLowerCase() + " type", new Token("", file, new StringLocation(0))));
                                     continue;
