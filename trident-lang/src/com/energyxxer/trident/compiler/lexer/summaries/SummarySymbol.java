@@ -77,7 +77,17 @@ public class SummarySymbol implements SummaryElement {
     public void collectSubSymbolsForPath(String[] path, int pathStart, ArrayList<SummarySymbol> list, TridentUtil.ResourceLocation fromFile, int inFileIndex) {
         if(path.length == pathStart) {
             if(isMember || (isStaticField && (visibility == Symbol.SymbolVisibility.PUBLIC || (visibility == Symbol.SymbolVisibility.LOCAL && Objects.equals(fromFile, parentSummary.getFileLocation())) || (visibility == Symbol.SymbolVisibility.PRIVATE && scopeStart <= inFileIndex && inFileIndex <= scopeEnd)))) {
-                list.add(this);
+
+                boolean alreadyAdded = false;
+                for(SummarySymbol sym : list) {
+                    if(sym.getName().equals(this.getName())) {
+                        alreadyAdded = true;
+                        break;
+                    }
+                }
+                if(!alreadyAdded) {
+                    list.add(this);
+                }
             }
         } else {
             if(subBlock == null) return;

@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class PointerObject implements TypeHandler<PointerObject> {
+    public static final PointerObject STATIC_HANDLER = new PointerObject();
 
     public static final int WRONG_TARGET_TYPE = 1;
     public static final int WRONG_MEMBER_TYPE = 2;
@@ -35,6 +36,8 @@ public class PointerObject implements TypeHandler<PointerObject> {
     @Nullable
     private String numericType = null;
 
+    private PointerObject() {}
+
     public PointerObject(Object target, Object member) {
         this(target, member, 1, null);
     }
@@ -48,6 +51,7 @@ public class PointerObject implements TypeHandler<PointerObject> {
 
     @Override
     public Object getMember(PointerObject object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
+        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
         boolean valid = false;
         Object returnValue = null;
         switch(member) {

@@ -51,7 +51,7 @@ public class TridentCompiler extends AbstractProcess {
     public static final String PROJECT_FILE_NAME = ".tdnproj";
     public static final String PROJECT_BUILD_FILE_NAME = ".tdnbuild";
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
-    public static final String TRIDENT_LANGUAGE_VERSION = "1.1.3";
+    public static final String TRIDENT_LANGUAGE_VERSION = "1.2.0";
 
     //Resources
     private TridentProjectWorker worker;
