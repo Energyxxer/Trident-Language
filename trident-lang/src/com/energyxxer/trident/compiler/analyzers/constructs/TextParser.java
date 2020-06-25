@@ -259,7 +259,7 @@ public class TextParser {
                             }
                         }).otherwise(v -> {
                             if(VersionFeatureManager.getBoolean("textcomponent.hover_event.content")) {
-                                using(e.get("content")).notIfNull().run(c -> {
+                                using(e.get("contents")).notIfNull().run(c -> {
                                     switch(action) {
                                         case SHOW_TEXT: {
                                             TextComponent value = (parseTextComponent(c, ctx, pattern, TextComponentContext.TOOLTIP));
@@ -289,7 +289,7 @@ public class TextParser {
                                                                         .run(lambdaRawTag -> rawTag[0] = lambdaRawTag)
                                                                         .otherwise(ignore -> delegate.report("Expected string in 'tag'", i.get("tag")));
                                                             }
-                                                        }).otherwise(i -> delegate.report("Expected string or object in 'content' for show_item hover event", c));
+                                                        }).otherwise(i -> delegate.report("Expected string or object in 'contents' for show_item hover event", c));
                                             }
 
                                             if(itemIdToShow[0] != null) {
@@ -321,7 +321,7 @@ public class TextParser {
                                                         if(i.has("name")) {
                                                             name[0] = parseTextComponent(i.get("name"), ctx, pattern, TextComponentContext.TOOLTIP);
                                                         }
-                                                    }).otherwise(i -> delegate.report("Expected object in 'content' for show_entity hover event", c));
+                                                    }).otherwise(i -> delegate.report("Expected object in 'contents' for show_entity hover event", c));
 
                                             if(entityIdToShow[0] != null) {
                                                 try {
@@ -334,7 +334,7 @@ public class TextParser {
                                             break;
                                         }
                                     }
-                                }).otherwise(c -> delegate.report("Missing hover event content or value", e));
+                                }).otherwise(c -> delegate.report("Missing hover event contents or value", e));
                             } else {
                                 delegate.report("Missing hover event value", e);
                             }
