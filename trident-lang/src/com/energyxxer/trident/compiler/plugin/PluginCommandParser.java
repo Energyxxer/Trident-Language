@@ -181,7 +181,7 @@ public class PluginCommandParser {
             case "REAL": return CommonParsers.parseDouble(pattern, ctx);
             case "INTEGER_NUMBER_RANGE": return CommonParsers.parseIntRange(pattern, ctx);
             case "REAL_NUMBER_RANGE": return CommonParsers.parseRealRange(pattern, ctx);
-            case "OBJECTIVE_NAME": return CommonParsers.parseObjective(pattern, ctx).getName();
+            case "OBJECTIVE_NAME": return CommonParsers.parseObjectiveName(pattern, ctx);
             case "SCORE":
             case "SCORE_OPTIONAL_OBJECTIVE": {
                 LocalScore score = CommonParsers.parseScore(pattern, ctx);

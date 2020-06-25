@@ -552,12 +552,16 @@ public class CommonParsers {
         }
     }
 
-    @Contract("null, _ -> null")
-    public static Objective parseObjective(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static String parseObjectiveName(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(pattern == null) return null;
         TokenPattern<?> inner = pattern.find("IDENTIFIER_A");
         if(inner == null) inner = pattern;
-        String name = parseIdentifierA(inner, ctx);
+        return parseIdentifierA(inner, ctx);
+    }
+
+    @Contract("null, _ -> null")
+    public static Objective parseObjective(TokenPattern<?> pattern, ISymbolContext ctx) {
+        String name = parseObjectiveName(pattern, ctx);
         if(!ctx.getCompiler().getModule().getObjectiveManager().exists(name)) {
             ctx.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING, "Undefined objective name '" + name + "'", pattern));
             return ctx.getCompiler().getModule().getObjectiveManager().create(name);
@@ -1031,7 +1035,7 @@ public class CommonParsers {
                 break;
             }
             case "SCORE_POINTER_HEAD": {
-                String objectiveName = parseObjective(pattern.find("OBJECTIVE_NAME"), ctx).getName();
+                String objectiveName = parseObjectiveName(pattern.find("OBJECTIVE_NAME"), ctx);
                 pointer.setMember(objectiveName);
                 TokenPattern<?> scalePattern = pattern.find("SCALE.REAL");
                 if(scalePattern != null) {
