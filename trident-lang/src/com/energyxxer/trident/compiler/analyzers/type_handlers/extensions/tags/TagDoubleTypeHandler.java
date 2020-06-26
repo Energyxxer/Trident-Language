@@ -12,7 +12,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 public class TagDoubleTypeHandler implements TypeHandler<TagDouble> {
     private static final TridentFunction CONSTRUCTOR = new NativeMethodWrapper<>(
             "new tag_double",
-            ((instance, params) -> new TagDouble(params[0] == null ? 0 : (int) params[0])),
+            ((instance, params) -> new TagDouble(params[0] == null ? 0 : (Double) params[0])),
             Double.class
     ).setNullable(0).createForInstance(null);
 
