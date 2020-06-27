@@ -210,12 +210,12 @@ define private class Location : JSONSerializable {
     var output = {}
 
     public block(block : Block) {
-        eval this.output.block = obj
+        eval this.output.block = block
         return this
     }
 
     public fluid(fluid : Fluid) {
-        eval this.output.fluid = obj
+        eval this.output.fluid = fluid
         return this
     }
 
