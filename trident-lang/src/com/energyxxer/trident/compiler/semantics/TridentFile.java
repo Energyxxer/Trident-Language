@@ -358,29 +358,34 @@ public class TridentFile extends SymbolContext {
         try {
             if (entryList != null) {
                 TokenPattern<?>[] entries = (entryList).getContents();
-                for (TokenPattern<?> pattern : entries) {
-                    if (!pattern.getName().equals("LINE_PADDING")) {
-                        TokenStructure entry = (TokenStructure) pattern.find("ENTRY");
+                if(parentFile.breaking) compiler.getTryStack().pushBreaking();
+                try {
+                    for (TokenPattern<?> pattern : entries) {
+                        if (!pattern.getName().equals("LINE_PADDING")) {
+                            TokenStructure entry = (TokenStructure) pattern.find("ENTRY");
 
-                        TokenPattern<?> inner = entry.getContents();
+                            TokenPattern<?> inner = entry.getContents();
 
-                        try {
-                            resolveEntry(inner, parent, appendTo, compileOnly);
-                        } catch(TridentException x) {
-                            if(compiler.getTryStack().isEmpty()) {
-                                if(!popCall) throw x;
-                                x.expandToUncaught();
-                                compiler.getReport().addNotice(x.getNotice());
-                                if(x.isBreaking() || parentFile.breaking) break;
-                            } else if(compiler.getTryStack().isRecovering()) {
-                                queuedExceptions.add(x);
-                            } else if(compiler.getTryStack().isBreaking()) {
-                                throw x;
+                            try {
+                                resolveEntry(inner, parent, appendTo, compileOnly);
+                            } catch(TridentException x) {
+                                if(compiler.getTryStack().isEmpty() || (parentFile.breaking && compiler.getTryStack().isBreaking())) {
+                                    if(!popCall) throw x;
+                                    x.expandToUncaught();
+                                    compiler.getReport().addNotice(x.getNotice());
+                                    if(x.isBreaking() || parentFile.breaking) break;
+                                } else if(compiler.getTryStack().isRecovering()) {
+                                    queuedExceptions.add(x);
+                                } else if(compiler.getTryStack().isBreaking()) {
+                                    throw x;
+                                }
+                            } catch(TridentException.Grouped gx) {
+                                queuedExceptions.addAll(gx.getExceptions());
                             }
-                        } catch(TridentException.Grouped gx) {
-                            queuedExceptions.addAll(gx.getExceptions());
                         }
                     }
+                } finally {
+                    if(parentFile.breaking) compiler.getTryStack().pop();
                 }
             }
             if(!queuedExceptions.isEmpty()) {
@@ -535,5 +540,9 @@ public class TridentFile extends SymbolContext {
     public CustomClass getClassForName(String className) {
         if(definedInnerClasses == null) return null;
         return definedInnerClasses.get(className);
+    }
+
+    public boolean isBreaking() {
+        return breaking;
     }
 }
