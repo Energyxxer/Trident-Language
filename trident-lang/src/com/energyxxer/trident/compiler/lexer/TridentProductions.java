@@ -517,7 +517,7 @@ public class TridentProductions {
         }
 
         {
-            LazyTokenListMatch l = new LazyTokenListMatch(optional(ENTRY, ofType(TokenType.NEWLINE).setOptional().setName("LINE_PADDING")), true).setName("ENTRIES");
+            LazyTokenListMatch l = new LazyTokenListMatch(ENTRY, true).setName("ENTRIES");
             FILE_INNER.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES"))
                     .addProcessor((p, lx) -> {
                         if(lx.getSummaryModule() != null) {

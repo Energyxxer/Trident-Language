@@ -361,27 +361,23 @@ public class TridentFile extends SymbolContext {
                 if(parentFile.breaking) compiler.getTryStack().pushBreaking();
                 try {
                     for (TokenPattern<?> pattern : entries) {
-                        if (!pattern.getName().equals("LINE_PADDING")) {
-                            TokenStructure entry = (TokenStructure) pattern.find("ENTRY");
+                        TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
 
-                            TokenPattern<?> inner = entry.getContents();
-
-                            try {
-                                resolveEntry(inner, parent, appendTo, compileOnly);
-                            } catch(TridentException x) {
-                                if(compiler.getTryStack().isEmpty() || (parentFile.breaking && compiler.getTryStack().isBreaking())) {
-                                    if(!popCall) throw x;
-                                    x.expandToUncaught();
-                                    compiler.getReport().addNotice(x.getNotice());
-                                    if(x.isBreaking() || parentFile.breaking) break;
-                                } else if(compiler.getTryStack().isRecovering()) {
-                                    queuedExceptions.add(x);
-                                } else if(compiler.getTryStack().isBreaking()) {
-                                    throw x;
-                                }
-                            } catch(TridentException.Grouped gx) {
-                                queuedExceptions.addAll(gx.getExceptions());
+                        try {
+                            resolveEntry(inner, parent, appendTo, compileOnly);
+                        } catch(TridentException x) {
+                            if(compiler.getTryStack().isEmpty() || (parentFile.breaking && compiler.getTryStack().isBreaking())) {
+                                if(!popCall) throw x;
+                                x.expandToUncaught();
+                                compiler.getReport().addNotice(x.getNotice());
+                                if(x.isBreaking() || parentFile.breaking) break;
+                            } else if(compiler.getTryStack().isRecovering()) {
+                                queuedExceptions.add(x);
+                            } else if(compiler.getTryStack().isBreaking()) {
+                                throw x;
                             }
+                        } catch(TridentException.Grouped gx) {
+                            queuedExceptions.addAll(gx.getExceptions());
                         }
                     }
                 } finally {

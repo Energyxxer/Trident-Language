@@ -106,7 +106,16 @@ public class PluginCommandParser {
                 return file.getResourceLocation();
             }
             case "ANONYMOUS_INNER_FUNCTION": {
-                return new TridentUserFunction(pattern, ctx, Collections.emptyList(), null, null, null);
+                TridentUserFunction function = new TridentUserFunction(pattern, ctx, Collections.emptyList(), null, null, null);;
+                if(parentPattern.hasTag(TDNMetaBuilder.STORE_METADATA_TAG_PREFIX + "STATS")) {
+                    DictionaryObject dict = new DictionaryObject();
+
+                    getInnerFunctionStats(dict, pattern);
+
+                    dict.put("call", function);
+                    return dict;
+                }
+                return function;
             }
             case "MODIFIER": {
                 Collection<ExecuteModifier> modifiers = CommonParsers.parseModifier(pattern, ctx, null);
@@ -217,5 +226,38 @@ public class PluginCommandParser {
         public File getDeclaringFSFile() {
             return declaringFile;
         }
+    }
+
+    private static void getInnerFunctionStats(DictionaryObject dict, TokenPattern<?> pattern) {
+        pattern = pattern.find("FILE_INNER.ENTRIES");
+        int entryCount = 0;
+        int commandCount = 0;
+        int instructionCount = 0;
+        int commentCount = 0;
+        if(pattern != null) {
+            for(TokenPattern<?> entry : ((TokenList) pattern).getContents()) {
+                TokenPattern<?> inner = ((TokenStructure) entry).getContents();
+
+                switch(inner.getName()) {
+                    case "COMMAND_WRAPPER": {
+                        commandCount++;
+                        break;
+                    }
+                    case "INSTRUCTION": {
+                        instructionCount++;
+                        break;
+                    }
+                    case "COMMENT": {
+                        commentCount++;
+                        break;
+                    }
+                }
+                entryCount++;
+            }
+        }
+        dict.put("entryCount", entryCount);
+        dict.put("commandCount", commandCount);
+        dict.put("instructionCount", instructionCount);
+        dict.put("commentCount", commentCount);
     }
 }
