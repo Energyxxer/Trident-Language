@@ -1668,7 +1668,7 @@ public class TridentProductions {
             JSON_ELEMENT.add(INTERPOLATION_BLOCK);
             JSON_ELEMENT.add(rawBoolean().setName("BOOLEAN"));
 
-            TEXT_COMPONENT.add(JSON_ROOT);
+            TEXT_COMPONENT.add(JSON_ELEMENT);
             TEXT_COMPONENT.add(INTERPOLATION_BLOCK);
         }
         //endregion

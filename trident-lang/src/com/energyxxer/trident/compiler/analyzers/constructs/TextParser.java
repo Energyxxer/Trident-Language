@@ -46,9 +46,20 @@ public class TextParser {
                     continue;
                 }
                 case "INTERPOLATION_BLOCK": {
-                    TextComponent result = InterpolationManager.parse(pattern, ctx, TextComponent.class);
+                    Object result = InterpolationManager.parse(pattern, ctx, TextComponent.class, String.class, Integer.class, Double.class, Boolean.class);
                     EObject.assertNotNull(result, pattern, ctx);
-                    return result;
+
+                    if(result instanceof String) {
+                        result = primitiveToTextComponent((String) result);
+                    } else if(result instanceof Integer) {
+                        result = primitiveToTextComponent((Integer) result);
+                    } else if(result instanceof Double) {
+                        result = primitiveToTextComponent((Double) result);
+                    } else if(result instanceof Boolean) {
+                        result = primitiveToTextComponent((Boolean) result);
+                    }
+
+                    return (TextComponent) result;
                 }
                 case "JSON_ROOT":
                 case "JSON_ELEMENT": {
@@ -65,7 +76,30 @@ public class TextParser {
         }
     }
 
-    public static TextComponent parseTextComponent(JsonElement elem, ISymbolContext ctx, TokenPattern<?> pattern, TextComponentContext context) {
+    public static TextComponent primitiveToTextComponent(String str) {
+        return new StringTextComponent(str);
+    }
+
+    public static TextComponent primitiveToTextComponent(boolean bool) {
+        return new StringTextComponent(Boolean.toString(bool));
+    }
+
+    public static TextComponent primitiveToTextComponent(Number num) {
+        return new StringTextComponent(num.toString());
+    }
+
+    public static TextComponent primitiveToTextComponent(JsonPrimitive prim, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(prim.isString()) {
+            return primitiveToTextComponent(prim.getAsString());
+        } else if(prim.isNumber()) {
+            return primitiveToTextComponent(prim.getAsNumber());
+        } else if(prim.isBoolean()) {
+            return primitiveToTextComponent(prim.getAsBoolean());
+        }
+        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
+    }
+
+    public static TextComponent parseTextComponent(JsonElement elem, ISymbolContext ctx, TokenPattern<?> pattern, TextComponentContext textContext) {
         if(elem instanceof TextComponentJsonElement) return ((TextComponentJsonElement) elem).getWrapped();
 
         boolean strict = ctx.getCompiler().getProperties().has("strict-text-components") && getAsBooleanOrNull(ctx.getCompiler().getProperties().get("strict-text-components"));
@@ -74,12 +108,12 @@ public class TextParser {
 
         final TextComponent[] component = new TextComponent[1];
 
-        if(elem.isJsonPrimitive() && ((JsonPrimitive)elem).isString()) {
-            return new StringTextComponent(getAsStringOrNull(elem));
+        if(elem.isJsonPrimitive()) {
+            return primitiveToTextComponent(elem.getAsJsonPrimitive(), pattern, ctx);
         } else if(elem.isJsonArray()) {
             ListTextComponent list = new ListTextComponent();
             for(JsonElement sub : elem.getAsJsonArray()) {
-                list.append(parseTextComponent(sub, ctx, pattern, context));
+                list.append(parseTextComponent(sub, ctx, pattern, textContext));
             }
             return list;
         } else if(elem.isJsonObject()) {
@@ -99,7 +133,7 @@ public class TextParser {
                             component[0] = new TranslateTextComponent(t);
                             if(obj.has("with")) {
                                 using(getAsJsonArrayOrNull(obj.get("with"))).notIfNull().run(
-                                        a -> a.forEach(e -> ((TranslateTextComponent) component[0]).addWith(parseTextComponent(e, ctx, pattern, context)))
+                                        a -> a.forEach(e -> ((TranslateTextComponent) component[0]).addWith(parseTextComponent(e, ctx, pattern, textContext)))
                                 ).otherwise(v -> delegate.report("Expected array in 'with'", obj.get("with")));
                             }
                         }).otherwise(t -> delegate.report("Expected string in 'translate'", obj.get("translate")));
@@ -243,7 +277,7 @@ public class TextParser {
 
             if(obj.has("hoverEvent")) {
                 using(obj.getAsJsonObject("hoverEvent")).notIfNull().run(e -> {
-                    if(!context.isHoverEnabled()) delegate.report("Hover events are not allowed in this context", "Hover events are not used in this context", e);
+                    if(!textContext.isHoverEnabled()) delegate.report("Hover events are not allowed in this context", "Hover events are not used in this context", e);
 
                     using(getAsStringOrNull(e.get("action"))).notIfNull()
                             .except(IllegalArgumentException.class, (x, a) -> delegate.report("Illegal hover event action '" + a + "'", "Unknown hover event action '" + a + "'", e.get("action")))
@@ -344,7 +378,7 @@ public class TextParser {
             }
             if(obj.has("clickEvent")) {
                 using(obj.getAsJsonObject("clickEvent")).notIfNull().run(e -> {
-                    if(!context.isClickEnabled()) delegate.report("Click events are not allowed in this context", "Click events are not used in this context", e);
+                    if(!textContext.isClickEnabled()) delegate.report("Click events are not allowed in this context", "Click events are not used in this context", e);
 
                     using(getAsStringOrNull(e.get("action"))).notIfNull()
                             .except(IllegalArgumentException.class, (x, a) -> delegate.report("Illegal click event action '" + a + "'", "Unknown click event action '" + a + "'", e.get("action")))
@@ -366,7 +400,7 @@ public class TextParser {
 
             if(obj.has("extra")) {
                 using(getAsJsonArrayOrNull(obj.get("extra"))).notIfNull().run(
-                        a -> a.forEach(e -> component[0].addExtra(parseTextComponent(e, ctx, pattern, context)))
+                        a -> a.forEach(e -> component[0].addExtra(parseTextComponent(e, ctx, pattern, textContext)))
                 ).otherwise(v -> delegate.report("Expected array in 'extra'", obj.get("extra")));
             }
 
