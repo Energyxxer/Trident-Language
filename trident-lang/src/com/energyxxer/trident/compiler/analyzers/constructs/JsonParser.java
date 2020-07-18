@@ -3,6 +3,7 @@ package com.energyxxer.trident.compiler.analyzers.constructs;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.trident.compiler.analyzers.default_libs.JsonLib;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.google.gson.JsonArray;
@@ -68,6 +69,10 @@ public class JsonParser {
                     JsonPrimitive number = new JsonPrimitive(CommonParsers.parseDouble(pattern, ctx));
                     patternCache.put(number, pattern);
                     return number;
+                case "JSON_NUMBER":
+                    JsonElement jsonNumber = new CustomJSONNumber(pattern.flatten(false));
+                    patternCache.put(jsonNumber, pattern);
+                    return jsonNumber;
                 case "BOOLEAN":
                     JsonPrimitive bool = new JsonPrimitive(pattern.flattenTokens().get(0).value.equals("true"));
                     patternCache.put(bool, pattern);
@@ -90,5 +95,12 @@ public class JsonParser {
      * JsonParser must not be instantiated.
      */
     private JsonParser() {
+    }
+
+    public static class CustomJSONNumber extends JsonLib.WrapperJsonElement<String> {
+
+        public CustomJSONNumber(String wrapped) {
+            super(wrapped, String.class);
+        }
     }
 }

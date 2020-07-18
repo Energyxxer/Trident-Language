@@ -1,5 +1,6 @@
 package com.energyxxer.trident.extensions;
 
+import com.energyxxer.trident.compiler.analyzers.constructs.JsonParser;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -9,6 +10,17 @@ public class EJsonElement {
     public static String getAsStringOrNull(JsonElement thiz) {
         return (thiz != null && thiz.isJsonPrimitive() && thiz.getAsJsonPrimitive().isString()) ?
                 thiz.getAsString() :
+                null;
+    }
+
+    public static String getAsStringOrNumberOrNull(JsonElement thiz) {
+        if(thiz instanceof JsonParser.CustomJSONNumber) {
+            return ((JsonParser.CustomJSONNumber) thiz).getWrapped();
+        }
+        return (thiz != null && thiz.isJsonPrimitive() && thiz.getAsJsonPrimitive().isString()) ?
+                thiz.getAsString() :
+                (thiz != null && thiz.isJsonPrimitive() && thiz.getAsJsonPrimitive().isNumber()) ?
+                        String.valueOf(thiz.getAsJsonPrimitive().getAsNumber()) :
                 null;
     }
 

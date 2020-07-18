@@ -1667,6 +1667,7 @@ public class TridentProductions {
             JSON_ELEMENT.add(real().setName("NUMBER"));
             JSON_ELEMENT.add(INTERPOLATION_BLOCK);
             JSON_ELEMENT.add(rawBoolean().setName("BOOLEAN"));
+            JSON_ELEMENT.add(ofType(JSON_NUMBER).setName("JSON_NUMBER"));
 
             TEXT_COMPONENT.add(JSON_ELEMENT);
             TEXT_COMPONENT.add(INTERPOLATION_BLOCK);

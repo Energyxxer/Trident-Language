@@ -122,12 +122,12 @@ public class TextParser {
             component[0] = null;
 
             if(obj.has("text")) {
-                using(getAsStringOrNull(obj.get("text")))
+                using(getAsStringOrNumberOrNull(obj.get("text")))
                         .notIfNull()
                         .run(t -> component[0] = new StringTextComponent(t))
                         .otherwise(t -> delegate.report("Expected string in 'text'", obj.get("text")));
             } else if(obj.has("translate")) {
-                using(getAsStringOrNull(obj.get("translate")))
+                using(getAsStringOrNumberOrNull(obj.get("translate")))
                         .notIfNull()
                         .run(t -> {
                             component[0] = new TranslateTextComponent(t);
@@ -138,15 +138,15 @@ public class TextParser {
                             }
                         }).otherwise(t -> delegate.report("Expected string in 'translate'", obj.get("translate")));
             } else if(obj.has("keybind")) {
-                using(getAsStringOrNull(obj.get("keybind")))
+                using(getAsStringOrNumberOrNull(obj.get("keybind")))
                         .notIfNull()
                         .run(t -> component[0] = new KeybindTextComponent(t))
                         .otherwise(t -> delegate.report("Expected string in 'keybind'", obj.get("keybind")));
             } else if(obj.has("score")) {
                 using(getAsJsonObjectOrNull(obj.get("score"))).notIfNull().run(s -> {
-                    String name = getAsStringOrNull(s.get("name"));
+                    String name = getAsStringOrNumberOrNull(s.get("name"));
                     if(name == null) delegate.report("Missing 'name' string for 'score' text component", s);
-                    String objectiveName = getAsStringOrNull(s.get("objective"));
+                    String objectiveName = getAsStringOrNumberOrNull(s.get("objective"));
                     if(objectiveName == null) delegate.report("Missing 'objective' string for 'score' text component", s);
                     if(name != null && objectiveName != null) {
                         Objective objective = ctx.getCompiler().getModule().getObjectiveManager().getOrCreate(objectiveName);
@@ -154,21 +154,21 @@ public class TextParser {
                     }
                 }).otherwise(v -> delegate.report("Expected object in 'score'", obj.get("score")));
             } else if(obj.has("selector")) {
-                using(getAsStringOrNull(obj.get("selector")))
+                using(getAsStringOrNumberOrNull(obj.get("selector")))
                         .notIfNull()
                         .run(t -> component[0] = new SelectorTextComponent(new RawEntity(t)))
                         .otherwise(t -> delegate.report("Expected string in 'selector'", obj.get("selector")));
             } else if(obj.has("nbt")) {
-                using(getAsStringOrNull(obj.get("nbt"))).notIfNull().run(s -> {
+                using(getAsStringOrNumberOrNull(obj.get("nbt"))).notIfNull().run(s -> {
                     Boolean rawInterpret = getAsBooleanOrNull(obj.get("interpret"));
                     boolean interpret = rawInterpret != null && rawInterpret;
 
-                    using(getAsStringOrNull(obj.get("entity"))).notIfNull()
+                    using(getAsStringOrNumberOrNull(obj.get("entity"))).notIfNull()
                             .run(e -> component[0] = new RawNBTTextComponent(s, "entity", e, interpret))
                             .otherwise(
-                                    v -> using(getAsStringOrNull(obj.get("block"))).notIfNull().run(b ->
+                                    v -> using(getAsStringOrNumberOrNull(obj.get("block"))).notIfNull().run(b ->
                                             component[0] = new RawNBTTextComponent(s, "block", b, interpret))
-                                            .otherwise(w -> using(getAsStringOrNull(obj.get("storage"))).notIfNull().run(b ->
+                                            .otherwise(w -> using(getAsStringOrNumberOrNull(obj.get("storage"))).notIfNull().run(b ->
                                             component[0] = new RawNBTTextComponent(s, "storage", b, interpret)
                                                     ).otherwise(x -> delegate.report("Expected either 'entity', 'block' or 'storage' in nbt text component, got neither.", obj)))
                     );
@@ -182,7 +182,7 @@ public class TextParser {
             style.setMask(0);
             if(obj.has("color")) {
                 try {
-                    using(getAsStringOrNull(obj.get("color")))
+                    using(getAsStringOrNumberOrNull(obj.get("color")))
                             .notIfNull()
                             .run(t -> {
                                 TextColor color = TextColor.valueOf(t.toUpperCase());
@@ -197,13 +197,13 @@ public class TextParser {
                             })
                             .otherwise(t -> delegate.report("Expected string in 'color'", obj.get("color")));
                 } catch(IllegalArgumentException x) {
-                    delegate.report("Illegal text color '" + getAsStringOrNull(obj.get("color")) + "'",
-                            "Unknown text color '" + getAsStringOrNull(obj.get("color")) + "'", obj.get("color"));
+                    delegate.report("Illegal text color '" + getAsStringOrNumberOrNull(obj.get("color")) + "'",
+                            "Unknown text color '" + getAsStringOrNumberOrNull(obj.get("color")) + "'", obj.get("color"));
                 }
             }
             if(obj.has("font")) {
                 try {
-                    using(getAsStringOrNull(obj.get("font")))
+                    using(getAsStringOrNumberOrNull(obj.get("font")))
                             .notIfNull()
                             .run(t -> {
                                 TridentUtil.ResourceLocation fontLoc = TridentUtil.ResourceLocation.createStrict(t);
@@ -215,7 +215,7 @@ public class TextParser {
                             })
                             .otherwise(t -> delegate.report("Expected string in 'font'", obj.get("font")));
                 } catch(IllegalArgumentException x) {
-                    delegate.report("Illegal font resource location '" + getAsStringOrNull(obj.get("font")) + "'", obj.get("font"));
+                    delegate.report("Illegal font resource location '" + getAsStringOrNumberOrNull(obj.get("font")) + "'", obj.get("font"));
                 }
             }
             if(obj.has("bold")) {
@@ -279,13 +279,13 @@ public class TextParser {
                 using(obj.getAsJsonObject("hoverEvent")).notIfNull().run(e -> {
                     if(!textContext.isHoverEnabled()) delegate.report("Hover events are not allowed in this context", "Hover events are not used in this context", e);
 
-                    using(getAsStringOrNull(e.get("action"))).notIfNull()
+                    using(getAsStringOrNumberOrNull(e.get("action"))).notIfNull()
                             .except(IllegalArgumentException.class, (x, a) -> delegate.report("Illegal hover event action '" + a + "'", "Unknown hover event action '" + a + "'", e.get("action")))
                             .run(a -> {
                         HoverEvent.Action action = HoverEvent.Action.valueOf(a.toUpperCase());
                         using(e.get("value")).notIfNull().run(v -> {
                             if(v.isJsonPrimitive() && v.getAsJsonPrimitive().isString()) {
-                                String value = getAsStringOrNull(v);
+                                String value = getAsStringOrNumberOrNull(v);
                                 component[0].addEvent(new HoverEvent(action, value));
                             } else {
                                 TextComponent value = (parseTextComponent(v, ctx, pattern, TextComponentContext.TOOLTIP));
@@ -310,7 +310,7 @@ public class TextParser {
                                             } else {
                                                 using(getAsJsonObjectOrNull(c)).notIfNull()
                                                         .run(i -> {
-                                                            using(getAsStringOrNull(i.get("id"))).notIfNull()
+                                                            using(getAsStringOrNumberOrNull(i.get("id"))).notIfNull()
                                                                     .run(rawId -> itemIdToShow[0] = new TridentUtil.ResourceLocation(rawId))
                                                                     .otherwise(ignore -> delegate.report("Expected string in 'id'", i));
                                                             if(i.has("count")) {
@@ -319,7 +319,7 @@ public class TextParser {
                                                                         .otherwise(ignore -> delegate.report("Expected integer in 'count'", i.get("count")));
                                                             }
                                                             if(i.has("tag")) {
-                                                                using(getAsStringOrNull(i.get("tag"))).notIfNull()
+                                                                using(getAsStringOrNumberOrNull(i.get("tag"))).notIfNull()
                                                                         .run(lambdaRawTag -> rawTag[0] = lambdaRawTag)
                                                                         .otherwise(ignore -> delegate.report("Expected string in 'tag'", i.get("tag")));
                                                             }
@@ -343,11 +343,11 @@ public class TextParser {
 
                                             using(getAsJsonObjectOrNull(c)).notIfNull()
                                                     .run(i -> {
-                                                        using(getAsStringOrNull(i.get("type"))).notIfNull()
+                                                        using(getAsStringOrNumberOrNull(i.get("type"))).notIfNull()
                                                                 .run(rawId -> entityIdToShow[0] = new TridentUtil.ResourceLocation(rawId))
                                                                 .otherwise(ignore -> delegate.report("Expected string in 'type'", i));
                                                         if(i.has("id")) {
-                                                            using(getAsStringOrNull(i.get("id"))).notIfNull()
+                                                            using(getAsStringOrNumberOrNull(i.get("id"))).notIfNull()
                                                                     .except(IllegalArgumentException.class, (x, xobj) -> delegate.report("Illegal UUID", "Invalid UUID", i.get("id")))
                                                                     .run(rawId -> id[0] = UUID.fromString(rawId))
                                                                     .otherwise(ignore -> delegate.report("Expected string in 'id'", i.get("id")));
@@ -380,12 +380,12 @@ public class TextParser {
                 using(obj.getAsJsonObject("clickEvent")).notIfNull().run(e -> {
                     if(!textContext.isClickEnabled()) delegate.report("Click events are not allowed in this context", "Click events are not used in this context", e);
 
-                    using(getAsStringOrNull(e.get("action"))).notIfNull()
+                    using(getAsStringOrNumberOrNull(e.get("action"))).notIfNull()
                             .except(IllegalArgumentException.class, (x, a) -> delegate.report("Illegal click event action '" + a + "'", "Unknown click event action '" + a + "'", e.get("action")))
                             .run(a -> {
                                 ClickEvent.Action action = ClickEvent.Action.valueOf(a.toUpperCase());
                                 using(e.get("value")).notIfNull().run(v -> {
-                                    String value = getAsStringOrNull(v);
+                                    String value = getAsStringOrNumberOrNull(v);
                                     if(value == null) delegate.report("Missing click event value", e);
                                     else component[0].addEvent(new ClickEvent(action, value));
                                 }).otherwise(v -> delegate.report("Missing click event value", e));
@@ -393,7 +393,7 @@ public class TextParser {
                 });
             }
             if(obj.has("insertion")) {
-                using(getAsStringOrNull(obj.get("insertion"))).notIfNull().run(
+                using(getAsStringOrNumberOrNull(obj.get("insertion"))).notIfNull().run(
                         t -> component[0].addEvent(new InsertionEvent(t))
                 ).otherwise(v -> delegate.report("Expected string in 'insertion'", obj.get("insertion")));
             }

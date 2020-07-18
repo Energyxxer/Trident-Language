@@ -78,6 +78,8 @@ public class TridentLexerProfile extends LexerProfile {
 
                     TokenType obtainedType = length >= 2 && Character.isLetter(str.charAt(length-1)) && ((length == 2) == (Character.isLetter(str.charAt(1)))) ? TridentTokens.TYPED_NUMBER : ((str.substring(0, length).contains(".")) ? TridentTokens.REAL_NUMBER : TridentTokens.INTEGER_NUMBER);
 
+                    if(type == JSON_NUMBER && obtainedType != TYPED_NUMBER) obtainedType = type;
+
                     if(type == TYPED_NUMBER) obtainedType = type;
                     else if(type == REAL_NUMBER && obtainedType == INTEGER_NUMBER) obtainedType = REAL_NUMBER;
 
@@ -94,7 +96,7 @@ public class TridentLexerProfile extends LexerProfile {
 
             @Override
             public Collection<TokenType> getHandledTypes() {
-                return Arrays.asList(TridentTokens.TYPED_NUMBER, TridentTokens.INTEGER_NUMBER, TridentTokens.REAL_NUMBER);
+                return Arrays.asList(TridentTokens.TYPED_NUMBER, TridentTokens.INTEGER_NUMBER, TridentTokens.REAL_NUMBER, JSON_NUMBER);
             }
         });
 
