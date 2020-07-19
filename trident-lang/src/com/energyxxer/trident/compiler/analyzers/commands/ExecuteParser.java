@@ -53,6 +53,7 @@ public class ExecuteParser implements SimpleCommandParser {
                 }
                 if(!found) throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + commandName + "'", rawCommand, ctx);
             }
+            return null;
         }
         return new ExecuteCommand(new EmptyCommand(), modifiers);
     }
