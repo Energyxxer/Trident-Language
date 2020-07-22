@@ -958,7 +958,7 @@ public class TridentProductions {
         {
             COMMAND.add(group(
                     matchItem(COMMAND_HEADER, "setworldspawn"),
-                    optional(COORDINATE_SET)
+                    optional(COORDINATE_SET, optional(MIXABLE_COORDINATE).setName("ANGLE"))
             ));
         }
         //endregion
@@ -969,7 +969,7 @@ public class TridentProductions {
                     optional(
                             sameLine(),
                             ENTITY,
-                            optional(COORDINATE_SET)
+                            optional(COORDINATE_SET, optional(MIXABLE_COORDINATE).setName("ANGLE"))
                     )
             ));
         }

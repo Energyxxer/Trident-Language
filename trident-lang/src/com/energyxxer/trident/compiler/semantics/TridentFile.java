@@ -89,6 +89,12 @@ public class TridentFile extends SymbolContext {
 
         this.function = compileOnly ? null : getNamespace().functions.getOrCreate(functionPath);
         setShouldExportFunction(parentContext == null || parentContext.getStaticParentFile().shouldExportFunction);
+
+        if(function != null) tags.forEach(l -> {
+            Tag tag = getCompiler().getModule().getNamespace(l.namespace).tags.functionTags.getOrCreate(l.body);
+            tag.setExport(true);
+            tag.addValue(new FunctionReference(this.function));
+        });
     }
 
     private void resolveDirectives() {
@@ -252,12 +258,6 @@ public class TridentFile extends SymbolContext {
     public void resolveEntries() {
         if(!valid) return;
         if(entriesResolved) return;
-
-        if(function != null) tags.forEach(l -> {
-            Tag tag = getCompiler().getModule().getNamespace(l.namespace).tags.functionTags.getOrCreate(l.body);
-            tag.setExport(true);
-            tag.addValue(new FunctionReference(this.function));
-        });
 
         resolveEntries((TokenList) this.pattern.find(".ENTRIES"), this, function, compileOnly);
     }
