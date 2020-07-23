@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static com.energyxxer.trident.extensions.EJsonElement.getAsBooleanOrNull;
 import static com.energyxxer.trident.extensions.EJsonElement.getAsStringOrNull;
 
 public class TridentCompiler extends AbstractProcess {
@@ -550,16 +551,27 @@ public class TridentCompiler extends AbstractProcess {
 
                 if(values != null) {
                     for(JsonElement elem : values) {
-                        String value = getAsStringOrNull(elem);
-                        if(value == null) continue;
-                        boolean isTag = value.startsWith("#");
-                        if(isTag) value = value.substring(1);
-                        TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(value);
+                        Type value;
+                        Tag.TagValueMode valueMode = Tag.TagValueMode.REQUIRED;
+
+                        String rawId;
+
+                        if(elem.isJsonObject()) {
+                            rawId = getAsStringOrNull(elem.getAsJsonObject().get("id"));
+                            valueMode = (Boolean.FALSE.equals(getAsBooleanOrNull(elem.getAsJsonObject().get("required")))) ? Tag.TagValueMode.OPTIONAL : Tag.TagValueMode.REQUIRED;
+                        } else {
+                            rawId = getAsStringOrNull(elem);
+                        }
+
+                        if(rawId == null) continue;
+                        boolean isTag = rawId.startsWith("#");
+                        if(isTag) rawId = rawId.substring(1);
+                        TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(rawId);
 
                         if(isTag) {
                             Tag created = module.getNamespace(loc.namespace).getTagManager().getGroup(group.getCategory()).getOrCreate(loc.body);
                             created.setExport(true);
-                            tag.addValue(created);
+                            value = created;
                         } else {
                             Type created;
                             if(group.getCategory().equals(FunctionReference.CATEGORY)) {
@@ -572,8 +584,10 @@ public class TridentCompiler extends AbstractProcess {
                                     continue;
                                 }
                             }
-                            tag.addValue(created);
+                            value = created;
                         }
+
+                        tag.addValue(value, valueMode);
                     }
                 }
 

@@ -8,6 +8,7 @@ import com.energyxxer.commodore.types.Type;
 import com.energyxxer.trident.compiler.TridentCompiler;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
 import com.energyxxer.trident.compiler.semantics.Symbol;
@@ -81,8 +82,22 @@ public class TagLib implements DefaultLibraryProvider {
         Tag tag = tagGroup.getOrCreate(tagLoc.body);
 
         for(Object rawValue : values) {
+
+            Object rawId;
+            Tag.TagValueMode valueMode;
+
             if(rawValue instanceof TridentUtil.ResourceLocation) {
-                TridentUtil.ResourceLocation value = (TridentUtil.ResourceLocation) rawValue;
+                rawId = rawValue;
+                valueMode = Tag.TagValueMode.REQUIRED;
+            } else if(rawValue instanceof DictionaryObject) {
+                rawId = ((DictionaryObject) rawValue).get("id");
+                valueMode = Boolean.FALSE.equals(((DictionaryObject) rawValue).get("required")) ? Tag.TagValueMode.OPTIONAL : Tag.TagValueMode.REQUIRED;
+            } else {
+                throw new IllegalArgumentException("Expected resource type or dictionary in 'values' list parameter, instead got " + TridentTypeManager.getTypeIdentifierForObject(rawValue));
+            }
+
+            if(rawId instanceof TridentUtil.ResourceLocation) {
+                TridentUtil.ResourceLocation value = (TridentUtil.ResourceLocation) rawId;
                 Type type;
                 if(value.isTag) {
                     type = module.getNamespace(value.namespace).getTagManager().getGroup(category).get(value.body);
@@ -92,9 +107,9 @@ public class TagLib implements DefaultLibraryProvider {
                 } else {
                     type = module.getNamespace(value.namespace).getTypeManager().getDictionary(category).get(value.body);
                 }
-                tag.addValue(type);
+                tag.addValue(type, valueMode);
             } else {
-                throw new IllegalArgumentException("Expected resource type in 'values' list parameter, instead got " + TridentTypeManager.getTypeIdentifierForObject(rawValue));
+                throw new IllegalArgumentException("Expected resource type in 'id' (in 'values' list parameter), instead got " + TridentTypeManager.getTypeIdentifierForObject(rawId));
             }
         }
 
