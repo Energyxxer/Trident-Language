@@ -25,7 +25,7 @@ public class FacingParser implements SimpleModifierParser {
                     return new ExecuteFacingEntity(EntityParser.parseEntity(branch.find("ENTITY"), ctx), (anchorToken != null && anchorToken.flatten(false).equals("eyes")) ? EntityAnchor.EYES : EntityAnchor.FEET);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, branch.find(".ENTITY"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, branch.tryFind(".ENTITY"))
                             .invokeThrow();
                 }
             }

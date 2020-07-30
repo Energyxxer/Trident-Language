@@ -35,14 +35,14 @@ public class EffectParser implements SimpleCommandParser {
                 using(inner.find(".DURATION")).notIfNull()
                         .except(CommodoreException.class,
                                 (ex, obj) -> TridentException.handleCommodoreException((CommodoreException) ex, inner, ctx)
-                                        .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.find(".DURATION"))
+                                        .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.tryFind(".DURATION"))
                                         .invokeThrow()
                         )
                         .run(p -> effect.setDuration(20 * CommonParsers.parseInt(p, ctx)));
                 using(inner.find("..AMPLIFIER")).notIfNull()
                         .except(CommodoreException.class,
                                 (ex, obj) -> TridentException.handleCommodoreException((CommodoreException) ex, inner, ctx)
-                                        .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.find(".DURATION"))
+                                        .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.tryFind(".DURATION"))
                                         .invokeThrow()
                         )
                         .run(p -> effect.setAmplifier(CommonParsers.parseInt(p, ctx)));

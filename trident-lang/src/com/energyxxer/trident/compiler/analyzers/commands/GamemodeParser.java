@@ -24,8 +24,8 @@ public class GamemodeParser implements SimpleCommandParser {
             return new GamemodeCommand(gamemode, entity);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("PLAYER.ENTITY"))
-                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("GAMEMODE"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("PLAYER.ENTITY"))
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.tryFind("GAMEMODE"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

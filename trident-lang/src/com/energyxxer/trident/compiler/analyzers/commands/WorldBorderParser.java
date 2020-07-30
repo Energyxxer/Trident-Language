@@ -30,8 +30,8 @@ public class WorldBorderParser implements SimpleCommandParser {
                     else return new WorldBorderSetDistance(distance, seconds);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map("DISTANCE", inner.find("DISTANCE"))
-                            .map("TIME", inner.find("TIME"))
+                            .map("DISTANCE", inner.tryFind("DISTANCE"))
+                            .map("TIME", inner.tryFind("TIME"))
                             .invokeThrow();
                 }
             }
@@ -42,7 +42,7 @@ public class WorldBorderParser implements SimpleCommandParser {
                     else return new WorldBorderSetDamageBuffer(damageOrDistance);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.find("DAMAGE_OR_DISTANCE"))
+                            .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.tryFind("DAMAGE_OR_DISTANCE"))
                             .invokeThrow();
                 }
             }
@@ -53,7 +53,7 @@ public class WorldBorderParser implements SimpleCommandParser {
                     else return new WorldBorderSetWarningTime(distanceOrTime);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.find("DISTANCE_OR_TIME"))
+                            .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.tryFind("DISTANCE_OR_TIME"))
                             .invokeThrow();
                 }
             }

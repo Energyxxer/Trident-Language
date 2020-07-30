@@ -85,7 +85,7 @@ public class TeleportParser implements SimpleCommandParser {
                                         }
                                     } catch(CommodoreException x) {
                                         TridentException.handleCommodoreException(x, pattern, ctx)
-                                                .map(CommodoreException.Source.ENTITY_ERROR, rotationOption.find("CHOICE..ENTITY"))
+                                                .map(CommodoreException.Source.ENTITY_ERROR, rotationOption.tryFind("CHOICE..ENTITY"))
                                                 .invokeThrow();
                                     }
                                 }

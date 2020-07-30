@@ -24,8 +24,8 @@ public class BanParser implements SimpleCommandParser {
             return new BanCommand(player, reason);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
-                    .map(CommodoreException.Source.FORMAT_ERROR, pattern.find("ENTITY"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
+                    .map(CommodoreException.Source.FORMAT_ERROR, pattern.tryFind("ENTITY"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

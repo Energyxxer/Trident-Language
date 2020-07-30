@@ -37,7 +37,7 @@ public class SummonParser implements SimpleCommandParser {
             return data.constructSummon();
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("NEW_ENTITY_LITERAL"))
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.tryFind("NEW_ENTITY_LITERAL"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

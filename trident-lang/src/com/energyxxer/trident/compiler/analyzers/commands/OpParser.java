@@ -17,8 +17,8 @@ public class OpParser implements SimpleCommandParser {
             return new OpCommand(EntityParser.parseEntity(pattern.find("ENTITY"), ctx));
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
-                    .map(CommodoreException.Source.FORMAT_ERROR, pattern.find("ENTITY"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
+                    .map(CommodoreException.Source.FORMAT_ERROR, pattern.tryFind("ENTITY"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

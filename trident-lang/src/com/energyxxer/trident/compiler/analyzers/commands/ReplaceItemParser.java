@@ -35,9 +35,9 @@ public class ReplaceItemParser implements SimpleCommandParser {
             } else return new ReplaceItemEntityCommand(EntityParser.parseEntity(pattern.find("TARGET.ENTITY"), ctx), slot, item, count);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("TARGET.ENTITY"))
-                    .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.find("COUNT"))
-                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("ITEM"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("TARGET.ENTITY"))
+                    .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.tryFind("COUNT"))
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.tryFind("ITEM"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

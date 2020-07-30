@@ -27,7 +27,7 @@ public class ScheduleParser implements SimpleCommandParser {
                     return new ScheduleCommand(CommonParsers.parseFunctionTag((TokenStructure) inner.find("FUNCTION_REFERENCE.RESOURCE_LOCATION_TAGGED"), ctx), CommonParsers.parseTime(inner.find("TIME"), ctx), mode);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, inner, ctx)
-                            .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.find("TIME"))
+                            .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.tryFind("TIME"))
                             .invokeThrow();
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
                 }

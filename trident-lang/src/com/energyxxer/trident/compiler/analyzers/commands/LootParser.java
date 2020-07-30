@@ -34,7 +34,7 @@ public class LootParser implements SimpleCommandParser {
                     return new LootGive(EntityParser.parseEntity(pattern.find("ENTITY"), ctx));
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
                             .invokeThrow();
                 }
             }
@@ -54,7 +54,7 @@ public class LootParser implements SimpleCommandParser {
                     else return new LootReplaceEntity(EntityParser.parseEntity(pattern.find("CHOICE.ENTITY"), ctx), slot, count);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.find("COUNT"))
+                            .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.tryFind("COUNT"))
                             .invokeThrow();
                 }
             }
@@ -82,7 +82,7 @@ public class LootParser implements SimpleCommandParser {
                     return new LootFromKill(EntityParser.parseEntity(pattern.find("ENTITY"), ctx));
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
                             .invokeThrow();
                 }
             }

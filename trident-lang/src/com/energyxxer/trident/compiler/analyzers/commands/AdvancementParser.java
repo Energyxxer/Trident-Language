@@ -48,7 +48,7 @@ public class AdvancementParser implements SimpleCommandParser {
                 try {
                     return new AdvancementCommand(action, entity, AdvancementCommand.Limit.ONLY, advancement.toString(), criteria);
                 } catch(CommodoreException x) {
-                    TridentException.handleCommodoreException(x, pattern, ctx).map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY")).invokeThrow();
+                    TridentException.handleCommodoreException(x, pattern, ctx).map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY")).invokeThrow();
                 }
             }
             default: {

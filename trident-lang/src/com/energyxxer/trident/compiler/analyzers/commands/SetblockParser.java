@@ -29,7 +29,7 @@ public class SetblockParser implements SimpleCommandParser {
             return new SetblockCommand(pos, block, mode);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("BLOCK"))
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.tryFind("BLOCK"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

@@ -28,9 +28,9 @@ public class EnchantParser implements SimpleCommandParser {
             return new EnchantCommand(entity, enchantment, level);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
-                    .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.find("LEVEL"))
-                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("ENCHANTMENT_ID"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
+                    .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.tryFind("LEVEL"))
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.tryFind("ENCHANTMENT_ID"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

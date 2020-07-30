@@ -26,7 +26,7 @@ public class TimeParser implements SimpleCommandParser {
                     return new TimeAddCommand(CommonParsers.parseTime(inner.find("TIME"), ctx));
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.find("TIME"))
+                            .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, inner.tryFind("TIME"))
                             .invokeThrow();
                 }
             }

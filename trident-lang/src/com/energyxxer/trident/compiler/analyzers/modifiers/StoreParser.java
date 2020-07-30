@@ -59,7 +59,7 @@ public class StoreParser implements SimpleModifierParser {
                     return new ExecuteStoreEntity(storeValue, entity, path, type, scale);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find("ENTITY"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, inner.tryFind("ENTITY"))
                             .invokeThrow();
                 }
             }

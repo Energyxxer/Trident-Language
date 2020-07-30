@@ -19,8 +19,8 @@ public class PardonIpParser implements SimpleCommandParser {
             return new PardonIpCommand(ip);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("IDENTIFIER_A"))
-                    .map(CommodoreException.Source.FORMAT_ERROR, pattern.find("IDENTIFIER_A"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("IDENTIFIER_A"))
+                    .map(CommodoreException.Source.FORMAT_ERROR, pattern.tryFind("IDENTIFIER_A"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

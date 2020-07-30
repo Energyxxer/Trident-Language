@@ -49,7 +49,7 @@ public class PlaySoundParser implements SimpleCommandParser {
             } else return new PlaySoundCommand(soundEvent.toString(), channel, entity);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
                     .map("MAX_VOLUME", () -> sub.searchByName("REAL").get(0))
                     .map("PITCH", () -> sub.searchByName("REAL").get(1))
                     .map("MIN_VOLUME", () -> sub.searchByName("REAL").get(2))

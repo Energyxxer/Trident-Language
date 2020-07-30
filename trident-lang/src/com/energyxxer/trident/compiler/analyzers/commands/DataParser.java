@@ -47,7 +47,7 @@ public class DataParser implements SimpleCommandParser {
             return new DataRemoveCommand(target, path);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, inner, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, inner.find("DATA_TARGET.ENTITY"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, inner.tryFind("DATA_TARGET.ENTITY"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
         }
@@ -112,7 +112,7 @@ public class DataParser implements SimpleCommandParser {
             return new DataModifyCommand(target, path, operation, source);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("DATA_TARGET.ENTITY"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("DATA_TARGET.ENTITY"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }
@@ -128,7 +128,7 @@ public class DataParser implements SimpleCommandParser {
             return new DataMergeCommand(target, nbt);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, inner, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, inner.find("DATA_TARGET.ENTITY"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, inner.tryFind("DATA_TARGET.ENTITY"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
         }
@@ -152,7 +152,7 @@ public class DataParser implements SimpleCommandParser {
             return new DataGetCommand(target);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, inner, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, inner.find("DATA_TARGET.ENTITY"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, inner.tryFind("DATA_TARGET.ENTITY"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
         }

@@ -85,8 +85,8 @@ public class AttributeParser implements SimpleCommandParser {
             }
         } catch (CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
-                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("ATTRIBUTE_ID"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.tryFind("ATTRIBUTE_ID"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

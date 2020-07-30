@@ -36,9 +36,9 @@ public class SpreadPlayersParser implements SimpleCommandParser {
             }
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
-                    .map("SPREAD_DISTANCE", pattern.find("SPREAD_DISTANCE"))
-                    .map("MAX_RANGE", pattern.find("MAX_RANGE"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
+                    .map("SPREAD_DISTANCE", pattern.tryFind("SPREAD_DISTANCE"))
+                    .map("MAX_RANGE", pattern.tryFind("MAX_RANGE"))
                     .map("MAX_HEIGHT", pattern.tryFind("UNDER_CLAUSE.MAX_HEIGHT"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);

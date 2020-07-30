@@ -50,9 +50,9 @@ public class ParticleParser implements SimpleCommandParser {
             } else return new ParticleCommand(particle);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("....ENTITY"))
-                    .map("SPEED", pattern.find("..SPEED"))
-                    .map("COUNT", pattern.find("..COUNT"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("....ENTITY"))
+                    .map("SPEED", pattern.tryFind("..SPEED"))
+                    .map("COUNT", pattern.tryFind("..COUNT"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

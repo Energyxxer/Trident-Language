@@ -20,7 +20,7 @@ public class WeatherParser implements SimpleCommandParser {
                     new WeatherCommand(mode);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.find("INTEGER"))
+                    .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.tryFind("INTEGER"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

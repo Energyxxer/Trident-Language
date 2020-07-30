@@ -42,8 +42,8 @@ public class WhitelistParser implements SimpleCommandParser {
                     }
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find("ENTITY"))
-                            .map(CommodoreException.Source.FORMAT_ERROR, inner.find("ENTITY"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, inner.tryFind("ENTITY"))
+                            .map(CommodoreException.Source.FORMAT_ERROR, inner.tryFind("ENTITY"))
                             .invokeThrow();
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
                 }

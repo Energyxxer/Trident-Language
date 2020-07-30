@@ -26,7 +26,7 @@ public class TriggerParser implements SimpleCommandParser {
             return new TriggerCommand(objective, action, amount);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("OBJECTIVE_NAME"))
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.tryFind("OBJECTIVE_NAME"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
         }

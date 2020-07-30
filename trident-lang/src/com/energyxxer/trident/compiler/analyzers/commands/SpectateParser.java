@@ -20,8 +20,8 @@ public class SpectateParser implements SimpleCommandParser {
             return new SpectateStartCommand(EntityParser.parseEntity(pattern.find("INNER.ENTITY"), ctx), EntityParser.parseEntity(pattern.find("INNER.INNER.ENTITY"), ctx));
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map("TARGET", pattern.find("INNER.ENTITY"))
-                    .map("SPECTATOR", pattern.find("INNER.INNER.ENTITY"))
+                    .map("TARGET", pattern.tryFind("INNER.ENTITY"))
+                    .map("SPECTATOR", pattern.tryFind("INNER.INNER.ENTITY"))
                     .invokeThrow();
         }
         throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);

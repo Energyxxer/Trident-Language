@@ -24,9 +24,9 @@ public class GiveParser implements SimpleCommandParser {
             return new GiveCommand(EntityParser.parseEntity(pattern.find("ENTITY"), ctx), item, amount);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
                     .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, amountPattern)
-                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("ITEM"))
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.tryFind("ITEM"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

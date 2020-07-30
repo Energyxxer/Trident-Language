@@ -74,8 +74,8 @@ public class ConditionalParser implements SimpleModifierParser {
                     }
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map("TARGET_ENTITY", subject.find("ENTITY"))
-                            .map("SOURCE_ENTITY", choice.find("ENTITY"))
+                            .map("TARGET_ENTITY", subject.tryFind("SCORE"))
+                            .map("SOURCE_ENTITY", choice.tryFind("SCORE"))
                             .invokeThrow();
                 }
             }
@@ -104,7 +104,7 @@ public class ConditionalParser implements SimpleModifierParser {
                     }
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, dataSubject.find("ENTITY"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, dataSubject.tryFind("ENTITY"))
                             .invokeThrow();
                 }
             }

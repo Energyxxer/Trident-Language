@@ -22,7 +22,7 @@ public class PositionedParser implements SimpleModifierParser {
                     return new ExecutePositionedAsEntity(EntityParser.parseEntity(branch.find("ENTITY"), ctx));
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, branch.find("ENTITY"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, branch.tryFind("ENTITY"))
                             .invokeThrow();
                 }
             }

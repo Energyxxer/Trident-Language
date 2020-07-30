@@ -23,9 +23,9 @@ public class ClearParser implements SimpleCommandParser {
             return new ClearCommand(EntityParser.parseEntity(pattern.find(".ENTITY"), ctx), item, amount);
         } catch(CommodoreException x) {
             TridentException.handleCommodoreException(x, pattern, ctx)
-                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.find(".ENTITY"))
-                    .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.find("..AMOUNT"))
-                    .map(CommodoreException.Source.TYPE_ERROR, pattern.find("..ITEM_TAGGED"))
+                    .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind(".ENTITY"))
+                    .map(CommodoreException.Source.NUMBER_LIMIT_ERROR, pattern.tryFind("..AMOUNT"))
+                    .map(CommodoreException.Source.TYPE_ERROR, pattern.tryFind("..ITEM_TAGGED"))
                     .invokeThrow();
             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
         }

@@ -107,8 +107,8 @@ public class ScoreboardParser implements SimpleCommandParser {
                     return new TriggerEnable(score.getHolder(), score.getObjective());
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, inner, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find("SCORE"))
-                            .map(CommodoreException.Source.TYPE_ERROR, inner.find("SCORE"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, inner.tryFind("SCORE"))
+                            .map(CommodoreException.Source.TYPE_ERROR, inner.tryFind("SCORE"))
                             .invokeThrow();
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
                 }
@@ -119,7 +119,7 @@ public class ScoreboardParser implements SimpleCommandParser {
                     return new ScoreGet(score);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, inner, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find("SCORE"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, inner.tryFind("SCORE"))
                             .invokeThrow();
                     throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", inner, ctx);
                 }
@@ -130,7 +130,7 @@ public class ScoreboardParser implements SimpleCommandParser {
                     return new ScoreList(entity);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, inner, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, inner.find(".ENTITY"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, inner.tryFind(".ENTITY"))
                             .invokeThrow();
                 }
             }

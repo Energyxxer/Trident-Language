@@ -32,7 +32,7 @@ public class TitleParser implements SimpleCommandParser {
                     return new TitleShowCommand(entity, display, text);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
                             .invokeThrow();
                 }
             }
@@ -41,7 +41,7 @@ public class TitleParser implements SimpleCommandParser {
                     return inner.find("LITERAL_CLEAR") != null ? new TitleClearCommand(entity) : new TitleResetCommand(entity);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
                             .invokeThrow();
                 }
             }
@@ -53,10 +53,10 @@ public class TitleParser implements SimpleCommandParser {
                     return new TitleTimesCommand(entity, fadeIn, stay, fadeOut);
                 } catch(CommodoreException x) {
                     TridentException.handleCommodoreException(x, pattern, ctx)
-                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.find("ENTITY"))
-                            .map("FADE_IN", inner.find("FADEIN"))
-                            .map("STAY", inner.find("STAY"))
-                            .map("FADE_OUT", inner.find("FADEOUT"))
+                            .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
+                            .map("FADE_IN", inner.tryFind("FADEIN"))
+                            .map("STAY", inner.tryFind("STAY"))
+                            .map("FADE_OUT", inner.tryFind("FADEOUT"))
                             .invokeThrow();
                 }
             }
