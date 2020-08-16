@@ -16,6 +16,8 @@ import com.energyxxer.enxlex.pattern_matching.ParsingSignature;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.enxlex.report.Report;
+import com.energyxxer.enxlex.report.Reported;
 import com.energyxxer.nbtmapper.NBTTypeMap;
 import com.energyxxer.nbtmapper.NBTTypeMapPack;
 import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
@@ -47,7 +49,7 @@ import java.util.*;
 import static com.energyxxer.trident.extensions.EJsonElement.getAsBooleanOrNull;
 import static com.energyxxer.trident.extensions.EJsonElement.getAsStringOrNull;
 
-public class TridentCompiler extends AbstractProcess {
+public class TridentCompiler extends AbstractProcess implements Reported {
 
     public static final String PROJECT_FILE_NAME = ".tdnproj";
     public static final String PROJECT_BUILD_FILE_NAME = ".tdnbuild";
@@ -76,7 +78,7 @@ public class TridentCompiler extends AbstractProcess {
     private String anonymousFunctionTemplate = "_anonymous*";
 
     //Caller Feedback
-    private CompilerReport report = null;
+    private Report report = null;
 
     //File Structure Tracking
     private ArrayList<String> ownFiles = new ArrayList<>();
@@ -106,7 +108,7 @@ public class TridentCompiler extends AbstractProcess {
         this.thread.setUncaughtExceptionHandler((th, ex) -> {
             logException(ex);
         });
-        report = new CompilerReport();
+        report = new Report();
 
         specialFileManager = new SpecialFileManager(this);
 
@@ -126,7 +128,7 @@ public class TridentCompiler extends AbstractProcess {
         this.thread.setUncaughtExceptionHandler((th, ex) -> {
             logException(ex);
         });
-        report = new CompilerReport();
+        report = new Report();
 
         specialFileManager = new SpecialFileManager(this);
 
@@ -152,7 +154,6 @@ public class TridentCompiler extends AbstractProcess {
     }
 
     private void runCompilation() {
-
         if(parentCompiler != null) {
             TridentCompiler next = parentCompiler;
             while(next != null) {
@@ -590,7 +591,6 @@ public class TridentCompiler extends AbstractProcess {
                         tag.addValue(value, valueMode);
                     }
                 }
-
                 break;
             }
         }
@@ -639,7 +639,8 @@ public class TridentCompiler extends AbstractProcess {
         updateStatus(message + (includeProjectName ? ("... [" + rootDir.getName() + "]") : ""));
     }
 
-    public CompilerReport getReport() {
+    @Override
+    public Report getReport() {
         return report;
     }
 
@@ -647,7 +648,7 @@ public class TridentCompiler extends AbstractProcess {
         return module;
     }
 
-    public void setReport(CompilerReport report) {
+    public void setReport(Report report) {
         this.report = report;
     }
 

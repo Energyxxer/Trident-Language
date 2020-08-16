@@ -71,7 +71,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
 
     public void start() {
         this.thread = new Thread(this::runSummary,"Trident-Compiler-Summarizer[" + rootDir.getName() + "]");
-        //report = new CompilerReport();
+        //report = new Report();
         thread.start();
     }
 

@@ -92,6 +92,7 @@ public class TridentProjectSummary implements ProjectSummary {
         return new ArrayList<>(soundEvents);
     }
 
+    @Override
     public Collection<Todo> getTodos() {
         return todos;
     }

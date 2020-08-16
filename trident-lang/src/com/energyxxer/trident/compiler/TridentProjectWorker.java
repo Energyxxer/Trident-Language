@@ -6,6 +6,7 @@ import com.energyxxer.commodore.util.io.CompoundInput;
 import com.energyxxer.commodore.util.io.DirectoryCompoundInput;
 import com.energyxxer.commodore.util.io.ZipCompoundInput;
 import com.energyxxer.commodore.versioning.JavaEditionVersion;
+import com.energyxxer.enxlex.report.Report;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.trident.compiler.lexer.TridentProductions;
@@ -33,7 +34,7 @@ public class TridentProjectWorker {
     public final Setup setup;
     public final Output output;
 
-    public CompilerReport report;
+    public Report report;
 
     private DependencyInfo dependencyInfo;
 
@@ -47,7 +48,7 @@ public class TridentProjectWorker {
         setup.resolveImplications();
 
         if(setup.useReport) {
-            report = new CompilerReport();
+            report = new Report();
         }
 
         if(setup.setupProperties) {
