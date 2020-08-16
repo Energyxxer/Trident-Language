@@ -2103,6 +2103,9 @@ public class TridentProductions {
             }
             ATTRIBUTE_ID.add(categoryMap.get(AttributeType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Attribute");
             BIOME_ID.add(categoryMap.get(BiomeType.CATEGORY)).addTags(SuggestionTags.ENABLED).addTags("cspn:Biome");
+            if(checkVersionFeature(module, "custom_biomes", false)) {
+                BIOME_ID.add(RESOURCE_LOCATION_S);
+            }
 
             BLOCK_ID.add(categoryMap.get(BlockType.CATEGORY).addTags(SuggestionTags.DISABLED)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BLOCK);
             ITEM_ID.add(categoryMap.get(ItemType.CATEGORY).addTags(SuggestionTags.DISABLED)).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ITEM);
