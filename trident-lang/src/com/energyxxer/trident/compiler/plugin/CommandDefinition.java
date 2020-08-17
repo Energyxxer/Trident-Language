@@ -28,11 +28,11 @@ public class CommandDefinition {
     }
 
     void parseSyntaxFile(EagerLexer lexer, File file) throws IOException {
-        lexer.tokenize(file, rawSyntaxFile, new TDNMetaLexerProfile());
+        lexer.start(file, rawSyntaxFile, new TDNMetaLexerProfile());
 
         lexer.getStream().tokens.remove(0);
 
-        TokenMatchResponse response = TDNMetaProductions.FILE.match(lexer.getStream().tokens);
+        TokenMatchResponse response = TDNMetaProductions.FILE.match(0, lexer);
 
         if(!response.matched) {
             throw new IOException("Syntax error in TDNMeta file '" + file + "': " + response.getErrorMessage());
@@ -42,7 +42,7 @@ public class CommandDefinition {
     }
 
     void parseHandlerFile(LazyLexer lexer, File file) throws IOException {
-        lexer.tokenizeParse(file, rawHandlerFile, new TridentLexerProfile());
+        lexer.start(file, rawHandlerFile, new TridentLexerProfile());
 
         lexer.getStream().tokens.remove(0);
 

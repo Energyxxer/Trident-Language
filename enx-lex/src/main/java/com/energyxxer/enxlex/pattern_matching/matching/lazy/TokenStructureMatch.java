@@ -1,15 +1,16 @@
 package com.energyxxer.enxlex.pattern_matching.matching.lazy;
 
-import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
+import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.util.MethodInvocation;
 import com.energyxxer.util.Stack;
 
 import java.util.ArrayList;
 
-public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
-    private ArrayList<LazyTokenPatternMatch> entries = new ArrayList<>();
+public class TokenStructureMatch extends TokenPatternMatch {
+    private ArrayList<TokenPatternMatch> entries = new ArrayList<>();
     /**
      * When greedy: false
      * The structure will always try to return a positive match, even if there are longer negative matches.
@@ -22,29 +23,29 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
      * */
     private boolean greedy = false;
 
-    public LazyTokenStructureMatch(String name) {
+    public TokenStructureMatch(String name) {
         this.name = name;
         optional = false;
     }
 
-    public LazyTokenStructureMatch(String name, boolean optional) {
+    public TokenStructureMatch(String name, boolean optional) {
         this.name = name;
         this.optional = optional;
     }
 
     @Override
-    public LazyTokenStructureMatch setName(String name) {
+    public TokenStructureMatch setName(String name) {
         super.setName(name);
         return this;
     }
 
-    public LazyTokenStructureMatch add(LazyTokenPatternMatch g) {
+    public TokenStructureMatch add(TokenPatternMatch g) {
         if(!entries.contains(g)) entries.add(g);
         return this;
     }
 
     @Override
-    public TokenMatchResponse match(int index, LazyLexer lexer, Stack st) {
+    public TokenMatchResponse match(int index, Lexer lexer, Stack st) {
         lexer.setCurrentIndex(index);
         MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[]{"int"}, new Object[]{index});
         st.push(thisInvoc);
@@ -58,7 +59,7 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
             invokeFailProcessors(0, lexer);
             return new TokenMatchResponse(false, null, 0, this, null);
         }
-        for (LazyTokenPatternMatch entry : entries) {
+        for (TokenPatternMatch entry : entries) {
             lexer.setCurrentIndex(index);
 
             MethodInvocation newInvoc = new MethodInvocation(entry, "match", new String[]{"int"}, new Object[]{index});
@@ -121,9 +122,9 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
         return humanReadableName;
     }
 
-    public LazyTokenStructureMatch exclude(LazyTokenPatternMatch entryToExclude) {
-        LazyTokenStructureMatch newStruct = new LazyTokenStructureMatch(name, optional);
-        for(LazyTokenPatternMatch entry : entries) {
+    public TokenStructureMatch exclude(TokenPatternMatch entryToExclude) {
+        TokenStructureMatch newStruct = new TokenStructureMatch(name, optional);
+        for(TokenPatternMatch entry : entries) {
             if(entry != entryToExclude) {
                 newStruct.add(entry);
             }
@@ -131,7 +132,7 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
         return newStruct;
     }
 
-    public LazyTokenStructureMatch setGreedy(boolean greedy) {
+    public TokenStructureMatch setGreedy(boolean greedy) {
         this.greedy = greedy;
         return this;
     }
@@ -140,7 +141,7 @@ public class LazyTokenStructureMatch extends LazyTokenPatternMatch {
         return greedy;
     }
 
-    public void remove(LazyTokenPatternMatch pattern) {
+    public void remove(TokenPatternMatch pattern) {
         entries.remove(pattern);
     }
 }

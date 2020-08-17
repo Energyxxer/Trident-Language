@@ -7,7 +7,7 @@ import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
-import com.energyxxer.enxlex.pattern_matching.matching.lazy.LazyTokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.enxlex.suggestions.SuggestionModule;
@@ -18,14 +18,13 @@ import java.io.File;
 
 public class LazyLexer extends Lexer {
 
-    private LazyTokenPatternMatch pattern;
+    private TokenPatternMatch pattern;
 
-    public LazyLexer(TokenStream stream, LazyTokenPatternMatch pattern) {
+    public LazyLexer(TokenStream stream, TokenPatternMatch pattern) {
         this.stream = stream;
         this.pattern = pattern;
     }
 
-    private int currentIndex = 0;
     private String fileContents = null;
     private StringLocationCache lineCache = new StringLocationCache();
     private LexerProfile profile = null;
@@ -34,7 +33,8 @@ public class LazyLexer extends Lexer {
 
     private TokenMatchResponse matchResponse = null;
 
-    public void tokenizeParse(File file, String str, LexerProfile profile) {
+    @Override
+    public void start(File file, String str, LexerProfile profile) {
         this.file = file;
         this.fileContents = str;
         this.profile = profile;
@@ -74,14 +74,6 @@ public class LazyLexer extends Lexer {
         return fileContents;
     }
 
-    public int getCurrentIndex() {
-        return currentIndex;
-    }
-
-    public void setCurrentIndex(int currentIndex) {
-        this.currentIndex = currentIndex;
-    }
-
     public String getLookingAt() {
         return fileContents.substring(currentIndex);
     }
@@ -90,21 +82,20 @@ public class LazyLexer extends Lexer {
         return fileContents.substring(getLookingIndexTrimmed());
     }
 
+    @Override
     public int getLookingIndexTrimmed() {
         int index = currentIndex;
         while(index < fileContents.length() && Character.isWhitespace(fileContents.charAt(index))) index++;
         return index;
     }
 
+    @Override
     public Token retrieveTokenOfType(TokenType type) {
         for (LexerContext context : profile.contexts) {
             if (context.getHandledTypes().contains(type)) {
                 ScannerContextResponse response = context.analyzeExpectingType(context.ignoreLeadingWhitespace() ?
                         getLookingAtTrimmed() :
                         getLookingAt(), type, profile);
-                /*if (response.errorMessage != null) {
-                    notices.add(new Notice(NoticeType.ERROR, response.errorMessage, "\b" + file.getAbsolutePath() + "\b" + (getLookingIndexTrimmed() + response.errorIndex) + "\b" + response.errorLength));
-                }*/
                 if (response.success && response.tokenType == type) {
                     Token token = new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(context.ignoreLeadingWhitespace() ?
                             getLookingIndexTrimmed() :
@@ -144,6 +135,7 @@ public class LazyLexer extends Lexer {
         return null;
     }
 
+    @Override
     public Token retrieveAnyToken() {
         for (LexerContext context : profile.contexts) {
             ScannerContextResponse response = context.analyze(
@@ -186,6 +178,7 @@ public class LazyLexer extends Lexer {
         return null;
     }
 
+    @Override
     public int getFileLength() {
         return fileContents.length();
     }

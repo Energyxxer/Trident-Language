@@ -193,7 +193,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
                                 TridentSummaryModule fileSummary = new TridentSummaryModule(summary);
                                 fileSummary.setFileLocation(new TridentUtil.ResourceLocation(relPath.getName(0) + ":" + relPath.subpath(2, relPath.getNameCount()).toString().replace(File.separator, "/").replaceAll(".tdn$","")));
                                 lex.setSummaryModule(fileSummary);
-                                lex.tokenizeParse(file, str, new TridentLexerProfile());
+                                lex.start(file, str, new TridentLexerProfile());
                                 this.summary.store(file, fileSummary);
 
                                 if (lex.getMatchResponse().matched) {

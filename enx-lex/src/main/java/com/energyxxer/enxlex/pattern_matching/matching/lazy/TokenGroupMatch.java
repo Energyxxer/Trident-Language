@@ -1,9 +1,9 @@
 package com.energyxxer.enxlex.pattern_matching.matching.lazy;
 
-import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
+import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
-import com.energyxxer.enxlex.pattern_matching.matching.GeneralTokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.util.MethodInvocation;
 import com.energyxxer.util.Stack;
@@ -12,33 +12,33 @@ import java.util.ArrayList;
 
 import static com.energyxxer.enxlex.pattern_matching.TokenMatchResponse.*;
 
-public class LazyTokenGroupMatch extends LazyTokenPatternMatch {
-    public ArrayList<LazyTokenPatternMatch> items;
+public class TokenGroupMatch extends TokenPatternMatch {
+    public ArrayList<TokenPatternMatch> items;
 
-    public LazyTokenGroupMatch() {
+    public TokenGroupMatch() {
         this.optional = false;
         items = new ArrayList<>();
     }
 
-    public LazyTokenGroupMatch(boolean optional) {
+    public TokenGroupMatch(boolean optional) {
         this.optional = optional;
         items = new ArrayList<>();
     }
 
     @Override
-    public LazyTokenGroupMatch setName(String name) {
+    public TokenGroupMatch setName(String name) {
         super.setName(name);
         return this;
     }
 
-    public LazyTokenGroupMatch append(LazyTokenPatternMatch i) {
+    public TokenGroupMatch append(TokenPatternMatch i) {
         items.add(i);
-        return this; //I'm so sorry for this
+        return this;
     }
 
 
     @Override
-    public TokenMatchResponse match(int index, LazyLexer lexer, Stack st) {
+    public TokenMatchResponse match(int index, Lexer lexer, Stack st) {
         lexer.setCurrentIndex(index);
         if(items.size() == 0) return new TokenMatchResponse(true, null, 0, null, new TokenGroup());
 
@@ -53,7 +53,7 @@ public class LazyTokenGroupMatch extends LazyTokenPatternMatch {
         boolean hasMatched = true;
         Token faultyToken = null;
         int length = 0;
-        GeneralTokenPatternMatch expected = null;
+        TokenPatternMatch expected = null;
         itemLoop: for (int i = 0; i < items.size(); i++) {
 
             if (currentIndex > lexer.getFileLength() && !items.get(i).optional) {
@@ -106,47 +106,47 @@ public class LazyTokenGroupMatch extends LazyTokenPatternMatch {
 
     @Override
     public String toString() {
-        String s = "";
+        StringBuilder s = new StringBuilder();
         if (this.optional) {
-            s += "[";
+            s.append("[");
         } else {
-            s += "<";
+            s.append("<");
         }
         for (int i = 0; i < items.size(); i++) {
-            s += items.get(i);
+            s.append(items.get(i));
             if (i < items.size() - 1) {
-                s += " ";
+                s.append(" ");
             }
         }
         if (this.optional) {
-            s += "]";
+            s.append("]");
         } else {
-            s += ">";
+            s.append(">");
         }
-        return s;
+        return s.toString();
     }
 
     @Override
     public String deepToString(int levels) {
         if(levels <= 0) return toString();
-        String s = "";
+        StringBuilder s = new StringBuilder();
         if (this.optional) {
-            s += "[";
+            s.append("[");
         } else {
-            s += "<";
+            s.append("<");
         }
         for (int i = 0; i < items.size(); i++) {
-            s += items.get(i).deepToString(levels-1);
+            s.append(items.get(i).deepToString(levels - 1));
             if (i < items.size() - 1) {
-                s += " ";
+                s.append(" ");
             }
         }
         if (this.optional) {
-            s += "]";
+            s.append("]");
         } else {
-            s += ">";
+            s.append(">");
         }
-        return s;
+        return s.toString();
     }
 
     @Override

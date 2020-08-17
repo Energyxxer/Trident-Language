@@ -2,14 +2,14 @@ package com.energyxxer.enxlex.pattern_matching;
 
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
-import com.energyxxer.enxlex.pattern_matching.matching.GeneralTokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 
 public class TokenMatchResponse {
 	public final boolean matched;
 	public final Token faultyToken;
 	public final int length;
-	public GeneralTokenPatternMatch expected = null;
+	public TokenPatternMatch expected = null;
 	public TokenPattern<?> pattern = null;
 
 	public static final int NO_MATCH = 0;
@@ -20,7 +20,7 @@ public class TokenMatchResponse {
 		this(matched, faultyToken, length, null, pattern);
 	}
 	
-	public TokenMatchResponse(boolean matched, Token faultyToken, int length, GeneralTokenPatternMatch expected, TokenPattern<?> pattern) {
+	public TokenMatchResponse(boolean matched, Token faultyToken, int length, TokenPatternMatch expected, TokenPattern<?> pattern) {
 		this.matched = matched;
 		this.faultyToken = faultyToken;
 		this.length = length;

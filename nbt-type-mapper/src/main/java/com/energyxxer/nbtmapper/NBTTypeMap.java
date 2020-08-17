@@ -146,7 +146,7 @@ public class NBTTypeMap {
         public void parseNBTTMFile(File file, String content, BiConsumer<String, DataType> consumer) {
             TokenStream ts = new TokenStream();
             LazyLexer lex = new LazyLexer(ts, NBTTMProductions.FILE);
-            lex.tokenizeParse(file, content, new NBTTMLexerProfile(module));
+            lex.start(file, content, new NBTTMLexerProfile(module));
 
             notices.addAll(lex.getNotices());
 

@@ -2,7 +2,11 @@ package com.energyxxer.trident.compiler.plugin;
 
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
-import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenGroupMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenItemMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenListMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -33,7 +37,7 @@ public class TDNMetaBuilder {
 
     private HashMap<String, Value> variables = new HashMap<>();
 
-    private LazyTokenPatternMatch returnValue = null;
+    private TokenPatternMatch returnValue = null;
 
     public TDNMetaBuilder(TokenPattern<?> filePattern, TridentProductions tdnProductions) {
         this.filePattern = filePattern;
@@ -92,7 +96,7 @@ public class TDNMetaBuilder {
                     String identifier = pattern.flatten(false);
                     Value defined = variables.get(identifier);
                     if(defined != null) return defined;
-                    LazyTokenPatternMatch production = tdnProductions.getStructureByName(identifier);
+                    TokenPatternMatch production = tdnProductions.getStructureByName(identifier);
                     if(production != null) return new TokenMatchValue(production);
                     throw new TDNMetaException("Identifier not found: '" + identifier + "'", pattern);
                 }
@@ -156,7 +160,7 @@ public class TDNMetaBuilder {
         }
     }
 
-    public LazyTokenPatternMatch getReturnValue() {
+    public TokenPatternMatch getReturnValue() {
         return returnValue;
     }
 
@@ -164,9 +168,9 @@ public class TDNMetaBuilder {
     }
 
     private static class TokenMatchValue extends Value {
-        public LazyTokenPatternMatch patternMatch;
+        public TokenPatternMatch patternMatch;
 
-        public TokenMatchValue(LazyTokenPatternMatch patternMatch) {
+        public TokenMatchValue(TokenPatternMatch patternMatch) {
             this.patternMatch = patternMatch;
         }
     }
@@ -245,13 +249,13 @@ public class TDNMetaBuilder {
 
     static {
         registerFunction("noToken", (ignore, args) -> {
-            LazyTokenItemMatch nt = new LazyTokenItemMatch(NO_TOKEN);
+            TokenItemMatch nt = new TokenItemMatch(NO_TOKEN);
             nt.addTags(PLUGIN_CREATED_TAG);
             nt.setOptional();
             return new TokenMatchValue(nt);
         });
         registerFunction("group", (ignore, args) -> {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch();
+            TokenGroupMatch g = new TokenGroupMatch();
             g.addTags(PLUGIN_CREATED_TAG);
             for(Value arg : args) {
                 if(arg instanceof TokenMatchValue) {
@@ -261,7 +265,7 @@ public class TDNMetaBuilder {
             return new TokenMatchValue(g);
         });
         registerFunction("optional", (ignore, args) -> {
-            LazyTokenGroupMatch g = new LazyTokenGroupMatch(true);
+            TokenGroupMatch g = new TokenGroupMatch(true);
             g.addTags(PLUGIN_CREATED_TAG);
             for(Value arg : args) {
                 if(arg instanceof TokenMatchValue) {
@@ -271,7 +275,7 @@ public class TDNMetaBuilder {
             return new TokenMatchValue(g);
         });
         registerFunction("choice", (ignore, args) -> {
-            LazyTokenStructureMatch s = new LazyTokenStructureMatch("CHOICE");
+            TokenStructureMatch s = new TokenStructureMatch("CHOICE");
             s.addTags(PLUGIN_CREATED_TAG);
             if(args.size() == 0) {
                 throw new IllegalArgumentException("Function 'choice' requires at least 1 parameter, found " + args.size());
@@ -281,7 +285,7 @@ public class TDNMetaBuilder {
                     s.add(((TokenMatchValue) arg).patternMatch);
                 } else if(arg instanceof StringLiteralValue) {
                     String text = ((StringLiteralValue) arg).stringValue;
-                    s.add(new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase()).addTags(SuggestionTags.ENABLED, PLUGIN_CREATED_TAG));
+                    s.add(new TokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase()).addTags(SuggestionTags.ENABLED, PLUGIN_CREATED_TAG));
                 } else {
                     throw new IllegalArgumentException("Function 'choice' only accepts Token Match values or Strings, found " + arg.getClass().getSimpleName());
                 }
@@ -289,8 +293,8 @@ public class TDNMetaBuilder {
             return new TokenMatchValue(s);
         });
         registerFunction("list", (ignore, args) -> {
-            LazyTokenPatternMatch listValue;
-            LazyTokenPatternMatch separatorValue = null;
+            TokenPatternMatch listValue;
+            TokenPatternMatch separatorValue = null;
             if(args.size() >= 1) {
                 if(args.get(0) instanceof TokenMatchValue) {
                     listValue = ((TokenMatchValue) args.get(0)).patternMatch;
@@ -307,7 +311,7 @@ public class TDNMetaBuilder {
                     throw new IllegalArgumentException("Function 'list' only accepts Token Match values at argument 1, found " + args.get(1).getClass().getSimpleName());
                 }
             }
-            return new TokenMatchValue(new LazyTokenListMatch(listValue, separatorValue).addTags(PLUGIN_CREATED_TAG));
+            return new TokenMatchValue(new TokenListMatch(listValue, separatorValue).addTags(PLUGIN_CREATED_TAG));
         });
         registerFunction("name", TokenMatchValue.class, (value, args) -> {
             if(args.size() >= 1) {
@@ -345,7 +349,7 @@ public class TDNMetaBuilder {
             if(args.size() >= 1) {
                 if(args.get(0) instanceof StringLiteralValue) {
                     if(!((TokenMatchValue) value).patternMatch.tags.contains(PLUGIN_CREATED_TAG)) {
-                        LazyTokenGroupMatch match = new LazyTokenGroupMatch().append(((TokenMatchValue) value).patternMatch);
+                        TokenGroupMatch match = new TokenGroupMatch().append(((TokenMatchValue) value).patternMatch);
                         match.addTags(PLUGIN_CREATED_TAG).addTags(STORE_VAR_TAG_PREFIX + ((StringLiteralValue) args.get(0)).stringValue);
                         for(int i = 1; i < args.size(); i++) {
                             Value arg = args.get(i);
@@ -369,7 +373,7 @@ public class TDNMetaBuilder {
         registerFunction("storeFlat", TokenMatchValue.class, (value, args) -> {
             if(args.size() >= 1) {
                 if(args.get(0) instanceof StringLiteralValue) {
-                    return new TokenMatchValue(new LazyTokenGroupMatch().append(((TokenMatchValue) value).patternMatch).addTags(PLUGIN_CREATED_TAG).addTags(STORE_FLAT_TAG).addTags(STORE_VAR_TAG_PREFIX + ((StringLiteralValue) args.get(0)).stringValue));
+                    return new TokenMatchValue(new TokenGroupMatch().append(((TokenMatchValue) value).patternMatch).addTags(PLUGIN_CREATED_TAG).addTags(STORE_FLAT_TAG).addTags(STORE_VAR_TAG_PREFIX + ((StringLiteralValue) args.get(0)).stringValue));
                 } else {
                     throw new IllegalArgumentException("Function 'storeVar' only accepts String Literal values at argument 0, found " + args.get(0).getClass().getSimpleName());
                 }
@@ -397,7 +401,7 @@ public class TDNMetaBuilder {
             if(args.size() >= 1) {
                 if(args.get(0) instanceof StringLiteralValue) {
                     String text = ((StringLiteralValue) args.get(0)).stringValue;
-                    return new TokenMatchValue(new LazyTokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase()).addTags(SuggestionTags.ENABLED, PLUGIN_CREATED_TAG));
+                    return new TokenMatchValue(new TokenItemMatch(TokenType.UNKNOWN, text).setName("LITERAL_" + text.toUpperCase()).addTags(SuggestionTags.ENABLED, PLUGIN_CREATED_TAG));
                 } else {
                     throw new IllegalArgumentException("Function 'hint' only accepts String Literal values at argument 0, found " + args.get(0).getClass().getSimpleName());
                 }
@@ -409,7 +413,7 @@ public class TDNMetaBuilder {
             if(args.size() >= 1) {
                 if(args.get(0) instanceof StringLiteralValue) {
                     String text = ((StringLiteralValue) args.get(0)).stringValue;
-                    return new TokenMatchValue(new LazyTokenItemMatch(TridentTokens.BRACE, text).addTags(PLUGIN_CREATED_TAG));
+                    return new TokenMatchValue(new TokenItemMatch(TridentTokens.BRACE, text).addTags(PLUGIN_CREATED_TAG));
                 } else {
                     throw new IllegalArgumentException("Function 'brace' only accepts String Literal values at argument 0, found " + args.get(0).getClass().getSimpleName());
                 }

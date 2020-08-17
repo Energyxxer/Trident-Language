@@ -1,8 +1,8 @@
 package com.energyxxer.enxlex.lexical_analysis;
 
 import com.energyxxer.enxlex.lexical_analysis.profiles.LexerContext;
-import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
 import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
+import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenStream;
@@ -14,9 +14,10 @@ import com.energyxxer.util.StringLocation;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
- * For tokenizing any file by rules given by EagerLexer Profiles
+ * For tokenizing any file by rules given by Lexer Profiles
  */
 public class EagerLexer extends Lexer {
 	
@@ -31,34 +32,8 @@ public class EagerLexer extends Lexer {
 
 	public EagerLexer(File file, String str, TokenStream stream, LexerProfile profile) {
 		this.stream = stream;
-		if(profile != null) tokenize(file, str, profile);
+		if(profile != null) start(file, str, profile);
 	}
-	
-	/*private void parse(File directory) {
-		if (!directory.exists())
-			return;
-		File[] files = directory.listFiles();
-		if(files == null) return;
-		for (File file : files) {
-			String name = file.getName();
-			if (file.isDirectory()) {
-				if(!file.getName().equals("resources") || !file.getParentFile().getParent().equals(ProjectManager.getWorkspaceDir())) {
-					//This is not the resource pack directory.
-					parse(file);
-				}
-			} else {
-				Lang fileLang = Lang.getLangForFile(name);
-				if(fileLang == null) continue;
-
-				try {
-					String str = new String(Files.readAllBytes(Paths.get(file.getPath())));
-					tokenize(file, str, fileLang.createProfile());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-	}*/
 
 	private File file;
 
@@ -75,7 +50,8 @@ public class EagerLexer extends Lexer {
 
 	private HashMap<TokenSection, String> subSections = null;
 
-	public void tokenize(File file, String str, LexerProfile profile) {
+	@Override
+	public void start(File file, String str, LexerProfile profile) {
 		this.file = file;
 		stream.setProfile(profile);
 		profile.setStream(stream);
@@ -194,5 +170,77 @@ public class EagerLexer extends Lexer {
 
 	public TokenStream getStream() {
 		return stream;
+	}
+
+
+
+	private static int findIndexForTokenList(int index, List<Token> list)
+	{
+		if (list.isEmpty()) return 0;
+
+		int minIndex = 0; // inclusive
+		int maxIndex = list.size(); // exclusive
+
+		if (index < list.get(minIndex).loc.index)
+		{
+			return minIndex;
+		}
+		if (index > list.get(maxIndex-1).loc.index)
+		{
+			return maxIndex;
+		}
+
+		while (minIndex < maxIndex)
+		{
+			int pivotIndex = (minIndex + maxIndex) / 2;
+
+			int pivotId = list.get(pivotIndex).loc.index;
+			if (pivotId == index)
+			{
+				return pivotIndex;
+			}
+			else if (index > pivotId)
+			{
+				minIndex = pivotIndex + 1;
+			}
+			else
+			{
+				maxIndex = pivotIndex;
+			}
+		}
+
+		return minIndex;
+	}
+
+	@Override
+	public int getLookingIndexTrimmed() {
+		int tokenIndex = findIndexForTokenList(currentIndex, stream.tokens);
+		if(tokenIndex < stream.tokens.size()) {
+			return stream.tokens.get(tokenIndex).loc.index;
+		}
+		return currentIndex;
+	}
+
+	@Override
+	public Token retrieveTokenOfType(TokenType type) {
+		Token token = retrieveAnyToken();
+		if(token.type == type) {
+			return token;
+		}
+		return null;
+	}
+
+	@Override
+	public Token retrieveAnyToken() {
+		int tokenIndex = findIndexForTokenList(currentIndex, stream.tokens);
+		if(tokenIndex < stream.tokens.size()) {
+			return stream.tokens.get(tokenIndex);
+		}
+		return null;
+	}
+
+	@Override
+	public int getFileLength() {
+		return stream.tokens.isEmpty() ? 0 : stream.tokens.get(stream.tokens.size()-1).getStringBounds().end.index;
 	}
 }

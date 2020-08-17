@@ -1,7 +1,11 @@
 package com.energyxxer.trident.compiler.lexer.syntaxlang;
 
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
-import com.energyxxer.enxlex.pattern_matching.matching.*;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenGroupMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenItemMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenListMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 
 import static com.energyxxer.trident.compiler.lexer.syntaxlang.TDNMetaLexerProfile.*;
 

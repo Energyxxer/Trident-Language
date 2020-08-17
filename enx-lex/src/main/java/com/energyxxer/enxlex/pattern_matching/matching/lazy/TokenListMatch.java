@@ -1,11 +1,11 @@
 package com.energyxxer.enxlex.pattern_matching.matching.lazy;
 
-import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
+import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.StandardTags;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
-import com.energyxxer.enxlex.pattern_matching.matching.GeneralTokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.util.MethodInvocation;
@@ -13,62 +13,62 @@ import com.energyxxer.util.Stack;
 
 import static com.energyxxer.enxlex.pattern_matching.TokenMatchResponse.*;
 
-public class LazyTokenListMatch extends LazyTokenPatternMatch {
-    protected LazyTokenPatternMatch pattern;
-    protected LazyTokenPatternMatch separator = null;
+public class TokenListMatch extends TokenPatternMatch {
+    protected TokenPatternMatch pattern;
+    protected TokenPatternMatch separator = null;
 
-    public LazyTokenListMatch(TokenType type) {
-        this.pattern = new LazyTokenItemMatch(type);
+    public TokenListMatch(TokenType type) {
+        this.pattern = new TokenItemMatch(type);
         this.optional = false;
     }
 
-    public LazyTokenListMatch(TokenType type, TokenType separator) {
-        this.pattern = new LazyTokenItemMatch(type);
+    public TokenListMatch(TokenType type, TokenType separator) {
+        this.pattern = new TokenItemMatch(type);
         this.optional = false;
-        this.separator = new LazyTokenItemMatch(separator);
+        this.separator = new TokenItemMatch(separator);
     }
 
-    public LazyTokenListMatch(TokenType type, boolean optional) {
-        this.pattern = new LazyTokenItemMatch(type);
+    public TokenListMatch(TokenType type, boolean optional) {
+        this.pattern = new TokenItemMatch(type);
         this.optional = optional;
     }
 
-    public LazyTokenListMatch(TokenType type, TokenType separator, boolean optional) {
-        this.pattern = new LazyTokenItemMatch(type);
+    public TokenListMatch(TokenType type, TokenType separator, boolean optional) {
+        this.pattern = new TokenItemMatch(type);
         this.optional = optional;
-        this.separator = new LazyTokenItemMatch(separator);
+        this.separator = new TokenItemMatch(separator);
     }
 
-    public LazyTokenListMatch(LazyTokenPatternMatch type) {
+    public TokenListMatch(TokenPatternMatch type) {
         this.pattern = type;
         this.optional = false;
     }
 
-    public LazyTokenListMatch(LazyTokenPatternMatch type, LazyTokenPatternMatch separator) {
+    public TokenListMatch(TokenPatternMatch type, TokenPatternMatch separator) {
         this.pattern = type;
         this.optional = false;
         this.separator = separator;
     }
 
-    public LazyTokenListMatch(LazyTokenPatternMatch type, boolean optional) {
+    public TokenListMatch(TokenPatternMatch type, boolean optional) {
         this.pattern = type;
         this.optional = optional;
     }
 
-    public LazyTokenListMatch(LazyTokenPatternMatch type, LazyTokenPatternMatch separator, boolean optional) {
+    public TokenListMatch(TokenPatternMatch type, TokenPatternMatch separator, boolean optional) {
         this.pattern = type;
         this.optional = optional;
         this.separator = separator;
     }
 
     @Override
-    public LazyTokenListMatch setName(String name) {
+    public TokenListMatch setName(String name) {
         super.setName(name);
         return this;
     }
 
     @Override
-    public TokenMatchResponse match(int index, LazyLexer lexer, Stack st) {
+    public TokenMatchResponse match(int index, Lexer lexer, Stack st) {
         lexer.setCurrentIndex(index);
         MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[] {"int"}, new Object[] {index});
         if(st.find(thisInvoc)) {
@@ -81,7 +81,7 @@ public class LazyTokenListMatch extends LazyTokenPatternMatch {
         boolean hasMatched = true;
         Token faultyToken = null;
         int length = 0;
-        GeneralTokenPatternMatch expected = null;
+        TokenPatternMatch expected = null;
         TokenList list = new TokenList().setName(this.name).addTags(this.tags);
 
         Stack tempStack = st.clone();
@@ -117,14 +117,7 @@ public class LazyTokenListMatch extends LazyTokenPatternMatch {
                 if (this.separator != null) {
                     TokenMatchResponse itemMatch = this.pattern.match(i, lexer, tempStack);
                     switch(itemMatch.getMatchType()) {
-                        case NO_MATCH: {
-                            hasMatched = false;
-                            faultyToken = itemMatch.faultyToken;
-                            expected = itemMatch.expected;
-                            length += itemMatch.length;
-                            if(itemMatch.pattern != null) list.add(itemMatch.pattern);
-                            break itemLoop;
-                        }
+                        case NO_MATCH:
                         case PARTIAL_MATCH: {
                             hasMatched = false;
                             faultyToken = itemMatch.faultyToken;

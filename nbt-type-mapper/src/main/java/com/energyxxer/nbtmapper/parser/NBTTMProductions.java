@@ -1,29 +1,33 @@
 package com.energyxxer.nbtmapper.parser;
 
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
-import com.energyxxer.enxlex.pattern_matching.matching.lazy.*;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenGroupMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenItemMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenListMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 
 import static com.energyxxer.nbtmapper.parser.NBTTMTokens.*;
 
 public class NBTTMProductions {
-    public static final LazyTokenPatternMatch FILE;
-    public static final LazyTokenPatternMatch ENTRY;
-    private static final LazyTokenStructureMatch TYPE;
+    public static final TokenPatternMatch FILE;
+    public static final TokenPatternMatch ENTRY;
+    private static final TokenStructureMatch TYPE;
     
     static {
 
         TYPE = struct("TYPE");
 
-        LazyTokenStructureMatch KEY = choice(ofType(NBTTMTokens.KEY), ofType(STRING_LITERAL), ofType(WILDCARD)).setName("KEY");
+        TokenStructureMatch KEY = choice(ofType(NBTTMTokens.KEY), ofType(STRING_LITERAL), ofType(WILDCARD)).setName("KEY");
 
-        LazyTokenStructureMatch FLAG = struct("FLAG");
+        TokenStructureMatch FLAG = struct("FLAG");
         FLAG.add(ofType(IDENTIFIER)); //boolean, text_component, resource_location...
         FLAG.add(group(matchItem(IDENTIFIER, "type"), brace("("), ofType(HASH).setOptional().setName("IS_TAG"), ofType(IDENTIFIER).setName("DEFINITION_CATEGORY"), brace(")")).setName("TYPE_FLAG"));
         FLAG.add(group(matchItem(IDENTIFIER, "one_of"), brace("("), list(ofType(STRING_LITERAL).setName("OPTION"), comma()).setName("OPTION_LIST"), brace(")")).setName("ONE_OF_FLAG"));
 
-        LazyTokenPatternMatch FLAGS = group(brace("("), list(FLAG, comma()).setName("FLAG_LIST"), brace(")")).setOptional().setName("FLAGS");
+        TokenPatternMatch FLAGS = group(brace("("), list(FLAG, comma()).setName("FLAG_LIST"), brace(")")).setOptional().setName("FLAGS");
 
-        LazyTokenGroupMatch COMPOUND = group(
+        TokenGroupMatch COMPOUND = group(
                 brace("{"),
                 list(
                         group(KEY, colon(), TYPE).setName("COMPOUND_INNER"),
@@ -32,13 +36,13 @@ public class NBTTMProductions {
                 brace("}"), FLAGS
         ).setName("COMPOUND");
 
-        LazyTokenGroupMatch LIST = group(
+        TokenGroupMatch LIST = group(
                 brace("["),
                 TYPE,
                 brace("]"), FLAGS
         ).setName("LIST");
 
-        LazyTokenGroupMatch ARRAY = group(
+        TokenGroupMatch ARRAY = group(
                 brace("["),
                 ofType(ARRAY_TYPE).setName("ARRAY_TYPE"),
                 ofType(SEMICOLON),
@@ -49,7 +53,7 @@ public class NBTTMProductions {
         TYPE.add(COMPOUND);
         TYPE.add(LIST);
         TYPE.add(ARRAY);
-        LazyTokenGroupMatch REFERENCE_S = group(ofType(REFERENCE).setName("REFERENCE_NAME"), FLAGS).setName("REFERENCE");
+        TokenGroupMatch REFERENCE_S = group(ofType(REFERENCE).setName("REFERENCE_NAME"), FLAGS).setName("REFERENCE");
         TYPE.add(REFERENCE_S);
 
         ENTRY = choice(
@@ -63,61 +67,61 @@ public class NBTTMProductions {
         );
     }
 
-    static LazyTokenItemMatch matchItem(TokenType type, String text) {
-        return new LazyTokenItemMatch(type, text).setName("ITEM_MATCH");
+    static TokenItemMatch matchItem(TokenType type, String text) {
+        return new TokenItemMatch(type, text).setName("ITEM_MATCH");
     }
 
-    static LazyTokenItemMatch brace(String brace) {
+    static TokenItemMatch brace(String brace) {
         return matchItem(BRACE, brace);
     }
 
-    static LazyTokenItemMatch colon() {
+    static TokenItemMatch colon() {
         return ofType(COLON);
     }
 
-    static LazyTokenItemMatch comma() {
+    static TokenItemMatch comma() {
         return ofType(COMMA).setName("COMMA");
     }
     
-    static LazyTokenItemMatch ofType(TokenType type) {
-        return new LazyTokenItemMatch(type);
+    static TokenItemMatch ofType(TokenType type) {
+        return new TokenItemMatch(type);
     }
 
-    static LazyTokenStructureMatch struct(String name) {
-        return new LazyTokenStructureMatch(name);
+    static TokenStructureMatch struct(String name) {
+        return new TokenStructureMatch(name);
     }
 
-    static LazyTokenStructureMatch choice(LazyTokenPatternMatch... options) {
+    static TokenStructureMatch choice(TokenPatternMatch... options) {
         if(options.length == 0) throw new IllegalArgumentException("Need one or more options for choice");
-        LazyTokenStructureMatch s = struct("CHOICE");
-        for(LazyTokenPatternMatch option : options) {
+        TokenStructureMatch s = struct("CHOICE");
+        for(TokenPatternMatch option : options) {
             s.add(option);
         }
         return s;
     }
 
-    static LazyTokenGroupMatch optional() {
-        return new LazyTokenGroupMatch(true);
+    static TokenGroupMatch optional() {
+        return new TokenGroupMatch(true);
     }
 
-    static LazyTokenGroupMatch group(LazyTokenPatternMatch... items) {
-        LazyTokenGroupMatch g = new LazyTokenGroupMatch();
-        for(LazyTokenPatternMatch item : items) {
+    static TokenGroupMatch group(TokenPatternMatch... items) {
+        TokenGroupMatch g = new TokenGroupMatch();
+        for(TokenPatternMatch item : items) {
             g.append(item);
         }
         return g;
     }
 
-    static LazyTokenListMatch list(LazyTokenPatternMatch pattern) {
+    static TokenListMatch list(TokenPatternMatch pattern) {
         return list(pattern, null);
     }
 
-    static LazyTokenListMatch list(LazyTokenPatternMatch pattern, LazyTokenPatternMatch separator) {
-        return new LazyTokenListMatch(pattern, separator);
+    static TokenListMatch list(TokenPatternMatch pattern, TokenPatternMatch separator) {
+        return new TokenListMatch(pattern, separator);
     }
 
-    static LazyTokenGroupMatch optional(LazyTokenPatternMatch... items) {
-        LazyTokenGroupMatch g = group(items);
+    static TokenGroupMatch optional(TokenPatternMatch... items) {
+        TokenGroupMatch g = group(items);
         g.setOptional();
         return g;
     }

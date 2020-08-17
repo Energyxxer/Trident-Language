@@ -1,49 +1,50 @@
 package com.energyxxer.enxlex.pattern_matching.matching.lazy;
 
-import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
+import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
 import com.energyxxer.enxlex.suggestions.ComplexSuggestion;
 import com.energyxxer.enxlex.suggestions.LiteralSuggestion;
 import com.energyxxer.util.MethodInvocation;
 import com.energyxxer.util.Stack;
 
-public class LazyTokenItemMatch extends LazyTokenPatternMatch {
+public class TokenItemMatch extends TokenPatternMatch {
     private TokenType type;
     private String stringMatch = null;
 
-    public LazyTokenItemMatch(TokenType type) {
+    public TokenItemMatch(TokenType type) {
         this.type = type;
         this.optional = false;
     }
 
-    public LazyTokenItemMatch(TokenType type, String stringMatch) {
+    public TokenItemMatch(TokenType type, String stringMatch) {
         this.type = type;
         this.stringMatch = stringMatch;
         this.optional = false;
     }
 
-    public LazyTokenItemMatch(TokenType type, boolean optional) {
+    public TokenItemMatch(TokenType type, boolean optional) {
         this.type = type;
         this.optional = optional;
     }
 
-    public LazyTokenItemMatch(TokenType type, String stringMatch, boolean optional) {
+    public TokenItemMatch(TokenType type, String stringMatch, boolean optional) {
         this.type = type;
         this.stringMatch = stringMatch;
         this.optional = optional;
     }
 
     @Override
-    public LazyTokenItemMatch setName(String name) {
+    public TokenItemMatch setName(String name) {
         super.setName(name);
         return this;
     }
 
     @Override
-    public TokenMatchResponse match(int index, LazyLexer lexer, Stack st) {
+    public TokenMatchResponse match(int index, Lexer lexer, Stack st) {
         lexer.setCurrentIndex(index);
         MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[] {"int"}, new Object[] {index});
 

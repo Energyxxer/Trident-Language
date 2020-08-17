@@ -1,7 +1,6 @@
 package com.energyxxer.enxlex.lexical_analysis.token;
 
 import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
-import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 
@@ -44,17 +43,17 @@ public class TokenStream implements Iterable<Token> {
 		return tokens.iterator();
 	}
 
-	public ArrayList<TokenPattern<?>> search(TokenPatternMatch m) {
+	public ArrayList<TokenPattern<?>> search(TokenPatternMatch m) {//not okay, todo remove this
 
 	    ArrayList<TokenPattern<?>> matches = new ArrayList<>();
 
-	    for(int i = 0; i < tokens.size(); i++) {
+	    /*for(int i = 0; i < tokens.size(); i++) {
 	        TokenMatchResponse response = m.match(tokens.subList(i,tokens.size()));
 	        if(response.matched) {
 	            if(response.pattern != null) matches.add(response.pattern);
 	            i += response.length-1;
             }
-        }
+        }*/
 
         return matches;
     }

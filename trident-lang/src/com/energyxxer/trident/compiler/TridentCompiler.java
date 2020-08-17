@@ -443,7 +443,7 @@ public class TridentCompiler extends AbstractProcess implements Reported {
                             ownFiles.add(cacheKey);
 
                             if(!filePatterns.containsKey(cacheKey) || filePatterns.get(cacheKey).getHashCode() != hashCode) {
-                                lex.tokenizeParse(file, str, new TridentLexerProfile());
+                                lex.start(file, str, new TridentLexerProfile());
 
                                 if (lex.getMatchResponse().matched) {
                                     filePatterns.put(cacheKey, new ParsingSignature(hashCode, lex.getMatchResponse().pattern, lex.getSummaryModule()));
@@ -904,7 +904,7 @@ public class TridentCompiler extends AbstractProcess implements Reported {
                 TokenStream ts = new TokenStream();
                 LazyLexer lex = new LazyLexer(ts, new TridentProductions(dummyModule).FILE);
                 lex.setSummaryModule(fileSummary);
-                lex.tokenizeParse(LIBRARY_TOKEN_FILE, content, new TridentLexerProfile());
+                lex.start(LIBRARY_TOKEN_FILE, content, new TridentLexerProfile());
 
                 if(!lex.getMatchResponse().matched) {
                     throw new RuntimeException("Native lib threw an error on parse: " + lex.getMatchResponse().getErrorMessage());
