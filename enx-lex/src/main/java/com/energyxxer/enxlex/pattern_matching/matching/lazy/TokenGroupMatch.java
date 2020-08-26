@@ -40,7 +40,7 @@ public class TokenGroupMatch extends TokenPatternMatch {
     @Override
     public TokenMatchResponse match(int index, Lexer lexer, Stack st) {
         lexer.setCurrentIndex(index);
-        if(items.size() == 0) return new TokenMatchResponse(true, null, 0, null, new TokenGroup());
+        if(items.size() == 0) return new TokenMatchResponse(true, null, 0, null, new TokenGroup(this));
 
         MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[] {"int"}, new Object[] {index});
 
@@ -48,7 +48,7 @@ public class TokenGroupMatch extends TokenPatternMatch {
 
         int popSuggestionStatus = handleSuggestionTags(lexer, index);
 
-        TokenGroup group = new TokenGroup().setName(this.name).addTags(this.tags);
+        TokenGroup group = new TokenGroup(this).setName(this.name).addTags(this.tags);
         int currentIndex = index;
         boolean hasMatched = true;
         Token faultyToken = null;
@@ -99,7 +99,7 @@ public class TokenGroupMatch extends TokenPatternMatch {
         if(hasMatched) {
             invokeProcessors(group, lexer);
         } else {
-            invokeFailProcessors(length, lexer);
+            invokeFailProcessors(group, lexer);
         }
         return response;
     }

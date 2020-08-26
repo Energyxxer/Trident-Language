@@ -5,6 +5,7 @@ import java.util.Objects;
 public class LiteralSuggestion extends Suggestion {
     private String preview;
     private String literal;
+    private boolean caseSensitive;
 
     public LiteralSuggestion(String literal) {
         this(literal, literal);
@@ -39,5 +40,13 @@ public class LiteralSuggestion extends Suggestion {
 
     public String getPreview() {
         return preview;
+    }
+
+    public void setCaseSensitive(boolean caseSensitive) {
+        this.caseSensitive = caseSensitive;
+    }
+
+    public boolean isCaseSensitive() {
+        return caseSensitive;
     }
 }

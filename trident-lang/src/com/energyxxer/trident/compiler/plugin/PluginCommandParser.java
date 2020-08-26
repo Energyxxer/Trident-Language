@@ -4,7 +4,6 @@ import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.functions.FunctionSection;
 import com.energyxxer.commodore.functionlogic.inspection.ExecutionContext;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
-import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.defaults.*;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
@@ -33,7 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class PluginCommandParser {
-    private static final ExecutionContext DEFAULT_EXEC_CONTEXT = new ExecutionContext(new Selector(Selector.BaseSelector.SENDER));
+    private static final ExecutionContext DEFAULT_EXEC_CONTEXT = new ExecutionContext();
 
     private HashSet<String> multiVars = new HashSet<>();
 

@@ -155,8 +155,8 @@ public class TridentProductions {
     private final TokenStructureMatch POINTER;
     private static final TokenPatternMatch resourceLocationFixer = ofType(NO_TOKEN).setName("_RLCF").setOptional().addFailProcessor((p, l) -> {
         if(l.getSuggestionModule() != null) {
-            if(((LazyLexer) l).getCurrentIndex() <= l.getSuggestionModule().getSuggestionIndex()+1) {
-                int targetIndex = ((LazyLexer) l).getLookingIndexTrimmed();
+            if(l.getCurrentIndex() <= l.getSuggestionModule().getSuggestionIndex()+1) {
+                int targetIndex = l.getLookingIndexTrimmed();
                 String str = ((LazyLexer) l).getCurrentReadingString();
                 int index = l.getSuggestionModule().getSuggestionIndex();
 
@@ -468,11 +468,11 @@ public class TridentProductions {
                                         ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                     }
                                 }
-                            }).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);}),
+                            }).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);}),
                             comma()
                     ).setOptional().setName("DICTIONARY_ENTRY_LIST"),
-                    brace("}"))).addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);});
-            LIST.add(group(brace("[").addProcessor(startClosure), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")).addProcessor(surroundBlock).addProcessor(endComplexValue).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);}));
+                    brace("}"))).addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);});
+            LIST.add(group(brace("[").addProcessor(startClosure), list(INTERPOLATION_VALUE, comma()).setOptional().setName("LIST_ENTRIES"), brace("]")).addProcessor(surroundBlock).addProcessor(endComplexValue).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);}));
         }
 
         PLAYER_NAME.add(identifierB());
@@ -529,7 +529,7 @@ public class TridentProductions {
                         }
                     }), ofType(EMPTY_TOKEN).setName("FILE_START_MARKER"), l).addProcessor(surroundBlock));
 
-            FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l,ofType(TokenType.END_OF_FILE)).addProcessor((p, lx) -> {uninstallCommands();}).addFailProcessor((len, lx) -> {uninstallCommands();}));
+            FILE.add(group(optional(list(DIRECTIVE).setOptional(true).setName("DIRECTIVES")),l,ofType(TokenType.END_OF_FILE)).addProcessor((p, lx) -> {uninstallCommands();}).addFailProcessor((ip, lx) -> {uninstallCommands();}));
         }
 
         TEXT_COLOR = choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white", "reset").setName("TEXT_COLOR");
@@ -2410,7 +2410,7 @@ public class TridentProductions {
                     brace("{").addProcessor(startComplexValue),
                     list(classBodyEntry).setOptional().setName("CLASS_BODY_ENTRIES"),
                     brace("}")
-            ).setOptional().setName("CLASS_DECLARATION_BODY").addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((n, l) -> {if(n > 0) endComplexValue.accept(null, l);});
+            ).setOptional().setName("CLASS_DECLARATION_BODY").addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);});
 
             INSTRUCTION.add(
                     group(instructionKeyword("define"),

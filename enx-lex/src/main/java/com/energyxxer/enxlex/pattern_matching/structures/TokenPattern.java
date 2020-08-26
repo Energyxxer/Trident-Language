@@ -2,6 +2,7 @@ package com.energyxxer.enxlex.pattern_matching.structures;
 
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.StringLocation;
 import com.sun.istack.internal.NotNull;
@@ -14,6 +15,12 @@ public abstract class TokenPattern<T> {
 
 	protected String name = "";
 	protected ArrayList<String> tags = new ArrayList<>();
+	public final TokenPatternMatch source;
+
+	public TokenPattern(TokenPatternMatch source) {
+		this.source = source;
+	}
+
 	public abstract T getContents();
 	public abstract TokenPattern<T> setName(String name);
 
@@ -85,4 +92,8 @@ public abstract class TokenPattern<T> {
 	}
 
 	public abstract void validate();
+
+    public Object evaluate(Object... data) {
+    	return source.getEvaluator().evaluate(this, data);
+	}
 }

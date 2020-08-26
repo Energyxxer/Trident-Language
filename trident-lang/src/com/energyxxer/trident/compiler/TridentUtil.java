@@ -5,7 +5,6 @@ import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.enxlex.lexical_analysis.profiles.ScannerContextResponse;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
-import com.energyxxer.trident.compiler.lexer.TridentTokens;
 import com.energyxxer.trident.compiler.semantics.TridentException;
 import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.util.Lazy;
@@ -65,7 +64,7 @@ public class TridentUtil {
 
         public static ResourceLocation createStrict(String str) {
             boolean isTag = str.startsWith("#");
-            ScannerContextResponse valueResult = TridentLexerProfile.usefulContexts.get(TridentTokens.RESOURCE_LOCATION).analyzeExpectingType(str.substring(isTag ? 1 : 0), null, null);
+            ScannerContextResponse valueResult = TridentLexerProfile.RESOURCE_LOCATION_CONTEXT.analyzeExpectingType(str.substring(isTag ? 1 : 0), null, null);
             if(valueResult.success && valueResult.endLocation.index == str.length() - (isTag ? 1 : 0)) {
                 return new TridentUtil.ResourceLocation(str);
             } else return null;

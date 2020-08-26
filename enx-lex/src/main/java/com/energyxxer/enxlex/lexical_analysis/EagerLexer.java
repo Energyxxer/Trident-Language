@@ -30,11 +30,6 @@ public class EagerLexer extends Lexer {
 		this.stream = stream;
 	}
 
-	public EagerLexer(File file, String str, TokenStream stream, LexerProfile profile) {
-		this.stream = stream;
-		if(profile != null) start(file, str, profile);
-	}
-
 	private File file;
 
 	private StringBuilder token = new StringBuilder();
@@ -224,7 +219,7 @@ public class EagerLexer extends Lexer {
 	@Override
 	public Token retrieveTokenOfType(TokenType type) {
 		Token token = retrieveAnyToken();
-		if(token.type == type) {
+		if(token.type == type || (type == null && token.type == TokenType.UNKNOWN)) {
 			return token;
 		}
 		return null;

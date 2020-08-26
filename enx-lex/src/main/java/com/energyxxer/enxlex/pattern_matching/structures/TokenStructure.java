@@ -2,6 +2,7 @@ package com.energyxxer.enxlex.pattern_matching.structures;
 
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.StringLocation;
 
@@ -12,7 +13,8 @@ import java.util.List;
 public class TokenStructure extends TokenPattern<TokenPattern<?>> {
 	private TokenPattern<?> group;
 	
-	public TokenStructure(String name, TokenPattern<?> group) {
+	public TokenStructure(String name, TokenPattern<?> group, TokenPatternMatch source) {
+		super(source);
 		this.name = name;
 		this.group = group;
 	}

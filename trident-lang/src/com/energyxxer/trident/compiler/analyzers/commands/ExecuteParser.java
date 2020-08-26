@@ -36,7 +36,6 @@ public class ExecuteParser implements SimpleCommandParser {
             CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandName);
             if (parser != null) {
                 Collection<Command> commands = parser.parse(((TokenStructure) rawCommand).getContents(), ctx, modifiers);
-                modifiers.addAll(0, ctx.getWritingFile().getWritingModifiers());
                 for(Command command : commands) {
                     if (modifiers.isEmpty()) appendTo.append(command);
                     else appendTo.append(new ExecuteCommand(command, modifiers));

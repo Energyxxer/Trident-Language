@@ -19,7 +19,6 @@ public class TridentLexerProfile extends LexerProfile {
 
     public static final Lazy<TridentLexerProfile> INSTANCE = new Lazy<>(TridentLexerProfile::new);
 
-    public static final HashMap<TokenType, LexerContext> usefulContexts = new HashMap<>();
     private static final List<String> allPrimitiveTypes = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "tag_byte", "tag_short", "tag_int", "tag_float", "tag_double", "tag_long", "tag_string", "tag_compound", "tag_list", "tag_int_array", "tag_byte_array", "tag_long_array", "nbt_path", "coordinates", "resource", "int_range", "real_range", "function", "pointer", "dictionary", "list", "exception", "custom_item", "custom_entity", "entity_event", "type_definition", "rotation", "uuid");
     private static final List<String> reservedWords = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "tag_byte", "tag_short", "tag_int", "tag_float", "tag_double", "tag_long", "tag_string", "tag_compound", "tag_list", "tag_int_array", "tag_byte_array", "tag_long_array", "nbt_path", "coordinates", "resource", "int_range", "real_range", "var", "eval", "define", "do", "while", "within", "for", "switch", "function", "if", "else", "try", "catch", "new", "throw", "return", "break", "continue", "private", "local", "public", "global", "case", "switch", "default", "component", "implements", "pointer", "true", "false", "class", "static", "final", "type_definition", "this");
 
@@ -36,8 +35,10 @@ public class TridentLexerProfile extends LexerProfile {
 
     public static final Pattern UUID_REGEX = Pattern.compile("[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]", Pattern.CASE_INSENSITIVE);
 
+    public static final LexerContext RESOURCE_LOCATION_CONTEXT;
+
     static {
-        usefulContexts.put(RESOURCE_LOCATION, new ResourceLocationContext(Namespace.ALLOWED_NAMESPACE_REGEX.replace("+",""), Function.ALLOWED_PATH_REGEX.replace("+",""), RESOURCE_LOCATION));
+        RESOURCE_LOCATION_CONTEXT = new ResourceLocationContext(Namespace.ALLOWED_NAMESPACE_REGEX.replace("+",""), Function.ALLOWED_PATH_REGEX.replace("+",""), RESOURCE_LOCATION);
     }
 
     public TridentLexerProfile() {
@@ -436,7 +437,7 @@ public class TridentLexerProfile extends LexerProfile {
         });
 
         //Resource Locations
-        contexts.add(usefulContexts.get(RESOURCE_LOCATION));
+        contexts.add(RESOURCE_LOCATION_CONTEXT);
 
         //Comments
         contexts.add(new LexerContext() {

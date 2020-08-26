@@ -29,7 +29,7 @@ public class TridentNativeFunctionBranch extends TridentFunctionBranch {
         }
         boolean nullable = true;
 
-        if(method.isAnnotationPresent(NativeMethodWrapper.TridentNotNullReturn.class)) {
+        if(method.isAnnotationPresent(NativeMethodWrapper.TridentNotNullReturn.class) || (method.getReturnType().isPrimitive() && method.getReturnType() != Void.TYPE)) {
             nullable = false;
         }
 

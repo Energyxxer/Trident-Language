@@ -117,7 +117,7 @@ public class LazyLexer extends Lexer {
             while(index < fileContents.length() && fileContents.charAt(index) != '\n' && Character.isWhitespace(fileContents.charAt(index))) index++;
             if(index < fileContents.length() && fileContents.charAt(index) == '\n') return new Token("\n", TokenType.NEWLINE, file, lineCache.getLocationForOffset(index));
         }
-        if (type == TokenType.UNKNOWN) {
+        if (type == TokenType.UNKNOWN || type == null) {
             StringBuilder sb = new StringBuilder();
             for (int i = getLookingIndexTrimmed(); i < fileContents.length(); i++) {
 

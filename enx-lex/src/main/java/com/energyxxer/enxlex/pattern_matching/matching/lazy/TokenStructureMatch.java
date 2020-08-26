@@ -56,7 +56,7 @@ public class TokenStructureMatch extends TokenPatternMatch {
 
         if(entries.isEmpty()) {
             //throw new IllegalStateException("Cannot attempt match; TokenStructureMatch '" + this.name + "' is empty.");
-            invokeFailProcessors(0, lexer);
+            invokeFailProcessors(null, lexer);
             return new TokenMatchResponse(false, null, 0, this, null);
         }
         for (TokenPatternMatch entry : entries) {
@@ -82,14 +82,14 @@ public class TokenStructureMatch extends TokenPatternMatch {
 
         if (longestMatch == null || longestMatch.matched) {
             if(longestMatch != null) {
-                TokenStructure struct = new TokenStructure(this.name, longestMatch.pattern).addTags(this.tags);
+                TokenStructure struct = new TokenStructure(this.name, longestMatch.pattern, this).addTags(this.tags);
                 invokeProcessors(struct, lexer);
                 return new TokenMatchResponse(true, null, longestMatch.length, struct);
             } else {
                 return new TokenMatchResponse(true, null, 0, null);
             }
         } else {
-            invokeFailProcessors(longestMatch.length, lexer);
+            invokeFailProcessors(longestMatch.pattern, lexer);
             if (longestMatch.length <= 0 && entries.size() > 1) {
                 return new TokenMatchResponse(false, longestMatch.faultyToken, longestMatch.length, this, null/*new TokenStructure(this.name, longestMatch.pattern).addTags(this.tags)*/);
             } else {

@@ -2,6 +2,7 @@ package com.energyxxer.enxlex.pattern_matching.structures;
 
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.StringLocation;
 
@@ -12,10 +13,8 @@ import java.util.List;
 public class TokenList extends TokenPattern<TokenPattern<?>[]> {
 	private List<TokenPattern<?>> patterns = new ArrayList<>();
 
-	public TokenList() {}
-	
-	public TokenList(List<TokenPattern<?>> patterns) {
-		this.patterns.addAll(patterns);
+	public TokenList(TokenPatternMatch source) {
+		super(source);
 	}
 	
 	public void add(TokenPattern<?> pattern) {
@@ -39,13 +38,13 @@ public class TokenList extends TokenPattern<TokenPattern<?>[]> {
 
 	@Override
 	public String toString() {
-		String o = "(L)" + ((name != null && name.length() > 0) ? (name + ": ") : "") + "[ ";
+		StringBuilder o = new StringBuilder("(L)" + ((name != null && name.length() > 0) ? (name + ": ") : "") + "[ ");
 		
 		for(TokenPattern<?> p : patterns) {
-			o += p.toString();
+			o.append(p.toString());
 		}
-		o += " ]";
-		return o;
+		o.append(" ]");
+		return o.toString();
 	}
 
 	@Override

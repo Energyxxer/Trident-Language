@@ -15,6 +15,8 @@ public class TokenItemMatch extends TokenPatternMatch {
     private TokenType type;
     private String stringMatch = null;
 
+    private boolean caseSensitive = true;
+
     public TokenItemMatch(TokenType type) {
         this.type = type;
         this.optional = false;
@@ -49,7 +51,7 @@ public class TokenItemMatch extends TokenPatternMatch {
         MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[] {"int"}, new Object[] {index});
 
         if(st.find(thisInvoc)) {
-            invokeFailProcessors(0, lexer);
+            invokeFailProcessors(null, lexer);
             return new TokenMatchResponse(false, null, 0, this, null);
         }
         st.push(thisInvoc);
@@ -67,6 +69,7 @@ public class TokenItemMatch extends TokenPatternMatch {
                         suggestion.addTag(tag);
                     }
                 }
+                suggestion.setCaseSensitive(caseSensitive);
                 lexer.getSuggestionModule().addSuggestion(suggestion);
             } else {
                 lexer.getSuggestionModule().addSuggestion(new ComplexSuggestion(this.type.toString()));
@@ -76,11 +79,11 @@ public class TokenItemMatch extends TokenPatternMatch {
         Token retrieved = lexer.retrieveTokenOfType(this.type);
         if(retrieved == null) {
             st.pop();
-            invokeFailProcessors(0, lexer);
+            invokeFailProcessors(null, lexer);
             return new TokenMatchResponse(false, lexer.retrieveAnyToken(), 0, this, null);
         }
 
-        matched = stringMatch == null || retrieved.value.equals(stringMatch);
+        matched = stringMatch == null || (caseSensitive ? retrieved.value.equals(stringMatch) : retrieved.value.equalsIgnoreCase(stringMatch));
 
         if (!matched) {
             faultyToken = retrieved;
@@ -88,15 +91,24 @@ public class TokenItemMatch extends TokenPatternMatch {
 
         int length = (matched) ? retrieved.loc.index + retrieved.value.length() - index : 0;
 
-        TokenItem item = new TokenItem(retrieved).setName(this.name).addTags(this.tags);
+        TokenItem item = new TokenItem(retrieved, this).setName(this.name).addTags(this.tags);
 
         st.pop();
         while(--popSuggestionStatus >= 0) {
             lexer.getSuggestionModule().popStatus();
         }
         if(matched) invokeProcessors(item, lexer);
-        else invokeFailProcessors(0, lexer);
+        else invokeFailProcessors(null, lexer);
         return new TokenMatchResponse(matched, faultyToken, length, (matched) ? null : this, item);
+    }
+
+    public boolean isCaseSensitive() {
+        return caseSensitive;
+    }
+
+    public TokenItemMatch setCaseSensitive(boolean caseSensitive) {
+        this.caseSensitive = caseSensitive;
+        return this;
     }
 
     public TokenType getType() {

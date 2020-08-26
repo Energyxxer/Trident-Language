@@ -899,7 +899,7 @@ public class TridentCompiler extends AbstractProcess implements Reported {
                 Path relPath = Paths.get(path);
 
                 fileSummary = new TridentSummaryModule(null);
-                fileSummary.setFileLocation(new TridentUtil.ResourceLocation(relPath.getName(0) + ":" + relPath.subpath(2, relPath.getNameCount()).toString().replace(File.separator, "/").replaceAll(".tdn$","")));
+                fileSummary.setFileLocation(new TridentUtil.ResourceLocation(relPath.getName(0) + ":" + relPath.subpath(2, relPath.getNameCount()).toString().replace(File.separator, "/").replaceAll("\\.tdn$","")));
 
                 TokenStream ts = new TokenStream();
                 LazyLexer lex = new LazyLexer(ts, new TridentProductions(dummyModule).FILE);

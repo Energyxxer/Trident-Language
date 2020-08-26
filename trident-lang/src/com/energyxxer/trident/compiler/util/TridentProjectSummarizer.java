@@ -191,7 +191,7 @@ public class TridentProjectSummarizer implements ProjectSummarizer {
 
                             if(!filePatterns.containsKey(toSourceCacheKey(file)) || (filePatterns.get(toSourceCacheKey(file)).getHashCode() != hashCode || filePatterns.get(toSourceCacheKey(file)).getSummary() == null)) {
                                 TridentSummaryModule fileSummary = new TridentSummaryModule(summary);
-                                fileSummary.setFileLocation(new TridentUtil.ResourceLocation(relPath.getName(0) + ":" + relPath.subpath(2, relPath.getNameCount()).toString().replace(File.separator, "/").replaceAll(".tdn$","")));
+                                fileSummary.setFileLocation(new TridentUtil.ResourceLocation(relPath.getName(0) + ":" + relPath.subpath(2, relPath.getNameCount()).toString().replace(File.separator, "/").replaceAll("\\.tdn$","")));
                                 lex.setSummaryModule(fileSummary);
                                 lex.start(file, str, new TridentLexerProfile());
                                 this.summary.store(file, fileSummary);

@@ -1,6 +1,7 @@
 package com.energyxxer.enxlex.pattern_matching.matching;
 
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
+import com.energyxxer.enxlex.pattern_matching.PatternEvaluator;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.suggestions.ComplexSuggestion;
@@ -18,7 +19,9 @@ public abstract class TokenPatternMatch {
     public boolean optional;
     public List<String> tags = new ArrayList<>();
     protected List<BiConsumer<TokenPattern<?>, Lexer>> processors = new ArrayList<>();
-    protected List<BiConsumer<Integer, Lexer>> failProcessors = new ArrayList<>();
+    protected List<BiConsumer<TokenPattern<?>, Lexer>> failProcessors = new ArrayList<>();
+
+    protected PatternEvaluator evaluator;
 
     public TokenPatternMatch addTags(String... newTags) {
         tags.addAll(Arrays.asList(newTags));
@@ -35,7 +38,7 @@ public abstract class TokenPatternMatch {
         return this;
     }
 
-    public TokenPatternMatch addFailProcessor(BiConsumer<Integer, Lexer> failProcessor) {
+    public TokenPatternMatch addFailProcessor(BiConsumer<TokenPattern<?>, Lexer> failProcessor) {
         failProcessors.add(failProcessor);
         return this;
     }
@@ -48,8 +51,8 @@ public abstract class TokenPatternMatch {
         processors.forEach(p -> p.accept(pattern, lexer));
     }
 
-    protected void invokeFailProcessors(int matchLength, Lexer lexer) {
-        failProcessors.forEach(p -> p.accept(matchLength, lexer));
+    protected void invokeFailProcessors(TokenPattern<?> incompletePattern, Lexer lexer) {
+        failProcessors.forEach(p -> p.accept(incompletePattern, lexer));
     }
 
 
@@ -105,5 +108,14 @@ public abstract class TokenPatternMatch {
             }
         }
         return popSuggestionStatus;
+    }
+
+    public PatternEvaluator getEvaluator() {
+        return evaluator;
+    }
+
+    public TokenPatternMatch setEvaluator(PatternEvaluator evaluator) {
+        this.evaluator = evaluator;
+        return this;
     }
 }

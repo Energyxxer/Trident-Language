@@ -1,6 +1,5 @@
 package com.energyxxer.enxlex.suggestions;
 
-import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
 
 import java.text.Collator;
@@ -15,7 +14,7 @@ public class SuggestionModule {
         ENABLED,
         DISABLED;
     }
-    private LazyLexer lexer;
+    private Lexer lexer;
 
     private final int originalSuggestionIndex;
     private boolean changedSuggestionIndex = false;
@@ -82,7 +81,7 @@ public class SuggestionModule {
         return lexer;
     }
 
-    public void setLexer(LazyLexer lexer) {
+    public void setLexer(Lexer lexer) {
         this.lexer = lexer;
     }
 

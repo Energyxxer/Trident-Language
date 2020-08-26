@@ -110,8 +110,8 @@ public class SummaryBlock implements SummaryElement {
 
     @Override
     public void collectSymbolsVisibleAt(int index, ArrayList<SummarySymbol> list, boolean fromSameFile) {
-        if(subElements.isEmpty()) return;
         if(associatedSymbol != null) associatedSymbol.collectSymbolsVisibleAt(index, list, fromSameFile);
+        if(subElements.isEmpty()) return;
         if((index < 0 && fixed) || (startIndex <= index && index <= endIndex)) {
             for(SummaryElement elem : subElements) {
                 elem.collectSymbolsVisibleAt(index, list, fromSameFile);

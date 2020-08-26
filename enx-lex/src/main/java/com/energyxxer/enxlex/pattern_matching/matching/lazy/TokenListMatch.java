@@ -72,7 +72,7 @@ public class TokenListMatch extends TokenPatternMatch {
         lexer.setCurrentIndex(index);
         MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[] {"int"}, new Object[] {index});
         if(st.find(thisInvoc)) {
-            invokeFailProcessors(0, lexer);
+            invokeFailProcessors(null, lexer);
             return new TokenMatchResponse(false, null, 0, this.pattern, null);
         }
         st.push(thisInvoc);
@@ -82,7 +82,7 @@ public class TokenListMatch extends TokenPatternMatch {
         Token faultyToken = null;
         int length = 0;
         TokenPatternMatch expected = null;
-        TokenList list = new TokenList().setName(this.name).addTags(this.tags);
+        TokenList list = new TokenList(this).setName(this.name).addTags(this.tags);
 
         Stack tempStack = st.clone();
 
@@ -132,7 +132,7 @@ public class TokenListMatch extends TokenPatternMatch {
                             if(itemMatch.pattern != null) list.add(itemMatch.pattern);
                             expectSeparator = true;
                             if(itemMatch.pattern instanceof TokenStructure && ((TokenStructure) itemMatch.pattern).getContents().hasTag(StandardTags.LIST_TERMINATOR)) {
-                                break;
+                                break itemLoop;
                             }
                         }
                     }
@@ -161,7 +161,7 @@ public class TokenListMatch extends TokenPatternMatch {
                             i += itemMatch.length;
                             if(itemMatch.pattern != null) list.add(itemMatch.pattern);
                             if(itemMatch.pattern instanceof TokenStructure && ((TokenStructure) itemMatch.pattern).getContents().hasTag(StandardTags.LIST_TERMINATOR)) {
-                                break;
+                                break itemLoop;
                             }
                         }
                     }
@@ -171,7 +171,7 @@ public class TokenListMatch extends TokenPatternMatch {
         }
         st.pop();
         if(!hasMatched) {
-            invokeFailProcessors(length, lexer);
+            invokeFailProcessors(list, lexer);
         } else {
             invokeProcessors(list, lexer);
         }
