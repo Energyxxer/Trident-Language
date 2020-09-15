@@ -2,7 +2,6 @@ package com.energyxxer.enxlex.pattern_matching.matching;
 
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
-import com.energyxxer.util.Stack;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,12 +19,12 @@ public class TokenGlue extends TokenPatternMatch {
     }
 
     @Override
-    public TokenMatchResponse match(int index, Lexer lexer, Stack st) {
+    public TokenMatchResponse match(int index, Lexer lexer) {
         lexer.setCurrentIndex(index);
         if(lexer.getLookingIndexTrimmed() == index) {
             boolean matched = true;
             for(TokenPatternMatch ignored : this.ignored) {
-                TokenMatchResponse match = ignored.match(index, lexer, st);
+                TokenMatchResponse match = ignored.match(index, lexer);
                 if(match.matched) {
                     matched = false;
                     break;
@@ -34,7 +33,7 @@ public class TokenGlue extends TokenPatternMatch {
             if(matched && !this.required.isEmpty()) {
                 boolean valid = false;
                 for(TokenPatternMatch required : this.required) {
-                    TokenMatchResponse match = required.match(index, lexer, st);
+                    TokenMatchResponse match = required.match(index, lexer);
                     if(match.matched) {
                         valid = true;
                         break;

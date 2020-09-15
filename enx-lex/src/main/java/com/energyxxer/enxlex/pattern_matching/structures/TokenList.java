@@ -3,6 +3,7 @@ package com.energyxxer.enxlex.pattern_matching.structures;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenListMatch;
 import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.StringLocation;
 
@@ -34,6 +35,20 @@ public class TokenList extends TokenPattern<TokenPattern<?>[]> {
 	@Override
 	public TokenPattern<?>[] getContents() {
 		return patterns.toArray(new TokenPattern<?>[0]);
+	}
+
+	public TokenPattern<?>[] getContentsExcludingSeparators() {
+		TokenPatternMatch separatorSource = ((TokenListMatch) this.source).getSeparatorMatch();
+		if(separatorSource == null) return getContents();
+
+		ArrayList<TokenPattern<?>> filtered = new ArrayList<>();
+
+		for(TokenPattern<?> entry : patterns) {
+			if(entry.source != null && entry.source != separatorSource) {
+				filtered.add(entry);
+			}
+		}
+		return filtered.toArray(new TokenPattern<?>[0]);
 	}
 
 	@Override

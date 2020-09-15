@@ -22,25 +22,25 @@ public class IdentifierLexerContext implements LexerContext {
     }
 
     @Override
-    public ScannerContextResponse analyze(String str, LexerProfile profile) {
-        return !onlyWhenExpected ? analyzeExpectingType(str, type, profile) : new ScannerContextResponse(false);
+    public ScannerContextResponse analyze(String str, int startIndex, LexerProfile profile) {
+        return !onlyWhenExpected ? analyzeExpectingType(str, startIndex, type, profile) : ScannerContextResponse.FAILED;
     }
 
     @Override
-    public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
-        int i = 0;
+    public ScannerContextResponse analyzeExpectingType(String str, int startIndex, TokenType type, LexerProfile profile) {
+        int i = startIndex;
         while(i < str.length() &&
                 (
                         (
-                                (i > 0 || firstRegex == null) && Character.toString(str.charAt(i)).matches(regex)
+                                (i > startIndex || firstRegex == null) && Character.toString(str.charAt(i)).matches(regex)
                         )
                                 ||
-                        (i == 0 && firstRegex != null && Character.toString(str.charAt(i)).matches(firstRegex)))) {
+                        (i == startIndex && firstRegex != null && Character.toString(str.charAt(i)).matches(firstRegex)))) {
             i++;
         }
-        if(i > 0) return new ScannerContextResponse(true, str.substring(0, i), type);
-        return new ScannerContextResponse(false);
-    }
+        if(i > startIndex) return new ScannerContextResponse(true, str.substring(startIndex, i), type);
+        return ScannerContextResponse.FAILED;
+    } //substring done
 
     @Override
     public Collection<TokenType> getHandledTypes() {

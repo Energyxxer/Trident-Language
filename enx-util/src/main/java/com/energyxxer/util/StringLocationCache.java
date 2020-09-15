@@ -3,9 +3,9 @@ package com.energyxxer.util;
 import java.util.HashMap;
 
 public class StringLocationCache {
+    //              (line)   (index)
     private HashMap<Integer, Integer> lineLocations = new HashMap<>();
     private int lastKnownLine = 0;
-    //              (line)   (index)
 
     public String text;
 

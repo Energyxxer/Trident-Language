@@ -110,4 +110,13 @@ public class TokenStructure extends TokenPattern<TokenPattern<?>> {
 		}
 		group.validate();
 	}
+
+	@Override
+	public void simplify(SimplificationDomain domain) {
+		if(source == null || (source.getEvaluator() == null && source.getSimplificationFunction() == null)) {
+			domain.pattern = group;
+		} else {
+			super.simplify(domain);
+		}
+	}
 }

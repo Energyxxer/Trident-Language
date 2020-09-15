@@ -4,8 +4,6 @@ import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.util.MethodInvocation;
-import com.energyxxer.util.Stack;
 
 import java.util.ArrayList;
 
@@ -45,10 +43,8 @@ public class TokenStructureMatch extends TokenPatternMatch {
     }
 
     @Override
-    public TokenMatchResponse match(int index, Lexer lexer, Stack st) {
+    public TokenMatchResponse match(int index, Lexer lexer) {
         lexer.setCurrentIndex(index);
-        MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[]{"int"}, new Object[]{index});
-        st.push(thisInvoc);
 
         int popSuggestionStatus = handleSuggestionTags(lexer, index);
 
@@ -62,9 +58,7 @@ public class TokenStructureMatch extends TokenPatternMatch {
         for (TokenPatternMatch entry : entries) {
             lexer.setCurrentIndex(index);
 
-            MethodInvocation newInvoc = new MethodInvocation(entry, "match", new String[]{"int"}, new Object[]{index});
-            //if(st.find(newInvoc)) continue;
-            TokenMatchResponse itemMatch = entry.match(index, lexer, st);
+            TokenMatchResponse itemMatch = entry.match(index, lexer);
 
             if (longestMatch == null) {
                 longestMatch = itemMatch;
@@ -75,7 +69,6 @@ public class TokenStructureMatch extends TokenPatternMatch {
             }
         }
 
-        st.pop();
         while(--popSuggestionStatus >= 0) {
             lexer.getSuggestionModule().popStatus();
         }

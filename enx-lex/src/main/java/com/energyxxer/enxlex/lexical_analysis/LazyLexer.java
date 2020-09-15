@@ -91,11 +91,12 @@ public class LazyLexer extends Lexer {
 
     @Override
     public Token retrieveTokenOfType(TokenType type) {
+        int lookingIndexTrimmed = getLookingIndexTrimmed();
         for (LexerContext context : profile.contexts) {
             if (context.getHandledTypes().contains(type)) {
-                ScannerContextResponse response = context.analyzeExpectingType(context.ignoreLeadingWhitespace() ?
-                        getLookingAtTrimmed() :
-                        getLookingAt(), type, profile);
+                ScannerContextResponse response = context.analyzeExpectingType(fileContents, context.ignoreLeadingWhitespace() ?
+                        lookingIndexTrimmed :
+                        currentIndex, type, profile);
                 if (response.success && response.tokenType == type) {
                     Token token = new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(context.ignoreLeadingWhitespace() ?
                             getLookingIndexTrimmed() :
@@ -137,11 +138,13 @@ public class LazyLexer extends Lexer {
 
     @Override
     public Token retrieveAnyToken() {
+        int lookingIndexTrimmed = getLookingIndexTrimmed();
         for (LexerContext context : profile.contexts) {
             ScannerContextResponse response = context.analyze(
+                    fileContents,
                     context.ignoreLeadingWhitespace() ?
-                            getLookingAtTrimmed() :
-                            getLookingAt(),
+                            lookingIndexTrimmed :
+                            currentIndex,
                     profile);
             if (response.success && !response.value.isEmpty()) {
                 Token token = new Token(response.value, response.tokenType, file, lineCache.getLocationForOffset(

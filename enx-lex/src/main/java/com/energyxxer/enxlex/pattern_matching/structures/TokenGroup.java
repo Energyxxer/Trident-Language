@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TokenGroup extends TokenPattern<TokenPattern<?>[]> {
-	private ArrayList<TokenPattern<?>> patterns = new ArrayList<TokenPattern<?>>();
+	private ArrayList<TokenPattern<?>> patterns = new ArrayList<>();
 	
 	public TokenGroup(TokenPatternMatch source) {
 		super(source);

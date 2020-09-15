@@ -5,8 +5,6 @@ import com.energyxxer.enxlex.lexical_analysis.token.Token;
 import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
-import com.energyxxer.util.MethodInvocation;
-import com.energyxxer.util.Stack;
 
 import java.util.ArrayList;
 
@@ -38,13 +36,9 @@ public class TokenGroupMatch extends TokenPatternMatch {
 
 
     @Override
-    public TokenMatchResponse match(int index, Lexer lexer, Stack st) {
+    public TokenMatchResponse match(int index, Lexer lexer) {
         lexer.setCurrentIndex(index);
         if(items.size() == 0) return new TokenMatchResponse(true, null, 0, null, new TokenGroup(this));
-
-        MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[] {"int"}, new Object[] {index});
-
-        st.push(thisInvoc);
 
         int popSuggestionStatus = handleSuggestionTags(lexer, index);
 
@@ -62,7 +56,7 @@ public class TokenGroupMatch extends TokenPatternMatch {
                 break;
             }
 
-            TokenMatchResponse itemMatch = items.get(i).match(currentIndex, lexer, st);
+            TokenMatchResponse itemMatch = items.get(i).match(currentIndex, lexer);
             switch(itemMatch.getMatchType()) {
                 case NO_MATCH: {
                     if(!items.get(i).optional) {
@@ -74,7 +68,7 @@ public class TokenGroupMatch extends TokenPatternMatch {
                     break;
                 }
                 case PARTIAL_MATCH: {
-                    if(!(items.get(i).optional && i+1 < items.size() && items.get(i+1).match(currentIndex, lexer, st).matched)) {
+                    if(!(items.get(i).optional && i+1 < items.size() && items.get(i+1).match(currentIndex, lexer).matched)) {
                         hasMatched = false;
                         length += itemMatch.length;
                         faultyToken = itemMatch.faultyToken;
@@ -91,7 +85,7 @@ public class TokenGroupMatch extends TokenPatternMatch {
                 }
             }
         }
-        st.pop();
+
         while(--popSuggestionStatus >= 0) {
             lexer.getSuggestionModule().popStatus();
         }
@@ -159,5 +153,9 @@ public class TokenGroupMatch extends TokenPatternMatch {
             }
         }
         return sb.toString();
+    }
+
+    public TokenPatternMatch setSimplificationFunctionContentIndex(int contentIndex) {
+        return setSimplificationFunction((d) -> d.pattern = ((TokenGroup) d.pattern).getContents()[contentIndex]);
     }
 }

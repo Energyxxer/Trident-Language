@@ -15,22 +15,22 @@ public class StringTypeMatchLexerContext implements LexerContext {
     }
 
     @Override
-    public ScannerContextResponse analyze(String str, LexerProfile profile) {
+    public ScannerContextResponse analyze(String str, int startIndex, LexerProfile profile) {
         for(int i = 0; i < strings.length; i++) {
-            if(str.startsWith(strings[i]) && (str.length() == strings[i].length() || !(profile.canMerge(str.charAt(strings[i].length()-1), str.charAt(strings[i].length()))))) return new ScannerContextResponse(true, strings[i], types[i]);
+            if(str.startsWith(strings[i], startIndex) && (str.length() == startIndex + strings[i].length() || !(profile.canMerge(str.charAt(startIndex+strings[i].length()-1), str.charAt(startIndex+strings[i].length()))))) return new ScannerContextResponse(true, strings[i], types[i]);
         }
-        return new ScannerContextResponse(false);
+        return ScannerContextResponse.FAILED;
     }
 
     @Override
-    public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+    public ScannerContextResponse analyzeExpectingType(String str, int startIndex, TokenType type, LexerProfile profile) {
         for(int i = 0; i < strings.length; i++) {
-            if(type == types[i] && str.startsWith(strings[i])) {
+            if(type == types[i] && str.startsWith(strings[i], startIndex)) {
                 return new ScannerContextResponse(true, strings[i], types[i]);
             }
         }
-        return new ScannerContextResponse(false);
-    }
+        return ScannerContextResponse.FAILED;
+    } //substring done
 
     @Override
     public Collection<TokenType> getHandledTypes() {

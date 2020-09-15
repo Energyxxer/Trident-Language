@@ -7,12 +7,12 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.suggestions.ComplexSuggestion;
 import com.energyxxer.enxlex.suggestions.SuggestionModule;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
-import com.energyxxer.util.Stack;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public abstract class TokenPatternMatch {
     public String name = "";
@@ -21,6 +21,7 @@ public abstract class TokenPatternMatch {
     protected List<BiConsumer<TokenPattern<?>, Lexer>> processors = new ArrayList<>();
     protected List<BiConsumer<TokenPattern<?>, Lexer>> failProcessors = new ArrayList<>();
 
+    private Consumer<TokenPattern.SimplificationDomain> simplificationFunction;
     protected PatternEvaluator evaluator;
 
     public TokenPatternMatch addTags(String... newTags) {
@@ -59,11 +60,8 @@ public abstract class TokenPatternMatch {
 
 
 
-    public TokenMatchResponse match(int index, Lexer lexer) {
-        return match(index, lexer, new Stack());
-    }
 
-    public abstract TokenMatchResponse match(int index, Lexer lexer, Stack st);
+    public abstract TokenMatchResponse match(int index, Lexer lexer);
 
     public TokenPatternMatch setOptional() {
         return setOptional(true);
@@ -117,5 +115,18 @@ public abstract class TokenPatternMatch {
     public TokenPatternMatch setEvaluator(PatternEvaluator evaluator) {
         this.evaluator = evaluator;
         return this;
+    }
+
+    public Consumer<TokenPattern.SimplificationDomain> getSimplificationFunction() {
+        return simplificationFunction;
+    }
+
+    public TokenPatternMatch setSimplificationFunction(Consumer<TokenPattern.SimplificationDomain> simplificationFunction) {
+        this.simplificationFunction = simplificationFunction;
+        return this;
+    }
+
+    public TokenPatternMatch setSimplificationFunctionFind(String path) {
+        return setSimplificationFunction((d) -> d.pattern = d.pattern.find(path));
     }
 }

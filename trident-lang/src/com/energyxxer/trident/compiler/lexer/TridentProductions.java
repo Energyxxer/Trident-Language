@@ -64,7 +64,7 @@ public class TridentProductions {
     private final TokenStructureMatch COMMAND;
     private final TokenStructureMatch MODIFIER;
 
-    private final TokenStructureMatch RESOURCE_LOCATION_S;
+    private final TokenStructureMatch RESOURCE_LOCATION_S; //TODO all the resource locations that implement tags by concatenating a hash() with RESOURCE_LOCATION_S, prevent #${}s
     private final TokenStructureMatch RESOURCE_LOCATION_TAGGED;
 
     private final TokenStructureMatch SELECTOR;
@@ -392,7 +392,7 @@ public class TridentProductions {
                                 l.getSuggestionModule().addSuggestion(new ComplexSuggestion(TridentSuggestionTags.IDENTIFIER_MEMBER));
                             }
                         }
-                    }), identifierY()
+                    }), identifierX()
                             .setName("SYMBOL_NAME")
                             .addTags(SuggestionTags.ENABLED)
                             .addProcessor((p, l) -> {
@@ -416,7 +416,7 @@ public class TridentProductions {
                                 l.getSuggestionModule().addSuggestion(new ComplexSuggestion(TridentSuggestionTags.IDENTIFIER_MEMBER));
                             }
                         }
-                    }), identifierY()
+                    }), identifierX()
                             .setName("SYMBOL_NAME")
                             .addTags(SuggestionTags.ENABLED)
                             .addProcessor((p, l) -> {
@@ -443,7 +443,7 @@ public class TridentProductions {
                     brace("{").addProcessor(startComplexValue),
                     list(
                             group(
-                                    choice(identifierY(), ofType(STRING_LITERAL))
+                                    choice(identifierX(), ofType(STRING_LITERAL))
                                             .setName("DICTIONARY_KEY")
                                             .addProcessor((p, l) -> {
                                                 if(l.getSummaryModule() != null) {
@@ -2239,7 +2239,6 @@ public class TridentProductions {
                 TokenGroupMatch g2 = new TokenGroupMatch().setName("ABSTRACT_RESOURCE");
                 g2.append(resourceLocationFixer);
                 g2.append(new TokenGroupMatch().append(hash().setName("TAG_HEADER").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ENTITY_TYPE_TAG)).append(ofType(GLUE)).append(RESOURCE_LOCATION_S).setName("RESOURCE_NAME"));
-                g2.append(new TokenGroupMatch(true).append(ofType(GLUE)).append(NBT_COMPOUND));
                 ENTITY_ID_TAGGED.add(g2);
 
                 ENTITY_ID.add(INTERPOLATION_BLOCK);
@@ -2895,9 +2894,6 @@ public class TridentProductions {
     private TokenItemMatch identifierX() {
         return ofType(IDENTIFIER_TYPE_X).setName("IDENTIFIER");
     }
-    private TokenItemMatch identifierY() {
-        return ofType(IDENTIFIER_TYPE_Y).setName("IDENTIFIER");
-    }
 
     private static Symbol.SymbolVisibility parseVisibility(TokenPattern<?> pattern, Symbol.SymbolVisibility defaultValue) {
         if(pattern == null) return defaultValue;
@@ -2998,8 +2994,8 @@ public class TridentProductions {
             case "IDENTIFIER_B_LIMITED": return identifierBLimited();
             case "IDENTIFIER_C": return identifierC();
             case "IDENTIFIER_D": return identifierD();
+            case "IDENTIFIER_Y":
             case "IDENTIFIER_X": return identifierX();
-            case "IDENTIFIER_Y": return identifierY();
             case "TRAILING_STRING": return ofType(TRAILING_STRING).setName("TRAILING_STRING");
             default: return null;
         }

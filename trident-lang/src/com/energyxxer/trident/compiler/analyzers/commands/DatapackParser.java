@@ -36,26 +36,21 @@ public class DatapackParser implements SimpleCommandParser {
 
                 TokenPattern<?> rawOrder = inner.find("CHOICE");
                 DataPackEnableCommand.Order order;
+
                 if(rawOrder != null) {
                     rawOrder = ((TokenStructure) rawOrder).getContents();
 
-                    String secondPack = null;
-
                     switch(rawOrder.getName()) {
-                        case "DATAPACK_ENABLE_FIRST": order = DataPackEnableCommand.Order.FIRST; break;
-                        case "DATAPACK_ENABLE_LAST": order = DataPackEnableCommand.Order.LAST; break;
-                        case "DATAPACK_ENABLE_BEFORE": order = DataPackEnableCommand.Order.BEFORE; break;
-                        case "DATAPACK_ENABLE_AFTER": order = DataPackEnableCommand.Order.AFTER; break;
+                        case "DATAPACK_ENABLE_FIRST": order = DataPackEnableCommand.Order.FIRST(); break;
+                        case "DATAPACK_ENABLE_LAST": order = DataPackEnableCommand.Order.LAST(); break;
+                        case "DATAPACK_ENABLE_BEFORE": order = DataPackEnableCommand.Order.BEFORE(CommonParsers.parseStringLiteralOrIdentifierA(rawOrder.find("STRING_LITERAL_OR_IDENTIFIER_A"), ctx)); break;
+                        case "DATAPACK_ENABLE_AFTER": order = DataPackEnableCommand.Order.AFTER(CommonParsers.parseStringLiteralOrIdentifierA(rawOrder.find("STRING_LITERAL_OR_IDENTIFIER_A"), ctx)); break;
                         default: {
                             throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + rawOrder.getName() + "'", rawOrder, ctx);
                         }
                     }
 
-                    if(order == DataPackEnableCommand.Order.BEFORE || order == DataPackEnableCommand.Order.AFTER) {
-                        secondPack = CommonParsers.parseStringLiteralOrIdentifierA(rawOrder.find("STRING_LITERAL_OR_IDENTIFIER_A"), ctx);
-                    }
-
-                    return new DataPackEnableCommand(datapack, order, secondPack);
+                    return new DataPackEnableCommand(datapack, order);
                 } else {
                     return new DataPackEnableCommand(datapack);
                 }

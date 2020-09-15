@@ -8,8 +8,6 @@ import com.energyxxer.enxlex.pattern_matching.TokenMatchResponse;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.util.MethodInvocation;
-import com.energyxxer.util.Stack;
 
 import static com.energyxxer.enxlex.pattern_matching.TokenMatchResponse.*;
 
@@ -68,14 +66,8 @@ public class TokenListMatch extends TokenPatternMatch {
     }
 
     @Override
-    public TokenMatchResponse match(int index, Lexer lexer, Stack st) {
+    public TokenMatchResponse match(int index, Lexer lexer) {
         lexer.setCurrentIndex(index);
-        MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[] {"int"}, new Object[] {index});
-        if(st.find(thisInvoc)) {
-            invokeFailProcessors(null, lexer);
-            return new TokenMatchResponse(false, null, 0, this.pattern, null);
-        }
-        st.push(thisInvoc);
         boolean expectSeparator = false;
 
         boolean hasMatched = true;
@@ -84,16 +76,11 @@ public class TokenListMatch extends TokenPatternMatch {
         TokenPatternMatch expected = null;
         TokenList list = new TokenList(this).setName(this.name).addTags(this.tags);
 
-        Stack tempStack = st.clone();
-
         itemLoop: for (int i = index; i < lexer.getFileLength();) {
-            MethodInvocation tempInvoc = new MethodInvocation(this, "match", new String[] {"int"}, new Object[] {i});
-            tempStack.push(tempInvoc);
-
             lexer.setCurrentIndex(i);
 
             if (this.separator != null && expectSeparator) {
-                TokenMatchResponse itemMatch = this.separator.match(i, lexer, tempStack);
+                TokenMatchResponse itemMatch = this.separator.match(i, lexer);
                 expectSeparator = false;
                 switch(itemMatch.getMatchType()) {
                     case NO_MATCH: {
@@ -115,7 +102,7 @@ public class TokenListMatch extends TokenPatternMatch {
                 }
             } else {
                 if (this.separator != null) {
-                    TokenMatchResponse itemMatch = this.pattern.match(i, lexer, tempStack);
+                    TokenMatchResponse itemMatch = this.pattern.match(i, lexer);
                     switch(itemMatch.getMatchType()) {
                         case NO_MATCH:
                         case PARTIAL_MATCH: {
@@ -137,7 +124,7 @@ public class TokenListMatch extends TokenPatternMatch {
                         }
                     }
                 } else {
-                    TokenMatchResponse itemMatch = this.pattern.match(i, lexer, tempStack);
+                    TokenMatchResponse itemMatch = this.pattern.match(i, lexer);
                     length += itemMatch.length;
                     switch(itemMatch.getMatchType()) {
                         case NO_MATCH: {
@@ -167,9 +154,7 @@ public class TokenListMatch extends TokenPatternMatch {
                     }
                 }
             }
-            tempStack.pop();
         }
-        st.pop();
         if(!hasMatched) {
             invokeFailProcessors(list, lexer);
         } else {
@@ -229,5 +214,12 @@ public class TokenListMatch extends TokenPatternMatch {
         }
         s += "...";
         return s;
+    }
+
+    public TokenPatternMatch getSeparatorMatch() {
+        return separator;
+    }
+    public TokenPatternMatch getEntryMatch() {
+        return pattern;
     }
 }

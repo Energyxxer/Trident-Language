@@ -189,7 +189,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                     if (referencedType instanceof Type) {
                         defaultType = ((Type) referencedType);
 
-                        if(!entityName.equals("default") && defaultType.getProperty("spawnable").equals("false")) {
+                        if(!entityName.equals("default") && "false".equals(defaultType.getProperty("spawnable"))) {
                             throw new TridentException(TridentException.Source.COMMAND_ERROR, "This entity type is not summonable", headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
                         }
                     } else if (referencedType instanceof CustomEntity) {

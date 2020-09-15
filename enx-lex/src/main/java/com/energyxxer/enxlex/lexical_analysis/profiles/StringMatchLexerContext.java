@@ -16,17 +16,17 @@ public class StringMatchLexerContext implements LexerContext {
     }
 
     @Override
-    public ScannerContextResponse analyze(String str, LexerProfile profile) {
-        return !onlyWhenExpected ? analyzeExpectingType(str, type, profile) : new ScannerContextResponse(false);
+    public ScannerContextResponse analyze(String str, int startIndex, LexerProfile profile) {
+        return !onlyWhenExpected ? analyzeExpectingType(str, startIndex, type, profile) : ScannerContextResponse.FAILED;
     }
 
     @Override
-    public ScannerContextResponse analyzeExpectingType(String str, TokenType type, LexerProfile profile) {
+    public ScannerContextResponse analyzeExpectingType(String str, int startIndex, TokenType type, LexerProfile profile) {
         for(String match : strings) {
-            if(str.startsWith(match) && (str.length() == match.length() || !(profile.canMerge(str.charAt(match.length()-1), str.charAt(match.length()))))) return new ScannerContextResponse(true, match, type);
+            if(str.startsWith(match, startIndex) && (str.length() == startIndex+match.length() || !(profile.canMerge(str.charAt(startIndex+match.length()-1), str.charAt(startIndex+match.length()))))) return new ScannerContextResponse(true, match, type);
         }
-        return new ScannerContextResponse(false);
-    }
+        return ScannerContextResponse.FAILED;
+    } //substring done
 
     @Override
     public Collection<TokenType> getHandledTypes() {

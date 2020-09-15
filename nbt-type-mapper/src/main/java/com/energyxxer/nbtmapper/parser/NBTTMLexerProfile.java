@@ -5,12 +5,12 @@ import com.energyxxer.commodore.defpacks.DefinitionPack;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.enxlex.lexical_analysis.profiles.*;
 import com.energyxxer.enxlex.lexical_analysis.token.Token;
-import com.energyxxer.enxlex.lexical_analysis.token.TokenSection;
 import com.energyxxer.enxlex.lexical_analysis.token.TokenType;
-import com.energyxxer.util.StringLocation;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 import static com.energyxxer.nbtmapper.parser.NBTTMTokens.*;
 
@@ -61,78 +61,13 @@ public class NBTTMLexerProfile extends LexerProfile {
 
 
         //String literals
-        contexts.add(new LexerContext() {
-
-            String delimiters = "\"";
-
-            @Override
-            public ScannerContextResponse analyze(String str, LexerProfile profile) {
-                if(str.length() <= 0) return new ScannerContextResponse(false);
-                char startingCharacter = str.charAt(0);
-
-                if(delimiters.contains(Character.toString(startingCharacter))) {
-
-                    StringBuilder token = new StringBuilder(Character.toString(startingCharacter));
-                    StringLocation end = new StringLocation(1,0,1);
-
-                    HashMap<TokenSection, String> escapedChars = new HashMap<>();
-
-                    for(int i = 1; i < str.length(); i++) {
-                        char c = str.charAt(i);
-
-                        if(c == '\n') {
-                            end.line++;
-                            end.column = 0;
-                        } else {
-                            end.column++;
-                        }
-                        end.index++;
-
-                        if(c == '\n') {
-                            ScannerContextResponse response = new ScannerContextResponse(true, token.toString(), end, STRING_LITERAL, escapedChars);
-                            response.setError("Illegal line end in string literal", i, 1);
-                            return response;
-                        }
-                        token.append(c);
-                        if(c == '\\') {
-                            token.append(str.charAt(i+1));
-                            escapedChars.put(new TokenSection(i,2), "string_literal.escape");
-                            i++;
-                        } else if(c == startingCharacter) {
-                            return new ScannerContextResponse(true, token.toString(), end, STRING_LITERAL, escapedChars);
-                        }
-                    }
-                    //Unexpected end of input
-                    ScannerContextResponse response = new ScannerContextResponse(true, token.toString(), end, STRING_LITERAL, escapedChars);
-                    response.setError("Unexpected end of input", str.length()-1, 1);
-                    return response;
-                } else return new ScannerContextResponse(false);
-            }
-
-            @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(STRING_LITERAL);
-            }
-        });
+        contexts.add(new StringLiteralLexerContext("\"", STRING_LITERAL));
 
         //Comments
-        contexts.add(new LexerContext() {
-            @Override
-            public ScannerContextResponse analyze(String str, LexerProfile profile) {
-                if(!str.startsWith("#")) return new ScannerContextResponse(false);
-                if(str.contains("\n")) {
-                    return new ScannerContextResponse(true, str.substring(0, str.indexOf("\n")), COMMENT);
-                } else return new ScannerContextResponse(true, str, COMMENT);
-            }
-
+        contexts.add(new CommentLexerContext("#", COMMENT) {
             @Override
             public ContextCondition getCondition() {
                 return ContextCondition.LINE_START;
-            }
-
-            @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(COMMENT);
             }
         });
     }

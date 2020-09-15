@@ -8,8 +8,6 @@ import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
 import com.energyxxer.enxlex.suggestions.ComplexSuggestion;
 import com.energyxxer.enxlex.suggestions.LiteralSuggestion;
-import com.energyxxer.util.MethodInvocation;
-import com.energyxxer.util.Stack;
 
 public class TokenItemMatch extends TokenPatternMatch {
     private TokenType type;
@@ -46,15 +44,8 @@ public class TokenItemMatch extends TokenPatternMatch {
     }
 
     @Override
-    public TokenMatchResponse match(int index, Lexer lexer, Stack st) {
+    public TokenMatchResponse match(int index, Lexer lexer) {
         lexer.setCurrentIndex(index);
-        MethodInvocation thisInvoc = new MethodInvocation(this, "match", new String[] {"int"}, new Object[] {index});
-
-        if(st.find(thisInvoc)) {
-            invokeFailProcessors(null, lexer);
-            return new TokenMatchResponse(false, null, 0, this, null);
-        }
-        st.push(thisInvoc);
 
         int popSuggestionStatus = handleSuggestionTags(lexer, index);
 
@@ -78,7 +69,6 @@ public class TokenItemMatch extends TokenPatternMatch {
 
         Token retrieved = lexer.retrieveTokenOfType(this.type);
         if(retrieved == null) {
-            st.pop();
             invokeFailProcessors(null, lexer);
             return new TokenMatchResponse(false, lexer.retrieveAnyToken(), 0, this, null);
         }
@@ -93,7 +83,6 @@ public class TokenItemMatch extends TokenPatternMatch {
 
         TokenItem item = new TokenItem(retrieved, this).setName(this.name).addTags(this.tags);
 
-        st.pop();
         while(--popSuggestionStatus >= 0) {
             lexer.getSuggestionModule().popStatus();
         }

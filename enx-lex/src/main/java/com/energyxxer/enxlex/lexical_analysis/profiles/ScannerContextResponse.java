@@ -10,6 +10,7 @@ import java.util.HashMap;
  * Defines a response model for custom analysis contexts.
  */
 public class ScannerContextResponse {
+    public static final ScannerContextResponse FAILED = new ScannerContextResponse(false);
     /**
      * Whether the analysis was successful and returned a token.
      * */
@@ -25,8 +26,9 @@ public class ScannerContextResponse {
      * */
     public final TokenType tokenType;
     /**
-     * The location within the substring passed to the analysis method where
-     * the given token ends. Should include the index, line and column changes.
+     * The location within the string passed to the analysis method where
+     * the given token ends, relative to the starting index.
+     * Should include the index, line and column CHANGES.
      * null if the analysis wasn't successful.
      * */
     public final StringLocation endLocation;
@@ -40,7 +42,7 @@ public class ScannerContextResponse {
      * */
     public String errorMessage = null;
     /**
-     * A field containing the index at which the error occurs, if any.
+     * A field containing the index at which the error occurs, if any. Relative to the starting index.
      * */
     public int errorIndex = -1;
     /**
@@ -136,7 +138,7 @@ public class ScannerContextResponse {
      * Sets the error fields with the given information.
      *
      * @param message The error message.
-     * @param index The index at which the error occurs.
+     * @param index The index at which the error occurs, relative to the starting index passed to the lexer context.
      * @param length The length of the error.
      * */
     public void setError(String message, int index, int length) {

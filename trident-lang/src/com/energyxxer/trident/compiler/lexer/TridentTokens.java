@@ -64,10 +64,8 @@ public class TridentTokens {
             IDENTIFIER_TYPE_C,
             //NBT path keys (same as B except doesn't allow dots, double quotes, square braces, curly braces nor angle braces):
             IDENTIFIER_TYPE_D,
-            //Pretty much Java identifiers, without using reserved keywords
+            //Pretty much Java identifiers. There are no reserved keywords
             IDENTIFIER_TYPE_X,
-            //Java identifiers without the reserved words
-            IDENTIFIER_TYPE_Y,
             //primitive types
             PRIMITIVE_TYPE,
             //minecraft:trident/resource_locations
