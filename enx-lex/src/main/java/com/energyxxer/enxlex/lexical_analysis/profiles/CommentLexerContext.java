@@ -15,11 +15,12 @@ public class CommentLexerContext implements LexerContext {
     public CommentLexerContext(String commentStart, TokenType handledType) {
         this.commentStart = commentStart;
         this.handledType = handledType;
+
     }
 
     @Override
     public ScannerContextResponse analyze(String str, int startIndex, LexerProfile profile) {
-        if(!str.startsWith("#", startIndex)) return ScannerContextResponse.FAILED;
+        if(!str.startsWith(commentStart, startIndex)) return ScannerContextResponse.FAILED;
         if(str.indexOf("\n", startIndex) != -1) {
             return handleComment(str.substring(startIndex, str.indexOf("\n", startIndex)));
         } else return handleComment(str.substring(startIndex));
