@@ -1,10 +1,11 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
-import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
-import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
+import com.energyxxer.prismarine.typesystem.functions.FormalParameter;
+import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -14,9 +15,9 @@ public class ClassMethod {
     private final String name;
     private final CustomClass definingClass;
     private final TokenPattern<?> definingPattern;
-    private final TridentUserFunction function;
+    private final PrismarineFunction function;
     private List<FormalParameter> formalParameters;
-    private @NotNull Symbol.SymbolVisibility visibility = Symbol.SymbolVisibility.LOCAL;
+    private @NotNull SymbolVisibility visibility = TridentSymbolVisibility.LOCAL;
     private VariableInstruction.SymbolModifierMap modifiers;
 
     public ClassMethod(String name, CustomClass definingClass) {
@@ -27,7 +28,7 @@ public class ClassMethod {
         this.formalParameters = Collections.emptyList();
     }
 
-    public ClassMethod(CustomClass definingClass, TokenPattern<?> definingPattern, TridentUserFunction function) {
+    public ClassMethod(CustomClass definingClass, TokenPattern<?> definingPattern, PrismarineFunction function) {
         this.name = function.getFunctionName();
         this.definingClass = definingClass;
         this.definingPattern = definingPattern;
@@ -48,15 +49,15 @@ public class ClassMethod {
         this.formalParameters = formalParameters;
     }
 
-    public TridentUserFunction getFunction() {
+    public PrismarineFunction getFunction() {
         return function;
     }
 
-    public Symbol.SymbolVisibility getVisibility() {
+    public SymbolVisibility getVisibility() {
         return visibility;
     }
 
-    public ClassMethod setVisibility(Symbol.SymbolVisibility visibility) {
+    public ClassMethod setVisibility(SymbolVisibility visibility) {
         this.visibility = visibility;
         return this;
     }

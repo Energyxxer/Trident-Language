@@ -1,12 +1,16 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
+import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.ContextualToString;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +37,7 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
             if(fieldDefiningClass.hasAccess(ctx, sym.getVisibility())) {
                 return keepSymbol ? sym : sym.getValue(pattern, ctx);
             } else {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + fieldDefiningClass.getClassTypeIdentifier(), pattern, ctx);
+                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + fieldDefiningClass.getClassTypeIdentifier(), pattern, ctx);
             }
         }
         throw new MemberNotFoundException();
@@ -53,7 +57,7 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
             }
         }
         if(foundClassMethod == null) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve function or method '" + memberName + "' of " + TridentTypeManager.getTypeIdentifierForObject(this), pattern, ctx);
+            throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot resolve function or method '" + memberName + "' of " + ctx.getTypeSystem().getTypeIdentifierForObject(this), pattern, ctx);
         }
         return foundClassMethod;
     }
@@ -74,10 +78,9 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
     @Override
     public Object cast(CustomClassObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         for(CustomClass type : type.getInheritanceTree()) {
-            TridentUserFunction castMethod = type.explicitCasts.get(targetType);
+            PrismarineFunction castMethod = type.explicitCasts.get(targetType);
             if(castMethod != null) {
-                castMethod.setThisObject(object);
-                return castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
+                return castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx, object);
             }
         }
         throw new ClassCastException();
@@ -86,17 +89,16 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
     @Override
     public Object coerce(CustomClassObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         for(CustomClass type : type.getInheritanceTree()) {
-            TridentUserFunction castMethod = type.implicitCasts.get(targetType);
+            PrismarineFunction castMethod = type.implicitCasts.get(targetType);
             if(castMethod != null) {
-                castMethod.setThisObject(object);
-                return castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
+                return castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx, object);
             }
         }
         return null;
     }
 
     @Override
-    public boolean canCoerce(Object object, TypeHandler into) {
+    public boolean canCoerce(Object object, TypeHandler into, ISymbolContext ctx) {
         return type.isInstance(object) && type.implicitCasts.containsKey(into);
     }
 
@@ -148,7 +150,7 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
         if(foundClassMethod instanceof ClassMethodFamily.ClassMethodSymbol) {
             return (String) ((ClassMethodFamily.ClassMethodSymbol) foundClassMethod).safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
         } else {
-            return (String) ((TridentFunction) foundClassMethod).safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
+            return (String) ((PrimitivePrismarineFunction) foundClassMethod).safeCall(new Object[0], new TokenPattern[0], pattern, ctx, this);
         }
     }
 
@@ -185,5 +187,10 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
 
     public Object getHidden(String key) {
         return hiddenData.get(key);
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return type.getTypeSystem();
     }
 }

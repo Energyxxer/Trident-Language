@@ -14,16 +14,17 @@ import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeNotFoundException;
 import com.energyxxer.commodore.types.defaults.FontReference;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.sets.JsonLiteralSet;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
+import com.energyxxer.trident.worker.tasks.SetupPropertiesTask;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.TridentCompiler;
-import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.analyzers.default_libs.JsonLib;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-import com.energyxxer.trident.extensions.EObject;
+import com.energyxxer.prismarine.PrismarineCompiler;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -36,45 +37,6 @@ import static com.energyxxer.trident.compiler.util.Using.using;
 import static com.energyxxer.trident.extensions.EJsonElement.*;
 
 public class TextParser {
-
-    public static TextComponent parseTextComponent(TokenPattern<?> pattern, ISymbolContext ctx) {
-        while (true) {
-            if (pattern == null) return null;
-            switch (pattern.getName()) {
-                case "TEXT_COMPONENT": {
-                    pattern = ((TokenStructure) pattern).getContents();
-                    continue;
-                }
-                case "INTERPOLATION_BLOCK": {
-                    Object result = InterpolationManager.parse(pattern, ctx, TextComponent.class, String.class, Integer.class, Double.class, Boolean.class);
-                    EObject.assertNotNull(result, pattern, ctx);
-
-                    if(result instanceof String) {
-                        result = primitiveToTextComponent((String) result);
-                    } else if(result instanceof Integer) {
-                        result = primitiveToTextComponent((Integer) result);
-                    } else if(result instanceof Double) {
-                        result = primitiveToTextComponent((Double) result);
-                    } else if(result instanceof Boolean) {
-                        result = primitiveToTextComponent((Boolean) result);
-                    }
-
-                    return (TextComponent) result;
-                }
-                case "JSON_ROOT":
-                case "JSON_ELEMENT": {
-                    try {
-                        return parseTextComponent(JsonParser.parseJson(pattern, ctx), ctx, pattern, TextComponentContext.CHAT);
-                    } finally {
-                        JsonParser.clearCache();
-                    }
-                }
-                default: {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown text component production: '" + pattern.getName() + "'", pattern, ctx);
-                }
-            }
-        }
-    }
 
     public static TextComponent primitiveToTextComponent(String str) {
         return new StringTextComponent(str);
@@ -96,13 +58,13 @@ public class TextParser {
         } else if(prim.isBoolean()) {
             return primitiveToTextComponent(prim.getAsBoolean());
         }
-        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
+        throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Impossible code reached", pattern, ctx);
     }
 
-    public static TextComponent parseTextComponent(JsonElement elem, ISymbolContext ctx, TokenPattern<?> pattern, TextComponentContext textContext) {
+    public static TextComponent jsonToTextComponent(JsonElement elem, ISymbolContext ctx, TokenPattern<?> pattern, TextComponentContext textContext) {
         if(elem instanceof TextComponentJsonElement) return ((TextComponentJsonElement) elem).getWrapped();
 
-        boolean strict = ctx.getCompiler().getProperties().has("strict-text-components") && getAsBooleanOrNull(ctx.getCompiler().getProperties().get("strict-text-components"));
+        boolean strict = ctx.get(SetupPropertiesTask.INSTANCE).has("strict-text-components") && getAsBooleanOrNull(ctx.get(SetupPropertiesTask.INSTANCE).get("strict-text-components"));
 
         ReportDelegate delegate = new ReportDelegate(ctx.getCompiler(), strict, pattern, ctx);
 
@@ -113,7 +75,7 @@ public class TextParser {
         } else if(elem.isJsonArray()) {
             ListTextComponent list = new ListTextComponent();
             for(JsonElement sub : elem.getAsJsonArray()) {
-                list.append(parseTextComponent(sub, ctx, pattern, textContext));
+                list.append(jsonToTextComponent(sub, ctx, pattern, textContext));
             }
             return list;
         } else if(elem.isJsonObject()) {
@@ -133,7 +95,7 @@ public class TextParser {
                             component[0] = new TranslateTextComponent(t);
                             if(obj.has("with")) {
                                 using(getAsJsonArrayOrNull(obj.get("with"))).notIfNull().run(
-                                        a -> a.forEach(e -> ((TranslateTextComponent) component[0]).addWith(parseTextComponent(e, ctx, pattern, textContext)))
+                                        a -> a.forEach(e -> ((TranslateTextComponent) component[0]).addWith(jsonToTextComponent(e, ctx, pattern, textContext)))
                                 ).otherwise(v -> delegate.report("Expected array in 'with'", obj.get("with")));
                             }
                         }).otherwise(t -> delegate.report("Expected string in 'translate'", obj.get("translate")));
@@ -149,7 +111,7 @@ public class TextParser {
                     String objectiveName = getAsStringOrNumberOrNull(s.get("objective"));
                     if(objectiveName == null) delegate.report("Missing 'objective' string for 'score' text component", s);
                     if(name != null && objectiveName != null) {
-                        Objective objective = ctx.getCompiler().getModule().getObjectiveManager().getOrCreate(objectiveName);
+                        Objective objective = ctx.get(SetupModuleTask.INSTANCE).getObjectiveManager().getOrCreate(objectiveName);
                         component[0] = new ScoreTextComponent(new LocalScore(objective, new RawEntity(name)));
                     }
                 }).otherwise(v -> delegate.report("Expected object in 'score'", obj.get("score")));
@@ -175,7 +137,7 @@ public class TextParser {
                 }).otherwise(v -> delegate.report("Expected object in 'nbt'", obj.get("nbt")));
             }
             if(component[0] == null) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know how to turn this into a text component: " + elem, pattern, ctx);
+                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Don't know how to turn this into a text component: " + elem, pattern, ctx);
             }
 
             TextStyle style = new TextStyle(0);
@@ -206,9 +168,9 @@ public class TextParser {
                     using(getAsStringOrNumberOrNull(obj.get("font")))
                             .notIfNull()
                             .run(t -> {
-                                TridentUtil.ResourceLocation fontLoc = TridentUtil.ResourceLocation.createStrict(t);
+                                ResourceLocation fontLoc = ResourceLocation.createStrict(t);
                                 if(fontLoc != null) {
-                                    style.setFont(new FontReference(ctx.getCompiler().getModule().getNamespace(fontLoc.namespace), fontLoc.body));
+                                    style.setFont(new FontReference(ctx.get(SetupModuleTask.INSTANCE).getNamespace(fontLoc.namespace), fontLoc.body));
                                 } else {
                                     throw new IllegalArgumentException(t);
                                 }
@@ -288,7 +250,7 @@ public class TextParser {
                                 String value = getAsStringOrNumberOrNull(v);
                                 component[0].addEvent(new HoverEvent(action, value));
                             } else {
-                                TextComponent value = (parseTextComponent(v, ctx, pattern, TextComponentContext.TOOLTIP));
+                                TextComponent value = (jsonToTextComponent(v, ctx, pattern, TextComponentContext.TOOLTIP));
                                 component[0].addEvent(new HoverEvent(action, value));
                             }
                         }).otherwise(v -> {
@@ -296,22 +258,22 @@ public class TextParser {
                                 using(e.get("contents")).notIfNull().run(c -> {
                                     switch(action) {
                                         case SHOW_TEXT: {
-                                            TextComponent value = (parseTextComponent(c, ctx, pattern, TextComponentContext.TOOLTIP));
+                                            TextComponent value = (jsonToTextComponent(c, ctx, pattern, TextComponentContext.TOOLTIP));
                                             component[0].addEvent(new HoverEvent(action, value));
                                             break;
                                         }
                                         case SHOW_ITEM: {
-                                            TridentUtil.ResourceLocation[] itemIdToShow = new TridentUtil.ResourceLocation[] {null};
+                                            ResourceLocation[] itemIdToShow = new ResourceLocation[] {null};
                                             int[] count = new int[] {1};
                                             String[] rawTag = new String[] {null};
 
                                             if(c.isJsonPrimitive() && c.getAsJsonPrimitive().isString()) {
-                                                itemIdToShow[0] = TridentUtil.ResourceLocation.createStrict(c.getAsString());
+                                                itemIdToShow[0] = ResourceLocation.createStrict(c.getAsString());
                                             } else {
                                                 using(getAsJsonObjectOrNull(c)).notIfNull()
                                                         .run(i -> {
                                                             using(getAsStringOrNumberOrNull(i.get("id"))).notIfNull()
-                                                                    .run(rawId -> itemIdToShow[0] = new TridentUtil.ResourceLocation(rawId))
+                                                                    .run(rawId -> itemIdToShow[0] = new ResourceLocation(rawId))
                                                                     .otherwise(ignore -> delegate.report("Expected string in 'id'", i));
                                                             if(i.has("count")) {
                                                                 using(getAsIntegerOrNull(i.get("count"))).notIfNull()
@@ -328,7 +290,7 @@ public class TextParser {
 
                                             if(itemIdToShow[0] != null) {
                                                 try {
-                                                    Type itemType = ctx.getCompiler().getModule().getNamespace(itemIdToShow[0].namespace).types.item.get(itemIdToShow[0].body);
+                                                    Type itemType = ctx.get(SetupModuleTask.INSTANCE).getNamespace(itemIdToShow[0].namespace).types.item.get(itemIdToShow[0].body);
                                                     component[0].addEvent(new RawShowItemHoverEvent(itemType, count[0], rawTag[0]));
                                                 } catch(TypeNotFoundException x) {
                                                     delegate.report("Illegal item type: " + itemIdToShow[0], c);
@@ -337,14 +299,14 @@ public class TextParser {
                                             break;
                                         }
                                         case SHOW_ENTITY: {
-                                            TridentUtil.ResourceLocation[] entityIdToShow = new TridentUtil.ResourceLocation[] {null};
+                                            ResourceLocation[] entityIdToShow = new ResourceLocation[] {null};
                                             UUID[] id = new UUID[] {null};
                                             TextComponent[] name = new TextComponent[] {null};
 
                                             using(getAsJsonObjectOrNull(c)).notIfNull()
                                                     .run(i -> {
                                                         using(getAsStringOrNumberOrNull(i.get("type"))).notIfNull()
-                                                                .run(rawId -> entityIdToShow[0] = new TridentUtil.ResourceLocation(rawId))
+                                                                .run(rawId -> entityIdToShow[0] = new ResourceLocation(rawId))
                                                                 .otherwise(ignore -> delegate.report("Expected string in 'type'", i));
                                                         if(i.has("id")) {
                                                             using(getAsStringOrNumberOrNull(i.get("id"))).notIfNull()
@@ -353,13 +315,13 @@ public class TextParser {
                                                                     .otherwise(ignore -> delegate.report("Expected string in 'id'", i.get("id")));
                                                         }
                                                         if(i.has("name")) {
-                                                            name[0] = parseTextComponent(i.get("name"), ctx, pattern, TextComponentContext.TOOLTIP);
+                                                            name[0] = jsonToTextComponent(i.get("name"), ctx, pattern, TextComponentContext.TOOLTIP);
                                                         }
                                                     }).otherwise(i -> delegate.report("Expected object in 'contents' for show_entity hover event", c));
 
                                             if(entityIdToShow[0] != null) {
                                                 try {
-                                                    Type entityType = ctx.getCompiler().getModule().getNamespace(entityIdToShow[0].namespace).types.entity.get(entityIdToShow[0].body);
+                                                    Type entityType = ctx.get(SetupModuleTask.INSTANCE).getNamespace(entityIdToShow[0].namespace).types.entity.get(entityIdToShow[0].body);
                                                     component[0].addEvent(new ShowEntityHoverEvent(entityType, id[0], name[0]));
                                                 } catch(TypeNotFoundException x) {
                                                     delegate.report("Illegal entity type: " + entityIdToShow[0], c);
@@ -400,13 +362,13 @@ public class TextParser {
 
             if(obj.has("extra")) {
                 using(getAsJsonArrayOrNull(obj.get("extra"))).notIfNull().run(
-                        a -> a.forEach(e -> component[0].addExtra(parseTextComponent(e, ctx, pattern, textContext)))
+                        a -> a.forEach(e -> component[0].addExtra(jsonToTextComponent(e, ctx, pattern, textContext)))
                 ).otherwise(v -> delegate.report("Expected array in 'extra'", obj.get("extra")));
             }
 
             return component[0];
         } else {
-            throw new TridentException(TridentException.Source.COMMAND_ERROR, "Don't know how to turn this into a text component: " + elem, pattern, ctx);
+            throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Don't know how to turn this into a text component: " + elem, pattern, ctx);
         }
     }
 
@@ -451,19 +413,19 @@ public class TextParser {
         }
     }
 
-    public static class TextComponentJsonElement extends JsonLib.WrapperJsonElement<TextComponent> {
+    public static class TextComponentJsonElement extends com.energyxxer.trident.compiler.analyzers.default_libs.via_reflection.JSON.WrapperJsonElement<TextComponent> {
         public TextComponentJsonElement(TextComponent wrapped) {
             super(wrapped, TextComponent.class);
         }
     }
 
     static class ReportDelegate {
-        private TridentCompiler compiler;
+        private PrismarineCompiler compiler;
         private boolean strict;
         private TokenPattern<?> pattern;
         private ISymbolContext ctx;
 
-        public ReportDelegate(TridentCompiler compiler, boolean strict, TokenPattern<?> pattern, ISymbolContext ctx) {
+        public ReportDelegate(PrismarineCompiler compiler, boolean strict, TokenPattern<?> pattern, ISymbolContext ctx) {
             this.compiler = compiler;
             this.strict = strict;
             this.pattern = pattern;
@@ -475,7 +437,7 @@ public class TextParser {
         }
 
         public void report(String message, JsonElement element) {
-            report(message, message, JsonParser.getPatternFor(element));
+            report(message, message, JsonLiteralSet.getPatternFor(element));
         }
 
         public void report(String message, TokenPattern<?> pattern) {
@@ -487,13 +449,13 @@ public class TextParser {
         }
 
         public void report(String strict, String notStrict, JsonElement element) {
-            report(strict, notStrict, JsonParser.getPatternFor(element));
+            report(strict, notStrict, JsonLiteralSet.getPatternFor(element));
         }
 
         public void report(String strict, String notStrict, TokenPattern<?> pattern) {
             if(pattern == null) pattern = this.pattern;
             if(this.strict) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, strict, pattern, ctx);
+                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, strict, pattern, ctx);
             } else {
                 compiler.getReport().addNotice(new Notice(NoticeType.WARNING, notStrict, pattern));
             }

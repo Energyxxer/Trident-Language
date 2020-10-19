@@ -3,34 +3,44 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 
-import java.util.HashMap;
-
-@AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.entity.Entity")
 public class EntityTypeHandler implements TypeHandler<Entity> {
-    private static HashMap<String, MemberWrapper<Entity>> members = new HashMap<>();
+    private TypeHandlerMemberCollection<Entity> members;
 
-    static {
+    @Override
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
+        members = new TypeHandlerMemberCollection<>(typeSystem, globalCtx);
+        members.setNotFoundPolicy(TypeHandlerMemberCollection.MemberNotFoundPolicy.THROW_EXCEPTION);
         try {
-            members.put("isPlayerName", new NativeMethodWrapper<>("isPlayerName", (instance, params) -> instance instanceof PlayerName));
-            members.put("isPlayer", new NativeMethodWrapper<>(Entity.class.getMethod("isPlayer")));
-            members.put("isUnknownType", new NativeMethodWrapper<>(Entity.class.getMethod("isUnknownType")));
-            members.put("getLimit", new NativeMethodWrapper<>(Entity.class.getMethod("getLimit")));
+            members.putMethod(EntityTypeHandler.class.getMethod("isPlayerName", Entity.class));
+            members.putMethod(Entity.class.getMethod("isPlayer"));
+            members.putMethod(Entity.class.getMethod("isUnknownType"));
+            members.putMethod(Entity.class.getMethod("getLimit"));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
     }
 
+    private final PrismarineTypeSystem typeSystem;
+
+    public EntityTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
+
     @Override
     public Object getMember(Entity object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        MemberWrapper<Entity> result = members.get(member);
-        if(result == null) throw new MemberNotFoundException();
-        return result.unwrap(object);
+        return members.getMember(object, member, pattern, ctx);
     }
 
     @Override
@@ -51,5 +61,9 @@ public class EntityTypeHandler implements TypeHandler<Entity> {
     @Override
     public String getTypeIdentifier() {
         return "entity";
+    }
+
+    public static boolean isPlayerName(@NativeFunctionAnnotations.ThisArg Entity entity) {
+        return entity instanceof PlayerName;
     }
 }

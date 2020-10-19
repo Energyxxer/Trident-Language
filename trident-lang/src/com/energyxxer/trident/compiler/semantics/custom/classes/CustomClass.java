@@ -1,39 +1,48 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
+import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.typesystem.functions.*;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
+import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
+import com.energyxxer.trident.worker.tasks.SetupOperatorManagerTask;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeConstraints;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperatorManager;
+import com.energyxxer.trident.compiler.lexer.TridentOperatorPool;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.trident.compiler.semantics.symbols.ClassMethodSymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
-import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
-import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
-import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.compiler.semantics.symbols.ClassMethodSymbolContext;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
-import org.jetbrains.annotations.NotNull;
+import com.energyxxer.prismarine.operators.*;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
-import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
+import static com.energyxxer.prismarine.typesystem.functions.natives.PrismarineNativeFunctionBranch.nativeMethodsToFunction;
+import static com.energyxxer.trident.sets.trident.instructions.VariableInstruction.parseSymbolDeclaration;
 
 public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMemberHolder {
-    private static CustomClass BASE_CLASS = null;
 
     private static final HashMap<String, ArrayList<Consumer<CustomClass>>> stringIdentifiedClassListeners = new HashMap<>();
 
     public enum MemberParentMode {
-        CREATE, OVERRIDE, FORCE, INHERIT;
+        CREATE, OVERRIDE, FORCE, INHERIT
     }
+
+    private final PrismarineTypeSystem typeSystem;
 
     private boolean complete = false;
 
@@ -42,8 +51,8 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     private final LinkedHashMap<String, InstanceMemberSupplier> instanceMemberSuppliers = new LinkedHashMap<>();
     private ArrayList<CustomClass> superClasses;
     private Set<CustomClass> inheritanceTree = null;
-    final LinkedHashMap<TypeHandler, TridentUserFunction> explicitCasts = new LinkedHashMap<>();
-    final LinkedHashMap<TypeHandler, TridentUserFunction> implicitCasts = new LinkedHashMap<>();
+    final LinkedHashMap<TypeHandler, PrismarineFunction> explicitCasts = new LinkedHashMap<>();
+    final LinkedHashMap<TypeHandler, PrismarineFunction> implicitCasts = new LinkedHashMap<>();
 
     private boolean _final = false;
     private boolean _static = false;
@@ -61,7 +70,8 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     private String typeIdentifier;
 
     //Constructor exclusively for base class
-    private CustomClass() {
+    private CustomClass(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
         this.name = "BASE CLASS";
         this.definitionContext = null;
         this.definitionFile = null;
@@ -70,27 +80,30 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         this.complete = true;
 
         try {
-            ClassMethod baseToStringMethod = new ClassMethod(this, null, nativeMethodsToFunction(null, "toString", CustomClass.class.getMethod("defaultToString", CustomClassObject.class)));
-            baseToStringMethod.setVisibility(Symbol.SymbolVisibility.PUBLIC);
+            ClassMethod baseToStringMethod = new ClassMethod(this, null, nativeMethodsToFunction(typeSystem, null, "toString", CustomClass.class.getMethod("defaultToString", CustomClassObject.class)));
+            baseToStringMethod.setVisibility(TridentSymbolVisibility.PUBLIC);
             this.instanceMethods.put(baseToStringMethod, MemberParentMode.FORCE, null, null);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
     }
 
-    public static @NativeMethodWrapper.TridentNotNullReturn String defaultToString(@NativeMethodWrapper.TridentThisArg CustomClassObject obj) {
+    public static @NativeFunctionAnnotations.NotNullReturn
+    String defaultToString(@NativeFunctionAnnotations.ThisArg CustomClassObject obj) {
         return obj.toString();
     }
 
-    private CustomClass(String name) {
+    private CustomClass(PrismarineTypeSystem typeSystem, String name) {
+        this.typeSystem = typeSystem;
         this.name = name;
     }
 
     //Constructor exclusively for native classes:
     public CustomClass(String name, String location, ISymbolContext ctx) {
+        this.typeSystem = ctx.getTypeSystem();
         this.name = name;
         this.definitionContext = ctx;
-        this.definitionFile = ctx.getStaticParentFile();
+        this.definitionFile = (TridentFile) ctx.getStaticParentUnit();
         this.innerStaticContext = new ClassMethodSymbolContext(ctx, null);
 
         this.typeIdentifier = location + "@" + name;
@@ -99,31 +112,31 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     }
 
     public static void defineClass(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Symbol.SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), ctx, Symbol.SymbolVisibility.GLOBAL);
+        SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), ctx, SymbolVisibility.GLOBAL);
         String className = pattern.find("CLASS_NAME").flatten(false);
 
         TokenList bodyEntryList = (TokenList) pattern.find("CLASS_DECLARATION_BODY.CLASS_BODY_ENTRIES");
         boolean isCompleteDefinition = pattern.find("CLASS_DECLARATION_BODY") != null;
 
         VariableInstruction.SymbolModifierMap modifierMap = VariableInstruction.SymbolModifierMap.createFromList(((TokenList) pattern.find("SYMBOL_MODIFIER_LIST")), ctx);
-        boolean _static = modifierMap.hasModifier(Symbol.SymbolModifier.STATIC);
-        boolean _final = modifierMap.hasModifier(Symbol.SymbolModifier.FINAL);
+        boolean _static = modifierMap.hasModifier(TridentTempFindABetterHome.SymbolModifier.STATIC);
+        boolean _final = modifierMap.hasModifier(TridentTempFindABetterHome.SymbolModifier.FINAL);
 
-        CustomClass classObject = ctx.getStaticParentFile().getClassForName(className);
+        CustomClass classObject = ((TridentFile) ctx.getStaticParentUnit()).getClassForName(className);
         if(classObject != null) {
             if(classObject.isComplete()) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot modify definition of class '" + classObject.getTypeIdentifier() + "': Class is already complete.", pattern.find("CLASS_NAME"), ctx);
+                throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot modify definition of class '" + classObject.getTypeIdentifier() + "': Class is already complete.", pattern.find("CLASS_NAME"), ctx);
             }
         } else {
-            classObject = new CustomClass(className);
-            classObject.definitionFile = ctx.getStaticParentFile();
+            classObject = new CustomClass(ctx.getTypeSystem(), className);
+            classObject.definitionFile = (TridentFile) ctx.getStaticParentUnit();
             classObject.definitionContext = ctx;
             classObject.innerStaticContext = new ClassMethodSymbolContext(ctx, null);
             classObject.typeIdentifier = classObject.definitionFile.getResourceLocation() + "@" + classObject.name;
             classObject._static = _static;
             classObject._final = _final;
 
-            ctx.getStaticParentFile().registerInnerClass(classObject, pattern, ctx);
+            ((TridentFile) ctx.getStaticParentUnit()).registerInnerClass(classObject, pattern, ctx);
             Symbol sym = new Symbol(className, visibility, classObject);
             sym.setFinalAndLock();
             ctx.putInContextForVisibility(visibility, sym);
@@ -132,35 +145,35 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
         ArrayList<CustomClass> oldSuperClasses = classObject.superClasses;
         classObject.superClasses = new ArrayList<>();
-        classObject.superClasses.add(BASE_CLASS);
+        classObject.superClasses.add(((TridentTypeSystem) ctx.getTypeSystem()).getBaseClass());
         if(pattern.find("CLASS_INHERITS") != null) {
             TokenList inheritsList = ((TokenList) pattern.find("CLASS_INHERITS.SUPERCLASS_LIST"));
             for(TokenPattern<?> rawParent : inheritsList.searchByName("INTERPOLATION_TYPE")) {
-                TypeHandler parentType = InterpolationManager.parseType(rawParent, ctx);
+                TypeHandler parentType = (TypeHandler) rawParent.evaluate(ctx);
                 if(parentType instanceof CustomClass) {
                     if(((CustomClass) parentType)._final || ((CustomClass) parentType)._static) {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot inherit a static or final class: " + parentType, rawParent, ctx);
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot inherit a static or final class: " + parentType, rawParent, ctx);
                     }
                     if(classObject.superClasses.contains(parentType)) {
-                        throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicated superclass: " + ((CustomClass) parentType).typeIdentifier, rawParent, ctx);
+                        throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Duplicated superclass: " + ((CustomClass) parentType).typeIdentifier, rawParent, ctx);
                     } else {
                         classObject.superClasses.add((CustomClass) parentType);
                     }
                 } else {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + parentType.getTypeIdentifier() + "' is not a class type.", rawParent, ctx);
+                    throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "'" + parentType.getTypeIdentifier() + "' is not a class type.", rawParent, ctx);
                 }
             }
         }
         if(isCompleteDefinition) {
             if(oldSuperClasses != null && !classObject.superClasses.containsAll(oldSuperClasses)) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Incomplete definition promised to extend " + oldSuperClasses + "; not all inherited in the complete definition.", pattern.tryFind("CLASS_INHERITS"), ctx);
+                throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Incomplete definition promised to extend " + oldSuperClasses + "; not all inherited in the complete definition.", pattern.tryFind("CLASS_INHERITS"), ctx);
             }
 
             if(_final != classObject._final) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Incomplete definition promised to make " + classObject + " " + (classObject._final ? "not" : "") + " final; such was not true in the complete definition.", pattern.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
+                throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Incomplete definition promised to make " + classObject + " " + (classObject._final ? "not" : "") + " final; such was not true in the complete definition.", pattern.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
             }
             if(_static != classObject._static) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Incomplete definition promised to make " + classObject + " " + (classObject._static ? "not" : "") + " static; such was not true in the complete definition.", pattern.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
+                throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Incomplete definition promised to make " + classObject + " " + (classObject._static ? "not" : "") + " static; such was not true in the complete definition.", pattern.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
             }
 
             classObject.complete = true;
@@ -190,10 +203,10 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
             for(Symbol field : classObject.staticMembers.values()) {
                 if(field.isFinal() && field.maySet()) {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Final static symbol '" + field.getName() + "' was not initialized.", pattern, ctx);
+                    throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Final static symbol '" + field.getName() + "' was not initialized.", pattern, ctx);
                 }
             }
-            updateStringIdentifiedClassListener(classObject);
+            ctx.getTypeSystem().registerUserDefinedType(classObject);
         }
 
         classObject._final = _final;
@@ -203,7 +216,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         switch(entry.getName()) {
             case "CLASS_MEMBER": {
                 VariableInstruction.SymbolDeclaration decl = parseSymbolDeclaration(entry, ctx);
-                if(!shouldParseStatic && decl.hasModifier(Symbol.SymbolModifier.STATIC)) {
+                if(!shouldParseStatic && decl.hasModifier(TridentTempFindABetterHome.SymbolModifier.STATIC)) {
                     return true;
                 }
                 decl.preParseConstraints();
@@ -212,39 +225,39 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                     mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
                 }
 
-                if(decl.hasModifier(Symbol.SymbolModifier.STATIC)) {
+                if(decl.hasModifier(TridentTempFindABetterHome.SymbolModifier.STATIC)) {
                     if(mode != MemberParentMode.CREATE) {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a static field.", entry.find("MEMBER_PARENT_MODE"), ctx);
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a static field.", entry.find("MEMBER_PARENT_MODE"), ctx);
                     }
                     this.putStaticMember(decl.getName(), decl.getSupplier().get());
                 } else {
                     if(_static) {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have instance field.", entry, ctx);
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have instance field.", entry, ctx);
                     }
                     if(mode == MemberParentMode.CREATE) {
                         InstanceMemberSupplier alreadyDefinedSupplier = this.getInstanceMemberSupplier(decl.getName());
                         if(alreadyDefinedSupplier != null && alreadyDefinedSupplier.getDefiningClass() == this) {
-                            throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate field '" + decl.getName() + "': it's already defined in the same class.", entry, ctx);
+                            throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Duplicate field '" + decl.getName() + "': it's already defined in the same class.", entry, ctx);
                         } if(alreadyDefinedSupplier != null) {
-                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Member '" + decl.getName() + "' is already defined in inherited class " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ". Use the 'override' keyword to change its default value.", entry, ctx);
+                            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Member '" + decl.getName() + "' is already defined in inherited class " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ". Use the 'override' keyword to change its default value.", entry, ctx);
                         }
                     } else if(mode == MemberParentMode.OVERRIDE) {
                         InstanceMemberSupplier alreadyDefinedSupplier = this.getInstanceMemberSupplier(decl.getName());
                         if(alreadyDefinedSupplier == null) {
-                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': not found in any of the inherited classes.", entry, ctx);
+                            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': not found in any of the inherited classes.", entry, ctx);
                         } else if(alreadyDefinedSupplier.getDefiningClass() == this) {
-                            throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Cannot override field '" + decl.getName() + "': it's already defined in the same class.", entry, ctx);
+                            throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Cannot override field '" + decl.getName() + "': it's already defined in the same class.", entry, ctx);
                         }
-                        if(((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().hasModifier(Symbol.SymbolModifier.FINAL)) {
-                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': it's defined as final in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
-                        } else if(decl.hasModifier(Symbol.SymbolModifier.FINAL)) {
-                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "' with a final field.", entry, ctx);
+                        if(((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().hasModifier(TridentTempFindABetterHome.SymbolModifier.FINAL)) {
+                            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': it's defined as final in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
+                        } else if(decl.hasModifier(TridentTempFindABetterHome.SymbolModifier.FINAL)) {
+                            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "' with a final field.", entry, ctx);
                         }
 
                         TypeConstraints thisConstraints = decl.getConstraint(null);
                         TypeConstraints otherConstraints = ((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().getConstraint(null);
                         if (!TypeConstraints.constraintsEqual(thisConstraints, otherConstraints)) {
-                            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': Mismatch of type constraints. Defined in superclass " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ": " + otherConstraints + "; Found: " + thisConstraints, entry, ctx);
+                            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': Mismatch of type constraints. Defined in superclass " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ": " + otherConstraints + "; Found: " + thisConstraints, entry, ctx);
                         }
                     }
 
@@ -260,7 +273,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                         }
 
                         @Override
-                        public Symbol.SymbolVisibility getVisibility() {
+                        public SymbolVisibility getVisibility() {
                             return decl.getVisibility();
                         }
 
@@ -274,11 +287,11 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             }
             case "CLASS_FUNCTION": {
                 VariableInstruction.SymbolModifierMap modifiers = VariableInstruction.SymbolModifierMap.createFromList(((TokenList) entry.find("SYMBOL_MODIFIER_LIST")), ctx);
-                if(!shouldParseStatic && modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
+                if(!shouldParseStatic && modifiers.hasModifier(TridentTempFindABetterHome.SymbolModifier.STATIC)) {
                     return true;
                 }
-                if(_static && !modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have instance methods.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
+                if(_static && !modifiers.hasModifier(TridentTempFindABetterHome.SymbolModifier.STATIC)) {
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have instance methods.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
                 }
                 String functionName = entry.find("SYMBOL_NAME").flatten(false);
                 boolean isConstructor = "new".equals(functionName);
@@ -287,27 +300,26 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                     mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
                 }
 
-                if(isConstructor && modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "'static' modifier not allowed here.", entry.find("SYMBOL_MODIFIER_LIST.LITERAL_STATIC"), this.definitionContext);
+                if(isConstructor && modifiers.hasModifier(TridentTempFindABetterHome.SymbolModifier.STATIC)) {
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "'static' modifier not allowed here.", entry.find("SYMBOL_MODIFIER_LIST.LITERAL_STATIC"), this.definitionContext);
                 }
 
-                Symbol.SymbolVisibility memberVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), this.definitionContext, Symbol.SymbolVisibility.LOCAL);
+                SymbolVisibility memberVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), this.definitionContext, TridentSymbolVisibility.LOCAL);
 
-                TridentFunctionBranch branch = TridentFunctionBranch.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), ctx);
+                PrismarineFunctionBranch branch = TridentTempFindABetterHome.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), ctx);
 
                 if(!isConstructor) {
                     ClassMethod method = new ClassMethod(
                             this,
                             entry,
-                            new TridentUserFunction(
+                            new PrismarineFunction(
                                     functionName,
                                     branch,
-                                    this.prepareFunctionContext(),
-                                    null
+                                    this.prepareFunctionContext()
                             )
                     ).setVisibility(memberVisibility).setModifiers(modifiers);
 
-                    if(modifiers.hasModifier(Symbol.SymbolModifier.STATIC)) {
+                    if(modifiers.hasModifier(TridentTempFindABetterHome.SymbolModifier.STATIC)) {
                         this.staticMethods.put(method, mode, entry, ctx);
                         this.innerStaticContext.putClassFunction(this.staticMethods.getFamily(functionName));
                     } else {
@@ -317,11 +329,10 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                     ClassMethod method = new ClassMethod(
                             this,
                             entry,
-                            new TridentUserFunction(
+                            new PrismarineFunction(
                                     functionName,
                                     branch,
-                                    this.prepareFunctionContext(),
-                                    null
+                                    this.prepareFunctionContext()
                             )
                     ).setVisibility(memberVisibility).setModifiers(modifiers);
 
@@ -334,43 +345,41 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             }
             case "CLASS_INDEXER": {
                 if(_static) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have indexers.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have indexers.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
                 }
-                Symbol.SymbolVisibility defaultVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), this.definitionContext, Symbol.SymbolVisibility.LOCAL);
+                SymbolVisibility defaultVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), this.definitionContext, TridentSymbolVisibility.LOCAL);
                 MemberParentMode mode = MemberParentMode.CREATE;
                 if(entry.find("MEMBER_PARENT_MODE") != null) {
                     mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
                 }
 
-                FormalParameter indexParam = FormalParameter.create(entry.find("FORMAL_PARAMETER"), ctx);
+                FormalParameter indexParam = TridentTempFindABetterHome.createFormalParams(entry.find("FORMAL_PARAMETER"), ctx);
 
-                TridentUserFunctionBranch getterBranch = new TridentUserFunctionBranch(Collections.singletonList(indexParam), entry.find("CLASS_GETTER.ANONYMOUS_INNER_FUNCTION"), TypeConstraints.parseConstraints(entry.find("CLASS_GETTER.TYPE_CONSTRAINTS"), ctx));
-                Symbol.SymbolVisibility getterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_GETTER.SYMBOL_VISIBILITY"), this.definitionContext, defaultVisibility);
-                TridentUserFunction getter = new TridentUserFunction(
+                TridentUserFunctionBranch getterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.singletonList(indexParam), entry.find("CLASS_GETTER.ANONYMOUS_INNER_FUNCTION"), (TypeConstraints) entry.find("CLASS_GETTER.TYPE_CONSTRAINTS").evaluate(ctx));
+                SymbolVisibility getterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_GETTER.SYMBOL_VISIBILITY"), this.definitionContext, defaultVisibility);
+                PrismarineFunction getter = new PrismarineFunction(
                         "<indexer getter>",
                         getterBranch,
-                        this.prepareFunctionContext(),
-                        null
+                        this.prepareFunctionContext()
                 );
 
-                TridentUserFunction setter = null;
-                Symbol.SymbolVisibility setterVisibility = Symbol.SymbolVisibility.LOCAL;
+                PrismarineFunction setter = null;
+                SymbolVisibility setterVisibility = TridentSymbolVisibility.LOCAL;
                 if(entry.find("CLASS_SETTER") != null) {
                     setterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_SETTER.SYMBOL_VISIBILITY"), this.definitionContext, defaultVisibility);
-                    TridentUserFunctionBranch setterBranch = new TridentUserFunctionBranch(Arrays.asList(indexParam, FormalParameter.create(entry.find("CLASS_SETTER.FORMAL_PARAMETER"), ctx)), entry.find("CLASS_SETTER.ANONYMOUS_INNER_FUNCTION"), null);
-                    setter = new TridentUserFunction(
+                    TridentUserFunctionBranch setterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Arrays.asList(indexParam, TridentTempFindABetterHome.createFormalParams(entry.find("CLASS_SETTER.FORMAL_PARAMETER"), ctx)), entry.find("CLASS_SETTER.ANONYMOUS_INNER_FUNCTION"), null);
+                    setter = new PrismarineFunction(
                             "<indexer setter>",
                             setterBranch,
-                            this.prepareFunctionContext(),
-                            null
+                            this.prepareFunctionContext()
                     );
                 }
 
                 if(getterVisibility.getVisibilityIndex() > defaultVisibility.getVisibilityIndex()) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Getter access privileges must not be more accessible than the indexer's. Indexer access: '" + defaultVisibility.toString().toLowerCase() + "', Getter access: " + getterVisibility.toString().toLowerCase(), entry.tryFind("CLASS_GETTER.SYMBOL_VISIBILITY"), ctx);
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Getter access privileges must not be more accessible than the indexer's. Indexer access: '" + defaultVisibility.toString().toLowerCase() + "', Getter access: " + getterVisibility.toString().toLowerCase(), entry.tryFind("CLASS_GETTER.SYMBOL_VISIBILITY"), ctx);
                 }
                 if(setter != null && setterVisibility.getVisibilityIndex() > defaultVisibility.getVisibilityIndex()) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Setter access privileges must not be more accessible than the indexer's. Indexer access: '" + defaultVisibility.toString().toLowerCase() + "', Setter access: " + setterVisibility.toString().toLowerCase(), entry.tryFind("CLASS_SETTER.SYMBOL_VISIBILITY"), ctx);
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Setter access privileges must not be more accessible than the indexer's. Indexer access: '" + defaultVisibility.toString().toLowerCase() + "', Setter access: " + setterVisibility.toString().toLowerCase(), entry.tryFind("CLASS_SETTER.SYMBOL_VISIBILITY"), ctx);
                 }
 
                 ClassIndexer indexer = new ClassIndexer(this, entry, indexParam, getter, setter);
@@ -382,45 +391,84 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             }
             case "CLASS_OVERRIDE": {
                 if(_static) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have type conversion definitions.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have type conversion definitions.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
                 }
                 boolean implicit = "implicit".equals(entry.find("CLASS_TRANSFORM_TYPE").flatten(false));
-                TypeHandler toType = InterpolationManager.parseType(entry.find("INTERPOLATION_TYPE"), this.getInnerStaticContext());
-                TridentFunctionBranch branch = new TridentUserFunctionBranch(Collections.emptyList(), entry.find("ANONYMOUS_INNER_FUNCTION"), new TypeConstraints(toType, false));
-                TridentUserFunction function = new TridentUserFunction(toType.getTypeIdentifier(), branch, this.getInnerStaticContext(), null);
-                if(implicit) branch.setShouldCoerce(false);
-                LinkedHashMap<TypeHandler, TridentUserFunction> castMap = implicit ? this.implicitCasts : this.explicitCasts;
+                TypeHandler toType = (TypeHandler) entry.find("INTERPOLATION_TYPE").evaluate(this.getInnerStaticContext());
+                PrismarineFunctionBranch branch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.emptyList(), entry.find("ANONYMOUS_INNER_FUNCTION"), new TypeConstraints(typeSystem, toType, false));
+                PrismarineFunction function = new PrismarineFunction(toType.getTypeIdentifier(), branch, this.getInnerStaticContext());
+                if(implicit) branch.setShouldCoerceReturn(false);
+                LinkedHashMap<TypeHandler, PrismarineFunction> castMap = implicit ? this.implicitCasts : this.explicitCasts;
                 castMap.put(toType, function);
+                break;
+            }
+            case "CLASS_OPERATOR": {
+                String operatorSymbol = entry.find("OPERATOR_SYMBOL").flatten(false);
+                int operandCount = (((TokenList) entry.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST")).size() + 1) / 2;
+                OperatorPool operatorPool = TridentOperatorPool.INSTANCE;
+                Operator associatedOperator;
+                if(operandCount == 1) {
+                    associatedOperator = operatorPool.getUnaryLeftOperatorForSymbol(operatorSymbol);
+                    if(associatedOperator == null) {
+                        associatedOperator = operatorPool.getUnaryLeftOperatorForSymbol(operatorSymbol);
+                    }
+                } else {
+                    associatedOperator = operatorPool.getBinaryOrTernaryOperatorForSymbol(operatorSymbol);
+                    if((associatedOperator instanceof TernaryOperator) != (operandCount == 3)) {
+                        associatedOperator = null;
+                    }
+                }
+                if(associatedOperator == null) {
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "There is no operator " + operatorSymbol + " for " + operandCount + " operands", entry.find("OPERATOR_PARAMETERS"), ctx);
+                }
+                PrismarineFunctionBranch branch = TridentTempFindABetterHome.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), ctx);
+                ClassMethod method = new ClassMethod(
+                        this,
+                        entry,
+                        new PrismarineFunction(
+                                operatorSymbol,
+                                branch,
+                                this.prepareFunctionContext()
+                        )
+                ).setVisibility(TridentSymbolVisibility.PUBLIC).setModifiers(new VariableInstruction.SymbolModifierMap().setModifier(TridentTempFindABetterHome.SymbolModifier.STATIC));
+
+                OperatorManager operatorManager = ctx.get(SetupOperatorManagerTask.INSTANCE);
+                if(associatedOperator instanceof UnaryOperator) {
+                    operatorManager.registerUnaryLeftOperator(operatorSymbol, method);
+                } else if(associatedOperator instanceof BinaryOperator) {
+                    operatorManager.registerBinaryOperator(operatorSymbol, method);
+                } else {
+                    operatorManager.registerTernaryOperator(operatorSymbol, method);
+                }
                 break;
             }
             case "COMMENT": {
                 break;
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, ctx);
+                throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, ctx);
             }
         }
         return false;
     }
 
-    public void putStaticFunction(TridentUserFunction value) {
+    public void putStaticFunction(PrismarineFunction value) {
         ClassMethod method = new ClassMethod(
                 this,
                 null,
-                new TridentUserFunction(
+                new PrismarineFunction(
                         value.getFunctionName(),
                         value.getBranch(),
-                        this.prepareFunctionContext(),
-                        null
+                        this.prepareFunctionContext()
                 )
-        ).setVisibility(Symbol.SymbolVisibility.PUBLIC);
+        ).setVisibility(TridentSymbolVisibility.PUBLIC);
 
         this.staticMethods.put(method, MemberParentMode.FORCE, null, null);
         this.innerStaticContext.putMethod(this.staticMethods.getFamily(value.getFunctionName()));
     }
 
     public void putStaticFinalMember(String name, Object value) {
-        Symbol sym = new Symbol(name, Symbol.SymbolVisibility.PUBLIC, value);
+        Symbol sym = new Symbol(name, TridentSymbolVisibility.PUBLIC, value);
         sym.setValue(value);
         sym.setFinalAndLock();
         putStaticMember(name, sym);
@@ -474,10 +522,10 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             if(object.hasAccess(ctx, sym.getVisibility())) {
                 return keepSymbol ? sym : sym.getValue(pattern, ctx);
             } else {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + object.getClassTypeIdentifier(), pattern, ctx);
+                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "'" + sym.getName() + "' has " + sym.getVisibility().toString().toLowerCase() + " access in " + object.getClassTypeIdentifier(), pattern, ctx);
             }
         }
-        return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
+        return ctx.getTypeSystem().getMetaTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
     }
 
     @Override
@@ -490,7 +538,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             }
         }
         if(foundClassMethod == null) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot resolve function or method '" + memberName + "' of " + TridentTypeManager.getTypeIdentifierForObject(this), pattern, ctx);
+            throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot resolve function or method '" + memberName + "' of " + ctx.getTypeSystem().getTypeIdentifierForObject(this), pattern, ctx);
         }
         return foundClassMethod;
     }
@@ -519,31 +567,28 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     private void assertComplete(TokenPattern<?> pattern, ISymbolContext ctx) {
         if(!isComplete()) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Definition of class '" + getTypeIdentifier() + "' is not yet complete", pattern, ctx);
+            throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Definition of class '" + getTypeIdentifier() + "' is not yet complete", pattern, ctx);
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object getIndexer(CustomClass object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
+        return ctx.getTypeSystem().getMetaTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object cast(CustomClass object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
+        return ctx.getTypeSystem().getMetaTypeHandler().cast(object, targetType, pattern, ctx);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object coerce(CustomClass object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        return TridentTypeManager.getTypeHandlerTypeHandler().coerce(object, targetType, pattern, ctx);
+        return ctx.getTypeSystem().getMetaTypeHandler().coerce(object, targetType, pattern, ctx);
     }
 
     @Override
-    public boolean canCoerce(Object object, TypeHandler into) {
-        return TridentTypeManager.getTypeHandlerTypeHandler().canCoerce(object, into);
+    public boolean canCoerce(Object object, TypeHandler into, ISymbolContext ctx) {
+        return ctx.getTypeSystem().getMetaTypeHandler().canCoerce(object, into, ctx);
     }
 
     @Override
@@ -586,12 +631,12 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     }
 
     @Override
-    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         assertComplete(pattern, ctx);
         if(_static) {
-            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Class '" + getClassTypeIdentifier() + "' is static; cannot be instantiated.", pattern, ctx);
+            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class '" + getClassTypeIdentifier() + "' is static; cannot be instantiated.", pattern, ctx);
         }
-        return (params, patterns, pattern2, ctx2) -> {
+        return (params, patterns, pattern2, ctx2, thisObject) -> {
             CustomClassObject created = new CustomClassObject(this);
 
             for(CustomClass cls : getInheritanceTree()) {
@@ -606,7 +651,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 pickedConstructor.safeCall(params, patterns, pattern2, ctx2);
                 for(Symbol field : created.instanceMembers.values()) {
                     if(field.isFinal() && field.maySet()) {
-                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Final symbol '" + field.getName() + "' was not initialized in constructor.", pattern, ctx2);
+                        throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Final symbol '" + field.getName() + "' was not initialized in constructor.", pattern, ctx2);
                     }
                 }
             }
@@ -638,10 +683,10 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         return innerStaticContext;
     }
 
-    public boolean hasAccess(ISymbolContext ctx, Symbol.SymbolVisibility visibility) {
-        return visibility == Symbol.SymbolVisibility.PUBLIC ||
-                (visibility == Symbol.SymbolVisibility.LOCAL && (getDeclaringFile().getDeclaringFSFile().equals(ctx.getDeclaringFSFile()) || isProtectedAncestor(ctx))) ||
-                (visibility == Symbol.SymbolVisibility.PRIVATE && ctx.isAncestor(this.innerStaticContext));
+    public boolean hasAccess(ISymbolContext ctx, SymbolVisibility visibility) {
+        return visibility == TridentSymbolVisibility.PUBLIC ||
+                (visibility == TridentSymbolVisibility.LOCAL && (getDeclaringFile().getPathFromRoot().equals(ctx.getPathFromRoot()) || isProtectedAncestor(ctx))) ||
+                (visibility == TridentSymbolVisibility.PRIVATE && ctx.isAncestor(this.innerStaticContext));
     }
 
     public boolean isProtectedAncestor(ISymbolContext ctx) {
@@ -679,7 +724,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         String getName();
         Symbol constructSymbol(CustomClassObject thiz);
 
-        Symbol.SymbolVisibility getVisibility();
+        SymbolVisibility getVisibility();
     }
 
     private static abstract class InstanceFieldSupplier implements InstanceMemberSupplier {
@@ -694,9 +739,9 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         }
     }
 
-    //public TridentFunction createFunction(CustomClassObject thiz) {
+    //public PrimitivePrismarineFunction createFunction(CustomClassObject thiz) {
     //    ISymbolContext innerFrame = definingClass.prepareFunctionContext(thiz);
-    //    return new TridentUserFunction(functionName, branches, innerFrame, thiz);
+    //    return new PrismarineFunction(functionName, branches, innerFrame, thiz);
     //}
 
     public Object forceGetMember(String key) {
@@ -721,13 +766,12 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         }
     }
 
-    public static @NotNull CustomClass getBaseClass() {
-        return BASE_CLASS;
+    public static CustomClass createBaseClass(PrismarineTypeSystem typeSystem) {
+        return new CustomClass(typeSystem);
     }
 
-    public static void staticSetup() {
-        if(BASE_CLASS == null) {
-            BASE_CLASS = new CustomClass();
-        }
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
     }
 }

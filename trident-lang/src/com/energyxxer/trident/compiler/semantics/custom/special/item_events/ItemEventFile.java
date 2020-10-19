@@ -11,7 +11,7 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.ScoreArgument;
 import com.energyxxer.commodore.textcomponents.StringTextComponent;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.util.IntegerRange;
-import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFile;
@@ -36,7 +36,7 @@ public class ItemEventFile extends SpecialFile {
 
     public ItemEventFile(SpecialFileManager parent) {
         super(parent, "item_events");
-        objectives = new Lazy<>(() -> new ItemEventObjectives(this.compiler.getModule().getObjectiveManager()));
+        objectives = new Lazy<>(() -> new ItemEventObjectives(this.getParent().getModule().getObjectiveManager()));
     }
 
     public void addCustomItem(ItemEvent.ItemScoreEventType eventType, Type itemType, CustomItem customItem, ItemEvent event) {
@@ -70,13 +70,13 @@ public class ItemEventFile extends SpecialFile {
                 Type itemType = typeEntry.getKey();
 
                 String criteria = "minecraft." + eventType.name().toLowerCase() + ":" + itemType.toString().replace(':','.');
-                Objective objective = compiler.getModule().getObjectiveManager().create(eventType.name().toLowerCase().charAt(0) + "item." + Integer.toString((this.getParent().getNamespace().getName() + ":" + new TridentUtil.ResourceLocation(itemType.toString())).hashCode(), 16), criteria, new StringTextComponent(eventType.name().toLowerCase() + " item " + itemType));
+                Objective objective = getParent().getModule().getObjectiveManager().create(eventType.name().toLowerCase().charAt(0) + "item." + Integer.toString((this.getParent().getNamespace().getName() + ":" + new ResourceLocation(itemType.toString())).hashCode(), 16), criteria, new StringTextComponent(eventType.name().toLowerCase() + " item " + itemType));
 
                 ScoreArgument scores = new ScoreArgument();
                 scores.put(objective, new IntegerRange(1, null));
 
                 for(Map.Entry<CustomItem, ArrayList<ItemEvent>> itemEntry : typeEntry.getValue().entrySet().stream().sorted((a, b) -> a.getKey() == null ? b.getKey() != null ? 1 : 0 : -1).collect(Collectors.toList())) {
-                    ScoreEventCriteriaData data = new ScoreEventCriteriaData(compiler, itemType, objective, function, itemEntry.getKey(), itemEntry.getValue());
+                    ScoreEventCriteriaData data = new ScoreEventCriteriaData(getParent().getModule(), itemType, objective, function, itemEntry.getKey(), itemEntry.getValue());
                     AnalyzerManager.getAnalyzer(ScoreEventCriteriaHandler.class, eventType.name().toLowerCase()).mid(this, data);
                 }
 

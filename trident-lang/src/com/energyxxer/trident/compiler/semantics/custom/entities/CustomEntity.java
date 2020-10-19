@@ -10,46 +10,51 @@ import com.energyxxer.commodore.functionlogic.selector.Selector;
 import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.util.TimeSpan;
 import com.energyxxer.commodore.util.attributes.Attribute;
+import com.energyxxer.trident.Trident;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
+import com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger;
+import com.energyxxer.trident.compiler.semantics.custom.special.TickingFunction;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
+import com.energyxxer.trident.sets.java.selector_arguments.TypeArgumentParser;
+import com.energyxxer.trident.sets.trident.TridentLiteralSet;
+import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
+import com.energyxxer.trident.worker.tasks.SetupSpecialFileManagerTask;
+import com.energyxxer.trident.worker.tasks.SetupTypeMapTask;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.nbtmapper.tags.DataType;
 import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
-import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.analyzers.commands.SummonParser;
-import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
-import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
-import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
-import com.energyxxer.trident.compiler.analyzers.constructs.selectors.TypeArgumentParser;
-import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger;
-import com.energyxxer.trident.compiler.semantics.custom.special.TickingFunction;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
-import static com.energyxxer.trident.compiler.analyzers.commands.SummonParser.requestComponents;
-import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
 import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger.REPLACE;
+import static com.energyxxer.trident.sets.trident.instructions.VariableInstruction.parseSymbolDeclaration;
+import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 
 public class CustomEntity implements TypeHandler<CustomEntity> {
-    public static final CustomEntity STATIC_HANDLER = new CustomEntity();
+    private final PrismarineTypeSystem typeSystem;
+    private final boolean isStaticHandler;
     private final String id;
     @Nullable
     private final Type baseType;
@@ -60,17 +65,23 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
     private HashMap<String, Symbol> members = new HashMap<>();
 
     //EMPTY OBJECT FOR STATIC HANDLER
-    private CustomEntity() {
+    private CustomEntity(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
         id = null;
         baseType = null;
         defaultNBT = new TagCompound();
+
+        isStaticHandler = true;
     }
 
     public CustomEntity(String id, @Nullable Type baseType, ISymbolContext ctx) {
+        this.typeSystem = ctx.getTypeSystem();
         this.id = id;
         this.baseType = baseType;
-        this.idTag = "trident-" + (baseType == null ? "component" : "entity") + "." + ctx.getStaticParentFile().getNamespace().getName() + "." + id;
+        this.idTag = "trident-" + (baseType == null ? "component" : "entity") + "." + ((TridentFile) ctx.getStaticParentUnit()).getNamespace().getName() + "." + id;
         this.defaultNBT = getBaseNBT();
+
+        isStaticHandler = false;
     }
 
     public String getId() {
@@ -90,7 +101,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
     public void mergeNBT(TagCompound newNBT, ISymbolContext ctx) {
         PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY).setProtocolMetadata(baseType);
         this.defaultNBT = ((TypeAwareNBTMerger) (path, cls) -> {
-            DataTypeQueryResponse response = ctx.getCompiler().getTypeMap().collectTypeInformation(path, context);
+            DataTypeQueryResponse response = ctx.get(SetupTypeMapTask.INSTANCE).collectTypeInformation(path, context);
             if (!response.isEmpty()) {
                 for (DataType type : new ArrayList<>(response.getPossibleTypes())) {
                     if (type.getFlags() != null && type.getFlags().hasFlag("fixed") && cls.equals(type.getCorrespondingTagType()))
@@ -124,14 +135,14 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
 
     @Override
     public Object getMember(CustomEntity object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
+        if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
         if(members.containsKey(member)) {
             Symbol sym = members.get(member);
             return keepSymbol ? sym : sym.getValue(pattern, ctx);
         }
         switch (member) {
             case "getSettingNBT":
-                return (TridentFunction) (params, patterns, pattern1, file1) -> {
+                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> {
                     TagCompound nbt = new TagCompound();
                     if (this.getBaseType() != null) {
                         nbt.add(new TagString("id", this.getBaseType().toString()));
@@ -140,36 +151,37 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                     return nbt;
                 };
             case "getMatchingNBT":
-                return (TridentFunction) (params, patterns, pattern1, file1) -> new TagCompound(new TagList("Tags", new TagString(idTag)));
+                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> new TagCompound(new TagList("Tags", new TagString(idTag)));
             case "idTag":
                 return idTag;
             case "baseType":
-                return baseType != null ? new TridentUtil.ResourceLocation(baseType.toString()) : null;
+                return baseType != null ? new ResourceLocation(baseType.toString()) : null;
         }
         throw new MemberNotFoundException();
     }
 
     @Override
     public Object getIndexer(CustomEntity object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
-        String indexStr = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
+        if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
+        String indexStr = PrismarineTypeSystem.assertOfClass(index, pattern, ctx, String.class);
         if(members.containsKey(indexStr)) {
             Symbol sym = members.get(indexStr);
             return keepSymbol ? sym : sym.getValue(pattern, ctx);
         } else if(keepSymbol) {
             Symbol sym;
-            members.put(indexStr, sym = new Symbol(indexStr, Symbol.SymbolVisibility.LOCAL, null));
+            members.put(indexStr, sym = new Symbol(indexStr, TridentSymbolVisibility.LOCAL, null));
             return sym;
         } else return null;
     }
 
     @Override
     public Object cast(CustomEntity object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 
     public static void defineEntity(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Symbol.SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), ctx, Symbol.SymbolVisibility.GLOBAL);
+        SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), ctx, SymbolVisibility.GLOBAL);
 
         String entityName;
         Type defaultType = null;
@@ -179,18 +191,18 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
 
         switch (headerDeclaration.getName()) {
             case "CONCRETE_ENTITY_DECLARATION": {
-                entityName = CommonParsers.parseIdentifierA(headerDeclaration.find("ENTITY_NAME.IDENTIFIER_A"), ctx);
+                entityName = (String) headerDeclaration.findThenEvaluate("ENTITY_NAME.IDENTIFIER_A", null, ctx);
                 if(entityName == null) { //Is not an IDENTIFIER_A
                     entityName = headerDeclaration.find("ENTITY_NAME").flatten(false);
                 }
 
-                if (headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED") != null) {
-                    Object referencedType = CommonParsers.parseEntityReference(headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
+                if (headerDeclaration.find("ENTITY_BASE.TRIDENT_ENTITY_ID_TAGGED") != null) {
+                    Object referencedType = headerDeclaration.find("ENTITY_BASE.TRIDENT_ENTITY_ID_TAGGED").evaluate(ctx);
                     if (referencedType instanceof Type) {
                         defaultType = ((Type) referencedType);
 
-                        if(!entityName.equals("default") && "false".equals(defaultType.getProperty("spawnable"))) {
-                            throw new TridentException(TridentException.Source.COMMAND_ERROR, "This entity type is not summonable", headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
+                        if(!entityName.equals("default") && defaultType.getProperty("spawnable").equals("false")) {
+                            throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "This entity type is not summonable", headerDeclaration.find("ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
                         }
                     } else if (referencedType instanceof CustomEntity) {
                         superEntity = ((CustomEntity) referencedType);
@@ -198,34 +210,32 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                             defaultType = superEntity.baseType;
                         }
                     } else {
-                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Impossible code reached", headerDeclaration, ctx);
+                        throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Impossible code reached", headerDeclaration, ctx);
                     }
                 } else if(!entityName.equals("default")) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The wildcard entity base may only be used on default entities, found name '" + entityName + "'", headerDeclaration, ctx);
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "The wildcard entity base may only be used on default entities, found name '" + entityName + "'", headerDeclaration, ctx);
                 }
                 break;
             }
             case "ABSTRACT_ENTITY_DECLARATION": {
-                entityName = CommonParsers.parseIdentifierA(headerDeclaration.find("ENTITY_NAME.IDENTIFIER_A"), ctx);
+                entityName = (String) headerDeclaration.findThenEvaluate("ENTITY_NAME.IDENTIFIER_A", null, ctx);
                 if(entityName == null) { //Is not an IDENTIFIER_A
                     entityName = headerDeclaration.find("ENTITY_NAME").flatten(false);
                 }
                 break;
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + headerDeclaration.getName() + "'", headerDeclaration, ctx);
+                throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Unknown grammar branch name '" + headerDeclaration.getName() + "'", headerDeclaration, ctx);
             }
         }
 
         ArrayList<CustomEntity> implemented = new ArrayList<>();
-        TokenList rawComponentList = ((TokenList) pattern.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST"));
+        TokenPattern<?> rawComponentList = pattern.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST");
         if (rawComponentList != null) {
             if(!entityName.equals("default")) {
-                for (TokenPattern<?> rawComponent : rawComponentList.searchByName("INTERPOLATION_VALUE")) {
-                    requestComponents(implemented, rawComponent, ctx);
-                }
+                rawComponentList.evaluate(ctx, implemented);
             } else {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default entities may not implement components", rawComponentList, ctx);
+                throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Default entities may not implement components", rawComponentList, ctx);
             }
         }
 
@@ -234,7 +244,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
         final CustomEntity entityDecl;
         if (!entityName.equals("default")) {
             if (defaultType != null && !defaultType.isStandalone()) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot create a non-default entity with this type: " + defaultType, pattern.find("ENTITY_DECLARATION_HEADER.ENTITY_BASE"), ctx);
+                throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot create a non-default entity with this type: " + defaultType, pattern.find("ENTITY_DECLARATION_HEADER.ENTITY_BASE"), ctx);
             }
             entityDecl = new CustomEntity(entityName, defaultType, ctx);
             ctx.putInContextForVisibility(visibility, new Symbol(entityName, visibility, entityDecl));
@@ -249,7 +259,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
             }
         } else {
             if (superEntity != null) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default entities may not inherit from custom entities", pattern.find("ENTITY_DECLARATION_HEADER.ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
+                throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Default entities may not inherit from custom entities", pattern.find("ENTITY_DECLARATION_HEADER.ENTITY_BASE.ENTITY_ID_TAGGED"), ctx);
             }
             entityDecl = null;
         }
@@ -257,7 +267,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
         ctx = new SymbolContext(ctx);
         final ISymbolContext finalCtx = ctx;
         final Type finalDefaultType = defaultType;
-        if (entityDecl != null) ctx.put(new Symbol("this", Symbol.SymbolVisibility.LOCAL, entityDecl));
+        if (entityDecl != null) ctx.put(new Symbol("this", TridentSymbolVisibility.LOCAL, entityDecl));
 
         ExceptionCollector collector = new ExceptionCollector(ctx);
         collector.begin();
@@ -272,14 +282,14 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                         switch (entry.getName()) {
                             case "DEFAULT_NBT": {
                                 if (entityDecl == null) {
-                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default entities", entry, ctx));
+                                    collector.log(new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default entities", entry, ctx));
                                     break;
                                 }
 
-                                TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), ctx);
+                                TagCompound newNBT = (TagCompound) entry.find("NBT_COMPOUND").evaluate(ctx);
                                 if (newNBT != null) {
                                     PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY).setProtocolMetadata(defaultType);
-                                    NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), ctx);
+                                    NBTInspector.inspectTag(newNBT, context, entry.find("NBT_COMPOUND"), ctx);
                                 }
 
                                 entityDecl.mergeNBT(newNBT, ctx);
@@ -287,7 +297,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                             }
                             case "DEFAULT_PASSENGERS": {
                                 if (entityDecl == null) {
-                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default passengers aren't allowed for default entities", entry, ctx));
+                                    collector.log(new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Default passengers aren't allowed for default entities", entry, ctx));
                                     break;
                                 }
 
@@ -298,7 +308,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
 
                                         TagCompound passengerCompound;
 
-                                        SummonParser.SummonData passengerData = SummonParser.parseNewEntityLiteral(rawPassenger, ctx);
+                                        TridentLiteralSet.SummonData passengerData = (TridentLiteralSet.SummonData) rawPassenger.evaluate(ctx);
 
                                         passengerData.fillDefaults();
 
@@ -313,13 +323,13 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                             }
                             case "DEFAULT_HEALTH": {
                                 if (entityDecl == null) {
-                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default health isn't allowed for default entities", entry, ctx));
+                                    collector.log(new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Default health isn't allowed for default entities", entry, ctx));
                                     break;
                                 }
 
-                                double health = CommonParsers.parseDouble(entry.find("HEALTH"), ctx);
+                                double health = (double) entry.find("HEALTH").evaluate(ctx);
                                 if (health < 0) {
-                                    collector.log(new TridentException(TridentException.Source.COMMAND_ERROR, "Health must be non-negative", entry.find("HEALTH"), ctx));
+                                    collector.log(new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Health must be non-negative", entry.find("HEALTH"), ctx));
                                     break;
                                 }
 
@@ -332,18 +342,18 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                             }
                             case "DEFAULT_NAME": {
                                 if (entityDecl == null) {
-                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default entities", entry, ctx));
+                                    collector.log(new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default entities", entry, ctx));
                                     break;
                                 }
 
-                                entityDecl.defaultNBT = entityDecl.defaultNBT.merge(new TagCompound(new TagString("CustomName", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), ctx).toString())));
+                                entityDecl.defaultNBT = entityDecl.defaultNBT.merge(new TagCompound(new TagString("CustomName", entry.find("TEXT_COMPONENT").evaluate(ctx).toString())));
                                 break;
                             }
                             case "ENTITY_INNER_FUNCTION": {
                                 TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx,
                                         entityDecl != null ?
                                                 ctx.getParent() instanceof TridentFile &&
-                                                        ((TridentFile) ctx.getParent()).getPath().endsWith(entityDecl.id + ".tdn") ?
+                                                        ctx.getParent().getPathFromRoot().endsWith(entityDecl.id + Trident.FUNCTION_EXTENSION) ?
                                                         null :
                                                         entityDecl.id
                                                 :
@@ -354,7 +364,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                 TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
                                 if (namePattern != null) {
                                     String name = namePattern.flatten(false);
-                                    Symbol sym = new Symbol(name, Symbol.SymbolVisibility.LOCAL, innerFile.getResourceLocation());
+                                    Symbol sym = new Symbol(name, TridentSymbolVisibility.LOCAL, innerFile.getResourceLocation());
                                     if (entityDecl != null) {
                                         entityDecl.members.put(name, sym);
                                     } else {
@@ -362,7 +372,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                     }
                                 }
 
-                                ctx.getStaticParentFile().schedulePostResolutionAction(() -> {
+                                ((TridentFile) ctx.getStaticParentUnit()).schedulePostResolutionAction(() -> {
                                     innerFile.resolveEntries();
 
                                     TokenPattern<?> functionModifier = entry.find("ENTITY_FUNCTION_MODIFIER");
@@ -370,14 +380,13 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                         functionModifier = ((TokenStructure) functionModifier).getContents();
                                         switch (functionModifier.getName()) {
                                             case "TICKING_ENTITY_FUNCTION": {
-
-                                                ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) functionModifier.find("TICKING_MODIFIERS")), finalCtx, collector);
+                                                ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) functionModifier.findThenEvaluateLazyDefault("TICKING_MODIFIERS.MODIFIER_LIST", ArrayList::new, finalCtx);
 
                                                 int interval = 1;
                                                 if(functionModifier.find("TICKING_INTERVAL") != null) {
-                                                    interval = CommonParsers.parseTime(functionModifier.find("TICKING_INTERVAL"), finalCtx).getTicks();
+                                                    interval = ((TimeSpan)functionModifier.find("TICKING_INTERVAL").evaluate(finalCtx)).getTicks();
                                                     if(interval <= 0) {
-                                                        throw new TridentException(TridentException.Source.COMMAND_ERROR, "Ticking interval must be greater than zero", functionModifier.find("TICKING_INTERVAL"), finalCtx);
+                                                        throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Ticking interval must be greater than zero", functionModifier.find("TICKING_INTERVAL"), finalCtx);
                                                     }
                                                 }
 
@@ -388,7 +397,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                                     filter = new SelectorArgument[] {new TypeArgument(finalDefaultType)};
                                                 }
 
-                                                finalCtx.getCompiler().getSpecialFileManager().getTickingFunction(interval).addEntityTickEvent(
+                                                finalCtx.get(SetupSpecialFileManagerTask.INSTANCE).getTickingFunction(interval).addEntityTickEvent(
                                                         new TickingFunction.EntityEvent(
                                                                 filter,
                                                                 new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers)
@@ -404,7 +413,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                 TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx,
                                         entityDecl != null ?
                                                 ctx.getParent() instanceof TridentFile &&
-                                                        ((TridentFile) ctx.getParent()).getPath().endsWith(entityDecl.id + ".tdn") ?
+                                                        ctx.getParent().getPathFromRoot().endsWith(entityDecl.id + Trident.FUNCTION_EXTENSION) ?
                                                         null :
                                                         entityDecl.id
                                                 :
@@ -415,7 +424,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                 TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
                                 if (namePattern != null) {
                                     String name = namePattern.flatten(false);
-                                    Symbol sym = new Symbol(name, Symbol.SymbolVisibility.LOCAL, innerFile.getResourceLocation());
+                                    Symbol sym = new Symbol(name, TridentSymbolVisibility.LOCAL, innerFile.getResourceLocation());
                                     if (entityDecl != null) {
                                         entityDecl.members.put(name, sym);
                                     } else {
@@ -423,9 +432,9 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                     }
                                 }
 
-                                EntityEvent event = InterpolationManager.parse(entry.find("EVENT_NAME.INTERPOLATION_VALUE"), ctx, EntityEvent.class);
+                                EntityEvent event = (EntityEvent) entry.find("EVENT_NAME").evaluate(ctx);
 
-                                ctx.getStaticParentFile().schedulePostResolutionAction(innerFile::resolveEntries);
+                                ((TridentFile) ctx.getStaticParentUnit()).schedulePostResolutionAction(innerFile::resolveEntries);
 
                                 SelectorArgument[] filter = new SelectorArgument[0];
                                 if(entityDecl != null) {
@@ -434,7 +443,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                     filter = new SelectorArgument[] {new TypeArgument(finalDefaultType)};
                                 }
 
-                                ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList(((TokenList) entry.find("EVENT_MODIFIERS")), ctx, collector);
+                                ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) entry.find("EVENT_MODIFIERS").evaluate(ctx);
                                 modifiers.add(0, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, new Selector(Selector.BaseSelector.SENDER, filter)));
 
                                 event.getFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
@@ -451,18 +460,18 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                 break;
                             }
                             case "ENTITY_EVAL": {
-                                InterpolationManager.parse(((TokenStructure) entry.find("LINE_SAFE_INTERPOLATION_VALUE")).getContents(), ctx);
+                                ((TokenStructure) entry.find("INTERPOLATION_VALUE")).getContents().evaluate(ctx);
                                 break;
                             }
                             case "COMMENT": {
                                 break;
                             }
                             default: {
-                                collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, ctx));
+                                collector.log(new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, ctx));
                                 break;
                             }
                         }
-                    } catch (TridentException | TridentException.Grouped x) {
+                    } catch (PrismarineException | PrismarineException.Grouped x) {
                         collector.log(x);
                     }
                 }
@@ -490,5 +499,21 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
     @Override
     public String getTypeIdentifier() {
         return "custom_entity";
+    }
+
+
+
+    public static CustomEntity createStaticHandler(PrismarineTypeSystem typeSystem) {
+        return new CustomEntity(typeSystem);
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
+
+    @Override
+    public boolean isStaticHandler() {
+        return isStaticHandler;
     }
 }

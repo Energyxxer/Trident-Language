@@ -2,56 +2,50 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.commodore.util.IntegerRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 
-@AnalyzerMember(key = "com.energyxxer.commodore.util.IntegerRange")
 public class IntRangeTypeHandler implements TypeHandler<IntegerRange> {
-    private static final TridentFunction CONSTRUCTOR = new NativeMethodWrapper<>(
-            "new int_range",
-            ((instance, params) -> new IntegerRange((Integer)params[0], (Integer)params[1])),
-            Integer.class,
-            Integer.class
-    ).setNullable(0).setNullable(1).createForInstance(null);
+    private TypeHandlerMemberCollection<IntegerRange> members;
+
+    private final PrismarineTypeSystem typeSystem;
+
+    public IntRangeTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
+    @Override
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
+        members = new TypeHandlerMemberCollection<>(typeSystem, globalCtx);
+        members.setNotFoundPolicy(TypeHandlerMemberCollection.MemberNotFoundPolicy.THROW_EXCEPTION);
+
+        try {
+            members.setConstructor(IntRangeTypeHandler.class.getMethod("construct", Integer.class, Integer.class));
+
+            members.putReadOnlyField("min", IntRangeTypeHandler::getMin);
+            members.putReadOnlyField("max", IntRangeTypeHandler::getMax);
+            members.putReadOnlyField("range", r -> getMax(r) - getMin(r));
+
+            members.putMethod(IntRangeTypeHandler.class.getMethod("deriveMin", Integer.class, IntegerRange.class));
+            members.putMethod(IntRangeTypeHandler.class.getMethod("deriveMax", Integer.class, IntegerRange.class));
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
 
     @Override
     public Object getMember(IntegerRange object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(member.equals("min")) {
-            return object.getMin();
-        }
-        if(member.equals("max")) {
-            return object.getMax();
-        }
-        if(member.equals("range")) {
-            return getMax(object) - getMin(object);
-        }
-        if(member.equals("deriveMin")) {
-            return (TridentFunction) (params, patterns, pattern1, file1) -> {
-                if(params.length != 1) {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMin' requires 1 parameter, instead found " + params.length, pattern, ctx);
-                }
-
-                Integer newMin = params[0] != null ? TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], ctx, Integer.class) : null;
-
-                return new IntegerRange(newMin, object.getMax());
-            };
-        }
-        if(member.equals("deriveMax")) {
-            return (TridentFunction) (params, patterns, pattern1, file1) -> {
-                if(params.length != 1) {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMax' requires 1 parameter, instead found " + params.length, pattern, ctx);
-                }
-
-                Integer newMax = params[0] != null ? TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], ctx, Integer.class) : null;
-
-                return new IntegerRange(object.getMin(), newMax);
-            };
-        }
-        throw new MemberNotFoundException();
+        return members.getMember(object, member, pattern, ctx);
     }
 
     @Override
@@ -59,17 +53,6 @@ public class IntRangeTypeHandler implements TypeHandler<IntegerRange> {
         throw new MemberNotFoundException();
     }
 
-    private int getMin(IntegerRange range) {
-        if(range.getMin() != null) return range.getMin();
-        else return Integer.MIN_VALUE;
-    }
-
-    private int getMax(IntegerRange range) {
-        if(range.getMax() != null) return range.getMax();
-        else return Integer.MAX_VALUE;
-    }
-
-    @SuppressWarnings("unchecked")
     @Override
     public Object cast(IntegerRange range, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
@@ -86,7 +69,34 @@ public class IntRangeTypeHandler implements TypeHandler<IntegerRange> {
     }
 
     @Override
-    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return CONSTRUCTOR;
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+        return members.getConstructor();
+    }
+
+
+
+    public static int getMin(IntegerRange range) {
+        if(range.getMin() != null) return range.getMin();
+        else return Integer.MIN_VALUE;
+    }
+
+    public static int getMax(IntegerRange range) {
+        if(range.getMax() != null) return range.getMax();
+        else return Integer.MAX_VALUE;
+    }
+
+    @NativeFunctionAnnotations.NotNullReturn
+    public static IntegerRange deriveMin(@NativeFunctionAnnotations.NullableArg Integer newMin, @NativeFunctionAnnotations.ThisArg IntegerRange thiz) {
+        return new IntegerRange(newMin, thiz.getMax());
+    }
+
+    @NativeFunctionAnnotations.NotNullReturn
+    public static IntegerRange deriveMax(@NativeFunctionAnnotations.NullableArg Integer newMax, @NativeFunctionAnnotations.ThisArg IntegerRange thiz) {
+        return new IntegerRange(thiz.getMin(), newMax);
+    }
+
+    @NativeFunctionAnnotations.NotNullReturn
+    public static IntegerRange construct(@NativeFunctionAnnotations.NullableArg Integer min, @NativeFunctionAnnotations.NullableArg Integer max) {
+        return new IntegerRange(min, max);
     }
 }

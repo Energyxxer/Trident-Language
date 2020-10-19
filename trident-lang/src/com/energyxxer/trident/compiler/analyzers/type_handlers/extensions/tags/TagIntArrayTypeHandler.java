@@ -2,18 +2,29 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 
 import com.energyxxer.commodore.functionlogic.nbt.TagInt;
 import com.energyxxer.commodore.functionlogic.nbt.TagIntArray;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction.HelperMethods.assertOfClass;
+import static com.energyxxer.prismarine.typesystem.PrismarineTypeSystem.assertOfClass;
 
 public class TagIntArrayTypeHandler implements TypeHandler<TagIntArray> {
-    private static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructTagIntArray(params, patterns, pattern, ctx);
+    private static final PrimitivePrismarineFunction CONSTRUCTOR = (params, patterns, pattern, ctx, thisObject) -> constructTagIntArray(params, patterns, pattern, ctx);
+
+    private final PrismarineTypeSystem typeSystem;
+
+    public TagIntArrayTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
 
     @Override
     public Object getMember(TagIntArray object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -27,8 +38,8 @@ public class TagIntArrayTypeHandler implements TypeHandler<TagIntArray> {
 
     @Override
     public Object cast(TagIntArray object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if ("primitive(list)".equals(TridentTypeManager.getInternalTypeIdentifierForType(targetType))) {
-            return new ListObject(object.getAllTags());
+        if ("primitive(list)".equals(typeSystem.getInternalTypeIdentifierForType(targetType))) {
+            return new ListObject(typeSystem, object.getAllTags());
         }
         throw new ClassCastException();
     }
@@ -45,17 +56,17 @@ public class TagIntArrayTypeHandler implements TypeHandler<TagIntArray> {
 
     @Override
     public TypeHandler<?> getSuperType() {
-        return TridentTypeManager.getHandlerForHandlerClass(NBTTagTypeHandler.class);
+        return typeSystem.getHandlerForHandlerClass(NBTTagTypeHandler.class);
     }
 
     @Override
-    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 
     private static TagIntArray constructTagIntArray(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(params.length == 0 || params[0] == null) return new TagIntArray();
-        ListObject list = TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], ctx, ListObject.class);
+        ListObject list = PrismarineTypeSystem.assertOfClass(params[0], patterns[0], ctx, ListObject.class);
 
         TagIntArray arr = new TagIntArray();
 

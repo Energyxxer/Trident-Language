@@ -1,10 +1,10 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
+import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,7 +17,7 @@ public class ClassMethodTable {
         this.type = type;
     }
 
-    public TridentFunction find(String memberName, ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction find(String memberName, ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx) {
         ClassMethodFamily family = methods.get(memberName);
         if(family != null) {
             return family.pickOverload(params, pattern, ctx);
@@ -26,10 +26,10 @@ public class ClassMethodTable {
     }
 
     public Object findAndWrap(String memberName, ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx, CustomClassObject thisObject) {
-        TridentFunction function = find(memberName, params, pattern, ctx);
+        PrimitivePrismarineFunction function = find(memberName, params, pattern, ctx);
         if(function == null) return null;
-        if(function instanceof TridentUserFunction) {
-            return new ClassMethodFamily.ClassMethodSymbol(this.getFamily(memberName), ((TridentUserFunction) function), thisObject);
+        if(function instanceof PrismarineFunction) {
+            return new ClassMethodFamily.ClassMethodSymbol(this.getFamily(memberName), ((PrismarineFunction) function), thisObject);
         } else {
             return function;
         }

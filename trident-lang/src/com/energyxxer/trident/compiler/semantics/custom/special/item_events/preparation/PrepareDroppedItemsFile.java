@@ -32,11 +32,11 @@ public class PrepareDroppedItemsFile extends SpecialFile {
 
     @Override
     protected void compile() {
-        function.append(new TagCommand(REMOVE, new Selector(ALL_ENTITIES, new TypeArgument(compiler.getModule().minecraft.types.entity.get("item"))), "tdci_dropped"));
+        function.append(new TagCommand(REMOVE, new Selector(ALL_ENTITIES, new TypeArgument(getParent().getModule().minecraft.types.entity.get("item"))), "tdci_dropped"));
         function.append(
                 new ExecuteCommand(
                         new TagCommand(ADD, new Selector(SENDER), "tdci_dropped"),
-                        new ExecuteAsEntity(new Selector(ALL_ENTITIES, new TypeArgument(compiler.getModule().minecraft.types.entity.get("item")), new NBTArgument(new TagCompound(new TagShort("Age", 0), new TagShort("PickupDelay", 40))))),
+                        new ExecuteAsEntity(new Selector(ALL_ENTITIES, new TypeArgument(getParent().getModule().minecraft.types.entity.get("item")), new NBTArgument(new TagCompound(new TagShort("Age", 0), new TagShort("PickupDelay", 40))))),
                         new ExecuteConditionDataEntity(IF, new Selector(SENDER), new NBTPath("Item", new NBTPath("tag", new NBTPath("TridentCustomItem")))),
                         new ExecuteConditionDataEntity(IF, new Selector(SENDER), new NBTPath("Thrower"))
                 ));

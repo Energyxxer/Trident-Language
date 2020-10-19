@@ -1,22 +1,39 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
+import static com.energyxxer.prismarine.typesystem.functions.natives.PrismarineNativeFunctionBranch.nativeMethodsToFunction;
 
 public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
 
-    private TridentUserFunction of;
-    private TridentUserFunction is;
+    private PrismarineFunction of;
+    private PrismarineFunction is;
 
-    public TypeHandlerTypeHandler() {
+    private final PrismarineTypeSystem typeSystem;
+
+    public TypeHandlerTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
+    @Override
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
         try {
-            of = nativeMethodsToFunction(null, TypeHandlerTypeHandler.class.getMethod("of", Object.class));
+            of = nativeMethodsToFunction(typeSystem, null, TypeHandlerTypeHandler.class.getMethod("of", Object.class, ISymbolContext.class));
+            is = nativeMethodsToFunction(typeSystem, null, TypeHandlerTypeHandler.class.getMethod("is", Object.class, TypeHandler.class));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
     }
 
     @Override
@@ -24,13 +41,9 @@ public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
         if("of".equals(member)) {
             return of;
         } else if("is".equals(member)) {
-            return new NativeMethodWrapper<>("is", ((instance, params) -> object.isInstance(params[0])), Object.class).setNullable(0).createForInstance(null);
+            return is;
         }
         throw new MemberNotFoundException();
-    }
-
-    public static TypeHandler of(@NativeMethodWrapper.TridentNullableArg Object obj) {
-        return TridentTypeManager.getStaticHandlerForObject(obj);
     }
 
     @Override
@@ -56,5 +69,14 @@ public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
     @Override
     public boolean isInstance(Object obj) {
         return obj instanceof TypeHandler && ((TypeHandler) obj).isStaticHandler();
+    }
+
+
+    public static TypeHandler of(@NativeFunctionAnnotations.NullableArg Object obj, ISymbolContext ctx) {
+        return ctx.getTypeSystem().getStaticHandlerForObject(obj);
+    }
+
+    public static boolean is(Object object, @NativeFunctionAnnotations.ThisArg TypeHandler handler) {
+        return handler.isInstance(object);
     }
 }

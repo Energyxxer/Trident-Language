@@ -1,64 +1,63 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.ContextualToString;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable<Object>, ContextualToString {
-    public static final DictionaryObject STATIC_HANDLER = new DictionaryObject();
-    private static Stack<DictionaryObject> toStringRecursion = new Stack<>();
-    private static HashMap<String, MemberWrapper<DictionaryObject>> members = new HashMap<>();
+    private final PrismarineTypeSystem typeSystem;
+    private final boolean isStaticHandler;
 
-    static {
+    private static Stack<DictionaryObject> toStringRecursion = new Stack<>();
+    private TypeHandlerMemberCollection<DictionaryObject> members;
+
+    @Override
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
+        members = new TypeHandlerMemberCollection<>(typeSystem, globalCtx);
+        members.setNotFoundPolicy(TypeHandlerMemberCollection.MemberNotFoundPolicy.RETURN_NULL);
+
         try {
-            members.put("merge", new NativeMethodWrapper<>(DictionaryObject.class.getMethod("merge", DictionaryObject.class)));
-            members.put("remove", new NativeMethodWrapper<>(DictionaryObject.class.getMethod("remove", String.class)));
-            members.put("clear", new NativeMethodWrapper<>(DictionaryObject.class.getMethod("clear")));
+            members.putMethod(DictionaryObject.class.getMethod("map", PrimitivePrismarineFunction.class, TokenPattern.class, ISymbolContext.class));
+            members.putMethod(DictionaryObject.class.getMethod("merge", DictionaryObject.class));
+            members.putMethod(DictionaryObject.class.getMethod("remove", String.class));
+            members.putMethod(DictionaryObject.class.getMethod("clear"));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
+    }
+
+    public DictionaryObject(PrismarineTypeSystem typeSystem) {
+        this(typeSystem, false);
+    }
+
+    private DictionaryObject(PrismarineTypeSystem typeSystem, boolean isStaticHandler) {
+        this.typeSystem = typeSystem;
+        this.isStaticHandler = isStaticHandler;
     }
 
     private HashMap<String, Symbol> map = new HashMap<>();
 
     @Override
     public Object getMember(DictionaryObject dict, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(dict, member, pattern, ctx, keepSymbol);
+        if(isStaticHandler) return typeSystem.getMetaTypeHandler().getMember(dict, member, pattern, ctx, keepSymbol);
         if(keepSymbol && !dict.map.containsKey(member)) {
             put(member, null);
         }
         if(!keepSymbol && !dict.map.containsKey(member)) {
-            if(member.equals("map")) {
-                return (TridentFunction) (params, patterns, pattern1, file1) -> {
-                    if (params.length < 1) {
-                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern1, ctx);
-                    }
-                    TridentUserFunction func = TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], file1, TridentUserFunction.class);
-
-                    DictionaryObject newDict = new DictionaryObject();
-
-                    try {
-                        for (Map.Entry<String, Symbol> entry : dict.entrySet()) {
-                            newDict.put(entry.getKey(), func.safeCall(new Object[]{entry.getKey(), entry.getValue().getValue(pattern, ctx)}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
-                        }
-                    } catch(ConcurrentModificationException x) {
-                        throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
-                    }
-
-                    return newDict;
-                };
-            }
-
-            MemberWrapper<DictionaryObject> result = members.get(member);
+            Object result = ((DictionaryObject) typeSystem.getStaticHandlerForObject(dict)).members.getMember(dict, member, pattern, ctx, keepSymbol);
             if (result != null) {
-                return result.unwrap(dict);
+                return result;
             }
         }
         Symbol elem = dict.map.get(member);
@@ -67,18 +66,19 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
 
     @Override
     public Object getIndexer(DictionaryObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
-        String key = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
+        if(isStaticHandler) return typeSystem.getMetaTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
+        String key = PrismarineTypeSystem.assertOfClass(index, pattern, ctx, String.class);
         return getMember(object, key, pattern, ctx, keepSymbol);
     }
 
     @Override
     public Object cast(DictionaryObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(isStaticHandler) return typeSystem.getMetaTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 
     @Override
-    public Iterator<?> getIterator(DictionaryObject dict) {
+    public Iterator<?> getIterator(DictionaryObject dict, ISymbolContext ctx) {
         return dict.iterator();
     }
 
@@ -99,7 +99,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
     }
 
     public Object put(String key, Object value) {
-        return map.put(key, new Symbol(key, Symbol.SymbolVisibility.GLOBAL, value));
+        return map.put(key, new Symbol(key, SymbolVisibility.GLOBAL, value));
     }
 
     public Object remove(String key) {
@@ -123,11 +123,11 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
     }
 
     public Object putIfAbsent(String key, Object value) {
-        return map.putIfAbsent(key, new Symbol(key, Symbol.SymbolVisibility.GLOBAL, value));
+        return map.putIfAbsent(key, new Symbol(key, SymbolVisibility.GLOBAL, value));
     }
 
     public DictionaryObject merge(DictionaryObject other) {
-        DictionaryObject newDict = new DictionaryObject();
+        DictionaryObject newDict = new DictionaryObject(typeSystem);
         for(Map.Entry<String, Symbol> entry : this.entrySet()) {
             newDict.put(entry.getKey(), entry.getValue().getValue(null, null));
         }
@@ -138,13 +138,27 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
     }
 
     public DictionaryObject shallowMerge(DictionaryObject other) {
-        DictionaryObject newDict = new DictionaryObject();
+        DictionaryObject newDict = new DictionaryObject(typeSystem);
         for(Map.Entry<String, Symbol> entry : this.entrySet()) {
             newDict.put(entry.getKey(), entry.getValue().getValue(null, null));
         }
         for(Map.Entry<String, Symbol> entry : other.entrySet()) {
             newDict.put(entry.getKey(), entry.getValue().getValue(null, null));
         }
+        return newDict;
+    }
+
+    public DictionaryObject map(PrimitivePrismarineFunction function, TokenPattern<?> pattern, ISymbolContext ctx) {
+        DictionaryObject newDict = new DictionaryObject(typeSystem);
+
+        try {
+            for (Map.Entry<String, Symbol> entry : this.entrySet()) {
+                newDict.put(entry.getKey(), function.safeCall(new Object[]{entry.getKey(), entry.getValue().getValue(pattern, ctx)}, new TokenPattern[]{pattern, pattern}, pattern, ctx, null));
+            }
+        } catch(ConcurrentModificationException x) {
+            throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
+        }
+
         return newDict;
     }
 
@@ -162,7 +176,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
             @Override
             public Object next() {
                 Map.Entry<String, Symbol> entry = it.next();
-                DictionaryObject dict = new DictionaryObject();
+                DictionaryObject dict = new DictionaryObject(typeSystem);
                 dict.put("key", entry.getKey());
                 dict.put("value", entry.getValue().getValue(null, null));
                 return dict;
@@ -176,7 +190,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
             return "{ ...circular... }";
         }
         toStringRecursion.push(this);
-        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue(null, null) instanceof String ? "\"" + s.getValue(null, null) + "\"" : InterpolationManager.castToString(s.getValue(null, null)))).collect(Collectors.joining(", ")) + "}";
+        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue(null, null) instanceof String ? "\"" + s.getValue(null, null) + "\"" : typeSystem.castToString(s.getValue(null, null)))).collect(Collectors.joining(", ")) + "}";
         toStringRecursion.pop();
         return str;
     }
@@ -186,7 +200,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
             return "{ ...circular... }";
         }
         toStringRecursion.push(this);
-        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue(pattern, ctx) instanceof String ? "\"" + s.getValue(pattern, ctx) + "\"" : InterpolationManager.castToString(s.getValue(pattern, ctx), pattern, ctx))).collect(Collectors.joining(", ")) + "}";
+        String str = "{" + map.values().stream().map((Symbol s) -> s.getName() + ": " + (s.getValue(pattern, ctx) instanceof String ? "\"" + s.getValue(pattern, ctx) + "\"" : typeSystem.castToString(s.getValue(pattern, ctx), pattern, ctx))).collect(Collectors.joining(", ")) + "}";
         toStringRecursion.pop();
         return str;
     }
@@ -199,5 +213,19 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
     @Override
     public String getTypeIdentifier() {
         return "dictionary";
+    }
+
+    public static DictionaryObject createStaticHandler(PrismarineTypeSystem typeSystem) {
+        return new DictionaryObject(typeSystem, true);
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
+
+    @Override
+    public boolean isStaticHandler() {
+        return isStaticHandler;
     }
 }

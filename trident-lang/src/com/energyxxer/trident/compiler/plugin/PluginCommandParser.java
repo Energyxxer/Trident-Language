@@ -5,27 +5,28 @@ import com.energyxxer.commodore.functionlogic.functions.FunctionSection;
 import com.energyxxer.commodore.functionlogic.inspection.ExecutionContext;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.types.Type;
-import com.energyxxer.commodore.types.defaults.*;
-import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.analyzers.commands.SummonParser;
-import com.energyxxer.trident.compiler.analyzers.constructs.*;
+import com.energyxxer.prismarine.plugins.PrismarinePluginUnit;
+import com.energyxxer.prismarine.plugins.syntax.PrismarineMetaBuilder;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
+import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunctionBranch;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
+import com.energyxxer.trident.sets.trident.TridentLiteralSet;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,32 +37,32 @@ public class PluginCommandParser {
 
     private HashSet<String> multiVars = new HashSet<>();
 
-    public void handleCommand(CommandDefinition def, TokenPattern<?> pattern, List<ExecuteModifier> modifiers, ISymbolContext ctx, FunctionSection appendTo) {
-        ISymbolContext subContext = new PluginSymbolContext(ctx, def.getRawHandlerPattern().getFile());
-        DictionaryObject argsObj = new DictionaryObject();
-        ListObject modifiersList = new ListObject();
+    public void handleCommand(PrismarinePluginUnit def, TokenPattern<?> pattern, List<ExecuteModifier> modifiers, ISymbolContext ctx, FunctionSection appendTo) {
+        ISymbolContext subContext = new PluginSymbolContext(ctx, def.get(TridentPluginUnitConfiguration.CommandHandlerFile.INSTANCE).getPattern().getFile().toPath());
+        DictionaryObject argsObj = new DictionaryObject(ctx.getTypeSystem());
+        ListObject modifiersList = new ListObject(ctx.getTypeSystem());
         for(ExecuteModifier modifier : modifiers) {
             modifiersList.add(modifier.getSubCommand(DEFAULT_EXEC_CONTEXT).getRaw());
         }
-        subContext.put(new Symbol("args", Symbol.SymbolVisibility.LOCAL, argsObj));
-        subContext.put(new Symbol("modifiers", Symbol.SymbolVisibility.LOCAL, modifiersList));
+        subContext.put(new Symbol("args", TridentSymbolVisibility.LOCAL, argsObj));
+        subContext.put(new Symbol("modifiers", TridentSymbolVisibility.LOCAL, modifiersList));
 
-        scanPattern(((TokenGroup) ((TokenStructure) pattern).getContents()).getContents()[1], argsObj, ctx);
+        scanPattern(pattern, argsObj, ctx);
 
-        TridentFile.resolveFileIntoSection(def.getRawHandlerPattern(), subContext, appendTo);
+        TridentFile.resolveFileIntoSection(def.get(TridentPluginUnitConfiguration.CommandHandlerFile.INSTANCE).getPattern(), subContext, appendTo);
     }
 
     private void scanPattern(TokenPattern<?> pattern, DictionaryObject argsObj, ISymbolContext ctx) {
-        while(pattern.hasTag(TDNMetaBuilder.PLUGIN_CREATED_TAG)) {
+        while(pattern.hasTag(PrismarineMetaBuilder.PLUGIN_CREATED_TAG)) {
             boolean storingInVar = false;
             for(String tag : pattern.getTags()) {
-                if(tag.startsWith(TDNMetaBuilder.STORE_VAR_TAG_PREFIX)) {
+                if(tag.startsWith(PrismarineMetaBuilder.STORE_VAR_TAG_PREFIX)) {
                     storingInVar = true;
-                    String storeVar = tag.substring(TDNMetaBuilder.STORE_VAR_TAG_PREFIX.length());
+                    String storeVar = tag.substring(PrismarineMetaBuilder.STORE_VAR_TAG_PREFIX.length());
                     TokenPattern<?> argPattern = ((TokenGroup) pattern).getContents()[0];
 
                     Object value;
-                    if(pattern.hasTag(TDNMetaBuilder.STORE_FLAT_TAG)) {
+                    if(pattern.hasTag(PrismarineMetaBuilder.STORE_FLAT_TAG_PREFIX)) {
                         value = pattern.flatten(true);
                     } else {
                         value = parseVar(argPattern, ctx, pattern);
@@ -72,7 +73,7 @@ public class PluginCommandParser {
                     } else if(multiVars.contains(storeVar)) {
                         ((ListObject) argsObj.get(storeVar)).add(value);
                     } else {
-                        ListObject newList = new ListObject();
+                        ListObject newList = new ListObject(ctx.getTypeSystem());
                         newList.add(argsObj.get(storeVar));
                         newList.add(value);
                         argsObj.put(storeVar, newList);
@@ -105,9 +106,9 @@ public class PluginCommandParser {
                 return file.getResourceLocation();
             }
             case "ANONYMOUS_INNER_FUNCTION": {
-                TridentUserFunction function = new TridentUserFunction(pattern, ctx, Collections.emptyList(), null, null, null);;
-                if(parentPattern.hasTag(TDNMetaBuilder.STORE_METADATA_TAG_PREFIX + "STATS")) {
-                    DictionaryObject dict = new DictionaryObject();
+                PrismarineFunction function = new PrismarineFunction(null, new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.emptyList(), pattern, null), ctx);
+                if(parentPattern.hasTag(PrismarineMetaBuilder.STORE_METADATA_TAG_PREFIX + "STATS")) {
+                    DictionaryObject dict = new DictionaryObject(ctx.getTypeSystem());
 
                     getInnerFunctionStats(dict, pattern);
 
@@ -117,89 +118,96 @@ public class PluginCommandParser {
                 return function;
             }
             case "MODIFIER": {
-                Collection<ExecuteModifier> modifiers = CommonParsers.parseModifier(pattern, ctx, null);
+                Object returnedModifiers = pattern.evaluate(ctx);
                 StringBuilder sb = new StringBuilder();
-                boolean first = true;
-                for(ExecuteModifier modifier : modifiers) {
-                    if(!first) sb.append(' ');
-                    sb.append(modifier.getSubCommand(DEFAULT_EXEC_CONTEXT).getRaw());
-                    first = false;
+
+                if(returnedModifiers instanceof ExecuteModifier) {
+                    sb.append(((ExecuteModifier) returnedModifiers).getSubCommand(DEFAULT_EXEC_CONTEXT).getRaw());
+                } else {
+                    boolean first = true;
+                    for(ExecuteModifier modifier : ((Collection<ExecuteModifier>) returnedModifiers)) {
+                        if(!first) sb.append(' ');
+                        sb.append(modifier.getSubCommand(DEFAULT_EXEC_CONTEXT).getRaw());
+                        first = false;
+                    }
                 }
+
                 return sb.toString();
             }
-            case "RESOURCE_LOCATION":
-            case "RESOURCE_LOCATION_TAGGED": return CommonParsers.parseResourceLocation(pattern, ctx);
             case "ENTITY":
-            case "SELECTOR": return EntityParser.parseEntity(pattern, ctx);
-            case "BLOCK":
-            case "BLOCK_TAGGED": return CommonParsers.parseBlock(pattern, ctx);
-            case "ITEM":
-            case "ITEM_TAGGED": {
-                NBTMode mode = NBTMode.SETTING;
-                if(parentPattern.hasTag(TDNMetaBuilder.STORE_METADATA_TAG_PREFIX + "TESTING")) mode = NBTMode.TESTING;
-                return CommonParsers.parseItem(pattern, ctx, mode);
-            }
-            case "NEW_ENTITY_LITERAL": {
-                SummonParser.SummonData summonData = SummonParser.parseNewEntityLiteral(pattern, ctx);
-                DictionaryObject newEntityDict = new DictionaryObject();
-                newEntityDict.put("type", new TridentUtil.ResourceLocation(summonData.type.toString()));
-                newEntityDict.put("components", new ListObject(summonData.components));
-                newEntityDict.put("fullNBT", summonData.nbt);
-                return newEntityDict;
-            }
-            case "TEXT_COMPONENT": return TextParser.parseTextComponent(pattern, ctx);
+            case "SELECTOR":
+            case "IDENTIFIER_B":
+            case "IDENTIFIER_A":
+            case "POINTER":
+            case "REAL_NUMBER_RANGE":
+            case "INTEGER_NUMBER_RANGE":
+            case "INTEGER":
+            case "REAL":
             case "NBT_COMPOUND":
             case "NBT_VALUE":
-            case "NBT_LIST": return NBTParser.parseValue(pattern, ctx);
-            case "NBT_PATH": return NBTParser.parsePath(pattern, ctx);
-            case "COORDINATE_SET":
-            case "TWO_COORDINATE_SET": {
-                return CoordinateParser.parse(pattern, ctx);
-            }
-            case "ROTATION": return CoordinateParser.parseRotation(pattern, ctx);
-            case "UUID": return CommonParsers.parseUUID(pattern, ctx);
-            case "BLOCK_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseBlockType(pattern, ctx).toString());
-            case "ITEM_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseItemType(pattern, ctx).toString());
-            case "ENTITY_ID":
-            case "ENTITY_ID_TAGGED": {
-                Object ref = CommonParsers.parseEntityReference(pattern, ctx);
-                if(ref instanceof Type) ref = new TridentUtil.ResourceLocation(ref.toString());
-                return ref;
-            }
-            case "EFFECT_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseType(pattern, ctx, EffectType.CATEGORY).toString());
-            case "PARTICLE_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseType(pattern, ctx, ParticleType.CATEGORY).toString());
-            case "ENCHANTMENT_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseType(pattern, ctx, EnchantmentType.CATEGORY).toString());
-            case "DIMENSION_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseType(pattern, ctx, DimensionType.CATEGORY, VersionFeatureManager.getBoolean("custom_dimensions")).toString());
-            case "BIOME_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseType(pattern, ctx, BiomeType.CATEGORY, VersionFeatureManager.getBoolean("custom_biomes")).toString());
-            case "ATTRIBUTE_ID": return new TridentUtil.ResourceLocation(CommonParsers.parseType(pattern, ctx, AttributeType.CATEGORY).toString());
-            case "SLOT_ID": return CommonParsers.parseType(pattern, ctx, ItemSlot.CATEGORY).toString();
-            case "GAMEMODE": return CommonParsers.parseType(pattern, ctx, GamemodeType.CATEGORY).toString();
-            case "GAMERULE": return CommonParsers.parseType(pattern, ctx, GameruleType.CATEGORY).toString();
-            case "STRUCTURE": return CommonParsers.parseType(pattern, ctx, StructureType.CATEGORY).toString();
-            case "DIFFICULTY": return CommonParsers.parseType(pattern, ctx, DifficultyType.CATEGORY).toString();
-            case "STRING_LITERAL_OR_IDENTIFIER_A": return CommonParsers.parseStringLiteralOrIdentifierA(pattern, ctx);
+            case "NBT_LIST":
+            case "NBT_PATH":
+            case "TEXT_COMPONENT":
+            case "RESOURCE_LOCATION":
+            case "RESOURCE_LOCATION_TAGGED":
+            case "BLOCK":
+            case "BLOCK_TAGGED":
+            case "BOOLEAN":
+            case "ROTATION":
+            case "UUID":
+            case "STRING_LITERAL_OR_IDENTIFIER_A":
+            case "STRING":
             case "DICTIONARY":
             case "LIST":
             case "INTERPOLATION_BLOCK":
             case "INTERPOLATION_VALUE":
-            case "LINE_SAFE_INTERPOLATION_VALUE": return InterpolationManager.parse(pattern, ctx);
-            case "POINTER": return CommonParsers.parsePointer(pattern, ctx);
-            case "INTEGER": return CommonParsers.parseInt(pattern, ctx);
-            case "BOOLEAN": return pattern.flatten(false).equals("true");
-            case "REAL": return CommonParsers.parseDouble(pattern, ctx);
-            case "INTEGER_NUMBER_RANGE": return CommonParsers.parseIntRange(pattern, ctx);
-            case "REAL_NUMBER_RANGE": return CommonParsers.parseRealRange(pattern, ctx);
-            case "OBJECTIVE_NAME": return CommonParsers.parseObjectiveName(pattern, ctx);
+            case "COORDINATE_SET":
+            case "TWO_COORDINATE_SET":
+                return pattern.evaluate(ctx);
+            case "ITEM":
+            case "ITEM_TAGGED": {
+                NBTMode mode = NBTMode.SETTING;
+                if(parentPattern.hasTag(PrismarineMetaBuilder.STORE_METADATA_TAG_PREFIX + "TESTING")) mode = NBTMode.TESTING;
+                return pattern.evaluate(ctx, mode);
+            }
+            case "NEW_ENTITY_LITERAL": {
+                TridentLiteralSet.SummonData summonData = (TridentLiteralSet.SummonData) pattern.evaluate(ctx);
+                DictionaryObject newEntityDict = new DictionaryObject(ctx.getTypeSystem());
+                newEntityDict.put("type", new ResourceLocation(summonData.type.toString()));
+                newEntityDict.put("components", new ListObject(ctx.getTypeSystem(), summonData.components));
+                newEntityDict.put("fullNBT", summonData.nbt);
+                return newEntityDict;
+            }
+            case "BLOCK_ID":
+            case "ITEM_ID":
+            case "EFFECT_ID":
+            case "PARTICLE_ID":
+            case "ENCHANTMENT_ID":
+            case "DIMENSION_ID":
+            case "BIOME_ID":
+            case "ATTRIBUTE_ID":
+                return new ResourceLocation((Type) pattern.evaluate(ctx));
+            case "TRIDENT_ENTITY_ID_NBT":
+            case "TRIDENT_ENTITY_ID_TAGGED":
+            case "ENTITY_ID":
+            case "ENTITY_ID_TAGGED": {
+                Object ref = pattern.evaluate(ctx);
+                if(ref instanceof Type) ref = new ResourceLocation((Type) ref);
+                return ref;
+            }
+            case "SLOT_ID":
+            case "GAMEMODE":
+            case "GAMERULE":
+            case "STRUCTURE":
+            case "DIFFICULTY": return ((Type) pattern.evaluate(ctx)).toString();
+            case "OBJECTIVE_NAME": return pattern.evaluate(ctx, String.class);
             case "SCORE":
             case "SCORE_OPTIONAL_OBJECTIVE": {
-                LocalScore score = CommonParsers.parseScore(pattern, ctx);
+                LocalScore score = (LocalScore) pattern.evaluate(ctx);
                 String objectiveName = null;
                 if(score.getObjective() != null) objectiveName = score.getObjective().getName();
-                return new PointerObject(score.getHolder(), objectiveName);
+                return new PointerObject(ctx.getTypeSystem(), score.getHolder(), objectiveName);
             }
-            case "STRING": return CommonParsers.parseStringLiteral(pattern, ctx);
-            case "IDENTIFIER_A": return CommonParsers.parseIdentifierA(pattern, ctx);
-            case "IDENTIFIER_B": return CommonParsers.parseIdentifierB(pattern, ctx);
             case "IDENTIFIER_C":
             case "IDENTIFIER_D":
             case "IDENTIFIER":
@@ -207,23 +215,23 @@ public class PluginCommandParser {
             case "NUMERIC_DATA_TYPE":
             case "TRAILING_STRING":
             case "ANCHOR": return pattern.flatten(false);
-            default: throw new TridentException(TridentException.Source.IMPOSSIBLE, "Don't know how to store this into a variable: '" + pattern.getName() + "'", pattern, ctx);
+            default: throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Don't know how to store this into a variable: '" + pattern.getName() + "'", pattern, ctx);
         }
     }
 
     public static class PluginSymbolContext extends SymbolContext {
 
-        private File declaringFile;
+        private Path declaringPath;
 
-        public PluginSymbolContext(ISymbolContext parentScope, File declaringFile) {
+        public PluginSymbolContext(ISymbolContext parentScope, Path declaringPath) {
             super(parentScope);
 
-            this.declaringFile = declaringFile;
+            this.declaringPath = declaringPath;
         }
 
         @Override
-        public File getDeclaringFSFile() {
-            return declaringFile;
+        public Path getPathFromRoot() {
+            return declaringPath;
         }
     }
 

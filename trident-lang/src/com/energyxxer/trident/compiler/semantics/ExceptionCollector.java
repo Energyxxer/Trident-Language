@@ -1,12 +1,13 @@
 package com.energyxxer.trident.compiler.semantics;
 
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 
 import java.util.ArrayList;
 
 public class ExceptionCollector {
     private final ISymbolContext file;
-    private ArrayList<TridentException> exceptions = new ArrayList<>();
+    private ArrayList<PrismarineException> exceptions = new ArrayList<>();
     private boolean wasEmpty;
     private boolean wasBreaking;
 
@@ -27,12 +28,12 @@ public class ExceptionCollector {
     }
 
     public void log(RuntimeException x) {
-        if(x instanceof TridentException) log(((TridentException) x));
-        if(x instanceof TridentException.Grouped) log(((TridentException.Grouped) x));
+        if(x instanceof PrismarineException) log(((PrismarineException) x));
+        if(x instanceof PrismarineException.Grouped) log(((PrismarineException.Grouped) x));
         else throw x;
     }
 
-    public void log(TridentException x) {
+    public void log(PrismarineException x) {
         if(wasEmpty) {
             x.expandToUncaught();
             file.getCompiler().getReport().addNotice(x.getNotice());
@@ -43,9 +44,9 @@ public class ExceptionCollector {
         }
     }
 
-    public void log(TridentException.Grouped gx) {
+    public void log(PrismarineException.Grouped gx) {
         if(wasEmpty) {
-            for(TridentException ex : gx.getExceptions()) {
+            for(PrismarineException ex : gx.getExceptions()) {
                 file.getCompiler().getReport().addNotice(ex.getNotice());
             }
         } else if(file.getCompiler().getTryStack().isRecovering()) {
@@ -59,7 +60,7 @@ public class ExceptionCollector {
         file.getCompiler().getTryStack().pop();
         if(!exceptions.isEmpty()) {
             if(!file.getCompiler().getTryStack().isEmpty()) {
-                throw new TridentException.Grouped(exceptions);
+                throw new PrismarineException.Grouped(exceptions);
             }
         }
     }

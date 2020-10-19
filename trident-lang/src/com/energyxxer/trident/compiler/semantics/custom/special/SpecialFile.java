@@ -1,10 +1,10 @@
 package com.energyxxer.trident.compiler.semantics.custom.special;
 
 import com.energyxxer.commodore.functionlogic.functions.Function;
-import com.energyxxer.trident.compiler.TridentCompiler;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 
 public abstract class SpecialFile {
-    protected final TridentCompiler compiler;
+    protected final PrismarineProjectWorker worker;
     protected final SpecialFileManager parent;
     private final String functionName;
     protected Function function;
@@ -12,7 +12,7 @@ public abstract class SpecialFile {
     private boolean compiled = false;
 
     public SpecialFile(SpecialFileManager parent, String functionName) {
-        this.compiler = parent.getCompiler();
+        this.worker = parent.getWorker();
         this.parent = parent;
         this.functionName = functionName;
     }

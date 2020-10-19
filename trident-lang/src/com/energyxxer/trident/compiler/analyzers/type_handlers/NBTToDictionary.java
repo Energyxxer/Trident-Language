@@ -2,11 +2,12 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 
 public class NBTToDictionary {
-    public static Object convert(NBTTag tag, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static Object convert(@NativeFunctionAnnotations.ThisArg NBTTag tag, TokenPattern<?> pattern, ISymbolContext ctx) {
         switch(tag.getType()) {
             case "TAG_Byte": {
                 return (int)((TagByte) tag).getValue();
@@ -30,7 +31,7 @@ public class NBTToDictionary {
                 return ((TagString) tag).getValue();
             }
             case "TAG_Compound": {
-                DictionaryObject dict = new DictionaryObject();
+                DictionaryObject dict = new DictionaryObject(ctx.getTypeSystem());
                 TagCompound compound = (TagCompound) tag;
 
                 for(NBTTag inner : compound.getAllTags()) {
@@ -43,7 +44,7 @@ public class NBTToDictionary {
             case "TAG_Byte_Array":
             case "TAG_Int_Array":
             case "TAG_Long_Array": {
-                ListObject list = new ListObject();
+                ListObject list = new ListObject(ctx.getTypeSystem());
                 ComplexNBTTag compound = (ComplexNBTTag) tag;
 
                 for(NBTTag inner : compound.getAllTags()) {
@@ -53,7 +54,7 @@ public class NBTToDictionary {
                 return list;
             }
             default: {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown NBT tag type: " + tag.getType(), pattern, ctx);
+                throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Unknown NBT tag type: " + tag.getType(), pattern, ctx);
             }
         }
     }

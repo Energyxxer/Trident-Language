@@ -6,9 +6,11 @@ import com.energyxxer.commodore.util.io.DirectoryCompoundInput;
 import com.energyxxer.commodore.util.io.ZipCompoundInput;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatures;
+import com.energyxxer.trident.Trident;
+import com.energyxxer.trident.TridentSuiteConfiguration;
 import com.energyxxer.nbtmapper.NBTTypeMapPack;
-import com.energyxxer.trident.compiler.plugin.TridentPlugin;
-import com.energyxxer.trident.compiler.util.JsonTraverser;
+import com.energyxxer.prismarine.plugins.PrismarinePlugin;
+import com.energyxxer.prismarine.util.JsonTraverser;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -22,14 +24,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.energyxxer.trident.compiler.TridentCompiler.newFileObject;
+import static com.energyxxer.prismarine.PrismarineCompiler.newFileObject;
 
 public class TridentBuildConfiguration {
     public DefinitionPack[] defaultDefinitionPacks;
     public Map<String, DefinitionPack> definitionPackAliases;
     public VersionFeatures featureMap;
-    public Map<String, TridentPlugin> pluginAliases;
-    public NBTTypeMapPack[] typeMapPacks; //TODO Replace with a Type Map Pack class
+    public Map<String, PrismarinePlugin> pluginAliases;
+    public NBTTypeMapPack[] typeMapPacks;
 
     public File dataPackOutput;
     public File resourcePackOutput;
@@ -38,32 +40,8 @@ public class TridentBuildConfiguration {
     public boolean exportComments = false;
     public boolean exportGameLog = true;
 
-    //NO NEED FOR CLONE ANYMORE
-    /*public TridentBuildConfiguration shallowClone() {
-        TridentBuildConfiguration copy = new TridentBuildConfiguration();
-        copy.defaultDefinitionPacks = this.defaultDefinitionPacks;
-        copy.definitionPackAliases = this.definitionPackAliases;
-        copy.featureMap = this.featureMap;
-        copy.pluginAliases = this.pluginAliases;
-        copy.rawTypeMaps = this.rawTypeMaps;
-
-        copy.dataPackOutput = this.dataPackOutput;
-        copy.resourcePackOutput = this.resourcePackOutput;
-        copy.cleanDataPackOutput = this.cleanDataPackOutput;
-        copy.cleanResourcePackOutput = this.cleanResourcePackOutput;
-        copy.exportComments = this.exportComments;
-        copy.exportGameLog = this.exportGameLog;
-
-        copy.preActions = this.preActions;
-        copy.postActions = this.postActions;
-        return copy;
-
-        //Arrays and maps copied as references
-        //No Trident classes should
-    }*/
-
     public JsonObject populateFromProjectRoot(File projectRootFile) throws IOException {
-        return populateFromJson(projectRootFile.toPath().resolve(TridentCompiler.PROJECT_BUILD_FILE_NAME).toFile(), projectRootFile);
+        return populateFromJson(projectRootFile.toPath().resolve(Trident.PROJECT_BUILD_FILE_NAME).toFile(), projectRootFile);
     }
 
     public JsonObject populateFromJson(File buildJsonFile) throws IOException {
@@ -117,7 +95,7 @@ public class TridentBuildConfiguration {
 
         //Plugin Aliases
         if(this.pluginAliases == null) {
-            HashMap<String, TridentPlugin> pluginAliases = new HashMap<>();
+            HashMap<String, PrismarinePlugin> pluginAliases = new HashMap<>();
             for(Map.Entry<String, JsonElement> aliasEntry : traverser.reset().get("input-resources").get("plugin-aliases").iterateAsObject()) {
                 String key = aliasEntry.getKey();
                 JsonElement rawValue = aliasEntry.getValue();
@@ -129,7 +107,7 @@ public class TridentBuildConfiguration {
                 if(pluginName.endsWith(".zip")) {
                     pluginName = pluginName.substring(0, pluginName.length()- ".zip".length());
                 }
-                pluginAliases.put(key, new TridentPlugin(pluginName, retrieveCompoundInputForFile(file), file));
+                pluginAliases.put(key, new PrismarinePlugin(pluginName, retrieveCompoundInputForFile(file), file, TridentSuiteConfiguration.INSTANCE));
             }
             this.pluginAliases = pluginAliases;
         }
@@ -150,17 +128,17 @@ public class TridentBuildConfiguration {
 
         //Data Pack Output
         if(this.dataPackOutput == null) {
-            String rawDataOutputPath = traverser.reset().get("output").get("directories").get("data-pack").asString();
-            if(rawDataOutputPath != null) {
-                this.dataPackOutput = newFileObject(rawDataOutputPath, rootDir);
+            String rawDataPackOutput = traverser.reset().get("output").get("directories").get("data-pack").asString();
+            if(rawDataPackOutput != null) {
+                this.dataPackOutput = newFileObject(rawDataPackOutput, rootDir);
             }
         }
 
         //Resource Pack Output
         if(this.resourcePackOutput == null) {
-            String rawResourcesOutputPath = traverser.reset().get("output").get("directories").get("resource-pack").asString();
-            if(rawResourcesOutputPath != null) {
-                this.resourcePackOutput = newFileObject(rawResourcesOutputPath, rootDir);
+            String rawResourcePackOutputPath = traverser.reset().get("output").get("directories").get("resource-pack").asString();
+            if(rawResourcePackOutputPath != null) {
+                this.resourcePackOutput = newFileObject(rawResourcePackOutputPath, rootDir);
             }
         }
 

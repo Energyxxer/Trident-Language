@@ -30,8 +30,11 @@ import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.commodore.textcomponents.TextStyle;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.util.IntegerRange;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
+import com.energyxxer.trident.worker.tasks.SetupPropertiesTask;
+import com.energyxxer.trident.worker.tasks.SetupWritingStackTask;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.google.gson.JsonObject;
 
 import java.util.Arrays;
@@ -62,7 +65,7 @@ public class GameLogFetcherFile extends SpecialFile {
     private static List<String> levelOrder = Arrays.asList("fatal, error, warning, info, debug".split(", "));
 
     private Objective logLevelObjective;
-    private static final String logObjectiveName = "trident_logger";
+    private static final String logObjectiveName = "tdn_logger";
 
     static {
         colors.put("info", TextColor.GREEN);
@@ -90,7 +93,7 @@ public class GameLogFetcherFile extends SpecialFile {
     @Override
     protected void compile() {
 
-        JsonObject preferences = parent.getCompiler().getProperties();
+        JsonObject preferences = parent.getWorker().output.get(SetupPropertiesTask.INSTANCE);
         if(preferences.has("game-logger") && preferences.get("game-logger").isJsonObject()) {
             JsonObject loggerPreferences = preferences.getAsJsonObject("game-logger");
             if(loggerPreferences.has("compact") && loggerPreferences.get("compact").isJsonPrimitive() && loggerPreferences.get("compact").getAsBoolean()) {
@@ -111,7 +114,7 @@ public class GameLogFetcherFile extends SpecialFile {
 
 
         Objective objective = parent.getGlobalObjective();
-        logLevelObjective = parent.getCompiler().getModule().getObjectiveManager().getOrCreate(logObjectiveName);
+        logLevelObjective = parent.getModule().getObjectiveManager().getOrCreate(logObjectiveName);
 
         op = new LocalScore(new PlayerName("#OPERATION"), objective);
 
@@ -142,7 +145,7 @@ public class GameLogFetcherFile extends SpecialFile {
             }
         }
 
-        Type aec = parent.getCompiler().getModule().minecraft.types.entity.get("area_effect_cloud");
+        Type aec = parent.getModule().minecraft.types.entity.get("area_effect_cloud");
         Selector tempSelector = new Selector(Selector.BaseSelector.ALL_ENTITIES, new TypeArgument(aec), new TagArgument("trident-gamelog"), new LimitArgument(1));
 
         x = new LocalScore(new PlayerName("#X"), objective);
@@ -179,7 +182,7 @@ public class GameLogFetcherFile extends SpecialFile {
         }
         fullLine.append(text("[", separation));
         if(!compact) {
-            fullLine.append(text(ctx.getCompiler().getModule().getName(), colored));
+            fullLine.append(text(ctx.get(SetupModuleTask.INSTANCE).getName(), colored));
             fullLine.append(text("/", separation));
         }
         fullLine.append(text(shorthands.get(key), colored));
@@ -188,7 +191,7 @@ public class GameLogFetcherFile extends SpecialFile {
         } else {
             fullLine.append(text("] In ", separation));
         }
-        fullLine.append(text(ctx.getWritingFile().getResourceLocation().toString(), colored));
+        fullLine.append(text(ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile().getResourceLocation().toString(), colored));
         if(lineNumEnabled) {
             fullLine.append(text(":", separation));
             fullLine.append(text(String.valueOf(pattern.getStringBounds().start.line), colored));

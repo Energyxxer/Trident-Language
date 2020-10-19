@@ -1,46 +1,55 @@
 package com.energyxxer.trident.compiler.semantics.custom.entities;
 
 import com.energyxxer.commodore.functionlogic.functions.Function;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
 
 public class EntityEvent implements TypeHandler<EntityEvent> {
-    public static final EntityEvent STATIC_HANDLER = new EntityEvent();
+    private final PrismarineTypeSystem typeSystem;
+    private final boolean isStaticHandler;
 
-    private TridentUtil.ResourceLocation location;
+    private ResourceLocation location;
     private Function function;
 
-    public EntityEvent() {}
+    private EntityEvent(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+        this.isStaticHandler = true;
+    }
 
-    public EntityEvent(TridentUtil.ResourceLocation location, Function function) {
+    public EntityEvent(PrismarineTypeSystem typeSystem, ResourceLocation location, Function function) {
+        this.typeSystem = typeSystem;
         this.location = location;
         this.function = function;
+        this.isStaticHandler = false;
     }
 
     @Override
     public Object getMember(EntityEvent object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
+        if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
         if("function".equals(member)) return location;
         throw new MemberNotFoundException();
     }
 
     @Override
     public Object getIndexer(EntityEvent object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
+        if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
         throw new MemberNotFoundException();
     }
 
     @Override
     public Object cast(EntityEvent object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().cast(object, targetType, pattern, ctx);
+        if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 
@@ -49,7 +58,7 @@ public class EntityEvent implements TypeHandler<EntityEvent> {
         return "[Entity Event: " + location + "]";
     }
 
-    public TridentUtil.ResourceLocation getLocation() {
+    public ResourceLocation getLocation() {
         return location;
     }
 
@@ -59,18 +68,18 @@ public class EntityEvent implements TypeHandler<EntityEvent> {
 
     public static void defineEvent(TokenPattern<?> pattern, ISymbolContext ctx) {
         String eventName = pattern.find("EVENT_NAME").flatten(false);
-        String functionPath = ctx.getStaticParentFile().getResourceLocation().toString() + "/trident_dispatch_event_" + eventName.toLowerCase();
-        TridentUtil.ResourceLocation functionLoc = new TridentUtil.ResourceLocation(functionPath);
-        if(ctx.getCompiler().getModule().getNamespace(functionLoc.namespace).functions.exists(functionLoc.body)) {
-            throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "A function by the name '" + functionLoc + "' already exists.", pattern, ctx);
+        String functionPath = ((TridentFile) ctx.getStaticParentUnit()).getResourceLocation().toString() + "/tdn_dispatch_event_" + eventName.toLowerCase();
+        ResourceLocation functionLoc = new ResourceLocation(functionPath);
+        if(ctx.get(SetupModuleTask.INSTANCE).getNamespace(functionLoc.namespace).functions.exists(functionLoc.body)) {
+            throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "A function by the name '" + functionLoc + "' already exists.", pattern, ctx);
         }
-        Function function = ctx.getCompiler().getModule().getNamespace(functionLoc.namespace).functions.create(functionLoc.body);
+        Function function = ctx.get(SetupModuleTask.INSTANCE).getNamespace(functionLoc.namespace).functions.create(functionLoc.body);
         if(pattern.find("EVENT_INITIALIZATION") != null) {
             ISymbolContext innerCtx = new SymbolContext(ctx);
             TridentFile.resolveInnerFileIntoSection(pattern.find("EVENT_INITIALIZATION.ANONYMOUS_INNER_FUNCTION"), innerCtx, function);
         }
-        EntityEvent event = new EntityEvent(functionLoc, function);
-        ctx.put(new Symbol(eventName, Symbol.SymbolVisibility.LOCAL, event));
+        EntityEvent event = new EntityEvent(ctx.getTypeSystem(), functionLoc, function);
+        ctx.put(new Symbol(eventName, TridentSymbolVisibility.LOCAL, event));
     }
 
     @Override
@@ -81,5 +90,19 @@ public class EntityEvent implements TypeHandler<EntityEvent> {
     @Override
     public String getTypeIdentifier() {
         return "entity_event";
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
+
+    public static EntityEvent createStaticHandler(PrismarineTypeSystem typeSystem) {
+        return new EntityEvent(typeSystem);
+    }
+
+    @Override
+    public boolean isStaticHandler() {
+        return isStaticHandler;
     }
 }

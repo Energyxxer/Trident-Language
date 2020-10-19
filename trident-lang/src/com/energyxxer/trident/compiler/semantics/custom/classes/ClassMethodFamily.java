@@ -1,25 +1,27 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
-import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunctionBranch;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeConstraints;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeConstraints;
+import com.energyxxer.prismarine.typesystem.functions.*;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
+import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ClassMethodFamily implements TridentFunction {
+public class ClassMethodFamily implements PrimitivePrismarineFunction {
     private final String name;
     private final ArrayList<ClassMethod> implementations = new ArrayList<>();
+    private boolean useExternalThis = false;
 
     private final ArrayList<ClashingInheritedMethods> clashingInheritedMethods = new ArrayList<>();
 
@@ -27,15 +29,15 @@ public class ClassMethodFamily implements TridentFunction {
         this.name = name;
     }
 
-    public ClassMethodSymbol pickOverloadSymbol(ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx, CustomClassObject thisObject) {
+    public ClassMethodSymbol pickOverloadSymbol(ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx, Object thisObject) {
         return new ClassMethodSymbol(this, pickOverload(params, pattern, ctx), thisObject);
     }
 
-    public TridentUserFunction pickOverload(ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrismarineFunction pickOverload(ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx) {
         ArrayList<ClassMethod> bestScoreBranchMatches = new ArrayList<>();
         double bestScore = -1;
 
-        //TridentFunctionBranch bestPick = null;
+        //PrismarineFunctionBranch bestPick = null;
         //boolean bestPickFullyMatched = false;
 
         for(ClassMethod method : implementations) {
@@ -49,7 +51,7 @@ public class ClassMethodFamily implements TridentFunction {
                 if(i < params.getValues().size()) actualParam = params.getValues().get(i);
                 int paramScore = 1;
                 if(formalParam.getConstraints() != null) {
-                    paramScore = formalParam.getConstraints().rateMatch(actualParam);
+                    paramScore = formalParam.getConstraints().rateMatch(actualParam, ctx);
                 }
                 if(paramScore == 0) {
                     branchMatched = false;
@@ -66,7 +68,7 @@ public class ClassMethodFamily implements TridentFunction {
 
             if(paramsCompared != 0) score /= paramsCompared;
             else {
-                score = params.size() == 0 ? 5 : 2;
+                score = params.size() == 0 ? 6 : 2;
             }
             if(branchMatched && score >= bestScore) {
                 if(score != bestScore) bestScoreBranchMatches.clear();
@@ -78,7 +80,7 @@ public class ClassMethodFamily implements TridentFunction {
             StringBuilder sb = new StringBuilder();
             boolean any = false;
             for(Object obj : params.getValues()) {
-                sb.append(TridentTypeManager.getTypeIdentifierForObject(obj));
+                sb.append(ctx.getTypeSystem().getTypeIdentifierForObject(obj));
                 sb.append(", ");
                 any = true;
             }
@@ -91,8 +93,13 @@ public class ClassMethodFamily implements TridentFunction {
                 overloads.append(method.getFormalParameters().toString().substring(1));
                 overloads.setLength(overloads.length()-1);
                 overloads.append(")");
+                TypeConstraints returnConstraints = method.getFunction().getBranch().getReturnConstraints();
+                if(returnConstraints != null) {
+                    overloads.append(" : ");
+                    overloads.append(returnConstraints);
+                }
             }
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Overload not found for parameter types: (" + sb.toString() + ")\nValid overloads are:" + overloads.toString(), pattern, ctx);
+            throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Overload not found for parameter types: (" + sb.toString() + ")\nValid overloads are:" + overloads.toString(), pattern, ctx);
         }
         ClassMethod bestMatch = bestScoreBranchMatches.get(0);
         if(bestScoreBranchMatches.size() > 1) {
@@ -104,14 +111,14 @@ public class ClassMethodFamily implements TridentFunction {
                 }
             }
             if(sameLengthMatches > 1) {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "Ambiguous call between: " + bestScoreBranchMatches.stream().filter(b->b.getFormalParameters().size() == params.size()).map(b -> b.getFormalParameters().toString()).collect(Collectors.joining(", ")), pattern, ctx);
+                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Ambiguous call between: " + bestScoreBranchMatches.stream().filter(b->b.getFormalParameters().size() == params.size()).map(b -> b.getFormalParameters().toString()).collect(Collectors.joining(", ")), pattern, ctx);
             } else if(sameLengthMatches < 1) {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "Ambiguous call between: " + bestScoreBranchMatches.stream().map(b -> b.getFormalParameters().toString()).collect(Collectors.joining(", ")), pattern, ctx);
+                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Ambiguous call between: " + bestScoreBranchMatches.stream().map(b -> b.getFormalParameters().toString()).collect(Collectors.joining(", ")), pattern, ctx);
             }
         }
 
         if(!bestMatch.getDefiningClass().hasAccess(ctx, bestMatch.getVisibility())) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, bestMatch + " has " + bestMatch.getVisibility().toString().toLowerCase() + " access in " + bestMatch.getDefiningClass().getClassTypeIdentifier(), pattern, ctx);
+            throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, bestMatch + " has " + bestMatch.getVisibility().toString().toLowerCase() + " access in " + bestMatch.getDefiningClass().getClassTypeIdentifier(), pattern, ctx);
         }
 
         return bestMatch.getFunction();
@@ -126,65 +133,65 @@ public class ClassMethodFamily implements TridentFunction {
         if(mode != CustomClass.MemberParentMode.FORCE) {
             if(mode == CustomClass.MemberParentMode.CREATE && existing != null) {
                 if(existing.getDefiningClass() == method.getDefiningClass()) {
-                    throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Duplicate method " + existing + ": it's already defined with the same parameter types in the same class", pattern, ctx);
+                    throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Duplicate method " + existing + ": it's already defined with the same parameter types in the same class", pattern, ctx);
                 } else {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Method " + existing + " is already defined in inherited class " + existing.getDefiningClass().getTypeIdentifier() + " with the same parameter types. Use the 'override' keyword to replace it", pattern, ctx);
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Method " + existing + " is already defined in inherited class " + existing.getDefiningClass().getTypeIdentifier() + " with the same parameter types. Use the 'override' keyword to replace it", pattern, ctx);
                 }
             }
             if(mode == CustomClass.MemberParentMode.INHERIT && existing != null) {
-                if(existing.getDefiningClass() != method.getDefiningClass() && existing.getDefiningClass() != CustomClass.getBaseClass()) {
+                if(existing.getDefiningClass() != method.getDefiningClass() && existing.getDefiningClass() != ((TridentTypeSystem) ctx.getTypeSystem()).getBaseClass()) {
                     //Make note for later
                     registerClashingMethods(existing, method);
                 }
             }
             if(existing == null && mode == CustomClass.MemberParentMode.OVERRIDE) {
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + method + ": couldn't find existing overload with parameter types: " + method.getFormalParameters().toString(), pattern, ctx);
+                throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override " + method + ": couldn't find existing overload with parameter types: " + method.getFormalParameters().toString(), pattern, ctx);
             }
 
             if(existing != null) {
                 if(mode == CustomClass.MemberParentMode.OVERRIDE && existing.getDefiningClass() == method.getDefiningClass()) {
-                    throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Cannot override " + existing + ": a branch with the same parameter types is already defined in the same class", pattern, ctx);
+                    throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Cannot override " + existing + ": a branch with the same parameter types is already defined in the same class", pattern, ctx);
                 }
 
-                if(existing.getModifiers() != null && existing.getModifiers().hasModifier(Symbol.SymbolModifier.FINAL)) {
+                if(existing.getModifiers() != null && existing.getModifiers().hasModifier(TridentTempFindABetterHome.SymbolModifier.FINAL)) {
                     if(mode == CustomClass.MemberParentMode.INHERIT) {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": it's defined as final in " + existing.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": it's defined as final in " + existing.getDefiningClass().getTypeIdentifier(), pattern, ctx);
                     } else {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + existing + ": it's defined as final in " + existing.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override " + existing + ": it's defined as final in " + existing.getDefiningClass().getTypeIdentifier(), pattern, ctx);
                     }
                 }
 
                 //Check visibility
-                Symbol.SymbolVisibility existingVisibility = existing.getVisibility();
-                Symbol.SymbolVisibility newVisibility = method.getVisibility();
+                SymbolVisibility existingVisibility = existing.getVisibility();
+                SymbolVisibility newVisibility = method.getVisibility();
 
                 if(!method.getDefiningClass().hasAccess(ctx, existingVisibility)) {
                     if(mode == CustomClass.MemberParentMode.INHERIT) {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": it has " + existingVisibility.toString().toLowerCase() + " access in " + existing.getDefiningClass().getTypeIdentifier() + "; not accessible from " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": it has " + existingVisibility.toString().toLowerCase() + " access in " + existing.getDefiningClass().getTypeIdentifier() + "; not accessible from " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
                     } else {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + existing + ": it has " + existingVisibility.toString().toLowerCase() + " access in " + existing.getDefiningClass().getTypeIdentifier() + "; not accessible from " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override " + existing + ": it has " + existingVisibility.toString().toLowerCase() + " access in " + existing.getDefiningClass().getTypeIdentifier() + "; not accessible from " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
                     }
                 }
                 if(newVisibility.getVisibilityIndex() < existingVisibility.getVisibilityIndex()) {
                     if(mode == CustomClass.MemberParentMode.INHERIT) {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": attempting to assign weaker access privileges '" + newVisibility.toString().toLowerCase() + "', was '" + existingVisibility.toString().toLowerCase() + "'", pattern, ctx);
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": attempting to assign weaker access privileges '" + newVisibility.toString().toLowerCase() + "', was '" + existingVisibility.toString().toLowerCase() + "'", pattern, ctx);
                     } else {
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Cannot override " + existing + ": attempting to assign weaker access privileges '" + newVisibility.toString().toLowerCase() + "', was '" + existingVisibility.toString().toLowerCase() + "'", pattern, ctx);
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override " + existing + ": attempting to assign weaker access privileges '" + newVisibility.toString().toLowerCase() + "', was '" + existingVisibility.toString().toLowerCase() + "'", pattern, ctx);
                     }
                 }
 
                 //Check return types
-                TridentFunctionBranch existingBranch = existing.getFunction().getBranch();
-                TridentFunctionBranch newBranch = method.getFunction().getBranch();
+                PrismarineFunctionBranch existingBranch = existing.getFunction().getBranch();
+                PrismarineFunctionBranch newBranch = method.getFunction().getBranch();
                 TypeConstraints existingReturnConstraints = existingBranch.getReturnConstraints();
                 TypeConstraints newReturnConstraints = newBranch.getReturnConstraints();
 
                 if(mode == CustomClass.MemberParentMode.INHERIT && !TypeConstraints.constraintsEqual(existingReturnConstraints, newReturnConstraints)) {
-                    throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": Incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": Incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
                 }
 
                 if(!TypeConstraints.constraintAContainsB(existingReturnConstraints, newReturnConstraints)) {
-                    throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot override " + existing + " due to incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                    throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot override " + existing + " due to incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
                 }
 
             }
@@ -220,7 +227,7 @@ public class ClassMethodFamily implements TridentFunction {
         for(ClashingInheritedMethods clashingMethods : clashingInheritedMethods) {
             if(findOverloadForParameters(clashingMethods.getFormalParameters()).getDefiningClass() != resolvingClass) {
                 //Did not change
-                throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Method '" + clashingMethods + "' is defined in multiple inherited classes: " + clashingMethods.getMethods().stream().map(m -> m.getDefiningClass().getTypeIdentifier()).collect(Collectors.joining(", ")) + ". Override it in the class body", pattern, ctx);
+                throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Method '" + clashingMethods + "' is defined in multiple inherited classes: " + clashingMethods.getMethods().stream().map(m -> m.getDefiningClass().getTypeIdentifier()).collect(Collectors.joining(", ")) + ". Override it in the class body", pattern, ctx);
             }
         }
     }
@@ -230,34 +237,31 @@ public class ClassMethodFamily implements TridentFunction {
     }
 
     @Override
-    public Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-        ClassMethodFamily.ClassMethodSymbol pickedConstructor = this.pickOverloadSymbol(new ActualParameterList(Arrays.asList(params), Arrays.asList(patterns), pattern), pattern, ctx, null);
+    public Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx, Object thisObject) {
+        ClassMethodSymbol pickedConstructor = this.pickOverloadSymbol(new ActualParameterList(Arrays.asList(params), Arrays.asList(patterns), pattern), pattern, ctx, useExternalThis ? thisObject : null);
         return pickedConstructor.safeCall(params, patterns, pattern, ctx);
     }
 
     public static class ClassMethodSymbol extends Symbol {
-        private TridentUserFunction pickedOverload;
-        private CustomClassObject thisObject;
+        private PrismarineFunction pickedOverload;
+        private Object thisObject;
 
-        public ClassMethodSymbol(ClassMethodFamily classMethodFamily, TridentUserFunction pickedOverload, CustomClassObject thisObject) {
-            super(classMethodFamily.name);
+        public ClassMethodSymbol(ClassMethodFamily classMethodFamily, PrismarineFunction pickedOverload, Object thisObject) {
+            super(classMethodFamily.name, TridentSymbolVisibility.LOCAL);
             this.pickedOverload = pickedOverload;
             this.thisObject = thisObject;
         }
 
-        public TridentUserFunction getPickedOverload() {
+        public PrismarineFunction getPickedOverload() {
             return pickedOverload;
         }
 
-        public CustomClassObject getThisObject() {
+        public Object getThisObject() {
             return thisObject;
         }
 
         public Object safeCall(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-            pickedOverload.setThisObject(thisObject);
-            Object returnValue = pickedOverload.safeCall(params, patterns, pattern, ctx);
-            pickedOverload.setThisObject(null);
-            return returnValue;
+            return pickedOverload.safeCall(params, patterns, pattern, ctx, this.thisObject);
         }
     }
 
@@ -292,5 +296,9 @@ public class ClassMethodFamily implements TridentFunction {
         public String toString() {
             return methods.get(0).toString();
         }
+    }
+
+    public void setUseExternalThis(boolean useExternalThis) {
+        this.useExternalThis = useExternalThis;
     }
 }

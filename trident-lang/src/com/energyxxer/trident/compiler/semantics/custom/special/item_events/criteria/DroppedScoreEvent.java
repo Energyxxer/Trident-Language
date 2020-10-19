@@ -49,7 +49,7 @@ public class DroppedScoreEvent implements ScoreEventCriteriaHandler {
         modifiers.add(new ExecuteConditionEntity(IF, initialSelector));
 
         if(data.customItem != null) {
-            modifiers.add(new ExecuteConditionEntity(IF, new Selector(ALL_ENTITIES, new TypeArgument(data.compiler.getModule().minecraft.types.entity.get("item")), new TagArgument("tdci_dropped"), new NBTArgument(new TagCompound(new TagCompound("Item", new TagCompound("tag", new TagInt("TridentCustomItem", data.customItem.getItemIdHash()))))))));
+            modifiers.add(new ExecuteConditionEntity(IF, new Selector(ALL_ENTITIES, new TypeArgument(data.module.minecraft.types.entity.get("item")), new TagArgument("tdci_dropped"), new NBTArgument(new TagCompound(new TagCompound("Item", new TagCompound("tag", new TagInt("TridentCustomItem", data.customItem.getItemIdHash()))))))));
 
             data.function.append(new ExecuteCommand(
                     new ScoreSet(new LocalScore(new PlayerName("#CUSTOM_CONSUMED"), itemEventFile.getParent().getGlobalObjective()), 1),

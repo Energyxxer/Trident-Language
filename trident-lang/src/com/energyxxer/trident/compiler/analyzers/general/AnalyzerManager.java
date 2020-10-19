@@ -1,10 +1,5 @@
 package com.energyxxer.trident.compiler.analyzers.general;
 
-import com.energyxxer.trident.compiler.analyzers.commands.CommandParser;
-import com.energyxxer.trident.compiler.analyzers.constructs.selectors.SelectorArgumentParser;
-import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
-import com.energyxxer.trident.compiler.analyzers.instructions.Instruction;
-import com.energyxxer.trident.compiler.analyzers.modifiers.ModifierParser;
 import com.energyxxer.trident.compiler.semantics.custom.special.item_events.criteria.ScoreEventCriteriaHandler;
 import com.energyxxer.util.logger.Debug;
 
@@ -21,12 +16,7 @@ public class AnalyzerManager {
         long start = System.currentTimeMillis();
 
         try {
-            cacheGroup(CommandParser.class);
-            cacheGroup(DefaultLibraryProvider.class);
-            cacheGroup(Instruction.class);
-            cacheGroup(ModifierParser.class);
             cacheGroup(ScoreEventCriteriaHandler.class);
-            cacheGroup(SelectorArgumentParser.class);
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
             e.printStackTrace();
         }
@@ -87,16 +77,16 @@ public class AnalyzerManager {
         return interfaces;
     }
 
-    @SuppressWarnings("unchecked")
     public static <T> T getAnalyzer(Class<T> group, String key) {
         HashMap<String, Object> innerMap = groups.get(group);
         if(innerMap == null) throw new IllegalArgumentException("No such analyzer group '" + group.getSimpleName() + "'");
         return (T) innerMap.get(key);
     }
 
-    public static void initialize() {}
+    public static void initialize() {
+        //just here to load the class
+    }
 
-    @SuppressWarnings("unchecked")
     public static <T> Collection<T> getAllParsers(Class<T> group) {
         HashMap<String, Object> innerMap = groups.get(group);
         if(innerMap == null) throw new IllegalArgumentException("No such analyzer group '" + group.getSimpleName() + "'");

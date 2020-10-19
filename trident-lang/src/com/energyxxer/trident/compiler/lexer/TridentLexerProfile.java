@@ -18,7 +18,7 @@ public class TridentLexerProfile extends LexerProfile {
 
     public static final Lazy<TridentLexerProfile> INSTANCE = new Lazy<>(TridentLexerProfile::new);
 
-    private static final List<String> allPrimitiveTypes = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "tag_byte", "tag_short", "tag_int", "tag_float", "tag_double", "tag_long", "tag_string", "tag_compound", "tag_list", "tag_int_array", "tag_byte_array", "tag_long_array", "nbt_path", "coordinates", "resource", "int_range", "real_range", "function", "pointer", "dictionary", "list", "exception", "custom_item", "custom_entity", "entity_event", "type_definition", "rotation", "uuid");
+    public static final List<String> allPrimitiveTypes = Arrays.asList("int", "real", "boolean", "string", "entity", "block", "item", "text_component", "nbt", "nbt_value", "tag_byte", "tag_short", "tag_int", "tag_float", "tag_double", "tag_long", "tag_string", "tag_compound", "tag_list", "tag_int_array", "tag_byte_array", "tag_long_array", "nbt_path", "coordinates", "resource", "int_range", "real_range", "function", "pointer", "dictionary", "list", "exception", "custom_item", "custom_entity", "entity_event", "type_definition", "rotation", "uuid");
 
     public static final Pattern IDENTIFIER_A_REGEX = Pattern.compile("[a-zA-Z0-9._\\-+]+");
     public static final Pattern IDENTIFIER_B_REGEX = Pattern.compile("[^@\\s]\\S*");
@@ -60,7 +60,7 @@ public class TridentLexerProfile extends LexerProfile {
                     int length = matcher.end() - matcher.start();
                     if(length <= 0) return ScannerContextResponse.FAILED;
                     String substring = str.substring(startIndex, startIndex + length);
-                    return new ScannerContextResponse(true, substring, (Character.isLetter(str.charAt(startIndex+length-1)) ? TridentTokens.TYPED_NUMBER : ((substring.contains(".")) ? TridentTokens.REAL_NUMBER : TridentTokens.INTEGER_NUMBER)));
+                    return new ScannerContextResponse(true, substring, (Character.isLetter(str.charAt(startIndex+length-1)) ? TYPED_NUMBER : ((substring.contains(".")) ? REAL_NUMBER : INTEGER_NUMBER)));
                 } else return ScannerContextResponse.FAILED;
             } //substring done
 
@@ -73,7 +73,7 @@ public class TridentLexerProfile extends LexerProfile {
                     if(length <= 0) return ScannerContextResponse.FAILED;
 
                     String substring = str.substring(startIndex, startIndex + length);
-                    TokenType obtainedType = length >= 2 && Character.isLetter(str.charAt(startIndex+length-1)) && ((length == 2) == (Character.isLetter(str.charAt(startIndex+1)))) ? TridentTokens.TYPED_NUMBER : ((substring.contains(".")) ? TridentTokens.REAL_NUMBER : TridentTokens.INTEGER_NUMBER);
+                    TokenType obtainedType = length >= 2 && Character.isLetter(str.charAt(startIndex+length-1)) && ((length == 2) == (Character.isLetter(str.charAt(startIndex+1)))) ? TYPED_NUMBER : ((substring.contains(".")) ? REAL_NUMBER : INTEGER_NUMBER);
 
                     if(type == JSON_NUMBER && obtainedType != TYPED_NUMBER) obtainedType = type;
 
@@ -93,7 +93,7 @@ public class TridentLexerProfile extends LexerProfile {
 
             @Override
             public Collection<TokenType> getHandledTypes() {
-                return Arrays.asList(TridentTokens.TYPED_NUMBER, TridentTokens.INTEGER_NUMBER, TridentTokens.REAL_NUMBER, JSON_NUMBER);
+                return Arrays.asList(TYPED_NUMBER, INTEGER_NUMBER, REAL_NUMBER, JSON_NUMBER);
             }
         });
 
@@ -108,9 +108,9 @@ public class TridentLexerProfile extends LexerProfile {
 
         contexts.add(new StringTypeMatchLexerContext(new String[] { ".", ",", ":", "=", "(", ")", "[", "]", "{", "}", "<", ">", "~", "^", "!", "#" },
                 new TokenType[] { DOT, COMMA, COLON, EQUALS, BRACE, BRACE, BRACE, BRACE, BRACE, BRACE, BRACE, BRACE, TILDE, CARET, NOT, HASH }
-                ));
+        ));
 
-        contexts.add(new StringMatchLexerContext(TridentTokens.SCOREBOARD_OPERATOR, "%=", "*=", "+=", "-=", "/=", "><", "=", ">", "<"));
+        contexts.add(new StringMatchLexerContext(SCOREBOARD_OPERATOR, "%=", "*=", "+=", "-=", "/=", "><", "=", ">", "<"));
 
         //Glue
         contexts.add(new LexerContext() {
@@ -122,7 +122,7 @@ public class TridentLexerProfile extends LexerProfile {
             @Override
             public ScannerContextResponse analyzeExpectingType(String str, int startIndex, TokenType type, LexerProfile profile) {
                 if(str.length() - startIndex > 0 && Character.isWhitespace(str.charAt(startIndex))) return ScannerContextResponse.FAILED;
-                return new ScannerContextResponse(true, "", TridentTokens.GLUE);
+                return new ScannerContextResponse(true, "", GLUE);
             }
 
             @Override
@@ -148,9 +148,9 @@ public class TridentLexerProfile extends LexerProfile {
                 for(int i = startIndex; i < str.length(); i++) {
                     char c = str.charAt(i);
                     if(c == '\n') return ScannerContextResponse.FAILED;
-                    if(!Character.isWhitespace(c)) return new ScannerContextResponse(true, "", TridentTokens.LINE_GLUE);
+                    if(!Character.isWhitespace(c)) return new ScannerContextResponse(true, "", LINE_GLUE);
                 }
-                return new ScannerContextResponse(true, "", TridentTokens.LINE_GLUE);
+                return new ScannerContextResponse(true, "", LINE_GLUE);
             }
 
             @Override
@@ -179,10 +179,10 @@ public class TridentLexerProfile extends LexerProfile {
                 if(str.length() - startIndex <= 0) return ScannerContextResponse.FAILED;
 
                 if(type == VERBATIM_COMMAND_HEADER) {
-                    if(str.startsWith("/", startIndex)) return new ScannerContextResponse(true, "/", VERBATIM_COMMAND_HEADER);
+                    if(str.startsWith("/", startIndex) && !str.startsWith("/>", startIndex)) return new ScannerContextResponse(true, "/", VERBATIM_COMMAND_HEADER);
                     else return ScannerContextResponse.FAILED;
                 } else {
-                    if(str.startsWith("$", startIndex)) return ScannerContextResponse.FAILED;
+                    if(str.startsWith("$", startIndex) || str.startsWith(">", startIndex)) return ScannerContextResponse.FAILED;
                     int endIndex = str.length();
                     if(str.indexOf("\n", startIndex) != -1) {
                         endIndex = str.indexOf("\n", startIndex);
@@ -391,9 +391,7 @@ public class TridentLexerProfile extends LexerProfile {
         contexts.add(new StringMatchLexerContext(SYMBOL, "*", "<=", ">=", "<", ">", "!=", "=", "$", ";", "?"));
         contexts.add(new StringMatchLexerContext(ARROW, "->"));
 
-        contexts.add(new StringMatchLexerContext(COMPILER_OPERATOR, "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=", "+", "-", "*", "/", "%", "<=", ">=", "<<=", ">>=", "<<", ">>", "<", ">", "==", "!=", "=", "&&", "||", "&", "|", "^"));
-        contexts.add(new StringMatchLexerContext(COMPILER_POSTFIX_OPERATOR, "++", "--"));
-        contexts.add(new StringMatchLexerContext(COMPILER_PREFIX_OPERATOR, "++", "--", "+", "-", "~", "!"));
+        contexts.add(new StringMatchLexerContext(COMPILER_OPERATOR, "++", "--", "+=", "-=", "*=", "/=", "%=", "&=", "^=", "|=", "+", "-", "*", "/", "%", "<=", ">=", "<<=", ">>=", "<<", ">>", "<", ">", "==", "!=", "=", "&&", "||", "&", "|", "^", "??", "?", ":", "~", "!"));
 
         contexts.add(new StringMatchLexerContext(NULL, "null"));
 

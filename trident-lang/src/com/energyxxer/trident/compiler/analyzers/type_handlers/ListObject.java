@@ -1,133 +1,101 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.ContextualToString;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, ContextualToString {
-    public static final ListObject STATIC_HANDLER = new ListObject();
+    private final PrismarineTypeSystem typeSystem;
+    private final boolean isStaticHandler;
     private static Stack<ListObject> toStringRecursion = new Stack<>();
 
-    private static HashMap<String, MemberWrapper<ListObject>> members = new HashMap<>();
+    private TypeHandlerMemberCollection<ListObject> members;
 
-    static {
+    @Override
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
+        members = new TypeHandlerMemberCollection<>(typeSystem, globalCtx);
+        members.setNotFoundPolicy(TypeHandlerMemberCollection.MemberNotFoundPolicy.THROW_EXCEPTION);
+
         try {
-            members.put("add", new NativeMethodWrapper<>(ListObject.class.getMethod("add", Object.class)));
-            members.put("insert", new NativeMethodWrapper<>(ListObject.class.getMethod("insert", Object.class, Integer.class)));
-            members.put("remove", new NativeMethodWrapper<>(ListObject.class.getMethod("remove", Integer.class)));
-            members.put("contains", new NativeMethodWrapper<>(ListObject.class.getMethod("contains", Object.class)));
-            members.put("indexOf", new NativeMethodWrapper<>(ListObject.class.getMethod("indexOf", Object.class)));
-            members.put("lastIndexOf", new NativeMethodWrapper<>(ListObject.class.getMethod("lastIndexOf", Object.class)));
-            members.put("isEmpty", new NativeMethodWrapper<>(ListObject.class.getMethod("isEmpty")));
-            members.put("clear", new NativeMethodWrapper<>(ListObject.class.getMethod("clear")));
+            members.putMethod(ListObject.class.getMethod("add", Object.class));
+            members.putMethod(ListObject.class.getMethod("insert", Object.class, Integer.class));
+            members.putMethod(ListObject.class.getMethod("remove", Integer.class));
+            members.putMethod(ListObject.class.getMethod("contains", Object.class));
+            members.putMethod(ListObject.class.getMethod("indexOf", Object.class));
+            members.putMethod(ListObject.class.getMethod("lastIndexOf", Object.class));
+            members.putMethod(ListObject.class.getMethod("isEmpty"));
+            members.putMethod(ListObject.class.getMethod("clear"));
 
-            members.put("length", new FieldWrapper<>(ListObject::size));
+            members.putMethod(ListObject.class.getMethod("map", PrimitivePrismarineFunction.class, TokenPattern.class, ISymbolContext.class));
+            members.putMethod(ListObject.class.getMethod("filter", PrimitivePrismarineFunction.class, TokenPattern.class, ISymbolContext.class));
+
+            members.putReadOnlyField("length", ListObject::size);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
     }
 
-
-
     private ArrayList<Symbol> content = new ArrayList<>();
 
-    public ListObject() {
+    private ListObject(PrismarineTypeSystem typeSystem, boolean isStaticHandler) {
+        this.typeSystem = typeSystem;
+        this.isStaticHandler = isStaticHandler;
     }
 
-    public ListObject(Object[] objects) {
+    public ListObject(PrismarineTypeSystem typeSystem) {
+        this(typeSystem, false);
+    }
+
+    public ListObject(PrismarineTypeSystem typeSystem, Object[] objects) {
+        this(typeSystem, false);
         for(Object obj : objects) {
             add(obj);
         }
     }
 
-    public <T> ListObject(Iterable<T> objects) {
+    public <T> ListObject(PrismarineTypeSystem typeSystem, Iterable<T> objects) {
+        this(typeSystem, false);
         objects.forEach(this::add);
     }
 
     @Override
     public Object getMember(ListObject object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
-        if(member.equals("map")) {
-            return (TridentFunction) (params, patterns, pattern1, file1) -> {
-                if(params.length < 1) {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'map' requires at least 1 parameter, instead found " + params.length, pattern, ctx);
-                }
-                TridentUserFunction func = TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], file1, TridentUserFunction.class);
-
-                ListObject newList = new ListObject();
-
-                try {
-                    int i = 0;
-                    for (Symbol sym : content) {
-                        newList.add(func.safeCall(new Object[]{sym.getValue(pattern, ctx), i}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1));
-                        i++;
-                    }
-                } catch(ConcurrentModificationException x) {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
-                }
-
-                return newList;
-            };
-        }
-        if(member.equals("filter")) {
-            return (TridentFunction) (params, patterns, pattern1, file1) -> {
-                if(params.length < 1) {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'filter' requires at least 1 parameter, instead found " + params.length, pattern, ctx);
-                }
-                TridentUserFunction func = TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], file1, TridentUserFunction.class);
-
-                ListObject newList = new ListObject();
-
-                try {
-                    int i = 0;
-                    for (Symbol sym : content) {
-                        Object obj = func.safeCall(new Object[]{sym.getValue(pattern, ctx), i}, new TokenPattern[]{pattern1, pattern1}, pattern1, file1);
-                        if(Boolean.TRUE.equals(obj)) {
-                            newList.add(sym.getValue(pattern, ctx));
-                        }
-                        i++;
-                    }
-                } catch(ConcurrentModificationException x) {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
-                }
-
-                return newList;
-            };
-        }
-
-
-        MemberWrapper<ListObject> result = members.get(member);
-        if(result == null) throw new MemberNotFoundException();
-        return result.unwrap(object);
+        if(isStaticHandler) return typeSystem.getMetaTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
+        return ((ListObject) typeSystem.getStaticHandlerForObject(object)).members.getMember(object, member, pattern, ctx);
     }
 
     @Override
     public Object getIndexer(ListObject object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
-        int realIndex = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
+        if(isStaticHandler) return typeSystem.getMetaTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
+        int realIndex = PrismarineTypeSystem.assertOfClass(index, pattern, ctx, Integer.class);
         if(realIndex < 0 || realIndex >= object.size()) {
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index + "; Length: " + object.size(), pattern, ctx);
+            throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Index out of bounds: " + index + "; Length: " + object.size(), pattern, ctx);
         }
 
         Symbol elem = object.content.get(realIndex);
         return keepSymbol || elem == null ? elem : elem.getValue(pattern, ctx);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object cast(ListObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(isStaticHandler) return typeSystem.getMetaTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 
     @Override
-    public Iterator<?> getIterator(ListObject list) {
+    public Iterator<?> getIterator(ListObject list, ISymbolContext ctx) {
         return list.iterator();
     }
 
@@ -143,19 +111,19 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
         return content.get(index).getValue(null, null);
     }
 
-    public void add(@NativeMethodWrapper.TridentNullableArg Object object) {
-        content.add(new Symbol(content.size() + "", Symbol.SymbolVisibility.GLOBAL, object));
+    public void add(@NativeFunctionAnnotations.NullableArg Object object) {
+        content.add(new Symbol(content.size() + "", SymbolVisibility.GLOBAL, object));
     }
 
-    public void insert(@NativeMethodWrapper.TridentNullableArg Object object, Integer index) {
-        content.add(index, new Symbol(content.size() + "", Symbol.SymbolVisibility.GLOBAL, object));
+    public void insert(@NativeFunctionAnnotations.NullableArg Object object, Integer index) {
+        content.add(index, new Symbol(content.size() + "", SymbolVisibility.GLOBAL, object));
     }
 
-    public boolean contains(@NativeMethodWrapper.TridentNullableArg Object object) {
+    public boolean contains(@NativeFunctionAnnotations.NullableArg Object object) {
         return content.stream().anyMatch(s -> Objects.equals(s.getValue(null, null), object));
     }
 
-    public int indexOf(@NativeMethodWrapper.TridentNullableArg Object object) {
+    public int indexOf(@NativeFunctionAnnotations.NullableArg Object object) {
         int index = 0;
         for(Symbol sym : content) {
             if(Objects.equals(sym.getValue(null, null), object)) return index;
@@ -164,7 +132,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
         return -1;
     }
 
-    public int lastIndexOf(@NativeMethodWrapper.TridentNullableArg Object object) {
+    public int lastIndexOf(@NativeFunctionAnnotations.NullableArg Object object) {
         int index = size()-1;
         for (Iterator<Symbol> it = new ArrayDeque<>(content).descendingIterator(); it.hasNext(); ) {
             Symbol sym = it.next();
@@ -178,11 +146,46 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
         content.clear();
     }
 
-    public Symbol remove(Integer index) {
+    public void remove(Integer index) {
         for(int i = index+1; i < size(); i++) {
             content.get(i).setName((index - 1) + "");
         }
-        return content.remove((int) index);
+        content.remove((int) index);
+    }
+
+    public ListObject map(PrimitivePrismarineFunction function, TokenPattern<?> pattern, ISymbolContext ctx) {
+        ListObject newList = new ListObject(typeSystem);
+
+        try {
+            int i = 0;
+            for (Symbol sym : content) {
+                newList.add(function.safeCall(new Object[]{sym.getValue(pattern, ctx), i}, new TokenPattern[]{pattern, pattern}, pattern, ctx, null));
+                i++;
+            }
+        } catch(ConcurrentModificationException x) {
+            throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
+        }
+
+        return newList;
+    }
+
+    public ListObject filter(PrimitivePrismarineFunction function, TokenPattern<?> pattern, ISymbolContext ctx) {
+        ListObject newList = new ListObject(typeSystem);
+
+        try {
+            int i = 0;
+            for (Symbol sym : content) {
+                Object obj = function.safeCall(new Object[]{sym.getValue(pattern, ctx), i}, new TokenPattern[]{pattern, pattern}, pattern, ctx, null);
+                if(Boolean.TRUE.equals(obj)) {
+                    newList.add(sym.getValue(pattern, ctx));
+                }
+                i++;
+            }
+        } catch(ConcurrentModificationException x) {
+            throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
+        }
+
+        return newList;
     }
 
     @NotNull
@@ -209,7 +212,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
             return "[ ...circular... ]";
         }
         toStringRecursion.push(this);
-        String str = "[" + content.stream().map((Symbol s) -> s.getValue(null, null) instanceof String ? "\"" + s.getValue(null, null) + "\"" : InterpolationManager.castToString(s.getValue(null, null))).collect(Collectors.joining(", "))  + "]";
+        String str = "[" + content.stream().map((Symbol s) -> s.getValue(null, null) instanceof String ? "\"" + s.getValue(null, null) + "\"" : typeSystem.castToString(s.getValue(null, null))).collect(Collectors.joining(", "))  + "]";
         toStringRecursion.pop();
         return str;
     }
@@ -219,7 +222,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
             return "[ ...circular... ]";
         }
         toStringRecursion.push(this);
-        String str = "[" + content.stream().map((Symbol s) -> s.getValue(pattern, ctx) instanceof String ? "\"" + s.getValue(pattern, ctx) + "\"" : InterpolationManager.castToString(s.getValue(pattern, ctx), pattern, ctx)).collect(Collectors.joining(", ")) + "]";
+        String str = "[" + content.stream().map((Symbol s) -> s.getValue(pattern, ctx) instanceof String ? "\"" + s.getValue(pattern, ctx) + "\"" : typeSystem.castToString(s.getValue(pattern, ctx), pattern, ctx)).collect(Collectors.joining(", ")) + "]";
         toStringRecursion.pop();
         return str;
     }
@@ -232,5 +235,19 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
     @Override
     public String getTypeIdentifier() {
         return "list";
+    }
+
+    public static ListObject createStaticHandler(PrismarineTypeSystem typeSystem) {
+        return new ListObject(typeSystem, true);
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
+
+    @Override
+    public boolean isStaticHandler() {
+        return isStaticHandler;
     }
 }

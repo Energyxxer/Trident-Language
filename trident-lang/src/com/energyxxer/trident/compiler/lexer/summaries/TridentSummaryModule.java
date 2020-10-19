@@ -1,61 +1,33 @@
 package com.energyxxer.trident.compiler.lexer.summaries;
 
-import com.energyxxer.enxlex.lexical_analysis.summary.SummaryModule;
-import com.energyxxer.enxlex.lexical_analysis.summary.Todo;
-import com.energyxxer.enxlex.lexical_analysis.token.Token;
-import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.util.TridentProjectSummary;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.prismarine.summaries.PrismarineProjectSummary;
+import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
+import com.energyxxer.prismarine.summaries.SummarySymbol;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
-public class TridentSummaryModule extends SummaryModule {
-    private TridentProjectSummary parentSummary;
-    private TridentUtil.ResourceLocation fileLocation = null;
-    private SummaryBlock fileBlock = new SummaryBlock(this);
+public class TridentSummaryModule extends PrismarineSummaryModule {
+    private ResourceLocation resourceLocation;
     private ArrayList<SummarySymbol> objectives = new ArrayList<>();
-    private ArrayList<TridentUtil.ResourceLocation> requires = new ArrayList<>();
-    private ArrayList<TridentUtil.ResourceLocation> functionTags = new ArrayList<>();
-    private ArrayList<Todo> todos = new ArrayList<>();
+    private ArrayList<ResourceLocation> functionTags = new ArrayList<>();
 
     private boolean compileOnly = false;
     private boolean directivesLocked = false;
-
-    private boolean searchingSymbols = false;
-
-    private Stack<SummaryBlock> contextStack = new Stack<>();
-
-    private ArrayList<String> tempMemberAccessList = new ArrayList<>();
-    private Stack<SummarySymbol> subSymbolStack = new Stack<>();
 
     public TridentSummaryModule() {
         this(null);
     }
 
     public TridentSummaryModule(TridentProjectSummary parentSummary) {
-        this.parentSummary = parentSummary;
-        contextStack.push(fileBlock);
-    }
-
-    public void addElement(SummaryElement element) {
-        contextStack.peek().putElement(element);
-    }
-
-    public void push(SummaryBlock block) {
-        contextStack.push(block);
+        super(parentSummary);
     }
 
     public void addObjective(SummarySymbol sym) {
         objectives.add(sym);
-    }
-
-    public SummaryBlock pop() {
-        return contextStack.pop();
-    }
-
-    public SummaryBlock peek() {
-        return contextStack.peek();
     }
 
     public Collection<SummarySymbol> getObjectives() {
@@ -65,7 +37,7 @@ public class TridentSummaryModule extends SummaryModule {
     public Collection<String> getAllObjectives() {
         ArrayList<String> objectives = new ArrayList<>();
         if(parentSummary != null) {
-            objectives.addAll(parentSummary.getObjectives());
+            objectives.addAll(((TridentProjectSummary) parentSummary).getObjectives());
         }
         for(SummarySymbol obj : this.objectives) {
             objectives.remove(obj.getName());
@@ -74,81 +46,12 @@ public class TridentSummaryModule extends SummaryModule {
         return objectives;
     }
 
-    public void addRequires(TridentUtil.ResourceLocation loc) {
-        if(!directivesLocked) requires.add(loc);
-    }
-
-    public void addFunctionTag(TridentUtil.ResourceLocation loc) {
+    public void addFunctionTag(ResourceLocation loc) {
         if(!directivesLocked) functionTags.add(loc);
     }
 
-    public List<TridentUtil.ResourceLocation> getRequires() {
-        return requires;
-    }
-
-    public List<TridentUtil.ResourceLocation> getFunctionTags() {
+    public List<ResourceLocation> getFunctionTags() {
         return functionTags;
-    }
-
-    public ArrayList<Todo> getTodos() {
-        return todos;
-    }
-
-    public Collection<SummarySymbol> getSymbolsVisibleAtIndexForPath(int index, String[] path) {
-        ArrayList<SummarySymbol> list = new ArrayList<>();
-        if(path.length == 0) return list;
-
-        Collection<SummarySymbol> rootSymbols = getSymbolsVisibleAt(index);
-
-        for(SummarySymbol sym : rootSymbols) {
-            if(sym.getName().equals(path[0])) {
-                sym.collectSubSymbolsForPath(path, 0, list, this.getFileLocation(), index);
-            }
-        }
-
-        return list;
-    }
-
-    public Collection<SummarySymbol> getSymbolsVisibleAt(int index) {
-        ArrayList<SummarySymbol> list = new ArrayList<>();
-        if(parentSummary != null) {
-            for(SummarySymbol globalSymbol : parentSummary.getGlobalSymbols()) {
-                if(!Objects.equals(((TridentSummaryModule) globalSymbol.getParentFileSummary()).getFileLocation(), this.getFileLocation())) {
-                    list.add(globalSymbol);
-                }
-            }
-        }
-        collectSymbolsVisibleAt(index, list, true);
-        return list;
-    }
-
-    public void collectSymbolsVisibleAt(int index, ArrayList<SummarySymbol> list, boolean fromSameFile) {
-        if(searchingSymbols) return;
-        searchingSymbols = true;
-        if(parentSummary != null) {
-            for(TridentUtil.ResourceLocation required : requires) {
-                TridentSummaryModule superFile = parentSummary.getSummaryForLocation(required);
-                if(superFile != null) {
-                    superFile.collectSymbolsVisibleAt(-1, list, false);
-                }
-            }
-        }
-        fileBlock.collectSymbolsVisibleAt(index, list, fromSameFile);
-        searchingSymbols = false;
-    }
-
-    public Collection<SummarySymbol> getGlobalSymbols() {
-        ArrayList<SummarySymbol> list = new ArrayList<>();
-        collectGlobalSymbols(list);
-        return list;
-    }
-
-    public void collectGlobalSymbols(ArrayList<SummarySymbol> list) {
-        fileBlock.collectGlobalSymbols(list);
-    }
-
-    public void updateIndices(Function<Integer, Integer> h) {
-        fileBlock.updateIndices(h);
     }
 
     public void lockDirectives() {
@@ -163,66 +66,29 @@ public class TridentSummaryModule extends SummaryModule {
         return compileOnly;
     }
 
-    public void setFileLocation(TridentUtil.ResourceLocation location) {
-        this.fileLocation = location;
-    }
-
-    public TridentUtil.ResourceLocation getFileLocation() {
-        return fileLocation;
-    }
-
     public TridentProjectSummary getParentSummary() {
-        return parentSummary;
+        return (TridentProjectSummary) parentSummary;
     }
 
-    public void setParentSummary(TridentProjectSummary parentSummary) {
-        this.parentSummary = parentSummary;
-    }
-
-    public void addTempMemberAccess(String name) {
-        tempMemberAccessList.add(name);
-    }
-
-    public void clearTempMemberAccessList() {
-        tempMemberAccessList.clear();
-    }
-
-    public ArrayList<String> getTempMemberAccessList() {
-        return tempMemberAccessList;
-    }
-
-    public boolean isSubSymbolStackEmpty() {
-        return subSymbolStack.isEmpty();
-    }
-
-    public SummarySymbol peekSubSymbol() {
-        return subSymbolStack.peek();
-    }
-
-    public SummarySymbol popSubSymbol() {
-        return subSymbolStack.pop();
-    }
-
-    public void pushSubSymbol(SummarySymbol sym) {
-        subSymbolStack.push(sym);
-    }
-
-    @Override
-    public void onEnd() {
-        super.onEnd();
-        fileBlock.clearEmptyBlocks();
+    public void setParentSummary(PrismarineProjectSummary parentSummary) {
+        this.parentSummary = (TridentProjectSummary) parentSummary;
     }
 
     @Override
     public String toString() {
         return "File Summary for " + fileLocation + ": \n" +
+                "    Resource Location: " + resourceLocation + "\n" +
                 "    Requires: " + requires + "\n" +
                 "    Function Tags: " + functionTags + "\n" +
                 "    Objectives: " + objectives.stream().map(SummarySymbol::getName).collect(Collectors.joining(", ")) + "\n" +
                 "    Scopes: " + fileBlock.toString() + "\n";
     }
 
-    public void addTodo(Token token, String text) {
-        todos.add(new Todo(token, text));
+    public void setResourceLocation(ResourceLocation resourceLocation) {
+        this.resourceLocation = resourceLocation;
+    }
+
+    public ResourceLocation getResourceLocation() {
+        return resourceLocation;
     }
 }

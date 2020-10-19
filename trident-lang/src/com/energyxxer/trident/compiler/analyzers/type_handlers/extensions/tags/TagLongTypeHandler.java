@@ -2,17 +2,28 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 
 import com.energyxxer.commodore.functionlogic.nbt.TagLong;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction.HelperMethods.assertOfClass;
+import static com.energyxxer.prismarine.typesystem.PrismarineTypeSystem.assertOfClass;
 
 public class TagLongTypeHandler implements TypeHandler<TagLong> {
-    static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructTagLong(params, patterns, pattern, ctx);
+    static final PrimitivePrismarineFunction CONSTRUCTOR = (params, patterns, pattern, ctx, thisObject) -> constructTagLong(params, patterns, pattern, ctx);
+
+    private final PrismarineTypeSystem typeSystem;
+
+    public TagLongTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
 
     @Override
     public Object getMember(TagLong object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -26,7 +37,7 @@ public class TagLongTypeHandler implements TypeHandler<TagLong> {
 
     @Override
     public Object cast(TagLong object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        switch (TridentTypeManager.getInternalTypeIdentifierForType(targetType)) {
+        switch (ctx.getTypeSystem().getInternalTypeIdentifierForType(targetType)) {
             case "primitive(int)":
                 return object.getValue().intValue();
             case "primitive(real)":
@@ -47,15 +58,14 @@ public class TagLongTypeHandler implements TypeHandler<TagLong> {
 
     @Override
     public TypeHandler<?> getSuperType() {
-        return TridentTypeManager.getHandlerForHandlerClass(NBTTagTypeHandler.class);
+        return typeSystem.getHandlerForHandlerClass(NBTTagTypeHandler.class);
     }
 
     @Override
-    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 
-    @SuppressWarnings("unchecked")
     private static TagLong constructTagLong(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(params.length == 0 || params[0] == null) return new TagLong(0L);
         Object param = assertOfClass(params[0], patterns[0], ctx, TagLong.class, Integer.class, Double.class, String.class);
@@ -63,7 +73,7 @@ public class TagLongTypeHandler implements TypeHandler<TagLong> {
             try {
                 return new TagLong(Long.parseLong((String) param));
             } catch(NumberFormatException x) {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, x.getMessage(), pattern, ctx);
+                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, x.getMessage(), pattern, ctx);
             }
         } else if(param instanceof Double) {
             return new TagLong((long)(double) param);

@@ -1,20 +1,21 @@
 package com.energyxxer.trident.compiler.semantics.symbols;
 
-import com.energyxxer.trident.compiler.TridentCompiler;
-import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
-import com.energyxxer.trident.compiler.semantics.Symbol;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.prismarine.PrismarineCompiler;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ImportedSymbolContext implements ISymbolContext {
-    protected final TridentCompiler compiler;
+    protected final PrismarineCompiler compiler;
     private ArrayList<ISymbolContext> contexts = new ArrayList<>();
     private ISymbolContext parent = null;
 
-    public ImportedSymbolContext(TridentCompiler compiler) {
+    public ImportedSymbolContext(PrismarineCompiler compiler) {
         this.compiler = compiler;
     }
 
@@ -34,12 +35,12 @@ public class ImportedSymbolContext implements ISymbolContext {
     }
 
     @Override
-    public @NotNull TridentCompiler getCompiler() {
+    public @NotNull PrismarineCompiler getCompiler() {
         return compiler.getRootCompiler();
     }
 
     @Override
-    public TridentFile getStaticParentFile() {
+    public TridentFile getStaticParentUnit() {
         throw new IllegalStateException();
     }
 

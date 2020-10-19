@@ -2,61 +2,72 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.commodore.functionlogic.coordinates.Coordinate;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
+import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClassObject;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 
 import java.util.HashMap;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
+import static com.energyxxer.prismarine.typesystem.functions.natives.PrismarineNativeFunctionBranch.nativeMethodsToFunction;
 
-@AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet")
 public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
-    private static HashMap<String, TridentUserFunction> members;
+    private HashMap<String, PrismarineFunction> members;
 
-    private static CustomClassObject COORDINATE_TYPE_ABSOLUTE;
-    private static CustomClassObject COORDINATE_TYPE_RELATIVE;
-    private static CustomClassObject COORDINATE_TYPE_LOCAL;
+    private CustomClassObject COORDINATE_TYPE_ABSOLUTE;
+    private CustomClassObject COORDINATE_TYPE_RELATIVE;
+    private CustomClassObject COORDINATE_TYPE_LOCAL;
 
-    public static CustomClassObject AXIS_X;
-    public static CustomClassObject AXIS_Y;
-    public static CustomClassObject AXIS_Z;
+    public CustomClassObject AXIS_X;
+    public CustomClassObject AXIS_Y;
+    public CustomClassObject AXIS_Z;
+
+    private final PrismarineTypeSystem typeSystem;
+
+    public CoordinateTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
 
     @Override
-    public void staticTypeSetup() {
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
+
+    @Override
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
         if(members != null) return;
         members = new HashMap<>();
         try {
-            members.put("getMagnitude", nativeMethodsToFunction(null, CoordinateTypeHandler.class.getMethod("getMagnitude", CustomClassObject.class, CoordinateSet.class)));
-            members.put("getCoordinateType", nativeMethodsToFunction(null, CoordinateTypeHandler.class.getMethod("getCoordinateType", CustomClassObject.class, CoordinateSet.class)));
-            members.put("deriveMagnitude", nativeMethodsToFunction(null, CoordinateTypeHandler.class.getMethod("deriveMagnitude", double.class, CustomClassObject.class, CoordinateSet.class)));
-            members.put("deriveCoordinateType", nativeMethodsToFunction(null, CoordinateTypeHandler.class.getMethod("deriveCoordinateType", CustomClassObject.class, CustomClassObject.class, CoordinateSet.class)));
+            members.put("getMagnitude", nativeMethodsToFunction(this.typeSystem, null, CoordinateTypeHandler.class.getMethod("getMagnitude", CustomClassObject.class, CoordinateSet.class)));
+            members.put("getCoordinateType", nativeMethodsToFunction(this.typeSystem, null, CoordinateTypeHandler.class.getMethod("getCoordinateType", CustomClassObject.class, CoordinateSet.class, ISymbolContext.class)));
+            members.put("deriveMagnitude", nativeMethodsToFunction(this.typeSystem, null, CoordinateTypeHandler.class.getMethod("deriveMagnitude", double.class, CustomClassObject.class, CoordinateSet.class)));
+            members.put("deriveCoordinateType", nativeMethodsToFunction(this.typeSystem, null, CoordinateTypeHandler.class.getMethod("deriveCoordinateType", CustomClassObject.class, CustomClassObject.class, CoordinateSet.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
 
-        CustomClass.registerStringIdentifiedClassListener("trident-util:native@CoordinateType", customClass -> {
-            COORDINATE_TYPE_ABSOLUTE = (CustomClassObject) customClass.forceGetMember("ABSOLUTE");
-            COORDINATE_TYPE_RELATIVE = (CustomClassObject) customClass.forceGetMember("RELATIVE");
-            COORDINATE_TYPE_LOCAL = (CustomClassObject) customClass.forceGetMember("LOCAL");
+        this.typeSystem.registerUserDefinedTypeListener("trident-util:native@CoordinateType", customClass -> {
+            COORDINATE_TYPE_ABSOLUTE = (CustomClassObject) ((CustomClass) customClass).forceGetMember("ABSOLUTE");
+            COORDINATE_TYPE_RELATIVE = (CustomClassObject) ((CustomClass) customClass).forceGetMember("RELATIVE");
+            COORDINATE_TYPE_LOCAL = (CustomClassObject) ((CustomClass) customClass).forceGetMember("LOCAL");
         });
-        CustomClass.registerStringIdentifiedClassListener("trident-util:native@Axis", customClass -> {
-            AXIS_X = (CustomClassObject) customClass.forceGetMember("X");
-            AXIS_Y = (CustomClassObject) customClass.forceGetMember("Y");
-            AXIS_Z = (CustomClassObject) customClass.forceGetMember("Z");
+        this.typeSystem.registerUserDefinedTypeListener("trident-util:native@Axis", customClass -> {
+            AXIS_X = (CustomClassObject) ((CustomClass) customClass).forceGetMember("X");
+            AXIS_Y = (CustomClassObject) ((CustomClass) customClass).forceGetMember("Y");
+            AXIS_Z = (CustomClassObject) ((CustomClass) customClass).forceGetMember("Z");
         });
     }
 
     @Override
     public Object getMember(CoordinateSet coords, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        TridentUserFunction result = members.get(member);
+        PrismarineFunction result = members.get(member);
         if(result == null) throw new MemberNotFoundException();
-        return new TridentUserFunction.FixedThisFunction(result, coords);
+        return new PrismarineFunction.FixedThisFunction(result, coords);
     }
 
     @Override
@@ -74,7 +85,7 @@ public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
         return CoordinateSet.class;
     }
 
-    public static double getMagnitude(@NativeMethodWrapper.TridentClassObjectArgument(classIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeMethodWrapper.TridentThisArg CoordinateSet coords) {
+    public static double getMagnitude(@NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeFunctionAnnotations.ThisArg CoordinateSet coords) {
         int index = (int)axis.forceGetMember("index");
         switch(index) {
             case 0: return coords.getX().getCoord();
@@ -84,20 +95,22 @@ public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
         throw new IllegalArgumentException("Invalid axis argument '" + axis + "'. Use constants Axis.X, Axis.Y and Axis.Z to specify an axis.");
     }
 
-    public static CustomClassObject getCoordinateType(@NativeMethodWrapper.TridentClassObjectArgument(classIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeMethodWrapper.TridentThisArg CoordinateSet coords) {
+    @NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@CoordinateType")
+    public static CustomClassObject getCoordinateType(@NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeFunctionAnnotations.ThisArg CoordinateSet coords, ISymbolContext ctx) {
         int index = (int)axis.forceGetMember("index");
+        CoordinateTypeHandler staticHandler = ctx.getTypeSystem().getHandlerForHandlerClass(CoordinateTypeHandler.class);
         switch(index) {
-            case 0: return coordTypeToConstant(coords.getX().getType());
-            case 1: return coordTypeToConstant(coords.getY().getType());
-            case 2: return coordTypeToConstant(coords.getZ().getType());
+            case 0: return staticHandler.coordTypeToConstant(coords.getX().getType());
+            case 1: return staticHandler.coordTypeToConstant(coords.getY().getType());
+            case 2: return staticHandler.coordTypeToConstant(coords.getZ().getType());
         }
         throw new IllegalArgumentException("Invalid axis argument '" + axis + "'. Use constants Axis.X, Axis.Y and Axis.Z to specify an axis.");
     }
 
     public static CoordinateSet deriveMagnitude(
             double newMagnitude,
-            @NativeMethodWrapper.TridentClassObjectArgument(classIdentifier = "trident-util:native@Axis") @NativeMethodWrapper.TridentNullableArg CustomClassObject axis,
-            @NativeMethodWrapper.TridentThisArg CoordinateSet coords
+            @NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") @NativeFunctionAnnotations.NullableArg CustomClassObject axis,
+            @NativeFunctionAnnotations.ThisArg CoordinateSet coords
     ) {
         Coordinate newX = coords.getX();
         Coordinate newY = coords.getY();
@@ -121,9 +134,9 @@ public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
     }
 
     public static CoordinateSet deriveCoordinateType(
-            @NativeMethodWrapper.TridentClassObjectArgument(classIdentifier = "trident-util:native@CoordinateType") CustomClassObject type,
-            @NativeMethodWrapper.TridentClassObjectArgument(classIdentifier = "trident-util:native@Axis") @NativeMethodWrapper.TridentNullableArg CustomClassObject axis,
-            @NativeMethodWrapper.TridentThisArg CoordinateSet coords
+            @NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@CoordinateType") CustomClassObject type,
+            @NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") @NativeFunctionAnnotations.NullableArg CustomClassObject axis,
+            @NativeFunctionAnnotations.ThisArg CoordinateSet coords
     ) {
         Coordinate newX = coords.getX();
         Coordinate newY = coords.getY();
@@ -153,7 +166,7 @@ public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
         return "coordinates";
     }
 
-    private static CustomClassObject coordTypeToConstant(Coordinate.Type type) {
+    private CustomClassObject coordTypeToConstant(Coordinate.Type type) {
         return type == Coordinate.Type.RELATIVE ? COORDINATE_TYPE_RELATIVE : type == Coordinate.Type.LOCAL ? COORDINATE_TYPE_LOCAL : COORDINATE_TYPE_ABSOLUTE;
     }
 

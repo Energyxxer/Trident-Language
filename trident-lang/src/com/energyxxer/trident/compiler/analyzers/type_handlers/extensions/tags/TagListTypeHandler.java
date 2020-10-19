@@ -1,24 +1,39 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 
+import com.energyxxer.commodore.functionlogic.nbt.NBTTag;
 import com.energyxxer.commodore.functionlogic.nbt.TagList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.NBTToDictionary;
 
-import java.util.HashMap;
 import java.util.Iterator;
 
-@AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.nbt.TagList")
 public class TagListTypeHandler implements TypeHandler<TagList> {
-    private static HashMap<String, MemberWrapper<TagList>> members = new HashMap<>();
+    private TypeHandlerMemberCollection<TagList> members;
+    private final PrismarineTypeSystem typeSystem;
 
-    static {
+    public TagListTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
+
+    @Override
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
+        members = new TypeHandlerMemberCollection<>(typeSystem, globalCtx);
+        members.setNotFoundPolicy(TypeHandlerMemberCollection.MemberNotFoundPolicy.THROW_EXCEPTION);
+
         try {
-            members.put("merge", new NativeMethodWrapper<>(TagList.class.getMethod("merge", TagList.class)));
-            members.put("length", new FieldWrapper<>(TagList::size));
+            members.putMethod(TagList.class.getMethod("merge", TagList.class));
+            members.putReadOnlyField("length", TagList::size);
+            members.putMethod("toList", NBTToDictionary.class.getMethod("convert", NBTTag.class, TokenPattern.class, ISymbolContext.class));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -26,20 +41,15 @@ public class TagListTypeHandler implements TypeHandler<TagList> {
 
     @Override
     public Object getMember(TagList object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(member.equals("toList")) {
-            return new NativeMethodWrapper<TagList>("toList", ((instance, params) -> NBTToDictionary.convert(instance, pattern, ctx))).createForInstance(object);
-        }
-        MemberWrapper<TagList> result = members.get(member);
-        if(result == null) throw new MemberNotFoundException();
-        return result.unwrap(object);
+        return members.getMember(object, member, pattern, ctx, keepSymbol);
     }
 
     @Override
     public Object getIndexer(TagList object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, Integer.class);
+        PrismarineTypeSystem.assertOfClass(index, pattern, ctx, Integer.class);
         int realIndex = (int) index;
         if(realIndex < 0 || realIndex >= object.size()) {
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Index out of bounds: " + index + "; Length: " + object.size(), pattern, ctx);
+            throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Index out of bounds: " + index + "; Length: " + object.size(), pattern, ctx);
         }
         return object.getAllTags().get(realIndex);
     }
@@ -50,7 +60,7 @@ public class TagListTypeHandler implements TypeHandler<TagList> {
     }
 
     @Override
-    public Iterator<?> getIterator(TagList object) {
+    public Iterator<?> getIterator(TagList object, ISymbolContext ctx) {
         return object.getAllTags().iterator();
     }
 
@@ -66,6 +76,6 @@ public class TagListTypeHandler implements TypeHandler<TagList> {
 
     @Override
     public TypeHandler<?> getSuperType() {
-        return TridentTypeManager.getHandlerForHandlerClass(NBTTagTypeHandler.class);
+        return typeSystem.getHandlerForHandlerClass(NBTTagTypeHandler.class);
     }
 }

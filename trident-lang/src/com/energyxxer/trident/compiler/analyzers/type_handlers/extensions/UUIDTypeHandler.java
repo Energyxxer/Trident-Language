@@ -2,33 +2,43 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.commodore.functionlogic.nbt.TagIntArray;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.default_libs.RandomLib;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClassObject;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 
 import java.util.Random;
 import java.util.UUID;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
+import static com.energyxxer.prismarine.typesystem.functions.natives.PrismarineNativeFunctionBranch.nativeMethodsToFunction;
 
-@AnalyzerMember(key = "java.util.UUID")
 public class UUIDTypeHandler implements TypeHandler<UUID> {
     private static ClassMethodFamily constructorFamily;
     private static boolean setup = false;
 
-    public static UUID constructUUID() {
-        return constructUUID(RandomLib.PROJECT_RANDOM);
+    private final PrismarineTypeSystem typeSystem;
+
+    public UUIDTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
     }
-    public static UUID constructUUID(@NativeMethodWrapper.TridentClassObjectArgument(classIdentifier = "trident-util:native@Random") CustomClassObject randomClsObj) {
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
+
+    public static UUID constructUUID() {
+        return constructUUID(com.energyxxer.trident.compiler.analyzers.default_libs.via_reflection.Random.PROJECT_RANDOM);
+    }
+    public static UUID constructUUID(@NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Random") CustomClassObject randomClsObj) {
         return constructUUID((Random) randomClsObj.getHidden("random"));
     }
     private static UUID constructUUID(Random random) {
@@ -48,14 +58,14 @@ public class UUIDTypeHandler implements TypeHandler<UUID> {
     }
 
     @Override
-    public void staticTypeSetup() {
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
         if(setup) return;
         setup = true;
         constructorFamily = new ClassMethodFamily("new");
         try {
-            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, UUIDTypeHandler.class.getMethod("constructUUID"))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
-            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, UUIDTypeHandler.class.getMethod("constructUUID", String.class))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
-            constructorFamily.putOverload(new ClassMethod(CustomClass.getBaseClass(), null, nativeMethodsToFunction(null, UUIDTypeHandler.class.getMethod("constructUUID", CustomClassObject.class))).setVisibility(Symbol.SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, null, UUIDTypeHandler.class.getMethod("constructUUID"))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, null, UUIDTypeHandler.class.getMethod("constructUUID", String.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, null, UUIDTypeHandler.class.getMethod("constructUUID", CustomClassObject.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -73,7 +83,7 @@ public class UUIDTypeHandler implements TypeHandler<UUID> {
 
     @Override
     public Object cast(UUID object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        String targetTypeIdentifier = TridentTypeManager.getInternalTypeIdentifierForType(targetType);
+        String targetTypeIdentifier = typeSystem.getInternalTypeIdentifierForType(targetType);
         switch(targetTypeIdentifier) {
             case "primitive(nbt_value)":
             case "primitive(tag_int_array)": {
@@ -89,7 +99,7 @@ public class UUIDTypeHandler implements TypeHandler<UUID> {
     }
 
     @Override
-    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return constructorFamily;
     }
 

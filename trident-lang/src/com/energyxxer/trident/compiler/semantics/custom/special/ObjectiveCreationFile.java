@@ -20,13 +20,13 @@ public class ObjectiveCreationFile extends SpecialFile {
 
     @Override
     public boolean shouldForceCompile() {
-        return !parent.getCompiler().getModule().getObjectiveManager().getAll().isEmpty();
+        return !parent.getModule().getObjectiveManager().getAll().isEmpty();
     }
 
     public LocalScore getConstant(int con) {
         if(constantsSet == null) {
             constantsSet = new HashSet<>();
-            constantObjective = parent.getCompiler().getModule().getObjectiveManager().getOrCreate("trident_const");
+            constantObjective = parent.getModule().getObjectiveManager().getOrCreate("tdn_const");
         }
         constantsSet.add(con);
         return new LocalScore(new PlayerName("#" + con), constantObjective);
@@ -34,13 +34,13 @@ public class ObjectiveCreationFile extends SpecialFile {
 
     @Override
     protected void compile() {
-        parent.getCompiler().getModule().getObjectiveManager().dumpObjectiveCreators(this.function);
+        parent.getModule().getObjectiveManager().dumpObjectiveCreators(this.function);
         if(constantsSet != null) {
             for(Integer n : constantsSet) {
                 function.append(new ScoreSet(new LocalScore(new PlayerName("#"+n), constantObjective), n));
             }
         }
-        Tag loadTag = parent.getCompiler().getModule().minecraft.tags.functionTags.getOrCreate("load");
+        Tag loadTag = parent.getModule().minecraft.tags.functionTags.getOrCreate("load");
         loadTag.setExport(true);
         loadTag.addValue(new FunctionReference(this.function));
     }

@@ -1,24 +1,25 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.constructs.FormalParameter;
-import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
-import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
+import com.energyxxer.prismarine.typesystem.functions.FormalParameter;
+import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassIndexer {
     private final CustomClass definingClass;
     private final TokenPattern<?> definingPattern;
-    private @NotNull Symbol.SymbolVisibility getterVisibility = Symbol.SymbolVisibility.LOCAL;
-    private @NotNull Symbol.SymbolVisibility setterVisibility = Symbol.SymbolVisibility.LOCAL;
+    private @NotNull SymbolVisibility getterVisibility = TridentSymbolVisibility.LOCAL;
+    private @NotNull SymbolVisibility setterVisibility = TridentSymbolVisibility.LOCAL;
     private VariableInstruction.SymbolModifierMap modifiers;
 
     private final FormalParameter indexParameter;
-    private final TridentUserFunction getterFunction;
-    private final TridentUserFunction setterFunction;
+    private final PrismarineFunction getterFunction;
+    private final PrismarineFunction setterFunction;
 
-    public ClassIndexer(CustomClass definingClass, TokenPattern<?> definingPattern, FormalParameter indexParameter, TridentUserFunction getterFunction, TridentUserFunction setterFunction) {
+    public ClassIndexer(CustomClass definingClass, TokenPattern<?> definingPattern, FormalParameter indexParameter, PrismarineFunction getterFunction, PrismarineFunction setterFunction) {
         this.definingClass = definingClass;
         this.definingPattern = definingPattern;
         this.indexParameter = indexParameter;
@@ -47,11 +48,11 @@ public class ClassIndexer {
         return definingPattern;
     }
 
-    public TridentUserFunction getGetterFunction() {
+    public PrismarineFunction getGetterFunction() {
         return getterFunction;
     }
 
-    public TridentUserFunction getSetterFunction() {
+    public PrismarineFunction getSetterFunction() {
         return setterFunction;
     }
 
@@ -65,20 +66,20 @@ public class ClassIndexer {
     }
 
     @NotNull
-    public Symbol.SymbolVisibility getGetterVisibility() {
+    public SymbolVisibility getGetterVisibility() {
         return getterVisibility;
     }
 
     @NotNull
-    public Symbol.SymbolVisibility getSetterVisibility() {
+    public SymbolVisibility getSetterVisibility() {
         return setterVisibility;
     }
 
-    public void setGetterVisibility(@NotNull Symbol.SymbolVisibility getterVisibility) {
+    public void setGetterVisibility(@NotNull SymbolVisibility getterVisibility) {
         this.getterVisibility = getterVisibility;
     }
 
-    public void setSetterVisibility(@NotNull Symbol.SymbolVisibility setterVisibility) {
+    public void setSetterVisibility(@NotNull SymbolVisibility setterVisibility) {
         this.setterVisibility = setterVisibility;
     }
 }

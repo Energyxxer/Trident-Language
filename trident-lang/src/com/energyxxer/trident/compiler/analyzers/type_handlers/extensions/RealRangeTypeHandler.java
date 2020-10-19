@@ -2,71 +2,55 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.commodore.util.DoubleRange;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 
-@AnalyzerMember(key = "com.energyxxer.commodore.util.DoubleRange")
 public class RealRangeTypeHandler implements TypeHandler<DoubleRange> {
-    private static final TridentFunction CONSTRUCTOR = new NativeMethodWrapper<>(
-            "new real_range",
-            ((instance, params) -> new DoubleRange((Double)params[0], (Double)params[1])),
-            Double.class,
-            Double.class
-    ).setNullable(0).setNullable(1).createForInstance(null);
+    private TypeHandlerMemberCollection<DoubleRange> members;
+
+    private final PrismarineTypeSystem typeSystem;
+
+    public RealRangeTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
+    @Override
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
+        members = new TypeHandlerMemberCollection<>(typeSystem, globalCtx);
+        members.setNotFoundPolicy(TypeHandlerMemberCollection.MemberNotFoundPolicy.THROW_EXCEPTION);
+
+        try {
+            members.setConstructor(RealRangeTypeHandler.class.getMethod("construct", Double.class, Double.class));
+
+            members.putReadOnlyField("min", RealRangeTypeHandler::getMin);
+            members.putReadOnlyField("max", RealRangeTypeHandler::getMax);
+            members.putReadOnlyField("range", r -> getMax(r) - getMin(r));
+
+            members.putMethod(RealRangeTypeHandler.class.getMethod("deriveMin", Double.class, DoubleRange.class));
+            members.putMethod(RealRangeTypeHandler.class.getMethod("deriveMax", Double.class, DoubleRange.class));
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
 
     @Override
     public Object getMember(DoubleRange object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(member.equals("min")) {
-            return object.getMin();
-        }
-        if(member.equals("max")) {
-            return object.getMax();
-        }
-        if(member.equals("range")) {
-            return getMax(object) - getMin(object);
-        }
-        if(member.equals("deriveMin")) {
-            return (TridentFunction) (params, patterns, pattern1, file1) -> {
-                if(params.length != 1) {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMin' requires 1 parameter, instead found " + params.length, pattern, ctx);
-                }
-
-                Double newMin = params[0] != null ? TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], ctx, Double.class) : null;
-
-                return new DoubleRange(newMin, object.getMax());
-            };
-        }
-        if(member.equals("deriveMax")) {
-            return (TridentFunction) (params, patterns, pattern1, file1) -> {
-                if(params.length != 1) {
-                    throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Method 'deriveMax' requires 1 parameter, instead found " + params.length, pattern, ctx);
-                }
-
-                Double newMax = params[0] != null ? TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], ctx, Double.class) : null;
-
-                return new DoubleRange(object.getMin(), newMax);
-            };
-        }
-        throw new MemberNotFoundException();
+        return members.getMember(object, member, pattern, ctx, keepSymbol);
     }
 
     @Override
     public Object getIndexer(DoubleRange object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         throw new MemberNotFoundException();
-    }
-
-    private double getMin(DoubleRange range) {
-        if(range.getMin() != null) return range.getMin();
-        else return Double.NEGATIVE_INFINITY;
-    }
-
-    private double getMax(DoubleRange range) {
-        if(range.getMax() != null) return range.getMax();
-        else return Double.POSITIVE_INFINITY;
     }
 
     @Override
@@ -85,7 +69,32 @@ public class RealRangeTypeHandler implements TypeHandler<DoubleRange> {
     }
 
     @Override
-    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return CONSTRUCTOR;
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+        return members.getConstructor();
+    }
+
+    public static double getMin(DoubleRange range) {
+        if(range.getMin() != null) return range.getMin();
+        else return Double.NEGATIVE_INFINITY;
+    }
+
+    public static double getMax(DoubleRange range) {
+        if(range.getMax() != null) return range.getMax();
+        else return Double.POSITIVE_INFINITY;
+    }
+
+    @NativeFunctionAnnotations.NotNullReturn
+    public static DoubleRange deriveMin(@NativeFunctionAnnotations.NullableArg Double newMin, @NativeFunctionAnnotations.ThisArg DoubleRange thiz) {
+        return new DoubleRange(newMin, thiz.getMax());
+    }
+
+    @NativeFunctionAnnotations.NotNullReturn
+    public static DoubleRange deriveMax(@NativeFunctionAnnotations.NullableArg Double newMax, @NativeFunctionAnnotations.ThisArg DoubleRange thiz) {
+        return new DoubleRange(thiz.getMin(), newMax);
+    }
+
+    @NativeFunctionAnnotations.NotNullReturn
+    public static DoubleRange construct(@NativeFunctionAnnotations.NullableArg Double min, @NativeFunctionAnnotations.NullableArg Double max) {
+        return new DoubleRange(min, max);
     }
 }

@@ -6,42 +6,48 @@ import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.defaults.FunctionReference;
+import com.energyxxer.trident.Trident;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
+import com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
+import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
+import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
+import com.energyxxer.trident.worker.tasks.SetupSpecialFileManagerTask;
+import com.energyxxer.trident.worker.tasks.SetupTypeMapTask;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.nbtmapper.tags.DataType;
 import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
-import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
-import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.constructs.NBTParser;
-import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
-import com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger;
-import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEvent;
-import com.energyxxer.trident.compiler.semantics.custom.special.item_events.ItemEventFile;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
-import static com.energyxxer.trident.compiler.analyzers.instructions.VariableInstruction.parseSymbolDeclaration;
 import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger.REPLACE;
 import static com.energyxxer.trident.compiler.semantics.custom.items.NBTMode.SETTING;
+import static com.energyxxer.trident.sets.trident.instructions.VariableInstruction.parseSymbolDeclaration;
+import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 
 public class CustomItem implements TypeHandler<CustomItem> {
-    public static final CustomItem STATIC_HANDLER = new CustomItem();
+    private final PrismarineTypeSystem typeSystem;
+    private final boolean isStaticHandler;
     private final String id;
     private final String namespace;
     private final Type baseType;
@@ -52,18 +58,22 @@ public class CustomItem implements TypeHandler<CustomItem> {
     private HashMap<String, Symbol> members = new HashMap<>();
 
     //EMPTY OBJECT FOR STATIC HANDLER
-    private CustomItem() {
+    private CustomItem(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
         id = null;
         namespace = null;
         baseType = null;
         defaultNBT = new TagCompound();
+        isStaticHandler = true;
     }
 
     public CustomItem(String id, Type baseType, ISymbolContext ctx) {
+        this.typeSystem = ctx.getTypeSystem();
         this.id = id;
-        this.namespace = ctx.getStaticParentFile().getNamespace().getName();
+        this.namespace = ((TridentFile) ctx.getStaticParentUnit()).getNamespace().getName();
         this.baseType = baseType;
         this.defaultNBT = new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
+        isStaticHandler = false;
     }
 
     public String getId() {
@@ -81,7 +91,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
     public void mergeNBT(TagCompound newNBT, ISymbolContext ctx) {
         PathContext context = new PathContext().setIsSetting(true).setProtocolMetadata(baseType);
         this.defaultNBT = ((TypeAwareNBTMerger) (path, cls) -> {
-            DataTypeQueryResponse response = ctx.getCompiler().getTypeMap().collectTypeInformation(path, context);
+            DataTypeQueryResponse response = ctx.get(SetupTypeMapTask.INSTANCE).collectTypeInformation(path, context);
             if (!response.isEmpty()) {
                 for (DataType type : new ArrayList<>(response.getPossibleTypes())) {
                     if (type.getFlags() != null && type.getFlags().hasFlag("fixed") && cls.equals(type.getCorrespondingTagType()))
@@ -138,14 +148,14 @@ public class CustomItem implements TypeHandler<CustomItem> {
 
     @Override
     public Object getMember(CustomItem object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
+        if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().getMember(object, member, pattern, ctx, keepSymbol);
         if(members.containsKey(member)) {
             Symbol sym = members.get(member);
             return keepSymbol ? sym : sym.getValue(pattern, ctx);
         }
         switch (member) {
             case "getSlotNBT":
-                return (TridentFunction) (params, patterns, pattern1, file1) -> {
+                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> {
                     TagCompound nbt = new TagCompound(
                             new TagString("id", ((CustomItem) this).getBaseType().toString()),
                             new TagByte("Count", 1));
@@ -157,18 +167,18 @@ public class CustomItem implements TypeHandler<CustomItem> {
                     return nbt;
                 };
             case "getItemTag":
-                return (TridentFunction) (params, patterns, pattern1, file1) -> {
+                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> {
                     if (((CustomItem) this).getDefaultNBT() != null) {
                         return ((CustomItem) this).getDefaultNBT().clone();
                     }
                     return new TagCompound();
                 };
             case "getMatchingNBT":
-                return (TridentFunction) (params, patterns, pattern1, file1) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
+                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
             case "getItem":
-                return (TridentFunction) (params, patterns, pattern1, file1) -> new Item(baseType, defaultNBT);
+                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> new Item(baseType, defaultNBT);
             case "baseType":
-                return baseType != null ? new TridentUtil.ResourceLocation(baseType.toString()) : null;
+                return baseType != null ? new ResourceLocation(baseType.toString()) : null;
             case "itemCode":
                 return getItemIdHash();
         }
@@ -177,20 +187,21 @@ public class CustomItem implements TypeHandler<CustomItem> {
 
     @Override
     public Object getIndexer(CustomItem object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(this == STATIC_HANDLER) return TridentTypeManager.getTypeHandlerTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
-        String indexStr = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
+        if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().getIndexer(object, index, pattern, ctx, keepSymbol);
+        String indexStr = PrismarineTypeSystem.assertOfClass(index, pattern, ctx, String.class);
         if(members.containsKey(indexStr)) {
             Symbol sym = members.get(indexStr);
             return keepSymbol ? sym : sym.getValue(pattern, ctx);
         } else if(keepSymbol) {
             Symbol sym;
-            members.put(indexStr, sym = new Symbol(indexStr, Symbol.SymbolVisibility.LOCAL, null));
+            members.put(indexStr, sym = new Symbol(indexStr, TridentSymbolVisibility.LOCAL, null));
             return sym;
         } else return null;
     }
 
     @Override
     public Object cast(CustomItem object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().cast(object, targetType, pattern, ctx);
         throw new ClassCastException();
     }
 
@@ -217,32 +228,32 @@ public class CustomItem implements TypeHandler<CustomItem> {
 
 
     public static void defineItem(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Symbol.SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), ctx, Symbol.SymbolVisibility.GLOBAL);
+        SymbolVisibility visibility = CommonParsers.parseVisibility(pattern.find("SYMBOL_VISIBILITY"), ctx, SymbolVisibility.GLOBAL);
 
-        String itemName = CommonParsers.parseIdentifierA(pattern.find("ITEM_NAME.IDENTIFIER_A"), ctx);
+        String itemName = (String) pattern.findThenEvaluate("ITEM_NAME.IDENTIFIER_A", null, ctx);
         if(itemName == null) { //Is not an IDENTIFIER_A
             itemName = pattern.find("ITEM_NAME").flatten(false);
         }
 
-        Type defaultType = CommonParsers.parseItemType(pattern.find("ITEM_ID"), ctx);
+        Type defaultType = (Type) pattern.find("ITEM_ID").evaluate(ctx);
 
         final CustomItem itemDecl;
         TokenPattern<?> rawCustomModelData = pattern.find("CUSTOM_MODEL_DATA.INTEGER");
 
         if(!itemName.equals("default")) {
             itemDecl = new CustomItem(itemName, defaultType, ctx);
-            if(rawCustomModelData != null) itemDecl.setCustomModelData(CommonParsers.parseInt(rawCustomModelData, ctx), ctx);
+            if(rawCustomModelData != null) itemDecl.setCustomModelData((Integer) rawCustomModelData.evaluate(ctx), ctx);
 
             ctx.putInContextForVisibility(visibility, new Symbol(itemName, visibility, itemDecl));
         } else if(rawCustomModelData != null) {
-            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default items don't support custom model data specifiers", rawCustomModelData, ctx);
+            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Default items don't support custom model data specifiers", rawCustomModelData, ctx);
         } else {
             itemDecl = null;
         }
 
         ctx = new SymbolContext(ctx);
         final ISymbolContext finalCtx = ctx;
-        if(itemDecl != null) ctx.put(new Symbol("this", Symbol.SymbolVisibility.LOCAL, itemDecl));
+        if(itemDecl != null) ctx.put(new Symbol("this", TridentSymbolVisibility.LOCAL, itemDecl));
 
         ExceptionCollector collector = new ExceptionCollector(ctx);
         collector.begin();
@@ -256,12 +267,12 @@ public class CustomItem implements TypeHandler<CustomItem> {
                     switch (entry.getName()) {
                         case "DEFAULT_NBT": {
                             if (itemDecl == null) {
-                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, ctx));
+                                collector.log(new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, ctx));
                                 break;
                             }
-                            TagCompound newNBT = NBTParser.parseCompound(entry.find("NBT_COMPOUND"), ctx);
+                            TagCompound newNBT = (TagCompound) entry.find("NBT_COMPOUND").evaluate(ctx);
                             PathContext context = new PathContext().setIsSetting(true).setProtocol(DEFAULT, "ITEM_TAG");
-                            NBTParser.analyzeTag(newNBT, context, entry.find("NBT_COMPOUND"), ctx);
+                            NBTInspector.inspectTag(newNBT, context, entry.find("NBT_COMPOUND"), ctx);
                             itemDecl.mergeNBT(newNBT, ctx);
                             break;
                         }
@@ -269,7 +280,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
                             TridentFile innerFile = TridentFile.createInnerFile(entry.find("OPTIONAL_NAME_INNER_FUNCTION"), ctx,
                                     itemDecl != null ?
                                             ctx.getParent() instanceof TridentFile &&
-                                                    ((TridentFile) ctx.getParent()).getPath().endsWith(itemDecl.id + ".tdn") ?
+                                                    ((TridentFile) ctx.getParent()).getPathFromRoot().endsWith(itemDecl.id + Trident.FUNCTION_EXTENSION) ?
                                                     null :
                                                     itemDecl.id
                                             :
@@ -281,7 +292,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
                             TokenPattern<?> namePattern = entry.find("OPTIONAL_NAME_INNER_FUNCTION.INNER_FUNCTION_NAME.RESOURCE_LOCATION");
                             if(namePattern != null) {
                                 String name = namePattern.flatten(false);
-                                Symbol sym = new Symbol(name, Symbol.SymbolVisibility.LOCAL, innerFile.getResourceLocation());
+                                Symbol sym = new Symbol(name, TridentSymbolVisibility.LOCAL, innerFile.getResourceLocation());
                                 if(itemDecl != null) {
                                     itemDecl.members.put(name, sym);
                                 } else {
@@ -289,7 +300,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
                                 }
                             }
 
-                            ctx.getStaticParentFile().schedulePostResolutionAction(() -> {
+                            ((TridentFile) ctx.getStaticParentUnit()).schedulePostResolutionAction(() -> {
                                 innerFile.resolveEntries();
                                 TokenPattern<?> rawFunctionModifiers = entry.find("INNER_FUNCTION_MODIFIERS");
                                 if (rawFunctionModifiers != null) {
@@ -302,28 +313,28 @@ public class CustomItem implements TypeHandler<CustomItem> {
                                             boolean pure = false;
                                             if (modifiers.find("LITERAL_PURE") != null) {
                                                 if (itemDecl != null) {
-                                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "The 'pure' modifier is only allowed for default items", modifiers.find("LITERAL_PURE"), finalCtx));
+                                                    collector.log(new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "The 'pure' modifier is only allowed for default items", modifiers.find("LITERAL_PURE"), finalCtx));
                                                 } else {
                                                     pure = true;
                                                 }
                                             }
 
-                                            ArrayList<ExecuteModifier> eventModifiers = CommonParsers.parseModifierList((TokenList) modifiers.find("EVENT_MODIFIERS"), finalCtx);
+                                            ArrayList<ExecuteModifier> eventModifiers = (ArrayList<ExecuteModifier>) modifiers.find("EVENT_MODIFIERS").evaluate(finalCtx);
 
                                             if (onWhat.getName().equals("ITEM_CRITERIA")) {
-                                                finalCtx.assertLanguageLevel(3, "Item events are", entry, collector);
+                                                TridentUtil.assertLanguageLevel(finalCtx, 3, "Item events are", entry, collector);
 
                                                 ItemEvent.ItemScoreEventType eventType = ItemEvent.ItemScoreEventType.valueOf(onWhat.find("ITEM_CRITERIA_KEY").flatten(false).toUpperCase());
 
                                                 if((itemDecl == null && eventType.supportsDefaultItems) || (itemDecl != null && eventType.supportsCustomItems)) {
-                                                    ((ItemEventFile) finalCtx.getCompiler().getSpecialFileManager().get("item_events")).addCustomItem(
+                                                    ((ItemEventFile) finalCtx.get(SetupSpecialFileManagerTask.INSTANCE).get("item_events")).addCustomItem(
                                                             eventType,
                                                             defaultType,
                                                             itemDecl,
                                                             new ItemEvent(new FunctionReference(innerFile.getFunction()), pure, eventModifiers)
                                                     );
                                                 } else {
-                                                    collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Item events for stat '" + eventType.toString().toLowerCase() + "' are not supported for " + (itemDecl == null ? "default" : "custom") + " items", onWhat, finalCtx));
+                                                    collector.log(new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Item events for stat '" + eventType.toString().toLowerCase() + "' are not supported for " + (itemDecl == null ? "default" : "custom") + " items", onWhat, finalCtx));
                                                 }
                                             }
                                         }
@@ -335,19 +346,19 @@ public class CustomItem implements TypeHandler<CustomItem> {
                         }
                         case "DEFAULT_NAME": {
                             if (itemDecl == null) {
-                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, ctx));
+                                collector.log(new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, ctx));
                                 break;
                             }
 
                             NBTCompoundBuilder builder = new NBTCompoundBuilder();
-                            builder.put(new NBTPath("display", new NBTPath("Name")), new TagString("Name", TextParser.parseTextComponent(entry.find("TEXT_COMPONENT"), ctx).toString()));
+                            builder.put(new NBTPath("display", new NBTPath("Name")), new TagString("Name", entry.find("TEXT_COMPONENT").evaluate(ctx).toString()));
 
                             itemDecl.mergeNBT(builder.getCompound(), ctx);
                             break;
                         }
                         case "DEFAULT_LORE": {
                             if (itemDecl == null) {
-                                collector.log(new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, ctx));
+                                collector.log(new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Default NBT isn't allowed for default items", entry, ctx));
                                 break;
                             }
                             TagList loreList = new TagList("Lore");
@@ -357,7 +368,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
                             if (rawLoreList != null) {
                                 for (TokenPattern<?> rawLine : rawLoreList.getContents()) {
                                     if (rawLine.getName().equals("TEXT_COMPONENT"))
-                                        loreList.add(new TagString(TextParser.parseTextComponent(rawLine, ctx).toString()));
+                                        loreList.add(new TagString(rawLine.evaluate(ctx).toString()));
                                 }
                             }
 
@@ -375,20 +386,20 @@ public class CustomItem implements TypeHandler<CustomItem> {
                             break;
                         }
                         case "ITEM_EVAL": {
-                            InterpolationManager.parse(((TokenStructure) entry.find("LINE_SAFE_INTERPOLATION_VALUE")).getContents(), ctx);
+                            ((TokenStructure) entry.find("INTERPOLATION_VALUE")).getContents().evaluate(ctx);
                             break;
                         }
                         case "COMMENT": {
                             break;
                         }
                         default: {
-                            collector.log(new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, ctx));
+                            collector.log(new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Unknown grammar branch name '" + entry.getName() + "'", entry, ctx));
                             break;
                         }
                     }
                 }
             }
-        } catch(TridentException | TridentException.Grouped x) {
+        } catch(PrismarineException | PrismarineException.Grouped x) {
             collector.log(x);
         } finally {
             collector.end();
@@ -408,5 +419,19 @@ public class CustomItem implements TypeHandler<CustomItem> {
 
     public int getItemIdHash() {
         return (namespace + ":" + id).hashCode();
+    }
+
+    public static CustomItem createStaticHandler(PrismarineTypeSystem typeSystem) {
+        return new CustomItem(typeSystem);
+    }
+
+    @Override
+    public boolean isStaticHandler() {
+        return isStaticHandler;
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
     }
 }

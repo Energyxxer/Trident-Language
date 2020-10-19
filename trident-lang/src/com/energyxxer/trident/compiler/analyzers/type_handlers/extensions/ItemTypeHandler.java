@@ -7,35 +7,51 @@ import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.symbols.AutoPropertySymbol;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.semantics.AutoPropertySymbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 
-@AnalyzerMember(key = "com.energyxxer.commodore.item.Item")
 public class ItemTypeHandler implements TypeHandler<Item> {
-    private static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructItem(params, patterns, pattern, ctx);
+    private static final PrimitivePrismarineFunction CONSTRUCTOR = (params, patterns, pattern, ctx, thisObject) -> constructItem(params, patterns, pattern, ctx);
+
+    private final PrismarineTypeSystem typeSystem;
+
+    public ItemTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
 
     @Override
     public Object getMember(Item object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        if(member.equals("itemType")) {
-            AutoPropertySymbol property = new AutoPropertySymbol<>("itemType", TridentUtil.ResourceLocation.class, () -> new TridentUtil.ResourceLocation(object.getItemType().toString()), value -> {
-                if(ctx.getCompiler().getModule().namespaceExists(value.namespace) && ctx.getCompiler().getModule().getNamespace(value.namespace).types.item.exists(value.body)) {
-                    object.setItemType(ctx.getCompiler().getModule().getNamespace(value.namespace).types.item.get(value.body));
-                } else {
-                    throw new TridentException(TridentException.Source.COMMAND_ERROR, value + " is not a valid item type", pattern, ctx);
-                }
-            });
-            return keepSymbol ? property : property.getValue(pattern, ctx);
-        } else if(member.equals("itemTag")) {
-            AutoPropertySymbol property = new AutoPropertySymbol<>("itemTag", TagCompound.class, object::getNBT, object::setNbt);
-            return keepSymbol ? property : property.getValue(pattern, ctx);
-        } else if(member.equals("getSlotNBT")) {
-            return (TridentFunction) (params, patterns, pattern1, file1) -> getSlotNBT(object);
+        switch (member) {
+            case "itemType": {
+                AutoPropertySymbol property = new AutoPropertySymbol<>("itemType", ResourceLocation.class, () -> new ResourceLocation(object.getItemType().toString()), value -> {
+                    if (ctx.get(SetupModuleTask.INSTANCE).namespaceExists(value.namespace) && ctx.get(SetupModuleTask.INSTANCE).getNamespace(value.namespace).types.item.exists(value.body)) {
+                        object.setItemType(ctx.get(SetupModuleTask.INSTANCE).getNamespace(value.namespace).types.item.get(value.body));
+                    } else {
+                        throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, value + " is not a valid item type", pattern, ctx);
+                    }
+                });
+                return keepSymbol ? property : property.getValue(pattern, ctx);
+            }
+            case "itemTag": {
+                AutoPropertySymbol property = new AutoPropertySymbol<>("itemTag", TagCompound.class, object::getNBT, object::setNbt);
+                return keepSymbol ? property : property.getValue(pattern, ctx);
+            }
+            case "getSlotNBT":
+                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> getSlotNBT(object);
         }
         throw new MemberNotFoundException();
     }
@@ -57,7 +73,6 @@ public class ItemTypeHandler implements TypeHandler<Item> {
         throw new MemberNotFoundException();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object cast(Item object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
@@ -74,14 +89,14 @@ public class ItemTypeHandler implements TypeHandler<Item> {
     }
 
     @Override
-    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 
     private static Item constructItem(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-        CommandModule module = ctx.getCompiler().getModule();
+        CommandModule module = ctx.get(SetupModuleTask.INSTANCE);
         if(params.length == 0 || params[0] == null) return new Item(module.minecraft.types.item.get("air"));
-        TridentUtil.ResourceLocation loc = TridentFunction.HelperMethods.assertOfClass(params[0], patterns[0], ctx, TridentUtil.ResourceLocation.class);
+        ResourceLocation loc = PrismarineTypeSystem.assertOfClass(params[0], patterns[0], ctx, ResourceLocation.class);
         Namespace ns = module.getNamespace(loc.namespace);
 
         Type type;
@@ -92,7 +107,7 @@ public class ItemTypeHandler implements TypeHandler<Item> {
             type = ns.types.item.get(loc.body);
         }
 
-        if(type == null) throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, "Resource location " + params[0] + " is not a valid item type", patterns[0], ctx);
+        if(type == null) throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Resource location " + params[0] + " is not a valid item type", patterns[0], ctx);
 
         return new Item(type);
     }

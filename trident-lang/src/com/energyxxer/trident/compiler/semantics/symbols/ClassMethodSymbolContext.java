@@ -1,10 +1,12 @@
 package com.energyxxer.trident.compiler.semantics.symbols;
 
-import com.energyxxer.trident.compiler.TridentCompiler;
-import com.energyxxer.trident.compiler.analyzers.constructs.ActualParameterList;
-import com.energyxxer.trident.compiler.semantics.Symbol;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClassObject;
+import com.energyxxer.prismarine.PrismarineCompiler;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -13,7 +15,7 @@ public class ClassMethodSymbolContext extends SymbolContext {
     private HashMap<String, ClassMethodFamily> classMethods = null;
     private CustomClassObject thisObject;
 
-    public ClassMethodSymbolContext(TridentCompiler compiler) {
+    public ClassMethodSymbolContext(PrismarineCompiler compiler) {
         super(compiler);
     }
 
@@ -25,7 +27,7 @@ public class ClassMethodSymbolContext extends SymbolContext {
     public Symbol search(@NotNull String name, ISymbolContext from, ActualParameterList params) {
         if (params != null && classMethods != null && classMethods.containsKey(name)) {
             ClassMethodFamily method = classMethods.get(name);
-            return method.pickOverloadSymbol(params, params.getPattern(), from, thisObject);
+            return method.pickOverloadSymbol(params, ((ActualParameterList) params).getPattern(), from, thisObject);
         }
         return super.search(name, from, params);
     }

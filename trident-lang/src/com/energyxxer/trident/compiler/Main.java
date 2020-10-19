@@ -1,20 +1,24 @@
 package com.energyxxer.trident.compiler;
 
+import com.energyxxer.trident.Trident;
+import com.energyxxer.trident.TridentSuiteConfiguration;
+import com.energyxxer.trident.worker.tasks.SetupBuildConfigTask;
 import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.prismarine.PrismarineCompiler;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static com.energyxxer.trident.compiler.TridentCompiler.newFileObject;
+import static com.energyxxer.prismarine.PrismarineCompiler.newFileObject;
 
 public class Main {
     private static int previousProgress = 0;
 
     public static void main(String[] args) throws IOException {
 
-        System.out.println("Trident Language Compiler version " + TridentCompiler.TRIDENT_LANGUAGE_VERSION);
+        System.out.println("Trident Language Compiler version " + Trident.TRIDENT_LANGUAGE_VERSION);
         if(args.length == 0) {
             System.out.println("No arguments passed to the program.\nFirst argument should be the path to the root directory of the project to compile.");
             System.out.println("Second argument (optional) should be a path to the build configuration file to use for this project. Defaults to `(project root)/.tdnbuild`.");
@@ -33,7 +37,7 @@ public class Main {
         System.out.println("Compiling project at directory " + rootDir);
         System.out.println();
 
-        File buildFile = rootDir.toPath().resolve(TridentCompiler.PROJECT_BUILD_FILE_NAME).toFile();
+        File buildFile = rootDir.toPath().resolve(Trident.PROJECT_BUILD_FILE_NAME).toFile();
 
         if(args.length >= 2) {
             buildFile = newFileObject(args[1], rootDir);
@@ -42,8 +46,8 @@ public class Main {
         TridentBuildConfiguration resources = new TridentBuildConfiguration();
         resources.populateFromJson(buildFile, rootDir);
 
-        TridentCompiler c = new TridentCompiler(rootDir);
-        c.setBuildConfig(resources);
+        PrismarineCompiler c = new PrismarineCompiler(TridentSuiteConfiguration.INSTANCE, rootDir);
+        c.getWorker().output.put(SetupBuildConfigTask.INSTANCE, resources);
 
         c.addProgressListener((process) -> {
             StringBuilder line = new StringBuilder(process.getStatus());

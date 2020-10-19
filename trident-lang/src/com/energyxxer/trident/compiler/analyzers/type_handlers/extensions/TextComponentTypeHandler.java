@@ -5,25 +5,34 @@ import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.textcomponents.StringTextComponent;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.commodore.textcomponents.TextComponentContext;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.TridentUtil;
+import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
-import com.energyxxer.trident.compiler.analyzers.default_libs.JsonLib;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.extensions.EObject;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-@AnalyzerMember(key = "com.energyxxer.commodore.textcomponents.TextComponent")
 public class TextComponentTypeHandler implements TypeHandler<TextComponent> {
-    private static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructTextComponent(params, patterns, pattern, ctx);
+    private static final PrimitivePrismarineFunction CONSTRUCTOR = (params, patterns, pattern, ctx, thisObject) -> constructTextComponent(params, patterns, pattern, ctx);
+
+    private final PrismarineTypeSystem typeSystem;
+
+    public TextComponentTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
 
     @Override
     public Object getMember(TextComponent object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -51,7 +60,7 @@ public class TextComponentTypeHandler implements TypeHandler<TextComponent> {
     }
 
     @Override
-    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
         return CONSTRUCTOR;
     }
 
@@ -62,13 +71,13 @@ public class TextComponentTypeHandler implements TypeHandler<TextComponent> {
         boolean skipIncompatibleTypes = false;
         if(params.length >= 2) {
             EObject.assertNotNull(params[1], patterns[1], ctx);
-            skipIncompatibleTypes = TridentFunction.HelperMethods.assertOfClass(params[1], patterns[1], ctx, Boolean.class);
+            skipIncompatibleTypes = PrismarineTypeSystem.assertOfClass(params[1], patterns[1], ctx, Boolean.class);
         }
 
         try {
-            JsonElement asJson = JsonLib.toJson(params[0], e -> {
+            JsonElement asJson = com.energyxxer.trident.compiler.analyzers.default_libs.via_reflection.JSON.toJson(params[0], e -> {
                 if(e instanceof TextComponent) return new TextParser.TextComponentJsonElement((TextComponent) e);
-                if(e instanceof TridentUtil.ResourceLocation
+                if(e instanceof ResourceLocation
                         || e instanceof Entity
                         || e instanceof CoordinateSet) return new JsonPrimitive(e.toString());
                 if(e instanceof PointerObject) {
@@ -91,14 +100,14 @@ public class TextComponentTypeHandler implements TypeHandler<TextComponent> {
                     }
                 }
                 return null;
-            }, skipIncompatibleTypes);
+            }, skipIncompatibleTypes, ctx);
             if (asJson != null) {
-                return TextParser.parseTextComponent(asJson, ctx, patterns[0], TextComponentContext.CHAT);
+                return TextParser.jsonToTextComponent(asJson, ctx, patterns[0], TextComponentContext.CHAT);
             } else {
-                throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot turn a value of type " + TridentTypeManager.getTypeIdentifierForObject(params[0]) + " into a text component", patterns[0], ctx);
+                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot turn a value of type " + ctx.getTypeSystem().getTypeIdentifierForObject(params[0]) + " into a text component", patterns[0], ctx);
             }
         } catch(IllegalArgumentException x) {
-            throw new TridentException(TridentException.Source.INTERNAL_EXCEPTION, x.getMessage(), pattern, ctx);
+            throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, x.getMessage(), pattern, ctx);
         }
     }
 }

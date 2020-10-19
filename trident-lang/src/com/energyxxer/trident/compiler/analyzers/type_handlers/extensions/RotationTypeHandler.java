@@ -2,28 +2,39 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.commodore.functionlogic.rotation.Rotation;
 import com.energyxxer.commodore.functionlogic.rotation.RotationUnit;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunction;
+import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClassObject;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 
 import java.util.HashMap;
 
-import static com.energyxxer.trident.compiler.analyzers.type_handlers.TridentNativeFunctionBranch.nativeMethodsToFunction;
+import static com.energyxxer.prismarine.typesystem.functions.natives.PrismarineNativeFunctionBranch.nativeMethodsToFunction;
 
-@AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.rotation.Rotation")
 public class RotationTypeHandler implements TypeHandler<Rotation> {
-    private static HashMap<String, TridentUserFunction> members;
+    private static HashMap<String, PrismarineFunction> members;
 
     private static CustomClassObject ROTATION_TYPE_ABSOLUTE;
     private static CustomClassObject ROTATION_TYPE_RELATIVE;
 
+    private final PrismarineTypeSystem typeSystem;
+
+    public RotationTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
     @Override
-    public void staticTypeSetup() {
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
+
+    @Override
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
         if(members != null) return;
         members = new HashMap<>();
 
@@ -33,10 +44,10 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
         });
 
         try {
-            members.put("getMagnitude", nativeMethodsToFunction(null, RotationTypeHandler.class.getMethod("getMagnitude", CustomClassObject.class, Rotation.class)));
-            members.put("getRotationType", nativeMethodsToFunction(null, RotationTypeHandler.class.getMethod("getRotationType", CustomClassObject.class, Rotation.class)));
-            members.put("deriveMagnitude", nativeMethodsToFunction(null, RotationTypeHandler.class.getMethod("deriveMagnitude", double.class, CustomClassObject.class, Rotation.class)));
-            members.put("deriveRotationType", nativeMethodsToFunction(null, RotationTypeHandler.class.getMethod("deriveRotationType", CustomClassObject.class, CustomClassObject.class, Rotation.class)));
+            members.put("getMagnitude", nativeMethodsToFunction(this.typeSystem, null, RotationTypeHandler.class.getMethod("getMagnitude", CustomClassObject.class, Rotation.class)));
+            members.put("getRotationType", nativeMethodsToFunction(this.typeSystem, null, RotationTypeHandler.class.getMethod("getRotationType", CustomClassObject.class, Rotation.class)));
+            members.put("deriveMagnitude", nativeMethodsToFunction(this.typeSystem, null, RotationTypeHandler.class.getMethod("deriveMagnitude", double.class, CustomClassObject.class, Rotation.class)));
+            members.put("deriveRotationType", nativeMethodsToFunction(this.typeSystem, null, RotationTypeHandler.class.getMethod("deriveRotationType", CustomClassObject.class, CustomClassObject.class, Rotation.class)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -44,9 +55,9 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
 
     @Override
     public Object getMember(Rotation object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        TridentUserFunction result = members.get(member);
+        PrismarineFunction result = members.get(member);
         if(result == null) throw new MemberNotFoundException();
-        return new TridentUserFunction.FixedThisFunction(result, object);
+        return new PrismarineFunction.FixedThisFunction(result, object);
     }
 
     @Override
@@ -60,7 +71,7 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
     }
 
 
-    public static double getMagnitude(@NativeMethodWrapper.TridentClassObjectArgument(classIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeMethodWrapper.TridentThisArg Rotation rot) {
+    public static double getMagnitude(@NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeFunctionAnnotations.ThisArg Rotation rot) {
         int index = (int)axis.forceGetMember("index");
         switch(index) {
             case 0: return rot.getPitch().getMagnitude();
@@ -70,7 +81,7 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
         throw new IllegalArgumentException("Impossible Internal Exception: Invalid index for Axis object: " + index + ". Please report as soon as possible");
     }
 
-    public static CustomClassObject getRotationType(@NativeMethodWrapper.TridentClassObjectArgument(classIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeMethodWrapper.TridentThisArg Rotation rot) {
+    public static CustomClassObject getRotationType(@NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeFunctionAnnotations.ThisArg Rotation rot) {
         int index = (int)axis.forceGetMember("index");
         switch(index) {
             case 0: return rotTypeToConstant(rot.getPitch().getType());
@@ -82,8 +93,8 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
 
     public static Rotation deriveMagnitude(
             double newMagnitude,
-            @NativeMethodWrapper.TridentClassObjectArgument(classIdentifier = "trident-util:native@Axis") @NativeMethodWrapper.TridentNullableArg CustomClassObject axis,
-            @NativeMethodWrapper.TridentThisArg Rotation rot
+            @NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") @NativeFunctionAnnotations.NullableArg CustomClassObject axis,
+            @NativeFunctionAnnotations.ThisArg Rotation rot
     ) {
         RotationUnit newX = rot.getPitch();
         RotationUnit newY = rot.getYaw();
@@ -103,9 +114,9 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
     }
 
     public static Rotation deriveRotationType(
-            @NativeMethodWrapper.TridentClassObjectArgument(classIdentifier = "trident-util:native@RotationType") CustomClassObject type,
-            @NativeMethodWrapper.TridentClassObjectArgument(classIdentifier = "trident-util:native@Axis") @NativeMethodWrapper.TridentNullableArg CustomClassObject axis,
-            @NativeMethodWrapper.TridentThisArg Rotation rot
+            @NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@RotationType") CustomClassObject type,
+            @NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") @NativeFunctionAnnotations.NullableArg CustomClassObject axis,
+            @NativeFunctionAnnotations.ThisArg Rotation rot
     ) {
         RotationUnit newX = rot.getPitch();
         RotationUnit newY = rot.getYaw();

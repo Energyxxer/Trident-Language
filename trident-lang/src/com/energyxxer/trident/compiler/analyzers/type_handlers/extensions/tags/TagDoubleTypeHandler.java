@@ -2,19 +2,39 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 
 import com.energyxxer.commodore.functionlogic.nbt.TagDouble;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.MemberNotFoundException;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.NativeMethodWrapper;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentFunction;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 
 public class TagDoubleTypeHandler implements TypeHandler<TagDouble> {
-    private static final TridentFunction CONSTRUCTOR = new NativeMethodWrapper<>(
-            "new tag_double",
-            ((instance, params) -> new TagDouble(params[0] == null ? 0 : (Double) params[0])),
-            Double.class
-    ).setNullable(0).createForInstance(null);
+    private TypeHandlerMemberCollection<TagDouble> members;
+
+    private final PrismarineTypeSystem typeSystem;
+
+    public TagDoubleTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
+    @Override
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
+        members = new TypeHandlerMemberCollection<>(typeSystem, globalCtx);
+        members.setNotFoundPolicy(TypeHandlerMemberCollection.MemberNotFoundPolicy.THROW_EXCEPTION);
+
+        try {
+            members.setConstructor(TagDoubleTypeHandler.class.getMethod("construct", Double.class));
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
 
     @Override
     public Object getMember(TagDouble object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
@@ -49,11 +69,17 @@ public class TagDoubleTypeHandler implements TypeHandler<TagDouble> {
 
     @Override
     public TypeHandler<?> getSuperType() {
-        return TridentTypeManager.getHandlerForHandlerClass(NBTTagTypeHandler.class);
+        return typeSystem.getHandlerForHandlerClass(NBTTagTypeHandler.class);
     }
 
     @Override
-    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return CONSTRUCTOR;
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+        return members.getConstructor();
+    }
+
+    @NativeFunctionAnnotations.NotNullReturn
+    public static TagDouble construct(@NativeFunctionAnnotations.NullableArg Double value) {
+        if(value == null) value = 0d;
+        return new TagDouble(value);
     }
 }

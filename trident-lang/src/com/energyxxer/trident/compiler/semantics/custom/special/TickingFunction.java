@@ -54,7 +54,7 @@ public class TickingFunction extends SpecialFile {
 
     @Override
     protected void compile() {
-        Tag tag = compiler.getModule().minecraft.tags.functionTags.getOrCreate(interval == 1 ? "tick" : "load");
+        Tag tag = getParent().getModule().minecraft.tags.functionTags.getOrCreate(interval == 1 ? "tick" : "load");
         tag.setExport(true);
         tag.addValue(new FunctionReference(function));
 

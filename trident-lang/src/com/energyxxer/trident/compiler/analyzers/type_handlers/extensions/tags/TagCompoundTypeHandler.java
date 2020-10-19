@@ -4,62 +4,98 @@ import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerMember;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.TypeHandler;
-import com.energyxxer.trident.compiler.semantics.Symbol;
-import com.energyxxer.trident.compiler.semantics.TridentException;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
-import com.energyxxer.trident.extensions.EObject;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.NBTToDictionary;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@AnalyzerMember(key = "com.energyxxer.commodore.functionlogic.nbt.TagCompound")
-public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
-    private static final TridentFunction CONSTRUCTOR = (params, patterns, pattern, ctx) -> constructNBT(params, patterns, pattern, ctx);
-    private static HashMap<String, MemberWrapper<TagCompound>> members = new HashMap<>();
+import static com.energyxxer.prismarine.typesystem.functions.natives.PrismarineNativeFunctionBranch.nativeMethodsToFunction;
 
-    static {
+public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
+    private TypeHandlerMemberCollection<TagCompound> members;
+
+    @Override
+    public void staticTypeSetup(PrismarineTypeSystem typeSystem, ISymbolContext globalCtx) {
+        members = new TypeHandlerMemberCollection<>(typeSystem, globalCtx);
+        members.setNotFoundPolicy(TypeHandlerMemberCollection.MemberNotFoundPolicy.RETURN_NULL);
+
+        ClassMethodFamily constructorFamily = new ClassMethodFamily("new");
+        members.setConstructor(constructorFamily);
+
         try {
-            members.put("merge", new NativeMethodWrapper<>(TagCompound.class.getMethod("merge", TagCompound.class)));
-            members.put("remove", new NativeMethodWrapper<>(TagCompound.class.getMethod("remove", String.class)));
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct"))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", int.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", double.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", NBTTag.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", String.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", boolean.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", TextComponent.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", ResourceLocation.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", ListObject.class, Boolean.class, TokenPattern.class, ISymbolContext.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", DictionaryObject.class, Boolean.class, TokenPattern.class, ISymbolContext.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            members.putMethod(TagCompound.class.getMethod("merge", TagCompound.class));
+            members.putMethod(TagCompound.class.getMethod("remove", String.class));
+            members.putMethod("toDictionary", NBTToDictionary.class.getMethod("convert", NBTTag.class, TokenPattern.class, ISymbolContext.class));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
     }
 
+    private final PrismarineTypeSystem typeSystem;
+
+    public TagCompoundTypeHandler(PrismarineTypeSystem typeSystem) {
+        this.typeSystem = typeSystem;
+    }
+
+    @Override
+    public PrismarineTypeSystem getTypeSystem() {
+        return typeSystem;
+    }
+
     @Override
     public Object getMember(TagCompound object, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
         if(object.contains(member)) return object.get(member);
-        if(member.equals("toDictionary")) {
-            return new NativeMethodWrapper<TagCompound>("toDictionary", ((instance, params) -> NBTToDictionary.convert(instance, pattern, ctx))).createForInstance(object);
-        }
-        MemberWrapper<TagCompound> result = members.get(member);
-        if(result == null) return null;
-        return result.unwrap(object);
+        return members.getMember(object, member, pattern, ctx, keepSymbol);
     }
 
     @Override
     public Object getIndexer(TagCompound object, Object index, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
-        String key = TridentFunction.HelperMethods.assertOfClass(index, pattern, ctx, String.class);
+        String key = PrismarineTypeSystem.assertOfClass(index, pattern, ctx, String.class);
         if(object.contains(key)) return object.get(key);
         else return null;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object cast(TagCompound object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         throw new ClassCastException();
     }
 
     @Override
-    public Iterator<?> getIterator(TagCompound object) {
+    public Iterator<?> getIterator(TagCompound object, ISymbolContext ctx) {
         return object.getAllTags().stream().map(t -> {
-            DictionaryObject entry = new DictionaryObject();
+            DictionaryObject entry = new DictionaryObject(typeSystem);
             entry.put("key", t.getName());
             entry.put("value", t);
             return entry;
@@ -78,64 +114,93 @@ public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
 
     @Override
     public TypeHandler<?> getSuperType() {
-        return TridentTypeManager.getHandlerForHandlerClass(NBTTagTypeHandler.class);
+        return typeSystem.getHandlerForHandlerClass(NBTTagTypeHandler.class);
     }
 
     @Override
-    public TridentFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return CONSTRUCTOR;
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+        return members.getConstructor();
     }
 
-    private static NBTTag constructNBT(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(params.length == 0) return new TagCompound();
-        EObject.assertNotNull(params[0], patterns[0], ctx);
 
-        boolean skipIncompatibleTypes = false;
-        if(params.length >= 2) {
-            EObject.assertNotNull(params[1], patterns[1], ctx);
-            skipIncompatibleTypes = TridentFunction.HelperMethods.assertOfClass(params[1], patterns[1], ctx, Boolean.class);
+
+
+    public static NBTTag construct() {
+        return new TagCompound();
+    }
+
+    public static NBTTag construct(NBTTag tag, @NativeFunctionAnnotations.NullableArg Boolean skipIncompatibleTypes) {
+        return tag.clone();
+    }
+
+    public static NBTTag construct(double value, @NativeFunctionAnnotations.NullableArg Boolean skipIncompatibleTypes) {
+        return new TagDouble(value);
+    }
+
+    public static NBTTag construct(int value, @NativeFunctionAnnotations.NullableArg Boolean skipIncompatibleTypes) {
+        return new TagInt(value);
+    }
+
+    public static NBTTag construct(String value, @NativeFunctionAnnotations.NullableArg Boolean skipIncompatibleTypes) {
+        return new TagString(value);
+    }
+
+    public static NBTTag construct(ResourceLocation value, @NativeFunctionAnnotations.NullableArg Boolean skipIncompatibleTypes) {
+        return new TagString(value.toString());
+    }
+
+    public static NBTTag construct(TextComponent value, @NativeFunctionAnnotations.NullableArg Boolean skipIncompatibleTypes) {
+        return new TagString(value.toString());
+    }
+
+    public static NBTTag construct(boolean value, @NativeFunctionAnnotations.NullableArg Boolean skipIncompatibleTypes) {
+        return new TagByte(value ? 1 : 0);
+    }
+
+    public static NBTTag construct(DictionaryObject dict, @NativeFunctionAnnotations.NullableArg Boolean skipIncompatibleTypes, TokenPattern<?> pattern, ISymbolContext ctx) {
+        TagCompound compound = new TagCompound();
+
+        for(Map.Entry<String, Symbol> obj : dict.entrySet()) {
+            NBTTag content = constructNBT(obj.getValue().getValue(pattern, ctx), skipIncompatibleTypes, pattern, ctx);
+            if(content != null) {
+                content.setName(obj.getKey());
+                compound.add(content);
+            }
         }
 
-        if(params[0] instanceof NBTTag) return ((NBTTag) params[0]).clone();
-        if(params[0] instanceof Number) {
-            if(params[0] instanceof Double) {
-                return new TagDouble(((double) params[0]));
-            } else {
-                return new TagInt((int) params[0]);
-            }
-        } else if(params[0] instanceof String || params[0] instanceof TridentUtil.ResourceLocation || params[0] instanceof TextComponent) {
-            return new TagString(params[0].toString());
-        } else if(params[0] instanceof Boolean) {
-            return new TagByte((boolean)params[0] ? 1 : 0);
-        } else if(params[0] instanceof DictionaryObject) {
-            TagCompound compound = new TagCompound();
+        return compound;
+    }
 
-            for(Map.Entry<String, Symbol> obj : ((DictionaryObject) params[0]).entrySet()) {
-                NBTTag content = constructNBT(new Object[] {obj.getValue().getValue(pattern, ctx), skipIncompatibleTypes}, new TokenPattern[] {patterns[0], pattern}, pattern, ctx);
-                if(content != null) {
-                    content.setName(obj.getKey());
-                    compound.add(content);
+    public static NBTTag construct(ListObject listObj, @NativeFunctionAnnotations.NullableArg Boolean skipIncompatibleTypes, TokenPattern<?> pattern, ISymbolContext ctx) {
+        TagList list = new TagList();
+
+        for(Object obj : listObj) {
+            NBTTag content = constructNBT(obj, skipIncompatibleTypes, pattern, ctx);
+            if(content != null) {
+                try {
+                    list.add(content);
+                } catch(CommodoreException x) {
+                    throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Error while converting list object to nbt list: " + x.getMessage(), pattern, ctx);
                 }
             }
+        }
 
-            return compound;
-        } if(params[0] instanceof ListObject) {
-            TagList list = new TagList();
+        return list;
+    }
 
-            for(Object obj : ((ListObject) params[0])) {
-                NBTTag content = constructNBT(new Object[] {obj, skipIncompatibleTypes}, new TokenPattern[] {patterns[0], pattern}, pattern, ctx);
-                if(content != null) {
-                    try {
-                        list.add(content);
-                    } catch(CommodoreException x) {
-                        throw new TridentException(TridentException.Source.TYPE_ERROR, "Error while converting list object to nbt list: " + x.getMessage(), pattern, ctx);
-                    }
-                }
-            }
+    private static NBTTag constructNBT(Object value, Boolean skipIncompatibleTypes, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if(value instanceof NBTTag) return construct((NBTTag) value, skipIncompatibleTypes);
+        if(value instanceof Double) return construct((double) value, skipIncompatibleTypes);
+        if(value instanceof Integer) return construct((int) value, skipIncompatibleTypes);
+        if(value instanceof String) return construct((String) value, skipIncompatibleTypes);
+        if(value instanceof ResourceLocation) return construct((ResourceLocation) value, skipIncompatibleTypes);
+        if(value instanceof TextComponent) return construct((TextComponent) value, skipIncompatibleTypes);
+        if(value instanceof Boolean) return construct((boolean) value, skipIncompatibleTypes);
+        if(value instanceof DictionaryObject) return construct((DictionaryObject) value, skipIncompatibleTypes, pattern, ctx);
+        if(value instanceof ListObject) return construct((ListObject) value, skipIncompatibleTypes, pattern, ctx);
 
-            return list;
-        } else if(!skipIncompatibleTypes) {
-            throw new TridentException(TridentException.Source.TYPE_ERROR, "Cannot convert object of type '" + TridentTypeManager.getTypeIdentifierForObject(params[0]) + "' to an nbt tag", pattern, ctx);
-        } else return null;
+        if(skipIncompatibleTypes) return null;
+
+        throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot convert object of type '" + ctx.getTypeSystem().getTypeIdentifierForObject(value) + "' to an nbt tag", pattern, ctx);
     }
 }

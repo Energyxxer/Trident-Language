@@ -1,11 +1,8 @@
 package com.energyxxer.trident.compiler.semantics;
 
 import com.energyxxer.commodore.CommodoreException;
-import com.energyxxer.commodore.functionlogic.commands.Command;
-import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.functions.Function;
-import com.energyxxer.commodore.functionlogic.functions.FunctionComment;
 import com.energyxxer.commodore.functionlogic.functions.FunctionSection;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.tags.Tag;
@@ -13,21 +10,21 @@ import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.enxlex.pattern_matching.structures.*;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
-import com.energyxxer.trident.compiler.TridentCompiler;
-import com.energyxxer.trident.compiler.TridentUtil;
-import com.energyxxer.trident.compiler.analyzers.commands.CommandParser;
-import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
-import com.energyxxer.trident.compiler.analyzers.constructs.InterpolationManager;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
-import com.energyxxer.trident.compiler.analyzers.instructions.Instruction;
+import com.energyxxer.prismarine.PrismarineCompiler;
+import com.energyxxer.prismarine.PrismarineLanguageUnit;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.state.CallStack;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.trident.Trident;
+import com.energyxxer.trident.TridentFileUnitConfiguration;
+import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.plugin.CommandDefinition;
-import com.energyxxer.trident.compiler.plugin.PluginCommandParser;
-import com.energyxxer.trident.compiler.plugin.TridentPlugin;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
-import com.energyxxer.trident.compiler.semantics.symbols.ISymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.ImportedSymbolContext;
-import com.energyxxer.trident.compiler.semantics.symbols.SymbolContext;
+import com.energyxxer.trident.worker.tasks.SetupBuildConfigTask;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
+import com.energyxxer.trident.worker.tasks.SetupWritingStackTask;
+import com.energyxxer.trident.worker.tasks.ValidatePropertiesTask;
 import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
@@ -36,18 +33,18 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class TridentFile extends SymbolContext {
+public class TridentFile extends PrismarineLanguageUnit {
+    private final TridentFile rootFile;
     private String namespace;
     private TokenPattern<?> pattern;
-    private final HashMap<TokenPattern<?>, TridentUtil.ResourceLocation> requires = new HashMap<>();
-    private ArrayList<TridentUtil.ResourceLocation> cascadingRequires = null;
-    private final ArrayList<TridentUtil.ResourceLocation> tags = new ArrayList<>();
-    private final ArrayList<TridentUtil.ResourceLocation> metaTags = new ArrayList<>();
-    private final Path relSourcePath;
+    private final HashMap<TokenPattern<?>, ResourceLocation> requires = new HashMap<>();
+    private ArrayList<ResourceLocation> cascadingRequires = null;
+    private final ArrayList<ResourceLocation> tags = new ArrayList<>();
+    private final ArrayList<ResourceLocation> metaTags = new ArrayList<>();
 
     private Function function;
     private final ArrayList<ExecuteModifier> writingModifiers = new ArrayList<>();
-    private final TridentUtil.ResourceLocation location;
+    private final ResourceLocation location;
 
     private boolean compileOnly = false;
     private boolean breaking = false;
@@ -64,41 +61,48 @@ public class TridentFile extends SymbolContext {
 
     private ArrayList<Runnable> postProcessingActions = new ArrayList<>();
 
-    public TridentFile(TridentCompiler compiler, Path relSourcePath, TokenPattern<?> filePattern) {
-        this(compiler, null, relSourcePath, filePattern, compiler.getLanguageLevel());
+    public TridentFile(PrismarineCompiler compiler, Path relSourcePath, TokenPattern<?> filePattern) { //TODO figure out constructors
+        this(compiler, null, relSourcePath, filePattern, compiler.get(ValidatePropertiesTask.INSTANCE).languageLevel);
     }
 
-    private TridentFile(TridentCompiler compiler, ISymbolContext parentContext, Path relSourcePath, TokenPattern<?> filePattern, int languageLevel) {
-        super(compiler);
+    private TridentFile(PrismarineCompiler compiler, ISymbolContext parentContext, Path relSourcePath, TokenPattern<?> filePattern, int languageLevel) {
+        super(compiler, relSourcePath);
         this.parentScope = parentContext;
-        this.namespace = relSourcePath.getName(0).toString();
         this.pattern = filePattern;
-        this.relSourcePath = relSourcePath;
+        if(parentContext == null) {
+            rootFile = null;
+        } else {
+            rootFile = ((TridentFile) parentContext.getStaticParentUnit()).rootFile;
+        }
 
         this.languageLevel = languageLevel;
 
-        String functionPath = relSourcePath.subpath(2, relSourcePath.getNameCount()).toString();
-        functionPath = functionPath.substring(0, functionPath.length()-".tdn".length()).replaceAll(Pattern.quote(File.separator), "/");
-        this.location = new TridentUtil.ResourceLocation(this.namespace + ":" + functionPath);
+        this.location = TridentFileUnitConfiguration.functionPathToResourceLocation(relSourcePath);
+        this.namespace = this.location.namespace;
 
         resolveDirectives();
-        if(!compileOnly && getNamespace().functions.exists(functionPath)) {
+        /*if(!compileOnly && getNamespace().functions.exists(functionPath)) {
             compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "A function by the name '" + namespace + ":" + functionPath + "' already exists", pattern));
+            valid = false;
+        }*/
+
+        if(!compileOnly && getNamespace().functions.exists(this.location.body)) {
+            compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "A function by the name '" + this.location + "' already exists", pattern));
             valid = false;
         }
 
-        this.function = compileOnly ? null : getNamespace().functions.getOrCreate(functionPath);
-        setShouldExportFunction(parentContext == null || parentContext.getStaticParentFile().shouldExportFunction);
+        this.function = compileOnly ? null : getNamespace().functions.getOrCreate(this.location.body);
+        setShouldExportFunction(parentContext == null || ((TridentFile) parentContext.getStaticParentUnit()).shouldExportFunction);
 
         if(function != null) tags.forEach(l -> {
-            Tag tag = getCompiler().getModule().getNamespace(l.namespace).tags.functionTags.getOrCreate(l.body);
+            Tag tag = get(SetupModuleTask.INSTANCE).getNamespace(l.namespace).tags.functionTags.getOrCreate(l.body);
             tag.setExport(true);
             tag.addValue(new FunctionReference(this.function));
         });
     }
 
     private void resolveDirectives() {
-        TokenPattern<?> directiveList = pattern.find("..DIRECTIVES");
+        TokenPattern<?> directiveList = pattern.find("DIRECTIVES");
         if(directiveList != null) {
             TokenPattern<?>[] directives = ((TokenList) directiveList).getContents();
             for(TokenPattern<?> rawDirective : directives) {
@@ -116,7 +120,7 @@ public class TridentFile extends SymbolContext {
                         break;
                     }
                     case "TAG_DIRECTIVE": {
-                        TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents().value);
+                        ResourceLocation loc = new ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents().value);
                         if(compileOnly) {
                             getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "A compile-only function may not have any tags", directiveList));
                         }
@@ -124,24 +128,24 @@ public class TridentFile extends SymbolContext {
                         break;
                     }
                     case "META_TAG_DIRECTIVE": {
-                        TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents().value);
+                        ResourceLocation loc = new ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents().value);
                         metaTags.add(loc);
                         break;
                     }
                     case "REQUIRE_DIRECTIVE": {
-                        TridentUtil.ResourceLocation loc = new TridentUtil.ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents().value);
+                        ResourceLocation loc = new ResourceLocation(((TokenItem) (directiveBody.getContents()[1])).getContents().value);
                         requires.put(directiveBody, loc);
                         break;
                     }
                     case "LANGUAGE_LEVEL_DIRECTIVE": {
-                        int level = CommonParsers.parseInt(directiveBody.find("INTEGER"), this);
+                        int level = (int) directiveBody.find("INTEGER").evaluate(this);
                         if(level < 1 || level > 3) {
                             getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Invalid language level: " + level, directiveBody.find("INTEGER")));
                         } else this.languageLevel = level;
                         break;
                     }
                     case "PRIORITY_DIRECTIVE": {
-                        this.priority = (float) CommonParsers.parseDouble(directiveBody.find("REAL"), this);
+                        this.priority = (float) (double) directiveBody.find("REAL").evaluate(this);
                         break;
                     }
                     case "BREAKING_DIRECTIVE": {
@@ -150,7 +154,7 @@ public class TridentFile extends SymbolContext {
                     }
                     case "METADATA_DIRECTIVE": {
                         if (this.metadata == null) {
-                            this.metadata = InterpolationManager.parse(directiveBody.find("DICTIONARY"), this, DictionaryObject.class);
+                            this.metadata = (DictionaryObject) directiveBody.find("DICTIONARY").evaluate(this);
                         } else {
                             getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Duplicate metadata directive", directiveList));
                         }
@@ -165,62 +169,68 @@ public class TridentFile extends SymbolContext {
             }
         }
         if(metadata == null) {
-            metadata = new DictionaryObject();
+            metadata = new DictionaryObject(this.getTypeSystem());
         }
     }
 
     public static Function createAnonymousSubFunction(ISymbolContext parent) {
-        String innerFilePathRaw = parent.getStaticParentFile().getPath().toString();
-        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
+        String innerFilePathRaw = parent.getStaticParentUnit().getPathFromRoot().toString();
+        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()- Trident.FUNCTION_EXTENSION.length());
 
-        Path relSourcePath = Paths.get(innerFilePathRaw).resolve(parent.getCompiler().createAnonymousFunctionName(parent.getStaticParentFile().anonymousChildren) + ".tdn");
-        parent.getStaticParentFile().anonymousChildren++;
+        Path relSourcePath = Paths.get(innerFilePathRaw).resolve(parent.get(ValidatePropertiesTask.INSTANCE).createAnonymousFunctionName(((TridentFile) parent.getStaticParentUnit()).anonymousChildren) + Trident.FUNCTION_EXTENSION);
+        ((TridentFile) parent.getStaticParentUnit()).anonymousChildren++;
 
         String functionPath = relSourcePath.subpath(2, relSourcePath.getNameCount()).toString();
-        functionPath = functionPath.substring(0, functionPath.length()-".tdn".length()).replaceAll(Pattern.quote(File.separator), "/");
+        functionPath = functionPath.substring(0, functionPath.length()- Trident.FUNCTION_EXTENSION.length()).replaceAll(Pattern.quote(File.separator), "/");
 
-        return parent.getCompiler().getModule().getNamespace(relSourcePath.getName(0).toString()).functions.create(functionPath);
+        return parent.get(SetupModuleTask.INSTANCE).getNamespace(relSourcePath.getName(0).toString()).functions.create(functionPath);
     }
 
     //Sub context automatically created
+
     public static TridentFile createInnerFile(TokenPattern<?> pattern, ISymbolContext parent) {
         return createInnerFile(pattern, parent, null);
     }
-
     //Sub context automatically created
+
     public static TridentFile createInnerFile(TokenPattern<?> pattern, ISymbolContext parent, String subPath) {
         return createInnerFile(pattern, parent, subPath, true);
     }
-
     //Sub context automatically created
+
     public static TridentFile createInnerFile(TokenPattern<?> pattern, ISymbolContext parent, String subPath, boolean autoResolve) {
         TokenPattern<?> namePattern = pattern.find("INNER_FUNCTION_NAME.RESOURCE_LOCATION");
-        String innerFilePathRaw = parent.getStaticParentFile().getPath().toString();
-        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()-".tdn".length());
+        String innerFilePathRaw = parent.getStaticParentUnit().getPathFromRoot().toString();
+        innerFilePathRaw = innerFilePathRaw.substring(0, innerFilePathRaw.length()- Trident.FUNCTION_EXTENSION.length());
         if(subPath != null) {
             innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(subPath).toString();
         }
 
         if(namePattern != null) {
-            TridentUtil.ResourceLocation suggestedLoc = CommonParsers.parseResourceLocation(namePattern, parent);
+            ResourceLocation suggestedLoc = (ResourceLocation) namePattern.evaluate(parent);
             suggestedLoc.assertStandalone(namePattern, parent);
             if(!suggestedLoc.namespace.equals("minecraft")) {
-                innerFilePathRaw = suggestedLoc.namespace + File.separator + "functions" + File.separator + suggestedLoc.body + ".tdn";
+                innerFilePathRaw = TridentFileUnitConfiguration.resourceLocationToFunctionPath(suggestedLoc).toString();
             } else {
                 String functionName = suggestedLoc.body;
                 while(functionName.startsWith("/")) {
                     functionName = functionName.substring(1);
                 }
-                innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(functionName + ".tdn").toString();
+                innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(functionName + Trident.FUNCTION_EXTENSION).toString();
             }
         } else {
-            innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(parent.getCompiler().createAnonymousFunctionName(parent.getStaticParentFile().anonymousChildren) + ".tdn").toString();
-            parent.getStaticParentFile().anonymousChildren++;
+            innerFilePathRaw = Paths.get(innerFilePathRaw).resolve(
+                    parent.get(ValidatePropertiesTask.INSTANCE)
+                            .createAnonymousFunctionName(
+                                    ((TridentFile) parent.getStaticParentUnit()).anonymousChildren
+                            ) + Trident.FUNCTION_EXTENSION
+            ).toString();
+            ((TridentFile) parent.getStaticParentUnit()).anonymousChildren++;
         }
 
         TokenPattern<?> innerFilePattern = pattern.find("FILE_INNER");
 
-        TridentFile innerFile = new TridentFile(parent.getCompiler(), parent, Paths.get(innerFilePathRaw), innerFilePattern, parent.getStaticParentFile().languageLevel);
+        TridentFile innerFile = new TridentFile(parent.getCompiler(), parent, Paths.get(innerFilePathRaw), innerFilePattern, ((TridentFile) parent.getStaticParentUnit()).languageLevel);
         if(autoResolve) innerFile.resolveEntries();
         return innerFile;
     }
@@ -228,19 +238,19 @@ public class TridentFile extends SymbolContext {
     //Sub context NOT automatically created
     public static void resolveInnerFileIntoSection(TokenPattern<?> pattern, ISymbolContext parentCtx, FunctionSection function) {
         if(pattern.find("FILE_INNER..DIRECTIVES") != null) {
-            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Directives aren't allowed in this context", pattern.find("FILE_INNER..DIRECTIVES"), parentCtx);
+            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Directives aren't allowed in this context", pattern.find("FILE_INNER..DIRECTIVES"), parentCtx);
         }
 
-        resolveEntries((TokenList) pattern.find("FILE_INNER.ENTRIES"), parentCtx, function, false);
+        resolveFunctionEntries((TokenList) pattern.find("FILE_INNER.ENTRIES"), parentCtx, function, false);
     }
 
     //Sub context NOT automatically created
     public static void resolveFileIntoSection(TokenPattern<?> pattern, ISymbolContext parentCtx, FunctionSection function) {
         if(pattern.find("DIRECTIVES") != null) {
-            throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "Directives aren't allowed in this context", pattern.find("DIRECTIVES"), parentCtx);
+            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Directives aren't allowed in this context", pattern.find("DIRECTIVES"), parentCtx);
         }
 
-        resolveEntries((TokenList) pattern.find("ENTRIES"), parentCtx, function, false);
+        resolveFunctionEntries((TokenList) pattern.find("ENTRIES"), parentCtx, function, false);
     }
 
     //Sub context NOT automatically created
@@ -248,33 +258,33 @@ public class TridentFile extends SymbolContext {
         resolveEntries(list, parentCtx, function, false);
     }
 
-    public void addCascadingRequires(Collection<TridentUtil.ResourceLocation> locations) { //TODO clean up; this lazy initialization is misleading
+    public void addCascadingRequires(Collection<ResourceLocation> locations) { //TODO clean up; this lazy initialization is misleading
         if(cascadingRequires == null) cascadingRequires = new ArrayList<>(requires.values());
         cascadingRequires.addAll(locations);
     }
 
-    private boolean reportedNoCommands = false;
+    public boolean reportedNoCommands = false;
 
     public void resolveEntries() {
         if(!valid) return;
         if(entriesResolved) return;
 
-        resolveEntries((TokenList) this.pattern.find(".ENTRIES"), this, function, compileOnly);
+        resolveEntries((TokenList) this.pattern.find("ENTRIES"), this, this.function, compileOnly);
     }
 
     public Function getFunction() {
-        return function;
+        return this.function;
     }
 
     public ArrayList<ExecuteModifier> getWritingModifiers() {
         return writingModifiers;
     }
 
-    public Collection<TridentUtil.ResourceLocation> getRequires() {
+    public Collection<ResourceLocation> getRequires() {
         return requires.values();
     }
 
-    public Collection<TridentUtil.ResourceLocation> getCascadingRequires() {
+    public Collection<ResourceLocation> getCascadingRequires() {
         return cascadingRequires;
     }
 
@@ -282,34 +292,30 @@ public class TridentFile extends SymbolContext {
         this.checkCircularRequires(new ArrayList<>());
     }
 
-    private void checkCircularRequires(ArrayList<TridentUtil.ResourceLocation> previous) {
+    private void checkCircularRequires(ArrayList<ResourceLocation> previous) {
         previous.add(this.location);
-        for(Map.Entry<TokenPattern<?>, TridentUtil.ResourceLocation> entry : requires.entrySet()) {
+        for(Map.Entry<TokenPattern<?>, ResourceLocation> entry : requires.entrySet()) {
             if(previous.contains(entry.getValue())) {
                 getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Circular requirement with function '" + entry.getValue() + "'", entry.getKey()));
                 Debug.log("Previous (for file '" + this.getResourceLocation() + "'): " + previous);
             } else {
-                TridentFile next = getCompiler().getFile(entry.getValue());
+                TridentFile next = getCompiler().getUnit(TridentFileUnitConfiguration.INSTANCE, TridentFileUnitConfiguration.resourceLocationToFunctionPath(entry.getValue()));
                 if(next != null) {
                     next.checkCircularRequires(previous);
                 } else {
-                    getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Required Trident function '" + entry.getValue() + "' does not exist", entry.getKey()));
+                    getCompiler().getReport().addNotice(new Notice(NoticeType.ERROR, "Required Trident Function '" + entry.getValue().toString().replace(File.separatorChar,'/') + "' does not exist", entry.getKey()));
                 }
             }
         }
         previous.remove(this.location);
     }
 
-    public TridentUtil.ResourceLocation getResourceLocation() {
+    public ResourceLocation getResourceLocation() {
         return location;
     }
 
     public Namespace getNamespace() {
-        return getCompiler().getModule().getNamespace(namespace);
-    }
-
-    public Path getPath() {
-        return relSourcePath;
+        return get(SetupModuleTask.INSTANCE).getNamespace(namespace);
     }
 
     public boolean isCompileOnly() {
@@ -330,30 +336,147 @@ public class TridentFile extends SymbolContext {
     }
 
     private static void resolveEntries(TokenList entryList, ISymbolContext parent, FunctionSection appendTo, boolean compileOnly) {
-        TridentFile parentFile = parent.getStaticParentFile();
+        TridentFile parentFile = (TridentFile) parent.getStaticParentUnit();
 
         boolean popCall = false;
         int postProcessingActionStartIndex = parentFile.postProcessingActions.size();
         parentFile.addCascadingRequires(Collections.emptyList());
-        TridentCompiler compiler = parent.getCompiler();
+        PrismarineCompiler compiler = parent.getCompiler();
 
         if(!parentFile.entriesResolved) {
             ImportedSymbolContext imports = new ImportedSymbolContext(parent.getCompiler());
             imports.setParentScope(parentFile.parentScope);
-            for (Iterator<TridentUtil.ResourceLocation> it = new ArrayDeque<>(parentFile.cascadingRequires).descendingIterator(); it.hasNext(); ) {
-                TridentUtil.ResourceLocation loc = it.next();
-                TridentFile file = parent.getCompiler().getFile(loc);
+            for (Iterator<ResourceLocation> it = new ArrayDeque<>(parentFile.cascadingRequires).descendingIterator(); it.hasNext(); ) {
+                ResourceLocation loc = it.next();
+                TridentFile file = parent.getCompiler().getUnit(TridentFileUnitConfiguration.INSTANCE, TridentFileUnitConfiguration.resourceLocationToFunctionPath(loc));
                 file.resolveEntries();
                 imports.addContext(file);
             }
             parentFile.parentScope = imports;
 
             compiler.getCallStack().push(new CallStack.Call("<body>", entryList, parentFile, entryList));
-            compiler.pushWritingFile(parentFile);
+            compiler.get(SetupWritingStackTask.INSTANCE).pushWritingFile(parentFile);
             popCall = true;
         }
         parentFile.entriesResolved = true;
-        ArrayList<TridentException> queuedExceptions = new ArrayList<>();
+        ArrayList<PrismarineException> queuedExceptions = new ArrayList<>();
+
+        try {
+            if (entryList != null) {
+                TokenPattern<?>[] entries = (entryList).getContents();
+                if(parentFile.breaking) compiler.getTryStack().pushBreaking();
+                try {
+                    for (TokenPattern<?> pattern : entries) {
+                        TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
+
+                        try {
+                            resolveEntries(inner, parent, appendTo, compileOnly);
+                        } catch(PrismarineException x) {
+                            if(compiler.getTryStack().isEmpty() || (parentFile.breaking && compiler.getTryStack().isBreaking())) {
+                                if(!popCall) throw x;
+                                x.expandToUncaught();
+                                compiler.getReport().addNotice(x.getNotice());
+                                if(x.isBreaking() || parentFile.breaking) break;
+                            } else if(compiler.getTryStack().isRecovering()) {
+                                queuedExceptions.add(x);
+                            } else if(compiler.getTryStack().isBreaking()) {
+                                throw x;
+                            }
+                        } catch(PrismarineException.Grouped gx) {
+                            queuedExceptions.addAll(gx.getExceptions());
+                        }
+                    }
+                } finally {
+                    if(parentFile.breaking) compiler.getTryStack().pop();
+                }
+            }
+            if(!queuedExceptions.isEmpty()) {
+                PrismarineException.Grouped ex = new PrismarineException.Grouped(queuedExceptions);
+                queuedExceptions = null;
+                throw ex;
+            }
+        } finally {
+            while(parentFile.postProcessingActions.size() > postProcessingActionStartIndex) {
+                try {
+                    parentFile.postProcessingActions.remove(postProcessingActionStartIndex).run();
+                }  catch(PrismarineException x) {
+                    if(compiler.getTryStack().isEmpty()) {
+                        x.expandToUncaught();
+                        compiler.getReport().addNotice(x.getNotice());
+                        if(x.isBreaking() || parentFile.breaking) {
+                            break;
+                        }
+                    } else {
+                        if(queuedExceptions == null) queuedExceptions = new ArrayList<>();
+                        queuedExceptions.add(x);
+                    }
+                } catch(PrismarineException.Grouped gx) {
+                    if(queuedExceptions == null) queuedExceptions = new ArrayList<>();
+                    queuedExceptions.addAll(gx.getExceptions());
+                }
+            }
+
+            if(queuedExceptions != null && !queuedExceptions.isEmpty()) {
+                for(PrismarineException x : queuedExceptions) {
+                    x.expandToUncaught();
+                    compiler.getReport().addNotice(x.getNotice());
+                }
+            }
+            if(popCall) {
+                compiler.getCallStack().pop();
+                compiler.get(SetupWritingStackTask.INSTANCE).popWritingFile();
+            }
+        }
+    }
+
+    private boolean entriesResolved = false;
+
+    public static void resolveEntries(TokenPattern<?> inner, ISymbolContext parent, FunctionSection appendTo, boolean compileOnly) {
+        PrismarineCompiler compiler = parent.getCompiler();
+        try {
+            switch (inner.getName()) {
+                case "COMMENT":
+                    Debug.log("Comment: " + inner.flatten(false));
+                    break;
+                default: {
+                    inner.evaluate(parent, appendTo);
+                    break;
+                }
+            }
+        } catch(CommodoreException x) {
+            if(x.getSource() == CommodoreException.Source.VERSION_ERROR) {
+                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, x.getSource() + ": " + x.getMessage(), inner, parent);
+            } else {
+                throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Commodore Exception of type " + x.getSource() + ": " + x.getMessage(), inner, parent);
+            }
+        }
+    }
+
+    private static void resolveFunctionEntries(TokenList entryList, ISymbolContext parent, FunctionSection appendTo, boolean compileOnly) {
+        TridentFile parentFile = (TridentFile) parent.getStaticParentUnit();
+
+        boolean popCall = false;
+        int postProcessingActionStartIndex = parentFile.postProcessingActions.size();
+        parentFile.addCascadingRequires(Collections.emptyList());
+        PrismarineCompiler compiler = parent.getCompiler();
+
+        if(!parentFile.entriesResolved) {
+            ImportedSymbolContext imports = new ImportedSymbolContext(parent.getCompiler());
+            imports.setParentScope(parentFile.parentScope);
+            for (Iterator<ResourceLocation> it = new ArrayDeque<>(parentFile.cascadingRequires).descendingIterator(); it.hasNext(); ) {
+                ResourceLocation loc = it.next();
+                TridentFile file = parent.getCompiler().getUnit(TridentFileUnitConfiguration.INSTANCE, TridentFileUnitConfiguration.resourceLocationToFunctionPath(loc));
+                file.resolveEntries();
+                imports.addContext(file);
+            }
+            parentFile.parentScope = imports;
+
+            compiler.getCallStack().push(new CallStack.Call("<body>", entryList, parentFile, entryList));
+            compiler.get(SetupWritingStackTask.INSTANCE).pushWritingFile(parentFile);
+            popCall = true;
+        }
+        parentFile.entriesResolved = true;
+        ArrayList<PrismarineException> queuedExceptions = new ArrayList<>();
 
         try {
             if (entryList != null) {
@@ -365,7 +488,7 @@ public class TridentFile extends SymbolContext {
 
                         try {
                             resolveEntry(inner, parent, appendTo, compileOnly);
-                        } catch(TridentException x) {
+                        } catch(PrismarineException x) {
                             if(compiler.getTryStack().isEmpty() || (parentFile.breaking && compiler.getTryStack().isBreaking())) {
                                 if(!popCall) throw x;
                                 x.expandToUncaught();
@@ -376,7 +499,7 @@ public class TridentFile extends SymbolContext {
                             } else if(compiler.getTryStack().isBreaking()) {
                                 throw x;
                             }
-                        } catch(TridentException.Grouped gx) {
+                        } catch(PrismarineException.Grouped gx) {
                             queuedExceptions.addAll(gx.getExceptions());
                         }
                     }
@@ -385,7 +508,7 @@ public class TridentFile extends SymbolContext {
                 }
             }
             if(!queuedExceptions.isEmpty()) {
-                TridentException.Grouped ex = new TridentException.Grouped(queuedExceptions);
+                PrismarineException.Grouped ex = new PrismarineException.Grouped(queuedExceptions);
                 queuedExceptions = null;
                 throw ex;
             }
@@ -393,7 +516,7 @@ public class TridentFile extends SymbolContext {
             while(parentFile.postProcessingActions.size() > postProcessingActionStartIndex) {
                 try {
                     parentFile.postProcessingActions.remove(postProcessingActionStartIndex).run();
-                }  catch(TridentException x) {
+                }  catch(PrismarineException x) {
                     if(compiler.getTryStack().isEmpty()) {
                         x.expandToUncaught();
                         compiler.getReport().addNotice(x.getNotice());
@@ -404,89 +527,66 @@ public class TridentFile extends SymbolContext {
                         if(queuedExceptions == null) queuedExceptions = new ArrayList<>();
                         queuedExceptions.add(x);
                     }
-                } catch(TridentException.Grouped gx) {
+                } catch(PrismarineException.Grouped gx) {
                     if(queuedExceptions == null) queuedExceptions = new ArrayList<>();
                     queuedExceptions.addAll(gx.getExceptions());
                 }
             }
 
             if(queuedExceptions != null && !queuedExceptions.isEmpty()) {
-                for(TridentException x : queuedExceptions) {
+                for(PrismarineException x : queuedExceptions) {
                     x.expandToUncaught();
                     compiler.getReport().addNotice(x.getNotice());
                 }
             }
             if(popCall) {
                 compiler.getCallStack().pop();
-                compiler.popWritingFile();
+                compiler.get(SetupWritingStackTask.INSTANCE).popWritingFile();
             }
         }
     }
-
-    private boolean entriesResolved = false;
 
     public static void resolveEntry(TokenPattern<?> inner, ISymbolContext parent, FunctionSection appendTo, boolean compileOnly) {
-        TridentCompiler compiler = parent.getCompiler();
-        boolean exportComments = compiler.getBuildConfig().exportComments;
+        boolean exportComments = parent.get(SetupBuildConfigTask.INSTANCE).exportComments;
         try {
-            switch (inner.getName()) {
-                case "COMMAND_WRAPPER":
-                    if (!compileOnly && appendTo != null) {
-
-                        ArrayList<ExecuteModifier> modifiers = CommonParsers.parseModifierList((TokenList) inner.find("MODIFIERS"), parent);
-
-                        TokenPattern<?> commandPattern = inner.find("COMMAND");
-                        String commandName = ((TokenGroup) ((TokenStructure) commandPattern).getContents()).getContents()[0].flattenTokens().get(0).value;
-                        CommandParser parser = AnalyzerManager.getAnalyzer(CommandParser.class, commandName);
-                        if (parser != null) {
-                            Collection<Command> commands = parser.parse(((TokenStructure) commandPattern).getContents(), parent, modifiers);
-                            modifiers.addAll(0, parent.getWritingFile().getWritingModifiers());
-                            for(Command command : commands) {
-                                if (modifiers.isEmpty()) appendTo.append(command);
-                                else appendTo.append(new ExecuteCommand(command, modifiers));
-                            }
-                        } else {
-                            boolean found = false;
-                            for(TridentPlugin plugin : parent.getCompiler().getWorker().output.transitivePlugins) {
-                                CommandDefinition def = plugin.getCommand(commandName);
-                                if(def != null) {
-                                    new PluginCommandParser().handleCommand(def, commandPattern, modifiers, parent, appendTo);
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if(!found) throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown command analyzer for '" + commandName + "'", commandPattern, parent);
-                        }
-                    } else if (!parent.getStaticParentFile().reportedNoCommands) {
-                        parent.getStaticParentFile().reportedNoCommands = true;
-                        throw new TridentException(TridentException.Source.STRUCTURAL_ERROR, "A compile-only function may not have commands", inner, parent);
-                    }
-                    break;
-                case "COMMENT":
-                    if (exportComments && appendTo != null)
-                        appendTo.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
-                    break;
-                case "INSTRUCTION": {
-                    String instructionKey = ((TokenStructure) inner).getContents().searchByName("INSTRUCTION_KEYWORD").get(0).flatten(false);
-                    Instruction instruction = AnalyzerManager.getAnalyzer(Instruction.class, instructionKey);
-                    if (instruction != null) {
-                        instruction.run(((TokenStructure) inner).getContents(), parent);
-                    } else {
-                        throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown instruction analyzer for '" + instructionKey + "'", inner, parent);
-                    }
-                    break;
-                } default: {
-                    throw new TridentException(TridentException.Source.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, parent);
-                }
-            }
+            inner.evaluate(parent, appendTo);
+//            switch (inner.getName()) {
+//                case "COMMAND_WRAPPER":
+//                    if (!compileOnly && appendTo != null) {
+//
+//                        ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) inner.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, parent);
+//
+//                        TokenPattern<?> commandPattern = inner.find("COMMAND");
+//                        Collection<Command> commands = (Collection<Command>) commandPattern.evaluate(parent, Collections.emptyList());
+//                        for(Command command : commands) {
+//                            if (modifiers.isEmpty()) appendTo.append(command);
+//                            else appendTo.append(new ExecuteCommand(command, modifiers));
+//                        }
+//                    } else if (!((TridentFile) parent.getStaticParentUnit()).reportedNoCommands) {
+//                        ((TridentFile) parent.getStaticParentUnit()).reportedNoCommands = true;
+//                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "A compile-only function may not have commands", inner, parent);
+//                    }
+//                    break;
+//                case "COMMENT":
+//                    if (exportComments && appendTo != null)
+//                        appendTo.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
+//                    break;
+//                case "INSTRUCTION": {
+//                    inner.evaluate(parent);
+//                    break;
+//                } default: {
+//                    throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, parent);
+//                }
+//            }
         } catch(CommodoreException x) {
             if(x.getSource() == CommodoreException.Source.VERSION_ERROR) {
-                throw new TridentException(TridentException.Source.COMMAND_ERROR, x.getSource() + ": " + x.getMessage(), inner, parent);
+                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, x.getSource() + ": " + x.getMessage(), inner, parent);
             } else {
-                throw new TridentException(TridentException.Source.IMPOSSIBLE, "Commodore Exception of type " + x.getSource() + ": " + x.getMessage(), inner, parent);
+                throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Commodore Exception of type " + x.getSource() + ": " + x.getMessage(), inner, parent);
             }
         }
     }
+
 
     public TokenPattern<?> getPattern() {
         return pattern;
@@ -496,11 +596,11 @@ public class TridentFile extends SymbolContext {
         return metadata;
     }
 
-    public Collection<TridentUtil.ResourceLocation> getTags() {
+    public Collection<ResourceLocation> getTags() {
         return tags;
     }
 
-    public Collection<TridentUtil.ResourceLocation> getMetaTags() {
+    public Collection<ResourceLocation> getMetaTags() {
         return metaTags;
     }
 
@@ -519,16 +619,12 @@ public class TridentFile extends SymbolContext {
         postProcessingActions.add(r);
     }
 
-    public File getDeclaringFSFile() {
-        return pattern.getFile();
-    }
-
     private HashMap<String, CustomClass> definedInnerClasses = null;
 
     public void registerInnerClass(CustomClass cls, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(definedInnerClasses == null) definedInnerClasses = new HashMap<>();
         if(definedInnerClasses.containsKey(cls.getClassName())) {
-            throw new TridentException(TridentException.Source.DUPLICATION_ERROR, "Class '" + cls.getTypeIdentifier() + "' already exists", pattern, ctx);
+            throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Class '" + cls.getTypeIdentifier() + "' already exists", pattern, ctx);
         }
         definedInnerClasses.put(cls.getClassName(), cls);
     }
@@ -540,5 +636,9 @@ public class TridentFile extends SymbolContext {
 
     public boolean isBreaking() {
         return breaking;
+    }
+
+    public TridentFile getRootFile() {
+        return rootFile;
     }
 }

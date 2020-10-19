@@ -1,0 +1,66 @@
+package com.energyxxer.trident.sets.java.commands;
+
+import com.energyxxer.commodore.functionlogic.commands.Command;
+import com.energyxxer.commodore.functionlogic.commands.experience.ExperienceAddCommand;
+import com.energyxxer.commodore.functionlogic.commands.experience.ExperienceCommand;
+import com.energyxxer.commodore.functionlogic.commands.experience.ExperienceQueryCommand;
+import com.energyxxer.commodore.functionlogic.commands.experience.ExperienceSetCommand;
+import com.energyxxer.commodore.functionlogic.entity.Entity;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenGroupMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+
+import static com.energyxxer.prismarine.PrismarineProductions.*;
+
+public class ExperienceCommandDefinition implements SimpleCommandDefinition {
+    @Override
+    public String[] getSwitchKeys() {
+        return new String[]{"experience", "xp"};
+    }
+
+    @Override
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+        TokenPatternMatch unitMatch = enumChoice(ExperienceCommand.Unit.class).setName("UNIT").setOptional();
+
+        TokenGroupMatch g = new TokenGroupMatch();
+        g.append(choice(
+                group(literal("add"), productions.getOrCreateStructure("ENTITY"), TridentProductions.integer(productions).addTags("cspn:Amount"), unitMatch).setName("ADD"),
+                group(literal("set"), productions.getOrCreateStructure("ENTITY"), TridentProductions.integer(productions).addTags("cspn:Amount"), unitMatch).setName("SET"),
+                group(literal("query"), productions.getOrCreateStructure("ENTITY"), unitMatch).setName("QUERY")
+        ).setName("SUBCOMMAND"));
+        return group(
+                choice(TridentProductions.commandHeader("experience"), TridentProductions.commandHeader("xp")),
+                choice(
+                        group(literal("add"), productions.getOrCreateStructure("ENTITY"), TridentProductions.integer(productions).setName("AMOUNT").addTags("cspn:Amount"), unitMatch).setEvaluator((p, d) -> {
+                            ISymbolContext ctx = (ISymbolContext) d[0];
+                            Entity player = (Entity) p.find("ENTITY").evaluate(ctx);
+                            int amount = (int) p.find("AMOUNT").evaluate(ctx);
+                            ExperienceCommand.Unit unit = (ExperienceCommand.Unit) p.findThenEvaluate("UNIT", ExperienceCommand.Unit.POINTS, ctx);
+                            return new ExperienceAddCommand(player, amount, unit);
+                        }),
+                        group(literal("set"), productions.getOrCreateStructure("ENTITY"), TridentProductions.integer(productions).setName("AMOUNT").addTags("cspn:Amount"), unitMatch).setEvaluator((p, d) -> {
+                            ISymbolContext ctx = (ISymbolContext) d[0];
+                            Entity player = (Entity) p.find("ENTITY").evaluate(ctx);
+                            int amount = (int) p.find("AMOUNT").evaluate(ctx);
+                            ExperienceCommand.Unit unit = (ExperienceCommand.Unit) p.findThenEvaluate("UNIT", ExperienceCommand.Unit.POINTS, ctx);
+                            return new ExperienceSetCommand(player, amount, unit);
+                        }),
+                        group(literal("query"), productions.getOrCreateStructure("ENTITY"), unitMatch).setEvaluator((p, d) -> {
+                            ISymbolContext ctx = (ISymbolContext) d[0];
+                            Entity player = (Entity) p.find("ENTITY").evaluate(ctx);
+                            ExperienceCommand.Unit unit = (ExperienceCommand.Unit) p.findThenEvaluate("UNIT", ExperienceCommand.Unit.POINTS, ctx);
+                            return new ExperienceQueryCommand(player, unit);
+                        })
+                ).setName("INNER")
+        ).setSimplificationFunctionFind("INNER");
+    }
+
+    @Override
+    public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
+        throw new UnsupportedOperationException(); //this step is optimized away
+    }
+}

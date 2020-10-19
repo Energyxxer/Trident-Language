@@ -44,7 +44,7 @@ public class PickedUpScoreEvent implements ScoreEventCriteriaHandler {
         modifiers.add(new ExecuteConditionEntity(IF, initialSelector));
 
         if(data.customItem != null) {
-            Objective objective = data.compiler.getModule().getObjectiveManager().create("ptitem." + Integer.toString(data.customItem.getItemIdHash(),16), "dummy", new StringTextComponent("Temporary picked_up " + data.customItem));
+            Objective objective = data.module.getObjectiveManager().create("ptitem." + Integer.toString(data.customItem.getItemIdHash(),16), "dummy", new StringTextComponent("Temporary picked_up " + data.customItem));
 
             //store result score #OPERATION ptitem.### clear @s <citem> 0
             data.function.append(new ExecuteCommand(new ClearCommand(new Selector(Selector.BaseSelector.SENDER),data.customItem.constructItem(NBTMode.TESTING), 0), new ExecuteStoreScore(new LocalScore(new PlayerName("#OPERATION"), objective))));
