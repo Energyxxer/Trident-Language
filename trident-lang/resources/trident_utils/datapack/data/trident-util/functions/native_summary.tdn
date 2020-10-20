@@ -140,3 +140,20 @@ define global static final class Math {
     public static signum() {}
     public static random() {}
 }
+
+define global final class Random {
+    public static final var PROJECT_RANDOM : Random
+
+    public new() {}
+
+    public new(seed : int) {}
+
+    public nextInt() {}
+    public nextInt(bound : int) {}
+
+    public nextReal() {}
+
+    public nextGaussian() {}
+
+    public nextBoolean() {}
+}

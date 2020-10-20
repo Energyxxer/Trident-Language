@@ -160,6 +160,7 @@ public class DefineInstruction implements InstructionDefinition {
                 ).addProcessor((p, l) -> {
                     if(l.getSummaryModule() != null) {
                         String methodName = p.find("SYMBOL_NAME").flatten(false);
+                        if("new".equals(methodName)) return;
                         SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), methodName, TridentSymbolVisibility.LOCAL, p.find("SYMBOL_NAME").getStringLocation().index);
                         ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p.find("SYMBOL_NAME"));
                         sym.setDeclarationPattern(p.find("SYMBOL_NAME"));
