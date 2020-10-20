@@ -1,16 +1,5 @@
 package com.energyxxer.trident.sets;
 
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
-import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
-import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
-import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
-import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
-import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
-import com.energyxxer.trident.compiler.semantics.custom.classes.ParameterizedMemberHolder;
-import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
-import com.energyxxer.trident.extensions.EObject;
-import com.energyxxer.trident.worker.tasks.SetupOperatorManagerTask;
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
@@ -18,18 +7,29 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
-import com.energyxxer.enxlex.suggestions.LiteralSuggestion;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.prismarine.expressions.TokenExpression;
 import com.energyxxer.prismarine.expressions.TokenExpressionMatch;
 import com.energyxxer.prismarine.providers.PatternProviderSet;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
+import com.energyxxer.prismarine.summaries.SymbolSuggestion;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
+import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ParameterizedMemberHolder;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
+import com.energyxxer.trident.extensions.EObject;
+import com.energyxxer.trident.worker.tasks.SetupOperatorManagerTask;
 import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.StringLocation;
 import com.energyxxer.util.logger.Debug;
@@ -42,9 +42,9 @@ import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import static com.energyxxer.prismarine.PrismarineProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.COMPILER_OPERATOR;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.PRIMITIVE_TYPE;
-import static com.energyxxer.prismarine.PrismarineProductions.*;
 
 public class ValueAccessExpressionSet extends PatternProviderSet {
 
@@ -303,7 +303,8 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                                 Debug.log("symbols to suggest: ");
                                 for(SummarySymbol subSymbol : symbol.getSubSymbols(filePath, start.index)) {
                                     Debug.log(subSymbol);
-                                    l.getSuggestionModule().addSuggestion(new LiteralSuggestion(subSymbol.getName()));
+                                    SymbolSuggestion suggestion = new SymbolSuggestion(subSymbol);
+                                    l.getSuggestionModule().addSuggestion(suggestion);
                                 }
                                 Debug.log("end of symbols");
                             } else {
@@ -360,7 +361,6 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
             Debug.log("end");
         }
     }
-
 
     private static TokenPattern<?> sanitizeMemberAccessPattern(@NotNull TokenPattern<?> pattern) {
         while(pattern.getName().equals("MEMBER_ACCESS")) {

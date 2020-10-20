@@ -1,6 +1,7 @@
 package com.energyxxer.trident.sets.trident.instructions;
 
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -71,7 +72,7 @@ public class VariableInstruction implements InstructionDefinition {
                         }
                         case "NEW_FUNCTION": {
                             TokenPattern<?> dynamicFunctionPattern = ((TokenStructure)root.find("NEW_FUNCTION.NEW_FUNCTION_SPLIT")).getContents();
-                            if(dynamicFunctionPattern != null && dynamicFunctionPattern.getName().equals("DYNAMIC_FUNCTION")) {
+                            if(dynamicFunctionPattern != null && ((TokenGroup) dynamicFunctionPattern).getContents()[0].getName().equals("DYNAMIC_FUNCTION")) {
                                 sym.addTag(TridentSuggestionTags.TAG_METHOD);
 
                                 sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, dynamicFunctionPattern.find("PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
