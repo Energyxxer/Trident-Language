@@ -1,16 +1,13 @@
 package com.energyxxer.trident.compiler.analyzers.default_libs.via_reflection;
 
+import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClassObject;
-import com.energyxxer.trident.worker.tasks.SetupPropertiesTask;
-import com.energyxxer.prismarine.PrismarineCompiler;
-import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
-import com.energyxxer.prismarine.util.JsonTraverser;
 
 public class Random {
     @DefaultLibraryProvider.HideFromCustomClass
-    public static java.util.Random PROJECT_RANDOM;
 
     public static void __new(@NativeFunctionAnnotations.ThisArg CustomClassObject thiz) {
         thiz.putHidden("random", new java.util.Random());
@@ -41,13 +38,8 @@ public class Random {
     }
 
     public static void __onClassCreation(CustomClass cls) {
-        PrismarineCompiler compiler = cls.getInnerStaticContext().getCompiler();
-        int defaultSeed = compiler.getRootDir().getName().hashCode();
-
-        int projectSeed = JsonTraverser.INSTANCE.reset(compiler.get(SetupPropertiesTask.INSTANCE)).get("random-seed").asInt(defaultSeed);
-
         CustomClassObject projectRandom = cls.forceInstantiate();
-        projectRandom.putHidden("random", PROJECT_RANDOM = new java.util.Random(projectSeed));
+        projectRandom.putHidden("random", ((TridentTypeSystem) cls.getTypeSystem()).projectRandom);
 
         cls.putStaticFinalMember("PROJECT_RANDOM", projectRandom);
     }

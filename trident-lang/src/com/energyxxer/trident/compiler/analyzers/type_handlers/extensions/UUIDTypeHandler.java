@@ -35,8 +35,8 @@ public class UUIDTypeHandler implements TypeHandler<UUID> {
         return typeSystem;
     }
 
-    public static UUID constructUUID() {
-        return constructUUID(com.energyxxer.trident.compiler.analyzers.default_libs.via_reflection.Random.PROJECT_RANDOM);
+    public static UUID constructUUID(ISymbolContext ctx) {
+        return constructUUID(((TridentTypeSystem) ctx.getTypeSystem()).projectRandom);
     }
     public static UUID constructUUID(@NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Random") CustomClassObject randomClsObj) {
         return constructUUID((Random) randomClsObj.getHidden("random"));
@@ -63,7 +63,7 @@ public class UUIDTypeHandler implements TypeHandler<UUID> {
         setup = true;
         constructorFamily = new ClassMethodFamily("new");
         try {
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, null, UUIDTypeHandler.class.getMethod("constructUUID"))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, null, UUIDTypeHandler.class.getMethod("constructUUID", ISymbolContext.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
             constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, null, UUIDTypeHandler.class.getMethod("constructUUID", String.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
             constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, null, UUIDTypeHandler.class.getMethod("constructUUID", CustomClassObject.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
         } catch (NoSuchMethodException e) {

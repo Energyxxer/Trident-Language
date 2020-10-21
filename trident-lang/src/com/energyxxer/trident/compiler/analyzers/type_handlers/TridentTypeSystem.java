@@ -10,6 +10,7 @@ import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.prismarine.util.JsonTraverser;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.*;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
@@ -17,16 +18,24 @@ import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
+import com.energyxxer.trident.worker.tasks.SetupPropertiesTask;
 import org.jetbrains.annotations.Contract;
 
 public class TridentTypeSystem extends PrismarineTypeSystem {
 
     private CustomClass baseClass;
+    public java.util.Random projectRandom;
     private OperatorManager<ClassMethod> operatorManager;
 
     public TridentTypeSystem(ISymbolContext globalCtx) {
         super(globalCtx);
         operatorManager = new OperatorManager<>(this);
+
+
+        int defaultSeed = globalCtx.getCompiler().getRootDir().getName().hashCode();
+        int projectSeed = JsonTraverser.INSTANCE.reset(globalCtx.get(SetupPropertiesTask.INSTANCE)).get("random-seed").asInt(defaultSeed);
+
+        projectRandom = new java.util.Random(projectSeed);
     }
 
     @Override
