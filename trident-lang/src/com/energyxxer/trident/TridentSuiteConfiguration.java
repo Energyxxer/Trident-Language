@@ -136,7 +136,6 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
                 SetupDependenciesTask.INSTANCE,
                 SetupPluginsTransitivelyTask.INSTANCE,
                 SetupPluginProductionsTask.INSTANCE,
-                SetupOperatorManagerTask.INSTANCE,
                 SetupResourcePackTask.INSTANCE,
                 SetupSpecialFileManagerTask.INSTANCE,
                 SetupTypeMapTask.INSTANCE,
@@ -201,7 +200,7 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
 
     @Override
     public void onAllCompilationWorkerTasksFinished(PrismarineProjectWorker worker, PrismarineCompiler compiler) {
-        DefaultOperators.populateOperatorManager(compiler.get(SetupOperatorManagerTask.INSTANCE), compiler.getTypeSystem());
+        DefaultOperators.populateOperatorManager(compiler.getTypeSystem().getOperatorManager(), compiler.getTypeSystem());
     }
 
     @Override

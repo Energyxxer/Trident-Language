@@ -2,27 +2,31 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.inspection.ExecutionContext;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.*;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.*;
-import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
-import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
-import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
-import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.operators.OperatorManager;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.ContextualToString;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.*;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.*;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
+import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
+import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
+import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import org.jetbrains.annotations.Contract;
 
 public class TridentTypeSystem extends PrismarineTypeSystem {
 
     private CustomClass baseClass;
+    private OperatorManager<ClassMethod> operatorManager;
 
     public TridentTypeSystem(ISymbolContext globalCtx) {
         super(globalCtx);
+        operatorManager = new OperatorManager<>(this);
     }
 
     @Override
@@ -123,5 +127,10 @@ public class TridentTypeSystem extends PrismarineTypeSystem {
 
     public CustomClass getBaseClass() {
         return baseClass;
+    }
+
+    @Override
+    public OperatorManager<ClassMethod> getOperatorManager() {
+        return operatorManager;
     }
 }

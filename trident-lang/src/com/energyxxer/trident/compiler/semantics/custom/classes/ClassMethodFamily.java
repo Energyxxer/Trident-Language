@@ -2,130 +2,34 @@ package com.energyxxer.trident.compiler.semantics.custom.classes;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.reporting.PrismarineException;
-import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeConstraints;
-import com.energyxxer.prismarine.typesystem.functions.*;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
+import com.energyxxer.prismarine.typesystem.functions.FormalParameter;
+import com.energyxxer.prismarine.typesystem.functions.PrismarineFunctionBranch;
+import com.energyxxer.prismarine.typesystem.functions.typed.TypedFunctionFamily;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ClassMethodFamily implements PrimitivePrismarineFunction {
-    private final String name;
-    private final ArrayList<ClassMethod> implementations = new ArrayList<>();
-    private boolean useExternalThis = false;
-
+public class ClassMethodFamily extends TypedFunctionFamily<ClassMethod> {
     private final ArrayList<ClashingInheritedMethods> clashingInheritedMethods = new ArrayList<>();
 
     public ClassMethodFamily(String name) {
-        this.name = name;
+        super(name);
     }
 
-    public ClassMethodSymbol pickOverloadSymbol(ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx, Object thisObject) {
-        return new ClassMethodSymbol(this, pickOverload(params, pattern, ctx), thisObject);
-    }
-
-    public PrismarineFunction pickOverload(ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx) {
-        ArrayList<ClassMethod> bestScoreBranchMatches = new ArrayList<>();
-        double bestScore = -1;
-
-        //PrismarineFunctionBranch bestPick = null;
-        //boolean bestPickFullyMatched = false;
-
-        for(ClassMethod method : implementations) {
-            List<FormalParameter> branchParams = method.getFormalParameters();
-            boolean branchMatched = true;
-            double score = 0;
-            int paramsCompared = branchParams.size();
-            for(int i = 0; i < branchParams.size() && branchMatched; i++) {
-                FormalParameter formalParam = branchParams.get(i);
-                Object actualParam = null;
-                if(i < params.getValues().size()) actualParam = params.getValues().get(i);
-                int paramScore = 1;
-                if(formalParam.getConstraints() != null) {
-                    paramScore = formalParam.getConstraints().rateMatch(actualParam, ctx);
-                }
-                if(paramScore == 0) {
-                    branchMatched = false;
-                    score = 0;
-                }
-                score += paramScore;
-            }
-            if(branchMatched && branchParams.size() < params.size()) {
-                score += (params.size() - branchParams.size());
-                paramsCompared += (params.size() - branchParams.size());
-                branchMatched = false;
-                //More parameters than asked for, deny this overload.
-            }
-
-            if(paramsCompared != 0) score /= paramsCompared;
-            else {
-                score = params.size() == 0 ? 6 : 2;
-            }
-            if(branchMatched && score >= bestScore) {
-                if(score != bestScore) bestScoreBranchMatches.clear();
-                bestScore = score;
-                bestScoreBranchMatches.add(method);
-            }
-        }
-        if(bestScoreBranchMatches.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            boolean any = false;
-            for(Object obj : params.getValues()) {
-                sb.append(ctx.getTypeSystem().getTypeIdentifierForObject(obj));
-                sb.append(", ");
-                any = true;
-            }
-            if(any) {
-                sb.setLength(sb.length()-2);
-            }
-            StringBuilder overloads = new StringBuilder();
-            for(ClassMethod method : this.implementations) {
-                overloads.append("\n    ").append(name).append("(");
-                overloads.append(method.getFormalParameters().toString().substring(1));
-                overloads.setLength(overloads.length()-1);
-                overloads.append(")");
-                TypeConstraints returnConstraints = method.getFunction().getBranch().getReturnConstraints();
-                if(returnConstraints != null) {
-                    overloads.append(" : ");
-                    overloads.append(returnConstraints);
-                }
-            }
-            throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Overload not found for parameter types: (" + sb.toString() + ")\nValid overloads are:" + overloads.toString(), pattern, ctx);
-        }
-        ClassMethod bestMatch = bestScoreBranchMatches.get(0);
-        if(bestScoreBranchMatches.size() > 1) {
-            int sameLengthMatches = 0;
-            for(ClassMethod branch : bestScoreBranchMatches) {
-                if(branch.getFormalParameters().size() == params.size()) {
-                    bestMatch = branch;
-                    sameLengthMatches++;
-                }
-            }
-            if(sameLengthMatches > 1) {
-                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Ambiguous call between: " + bestScoreBranchMatches.stream().filter(b->b.getFormalParameters().size() == params.size()).map(b -> b.getFormalParameters().toString()).collect(Collectors.joining(", ")), pattern, ctx);
-            } else if(sameLengthMatches < 1) {
-                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Ambiguous call between: " + bestScoreBranchMatches.stream().map(b -> b.getFormalParameters().toString()).collect(Collectors.joining(", ")), pattern, ctx);
-            }
-        }
-
+    @Override
+    protected void validatePickedOverload(ClassMethod bestMatch, ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(!bestMatch.getDefiningClass().hasAccess(ctx, bestMatch.getVisibility())) {
             throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, bestMatch + " has " + bestMatch.getVisibility().toString().toLowerCase() + " access in " + bestMatch.getDefiningClass().getClassTypeIdentifier(), pattern, ctx);
         }
-
-        return bestMatch.getFunction();
-    }
-
-    public String getName() {
-        return name;
     }
 
     public void putOverload(ClassMethod method, CustomClass.MemberParentMode mode, TokenPattern<?> pattern, ISymbolContext ctx) {
@@ -203,15 +107,6 @@ public class ClassMethodFamily implements PrimitivePrismarineFunction {
         implementations.add(method);
     }
 
-    public ClassMethod findOverloadForParameters(List<FormalParameter> types) {
-        for(ClassMethod method : implementations) {
-            if(FormalParameter.parameterListEquals(method.getFormalParameters(), types)) {
-                return method;
-            }
-        }
-        return null;
-    }
-
     private void registerClashingMethods(ClassMethod existing, ClassMethod method) {
         for(ClashingInheritedMethods clashingMethods : clashingInheritedMethods) {
             if(clashingMethods.matches(method)) {
@@ -234,35 +129,6 @@ public class ClassMethodFamily implements PrimitivePrismarineFunction {
 
     public ArrayList<ClassMethod> getImplementations() {
         return implementations;
-    }
-
-    @Override
-    public Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx, Object thisObject) {
-        ClassMethodSymbol pickedConstructor = this.pickOverloadSymbol(new ActualParameterList(Arrays.asList(params), Arrays.asList(patterns), pattern), pattern, ctx, useExternalThis ? thisObject : null);
-        return pickedConstructor.safeCall(params, patterns, pattern, ctx);
-    }
-
-    public static class ClassMethodSymbol extends Symbol {
-        private PrismarineFunction pickedOverload;
-        private Object thisObject;
-
-        public ClassMethodSymbol(ClassMethodFamily classMethodFamily, PrismarineFunction pickedOverload, Object thisObject) {
-            super(classMethodFamily.name, TridentSymbolVisibility.LOCAL);
-            this.pickedOverload = pickedOverload;
-            this.thisObject = thisObject;
-        }
-
-        public PrismarineFunction getPickedOverload() {
-            return pickedOverload;
-        }
-
-        public Object getThisObject() {
-            return thisObject;
-        }
-
-        public Object safeCall(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-            return pickedOverload.safeCall(params, patterns, pattern, ctx, this.thisObject);
-        }
     }
 
     private static class ClashingInheritedMethods {

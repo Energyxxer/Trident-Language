@@ -1,19 +1,26 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.operators;
 
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.BooleanTypeHandler;
-import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.expressions.TokenUnaryExpression;
+import com.energyxxer.prismarine.operators.OperatorManager;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeConstraints;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.typed.TypedFunctionFamily;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.BooleanTypeHandler;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
 import com.energyxxer.util.logger.Debug;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Objects;
+
+import static com.energyxxer.prismarine.typesystem.functions.natives.PrismarineNativeFunctionBranch.nativeMethodsToFunction;
 
 public class DefaultOperators {
 
@@ -228,13 +235,14 @@ public class DefaultOperators {
         allMethods = DefaultOperators.class.getMethods();
     }
 
-    public static void populateOperatorManager(OperatorManager operatorManager, PrismarineTypeSystem typeSystem) {
-        operatorManager.setTypeSystem(typeSystem);
+
+
+    public static void populateOperatorManager(OperatorManager<ClassMethod> operatorManager, PrismarineTypeSystem typeSystem) {
         for(Method method : allMethods) {
             OperatorManager.NativeOperator annot = method.getAnnotation(OperatorManager.NativeOperator.class);
             if(annot != null) {
                 String symbol = annot.symbol();
-                HashMap<String, ClassMethodFamily> targetMap;
+                HashMap<String, TypedFunctionFamily<ClassMethod>> targetMap;
                 switch(annot.grade()) {
                     case 1: {
                         if(annot.symbol().charAt(0) == '_') {
@@ -256,7 +264,7 @@ public class DefaultOperators {
                     default:
                         throw new RuntimeException("Native operator method with invalid parameter count: " + method);
                 }
-                operatorManager.addOperator(symbol, targetMap, method, typeSystem);
+                operatorManager.addOperator(symbol, targetMap, new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(typeSystem, null, method)).setVisibility(SymbolVisibility.GLOBAL));
             }
         }
 
@@ -345,7 +353,7 @@ public class DefaultOperators {
             Object a = expr.getOperands()[0].evaluate(ctx, true);
             if(a instanceof Symbol) {
                 Object oldValue = ((Symbol) a).getValue(expr, ctx);
-                Object newValue = operatorManager.evaluate(operatorManager.unaryLeftOperators.get("++"), new Object[] {oldValue}, expr, ctx);
+                Object newValue = operatorManager.evaluateUnaryLeft("++", new Object[] {oldValue}, expr, ctx);
                 ((Symbol) a).safeSetValue(newValue, expr, ctx);
                 return newValue;
             } else {
@@ -355,10 +363,10 @@ public class DefaultOperators {
         operatorManager.specialUnaryRightOperators.put("++", (expr, ctx) -> {
             // do not throw any SpecialOperatorFailure exceptions here; this operator is not allowed
             // to pass through the standard overload list if there is not a symbol involved.
-            Object a = expr.getOperands()[0].evaluate(ctx, true);
+            Object a = ((TokenUnaryExpression) expr).getOperands()[0].evaluate(ctx, true);
             if(a instanceof Symbol) {
                 Object oldValue = ((Symbol) a).getValue(expr, ctx);
-                Object newValue = operatorManager.evaluate(operatorManager.unaryRightOperators.get("++"), new Object[] {oldValue}, expr, ctx);
+                Object newValue = operatorManager.evaluateUnaryRight("++", new Object[] {oldValue}, expr, ctx);
                 ((Symbol) a).safeSetValue(newValue, expr, ctx);
                 return oldValue;
             } else {
@@ -372,7 +380,7 @@ public class DefaultOperators {
             Object a = expr.getOperands()[0].evaluate(ctx, true);
             if(a instanceof Symbol) {
                 Object oldValue = ((Symbol) a).getValue(expr, ctx);
-                Object newValue = operatorManager.evaluate(operatorManager.unaryLeftOperators.get("--"), new Object[] {oldValue}, expr, ctx);
+                Object newValue = operatorManager.evaluateUnaryLeft("--", new Object[] {oldValue}, expr, ctx);
                 ((Symbol) a).safeSetValue(newValue, expr, ctx);
                 return newValue;
             } else {
@@ -385,7 +393,7 @@ public class DefaultOperators {
             Object a = expr.getOperands()[0].evaluate(ctx, true);
             if(a instanceof Symbol) {
                 Object oldValue = ((Symbol) a).getValue(expr, ctx);
-                Object newValue = operatorManager.evaluate(operatorManager.unaryRightOperators.get("--"), new Object[] {oldValue}, expr, ctx);
+                Object newValue = operatorManager.evaluateUnaryRight("--", new Object[] {oldValue}, expr, ctx);
                 ((Symbol) a).safeSetValue(newValue, expr, ctx);
                 return oldValue;
             } else {
@@ -394,12 +402,12 @@ public class DefaultOperators {
         });
     }
 
-    private static void addCompoundAssignmentOperator(String baseOperator, OperatorManager operatorManager) {
+    private static void addCompoundAssignmentOperator(String baseOperator, OperatorManager<ClassMethod> operatorManager) {
         operatorManager.specialBinaryOperators.put(baseOperator + "=", (expr, ctx) -> {
             Object a = expr.getOperands()[0].evaluate(ctx, true);
             Object b = expr.getOperands()[1].evaluate(ctx);
             if(a instanceof Symbol) {
-                Object newValue = operatorManager.evaluate(operatorManager.binaryOperators.get(baseOperator), new Object[] {((Symbol) a).getValue(expr, ctx), b}, expr, ctx);
+                Object newValue = operatorManager.evaluateBinary(baseOperator, new Object[] {((Symbol) a).getValue(expr, ctx), b}, expr, ctx);
                 ((Symbol) a).safeSetValue(newValue, expr, ctx);
                 return newValue;
             } else {

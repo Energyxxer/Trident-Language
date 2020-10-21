@@ -1,31 +1,30 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
-import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
-import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
-import com.energyxxer.prismarine.typesystem.functions.*;
-import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.*;
-import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
-import com.energyxxer.trident.worker.tasks.SetupOperatorManagerTask;
-import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
-import com.energyxxer.prismarine.typesystem.TypeConstraints;
-import com.energyxxer.prismarine.typesystem.TypeHandler;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.OperatorManager;
-import com.energyxxer.trident.compiler.lexer.TridentOperatorPool;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.prismarine.reporting.PrismarineException;
-import com.energyxxer.prismarine.symbols.Symbol;
-import com.energyxxer.trident.compiler.semantics.symbols.ClassMethodSymbolContext;
-import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
-import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.prismarine.operators.*;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.TypeConstraints;
+import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.*;
 import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunctionBranch;
+import com.energyxxer.trident.compiler.lexer.TridentOperatorPool;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.symbols.ClassMethodSymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
+import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
+import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -317,7 +316,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                                     branch,
                                     this.prepareFunctionContext()
                             )
-                    ).setVisibility(memberVisibility).setModifiers(modifiers);
+                    ).setModifiers(modifiers).setVisibility(memberVisibility);
 
                     if(modifiers.hasModifier(TridentTempFindABetterHome.SymbolModifier.STATIC)) {
                         this.staticMethods.put(method, mode, entry, ctx);
@@ -334,7 +333,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                                     branch,
                                     this.prepareFunctionContext()
                             )
-                    ).setVisibility(memberVisibility).setModifiers(modifiers);
+                    ).setModifiers(modifiers).setVisibility(memberVisibility);
 
                     if(this.constructorFamily == null) {
                         this.constructorFamily = new ClassMethodFamily("new");
@@ -430,9 +429,11 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                                 branch,
                                 this.prepareFunctionContext()
                         )
-                ).setVisibility(TridentSymbolVisibility.PUBLIC).setModifiers(new VariableInstruction.SymbolModifierMap().setModifier(TridentTempFindABetterHome.SymbolModifier.STATIC));
+                ).setModifiers(
+                        new VariableInstruction.SymbolModifierMap().setModifier(TridentTempFindABetterHome.SymbolModifier.STATIC)
+                ).setVisibility(TridentSymbolVisibility.PUBLIC);
 
-                OperatorManager operatorManager = ctx.get(SetupOperatorManagerTask.INSTANCE);
+                OperatorManager operatorManager = typeSystem.getOperatorManager();
                 if(associatedOperator instanceof UnaryOperator) {
                     operatorManager.registerUnaryLeftOperator(operatorSymbol, method);
                 } else if(associatedOperator instanceof BinaryOperator) {
@@ -647,7 +648,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             }
 
             if(constructorFamily != null) {
-                ClassMethodFamily.ClassMethodSymbol pickedConstructor = constructorFamily.pickOverloadSymbol(new ActualParameterList(Arrays.asList(params), Arrays.asList(patterns), pattern2), pattern2, ctx, created);
+                PrismarineFunction.FixedThisFunctionSymbol pickedConstructor = constructorFamily.pickOverloadSymbol(new ActualParameterList(Arrays.asList(params), Arrays.asList(patterns), pattern2), pattern2, ctx, created);
                 pickedConstructor.safeCall(params, patterns, pattern2, ctx2);
                 for(Symbol field : created.instanceMembers.values()) {
                     if(field.isFinal() && field.maySet()) {
@@ -774,4 +775,5 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     public PrismarineTypeSystem getTypeSystem() {
         return typeSystem;
     }
+
 }

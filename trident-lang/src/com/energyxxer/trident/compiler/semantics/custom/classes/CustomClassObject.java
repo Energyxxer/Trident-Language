@@ -1,16 +1,16 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
-import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
-import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
-import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
-import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.ContextualToString;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -147,8 +147,8 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
     public String contextualToString(TokenPattern<?> pattern, ISymbolContext ctx) {
         Object foundClassMethod = instanceMethods.findAndWrap("toString", new ActualParameterList(Collections.emptyList(), Collections.emptyList(), pattern), pattern, ctx);
         if(foundClassMethod == null) return toString();
-        if(foundClassMethod instanceof ClassMethodFamily.ClassMethodSymbol) {
-            return (String) ((ClassMethodFamily.ClassMethodSymbol) foundClassMethod).safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
+        if(foundClassMethod instanceof PrismarineFunction.FixedThisFunctionSymbol) {
+            return (String) ((PrismarineFunction.FixedThisFunctionSymbol) foundClassMethod).safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
         } else {
             return (String) ((PrimitivePrismarineFunction) foundClassMethod).safeCall(new Object[0], new TokenPattern[0], pattern, ctx, this);
         }

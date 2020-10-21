@@ -29,7 +29,7 @@ public class ClassMethodTable {
         PrimitivePrismarineFunction function = find(memberName, params, pattern, ctx);
         if(function == null) return null;
         if(function instanceof PrismarineFunction) {
-            return new ClassMethodFamily.ClassMethodSymbol(this.getFamily(memberName), ((PrismarineFunction) function), thisObject);
+            return new PrismarineFunction.FixedThisFunctionSymbol(memberName, ((PrismarineFunction) function), thisObject);
         } else {
             return function;
         }
