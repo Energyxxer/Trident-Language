@@ -27,6 +27,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility
 import com.energyxxer.trident.sets.trident.TridentLiteralSet;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -38,7 +39,7 @@ public class PluginCommandParser {
     private HashSet<String> multiVars = new HashSet<>();
 
     public void handleCommand(PrismarinePluginUnit def, TokenPattern<?> pattern, List<ExecuteModifier> modifiers, ISymbolContext ctx, FunctionSection appendTo) {
-        ISymbolContext subContext = new PluginSymbolContext(ctx, def.get(TridentPluginUnitConfiguration.CommandHandlerFile.INSTANCE).getPattern().getFile().toPath());
+        ISymbolContext subContext = new PluginSymbolContext(ctx, Paths.get(def.get(TridentPluginUnitConfiguration.CommandHandlerFile.INSTANCE).getPattern().getSource().getFullPath()));
         DictionaryObject argsObj = new DictionaryObject(ctx.getTypeSystem());
         ListObject modifiersList = new ListObject(ctx.getTypeSystem());
         for(ExecuteModifier modifier : modifiers) {

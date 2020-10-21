@@ -21,6 +21,10 @@ import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -76,7 +80,7 @@ public class OperatorManager {
         if(correspondingSpecialMap.containsKey(sym)) {
             try {
                 return correspondingSpecialMap.get(sym).apply(expr, ctx);
-            } catch(DefaultOperators.SpecialOperatorFailure failure) {
+            } catch(SpecialOperatorFailure failure) {
                 //special operator overload didn't match the types
                 //Reuse the already-parsed operands
                 operands = failure.getOperandsAsEvaluated();
@@ -102,7 +106,7 @@ public class OperatorManager {
         if(specialBinaryOperators.containsKey(sym)) {
             try {
                 return specialBinaryOperators.get(sym).apply(expr, ctx);
-            } catch(DefaultOperators.SpecialOperatorFailure failure) {
+            } catch(SpecialOperatorFailure failure) {
                 //special operator overload didn't match the types
                 //Reuse the already-parsed operands
                 operands = failure.getOperandsAsEvaluated();
@@ -128,7 +132,7 @@ public class OperatorManager {
         if(specialTernaryOperators.containsKey(sym)) {
             try {
                 return specialTernaryOperators.get(sym).apply(expr, ctx);
-            } catch(DefaultOperators.SpecialOperatorFailure failure) {
+            } catch(SpecialOperatorFailure failure) {
                 //special operator overload didn't match the types
                 //Reuse the already-parsed operands
                 operands = failure.getOperandsAsEvaluated();
@@ -180,5 +184,25 @@ public class OperatorManager {
 
     public void registerTernaryOperator(String symbol, ClassMethod method) {
         addOperator(symbol, ternaryOperators, method);
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public @interface NativeOperator {
+        String symbol();
+
+        int grade();
+    }
+
+    public static class SpecialOperatorFailure extends RuntimeException {
+        private Object[] operandsAsEvaluated;
+
+        public SpecialOperatorFailure(Object[] operandsAsEvaluated) {
+            this.operandsAsEvaluated = operandsAsEvaluated;
+        }
+
+        public Object[] getOperandsAsEvaluated() {
+            return operandsAsEvaluated;
+        }
     }
 }

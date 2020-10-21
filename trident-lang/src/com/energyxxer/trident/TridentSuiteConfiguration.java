@@ -57,7 +57,7 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
         this.putLanguageUnitConfiguration(TridentFileUnitConfiguration.INSTANCE);
         this.putPluginUnitConfiguration(TridentPluginUnitConfiguration.INSTANCE);
 
-        standardLibrary = new PrismarineLibrary(this);
+        standardLibrary = new PrismarineLibrary("Trident Standard Library", this);
 
         try {
             standardLibrary

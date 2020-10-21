@@ -1,6 +1,7 @@
 package com.energyxxer.trident;
 
 import com.energyxxer.enxlex.lexical_analysis.profiles.LexerProfile;
+import com.energyxxer.enxlex.lexical_analysis.token.TokenSource;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.prismarine.PrismarineCompiler;
@@ -135,7 +136,7 @@ public class TridentFileUnitConfiguration extends PrismarineLanguageUnitConfigur
     }
 
     @Override
-    public TridentSummaryModule createSummaryModule(File file, Path relativePath) {
+    public TridentSummaryModule createSummaryModule(TokenSource source, Path relativePath) {
         TridentSummaryModule summary = new TridentSummaryModule();
         summary.setResourceLocation(functionPathToResourceLocation(relativePath));
         return summary;

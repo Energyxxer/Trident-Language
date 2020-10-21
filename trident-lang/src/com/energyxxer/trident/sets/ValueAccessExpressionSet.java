@@ -36,6 +36,7 @@ import com.energyxxer.util.logger.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Stack;
@@ -261,7 +262,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
             SummarySymbol symbol = null;
 
-            Path filePath = root.getFile().toPath();
+            Path filePath = Paths.get(root.getSource().getFullPath());
 
             for(int i = 0; i < memberAccessesArr.length + 2; i++) {
                 TokenPattern<?> memberAccess = i == 0 ? root : (i == memberAccessesArr.length+1 ? failingAccess : memberAccessesArr[i-1]);

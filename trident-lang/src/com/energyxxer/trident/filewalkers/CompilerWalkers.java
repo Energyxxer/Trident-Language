@@ -3,6 +3,13 @@ package com.energyxxer.trident.filewalkers;
 import com.energyxxer.commodore.module.ModulePackGenerator;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.module.RawExportable;
+import com.energyxxer.enxlex.lexical_analysis.token.SourceFile;
+import com.energyxxer.prismarine.PrismarineCompiler;
+import com.energyxxer.prismarine.in.ProjectReader;
+import com.energyxxer.prismarine.util.PathMatcher;
+import com.energyxxer.prismarine.walker.FileWalker;
+import com.energyxxer.prismarine.walker.FileWalkerStop;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.Trident;
 import com.energyxxer.trident.compiler.TridentBuildConfiguration;
 import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
@@ -10,12 +17,6 @@ import com.energyxxer.trident.worker.tasks.SetupBuildConfigTask;
 import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 import com.energyxxer.trident.worker.tasks.SetupResourcePackTask;
 import com.energyxxer.trident.worker.tasks.SetupTypeMapTask;
-import com.energyxxer.prismarine.PrismarineCompiler;
-import com.energyxxer.prismarine.in.ProjectReader;
-import com.energyxxer.prismarine.util.PathMatcher;
-import com.energyxxer.prismarine.walker.FileWalker;
-import com.energyxxer.prismarine.walker.FileWalkerStop;
-import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
@@ -88,7 +89,7 @@ public class CompilerWalkers {
                     .perform();
 
             String str = result.getString();
-            worker.output.get(SetupTypeMapTask.INSTANCE).parsing.parseNBTTMFile(file, str);
+            worker.output.get(SetupTypeMapTask.INSTANCE).parsing.parseNBTTMFile(new SourceFile(file), str);
 
             return true;
         }

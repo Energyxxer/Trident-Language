@@ -1,14 +1,12 @@
 package com.energyxxer.trident.compiler.analyzers.default_libs.via_reflection;
 
+import com.energyxxer.enxlex.lexical_analysis.token.TokenSource;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.enxlex.report.StackTrace;
-import com.energyxxer.prismarine.Prismarine;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
-
-import java.io.File;
 
 public class Debug {
     public static void log(Object obj, TokenPattern<?> pattern, ISymbolContext ctx) {
@@ -42,11 +40,8 @@ public class Debug {
         Notice notice = new Notice(NoticeType.DEBUG, "Stack Trace:", "Stack Trace:", pattern).setStackTrace(stackTrace);
 
         for(StackTrace.StackTraceElement frame : stackTrace.getElements()) {
-            File file = frame.getPattern().getFile();
-            if(!file.equals(Prismarine.NULL_FILE)) {
-                notice.pointToFile(file);
-                break;
-            }
+            TokenSource source = frame.getPattern().getSource();
+            notice.pointToSource(source);
         }
 
         ctx.getCompiler().getReport().addNotice(notice);

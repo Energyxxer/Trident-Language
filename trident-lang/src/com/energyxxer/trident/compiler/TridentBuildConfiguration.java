@@ -6,11 +6,13 @@ import com.energyxxer.commodore.util.io.DirectoryCompoundInput;
 import com.energyxxer.commodore.util.io.ZipCompoundInput;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatures;
-import com.energyxxer.trident.Trident;
-import com.energyxxer.trident.TridentSuiteConfiguration;
-import com.energyxxer.nbtmapper.NBTTypeMapPack;
+import com.energyxxer.enxlex.lexical_analysis.token.SourceFile;
+import com.energyxxer.enxlex.lexical_analysis.token.ZipSource;
+import com.energyxxer.nbtmapper.packs.NBTTypeMapPack;
 import com.energyxxer.prismarine.plugins.PrismarinePlugin;
 import com.energyxxer.prismarine.util.JsonTraverser;
+import com.energyxxer.trident.Trident;
+import com.energyxxer.trident.TridentSuiteConfiguration;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -117,7 +119,7 @@ public class TridentBuildConfiguration {
             ArrayList<NBTTypeMapPack> typeMapPacks = new ArrayList<>();
             for(JsonElement rawTypeMapPack : traverser.reset().get("input-resources").get("type-map-packs").iterateAsArray()) {
                 if(rawTypeMapPack.isJsonPrimitive() && rawTypeMapPack.getAsJsonPrimitive().isString()) {
-                    typeMapPacks.add(NBTTypeMapPack.fromCompound(retrieveCompoundInputForFile(newFileObject(rawTypeMapPack.getAsString(), rootDir))));
+                    typeMapPacks.add(retrieveNBTTypeMapPackForFile(newFileObject(rawTypeMapPack.getAsString(), rootDir)));
                 }
             }
             this.typeMapPacks = typeMapPacks.toArray(new NBTTypeMapPack[0]);
@@ -171,6 +173,15 @@ public class TridentBuildConfiguration {
             return new DirectoryCompoundInput(file);
         } else if(file.isFile() && file.getName().endsWith(".zip")) {
             return new ZipCompoundInput(file);
+        }
+        throw new FileNotFoundException("Could not find folder nor zip at path '" + file + "'");
+    }
+
+    private static NBTTypeMapPack retrieveNBTTypeMapPackForFile(File file) throws IOException {
+        if(file.isDirectory()) {
+            return NBTTypeMapPack.fromCompound(new DirectoryCompoundInput(file), p -> new SourceFile(file.toPath().resolve(p).toFile()));
+        } else if(file.isFile() && file.getName().endsWith(".zip")) {
+            return NBTTypeMapPack.fromCompound(new ZipCompoundInput(file), p -> new ZipSource(file, p));
         }
         throw new FileNotFoundException("Could not find folder nor zip at path '" + file + "'");
     }
