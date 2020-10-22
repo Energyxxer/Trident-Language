@@ -1,112 +1,25 @@
 package com.energyxxer.trident.compiler.resourcepack;
 
-import com.energyxxer.commodore.module.Exportable;
+
 import com.energyxxer.commodore.module.ModulePackGenerator;
 import com.energyxxer.prismarine.PrismarineCompiler;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.energyxxer.prismarine.out.PrismarineExportablePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
-import static com.energyxxer.commodore.module.ModulePackGenerator.OutputType.FOLDER;
-import static com.energyxxer.commodore.module.ModulePackGenerator.OutputType.ZIP;
-
-public class ResourcePackGenerator {
-    @Nullable
-    private final PrismarineCompiler compiler;
-
-    @NotNull
-    private final String rootPath;
-    @NotNull
-    private final File rootFile;
-
-    private final Gson gson;
-
-    private String description;
-
-    @NotNull
-    public ArrayList<Exportable> exportables;
-
-    @NotNull
-    private final ModulePackGenerator.OutputType outputType;
-
-    private ZipOutputStream zipStream;
-
+public class ResourcePackGenerator extends PrismarineExportablePack {
     public ResourcePackGenerator(@Nullable PrismarineCompiler compiler, @NotNull File outFile) {
-        this(compiler, outFile, outFile.getName().endsWith(".zip") ? ZIP : FOLDER);
+        super(compiler, outFile);
     }
 
-    private float progressDelta = 1;
-
-    public ResourcePackGenerator(@Nullable PrismarineCompiler compiler, @NotNull File outFile, @NotNull ModulePackGenerator.OutputType outputType) {
-        this.compiler = compiler;
-        this.outputType = outputType;
-
-        if(outputType == FOLDER && !outFile.exists()) {
-            outFile.mkdirs();
-        } else if(outputType == ZIP && !outFile.getParentFile().exists()) {
-            outFile.getParentFile().mkdirs();
-        }
-        this.gson = new GsonBuilder().setPrettyPrinting().create();
-
-        this.rootPath = outFile.getAbsolutePath();
-        this.rootFile = outFile;
-        this.exportables = new ArrayList<>();
-        this.description = "Resource Pack created with Trident";
+    public ResourcePackGenerator(@Nullable PrismarineCompiler compiler, @NotNull File outFile, ModulePackGenerator.@NotNull OutputType outputType) {
+        super(compiler, outFile, outputType);
     }
 
-    public void generate() throws IOException {
-        if(outputType == ZIP) {
-            zipStream = new ZipOutputStream(new FileOutputStream(rootFile));
-        }
-
-        try {
-            progressDelta = exportables.isEmpty() ? 1 : 1f/(exportables.size());
-
-            for(Exportable exportable : exportables) {
-                if(exportable.shouldExport()) {
-                    createFile(exportable.getExportPath(), exportable.getContents());
-                }
-            }
-        } finally {
-            if(zipStream != null) zipStream.close();
-        }
-    }
-
-    private void createFile(@Nullable String path, @Nullable byte[] contents) throws IOException {
-        if(path == null || contents == null) return;
-        if(compiler != null) {
-            compiler.updateProgress(compiler.getProgress() + progressDelta);
-            compiler.setProgress("Generating resource pack: " + path);
-        }
-        if(outputType == ZIP) {
-            ZipEntry e = new ZipEntry(path);
-            zipStream.putNextEntry(e);
-
-            byte[] data = contents;
-            zipStream.write(data, 0, data.length);
-            zipStream.closeEntry();
-        } else {
-            File file = new File(rootPath + File.separator + path.replace("/", File.separator));
-            file.getParentFile().mkdirs();
-            file.createNewFile();
-
-            try(FileOutputStream writer = new FileOutputStream(file)) {
-                writer.write(contents);
-                writer.flush();
-            }
-        }
-    }
-
-    @NotNull
-    public ModulePackGenerator.OutputType getOutputType() {
-        return outputType;
+    @Override
+    public String getProgressMessage() {
+        return "Generating resource pack";
     }
 }

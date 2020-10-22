@@ -40,7 +40,6 @@ public class ClassMethod extends TypedFunction {
 
     //overrides, self-returning
 
-
     @Override
     public ClassMethod setFormalParameters(List<FormalParameter> formalParameters) {
         super.setFormalParameters(formalParameters);

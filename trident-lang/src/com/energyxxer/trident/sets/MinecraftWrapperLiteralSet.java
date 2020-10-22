@@ -55,30 +55,5 @@ public class MinecraftWrapperLiteralSet extends PatternProviderSet {
 
         importUnit(productions -> group(literal("uuid").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("UUID"), TridentProductions.brace(">")).setName("WRAPPED_UUID").setSimplificationFunction(wrapperSimplification));
 
-
-        //temp
-        importUnit(productions -> group(literal("__temp_block_id").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("BLOCK_ID"), TridentProductions.brace(">")).setName("WRAPPED_TEMP").setSimplificationFunction(wrapperSimplification));
-        importUnit(productions -> group(literal("__temp_block_tag").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("BLOCK_ID_TAGGED"), TridentProductions.brace(">")).setName("WRAPPED_TEMP").setSimplificationFunction(wrapperSimplification));
-        importUnit(productions -> group(literal("__temp_entity_id").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("ENTITY_ID"), TridentProductions.brace(">")).setName("WRAPPED_TEMP").setSimplificationFunction(wrapperSimplification));
-        importUnit(productions -> group(literal("__temp_entity_tag").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("ENTITY_ID_TAGGED"), TridentProductions.brace(">")).setName("WRAPPED_TEMP").setSimplificationFunction(wrapperSimplification));
-
-        importUnit(productions -> group(literal("__temp_dimension_id").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("DIMENSION_ID"), TridentProductions.brace(">")).setName("WRAPPED_TEMP").setSimplificationFunction(wrapperSimplification));
-
-        importUnit(productions -> group(literal("__temp_particle").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("PARTICLE"), TridentProductions.brace(">")).setName("WRAPPED_TEMP").setSimplificationFunction(wrapperSimplification));
-        importUnit(productions -> group(literal("__temp_gamerule_setter").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("GAMERULE_SETTER"), TridentProductions.brace(">")).setName("WRAPPED_TEMP").setSimplificationFunction(wrapperSimplification));
-
-        importUnit(productions -> group(literal("__temp_block").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("BLOCK"), TridentProductions.brace(">")).setName("WRAPPED_TEMP").setSimplificationFunction(wrapperSimplification));
-
-
-        importUnit(productions -> group(literal("__temp_item_setting").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("ITEM_TAGGED"), TridentProductions.brace(">")).setName("WRAPPED_TEMP").setSimplificationFunction(d -> {
-            d.pattern = ((TokenGroup) d.pattern).getContents()[2];
-            d.data = new Object[] {(ISymbolContext) d.data[0], NBTMode.SETTING};
-        }));
-        importUnit(productions -> group(literal("__temp_item_testing").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("ITEM_TAGGED"), TridentProductions.brace(">")).setName("WRAPPED_TEMP").setSimplificationFunction(d -> {
-            d.pattern = ((TokenGroup) d.pattern).getContents()[2];
-            d.data = new Object[] {(ISymbolContext) d.data[0], NBTMode.TESTING};
-        }));
-
-        importUnit(productions -> group(literal("__nel").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("NEW_ENTITY_LITERAL"), TridentProductions.brace(">")).setName("WRAPPED_TEMP").setSimplificationFunction(wrapperSimplification));
     }
 }

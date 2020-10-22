@@ -52,10 +52,10 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         super(null);
     }
 
-    private static final ArrayList<PreBlockDeclaration> preBlockDeclarations = new ArrayList<>();
-    public static final BiConsumer<TokenPattern<?>, Lexer> clearPreBlockDeclarations = (p, l) -> preBlockDeclarations.clear();
+    private final ArrayList<PreBlockDeclaration> preBlockDeclarations = new ArrayList<>();
+    public final BiConsumer<TokenPattern<?>, Lexer> clearPreBlockDeclarations = (p, l) -> preBlockDeclarations.clear();
 
-    public static final BiConsumer<TokenPattern<?>, Lexer> capturePreBlockDeclarations = (p, l) -> {
+    public final BiConsumer<TokenPattern<?>, Lexer> capturePreBlockDeclarations = (p, l) -> {
         if(l.getSummaryModule() != null) {
             for(PreBlockDeclaration declaration : preBlockDeclarations) {
                 SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), declaration.declarationPattern.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index + 1);
@@ -518,13 +518,13 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
     }
 
 
-    public static PreBlockDeclaration addPreBlockDeclaration(TokenPattern<?> declarationPattern) {
+    public PreBlockDeclaration addPreBlockDeclaration(TokenPattern<?> declarationPattern) {
         PreBlockDeclaration declaration = new PreBlockDeclaration(declarationPattern);
         preBlockDeclarations.add(declaration);
         return declaration;
     }
 
-    public static PreBlockDeclaration addPreBlockDeclaration(TokenPattern<?> declarationPattern, TokenPattern<?> constraintsPattern) {
+    public PreBlockDeclaration addPreBlockDeclaration(TokenPattern<?> declarationPattern, TokenPattern<?> constraintsPattern) {
         PreBlockDeclaration declaration = new PreBlockDeclaration(declarationPattern, constraintsPattern);
         preBlockDeclarations.add(declaration);
         return declaration;

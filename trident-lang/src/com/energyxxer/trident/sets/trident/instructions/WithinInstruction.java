@@ -26,7 +26,7 @@ public class WithinInstruction implements InstructionDefinition {
                 TridentProductions.instructionKeyword("within"),
                 TridentProductions.identifierX().setName("VARIABLE_NAME").addProcessor((p, l) -> {
                     if(l.getSummaryModule() != null) {
-                        ValueAccessExpressionSet.addPreBlockDeclaration(p.find("VARIABLE_NAME")).setTags(new String[] {TridentSuggestionTags.TAG_COORDINATE});
+                        productions.getProviderSet(ValueAccessExpressionSet.class).addPreBlockDeclaration(p.find("VARIABLE_NAME")).setTags(new String[] {TridentSuggestionTags.TAG_COORDINATE});
                     }
                 }),
                 wrapper(productions.getOrCreateStructure("COORDINATE_SET")).setName("FROM").addTags("cspn:From"),

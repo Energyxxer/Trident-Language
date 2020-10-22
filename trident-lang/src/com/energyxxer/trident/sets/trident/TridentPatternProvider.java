@@ -50,6 +50,8 @@ public class TridentPatternProvider extends PatternProviderSet {
 
     @Override
     protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
+        ValueAccessExpressionSet vae = productions.getProviderSet(ValueAccessExpressionSet.class);
+        
         productions.getOrCreateStructure("COMMENT").add(new TokenItemMatch(COMMENT).setName("COMMENT").addProcessor(
                 (p, l) -> {
                     if (l.getSummaryModule() != null) {
@@ -164,7 +166,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                             TokenList paramList = (TokenList) p.find("FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
                             if(paramList != null) {
                                 for(TokenPattern<?> paramPattern : paramList.searchByName("FORMAL_PARAMETER")) {
-                                    ValueAccessExpressionSet.addPreBlockDeclaration(paramPattern.find("FORMAL_PARAMETER_NAME"), paramPattern.find("TYPE_CONSTRAINTS"));
+                                    vae.addPreBlockDeclaration(paramPattern.find("FORMAL_PARAMETER_NAME"), paramPattern.find("TYPE_CONSTRAINTS"));
                                 }
                             }
                         }
@@ -232,9 +234,9 @@ public class TridentPatternProvider extends PatternProviderSet {
 
 
 
-        productions.getOrCreateStructure("INNER_FUNCTION").add(group(group(productions.getOrCreateStructure("RESOURCE_LOCATION")).setName("INNER_FUNCTION_NAME"), TridentProductions.brace("{").addProcessor(ValueAccessExpressionSet.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), TridentProductions.brace("}")).setGreedy(true).addProcessor(surroundBlock));
-        productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION").add(group(TridentProductions.brace("{").addProcessor(ValueAccessExpressionSet.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), TridentProductions.brace("}")).setGreedy(true).addProcessor(surroundBlock));
-        productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION").add(group(group(productions.getOrCreateStructure("RESOURCE_LOCATION")).setOptional().setName("INNER_FUNCTION_NAME"), TridentProductions.brace("{").addProcessor(ValueAccessExpressionSet.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), TridentProductions.brace("}")).setGreedy(true).addProcessor(surroundBlock));
+        productions.getOrCreateStructure("INNER_FUNCTION").add(group(group(productions.getOrCreateStructure("RESOURCE_LOCATION")).setName("INNER_FUNCTION_NAME"), TridentProductions.brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), TridentProductions.brace("}")).setGreedy(true).addProcessor(surroundBlock));
+        productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION").add(group(TridentProductions.brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), TridentProductions.brace("}")).setGreedy(true).addProcessor(surroundBlock));
+        productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION").add(group(group(productions.getOrCreateStructure("RESOURCE_LOCATION")).setOptional().setName("INNER_FUNCTION_NAME"), TridentProductions.brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), TridentProductions.brace("}")).setGreedy(true).addProcessor(surroundBlock));
 
 
 

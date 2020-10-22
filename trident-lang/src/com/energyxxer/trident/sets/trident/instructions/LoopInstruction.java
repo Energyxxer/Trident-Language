@@ -46,7 +46,7 @@ public abstract class LoopInstruction implements InstructionDefinition {
                 if(l.getSummaryModule() != null) {
                     TokenPattern<?> iteratorName = p.find("LOOP_HEADER.VARIABLE_NAME");
                     if(iteratorName != null) {
-                        ValueAccessExpressionSet.addPreBlockDeclaration(iteratorName);
+                        productions.getProviderSet(ValueAccessExpressionSet.class).addPreBlockDeclaration(iteratorName);
                     }
                 }
             }), wrapper(productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setName("LOOP_BODY")).setName("FOR_STATEMENT");

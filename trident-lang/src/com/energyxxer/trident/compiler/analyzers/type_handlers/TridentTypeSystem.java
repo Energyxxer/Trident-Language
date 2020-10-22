@@ -47,7 +47,6 @@ public class TridentTypeSystem extends PrismarineTypeSystem {
         registerPrimitiveTypeHandler(new RealTypeHandler(this));
         registerPrimitiveTypeHandler(new StringTypeHandler(this));
         registerPrimitiveTypeHandler(new ResourceTypeHandler(this));
-        registerPrimitiveTypeHandler(new CommandTypeHandler(this));
         registerPrimitiveTypeHandler(new TextComponentTypeHandler(this));
         registerPrimitiveTypeHandler(new CoordinateTypeHandler(this));
         registerPrimitiveTypeHandler(new RotationTypeHandler(this));

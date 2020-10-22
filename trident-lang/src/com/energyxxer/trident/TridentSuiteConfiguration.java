@@ -200,6 +200,11 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
 
     @Override
     public void onAllCompilationWorkerTasksFinished(PrismarineProjectWorker worker, PrismarineCompiler compiler) {
+        ResourcePackGenerator resourcePack = worker.output.get(SetupResourcePackTask.INSTANCE);
+        if(resourcePack != null) {
+            resourcePack.setCompiler(compiler);
+        }
+
         DefaultOperators.populateOperatorManager(compiler.getTypeSystem().getOperatorManager(), compiler.getTypeSystem());
     }
 
