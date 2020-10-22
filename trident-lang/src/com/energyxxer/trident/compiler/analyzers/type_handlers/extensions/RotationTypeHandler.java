@@ -38,9 +38,9 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
         if(members != null) return;
         members = new HashMap<>();
 
-        CustomClass.registerStringIdentifiedClassListener("trident-util:native@RotationType", customClass -> {
-            ROTATION_TYPE_ABSOLUTE = (CustomClassObject) customClass.forceGetMember("ABSOLUTE");
-            ROTATION_TYPE_RELATIVE = (CustomClassObject) customClass.forceGetMember("RELATIVE");
+        typeSystem.registerUserDefinedTypeListener("trident-util:native@RotationType", customClass -> {
+            ROTATION_TYPE_ABSOLUTE = (CustomClassObject) ((CustomClass) customClass).forceGetMember("ABSOLUTE");
+            ROTATION_TYPE_RELATIVE = (CustomClassObject) ((CustomClass) customClass).forceGetMember("RELATIVE");
         });
 
         try {

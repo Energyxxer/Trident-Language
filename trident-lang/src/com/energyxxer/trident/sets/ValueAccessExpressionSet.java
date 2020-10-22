@@ -174,12 +174,12 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
         TokenStructureMatch MEMBER_ACCESS;
         MEMBER_ACCESS = choice(
-                config.memberAccess ? group(TridentProductions.dot(), TridentProductions.identifierX()
+                config.memberAccess ? group(TridentProductions.symbol("?").setName("NULL_FORGIVE").setOptional().setRecessive(), TridentProductions.dot(), TridentProductions.identifierX()
                         .setName("SYMBOL_NAME")
                         .addTags(SuggestionTags.ENABLED)
                 ).setName("MEMBER_KEY") : null,
-                config.indexAccess ? group(TridentProductions.brace("["), group(productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("INDEX"), TridentProductions.brace("]")).setName("MEMBER_INDEX") : null,
-                config.callAccess ? group(TridentProductions.brace("(").setName("__member_access_call").addProcessor(startClosure), list(productions.getOrCreateStructure("INTERPOLATION_VALUE"), TridentProductions.comma()).setOptional().setName("PARAMETERS"), TridentProductions.brace(")")).setName("METHOD_CALL").addProcessor(endComplexValue).addFailProcessor((ip, l) -> {
+                config.indexAccess ? group(TridentProductions.symbol("?").setName("NULL_FORGIVE").setOptional().setRecessive(), TridentProductions.brace("["), group(productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("INDEX"), TridentProductions.brace("]")).setName("MEMBER_INDEX") : null,
+                config.callAccess ? group(TridentProductions.symbol("?").setName("NULL_FORGIVE").setOptional().setRecessive(), TridentProductions.brace("(").setName("__member_access_call").addProcessor(startClosure), list(productions.getOrCreateStructure("INTERPOLATION_VALUE"), TridentProductions.comma()).setOptional().setName("PARAMETERS"), TridentProductions.brace(")")).setName("METHOD_CALL").addProcessor(endComplexValue).addFailProcessor((ip, l) -> {
                     if(ip.find("__member_access_call") != null) {
                         endComplexValue.accept(null, l);
                     }
@@ -408,7 +408,6 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
             for (int i = firstAccessorParameters[0] == null ? 0 : 1; i < accessors.length; i++) {
                 TokenPattern<?> accessor = accessors[i];
-                EObject.assertNotNull(parent, toBlame, ctx);
 
                 if(parent instanceof ParameterizedMemberHolder && i+1 < accessors.length && accessor.getName().equals("MEMBER_KEY") && accessors[i+1].getName().equals("METHOD_CALL")) {
                     ActualParameterList paramList = parseActualParameterList(accessors[i+1], ctx);
@@ -432,6 +431,10 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 }
 
                 parent = parseAccessor(parent, toBlame, accessor, ctx, keepSymbol && (i == accessors.length-1));
+                if(parent == NULL_FORGIVEN.class) {
+                    parent = null;
+                    break;
+                }
                 toBlame = accessor;
             }
 
@@ -449,6 +452,10 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
     private static Object parseAccessor(Object parent, TokenPattern<?> parentPattern, TokenPattern<?> accessorPattern, ISymbolContext ctx, boolean keepSymbol) {
         //expect sanitized accessor pattern
+        boolean nullForgive = accessorPattern.find("NULL_FORGIVE") != null;
+        if(nullForgive && parent == null) {
+            return NULL_FORGIVEN.class;
+        }
         EObject.assertNotNull(parent, parentPattern, ctx);
         switch (accessorPattern.getName()) {
             case "MEMBER_KEY": {
@@ -560,4 +567,6 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
     private static final ValueChainConfiguration NORMAL_VALUE_CHAIN_CONFIG = new ValueChainConfiguration();
     private static final ValueChainConfiguration TYPE_CHAIN_CONFIG = new ValueChainConfiguration() {{indexAccess = callAccess = tail = false;}};
+
+    private static class NULL_FORGIVEN {}
 }

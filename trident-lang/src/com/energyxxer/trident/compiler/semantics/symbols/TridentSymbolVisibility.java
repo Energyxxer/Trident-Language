@@ -59,7 +59,7 @@ public class TridentSymbolVisibility {
             // while the file hasn't called surroundBlock() with proper block start and end indices
             return (symbol.getScopeEnd() == 0 || (symbol.getScopeStart() <= inFileIndex &&
                     inFileIndex <= symbol.getScopeEnd()))
-                    && Objects.equals(fromPath, ((PrismarineSummaryModule) symbol.getParentFileSummary()).getFileLocation());
+                    && (fromPath == null || symbol.getParentFileSummary() == null || fromPath.equals(((PrismarineSummaryModule) symbol.getParentFileSummary()).getFileLocation()));
         }
 
         @Override

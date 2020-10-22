@@ -751,22 +751,6 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
 
 
-    public static void registerStringIdentifiedClassListener(String classIdentifier, Consumer<CustomClass> listener) {
-        if(!stringIdentifiedClassListeners.containsKey(classIdentifier)) {
-            stringIdentifiedClassListeners.put(classIdentifier, new ArrayList<>());
-        }
-        stringIdentifiedClassListeners.get(classIdentifier).add(listener);
-    }
-
-    public static void updateStringIdentifiedClassListener(CustomClass cls) {
-        List<Consumer<CustomClass>> listeners = stringIdentifiedClassListeners.get(cls.getTypeIdentifier());
-        if(listeners != null) {
-            for(Consumer<CustomClass> listener : listeners) {
-                listener.accept(cls);
-            }
-        }
-    }
-
     public static CustomClass createBaseClass(PrismarineTypeSystem typeSystem) {
         return new CustomClass(typeSystem);
     }
