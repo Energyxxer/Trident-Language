@@ -174,12 +174,12 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
         TokenStructureMatch MEMBER_ACCESS;
         MEMBER_ACCESS = choice(
-                config.memberAccess ? group(TridentProductions.symbol("?").setName("NULL_FORGIVE").setOptional().setRecessive(), TridentProductions.dot(), TridentProductions.identifierX()
+                config.memberAccess ? group(TridentProductions.symbol("?").setName("NULL_PROPAGATION").setOptional().setRecessive(), TridentProductions.dot(), TridentProductions.identifierX()
                         .setName("SYMBOL_NAME")
                         .addTags(SuggestionTags.ENABLED)
                 ).setName("MEMBER_KEY") : null,
-                config.indexAccess ? group(TridentProductions.symbol("?").setName("NULL_FORGIVE").setOptional().setRecessive(), TridentProductions.brace("["), group(productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("INDEX"), TridentProductions.brace("]")).setName("MEMBER_INDEX") : null,
-                config.callAccess ? group(TridentProductions.symbol("?").setName("NULL_FORGIVE").setOptional().setRecessive(), TridentProductions.brace("(").setName("__member_access_call").addProcessor(startClosure), list(productions.getOrCreateStructure("INTERPOLATION_VALUE"), TridentProductions.comma()).setOptional().setName("PARAMETERS"), TridentProductions.brace(")")).setName("METHOD_CALL").addProcessor(endComplexValue).addFailProcessor((ip, l) -> {
+                config.indexAccess ? group(TridentProductions.symbol("?").setName("NULL_PROPAGATION").setOptional().setRecessive(), TridentProductions.brace("["), group(productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("INDEX"), TridentProductions.brace("]")).setName("MEMBER_INDEX") : null,
+                config.callAccess ? group(TridentProductions.symbol("?").setName("NULL_PROPAGATION").setOptional().setRecessive(), TridentProductions.brace("(").setName("__member_access_call").addProcessor(startClosure), list(productions.getOrCreateStructure("INTERPOLATION_VALUE"), TridentProductions.comma()).setOptional().setName("PARAMETERS"), TridentProductions.brace(")")).setName("METHOD_CALL").addProcessor(endComplexValue).addFailProcessor((ip, l) -> {
                     if(ip.find("__member_access_call") != null) {
                         endComplexValue.accept(null, l);
                     }
@@ -431,7 +431,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 }
 
                 parent = parseAccessor(parent, toBlame, accessor, ctx, keepSymbol && (i == accessors.length-1));
-                if(parent == NULL_FORGIVEN.class) {
+                if(parent == NULL_PROPAGATION.class) {
                     parent = null;
                     break;
                 }
@@ -452,9 +452,9 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
     private static Object parseAccessor(Object parent, TokenPattern<?> parentPattern, TokenPattern<?> accessorPattern, ISymbolContext ctx, boolean keepSymbol) {
         //expect sanitized accessor pattern
-        boolean nullForgive = accessorPattern.find("NULL_FORGIVE") != null;
-        if(nullForgive && parent == null) {
-            return NULL_FORGIVEN.class;
+        boolean propagateNull = accessorPattern.find("NULL_PROPAGATION") != null;
+        if(propagateNull && parent == null) {
+            return NULL_PROPAGATION.class;
         }
         EObject.assertNotNull(parent, parentPattern, ctx);
         switch (accessorPattern.getName()) {
@@ -568,5 +568,5 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
     private static final ValueChainConfiguration NORMAL_VALUE_CHAIN_CONFIG = new ValueChainConfiguration();
     private static final ValueChainConfiguration TYPE_CHAIN_CONFIG = new ValueChainConfiguration() {{indexAccess = callAccess = tail = false;}};
 
-    private static class NULL_FORGIVEN {}
+    private static class NULL_PROPAGATION {}
 }
