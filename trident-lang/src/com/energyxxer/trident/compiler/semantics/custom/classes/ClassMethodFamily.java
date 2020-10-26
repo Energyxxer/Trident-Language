@@ -1,6 +1,8 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
@@ -16,6 +18,7 @@ import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ClassMethodFamily extends TypedFunctionFamily<ClassMethod> {
@@ -29,6 +32,9 @@ public class ClassMethodFamily extends TypedFunctionFamily<ClassMethod> {
     protected void validatePickedOverload(ClassMethod bestMatch, ActualParameterList params, ISymbolContext ctx) {
         if(!bestMatch.getDefiningClass().hasAccess(ctx, bestMatch.getVisibility())) {
             throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, bestMatch + " has " + bestMatch.getVisibility().toString().toLowerCase() + " access in " + bestMatch.getDefiningClass().getClassTypeIdentifier(), params.getPattern(), ctx);
+        }
+        if(params.hasNames() && bestMatch.isNamedParameterCallsDisabled()) {
+            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, bestMatch + " has mismatched parameter names with its overriding method.\nNamed parameters have been disabled for calls to this method", params.getPattern(), ctx);
         }
     }
 
@@ -98,6 +104,23 @@ public class ClassMethodFamily extends TypedFunctionFamily<ClassMethod> {
                     throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot override " + existing + " due to incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
                 }
 
+                //Check parameter names (warn)
+
+                for(int i = 0; i < existing.getFormalParameters().size(); i++) {
+                    FormalParameter existingParam = existing.getFormalParameters().get(i);
+                    FormalParameter newParam = method.getFormalParameters().get(i);
+
+                    if(!Objects.equals(existingParam.getName(), newParam.getName())) {
+                        ctx.getCompiler().getReport().addNotice(new Notice(NoticeType.WARNING,
+                                "Method '" + method + "' has a different parameter name for position " + i + " to that of the method it is overriding." +
+                                        "\nNamed function arguments will be unusable with this method." +
+                                        "\n    Parameter name in " + existing.getDefiningClass().getTypeIdentifier() + ": " + existingParam.getName() + "" +
+                                        "\n    Parameter name in " + method.getDefiningClass().getTypeIdentifier() + ": " + newParam.getName(), pattern)
+                        );
+                        method.disableNamedParameterCalls();
+                    }
+
+                }
             }
 
 

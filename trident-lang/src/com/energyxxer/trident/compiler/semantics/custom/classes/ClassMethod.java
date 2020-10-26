@@ -13,6 +13,8 @@ public class ClassMethod extends TypedFunction {
     private final CustomClass definingClass;
     private VariableInstruction.SymbolModifierMap modifiers;
 
+    private boolean namedParameterCallsDisabled = false;
+
     public ClassMethod(String name, CustomClass definingClass) {
         super(name);
         this.definingClass = definingClass;
@@ -50,5 +52,13 @@ public class ClassMethod extends TypedFunction {
     public ClassMethod setVisibility(SymbolVisibility visibility) {
         super.setVisibility(visibility);
         return this;
+    }
+
+    public void disableNamedParameterCalls() {
+        namedParameterCallsDisabled = true;
+    }
+
+    public boolean isNamedParameterCallsDisabled() {
+        return namedParameterCallsDisabled;
     }
 }
