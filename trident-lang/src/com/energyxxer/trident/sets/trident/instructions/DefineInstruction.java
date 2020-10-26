@@ -131,9 +131,7 @@ public class DefineInstruction implements InstructionDefinition {
                         sym.setType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, p.find("TYPE_CONSTRAINTS")));
                         sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE.ROOT_INTERPOLATION_VALUE.NEW_FUNCTION_SPLIT.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
 
-                        if(p.find("SYMBOL_MODIFIER_LIST") != null && p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
-                            sym.setStaticField(true);
-                        } else {
+                        if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                             sym.setInstanceField(true);
                         }
                         if(!sym.hasSubBlock()) {
@@ -167,9 +165,7 @@ public class DefineInstruction implements InstructionDefinition {
                         //sym.addUsage(p.find("SYMBOL_NAME"));
                         sym.setVisibility(TridentProductions.parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
                         sym.addTag(TridentSuggestionTags.TAG_METHOD);
-                        if(p.find("SYMBOL_MODIFIER_LIST") != null && p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
-                            sym.setStaticField(true);
-                        } else {
+                        if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                             sym.setInstanceField(true);
                         }
                         if(!sym.hasSubBlock()) {

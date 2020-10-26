@@ -9,6 +9,7 @@ import com.energyxxer.prismarine.typesystem.ContextualToString;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 import org.jetbrains.annotations.NotNull;
@@ -159,7 +160,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
         try {
             int i = 0;
             for (Symbol sym : content) {
-                newList.add(function.safeCall(new Object[]{sym.getValue(pattern, ctx), i}, new TokenPattern[]{pattern, pattern}, pattern, ctx, null));
+                newList.add(function.safeCall(new ActualParameterList(new Object[] {sym.getValue(pattern, ctx), i}, null, pattern), ctx, null));
                 i++;
             }
         } catch(ConcurrentModificationException x) {
@@ -175,7 +176,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
         try {
             int i = 0;
             for (Symbol sym : content) {
-                Object obj = function.safeCall(new Object[]{sym.getValue(pattern, ctx), i}, new TokenPattern[]{pattern, pattern}, pattern, ctx, null);
+                Object obj = function.safeCall(new ActualParameterList(new Object[] {sym.getValue(pattern, ctx), i}, null, pattern), ctx, null);
                 if(Boolean.TRUE.equals(obj)) {
                     newList.add(sym.getValue(pattern, ctx));
                 }

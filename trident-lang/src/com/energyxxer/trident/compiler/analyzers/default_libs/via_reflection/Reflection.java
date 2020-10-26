@@ -5,6 +5,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.trident.TridentFileUnitConfiguration;
 import com.energyxxer.trident.compiler.ResourceLocation;
@@ -31,7 +32,7 @@ public class Reflection {
 
         ctx.get(SetupWritingStackTask.INSTANCE).pushWritingFile(file);
         try {
-            writer.safeCall(new Object[0], new TokenPattern[0], callingPattern, ctx, null);
+            writer.safeCall(new ActualParameterList(callingPattern), ctx, null);
         } finally {
             ctx.get(SetupWritingStackTask.INSTANCE).popWritingFile();
         }

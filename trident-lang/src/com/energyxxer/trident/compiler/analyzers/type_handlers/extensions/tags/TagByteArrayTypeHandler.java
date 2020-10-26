@@ -1,18 +1,20 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 
-import com.energyxxer.commodore.functionlogic.nbt.*;
+import com.energyxxer.commodore.functionlogic.nbt.TagByte;
+import com.energyxxer.commodore.functionlogic.nbt.TagByteArray;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
-import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 
 import static com.energyxxer.prismarine.typesystem.PrismarineTypeSystem.assertOfClass;
 
 public class TagByteArrayTypeHandler implements TypeHandler<TagByteArray> {
-    private static final PrimitivePrismarineFunction CONSTRUCTOR = (params, patterns, pattern, ctx, thisObject) -> constructTagByteArray(params, patterns, pattern, ctx);
+    private static final PrimitivePrismarineFunction CONSTRUCTOR = (params, ctx, thisObject) -> constructTagByteArray(params, ctx);
 
     private final PrismarineTypeSystem typeSystem;
 
@@ -63,14 +65,14 @@ public class TagByteArrayTypeHandler implements TypeHandler<TagByteArray> {
         return CONSTRUCTOR;
     }
 
-    private static TagByteArray constructTagByteArray(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(params.length == 0 || params[0] == null) return new TagByteArray();
-        ListObject list = PrismarineTypeSystem.assertOfClass(params[0], patterns[0], ctx, ListObject.class);
+    private static TagByteArray constructTagByteArray(ActualParameterList params, ISymbolContext ctx) {
+        if(params.size() == 0 || params.getValue(0) == null) return new TagByteArray();
+        ListObject list = PrismarineTypeSystem.assertOfClass(params.getValue(0), params.getPattern(0), ctx, ListObject.class);
 
         TagByteArray arr = new TagByteArray();
 
         for(Object obj : list) {
-            Object checked = assertOfClass(obj, patterns[0], ctx, Integer.class, TagByte.class);
+            Object checked = assertOfClass(obj, params.getPattern(0), ctx, Integer.class, TagByte.class);
             if(checked instanceof TagByte) {
                 arr.add((TagByte) checked);
             } else {

@@ -27,7 +27,7 @@ public class ClassMethodSymbolContext extends SymbolContext {
     public Symbol search(@NotNull String name, ISymbolContext from, ActualParameterList params) {
         if (params != null && classMethods != null && classMethods.containsKey(name)) {
             ClassMethodFamily method = classMethods.get(name);
-            return method.pickOverloadSymbol(params, ((ActualParameterList) params).getPattern(), from, thisObject);
+            return method.pickOverloadSymbol(params, from, thisObject);
         }
         return super.search(name, from, params);
     }

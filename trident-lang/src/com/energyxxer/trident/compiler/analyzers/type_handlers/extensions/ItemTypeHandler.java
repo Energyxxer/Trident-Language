@@ -7,20 +7,21 @@ import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.types.Type;
-import com.energyxxer.trident.compiler.ResourceLocation;
-import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
-import com.energyxxer.prismarine.symbols.AutoPropertySymbol;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.AutoPropertySymbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 
 public class ItemTypeHandler implements TypeHandler<Item> {
-    private static final PrimitivePrismarineFunction CONSTRUCTOR = (params, patterns, pattern, ctx, thisObject) -> constructItem(params, patterns, pattern, ctx);
+    private static final PrimitivePrismarineFunction CONSTRUCTOR = (params, ctx, thisObject) -> constructItem(params, ctx);
 
     private final PrismarineTypeSystem typeSystem;
 
@@ -51,7 +52,7 @@ public class ItemTypeHandler implements TypeHandler<Item> {
                 return keepSymbol ? property : property.getValue(pattern, ctx);
             }
             case "getSlotNBT":
-                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> getSlotNBT(object);
+                return (PrimitivePrismarineFunction) (params, ctx1, thisObject) -> getSlotNBT(object);
         }
         throw new MemberNotFoundException();
     }
@@ -93,10 +94,10 @@ public class ItemTypeHandler implements TypeHandler<Item> {
         return CONSTRUCTOR;
     }
 
-    private static Item constructItem(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+    private static Item constructItem(ActualParameterList params, ISymbolContext ctx) {
         CommandModule module = ctx.get(SetupModuleTask.INSTANCE);
-        if(params.length == 0 || params[0] == null) return new Item(module.minecraft.types.item.get("air"));
-        ResourceLocation loc = PrismarineTypeSystem.assertOfClass(params[0], patterns[0], ctx, ResourceLocation.class);
+        if(params.size() == 0 || params.getValue(0) == null) return new Item(module.minecraft.types.item.get("air"));
+        ResourceLocation loc = PrismarineTypeSystem.assertOfClass(params.getValue(0), params.getPattern(0), ctx, ResourceLocation.class);
         Namespace ns = module.getNamespace(loc.namespace);
 
         Type type;
@@ -107,7 +108,7 @@ public class ItemTypeHandler implements TypeHandler<Item> {
             type = ns.types.item.get(loc.body);
         }
 
-        if(type == null) throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Resource location " + params[0] + " is not a valid item type", patterns[0], ctx);
+        if(type == null) throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Resource location " + params.getValue(0) + " is not a valid item type", params.getPattern(0), ctx);
 
         return new Item(type);
     }

@@ -14,6 +14,7 @@ import com.energyxxer.prismarine.expressions.TokenExpression;
 import com.energyxxer.prismarine.expressions.TokenExpressionMatch;
 import com.energyxxer.prismarine.providers.PatternProviderSet;
 import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
 import com.energyxxer.prismarine.summaries.SymbolSuggestion;
 import com.energyxxer.prismarine.symbols.Symbol;
@@ -35,9 +36,7 @@ import com.energyxxer.util.logger.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -83,6 +82,18 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
     @Override
     protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
 
+        TokenPatternMatch ACTUAL_PARAMETERS = list(
+                group(
+                        optional(
+                                TridentProductions.identifierX(),
+                                TridentProductions.colon()
+                        ).setName("ACTUAL_PARAMETER_LABEL").setEvaluator((p, d) -> ((TokenGroup) p).getContents()[0].flatten(false)),
+                        productions.getOrCreateStructure("INTERPOLATION_VALUE")
+                ),
+                TridentProductions.comma()
+        ).setOptional().setName("ACTUAL_PARAMETERS");
+        productions.putPatternMatch("ACTUAL_PARAMETERS", ACTUAL_PARAMETERS);
+
         productions.getOrCreateStructure("ROOT_INTERPOLATION_VALUE")
                 .add(
                         choice(TridentProductions.identifierX(), literal("this"))
@@ -99,10 +110,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                                 literal("new").setName("VALUE_WRAPPER_KEY"),
                                 productions.getOrCreateStructure("INTERPOLATION_TYPE"),
                                 TridentProductions.brace("("),
-                                list(
-                                        productions.getOrCreateStructure("INTERPOLATION_VALUE"),
-                                        TridentProductions.comma()
-                                ).setOptional().setName("PARAMETERS"),
+                                productions.getPatternMatch("ACTUAL_PARAMETERS"),
                                 TridentProductions.brace(")")
                         ).setName("CONSTRUCTOR_CALL")
                         .setEvaluator((p, d) -> {
@@ -114,19 +122,10 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                             if (constructor == null) {
                                 throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "There is no constructor for type '" + ctx.getTypeSystem().getTypeIdentifierForType(handler) + "'", p.find("INTERPOLATION_TYPE"), ctx);
                             }
-                            ArrayList<Object> params = new ArrayList<>();
-                            ArrayList<TokenPattern<?>> patterns = new ArrayList<>();
 
-                            TokenList paramList = (TokenList) p.find("PARAMETERS");
+                            ActualParameterList actualParams = parseActualParameterList(p, ctx);
 
-                            if (paramList != null) {
-                                for (TokenPattern<?> rawParam : paramList.getContentsExcludingSeparators()) {
-                                    params.add(rawParam.evaluate(ctx, false));
-                                    patterns.add(rawParam);
-                                }
-                            }
-
-                            return ctx.getTypeSystem().sanitizeObject(constructor.safeCall(params.toArray(), patterns.toArray(new TokenPattern<?>[0]), p, ctx, null));
+                            return ctx.getTypeSystem().sanitizeObject(constructor.safeCall(actualParams, ctx, null));
                         })
                 ).addTags(SuggestionTags.ENABLED, SuggestionTags.DISABLED_INDEX, TridentSuggestionTags.CONTEXT_INTERPOLATION_VALUE);
 
@@ -174,12 +173,17 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
         TokenStructureMatch MEMBER_ACCESS;
         MEMBER_ACCESS = choice(
-                config.memberAccess ? group(TridentProductions.symbol("?").setName("NULL_PROPAGATION").setOptional().setRecessive(), TridentProductions.dot(), TridentProductions.identifierX()
+                config.memberAccess ? group(TridentProductions.nullPropagation(), TridentProductions.dot(), TridentProductions.identifierX()
                         .setName("SYMBOL_NAME")
                         .addTags(SuggestionTags.ENABLED)
                 ).setName("MEMBER_KEY") : null,
-                config.indexAccess ? group(TridentProductions.symbol("?").setName("NULL_PROPAGATION").setOptional().setRecessive(), TridentProductions.brace("["), group(productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("INDEX"), TridentProductions.brace("]")).setName("MEMBER_INDEX") : null,
-                config.callAccess ? group(TridentProductions.symbol("?").setName("NULL_PROPAGATION").setOptional().setRecessive(), TridentProductions.brace("(").setName("__member_access_call").addProcessor(startClosure), list(productions.getOrCreateStructure("INTERPOLATION_VALUE"), TridentProductions.comma()).setOptional().setName("PARAMETERS"), TridentProductions.brace(")")).setName("METHOD_CALL").addProcessor(endComplexValue).addFailProcessor((ip, l) -> {
+                config.indexAccess ? group(TridentProductions.nullPropagation(), TridentProductions.brace("["), group(productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("INDEX"), TridentProductions.brace("]")).setName("MEMBER_INDEX") : null,
+                config.callAccess ? group(
+                        TridentProductions.nullPropagation(),
+                        TridentProductions.brace("(").setName("__member_access_call").addProcessor(startClosure),
+                        productions.getPatternMatch("ACTUAL_PARAMETERS"),
+                        TridentProductions.brace(")")
+                ).setName("METHOD_CALL").addProcessor(endComplexValue).addFailProcessor((ip, l) -> {
                     if(ip.find("__member_access_call") != null) {
                         endComplexValue.accept(null, l);
                     }
@@ -261,7 +265,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
             SummarySymbol symbol = null;
 
-            Path filePath = Paths.get(root.getSource().getFullPath());
+            Path filePath = ((PrismarineSummaryModule)l.getSummaryModule()).getFileLocation();
 
             for(int i = 0; i < memberAccessesArr.length + 2; i++) {
                 TokenPattern<?> memberAccess = i == 0 ? root : (i == memberAccessesArr.length+1 ? failingAccess : memberAccessesArr[i-1]);
@@ -396,10 +400,10 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 //Evaluated first accessor, gotta be a function
 
                 if(parent instanceof PrismarineFunction.FixedThisFunctionSymbol) {
-                    parent = ctx.getTypeSystem().sanitizeObject(((PrismarineFunction.FixedThisFunctionSymbol) parent).safeCall(firstAccessorParameters[0].getValues().toArray(), firstAccessorParameters[0].getPatterns().toArray(new TokenPattern<?>[0]), accessors[0], ctx));
+                    parent = ctx.getTypeSystem().sanitizeObject(((PrismarineFunction.FixedThisFunctionSymbol) parent).safeCall(firstAccessorParameters[0], ctx));
                     toBlame = accessors[0];
                 } else if (parent instanceof PrimitivePrismarineFunction) {
-                    parent = ctx.getTypeSystem().sanitizeObject(((PrimitivePrismarineFunction) parent).safeCall(firstAccessorParameters[0].getValues().toArray(), firstAccessorParameters[0].getPatterns().toArray(new TokenPattern<?>[0]), accessors[0], ctx, null));
+                    parent = ctx.getTypeSystem().sanitizeObject(((PrimitivePrismarineFunction) parent).safeCall(firstAccessorParameters[0], ctx, null));
                     toBlame = accessors[0];
                 } else {
                     throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "This is not a function", toBlame, ctx);
@@ -417,10 +421,10 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     EObject.assertNotNull(member, toBlame, ctx);
 
                     if(member instanceof PrismarineFunction.FixedThisFunctionSymbol) {
-                        parent = ctx.getTypeSystem().sanitizeObject(((PrismarineFunction.FixedThisFunctionSymbol) member).safeCall(paramList.getValues().toArray(), paramList.getPatterns().toArray(new TokenPattern<?>[0]), accessors[i+1], ctx));
+                        parent = ctx.getTypeSystem().sanitizeObject(((PrismarineFunction.FixedThisFunctionSymbol) member).safeCall(paramList, ctx));
                         toBlame = accessor;
                     } else if (member instanceof PrimitivePrismarineFunction) {
-                        parent = ctx.getTypeSystem().sanitizeObject(((PrimitivePrismarineFunction) member).safeCall(paramList.getValues().toArray(), paramList.getPatterns().toArray(new TokenPattern<?>[0]), accessors[i+1], ctx, null));
+                        parent = ctx.getTypeSystem().sanitizeObject(((PrimitivePrismarineFunction) member).safeCall(paramList, ctx, null));
                         toBlame = accessor;
                     } else {
                         throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "This is not a function", toBlame, ctx);
@@ -488,7 +492,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 if (parent instanceof PrimitivePrismarineFunction) {
                     ActualParameterList paramList = parseActualParameterList(accessorPattern, ctx);
 
-                    return ctx.getTypeSystem().sanitizeObject(((PrimitivePrismarineFunction) parent).safeCall(paramList.getValues().toArray(), paramList.getPatterns().toArray(new TokenPattern<?>[0]), accessorPattern, ctx, null));
+                    return ctx.getTypeSystem().sanitizeObject(((PrimitivePrismarineFunction) parent).safeCall(paramList, ctx, null));
                 } else {
                     throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "This is not a function", parentPattern, ctx);
                 }
@@ -511,17 +515,31 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
     }
 
     private static ActualParameterList parseActualParameterList(TokenPattern<?> pattern, ISymbolContext ctx) {
-        TokenList paramList = (TokenList) pattern.find("PARAMETERS");
-        if(paramList == null) return new ActualParameterList(Collections.emptyList(), Collections.emptyList(), pattern);
+        TokenList paramList = (TokenList) pattern.find("ACTUAL_PARAMETERS");
+        if(paramList == null) return new ActualParameterList(pattern);
+        ArrayList<String> names = null;
         ArrayList<Object> params = new ArrayList<>();
         ArrayList<TokenPattern<?>> patterns = new ArrayList<>();
-        for (TokenPattern<?> rawParam : paramList.getContents()) {
-            if (rawParam.getName().equals("INTERPOLATION_VALUE")) {
-                params.add(rawParam.evaluate(ctx));
-                patterns.add(rawParam);
+        int i = 0;
+        for (TokenPattern<?> rawParam : paramList.getContentsExcludingSeparators()) {
+            Object value = rawParam.find("INTERPOLATION_VALUE").evaluate(ctx);
+            params.add(value);
+            patterns.add(rawParam);
+
+            String name = (String) rawParam.findThenEvaluate("ACTUAL_PARAMETER_LABEL", null);
+            if(name != null || names != null) {
+                if(names == null) {
+                    names = new ArrayList<>();
+                    for(int j = 0; j < i; j++) {
+                        names.add(null);
+                    }
+                }
+                names.add(name);
             }
+
+            i++;
         }
-        return new ActualParameterList(params, patterns, pattern);
+        return new ActualParameterList(params.toArray(), names != null ? names.toArray(new String[0]) : null, patterns.toArray(new TokenPattern<?>[0]), pattern);
     }
 
 

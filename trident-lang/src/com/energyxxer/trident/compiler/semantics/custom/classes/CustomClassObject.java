@@ -13,7 +13,6 @@ import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunctio
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 
 public class CustomClassObject implements TypeHandler<CustomClassObject>, ParameterizedMemberHolder, ContextualToString {
@@ -49,7 +48,7 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
 
     @Override
     public Object getMemberForParameters(String memberName, TokenPattern<?> pattern, ActualParameterList params, ISymbolContext ctx, boolean keepSymbol) {
-        Object foundClassMethod = instanceMethods.findAndWrap(memberName, params, pattern, ctx);
+        Object foundClassMethod = instanceMethods.findAndWrap(memberName, params, ctx);
         if(foundClassMethod == null) {
             try {
                 foundClassMethod = getMember(this, memberName, pattern, ctx, keepSymbol);
@@ -80,7 +79,7 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
         for(CustomClass type : type.getInheritanceTree()) {
             PrismarineFunction castMethod = type.explicitCasts.get(targetType);
             if(castMethod != null) {
-                return castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx, object);
+                return castMethod.safeCall(new ActualParameterList(pattern), ctx, object);
             }
         }
         throw new ClassCastException();
@@ -91,7 +90,7 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
         for(CustomClass type : type.getInheritanceTree()) {
             PrismarineFunction castMethod = type.implicitCasts.get(targetType);
             if(castMethod != null) {
-                return castMethod.safeCall(new Object[0], new TokenPattern[0], pattern, ctx, object);
+                return castMethod.safeCall(new ActualParameterList(pattern), ctx, object);
             }
         }
         return null;
@@ -145,12 +144,12 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
     }
 
     public String contextualToString(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Object foundClassMethod = instanceMethods.findAndWrap("toString", new ActualParameterList(Collections.emptyList(), Collections.emptyList(), pattern), pattern, ctx);
+        Object foundClassMethod = instanceMethods.findAndWrap("toString", new ActualParameterList(pattern), ctx);
         if(foundClassMethod == null) return toString();
         if(foundClassMethod instanceof PrismarineFunction.FixedThisFunctionSymbol) {
-            return (String) ((PrismarineFunction.FixedThisFunctionSymbol) foundClassMethod).safeCall(new Object[0], new TokenPattern[0], pattern, ctx);
+            return (String) ((PrismarineFunction.FixedThisFunctionSymbol) foundClassMethod).safeCall(new ActualParameterList(pattern), ctx);
         } else {
-            return (String) ((PrimitivePrismarineFunction) foundClassMethod).safeCall(new Object[0], new TokenPattern[0], pattern, ctx, this);
+            return (String) ((PrimitivePrismarineFunction) foundClassMethod).safeCall(new ActualParameterList(pattern), ctx, this);
         }
     }
 

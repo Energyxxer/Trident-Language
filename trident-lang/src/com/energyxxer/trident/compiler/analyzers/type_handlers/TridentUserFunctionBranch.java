@@ -1,21 +1,23 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
-import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.prismarine.controlflow.ReturnException;
-import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
-import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClassObject;
-import com.energyxxer.trident.compiler.semantics.symbols.ClassMethodSymbolContext;
-import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.prismarine.controlflow.ReturnException;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeConstraints;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.FormalParameter;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunctionBranch;
+import com.energyxxer.prismarine.typesystem.functions.typed.TypedFunction;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClassObject;
+import com.energyxxer.trident.compiler.semantics.symbols.ClassMethodSymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.trident.worker.tasks.SetupWritingStackTask;
 
 import java.util.Collection;
@@ -38,8 +40,10 @@ public class TridentUserFunctionBranch extends PrismarineFunctionBranch {
         return functionPattern;
     }
 
-    public Object call(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext declaringCtx, ISymbolContext callingCtx, Object thisObject) {
+    public Object call(ActualParameterList params, ISymbolContext declaringCtx, ISymbolContext callingCtx, Object thisObject) {
         SymbolContext innerFrame;
+
+        params.reportInvalidNames(formalParameters, callingCtx);
 
         if(thisObject instanceof CustomClassObject) {
             innerFrame = new ClassMethodSymbolContext(declaringCtx, (CustomClassObject) thisObject);
@@ -57,7 +61,14 @@ public class TridentUserFunctionBranch extends PrismarineFunctionBranch {
             FormalParameter param = formalParameters.get(i);
             Symbol sym = new Symbol(param.getName(), TridentSymbolVisibility.PRIVATE);
             sym.setTypeConstraints(param.getConstraints());
-            sym.safeSetValue(i < params.length ? params[i] : null, i < params.length ? patterns[i] : pattern, callingCtx);
+            Object[] actualValue = TypedFunction.getActualParameterByFormalIndex(i, formalParameters, params, callingCtx);
+            TokenPattern<?> actualValuePattern = ((int) actualValue[1]) < params.size() ? params.getPattern(((int) actualValue[1])) : params.getPattern();
+
+            sym.safeSetValue(
+                    actualValue[0],
+                    actualValuePattern,
+                    callingCtx
+            );
             innerFrame.put(sym);
         }
         if(thisObject != null) {
@@ -76,7 +87,7 @@ public class TridentUserFunctionBranch extends PrismarineFunctionBranch {
         if(returnConstraints != null) {
             if(shouldCoerceReturn) {
                 returnConstraints.validate(returnValue, returnPattern, callingCtx);
-                returnValue = returnConstraints.adjustValue(returnValue, pattern, callingCtx);
+                returnValue = returnConstraints.adjustValue(returnValue, params.getPattern(), callingCtx);
             } else {
                 returnConstraints.validateExact(returnValue, returnPattern, callingCtx);
             }

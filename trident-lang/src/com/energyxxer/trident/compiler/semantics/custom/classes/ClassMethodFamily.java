@@ -26,9 +26,9 @@ public class ClassMethodFamily extends TypedFunctionFamily<ClassMethod> {
     }
 
     @Override
-    protected void validatePickedOverload(ClassMethod bestMatch, ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx) {
+    protected void validatePickedOverload(ClassMethod bestMatch, ActualParameterList params, ISymbolContext ctx) {
         if(!bestMatch.getDefiningClass().hasAccess(ctx, bestMatch.getVisibility())) {
-            throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, bestMatch + " has " + bestMatch.getVisibility().toString().toLowerCase() + " access in " + bestMatch.getDefiningClass().getClassTypeIdentifier(), pattern, ctx);
+            throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, bestMatch + " has " + bestMatch.getVisibility().toString().toLowerCase() + " access in " + bestMatch.getDefiningClass().getClassTypeIdentifier(), params.getPattern(), ctx);
         }
     }
 

@@ -17,16 +17,16 @@ public class ClassMethodTable {
         this.type = type;
     }
 
-    public PrimitivePrismarineFunction find(String memberName, ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction find(String memberName, ActualParameterList params, ISymbolContext ctx) {
         ClassMethodFamily family = methods.get(memberName);
         if(family != null) {
-            return family.pickOverload(params, pattern, ctx);
+            return family.pickOverload(params, ctx);
         }
         return null;
     }
 
-    public Object findAndWrap(String memberName, ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx, CustomClassObject thisObject) {
-        PrimitivePrismarineFunction function = find(memberName, params, pattern, ctx);
+    public Object findAndWrap(String memberName, ActualParameterList params, ISymbolContext ctx, CustomClassObject thisObject) {
+        PrimitivePrismarineFunction function = find(memberName, params, ctx);
         if(function == null) return null;
         if(function instanceof PrismarineFunction) {
             return new PrismarineFunction.FixedThisFunctionSymbol(memberName, ((PrismarineFunction) function), thisObject);

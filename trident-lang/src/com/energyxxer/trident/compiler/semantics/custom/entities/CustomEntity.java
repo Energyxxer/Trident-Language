@@ -142,7 +142,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
         }
         switch (member) {
             case "getSettingNBT":
-                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> {
+                return (PrimitivePrismarineFunction) (params, ctx1, thisObject) -> {
                     TagCompound nbt = new TagCompound();
                     if (this.getBaseType() != null) {
                         nbt.add(new TagString("id", this.getBaseType().toString()));
@@ -151,7 +151,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                     return nbt;
                 };
             case "getMatchingNBT":
-                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> new TagCompound(new TagList("Tags", new TagString(idTag)));
+                return (PrimitivePrismarineFunction) (params, ctx1, thisObject) -> new TagCompound(new TagList("Tags", new TagString(idTag)));
             case "idTag":
                 return idTag;
             case "baseType":

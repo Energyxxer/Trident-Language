@@ -155,7 +155,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
         }
         switch (member) {
             case "getSlotNBT":
-                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> {
+                return (PrimitivePrismarineFunction) (params, ctx1, thisObject) -> {
                     TagCompound nbt = new TagCompound(
                             new TagString("id", ((CustomItem) this).getBaseType().toString()),
                             new TagByte("Count", 1));
@@ -167,16 +167,16 @@ public class CustomItem implements TypeHandler<CustomItem> {
                     return nbt;
                 };
             case "getItemTag":
-                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> {
+                return (PrimitivePrismarineFunction) (params, ctx1, thisObject) -> {
                     if (((CustomItem) this).getDefaultNBT() != null) {
                         return ((CustomItem) this).getDefaultNBT().clone();
                     }
                     return new TagCompound();
                 };
             case "getMatchingNBT":
-                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
+                return (PrimitivePrismarineFunction) (params, ctx1, thisObject) -> new TagCompound(new TagInt("TridentCustomItem", getItemIdHash()));
             case "getItem":
-                return (PrimitivePrismarineFunction) (params, patterns, pattern1, file1, thisObject) -> new Item(baseType, defaultNBT);
+                return (PrimitivePrismarineFunction) (params, ctx1, thisObject) -> new Item(baseType, defaultNBT);
             case "baseType":
                 return baseType != null ? new ResourceLocation(baseType.toString()) : null;
             case "itemCode":

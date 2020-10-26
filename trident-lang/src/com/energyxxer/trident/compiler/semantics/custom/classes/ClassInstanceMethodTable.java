@@ -1,8 +1,7 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 
 public class ClassInstanceMethodTable {
     private final ClassMethodTable methodTable;
@@ -13,8 +12,8 @@ public class ClassInstanceMethodTable {
         this.thisObject = thisObject;
     }
 
-    public Object findAndWrap(String memberName, ActualParameterList params, TokenPattern<?> pattern, ISymbolContext ctx) {
-        return methodTable.findAndWrap(memberName, params, pattern, ctx, thisObject);
+    public Object findAndWrap(String memberName, ActualParameterList params, ISymbolContext ctx) {
+        return methodTable.findAndWrap(memberName, params, ctx, thisObject);
     }
 
     public ClassMethodTable getMethodTable() {

@@ -116,7 +116,7 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
 
     @Override
     public PrismarineTypeSystem createTypeSystem(PrismarineCompiler compiler, GlobalSymbolContext globalCtx) {
-        return new TridentTypeSystem(globalCtx);
+        return new TridentTypeSystem(compiler, globalCtx);
     }
 
     @Override

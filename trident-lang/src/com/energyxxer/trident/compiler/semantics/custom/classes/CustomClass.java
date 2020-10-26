@@ -531,7 +531,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     @Override
     public Object getMemberForParameters(String memberName, TokenPattern<?> pattern, ActualParameterList params, ISymbolContext ctx, boolean keepSymbol) {
-        Object foundClassMethod = staticMethods.find(memberName, params, pattern, ctx);
+        Object foundClassMethod = staticMethods.find(memberName, params, ctx);
         if(foundClassMethod == null) {
             try {
                 foundClassMethod = getMember(this, memberName, pattern, ctx, keepSymbol);
@@ -637,7 +637,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         if(_static) {
             throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class '" + getClassTypeIdentifier() + "' is static; cannot be instantiated.", pattern, ctx);
         }
-        return (params, patterns, pattern2, ctx2, thisObject) -> {
+        return (params, ctx2, thisObject) -> {
             CustomClassObject created = new CustomClassObject(this);
 
             for(CustomClass cls : getInheritanceTree()) {
@@ -648,8 +648,8 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             }
 
             if(constructorFamily != null) {
-                PrismarineFunction.FixedThisFunctionSymbol pickedConstructor = constructorFamily.pickOverloadSymbol(new ActualParameterList(Arrays.asList(params), Arrays.asList(patterns), pattern2), pattern2, ctx, created);
-                pickedConstructor.safeCall(params, patterns, pattern2, ctx2);
+                PrismarineFunction.FixedThisFunctionSymbol pickedConstructor = constructorFamily.pickOverloadSymbol(params, ctx, created);
+                pickedConstructor.safeCall(params, ctx2);
                 for(Symbol field : created.instanceMembers.values()) {
                     if(field.isFinal() && field.maySet()) {
                         throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Final symbol '" + field.getName() + "' was not initialized in constructor.", pattern, ctx2);

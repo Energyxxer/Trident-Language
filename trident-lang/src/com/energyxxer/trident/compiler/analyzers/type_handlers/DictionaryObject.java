@@ -9,6 +9,7 @@ import com.energyxxer.prismarine.typesystem.ContextualToString;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +56,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
             put(member, null);
         }
         if(!keepSymbol && !dict.map.containsKey(member)) {
-            Object result = ((DictionaryObject) typeSystem.getStaticHandlerForObject(dict)).members.getMember(dict, member, pattern, ctx, keepSymbol);
+            Object result = ((DictionaryObject) typeSystem.getStaticHandlerForObject(dict)).members.getMember(dict, member, pattern, ctx, false);
             if (result != null) {
                 return result;
             }
@@ -153,7 +154,8 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
 
         try {
             for (Map.Entry<String, Symbol> entry : this.entrySet()) {
-                newDict.put(entry.getKey(), function.safeCall(new Object[]{entry.getKey(), entry.getValue().getValue(pattern, ctx)}, new TokenPattern[]{pattern, pattern}, pattern, ctx, null));
+                ActualParameterList params = new ActualParameterList(new Object[] {entry.getKey(), entry.getValue().getValue(pattern, ctx)}, null, pattern);
+                newDict.put(entry.getKey(), function.safeCall(params, ctx, null));
             }
         } catch(ConcurrentModificationException x) {
             throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);

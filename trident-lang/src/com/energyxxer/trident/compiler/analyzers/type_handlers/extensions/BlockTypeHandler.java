@@ -6,24 +6,25 @@ import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.types.Type;
-import com.energyxxer.trident.compiler.ResourceLocation;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
-import com.energyxxer.prismarine.symbols.AutoPropertySymbol;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.AutoPropertySymbol;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 
 import java.util.Map;
 
 public class BlockTypeHandler implements TypeHandler<Block> {
-    public final PrimitivePrismarineFunction CONSTRUCTOR = (params, patterns, pattern, ctx, thisObject) -> constructBlock(params, patterns, pattern, ctx);
+    public final PrimitivePrismarineFunction CONSTRUCTOR = (params, ctx, thisObject) -> constructBlock(params, ctx);
 
     private final PrismarineTypeSystem typeSystem;
 
@@ -96,10 +97,10 @@ public class BlockTypeHandler implements TypeHandler<Block> {
         return CONSTRUCTOR;
     }
 
-    private static Block constructBlock(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
+    private static Block constructBlock(ActualParameterList params, ISymbolContext ctx) {
         CommandModule module = ctx.get(SetupModuleTask.INSTANCE);
-        if(params.length == 0 || params[0] == null) return new Block(module.minecraft.types.block.get("air"));
-        ResourceLocation loc = PrismarineTypeSystem.assertOfClass(params[0], patterns[0], ctx, ResourceLocation.class);
+        if(params.size() == 0 || params.getValue(0) == null) return new Block(module.minecraft.types.block.get("air"));
+        ResourceLocation loc = PrismarineTypeSystem.assertOfClass(params.getValue(0), params.getPattern(0), ctx, ResourceLocation.class);
         Namespace ns = module.getNamespace(loc.namespace);
 
         Type type;
@@ -110,7 +111,7 @@ public class BlockTypeHandler implements TypeHandler<Block> {
             type = ns.types.block.get(loc.body);
         }
 
-        if(type == null) throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Resource location " + params[0] + " is not a valid block type", patterns[0], ctx);
+        if(type == null) throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Resource location " + params.getValue(0) + " is not a valid block type", params.getPattern(0), ctx);
 
         return new Block(type);
     }

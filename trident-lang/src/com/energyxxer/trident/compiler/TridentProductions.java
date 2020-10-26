@@ -263,4 +263,8 @@ public class TridentProductions {
             lx.getNotices().add(new Notice(NoticeType.WARNING, "Plugin '" + name + "' has no commands to import.", p));
         }
     }
+
+    public static TokenPatternMatch nullPropagation() {
+        return symbol("?").setName("NULL_PROPAGATION").setOptional().setRecessive().addTags(SuggestionTags.DISABLED);
+    }
 }

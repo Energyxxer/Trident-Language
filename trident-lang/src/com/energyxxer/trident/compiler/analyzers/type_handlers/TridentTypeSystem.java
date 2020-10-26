@@ -3,6 +3,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.inspection.ExecutionContext;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.PrismarineCompiler;
 import com.energyxxer.prismarine.operators.OperatorManager;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.ContextualToString;
@@ -27,8 +28,8 @@ public class TridentTypeSystem extends PrismarineTypeSystem {
     public java.util.Random projectRandom;
     private OperatorManager<ClassMethod> operatorManager;
 
-    public TridentTypeSystem(ISymbolContext globalCtx) {
-        super(globalCtx);
+    public TridentTypeSystem(PrismarineCompiler compiler, ISymbolContext globalCtx) {
+        super(compiler, globalCtx);
         operatorManager = new OperatorManager<>(this);
 
 

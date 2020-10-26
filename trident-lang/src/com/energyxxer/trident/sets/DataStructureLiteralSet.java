@@ -52,7 +52,6 @@ public class DataStructureLiteralSet extends PatternProviderSet { //dictionaries
                                                 ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(new TridentSummaryModule.SymbolUsage(p, key));
                                                 sym.setDeclarationPattern(p);
                                                 //sym.addUsage(p);
-                                                sym.setMember(true);
                                                 ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
                                             }
                                         }),

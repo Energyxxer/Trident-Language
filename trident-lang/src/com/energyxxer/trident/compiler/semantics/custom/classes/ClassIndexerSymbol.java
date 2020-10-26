@@ -1,12 +1,13 @@
 package com.energyxxer.trident.compiler.semantics.custom.classes;
 
-import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
-import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
+import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import org.jetbrains.annotations.Nullable;
 
 public class ClassIndexerSymbol extends Symbol {
@@ -31,7 +32,7 @@ public class ClassIndexerSymbol extends Symbol {
             throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Getter for indexer has " + indexer.getGetterVisibility().toString().toLowerCase() + " access in " + indexer.getDefiningClass().getClassTypeIdentifier(), pattern, ctx);
         }
 
-        return getter.safeCall(new Object[] {this.index}, new TokenPattern[] {pattern}, pattern, ctx, this.thisObject);
+        return getter.safeCall(new ActualParameterList(new Object[] {this.index}, null, pattern), ctx, this.thisObject);
     }
 
     @Override
@@ -42,6 +43,6 @@ public class ClassIndexerSymbol extends Symbol {
         if(!indexer.getDefiningClass().hasAccess(ctx, indexer.getSetterVisibility())) {
             throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Setter for indexer has " + indexer.getSetterVisibility().toString().toLowerCase() + " access in " + indexer.getDefiningClass().getClassTypeIdentifier(), pattern, ctx);
         }
-        setter.safeCall(new Object[] {this.index, value}, new TokenPattern[] {pattern, pattern}, pattern, ctx, this.thisObject);
+        setter.safeCall(new ActualParameterList(new Object[] {this.index, value}, null, pattern), ctx, this.thisObject);
     }
 }

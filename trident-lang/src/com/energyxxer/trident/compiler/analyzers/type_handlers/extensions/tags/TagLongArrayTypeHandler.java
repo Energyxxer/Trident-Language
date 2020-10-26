@@ -2,16 +2,17 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags;
 
 import com.energyxxer.commodore.functionlogic.nbt.TagLong;
 import com.energyxxer.commodore.functionlogic.nbt.TagLongArray;
-import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 
 public class TagLongArrayTypeHandler implements TypeHandler<TagLongArray> {
-    private static final PrimitivePrismarineFunction CONSTRUCTOR = (params, patterns, pattern, ctx, thisObject) -> constructTagLongArray(params, patterns, pattern, ctx);
+    private static final PrimitivePrismarineFunction CONSTRUCTOR = (params, ctx, thisObject) -> constructTagLongArray(params, ctx);
 
     private final PrismarineTypeSystem typeSystem;
 
@@ -62,9 +63,9 @@ public class TagLongArrayTypeHandler implements TypeHandler<TagLongArray> {
         return CONSTRUCTOR;
     }
 
-    private static TagLongArray constructTagLongArray(Object[] params, TokenPattern<?>[] patterns, TokenPattern<?> pattern, ISymbolContext ctx) {
-        if(params.length == 0 || params[0] == null) return new TagLongArray();
-        ListObject list = PrismarineTypeSystem.assertOfClass(params[0], patterns[0], ctx, ListObject.class);
+    private static TagLongArray constructTagLongArray(ActualParameterList params, ISymbolContext ctx) {
+        if(params.size() == 0 || params.getValue(0) == null) return new TagLongArray();
+        ListObject list = PrismarineTypeSystem.assertOfClass(params.getValue(0), params.getPattern(0), ctx, ListObject.class);
 
         TagLongArray arr = new TagLongArray();
 
@@ -72,7 +73,7 @@ public class TagLongArrayTypeHandler implements TypeHandler<TagLongArray> {
             if(obj instanceof TagLong) {
                 arr.add((TagLong) obj);
             } else {
-                arr.add((TagLong) TagLongTypeHandler.CONSTRUCTOR.call(new Object[] {obj}, patterns, pattern, ctx, null));
+                arr.add((TagLong) TagLongTypeHandler.CONSTRUCTOR.call(new ActualParameterList(new Object[] {obj}, null, params.getPattern()), ctx, null));
             }
         }
 
