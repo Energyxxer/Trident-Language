@@ -1,0 +1,172 @@
+define private class int {
+}
+
+define private class real {
+}
+
+define private class boolean {
+}
+
+define private class string {
+    public final var length : int = 0
+
+    public substring(beginIndex : int, endIndex : int?) : string {}
+    public indexOf(str : string) : int {}
+    public lastIndexOf(str : string) : int {}
+    public split(delimiter : string, limit : int?) : list {}
+    public splitRegex(delimiter : string, limit : int?) : list {}
+    public replace(find : string, replacement : string) : string {}
+    public replaceRegex(regex : string, replacement : string) : string {}
+    public replaceFirst(regex : string, replacement : string) : string {}
+    public toLowerCase() : string {}
+    public toUpperCase() : string {}
+    public trim() : string {}
+    public startsWith(prefix : string) : boolean {}
+    public endsWith(suffix : string) : boolean {}
+    public contains(sub : string) : boolean {}
+    public matches(regex : string) : boolean {}
+    public isEmpty() : boolean {}
+    public isWhitespace() : boolean {}
+    public isDigit() : boolean {}
+    public isLetter() : boolean {}
+    public isLetterOrDigit() : boolean {}
+}
+
+
+define private class resource {
+    public var namespace : string = ""
+    public var body : string = ""
+    public var isTag : boolean = false
+    public var parent : resource
+    public var nameCount : int
+
+    public resolve(nextPart : string, delimiter : string?) : resource {}
+    public resolve(nextPart : resource, delimiter : string?) : resource {}
+    public subLoc(start : int, end : int) : resource {}
+}
+
+define private class command {}
+define private class text_component {}
+
+
+
+define private class coordinates {
+    public getMagnitude(axis : Axis) : real {}
+    public getCoordinateType(axis : Axis) : CoordinateType {}
+    public deriveMagnitude(newMagnitude : real, axis : Axis?) : coordinates {}
+    public deriveCoordinateType(newType : CoordinateType, axis : Axis?) : coordinates {}
+}
+define private class rotation {
+    public getMagnitude(axis : Axis) : real {}
+    public getRotationType(axis : Axis) : RotationType {}
+    public deriveMagnitude(newMagnitude : real, axis : Axis?) : rotation {}
+    public deriveRotationType(newType : RotationType, axis : Axis?) : rotation {}
+}
+
+define private class uuid {}
+
+define private class block {
+    public var blockType : resource
+    public var blockTag : nbt?
+    public var blockState : dictionary?
+}
+
+define private class item {
+    public var itemType : resource
+    public var itemTag : nbt?
+
+    public getSlotNBT() : nbt {}
+}
+
+define private class entity {
+    public isPlayerName() : boolean {}
+    public isPlayer() : boolean {}
+    public isUnknownType() : boolean {}
+    public getLimit() : int {}
+}
+
+define private class int_range {
+    public var min : int?
+    public var max : int?
+    public var range : int
+
+    public deriveMin(newMin : int?) : int_range {}
+    public deriveMax(newMax : int?) : int_range {}
+}
+
+define private class real_range {
+    public var min : real?
+    public var max : real?
+    public var range : real
+
+    public deriveMin(newMin : real?) : real_range {}
+    public deriveMax(newMax : real?) : real_range {}
+}
+
+
+define private class dictionary {
+    public map(function : function) : dictionary {}
+    public merge(other : dictionary) : dictionary {}
+    public remove(key : string) {}
+    public clear() {}
+}
+
+define private class list {
+    public final var length : int = 0
+
+    public add(object) {}
+    public insert(object, index : int) {}
+    public remove(index : int) {}
+    public contains(object) : boolean {}
+    public indexOf(object) : int {}
+    public lastIndexOf(object) : int {}
+    public isEmpty() : boolean {}
+    public clear() {}
+
+    public map(function : function) : list {}
+    public filter(function : function) : list {}
+}
+
+
+
+define private class nbt_path {
+    public resolveKey(key : string, compound : nbt?) : nbt_path {}
+    public resolveIndex(index : int) : nbt_path {}
+}
+
+define private class tag_compound {
+    public merge(other : tag_compound) : tag_compound {}
+    public remove(key : string) {}
+    public toDictionary(tag : nbt_value) : dictionary {}
+}
+
+define private class nbt_value {}
+
+define private class tag_compound : nbt_value {
+    public merge(other : tag_compound) : tag_compound {}
+    public remove(key : string) {}
+    public toDictionary() : dictionary {}
+}
+
+define private class tag_list : nbt_value {
+    public final var length : int = 0
+    public merge(other : tag_list) : tag_list {}
+    public toList() : list {}
+}
+
+define private class tag_byte_array : nbt_value {}
+define private class tag_int_array : nbt_value {}
+define private class tag_long_array : nbt_value {}
+
+define private class tag_byte : nbt_value {}
+define private class tag_short : nbt_value {}
+define private class tag_int : nbt_value {}
+define private class tag_float : nbt_value {}
+define private class tag_double : nbt_value {}
+define private class tag_long : nbt_value {}
+
+
+define private class type_definition {
+    public static of(object) : type_definition? {}
+    public is(object) : boolean {}
+}

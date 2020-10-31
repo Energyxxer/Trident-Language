@@ -27,16 +27,16 @@ public class BasicLiteralSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("ROOT_INTERPOLATION_VALUE")
                 .add(
-                        productions.putPatternMatch("REAL_NUMBER", ofType(REAL_NUMBER).setName("RAW_REAL").setEvaluator((p, d) -> Double.parseDouble(p.flatten(false))))
+                        productions.putPatternMatch("REAL_NUMBER", ofType(REAL_NUMBER).setName("RAW_REAL").addTags("primitive:real").setEvaluator((p, d) -> Double.parseDouble(p.flatten(false))))
                 )
                 .add(
-                        productions.putPatternMatch("INTEGER_NUMBER", ofType(INTEGER_NUMBER).setName("RAW_INTEGER").setEvaluator(BasicLiteralSet::evaluateIntegerPattern))
+                        productions.putPatternMatch("INTEGER_NUMBER", ofType(INTEGER_NUMBER).setName("RAW_INTEGER").addTags("primitive:int").setEvaluator(BasicLiteralSet::evaluateIntegerPattern))
                 )
                 .add(
-                        productions.putPatternMatch("BOOLEAN", ofType(BOOLEAN).addTags(SuggestionTags.ENABLED).setEvaluator((p, d) -> "true".equals(p.flatten(false))))
+                        productions.putPatternMatch("BOOLEAN", ofType(BOOLEAN).addTags("primitive:boolean").addTags(SuggestionTags.ENABLED).setEvaluator((p, d) -> "true".equals(p.flatten(false))))
                 )
                 .add(
-                        productions.putPatternMatch("STRING_LITERAL", ofType(STRING_LITERAL).setName("STRING_LITERAL").setEvaluator((p, d) -> parseQuotedString(p.flatten(false), p, (ISymbolContext) d[0])))
+                        productions.putPatternMatch("STRING_LITERAL", ofType(STRING_LITERAL).setName("STRING_LITERAL").addTags("primitive:string").setEvaluator((p, d) -> parseQuotedString(p.flatten(false), p, (ISymbolContext) d[0])))
                 )
                 .add(
                         productions.putPatternMatch("NULL", ofType(NULL).setName("NULL_VALUE").setEvaluator((p, d) -> null))

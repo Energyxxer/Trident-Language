@@ -1,7 +1,5 @@
 package com.energyxxer.trident.compiler.semantics.symbols;
 
-import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
-import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
@@ -37,7 +35,7 @@ public class TridentSymbolVisibility {
 
         @Override
         public boolean isVisibleFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
-            return (symbol.getStartIndex() <= inFileIndex || symbol.getDeclarationPattern().getStringLocation().index == inFileIndex) && Objects.equals(fromPath, ((TridentSummaryModule) symbol.getParentFileSummary()).getFileLocation());
+            return (symbol.getStartIndex() <= inFileIndex || symbol.getDeclarationPattern().getStringLocation().index == inFileIndex) && Objects.equals(fromPath, symbol.getParentFileSummary().getFileLocation());
         }
 
         @Override
@@ -59,7 +57,7 @@ public class TridentSymbolVisibility {
             // while the file hasn't called surroundBlock() with proper block start and end indices
             return (symbol.getScopeEnd() == 0 || (symbol.getScopeStart() <= inFileIndex &&
                     inFileIndex <= symbol.getScopeEnd()))
-                    && (fromPath == null || symbol.getParentFileSummary() == null || fromPath.equals(((PrismarineSummaryModule) symbol.getParentFileSummary()).getFileLocation()));
+                    && (fromPath == null || symbol.getParentFileSummary() == null || fromPath.equals(symbol.getParentFileSummary().getFileLocation()));
         }
 
         @Override

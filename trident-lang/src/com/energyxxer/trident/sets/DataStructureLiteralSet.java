@@ -67,7 +67,7 @@ public class DataStructureLiteralSet extends PatternProviderSet { //dictionaries
                         }).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);}),
                         TridentProductions.comma()
                 ).setOptional().setName("DICTIONARY_ENTRY_LIST"),
-                TridentProductions.brace("}"))).addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);})
+                TridentProductions.brace("}"))).addTags("primitive:dictionary").addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);})
         .setEvaluator((p, d) -> {
             ISymbolContext ctx = (ISymbolContext) d[0];
             DictionaryObject dict = new DictionaryObject(ctx.getTypeSystem());
@@ -100,6 +100,7 @@ public class DataStructureLiteralSet extends PatternProviderSet { //dictionaries
                         ).setOptional().setName("LIST_ENTRIES"),
                         TridentProductions.brace("]")
                 ).addProcessor(surroundBlock).addProcessor(endComplexValue).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);}))
+                .addTags("primitive:list")
         .setEvaluator((p, d) -> {
             ISymbolContext ctx = (ISymbolContext) d[0];
             ListObject list = new ListObject(ctx.getTypeSystem());

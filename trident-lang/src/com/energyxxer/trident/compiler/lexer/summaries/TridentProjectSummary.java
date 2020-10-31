@@ -2,8 +2,11 @@ package com.energyxxer.trident.compiler.lexer.summaries;
 
 import com.energyxxer.prismarine.summaries.PrismarineProjectSummary;
 import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
+import com.energyxxer.prismarine.summaries.SummaryBlock;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
+import com.energyxxer.trident.TridentSuiteConfiguration;
 import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
 import java.util.*;
@@ -86,5 +89,19 @@ public class TridentProjectSummary extends PrismarineProjectSummary {
         this.tags.putAll(((TridentProjectSummary) other).tags);
         this.soundEvents.addAll(((TridentProjectSummary) other).soundEvents);
         this.objectives.addAll(((TridentProjectSummary) other).objectives);
+    }
+
+    public SummarySymbol getPrimitiveSymbol(String identifier) {
+        PrismarineSummaryModule primitivesSummary = getSummaryForLocation(TridentSuiteConfiguration.PRIMITIVES_SUMMARY_PATH);
+        SummaryBlock primitivesPackage = primitivesSummary != null ? primitivesSummary.getFileBlock() : null;
+        if(primitivesPackage != null) {
+            SummaryBlock classBlock = (SummaryBlock) primitivesPackage.getElementByName(identifier);
+            if(classBlock != null) {
+                return classBlock.getAssociatedSymbol();
+            }
+        } else {
+            Debug.log("HOW (missing primitive package)");
+        }
+        return null;
     }
 }

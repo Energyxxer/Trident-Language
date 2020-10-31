@@ -8,20 +8,6 @@ import com.energyxxer.commodore.tags.TagGroup;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
-import com.energyxxer.trident.compiler.ResourceLocation;
-import com.energyxxer.trident.compiler.TridentBuildConfiguration;
-import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
-import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.DefaultOperators;
-import com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary;
-import com.energyxxer.trident.compiler.plugin.TridentPluginUnitConfiguration;
-import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
-import com.energyxxer.trident.compiler.semantics.AliasType;
-import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
-import com.energyxxer.trident.filewalkers.CompilerWalkers;
-import com.energyxxer.trident.filewalkers.SummaryWalkers;
-import com.energyxxer.trident.worker.tasks.*;
 import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.prismarine.PrismarineCompiler;
@@ -37,6 +23,20 @@ import com.energyxxer.prismarine.util.FileUtil;
 import com.energyxxer.prismarine.walker.FileWalker;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.prismarine.worker.tasks.SetupProductionsTask;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.TridentBuildConfiguration;
+import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
+import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.operators.DefaultOperators;
+import com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary;
+import com.energyxxer.trident.compiler.plugin.TridentPluginUnitConfiguration;
+import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
+import com.energyxxer.trident.compiler.semantics.AliasType;
+import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManager;
+import com.energyxxer.trident.filewalkers.CompilerWalkers;
+import com.energyxxer.trident.filewalkers.SummaryWalkers;
+import com.energyxxer.trident.worker.tasks.*;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.JsonObject;
 
@@ -44,10 +44,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 
 public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
+    public static final Path PRIMITIVES_SUMMARY_PATH = Paths.get("datapack/data/trident-util/functions/primitives.tdn");
 
     public static final TridentSuiteConfiguration INSTANCE = new TridentSuiteConfiguration();
 
@@ -71,6 +73,12 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
                             Paths.get("datapack/data/trident-util/functions/native.tdn"),
                             TridentFileUnitConfiguration.INSTANCE,
                             read("/trident_utils/datapack/data/trident-util/functions/native_summary.tdn"),
+                            PrismarineLibraryUnit.Availability.SUMMARY_ONLY
+                    )
+                    .registerUnit(
+                            PRIMITIVES_SUMMARY_PATH,
+                            TridentFileUnitConfiguration.INSTANCE,
+                            read("/trident_utils/datapack/data/trident-util/functions/primitives.tdn"),
                             PrismarineLibraryUnit.Availability.SUMMARY_ONLY
                     )
                     .registerUnit(

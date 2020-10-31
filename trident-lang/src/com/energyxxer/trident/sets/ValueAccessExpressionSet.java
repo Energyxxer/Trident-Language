@@ -1,6 +1,7 @@
 package com.energyxxer.trident.sets;
 
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
+import com.energyxxer.enxlex.lexical_analysis.summary.SummaryModule;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
@@ -24,8 +25,10 @@ import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.trident.TridentSuiteConfiguration;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
+import com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ParameterizedMemberHolder;
 import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
@@ -234,7 +237,14 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
             switch(inner.getName()) {
                 case "PRIMITIVE_ROOT_TYPE": {
-                    //todo
+                    String identifier = inner.flatten(false);
+
+                    TridentProjectSummary parentSummary = ((TridentSummaryModule) l.getSummaryModule()).getParentSummary();
+                    if(parentSummary != null) {
+                        return parentSummary.getPrimitiveSymbol(identifier);
+                    } else if(TridentSuiteConfiguration.PRIMITIVES_SUMMARY_PATH.equals(((TridentSummaryModule) l.getSummaryModule()).getFileLocation())) {
+                        return ((TridentSummaryModule) l.getSummaryModule()).getSymbolForName(identifier, inner.getStringLocation().index);
+                    }
                     break;
                 }
                 case "INTERPOLATION_CHAIN": {
@@ -246,6 +256,18 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     return ((TridentSummaryModule) l.getSummaryModule()).getSymbolForName(typeName, inner.getStringLocation().index);
                 }
             }
+        }
+        return null;
+    }
+
+    private static SummarySymbol createSymbolForPrimitiveValue(String identifier, SummaryModule summaryModule) {
+        TridentProjectSummary parentSummary = (TridentProjectSummary) summaryModule.getParentSummary();
+        if(parentSummary != null) {
+            SummarySymbol primitiveType = parentSummary.getPrimitiveSymbol(identifier);
+            if(primitiveType == null) return null;
+            SummarySymbol symbol = new SummarySymbol(((PrismarineSummaryModule) summaryModule), "", 0);
+            symbol.setType(primitiveType);
+            return symbol;
         }
         return null;
     }
@@ -294,7 +316,16 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                             break;
                         }
                         default: {
-                            return;
+                            boolean primitiveFound = false;
+                            for(String tag : ((TokenStructure) memberAccess).getContents().getTags()) {
+                                if(tag.startsWith("primitive:")) {
+                                    symbol = createSymbolForPrimitiveValue(tag.substring("primitive:".length()), l.getSummaryModule());
+                                    if(symbol == null) return;
+                                    primitiveFound = true;
+                                    break;
+                                }
+                            }
+                            if(!primitiveFound) return;
                         }
                     }
                 } else {

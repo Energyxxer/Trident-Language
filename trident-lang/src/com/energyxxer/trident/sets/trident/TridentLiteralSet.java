@@ -159,10 +159,10 @@ public class TridentLiteralSet extends PatternProviderSet { //pointers, type_def
 
         productions.getOrCreateStructure("ROOT_INTERPOLATION_VALUE")
                 .add(
-                        group(literal("pointer").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("POINTER"), TridentProductions.brace(">")).setName("WRAPPED_POINTER").setSimplificationFunction(wrapperSimplification)
+                        group(literal("pointer").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("POINTER"), TridentProductions.brace(">")).setName("WRAPPED_POINTER").addTags("primitive:pointer").setSimplificationFunction(wrapperSimplification)
                 )
                 .add(
-                        group(literal("type_definition").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("INTERPOLATION_TYPE"), TridentProductions.brace(">")).setName("WRAPPED_TYPE").setSimplificationFunction(wrapperSimplification)
+                        group(literal("type_definition").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("INTERPOLATION_TYPE"), TridentProductions.brace(">")).setName("WRAPPED_TYPE").addTags("primitive:type_definition").setSimplificationFunction(wrapperSimplification)
                 )
                 .add(
                         group(

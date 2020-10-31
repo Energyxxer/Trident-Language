@@ -10,6 +10,7 @@ import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.controlflow.ReturnException;
 import com.energyxxer.prismarine.in.ProjectReader;
 import com.energyxxer.prismarine.operators.OperatorPool;
+import com.energyxxer.prismarine.summaries.PrismarineProjectSummary;
 import com.energyxxer.prismarine.util.PathMatcher;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
@@ -136,8 +137,9 @@ public class TridentFileUnitConfiguration extends PrismarineLanguageUnitConfigur
     }
 
     @Override
-    public TridentSummaryModule createSummaryModule(TokenSource source, Path relativePath) {
+    public TridentSummaryModule createSummaryModule(TokenSource source, Path relativePath, PrismarineProjectSummary parentSummary) {
         TridentSummaryModule summary = new TridentSummaryModule();
+        summary.setParentSummary(parentSummary);
         summary.setResourceLocation(functionPathToResourceLocation(relativePath));
         return summary;
     }
