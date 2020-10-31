@@ -41,7 +41,7 @@ public class TypeHandlerTypeHandler implements TypeHandler<TypeHandler> {
         if("of".equals(member)) {
             return of;
         } else if("is".equals(member)) {
-            return is;
+            return new PrismarineFunction.FixedThisFunction(is, object);
         }
         throw new MemberNotFoundException();
     }
