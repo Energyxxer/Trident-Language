@@ -75,7 +75,7 @@ public class VariableInstruction implements InstructionDefinition {
                             if(dynamicFunctionPattern != null && ((TokenGroup) dynamicFunctionPattern).getContents()[0].getName().equals("DYNAMIC_FUNCTION")) {
                                 sym.addTag(TridentSuggestionTags.TAG_METHOD);
 
-                                sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, dynamicFunctionPattern.find("PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
+                                sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, dynamicFunctionPattern.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
                             }
                             break;
                         }

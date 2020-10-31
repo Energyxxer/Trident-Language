@@ -129,7 +129,6 @@ public class DefineInstruction implements InstructionDefinition {
                         sym.addTag(TridentSuggestionTags.TAG_FIELD);
 
                         sym.setType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, p.find("TYPE_CONSTRAINTS")));
-                        sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE.ROOT_INTERPOLATION_VALUE.NEW_FUNCTION_SPLIT.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
 
                         if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                             sym.setInstanceField(true);
@@ -168,6 +167,7 @@ public class DefineInstruction implements InstructionDefinition {
                         if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                             sym.setInstanceField(true);
                         }
+                        sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
                         if(!sym.hasSubBlock()) {
                             ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                         }
