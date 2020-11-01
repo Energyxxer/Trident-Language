@@ -17,10 +17,10 @@ import java.util.HashMap;
 import static com.energyxxer.prismarine.typesystem.functions.natives.PrismarineNativeFunctionBranch.nativeMethodsToFunction;
 
 public class RotationTypeHandler implements TypeHandler<Rotation> {
-    private static HashMap<String, PrismarineFunction> members;
+    private HashMap<String, PrismarineFunction> members;
 
-    private static CustomClassObject ROTATION_TYPE_ABSOLUTE;
-    private static CustomClassObject ROTATION_TYPE_RELATIVE;
+    private CustomClassObject ROTATION_TYPE_ABSOLUTE;
+    private CustomClassObject ROTATION_TYPE_RELATIVE;
 
     private final PrismarineTypeSystem typeSystem;
 
@@ -45,7 +45,7 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
 
         try {
             members.put("getMagnitude", nativeMethodsToFunction(this.typeSystem, null, RotationTypeHandler.class.getMethod("getMagnitude", CustomClassObject.class, Rotation.class)));
-            members.put("getRotationType", nativeMethodsToFunction(this.typeSystem, null, RotationTypeHandler.class.getMethod("getRotationType", CustomClassObject.class, Rotation.class)));
+            members.put("getRotationType", nativeMethodsToFunction(this.typeSystem, null, RotationTypeHandler.class.getMethod("getRotationType", CustomClassObject.class, Rotation.class, ISymbolContext.class)));
             members.put("deriveMagnitude", nativeMethodsToFunction(this.typeSystem, null, RotationTypeHandler.class.getMethod("deriveMagnitude", double.class, CustomClassObject.class, Rotation.class)));
             members.put("deriveRotationType", nativeMethodsToFunction(this.typeSystem, null, RotationTypeHandler.class.getMethod("deriveRotationType", CustomClassObject.class, CustomClassObject.class, Rotation.class)));
         } catch (NoSuchMethodException e) {
@@ -81,11 +81,12 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
         throw new IllegalArgumentException("Impossible Internal Exception: Invalid index for Axis object: " + index + ". Please report as soon as possible");
     }
 
-    public static CustomClassObject getRotationType(@NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeFunctionAnnotations.ThisArg Rotation rot) {
+    public static CustomClassObject getRotationType(@NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeFunctionAnnotations.ThisArg Rotation rot, ISymbolContext ctx) {
         int index = (int)axis.forceGetMember("index");
+        RotationTypeHandler staticHandler = ctx.getTypeSystem().getHandlerForHandlerClass(RotationTypeHandler.class);
         switch(index) {
-            case 0: return rotTypeToConstant(rot.getPitch().getType());
-            case 1: return rotTypeToConstant(rot.getYaw().getType());
+            case 0: return staticHandler.rotTypeToConstant(rot.getPitch().getType());
+            case 1: return staticHandler.rotTypeToConstant(rot.getYaw().getType());
             case 2: throw new IllegalArgumentException("Invalid rotation axis argument 'Axis.Z'");
         }
         throw new IllegalArgumentException("Impossible Internal Exception: Invalid index for Axis object: " + index + ". Please report as soon as possible");
@@ -147,7 +148,7 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
         return "rotation";
     }
 
-    private static CustomClassObject rotTypeToConstant(RotationUnit.Type type) {
+    private CustomClassObject rotTypeToConstant(RotationUnit.Type type) {
         return type == RotationUnit.Type.RELATIVE ? ROTATION_TYPE_RELATIVE : ROTATION_TYPE_ABSOLUTE;
     }
 
