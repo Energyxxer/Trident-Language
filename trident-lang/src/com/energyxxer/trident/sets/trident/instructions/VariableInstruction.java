@@ -1,5 +1,6 @@
 package com.energyxxer.trident.sets.trident.instructions;
 
+import com.energyxxer.enxlex.lexical_analysis.inspections.SuggestionInspection;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
@@ -21,6 +22,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility
 import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
 import com.energyxxer.trident.sets.DataStructureLiteralSet;
 import com.energyxxer.trident.sets.ValueAccessExpressionSet;
+import com.energyxxer.util.StringBounds;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -84,6 +86,42 @@ public class VariableInstruction implements InstructionDefinition {
                 sym.setVisibility(TridentProductions.parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
                 if(!sym.hasSubBlock()) {
                     ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
+                }
+            }
+
+            if(l.getInspectionModule() != null) {
+                if(p.find("SYMBOL_MODIFIER_LIST") == null) { //assume it's not final since there is only one option
+                    int startIndex = p.find("INSTRUCTION_KEYWORD").getStringLocation().index;
+
+                    StringBounds bounds = p.getStringBounds();
+
+                    SuggestionInspection inspection = new SuggestionInspection("Make final")
+                            .setStartIndex(bounds.start.index)
+                            .setEndIndex(bounds.end.index)
+                            .setReplacementStartIndex(startIndex)
+                            .setReplacementEndIndex(startIndex)
+                            .setReplacementText("final ");
+
+                    l.getInspectionModule().addInspection(inspection);
+                }
+
+                if(p.find("TYPE_CONSTRAINTS.TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER") == null && p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE") != null) {
+                    SummarySymbol initSymbol = ValueAccessExpressionSet.getSymbolForChain(l, (TokenPattern<?>) p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE").getContents());
+                    if(initSymbol != null && initSymbol.getType() != null) {
+                        int replacementStartIndex = p.find("SYMBOL_NAME").getStringBounds().end.index;
+                        int replacementEndIndex = p.find("SYMBOL_INITIALIZATION").getStringLocation().index;
+
+                        StringBounds bounds = p.getStringBounds();
+
+                        SuggestionInspection inspection = new SuggestionInspection("Constrain variable to initialization type")
+                                .setStartIndex(bounds.start.index)
+                                .setEndIndex(bounds.end.index)
+                                .setReplacementStartIndex(replacementStartIndex)
+                                .setReplacementEndIndex(replacementEndIndex)
+                                .setReplacementText(" : " + initSymbol.getType().getName() + " ");
+
+                        l.getInspectionModule().addInspection(inspection);
+                    }
                 }
             }
         });

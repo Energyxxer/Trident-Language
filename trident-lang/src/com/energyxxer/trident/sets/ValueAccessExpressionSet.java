@@ -207,7 +207,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 })
                 .addProcessor((p, l) -> {
                     memberAccessStack.pop(); //all succeeded, so no use
-                    processMemberAccessData(l, ((TokenGroup) p).getContents()[0], ((TokenList) p.find("MEMBER_ACCESSES")), null);
+                    processMemberAccessData(l, ((TokenGroup) p).getContents()[0], ((TokenList) p.find("MEMBER_ACCESSES")), null, true);
                 })
                 .addFailProcessor((ip, l) -> {
                     ArrayList<TokenPattern<?>> memberAccessData = memberAccessStack.pop();
@@ -216,7 +216,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     TokenPattern<?> rootPattern = ipContents.length > 0 ? ipContents[0] : null;
                     if(rootPattern == null) return;
 
-                    processMemberAccessData(l, rootPattern, memberAccessData.size() > 0 ? ((TokenList) memberAccessData.get(0)) : null, memberAccessData.size() > 1 ? memberAccessData.get(1) : null);
+                    processMemberAccessData(l, rootPattern, memberAccessData.size() > 0 ? ((TokenList) memberAccessData.get(0)) : null, memberAccessData.size() > 1 ? memberAccessData.get(1) : null, true);
                 })
                 .setEvaluator(
                         (p, d) -> parseAccessorChain(p, ((ISymbolContext) d[0]), (d.length > 1 && (boolean) d[1]))
@@ -272,16 +272,61 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         return null;
     }
 
-    private static void processMemberAccessData(Lexer l, TokenPattern<?> root, TokenList memberAccesses, TokenPattern<?> failingAccess) {
-        if(memberAccesses == null || (memberAccesses.getContents().length == 0 && failingAccess == null)) return;
-        if(l.getSuggestionModule() == null || l.getSummaryModule() == null) return;
+    public static SummarySymbol getSymbolForChain(Lexer l, TokenPattern<?> p) {
+        TokenGroup chainGroup = (TokenGroup) p;
+        if(chainGroup == null) return null;
+        TokenPattern<?>[] chainGroupContents = chainGroup.getContents();
+
+        if(chainGroupContents.length == 1) {
+            return processChainRootSymbol(l, chainGroupContents[0]);
+        }
+
+        return processMemberAccessData(l, chainGroupContents[0], (TokenList) chainGroupContents[1], null, false);
+    }
+
+    private static SummarySymbol processChainRootSymbol(Lexer l, TokenPattern<?> root) {
+        SummarySymbol symbol = null;
+        switch(((TokenStructure) root).getContents().getName()) {
+            case "VARIABLE_NAME": {
+                symbol = ((TridentSummaryModule) l.getSummaryModule()).getSymbolForName(root.flatten(false), root.getStringLocation().index);
+                Debug.log(symbol);
+                if(symbol == null) return null;
+                break;
+            }
+            case "CONSTRUCTOR_CALL": {
+                SummarySymbol typeSymbol = getTypeSymbolFromTypePattern(l, root.find("INTERPOLATION_TYPE"));
+                if(typeSymbol == null) {
+                    return null;
+                }
+                symbol = new SummarySymbol(((TridentSummaryModule) l.getSummaryModule()), "", TridentSymbolVisibility.LOCAL, root.getStringLocation().index);
+                symbol.setType(typeSymbol);
+                break;
+            }
+            default: {
+                boolean primitiveFound = false;
+                for(String tag : ((TokenStructure) root).getContents().getTags()) {
+                    if(tag.startsWith("primitive:")) {
+                        symbol = createSymbolForPrimitiveValue(tag.substring("primitive:".length()), l.getSummaryModule());
+                        if(symbol == null) return null;
+                        primitiveFound = true;
+                        break;
+                    }
+                }
+                if(!primitiveFound) return null;
+            }
+        }
+        return symbol;
+    }
+
+    private static SummarySymbol processMemberAccessData(Lexer l, TokenPattern<?> root, TokenList memberAccesses, TokenPattern<?> failingAccess, boolean suggest) {
+        if(memberAccesses == null || (memberAccesses.getContents().length == 0 && failingAccess == null)) return null;
+        if((suggest && l.getSuggestionModule() == null) || l.getSummaryModule() == null) return null;
 
         StringLocation start = root.getStringLocation();
         StringLocation end = failingAccess != null ? failingAccess.getStringBounds().end : memberAccesses.getStringBounds().end;
-        int suggestionIndex = l.getSuggestionModule().getSuggestionIndex();
+        int suggestionIndex = suggest ? l.getSuggestionModule().getSuggestionIndex() : 0;
 
-        if(suggestionIndex >= start.index && suggestionIndex <= end.index) {
-            Debug.log("IN CHAIN, READY TO SUGGEST");
+        if(!suggest || (suggestionIndex >= start.index && suggestionIndex <= end.index)) {
 
             TokenPattern<?>[] memberAccessesArr = memberAccesses.getContents();
 
@@ -292,42 +337,12 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
             for(int i = 0; i < memberAccessesArr.length + 2; i++) {
                 TokenPattern<?> memberAccess = i == 0 ? root : (i == memberAccessesArr.length+1 ? failingAccess : memberAccessesArr[i-1]);
                 if(memberAccess == null) continue;
-                if(memberAccess.getStringBounds().start.index > suggestionIndex) break;
-                boolean isLastAccess = memberAccess.getStringBounds().end.index >= suggestionIndex;
-
-                Debug.log(memberAccess.flatten(false));
-                Debug.log("isLastAccess: " + isLastAccess);
+                if(suggest && memberAccess.getStringBounds().start.index > suggestionIndex) break;
+                boolean isLastAccess = suggest && memberAccess.getStringBounds().end.index >= suggestionIndex;
 
                 if(i == 0) {
-                    switch(((TokenStructure) memberAccess).getContents().getName()) {
-                        case "VARIABLE_NAME": {
-                            symbol = ((TridentSummaryModule) l.getSummaryModule()).getSymbolForName(memberAccess.flatten(false), start.index);
-                            Debug.log(symbol);
-                            if(symbol == null) return;
-                            break;
-                        }
-                        case "CONSTRUCTOR_CALL": {
-                            SummarySymbol typeSymbol = getTypeSymbolFromTypePattern(l, memberAccess.find("INTERPOLATION_TYPE"));
-                            if(typeSymbol == null) {
-                                return;
-                            }
-                            symbol = new SummarySymbol(((TridentSummaryModule) l.getSummaryModule()), "", TridentSymbolVisibility.LOCAL, memberAccess.getStringLocation().index);
-                            symbol.setType(typeSymbol);
-                            break;
-                        }
-                        default: {
-                            boolean primitiveFound = false;
-                            for(String tag : ((TokenStructure) memberAccess).getContents().getTags()) {
-                                if(tag.startsWith("primitive:")) {
-                                    symbol = createSymbolForPrimitiveValue(tag.substring("primitive:".length()), l.getSummaryModule());
-                                    if(symbol == null) return;
-                                    primitiveFound = true;
-                                    break;
-                                }
-                            }
-                            if(!primitiveFound) return;
-                        }
-                    }
+                    symbol = processChainRootSymbol(l, memberAccess);
+                    if(symbol == null) return null;
                 } else {
                     if(i <= memberAccessesArr.length) {
                         memberAccess = ((TokenStructure) memberAccess).getContents();
@@ -335,13 +350,11 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     switch(memberAccess.getName()) {
                         case "MEMBER_KEY": {
                             if(isLastAccess) {
-                                Debug.log("symbols to suggest: ");
                                 for(SummarySymbol subSymbol : symbol.getSubSymbols(filePath, start.index)) {
                                     Debug.log(subSymbol);
                                     SymbolSuggestion suggestion = new SymbolSuggestion(subSymbol);
                                     l.getSuggestionModule().addSuggestion(suggestion);
                                 }
-                                Debug.log("end of symbols");
                             } else {
                                 TokenPattern<?> memberName = memberAccess.find("SYMBOL_NAME");
                                 boolean looped = false;
@@ -352,8 +365,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                                     }
                                 }
                                 if(!looped) {
-                                    Debug.log("Abandoning, found no sub symbols: " + (memberName != null ? memberName.flatten(false) : "null"));
-                                    return;
+                                    return null;
                                 }
                             }
                             break;
@@ -361,13 +373,11 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                         case "METHOD_CALL": {
                             StringBounds parameterBounds = memberAccess.getStringBounds();
                             if(suggestionIndex >= parameterBounds.start.index && suggestionIndex <= parameterBounds.end.index) {
-                                Debug.log("Abandoning, inside method call parameters");
-                                return;
+                                return null;
                             }
                             SummarySymbol returnType = symbol.getReturnType();
                             if(returnType == null) {
-                                Debug.log("Abandoning, no known return type");
-                                return;
+                                return null;
                             }
                             symbol = new SummarySymbol(((TridentSummaryModule) l.getSummaryModule()), "", TridentSymbolVisibility.LOCAL, parameterBounds.start.index);
                             symbol.setType(returnType);
@@ -376,8 +386,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                         case "MEMBER_INDEX": {
                             StringBounds parameterBounds = memberAccess.getStringBounds();
                             if(suggestionIndex >= parameterBounds.start.index && suggestionIndex <= parameterBounds.end.index) {
-                                Debug.log("Abandoning, inside indexer");
-                                return;
+                                return null;
                             }
                             break;
                         }
@@ -387,14 +396,9 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     }
                 }
             }
-            /*if(l.getSummaryModule() != null) {
-                ArrayList<String> memberPath = ((TridentSummaryModule) l.getSummaryModule()).getTempMemberAccessList();
-                l.getSuggestionModule().setLookingAtMemberPath(memberPath.toArray(new String[0]));
-                l.getSuggestionModule().addSuggestion(new ComplexSuggestion(TridentSuggestionTags.IDENTIFIER_MEMBER));
-            }*/
-            Debug.log(symbol);
-            Debug.log("end");
+            return symbol;
         }
+        return null;
     }
 
     private static TokenPattern<?> sanitizeMemberAccessPattern(@NotNull TokenPattern<?> pattern) {

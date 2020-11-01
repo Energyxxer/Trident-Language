@@ -19,7 +19,6 @@ import com.energyxxer.prismarine.summaries.PrismarineProjectSummarizer;
 import com.energyxxer.prismarine.summaries.PrismarineProjectSummary;
 import com.energyxxer.prismarine.symbols.contexts.GlobalSymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
-import com.energyxxer.prismarine.util.FileUtil;
 import com.energyxxer.prismarine.walker.FileWalker;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.prismarine.worker.tasks.SetupProductionsTask;
@@ -37,6 +36,7 @@ import com.energyxxer.trident.compiler.semantics.custom.special.SpecialFileManag
 import com.energyxxer.trident.filewalkers.CompilerWalkers;
 import com.energyxxer.trident.filewalkers.SummaryWalkers;
 import com.energyxxer.trident.worker.tasks.*;
+import com.energyxxer.util.FileUtil;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.JsonObject;
 

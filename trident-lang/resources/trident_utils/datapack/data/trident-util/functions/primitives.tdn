@@ -126,6 +126,7 @@ define private class list {
     public map(function : function) : list {}
     public filter(function : function) : list {}
 }
+define private class function {}
 
 
 
