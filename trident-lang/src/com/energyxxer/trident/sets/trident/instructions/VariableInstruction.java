@@ -8,6 +8,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
@@ -50,7 +51,9 @@ public class VariableInstruction implements InstructionDefinition {
             if(l.getSummaryModule() != null) {
                 SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
 
-                sym.setType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, p.find("TYPE_CONSTRAINTS")));
+                ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(s -> {
+                    sym.setType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(s, p.find("TYPE_CONSTRAINTS")));
+                });
 
                 sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
                 TokenPattern<?> root = p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE.ROOT_INTERPOLATION_VALUE");
@@ -77,7 +80,7 @@ public class VariableInstruction implements InstructionDefinition {
                             if(dynamicFunctionPattern != null && ((TokenGroup) dynamicFunctionPattern).getContents()[0].getName().equals("DYNAMIC_FUNCTION")) {
                                 sym.addTag(TridentSuggestionTags.TAG_METHOD);
 
-                                sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, dynamicFunctionPattern.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
+                                sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint((PrismarineSummaryModule) l.getSummaryModule(), dynamicFunctionPattern.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
                             }
                             break;
                         }
@@ -106,22 +109,28 @@ public class VariableInstruction implements InstructionDefinition {
                 }
 
                 if(p.find("TYPE_CONSTRAINTS.TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER") == null && p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE") != null) {
-                    SummarySymbol initSymbol = ValueAccessExpressionSet.getSymbolForChain(l, (TokenPattern<?>) p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE").getContents());
-                    if(initSymbol != null && initSymbol.getType() != null) {
-                        int replacementStartIndex = p.find("SYMBOL_NAME").getStringBounds().end.index;
-                        int replacementEndIndex = p.find("SYMBOL_INITIALIZATION").getStringLocation().index;
+                    ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(s -> {
+                        TokenPattern<?> contents = p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE");
+                        if (contents instanceof TokenGroup) {
+                            SummarySymbol initSymbol = ValueAccessExpressionSet.getSymbolForChain(s, (TokenPattern<?>) contents.getContents());
 
-                        StringBounds bounds = p.getStringBounds();
+                            if(initSymbol != null && initSymbol.getType() != null) {
+                                int replacementStartIndex = p.find("SYMBOL_NAME").getStringBounds().end.index;
+                                int replacementEndIndex = p.find("SYMBOL_INITIALIZATION").getStringLocation().index;
 
-                        SuggestionInspection inspection = new SuggestionInspection("Constrain variable to initialization type")
-                                .setStartIndex(bounds.start.index)
-                                .setEndIndex(bounds.end.index)
-                                .setReplacementStartIndex(replacementStartIndex)
-                                .setReplacementEndIndex(replacementEndIndex)
-                                .setReplacementText(" : " + initSymbol.getType().getName() + " ");
+                                StringBounds bounds = p.getStringBounds();
 
-                        l.getInspectionModule().addInspection(inspection);
-                    }
+                                SuggestionInspection inspection = new SuggestionInspection("Constrain variable to initialization type")
+                                        .setStartIndex(bounds.start.index)
+                                        .setEndIndex(bounds.end.index)
+                                        .setReplacementStartIndex(replacementStartIndex)
+                                        .setReplacementEndIndex(replacementEndIndex)
+                                        .setReplacementText(" : " + initSymbol.getType().getName() + " ");
+
+                                l.getInspectionModule().addInspection(inspection);
+                            }
+                        }
+                    });
                 }
             }
         });

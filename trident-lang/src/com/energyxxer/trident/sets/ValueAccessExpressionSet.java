@@ -8,6 +8,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.enxlex.suggestions.SuggestionModule;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
@@ -35,13 +36,13 @@ import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility
 import com.energyxxer.trident.extensions.EObject;
 import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.StringLocation;
-import com.energyxxer.util.logger.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Stack;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
@@ -63,7 +64,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), declaration.declarationPattern.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index + 1);
                 ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(declaration.declarationPattern);
                 sym.setDeclarationPattern(declaration.declarationPattern);
-                sym.setType(getTypeSymbolFromConstraint(l, declaration.constraintsPattern));
+                sym.setType(getTypeSymbolFromConstraint((PrismarineSummaryModule) l.getSummaryModule(), declaration.constraintsPattern));
                 if(declaration.tags != null) {
                     for(String tag : declaration.tags) {
                         sym.addTag(tag);
@@ -207,7 +208,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 })
                 .addProcessor((p, l) -> {
                     memberAccessStack.pop(); //all succeeded, so no use
-                    processMemberAccessData(l, ((TokenGroup) p).getContents()[0], ((TokenList) p.find("MEMBER_ACCESSES")), null, true);
+                    suggestMemberAccessData(l, ((TokenGroup) p).getContents()[0], ((TokenList) p.find("MEMBER_ACCESSES")), null);
                 })
                 .addFailProcessor((ip, l) -> {
                     ArrayList<TokenPattern<?>> memberAccessData = memberAccessStack.pop();
@@ -216,19 +217,19 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     TokenPattern<?> rootPattern = ipContents.length > 0 ? ipContents[0] : null;
                     if(rootPattern == null) return;
 
-                    processMemberAccessData(l, rootPattern, memberAccessData.size() > 0 ? ((TokenList) memberAccessData.get(0)) : null, memberAccessData.size() > 1 ? memberAccessData.get(1) : null, true);
+                    suggestMemberAccessData(l, rootPattern, memberAccessData.size() > 0 ? ((TokenList) memberAccessData.get(0)) : null, memberAccessData.size() > 1 ? memberAccessData.get(1) : null);
                 })
                 .setEvaluator(
                         (p, d) -> parseAccessorChain(p, ((ISymbolContext) d[0]), (d.length > 1 && (boolean) d[1]))
                 );
     }
 
-    public static SummarySymbol getTypeSymbolFromConstraint(Lexer l, TokenPattern<?> pattern) {
+    public static SummarySymbol getTypeSymbolFromConstraint(PrismarineSummaryModule fileSummary, TokenPattern<?> pattern) {
         if(pattern == null) return null;
-        return getTypeSymbolFromTypePattern(l, pattern.find("TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER.TYPE_CONSTRAINTS_EXPLICIT.INTERPOLATION_TYPE"));
+        return getTypeSymbolFromTypePattern(fileSummary, pattern.find("TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER.TYPE_CONSTRAINTS_EXPLICIT.INTERPOLATION_TYPE"));
     }
 
-    private static SummarySymbol getTypeSymbolFromTypePattern(Lexer l, TokenPattern<?> pattern) {
+    private static SummarySymbol getTypeSymbolFromTypePattern(PrismarineSummaryModule fileSummary, TokenPattern<?> pattern) {
         if(pattern == null || !pattern.getName().equals("INTERPOLATION_TYPE") || !(pattern instanceof TokenStructure)) return null;
         TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
 
@@ -239,11 +240,11 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 case "PRIMITIVE_ROOT_TYPE": {
                     String identifier = inner.flatten(false);
 
-                    TridentProjectSummary parentSummary = ((TridentSummaryModule) l.getSummaryModule()).getParentSummary();
+                    TridentProjectSummary parentSummary = (TridentProjectSummary) fileSummary.getParentSummary();
                     if(parentSummary != null) {
                         return parentSummary.getPrimitiveSymbol(identifier);
-                    } else if(TridentSuiteConfiguration.PRIMITIVES_SUMMARY_PATH.equals(((TridentSummaryModule) l.getSummaryModule()).getFileLocation())) {
-                        return ((TridentSummaryModule) l.getSummaryModule()).getSymbolForName(identifier, inner.getStringLocation().index);
+                    } else if(TridentSuiteConfiguration.PRIMITIVES_SUMMARY_PATH.equals(fileSummary.getFileLocation())) {
+                        return fileSummary.getSymbolForName(identifier, inner.getStringLocation().index);
                     }
                     break;
                 }
@@ -253,7 +254,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                         return null;
                     }
                     String typeName = inner.find("ROOT_INTERPOLATION_TYPE").flatten(false);
-                    return ((TridentSummaryModule) l.getSummaryModule()).getSymbolForName(typeName, inner.getStringLocation().index);
+                    return fileSummary.getSymbolForName(typeName, inner.getStringLocation().index);
                 }
             }
         }
@@ -272,33 +273,32 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         return null;
     }
 
-    public static SummarySymbol getSymbolForChain(Lexer l, TokenPattern<?> p) {
+    public static SummarySymbol getSymbolForChain(PrismarineSummaryModule fileSummary, TokenPattern<?> p) {
         TokenGroup chainGroup = (TokenGroup) p;
         if(chainGroup == null) return null;
         TokenPattern<?>[] chainGroupContents = chainGroup.getContents();
 
         if(chainGroupContents.length == 1) {
-            return processChainRootSymbol(l, chainGroupContents[0]);
+            return processChainRootSymbol(fileSummary, chainGroupContents[0]);
         }
 
-        return processMemberAccessData(l, chainGroupContents[0], (TokenList) chainGroupContents[1], null, false);
+        return getSymbolForChain(chainGroupContents[0], (TokenList) chainGroupContents[1], fileSummary, (a, b) -> false);
     }
 
-    private static SummarySymbol processChainRootSymbol(Lexer l, TokenPattern<?> root) {
+    private static SummarySymbol processChainRootSymbol(PrismarineSummaryModule fileSummary, TokenPattern<?> root) {
         SummarySymbol symbol = null;
         switch(((TokenStructure) root).getContents().getName()) {
             case "VARIABLE_NAME": {
-                symbol = ((TridentSummaryModule) l.getSummaryModule()).getSymbolForName(root.flatten(false), root.getStringLocation().index);
-                Debug.log(symbol);
+                symbol = fileSummary.getSymbolForName(root.flatten(false), root.getStringLocation().index);
                 if(symbol == null) return null;
                 break;
             }
             case "CONSTRUCTOR_CALL": {
-                SummarySymbol typeSymbol = getTypeSymbolFromTypePattern(l, root.find("INTERPOLATION_TYPE"));
+                SummarySymbol typeSymbol = getTypeSymbolFromTypePattern(fileSummary, root.find("INTERPOLATION_TYPE"));
                 if(typeSymbol == null) {
                     return null;
                 }
-                symbol = new SummarySymbol(((TridentSummaryModule) l.getSummaryModule()), "", TridentSymbolVisibility.LOCAL, root.getStringLocation().index);
+                symbol = new SummarySymbol(fileSummary, "", TridentSymbolVisibility.LOCAL, root.getStringLocation().index);
                 symbol.setType(typeSymbol);
                 break;
             }
@@ -306,7 +306,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 boolean primitiveFound = false;
                 for(String tag : ((TokenStructure) root).getContents().getTags()) {
                     if(tag.startsWith("primitive:")) {
-                        symbol = createSymbolForPrimitiveValue(tag.substring("primitive:".length()), l.getSummaryModule());
+                        symbol = createSymbolForPrimitiveValue(tag.substring("primitive:".length()), fileSummary);
                         if(symbol == null) return null;
                         primitiveFound = true;
                         break;
@@ -318,87 +318,112 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         return symbol;
     }
 
-    private static SummarySymbol processMemberAccessData(Lexer l, TokenPattern<?> root, TokenList memberAccesses, TokenPattern<?> failingAccess, boolean suggest) {
-        if(memberAccesses == null || (memberAccesses.getContents().length == 0 && failingAccess == null)) return null;
-        if((suggest && l.getSuggestionModule() == null) || l.getSummaryModule() == null) return null;
+    private static void suggestMemberAccessData(Lexer l, TokenPattern<?> root, TokenList memberAccesses, TokenPattern<?> failingAccess) {
+        PrismarineSummaryModule fileSummary = (PrismarineSummaryModule) l.getSummaryModule();
+        SuggestionModule suggestionModule = l.getSuggestionModule();
+        if(fileSummary == null || suggestionModule == null) return;
+        if(memberAccesses == null || (memberAccesses.getContents().length == 0 && failingAccess == null)) return;
 
         StringLocation start = root.getStringLocation();
         StringLocation end = failingAccess != null ? failingAccess.getStringBounds().end : memberAccesses.getStringBounds().end;
-        int suggestionIndex = suggest ? l.getSuggestionModule().getSuggestionIndex() : 0;
+        int suggestionIndex = suggestionModule.getSuggestionIndex();
 
-        if(!suggest || (suggestionIndex >= start.index && suggestionIndex <= end.index)) {
+        if(suggestionIndex >= start.index && suggestionIndex <= end.index) {
 
-            TokenPattern<?>[] memberAccessesArr = memberAccesses.getContents();
+            Path filePath = fileSummary.getFileLocation();
 
-            SummarySymbol symbol = null;
+            fileSummary.addFileAwareProcessor(fs -> {
+                boolean[] broken = new boolean[] {false};
 
-            Path filePath = ((PrismarineSummaryModule)l.getSummaryModule()).getFileLocation();
-
-            for(int i = 0; i < memberAccessesArr.length + 2; i++) {
-                TokenPattern<?> memberAccess = i == 0 ? root : (i == memberAccessesArr.length+1 ? failingAccess : memberAccessesArr[i-1]);
-                if(memberAccess == null) continue;
-                if(suggest && memberAccess.getStringBounds().start.index > suggestionIndex) break;
-                boolean isLastAccess = suggest && memberAccess.getStringBounds().end.index >= suggestionIndex;
-
-                if(i == 0) {
-                    symbol = processChainRootSymbol(l, memberAccess);
-                    if(symbol == null) return null;
-                } else {
-                    if(i <= memberAccessesArr.length) {
-                        memberAccess = ((TokenStructure) memberAccess).getContents();
+                SummarySymbol obtainedSymbol = getSymbolForChain(root, memberAccesses, fs, (m, s) -> {
+                    StringBounds bounds = m.getStringBounds();
+                    boolean shouldBreak = bounds.start.index > suggestionIndex;
+                    if(bounds.start.index < suggestionIndex && suggestionIndex <= bounds.end.index) {
+                        if(m.getName().equals("MEMBER_KEY")) {
+                            shouldBreak = true;
+                            for(SummarySymbol subSymbol : s.getSubSymbols(filePath, start.index)) {
+                                SymbolSuggestion suggestion = new SymbolSuggestion(subSymbol);
+                                suggestionModule.addSuggestion(suggestion);
+                            }
+                        }
                     }
-                    switch(memberAccess.getName()) {
-                        case "MEMBER_KEY": {
-                            if(isLastAccess) {
-                                for(SummarySymbol subSymbol : symbol.getSubSymbols(filePath, start.index)) {
-                                    Debug.log(subSymbol);
-                                    SymbolSuggestion suggestion = new SymbolSuggestion(subSymbol);
-                                    l.getSuggestionModule().addSuggestion(suggestion);
-                                }
-                            } else {
-                                TokenPattern<?> memberName = memberAccess.find("SYMBOL_NAME");
-                                boolean looped = false;
-                                if(memberName != null) {
-                                    for(SummarySymbol subSymbol : symbol.getSubSymbolsByName(memberName.flatten(false), filePath, start.index)) {
-                                        symbol = subSymbol;
-                                        looped = true;
-                                    }
-                                }
-                                if(!looped) {
-                                    return null;
-                                }
-                            }
-                            break;
+                    if(!shouldBreak && (m.getName().equals("METHOD_CALL") || m.getName().equals("MEMBER_INDEX"))) {
+                        StringBounds parameterBounds = m.getStringBounds();
+                        if(suggestionIndex >= parameterBounds.start.index && suggestionIndex <= parameterBounds.end.index) {
+                            shouldBreak = true;
                         }
-                        case "METHOD_CALL": {
-                            StringBounds parameterBounds = memberAccess.getStringBounds();
-                            if(suggestionIndex >= parameterBounds.start.index && suggestionIndex <= parameterBounds.end.index) {
-                                return null;
-                            }
-                            SummarySymbol returnType = symbol.getReturnType();
-                            if(returnType == null) {
-                                return null;
-                            }
-                            symbol = new SummarySymbol(((TridentSummaryModule) l.getSummaryModule()), "", TridentSymbolVisibility.LOCAL, parameterBounds.start.index);
-                            symbol.setType(returnType);
-                            break;
-                        }
-                        case "MEMBER_INDEX": {
-                            StringBounds parameterBounds = memberAccess.getStringBounds();
-                            if(suggestionIndex >= parameterBounds.start.index && suggestionIndex <= parameterBounds.end.index) {
-                                return null;
-                            }
-                            break;
-                        }
-                        default: {
-                            break;
+                    }
+                    if(shouldBreak) broken[0] = true;
+                    return shouldBreak;
+                });
+
+                if(obtainedSymbol != null && !broken[0] && failingAccess != null) {
+                    if(failingAccess.getName().equals("MEMBER_KEY")) {
+                        for(SummarySymbol subSymbol : obtainedSymbol.getSubSymbols(filePath, start.index)) {
+                            SymbolSuggestion suggestion = new SymbolSuggestion(subSymbol);
+                            suggestionModule.addSuggestion(suggestion);
                         }
                     }
                 }
-            }
-            return symbol;
+            });
         }
-        return null;
+    }
+
+    @SuppressWarnings("DuplicateBranchesInSwitch")
+    private static SummarySymbol getSymbolForChain(TokenPattern<?> root, TokenList memberAccesses, PrismarineSummaryModule fileSummary, BiPredicate<TokenPattern<?>, SummarySymbol> shouldBreak) {
+        TokenPattern<?>[] memberAccessesArr = memberAccesses.getContents();
+
+        int rootIndex = root.getStringLocation().index;
+
+        SummarySymbol symbol = null;
+
+        Path filePath = fileSummary.getFileLocation();
+
+        for(int i = 0; i < memberAccessesArr.length + 1; i++) {
+            TokenPattern<?> memberAccess = i == 0 ? root : memberAccessesArr[i-1];
+            if(memberAccess == null) continue;
+            memberAccess = sanitizeMemberAccessPattern(memberAccess);
+            if(shouldBreak.test(memberAccess, symbol)) return symbol;
+
+            if(i == 0) {
+                symbol = processChainRootSymbol(fileSummary, memberAccess);
+                if(symbol == null) return null;
+            } else {
+                switch(memberAccess.getName()) {
+                    case "MEMBER_KEY": {
+                        TokenPattern<?> memberName = memberAccess.find("SYMBOL_NAME");
+                        boolean looped = false;
+                        if(memberName != null) {
+                            for(SummarySymbol subSymbol : symbol.getSubSymbolsByName(memberName.flatten(false), filePath, rootIndex)) {
+                                symbol = subSymbol;
+                                looped = true;
+                            }
+                        }
+                        if(!looped) {
+                            return null;
+                        }
+                        break;
+                    }
+                    case "METHOD_CALL": {
+                        SummarySymbol returnType = symbol.getReturnType();
+                        if(returnType == null) {
+                            return null;
+                        }
+                        symbol = new SummarySymbol(fileSummary, "", TridentSymbolVisibility.LOCAL, rootIndex);
+                        symbol.setType(returnType);
+                        break;
+                    }
+                    case "MEMBER_INDEX": {
+                        //Can't do much about this atm
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
+        }
+        return symbol;
     }
 
     private static TokenPattern<?> sanitizeMemberAccessPattern(@NotNull TokenPattern<?> pattern) {

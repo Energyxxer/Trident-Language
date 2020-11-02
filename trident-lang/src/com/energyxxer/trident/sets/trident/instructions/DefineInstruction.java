@@ -1,8 +1,10 @@
 package com.energyxxer.trident.sets.trident.instructions;
 
 import com.energyxxer.commodore.textcomponents.TextComponent;
+import com.energyxxer.enxlex.lexical_analysis.inspections.SuggestionInspection;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -13,6 +15,7 @@ import com.energyxxer.prismarine.operators.Operator;
 import com.energyxxer.prismarine.operators.OperatorPool;
 import com.energyxxer.prismarine.operators.TernaryOperator;
 import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
@@ -29,6 +32,7 @@ import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.trident.sets.ValueAccessExpressionSet;
 import com.energyxxer.trident.worker.tasks.SetupModuleTask;
+import com.energyxxer.util.StringBounds;
 import com.energyxxer.util.logger.Debug;
 
 import java.util.ArrayList;
@@ -128,13 +132,40 @@ public class DefineInstruction implements InstructionDefinition {
                         sym.setVisibility(TridentProductions.parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
                         sym.addTag(TridentSuggestionTags.TAG_FIELD);
 
-                        sym.setType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, p.find("TYPE_CONSTRAINTS")));
+                        ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(s -> {
+                            sym.setType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(s, p.find("TYPE_CONSTRAINTS")));
+                        });
 
                         if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                             sym.setInstanceField(true);
                         }
                         if(!sym.hasSubBlock()) {
                             ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
+                        }
+                        if(l.getInspectionModule() != null) {
+                            if(p.find("TYPE_CONSTRAINTS.TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER") == null && p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE") != null) {
+                                ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(s -> {
+                                    TokenPattern<?> contents = p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE");
+                                    if(contents instanceof TokenGroup) {
+                                        SummarySymbol initSymbol = ValueAccessExpressionSet.getSymbolForChain(s, (TokenPattern<?>) contents.getContents());
+                                        if (initSymbol != null && initSymbol.getType() != null) {
+                                            int replacementStartIndex = p.find("SYMBOL_NAME").getStringBounds().end.index;
+                                            int replacementEndIndex = p.find("SYMBOL_INITIALIZATION").getStringLocation().index;
+
+                                            StringBounds bounds = p.getStringBounds();
+
+                                            SuggestionInspection inspection = new SuggestionInspection("Constrain field to initialization type")
+                                                    .setStartIndex(bounds.start.index)
+                                                    .setEndIndex(bounds.end.index)
+                                                    .setReplacementStartIndex(replacementStartIndex)
+                                                    .setReplacementEndIndex(replacementEndIndex)
+                                                    .setReplacementText(" : " + initSymbol.getType().getName() + " ");
+
+                                            l.getInspectionModule().addInspection(inspection);
+                                        }
+                                    }
+                                });
+                            }
                         }
                     }
                 }),
@@ -167,7 +198,7 @@ public class DefineInstruction implements InstructionDefinition {
                         if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                             sym.setInstanceField(true);
                         }
-                        sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(l, p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
+                        sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint((PrismarineSummaryModule) l.getSummaryModule(), p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
                         if(!sym.hasSubBlock()) {
                             ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                         }
