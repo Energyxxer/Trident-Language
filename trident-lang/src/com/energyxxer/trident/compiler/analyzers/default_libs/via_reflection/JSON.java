@@ -49,7 +49,7 @@ public class JSON {
 
     private static Object stringify(Object param, Boolean prettyPrinting, ISymbolContext ctx) {
         if(prettyPrinting == null) prettyPrinting = false;
-        GsonBuilder gb = new GsonBuilder();
+        GsonBuilder gb = new GsonBuilder().disableHtmlEscaping();
         if(prettyPrinting) gb.setPrettyPrinting();
         return gb.create().toJson(toJson(param, null, true, ctx));
     }

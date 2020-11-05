@@ -95,6 +95,7 @@ public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
         throw new IllegalArgumentException("Invalid axis argument '" + axis + "'. Use constants Axis.X, Axis.Y and Axis.Z to specify an axis.");
     }
 
+    @NativeFunctionAnnotations.NotNullReturn
     @NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@CoordinateType")
     public static CustomClassObject getCoordinateType(@NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeFunctionAnnotations.ThisArg CoordinateSet coords, ISymbolContext ctx) {
         int index = (int)axis.forceGetMember("index");

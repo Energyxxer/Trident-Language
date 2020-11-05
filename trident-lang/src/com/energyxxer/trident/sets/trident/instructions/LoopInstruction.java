@@ -64,9 +64,11 @@ public abstract class LoopInstruction implements InstructionDefinition {
             return group(
                     blockLabel,
                     TridentProductions.instructionKeyword("while"),
-                    TridentProductions.brace("("),
-                    WHILE_HEADER,
-                    TridentProductions.brace(")"),
+                    group(
+                            TridentProductions.brace("("),
+                            WHILE_HEADER,
+                            TridentProductions.brace(")")
+                    ).setName("LOOP_HEADER_WRAPPER"),
                     wrapper(productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setName("LOOP_BODY")
             ).setName("WHILE_STATEMENT");
         }

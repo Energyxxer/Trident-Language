@@ -282,6 +282,10 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
             return processChainRootSymbol(fileSummary, chainGroupContents[0]);
         }
 
+        if(!(chainGroupContents[1] instanceof TokenList)) {
+            return null;
+        }
+
         return getSymbolForChain(chainGroupContents[0], (TokenList) chainGroupContents[1], fileSummary, (a, b) -> false);
     }
 

@@ -81,6 +81,8 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
         throw new IllegalArgumentException("Impossible Internal Exception: Invalid index for Axis object: " + index + ". Please report as soon as possible");
     }
 
+    @NativeFunctionAnnotations.NotNullReturn
+    @NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@RotationType")
     public static CustomClassObject getRotationType(@NativeFunctionAnnotations.UserDefinedTypeObjectArgument(typeIdentifier = "trident-util:native@Axis") CustomClassObject axis, @NativeFunctionAnnotations.ThisArg Rotation rot, ISymbolContext ctx) {
         int index = (int)axis.forceGetMember("index");
         RotationTypeHandler staticHandler = ctx.getTypeSystem().getHandlerForHandlerClass(RotationTypeHandler.class);

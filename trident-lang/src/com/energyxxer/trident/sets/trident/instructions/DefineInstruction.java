@@ -146,7 +146,7 @@ public class DefineInstruction implements InstructionDefinition {
                             if(p.find("TYPE_CONSTRAINTS.TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER") == null && p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE") != null) {
                                 ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(s -> {
                                     TokenPattern<?> contents = p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE");
-                                    if(contents instanceof TokenGroup) {
+                                    if(contents instanceof TokenGroup || contents instanceof TokenStructure) {
                                         SummarySymbol initSymbol = ValueAccessExpressionSet.getSymbolForChain(s, (TokenPattern<?>) contents.getContents());
                                         if (initSymbol != null && initSymbol.getType() != null) {
                                             int replacementStartIndex = p.find("SYMBOL_NAME").getStringBounds().end.index;
@@ -208,21 +208,22 @@ public class DefineInstruction implements InstructionDefinition {
                 group(literal("operator"), ofType(COMPILER_OPERATOR).setName("OPERATOR_SYMBOL"), productions.getOrCreateStructure("DYNAMIC_FUNCTION")).setName("CLASS_OPERATOR")
                         .addProcessor((p, l) -> {
                             String operatorSymbol = p.find("OPERATOR_SYMBOL").flatten(false);
-                            int operandCount = (((TokenList) p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST")).size() + 1) / 2;
-                            Operator associatedOperator;
+                            TokenList formalParamList = ((TokenList) p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST"));
+                            int operandCount = formalParamList != null ? (formalParamList.size() + 1) / 2 : 0;
+                            Operator associatedOperator = null;
                             if(operandCount == 1) {
                                 associatedOperator = operatorPool.getUnaryLeftOperatorForSymbol(operatorSymbol);
                                 if(associatedOperator == null) {
                                     associatedOperator = operatorPool.getUnaryLeftOperatorForSymbol(operatorSymbol);
                                 }
-                            } else {
+                            } else if(operandCount >= 2 && operandCount <= 3) {
                                 associatedOperator = operatorPool.getBinaryOrTernaryOperatorForSymbol(operatorSymbol);
                                 if((associatedOperator instanceof TernaryOperator) != (operandCount == 3)) {
                                     associatedOperator = null;
                                 }
                             }
                             if(associatedOperator == null) {
-                                l.getNotices().add(new Notice(NoticeType.ERROR, "There is no operator " + operatorSymbol + " for " + operandCount + " operands", p.find("OPERATOR_PARAMETERS")));
+                                l.getNotices().add(new Notice(NoticeType.ERROR, "There is no operator " + operatorSymbol + " for " + operandCount + " operands", p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK")));
                             }
                         }),
                 group(literal("override").setOptional(), choice("explicit", "implicit").setName("CLASS_TRANSFORM_TYPE"), TridentProductions.brace("<"), productions.getOrCreateStructure("INTERPOLATION_TYPE"), TridentProductions.brace(">"), productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setName("CLASS_OVERRIDE"),

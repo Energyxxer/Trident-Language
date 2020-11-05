@@ -111,7 +111,7 @@ public class VariableInstruction implements InstructionDefinition {
                 if(p.find("TYPE_CONSTRAINTS.TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER") == null && p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE") != null) {
                     ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(s -> {
                         TokenPattern<?> contents = p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE");
-                        if (contents instanceof TokenGroup) {
+                        if (contents instanceof TokenGroup || contents instanceof TokenStructure) {
                             SummarySymbol initSymbol = ValueAccessExpressionSet.getSymbolForChain(s, (TokenPattern<?>) contents.getContents());
 
                             if(initSymbol != null && initSymbol.getType() != null) {
