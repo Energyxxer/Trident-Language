@@ -41,6 +41,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
 
             members.putMethod(ListObject.class.getMethod("map", PrimitivePrismarineFunction.class, TokenPattern.class, ISymbolContext.class));
             members.putMethod(ListObject.class.getMethod("filter", PrimitivePrismarineFunction.class, TokenPattern.class, ISymbolContext.class));
+            members.putMethod(ListObject.class.getMethod("reduce", PrimitivePrismarineFunction.class, Object.class, TokenPattern.class, ISymbolContext.class));
 
             members.putReadOnlyField("length", ListObject::size);
         } catch (NoSuchMethodException e) {
@@ -187,6 +188,29 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
         }
 
         return newList;
+    }
+
+    public Object reduce(PrimitivePrismarineFunction function, Object initialValue, TokenPattern<?> pattern, ISymbolContext ctx) {
+        Object current = initialValue;
+        int currentIndex = 0;
+        if(current == null) {
+            if(this.isEmpty()) {
+                throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Cannot reduce an empty array with no initial value", pattern, ctx);
+            } else {
+                current = this.get(0);
+                currentIndex = 1;
+            }
+        }
+
+        try {
+            for(; currentIndex < size(); currentIndex++) {
+                current = function.safeCall(new ActualParameterList(new Object[] {current, this.get(currentIndex), currentIndex}, null, pattern), ctx, null);
+            }
+        } catch(ConcurrentModificationException x) {
+            throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Concurrent modification", pattern, ctx);
+        }
+
+        return current;
     }
 
     @NotNull

@@ -32,6 +32,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
             members.putMethod(DictionaryObject.class.getMethod("map", PrimitivePrismarineFunction.class, TokenPattern.class, ISymbolContext.class));
             members.putMethod(DictionaryObject.class.getMethod("merge", DictionaryObject.class));
             members.putMethod(DictionaryObject.class.getMethod("remove", String.class));
+            members.putMethod(DictionaryObject.class.getMethod("hasOwnProperty", String.class));
             members.putMethod(DictionaryObject.class.getMethod("clear"));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -105,6 +106,10 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
 
     public Object remove(String key) {
         return map.remove(key);
+    }
+
+    public boolean hasOwnProperty(String key) {
+        return map.containsKey(key);
     }
 
     public void clear() {

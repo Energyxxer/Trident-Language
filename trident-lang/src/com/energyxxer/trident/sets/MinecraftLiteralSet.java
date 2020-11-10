@@ -1358,7 +1358,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
     }
 
     public static NBTTag parseNumericNBTTag(TokenPattern<?> pattern, ISymbolContext ctx) {
-        String flat = pattern.flattenTokens().get(0).value;
+        String flat = pattern.flattenTokens(new ArrayList<>()).get(0).value;
 
         Matcher matcher = TridentLexerProfile.NUMBER_REGEX.matcher(flat);
         matcher.lookingAt(); //must be true

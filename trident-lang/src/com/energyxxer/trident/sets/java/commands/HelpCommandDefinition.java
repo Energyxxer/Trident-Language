@@ -9,6 +9,8 @@ import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 
+import java.util.ArrayList;
+
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.TRAILING_STRING;
 
@@ -28,6 +30,6 @@ public class HelpCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return new HelpCommand(pattern.flattenTokens().get(1).value);
+        return new HelpCommand(pattern.flattenTokens(new ArrayList<>()).get(1).value);
     }
 }

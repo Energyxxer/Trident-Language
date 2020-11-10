@@ -9,6 +9,7 @@ import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.util.Lazy;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class ResourceLocation {
@@ -37,7 +38,7 @@ public class ResourceLocation {
     public ResourceLocation(TokenPattern<?> typeGroup) {
         if(typeGroup.find("") != null) isTag = true;
         TokenPattern<?> namespacePattern = typeGroup.find("NAMESPACE");
-        namespace = namespacePattern != null ? namespacePattern.flattenTokens().get(0).value : "minecraft";
+        namespace = namespacePattern != null ? namespacePattern.flattenTokens(new ArrayList<>()).get(0).value : "minecraft";
         body = typeGroup.find("TYPE_NAME").flatten(true);
     }
 

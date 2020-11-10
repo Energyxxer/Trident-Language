@@ -341,7 +341,10 @@ public class TridentLiteralSet extends PatternProviderSet { //pointers, type_def
                                             ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
                                         }
                                 })
-                        ).setName("VARIABLE").setSimplificationFunctionFind("VARIABLE_NAME")
+                        ).setName("VARIABLE").setSimplificationFunction(d -> {
+                            d.pattern = d.pattern.find("VARIABLE_NAME");
+                            d.data = new Object[] {(ISymbolContext) d.data[0]};
+                        })
                 )
                 .add(
                         group(
