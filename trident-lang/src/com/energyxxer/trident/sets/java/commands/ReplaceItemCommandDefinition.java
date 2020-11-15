@@ -10,7 +10,10 @@ import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.defaults.ItemSlot;
+import com.energyxxer.enxlex.lexical_analysis.inspections.ReplacementInspectionAction;
+import com.energyxxer.enxlex.lexical_analysis.inspections.SuggestionInspection;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenGroupMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.reporting.PrismarineException;
@@ -19,6 +22,7 @@ import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
+import com.energyxxer.util.StringBounds;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
@@ -30,7 +34,7 @@ public class ReplaceItemCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
-        return group(
+        TokenGroupMatch pattern = group(
                 TridentProductions.commandHeader("replaceitem"),
                 choice(
                         group(literal("block"), productions.getOrCreateStructure("COORDINATE_SET")).setEvaluator((p, d) -> {
@@ -48,6 +52,37 @@ public class ReplaceItemCommandDefinition implements SimpleCommandDefinition {
                 productions.getOrCreateStructure("ITEM"),
                 TridentProductions.integer(productions).setOptional().setName("COUNT").addTags("cspn:Count")
         );
+
+        if(TridentProductions.checkVersionFeature(productions.worker,"command.item", false)) {
+            pattern.addProcessor((p, l) -> {
+                if(l.getInspectionModule() != null) {
+
+                    StringBounds bounds = p.getStringBounds();
+
+                    int slotIdEndIndex = p.find("SLOT_ID").getStringBounds().end.index;
+
+                    SuggestionInspection inspection = new SuggestionInspection("Convert to item command")
+                            .setStartIndex(bounds.start.index)
+                            .setEndIndex(bounds.end.index)
+                            .addAction(
+                                    new ReplacementInspectionAction()
+                                            .setReplacementStartIndex(slotIdEndIndex)
+                                            .setReplacementEndIndex(slotIdEndIndex)
+                                            .setReplacementText(" replace")
+                            )
+                            .addAction(
+                                    new ReplacementInspectionAction()
+                                            .setReplacementStartIndex(bounds.start.index)
+                                            .setReplacementEndIndex(bounds.start.index + "replaceitem".length())
+                                            .setReplacementText("item")
+                            );
+
+                    l.getInspectionModule().addInspection(inspection);
+                }
+            });
+        }
+
+        return pattern;
     }
 
     @Override

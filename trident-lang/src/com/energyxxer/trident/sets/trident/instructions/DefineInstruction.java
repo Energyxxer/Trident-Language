@@ -1,6 +1,7 @@
 package com.energyxxer.trident.sets.trident.instructions;
 
 import com.energyxxer.commodore.textcomponents.TextComponent;
+import com.energyxxer.enxlex.lexical_analysis.inspections.ReplacementInspectionAction;
 import com.energyxxer.enxlex.lexical_analysis.inspections.SuggestionInspection;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
@@ -157,9 +158,12 @@ public class DefineInstruction implements InstructionDefinition {
                                             SuggestionInspection inspection = new SuggestionInspection("Constrain field to initialization type")
                                                     .setStartIndex(bounds.start.index)
                                                     .setEndIndex(bounds.end.index)
-                                                    .setReplacementStartIndex(replacementStartIndex)
-                                                    .setReplacementEndIndex(replacementEndIndex)
-                                                    .setReplacementText(" : " + initSymbol.getType().getName() + " ");
+                                                    .addAction(
+                                                            new ReplacementInspectionAction()
+                                                            .setReplacementStartIndex(replacementStartIndex)
+                                                            .setReplacementEndIndex(replacementEndIndex)
+                                                            .setReplacementText(" : " + initSymbol.getType().getName() + " ")
+                                                    );
 
                                             l.getInspectionModule().addInspection(inspection);
                                         }

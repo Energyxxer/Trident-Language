@@ -8,8 +8,11 @@ import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.defaults.ItemModifier;
+import com.energyxxer.enxlex.lexical_analysis.inspections.ReplacementInspectionAction;
+import com.energyxxer.enxlex.lexical_analysis.inspections.SuggestionInspection;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
@@ -19,6 +22,7 @@ import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinitio
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
 import com.energyxxer.trident.worker.tasks.SetupModuleTask;
+import com.energyxxer.util.StringBounds;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
@@ -63,7 +67,7 @@ public class ItemCommandDefinition implements SimpleCommandDefinition {
                                         .invokeThrow();
                                 throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Impossible code reached", p, ctx);
                             }
-                        }),
+                        }).setName("ITEM_COPY_COMMAND"),
                         group(literal("replace"), productions.getOrCreateStructure("ITEM"), TridentProductions.integer(productions).setOptional().setName("COUNT").addTags("cspn:Count")).setEvaluator((p, d) -> {
                             ISymbolContext ctx = (ISymbolContext) d[0];
                             ItemHolder target = (ItemHolder) d[1];
@@ -81,7 +85,7 @@ public class ItemCommandDefinition implements SimpleCommandDefinition {
                                         .invokeThrow();
                                 throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Impossible code reached", p, ctx);
                             }
-                        }),
+                        }).setName("ITEM_REPLACE_COMMAND"),
                         group(literal("modify"), productions.getOrCreateStructure("RESOURCE_LOCATION")).setEvaluator((p, d) -> {
                             ISymbolContext ctx = (ISymbolContext) d[0];
                             ItemHolder target = (ItemHolder) d[1];
@@ -97,7 +101,7 @@ public class ItemCommandDefinition implements SimpleCommandDefinition {
                                         .invokeThrow();
                                 throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Impossible code reached", p, ctx);
                             }
-                        })
+                        }).setName("ITEM_MODIFY_COMMAND")
                 ).setName("SUBCOMMAND")
             ).setSimplificationFunction(d -> {
                 ISymbolContext ctx = (ISymbolContext) d.data[0];
@@ -107,6 +111,32 @@ public class ItemCommandDefinition implements SimpleCommandDefinition {
                 d.pattern = d.pattern.find("SUBCOMMAND");
                 d.data = new Object[] {ctx, holder};
             })
+                .addProcessor((p, l) -> {
+                    if(l.getInspectionModule() != null && ((TokenStructure) p.find("SUBCOMMAND")).getContents().getName().equals("ITEM_REPLACE_COMMAND")) {
+
+                        StringBounds bounds = p.getStringBounds();
+
+                        StringBounds replaceLiteralBounds = p.find("SUBCOMMAND.LITERAL_REPLACE").getStringBounds();
+
+                        SuggestionInspection inspection = new SuggestionInspection("Convert to replaceitem command")
+                                .setStartIndex(bounds.start.index)
+                                .setEndIndex(bounds.end.index)
+                                .addAction(
+                                        new ReplacementInspectionAction()
+                                                .setReplacementStartIndex(replaceLiteralBounds.start.index-1)
+                                                .setReplacementEndIndex(replaceLiteralBounds.end.index)
+                                                .setReplacementText("")
+                                )
+                                .addAction(
+                                        new ReplacementInspectionAction()
+                                                .setReplacementStartIndex(bounds.start.index)
+                                                .setReplacementEndIndex(bounds.start.index + "item".length())
+                                                .setReplacementText("replaceitem")
+                                );
+
+                        l.getInspectionModule().addInspection(inspection);
+                    }
+                })
         );
     }
 
