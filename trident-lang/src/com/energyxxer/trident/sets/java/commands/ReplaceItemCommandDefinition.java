@@ -2,22 +2,23 @@ package com.energyxxer.trident.sets.java.commands;
 
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.Command;
-import com.energyxxer.commodore.functionlogic.commands.replaceitem.ReplaceItemBlockCommand;
-import com.energyxxer.commodore.functionlogic.commands.replaceitem.ReplaceItemEntityCommand;
+import com.energyxxer.commodore.functionlogic.commands.item.ItemHolderBlock;
+import com.energyxxer.commodore.functionlogic.commands.item.ItemHolderEntity;
+import com.energyxxer.commodore.functionlogic.commands.item.ItemReplaceCommand;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.defaults.ItemSlot;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.prismarine.reporting.PrismarineException;
-import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
-import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
@@ -35,12 +36,12 @@ public class ReplaceItemCommandDefinition implements SimpleCommandDefinition {
                         group(literal("block"), productions.getOrCreateStructure("COORDINATE_SET")).setEvaluator((p, d) -> {
                             ISymbolContext ctx = (ISymbolContext) d[0];
                             CoordinateSet pos = (CoordinateSet) p.find("COORDINATE_SET").evaluate(ctx);
-                            return new ReplaceItemBlockCommand(pos, (ItemSlot) d[1], (Item) d[2], (int) d[3]);
+                            return new ItemReplaceCommand(new ItemHolderBlock(pos, (ItemSlot) d[1]), (Item) d[2], (int) d[3]);
                         }),
                         group(literal("entity"), productions.getOrCreateStructure("ENTITY")).setEvaluator((p, d) -> {
                             ISymbolContext ctx = (ISymbolContext) d[0];
                             Entity entity = (Entity) p.find("ENTITY").evaluate(ctx);
-                            return new ReplaceItemEntityCommand(entity, (ItemSlot) d[1], (Item) d[2], (int) d[3]);
+                            return new ItemReplaceCommand(new ItemHolderEntity(entity, (ItemSlot) d[1]), (Item) d[2], (int) d[3]);
                         })
                 ).setName("TARGET"),
                 productions.getOrCreateStructure("SLOT_ID"),

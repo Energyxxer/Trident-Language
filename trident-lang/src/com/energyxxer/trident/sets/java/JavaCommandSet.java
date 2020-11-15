@@ -42,6 +42,7 @@ public class JavaCommandSet extends PatternSwitchProviderSet {
                 GameruleCommandDefinition.class,
                 GiveCommandDefinition.class,
                 HelpCommandDefinition.class,
+                ItemCommandDefinition.class,
                 KickCommandDefinition.class,
                 KillCommandDefinition.class,
                 ListCommandDefinition.class,
