@@ -155,9 +155,9 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         TokenStructureMatch MID_INTERPOLATION_VALUE = struct("MID_INTERPOLATION_VALUE");
         MID_INTERPOLATION_VALUE.add(createChainForRoot(productions.getOrCreateStructure("ROOT_INTERPOLATION_VALUE"), productions, NORMAL_VALUE_CHAIN_CONFIG));
         MID_INTERPOLATION_VALUE.add(
-                group(TridentProductions.brace("("), productions.getOrCreateStructure("INTERPOLATION_TYPE"), TridentProductions.brace(")"), productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("CAST").setEvaluator((p, d) -> {
+                group(TridentProductions.brace("("), productions.getOrCreateStructure("INTERPOLATION_TYPE"), TridentProductions.brace(")"), MID_INTERPOLATION_VALUE).setName("CAST").setEvaluator((p, d) -> {
                     ISymbolContext ctx = (ISymbolContext) d[0];
-                    Object parent = p.find("INTERPOLATION_VALUE").evaluate(ctx);
+                    Object parent = p.find("MID_INTERPOLATION_VALUE").evaluate(ctx);
                     TypeHandler targetType = (TypeHandler) p.find("INTERPOLATION_TYPE").evaluate(ctx);
                     return ctx.getTypeSystem().cast(parent, targetType, p, ctx);
                 })
@@ -345,9 +345,11 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     if(bounds.start.index < suggestionIndex && suggestionIndex <= bounds.end.index) {
                         if(m.getName().equals("MEMBER_KEY")) {
                             shouldBreak = true;
-                            for(SummarySymbol subSymbol : s.getSubSymbols(filePath, start.index)) {
-                                SymbolSuggestion suggestion = new SymbolSuggestion(subSymbol);
-                                suggestionModule.addSuggestion(suggestion);
+                            if(s != null) {
+                                for(SummarySymbol subSymbol : s.getSubSymbols(filePath, start.index)) {
+                                    SymbolSuggestion suggestion = new SymbolSuggestion(subSymbol);
+                                    suggestionModule.addSuggestion(suggestion);
+                                }
                             }
                         }
                     }
@@ -373,7 +375,6 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         }
     }
 
-    @SuppressWarnings("DuplicateBranchesInSwitch")
     private static SummarySymbol getSymbolForChain(TokenPattern<?> root, TokenList memberAccesses, PrismarineSummaryModule fileSummary, BiPredicate<TokenPattern<?>, SummarySymbol> shouldBreak) {
         TokenPattern<?>[] memberAccessesArr = memberAccesses.getContents();
 
@@ -419,7 +420,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     }
                     case "MEMBER_INDEX": {
                         //Can't do much about this atm
-                        break;
+                        return null;
                     }
                     default: {
                         break;
