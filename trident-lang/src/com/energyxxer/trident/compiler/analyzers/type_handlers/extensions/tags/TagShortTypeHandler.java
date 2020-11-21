@@ -48,7 +48,7 @@ public class TagShortTypeHandler implements TypeHandler<TagShort> {
 
     @Override
     public Object cast(TagShort object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        switch (targetType.getTypeIdentifier()) {
+        switch (typeSystem.getInternalTypeIdentifierForType(targetType)) {
             case "primitive(int)":
                 return object.getValue().intValue();
             case "primitive(real)":

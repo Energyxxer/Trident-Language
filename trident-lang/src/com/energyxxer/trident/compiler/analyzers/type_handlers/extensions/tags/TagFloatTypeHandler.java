@@ -48,7 +48,7 @@ public class TagFloatTypeHandler implements TypeHandler<TagFloat> {
 
     @Override
     public Object cast(TagFloat object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        switch (targetType.getTypeIdentifier()) {
+        switch (typeSystem.getInternalTypeIdentifierForType(targetType)) {
             case "primitive(int)":
                 return object.getValue().intValue();
             case "primitive(real)":

@@ -48,7 +48,7 @@ public class TagByteTypeHandler implements TypeHandler<TagByte> {
 
     @Override
     public Object cast(TagByte object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        switch (targetType.getTypeIdentifier()) {
+        switch (typeSystem.getInternalTypeIdentifierForType(targetType)) {
             case "primitive(int)":
                 return object.getValue().intValue();
             case "primitive(real)":
