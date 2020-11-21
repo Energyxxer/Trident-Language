@@ -290,7 +290,7 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
         if(buildConfig.dataPackOutput != null) {
             try {
                 File bpOut = buildConfig.dataPackOutput;
-                for(Exportable exportable : module.exportables) {
+                for(Exportable exportable : module.getAllExportables()) {
                     if(exportable.shouldExport() && exportable.getExportPath() != null) {
                         String firstName = exportable.getExportPath();
                         if(firstName.contains("/")) firstName = firstName.substring(0, firstName.indexOf("/"));
@@ -320,7 +320,7 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
                 if(buildConfig.cleanResourcePackOutput) {
                     File resourceOut = buildConfig.resourcePackOutput;
                     resourcePackSubFolderNames.add("assets");
-                    for(Exportable exportable : resourcePack.exportables) {
+                    for(Exportable exportable : resourcePack.getAllExportables()) {
                         if(exportable.shouldExport() && exportable.getExportPath() != null) {
                             String firstName = exportable.getExportPath();
                             if(firstName.contains("/")) firstName = firstName.substring(0, firstName.indexOf("/"));
