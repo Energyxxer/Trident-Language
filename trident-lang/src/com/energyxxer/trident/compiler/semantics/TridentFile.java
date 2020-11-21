@@ -3,6 +3,7 @@ package com.energyxxer.trident.compiler.semantics;
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.functions.Function;
+import com.energyxxer.commodore.functionlogic.functions.FunctionComment;
 import com.energyxxer.commodore.functionlogic.functions.FunctionSection;
 import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.tags.Tag;
@@ -432,11 +433,11 @@ public class TridentFile extends PrismarineLanguageUnit {
     private boolean entriesResolved = false;
 
     public static void resolveEntries(TokenPattern<?> inner, ISymbolContext parent, FunctionSection appendTo, boolean compileOnly) {
-        PrismarineCompiler compiler = parent.getCompiler();
         try {
             switch (inner.getName()) {
                 case "COMMENT":
-                    Debug.log("Comment: " + inner.flatten(false));
+                    if (parent.get(SetupBuildConfigTask.INSTANCE).exportComments && appendTo != null)
+                        appendTo.append(new FunctionComment(inner.flatten(false).substring(1)));
                     break;
                 default: {
                     inner.evaluate(parent, appendTo);
@@ -547,7 +548,6 @@ public class TridentFile extends PrismarineLanguageUnit {
     }
 
     public static void resolveEntry(TokenPattern<?> inner, ISymbolContext parent, FunctionSection appendTo, boolean compileOnly) {
-        boolean exportComments = parent.get(SetupBuildConfigTask.INSTANCE).exportComments;
         try {
             inner.evaluate(parent, appendTo);
 //            switch (inner.getName()) {
