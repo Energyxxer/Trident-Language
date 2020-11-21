@@ -896,8 +896,8 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         group(
                                 TridentProductions.resourceLocationFixer,
                                 productions.getOrCreateStructure("BLOCK_ID"),
-                                optional(TridentProductions.glue(), productions.getOrCreateStructure("BLOCKSTATE")).setSimplificationFunctionContentIndex(1).setName("BLOCKSTATE_CLAUSE"),
-                                optional(TridentProductions.glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("NBT_CLAUSE")
+                                optional(TridentProductions.glue(), productions.getOrCreateStructure("BLOCKSTATE")).setSimplificationFunctionContentIndex(1).setName("APPENDED_BLOCKSTATE"),
+                                optional(TridentProductions.glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
                         ).setEvaluator((p, d) -> {
                             Type blockId = (Type) p.find("BLOCK_ID").evaluate(d[0], d.length > 1 && (boolean) d[1]);
                             return evaluateBlock(blockId, p, p.find("BLOCK_ID"), d);
