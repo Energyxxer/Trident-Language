@@ -79,7 +79,7 @@ public class AdvancementCommandDefinition implements SimpleCommandDefinition {
         ISymbolContext ctx = (ISymbolContext) data[0];
 
         ResourceLocation advancement = (ResourceLocation) pattern.find("RESOURCE_LOCATION").evaluate(ctx);
-        ArrayList<String> criteria = (ArrayList<String>) pattern.findThenEvaluate("CRITERIA", (ISymbolContext) data[0]);
+        ArrayList<String> criteria = (ArrayList<String>) pattern.findThenEvaluate("CRITERIA", null, (ISymbolContext) data[0]);
         if(criteria == null) criteria = new ArrayList<>();
 
         return new AdvancementCommand((AdvancementCommand.Action) data[1], (Entity) data[2], AdvancementCommand.Limit.ONLY, advancement.toString(), criteria);
