@@ -43,14 +43,17 @@ public class ExecuteCommandDefinition implements CommandDefinition {
     public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> ignore) {
         ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) pattern.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx);
         modifiers.addAll(0, ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile().getWritingModifiers());
-
-        Collection<Command> commands = (Collection<Command>) pattern.findThenEvaluateLazyDefault("EXECUTE_END", () -> {
+        Object returnedCommands = pattern.findThenEvaluateLazyDefault("EXECUTE_END", () -> {
             if (modifiers.isEmpty()) {
                 return Collections.emptyList();
             } else {
                 return Collections.singletonList(new EmptyCommand());
             }
         }, ctx, modifiers);
+        if(returnedCommands instanceof Command) {
+            returnedCommands = Collections.singletonList((Command)returnedCommands);
+        }
+        Collection<Command> commands = (Collection<Command>) returnedCommands;
         if (modifiers.isEmpty()) return commands;
 
         ArrayList<Command> outCommands = new ArrayList<>();
