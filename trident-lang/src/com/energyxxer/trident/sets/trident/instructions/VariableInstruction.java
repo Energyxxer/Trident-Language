@@ -169,7 +169,7 @@ public class VariableInstruction implements InstructionDefinition {
             boolean initialized = false;
             if(pattern.find("SYMBOL_INITIALIZATION") != null) {
                 DataStructureLiteralSet.setNextFunctionName(memberName);
-                initialValue = ((TokenPattern<?>) pattern.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE").getContents()).evaluate(ctx);
+                initialValue = pattern.find("SYMBOL_INITIALIZATION.INITIAL_VALUE").evaluate(ctx);
                 DataStructureLiteralSet.setNextFunctionName(null);
                 initialized = true;
             }
