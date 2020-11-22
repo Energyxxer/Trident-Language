@@ -1364,10 +1364,11 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         matcher.lookingAt(); //must be true
 
         String numberPart = matcher.group(1);
+        boolean expectedReal = numberPart.contains(".") || numberPart.contains("e") || numberPart.contains("E");
         try {
             switch (matcher.group(3).toLowerCase()) {
                 case "": {
-                    return (numberPart.contains(".")) ?
+                    return expectedReal ?
                             new TagDouble(Double.parseDouble(numberPart)) :
                             new TagInt(Integer.parseInt(numberPart));
                 }
@@ -1391,7 +1392,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 }
             }
         } catch (NumberFormatException x) {
-            NumericNBTType expectedType = matcher.group(3).length() == 0 && numberPart.contains(".") ? NumericNBTType.DOUBLE : NumericNBTType.getTypeForSuffix(matcher.group(3));
+            NumericNBTType expectedType = matcher.group(3).length() == 0 && expectedReal ? NumericNBTType.DOUBLE : NumericNBTType.getTypeForSuffix(matcher.group(3));
             String baseError = "Numeric value out of range: " + numberPart + " for a number of type " + expectedType.toString().toLowerCase() + ".";
             if (ctx.get(SetupPropertiesTask.INSTANCE).has("strict-nbt") &&
                     ctx.get(SetupPropertiesTask.INSTANCE).get("strict-nbt").isJsonPrimitive() &&
