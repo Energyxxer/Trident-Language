@@ -31,7 +31,7 @@ public class TridentLexerProfile extends LexerProfile {
     public static final Pattern SHORT_NUMBER_REGEX = Pattern.compile("[+-]?\\d*(\\.\\d+)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern TIME_REGEX = Pattern.compile("(\\d*(\\.\\d+)|\\d+)[tsd]?");
 
-    public static final Pattern UUID_REGEX = Pattern.compile("[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]", Pattern.CASE_INSENSITIVE);
+    public static final Pattern UUID_REGEX = Pattern.compile("[0-9a-f]{1,8}-[0-9a-f]{1,4}-[0-9a-f]{1,4}-[0-9a-f]{1,4}-[0-9a-f]{1,12}", Pattern.CASE_INSENSITIVE);
 
     public static final LexerContext RESOURCE_LOCATION_CONTEXT;
 
