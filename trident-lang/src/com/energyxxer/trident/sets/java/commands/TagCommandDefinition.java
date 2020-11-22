@@ -51,7 +51,7 @@ public class TagCommandDefinition implements CommandDefinition {
                                     Entity entity = (Entity) d[1];
 
                                     String tag = (String) p.find("TAG").evaluate(ctx);
-                                    return Collections.singletonList(new TagCommand(TagCommand.Action.ADD, entity, tag));
+                                    return Collections.singletonList(new TagCommand(TagCommand.Action.REMOVE, entity, tag));
                                 }),
                         group(matchItem(CUSTOM_COMMAND_KEYWORD, "update"), TridentProductions.noToken().addTags("cspn:Tag"), wrapper(TridentProductions.identifierA(productions)).setName("TAG"))
                                 .setEvaluator((p, d) -> {
