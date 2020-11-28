@@ -47,4 +47,16 @@ public class MinecraftTypes {
             }
         }
     }
+
+    public static DictionaryObject getProperties(String category, ResourceLocation identifier, ISymbolContext ctx) {
+        Type type = ctx.get(SetupModuleTask.INSTANCE).getTypeManager(identifier.namespace).getDictionary(category).get(identifier.body);
+        if(type == null) {
+            throw new IllegalArgumentException("Type '" + identifier + "' of category '" + category + "' does not exist");
+        }
+        DictionaryObject dict = new DictionaryObject(ctx.getTypeSystem());
+        for(Map.Entry<String, String> property : type.getProperties().entrySet()) {
+            dict.put(property.getKey(), property.getValue());
+        }
+        return dict;
+    }
 }

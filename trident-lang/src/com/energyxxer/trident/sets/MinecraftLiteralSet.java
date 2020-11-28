@@ -963,7 +963,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                             Object inBlock = p.find("INTERPOLATION_BLOCK").evaluate(d[0]);
                             return evaluateItem(inBlock, p, p.find("INTERPOLATION_BLOCK"), d);
                         })
-                ).addTags("cspn:Block");
+                ).addTags("cspn:Item");
 
         productions.getOrCreateStructure("ITEM_TAGGED")
                 .add(

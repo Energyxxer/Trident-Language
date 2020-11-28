@@ -1,6 +1,8 @@
 package com.energyxxer.trident.filewalkers;
 
+import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.module.Namespace;
+import com.energyxxer.commodore.tags.TagGroup;
 import com.energyxxer.prismarine.in.ProjectReader;
 import com.energyxxer.prismarine.summaries.PrismarineProjectSummary;
 import com.energyxxer.prismarine.util.PathMatcher;
@@ -29,6 +31,28 @@ public class SummaryWalkers {
 
             ResourceLocation loc = new ResourceLocation(pathMatchResult.groups[1] + ":" + pathMatchResult.groups[2]);
             ((TridentProjectSummary) walker.getSubject()).addRawFunction(loc);
+
+            return true;
+        }
+    };
+
+    public static final FileWalkerStop<PrismarineProjectSummary> TAG_STOP = new FileWalkerStop<PrismarineProjectSummary>("datapack/data/(*)/tags/(*)/(**).json") {
+        @Override
+        public boolean accept(File file, Path relativePath, PathMatcher.Result pathMatchResult, PrismarineProjectWorker worker, FileWalker<PrismarineProjectSummary> walker) throws IOException {
+
+            String namespaceName = pathMatchResult.groups[1];
+            String categoryDirName = pathMatchResult.groups[2];
+            String tagName = pathMatchResult.groups[3];
+
+            CommandModule module = worker.output.get(SetupModuleTask.INSTANCE);
+            Namespace namespace = module.getNamespace(namespaceName);
+
+            for(TagGroup<?> group : namespace.tags.getGroups()) {
+                if (categoryDirName.equals(group.getDirectoryName())) {
+                    group.getOrCreate(tagName);
+                    break;
+                }
+            }
 
             return true;
         }

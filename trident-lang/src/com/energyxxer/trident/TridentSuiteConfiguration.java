@@ -181,8 +181,9 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
     @Override
     public void setupWalkerForCompilation(FileWalker<PrismarineCompiler> walker) {
         walker.addStops(
-                CompilerWalkers.DATA_EXPORTABLE_STOP,
                 CompilerWalkers.FUNCTION_STOP,
+                CompilerWalkers.TAG_STOP,
+                CompilerWalkers.DATA_EXPORTABLE_STOP,
                 CompilerWalkers.RESOURCE_EXPORTABLE_STOP,
                 CompilerWalkers.TYPE_MAP_STOP
         );
@@ -192,6 +193,7 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
     public void setupWalkerForSummary(FileWalker<PrismarineProjectSummary> walker) {
         walker.addStops(
                 SummaryWalkers.FUNCTION_STOP,
+                SummaryWalkers.TAG_STOP,
                 SummaryWalkers.SOUNDS_JSON_STOP
         );
     }
@@ -226,7 +228,12 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
     }
 
     @Override
-    public void runSummaryPreFileTree(PrismarineProjectSummarizer<?> summarizer) {
+    public void runSummaryPreFileTree(PrismarineProjectSummarizer<?> prismarineProjectSummarizer) {
+
+    }
+
+    @Override
+    public void runSummaryPostFileTree(PrismarineProjectSummarizer<?> summarizer) {
         CommandModule module = summarizer.get(SetupModuleTask.INSTANCE);
         TridentProjectSummary summary = (TridentProjectSummary) summarizer.getSummary();
 
@@ -328,7 +335,6 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
                         }
                     }
                     for(String subFolder : resourcePackSubFolderNames) {
-                        Debug.log("Clearing folder: " + subFolder);
                         FileUtil.recursivelyDelete(resourceOut.toPath().resolve(subFolder).toFile());
                     }
                 }

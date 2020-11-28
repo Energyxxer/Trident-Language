@@ -13,7 +13,6 @@ import com.energyxxer.prismarine.worker.PrismarineProjectWorkerTask;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.TridentBuildConfiguration;
 import com.energyxxer.trident.compiler.semantics.AliasType;
-import com.energyxxer.util.logger.Debug;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -112,7 +111,7 @@ public class SetupModuleTask extends PrismarineProjectWorkerTask<CommandModule> 
                         ResourceLocation real = new ResourceLocation(entry.getValue().getAsString());
 
                         module.getNamespace(alias.namespace).types.getDictionary(category).create((c, ns, n) -> new AliasType(c, ns, n, module.getNamespace(real.namespace), real.body), alias.body);
-                        Debug.log("Created alias '" + alias + "' for '" + real + "'");
+//                        Debug.log("Created alias '" + alias + "' for '" + real + "'");
                     }
                 }
             }
