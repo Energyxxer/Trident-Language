@@ -14,6 +14,7 @@ import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.prismarine.expressions.TokenExpression;
 import com.energyxxer.prismarine.expressions.TokenExpressionMatch;
+import com.energyxxer.prismarine.operators.UnaryOperator;
 import com.energyxxer.prismarine.providers.PatternProviderSet;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
@@ -155,10 +156,14 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         TokenStructureMatch MID_INTERPOLATION_VALUE = struct("MID_INTERPOLATION_VALUE");
         MID_INTERPOLATION_VALUE.add(createChainForRoot(productions.getOrCreateStructure("ROOT_INTERPOLATION_VALUE"), productions, NORMAL_VALUE_CHAIN_CONFIG));
         MID_INTERPOLATION_VALUE.add(
-                group(TridentProductions.brace("("), productions.getOrCreateStructure("INTERPOLATION_TYPE"), TridentProductions.brace(")"), MID_INTERPOLATION_VALUE).setName("CAST").setEvaluator((p, d) -> {
+                group(TridentProductions.brace("("),
+                        wrapper(productions.getOrCreateStructure("INTERPOLATION_TYPE")).setRecessive().setName("CAST_TYPE"),
+                        TridentProductions.brace(")"),
+                        wrapper(new TokenExpressionMatch(MID_INTERPOLATION_VALUE, productions.unitConfig.getOperatorPool(), ofType(COMPILER_OPERATOR)).setOperatorFilter(op -> op instanceof UnaryOperator).setName("EXPRESSION").setEvaluator((p, d) -> ((ISymbolContext) d[0]).getTypeSystem().getOperatorManager().evaluate((TokenExpression) p, (ISymbolContext) d[0]))).setName("CAST_VALUE")
+                ).setName("CAST").setEvaluator((p, d) -> {
                     ISymbolContext ctx = (ISymbolContext) d[0];
-                    Object parent = p.find("MID_INTERPOLATION_VALUE").evaluate(ctx);
-                    TypeHandler targetType = (TypeHandler) p.find("INTERPOLATION_TYPE").evaluate(ctx);
+                    Object parent = p.find("CAST_VALUE").evaluate(ctx);
+                    TypeHandler targetType = (TypeHandler) p.find("CAST_TYPE").evaluate(ctx);
                     return ctx.getTypeSystem().cast(parent, targetType, p, ctx);
                 })
         );
