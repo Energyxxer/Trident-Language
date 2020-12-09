@@ -157,9 +157,20 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         MID_INTERPOLATION_VALUE.add(createChainForRoot(productions.getOrCreateStructure("ROOT_INTERPOLATION_VALUE"), productions, NORMAL_VALUE_CHAIN_CONFIG));
         MID_INTERPOLATION_VALUE.add(
                 group(TridentProductions.brace("("),
-                        wrapper(productions.getOrCreateStructure("INTERPOLATION_TYPE")).setRecessive().setName("CAST_TYPE"),
+                        wrapper(productions.getOrCreateStructure("INTERPOLATION_TYPE")).setName("CAST_TYPE"),
                         TridentProductions.brace(")"),
-                        wrapper(new TokenExpressionMatch(MID_INTERPOLATION_VALUE, productions.unitConfig.getOperatorPool(), ofType(COMPILER_OPERATOR)).setOperatorFilter(op -> op instanceof UnaryOperator).setName("EXPRESSION").setEvaluator((p, d) -> ((ISymbolContext) d[0]).getTypeSystem().getOperatorManager().evaluate((TokenExpression) p, (ISymbolContext) d[0]))).setName("CAST_VALUE")
+                        wrapper(
+                                new TokenExpressionMatch(
+                                        MID_INTERPOLATION_VALUE,
+                                        productions.unitConfig.getOperatorPool(),
+                                        ofType(COMPILER_OPERATOR)
+                                ).setOperatorFilter(
+                                        op -> op instanceof UnaryOperator && productions.unitConfig.getOperatorPool().getBinaryOrTernaryOperatorForSymbol(op.getSymbol()) == null
+                                ).setName(
+                                        "EXPRESSION"
+                                ).setEvaluator(
+                                        (p, d) -> ((ISymbolContext) d[0]).getTypeSystem().getOperatorManager().evaluate((TokenExpression) p, (ISymbolContext) d[0])
+                                )).setName("CAST_VALUE")
                 ).setName("CAST").setEvaluator((p, d) -> {
                     ISymbolContext ctx = (ISymbolContext) d[0];
                     Object parent = p.find("CAST_VALUE").evaluate(ctx);
