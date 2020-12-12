@@ -531,7 +531,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     @Override
     public Object getMemberForParameters(String memberName, TokenPattern<?> pattern, ActualParameterList params, ISymbolContext ctx, boolean keepSymbol) {
-        Object foundClassMethod = staticMethods.find(memberName, params, ctx);
+        Object foundClassMethod = staticMethods.find(memberName, params, ctx, null);
         if(foundClassMethod == null) {
             try {
                 foundClassMethod = getMember(this, memberName, pattern, ctx, keepSymbol);
