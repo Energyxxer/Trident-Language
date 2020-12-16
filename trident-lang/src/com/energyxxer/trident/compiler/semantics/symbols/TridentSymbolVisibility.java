@@ -43,6 +43,27 @@ public class TridentSymbolVisibility {
             return "LOCAL";
         }
     };
+    public static final SymbolVisibility MEMBER_ACCESS_ONLY = new SymbolVisibility(2) {
+        @Override
+        public boolean isVisibleFromContext(Symbol symbol, ISymbolContext containingContext, ISymbolContext accessingContext) {
+            return false;
+        }
+
+        @Override
+        public boolean isVisibleFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
+            return false;
+        }
+
+        @Override
+        public boolean isVisibleMemberFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "MEMBER_ACCESS_ONLY";
+        }
+    };
     public static final SymbolVisibility PRIVATE = new SymbolVisibility(1) {
         @Override
         public boolean isVisibleFromContext(Symbol symbol, ISymbolContext containingContext, ISymbolContext accessingContext) {
