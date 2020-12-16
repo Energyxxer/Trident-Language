@@ -4,17 +4,18 @@ import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.nbt.path.*;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
+import com.energyxxer.prismarine.typesystem.generics.GenericSupplier;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
-import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 
 import java.util.ArrayList;
 
@@ -42,10 +43,10 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
         ClassMethodFamily constructorFamily = new ClassMethodFamily("new");
         members.setConstructor(constructorFamily);
         try {
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, NBTPathTypeHandler.class.getMethod("constructNBTPath"))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, NBTPathTypeHandler.class.getMethod("constructNBTPath", int.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, NBTPathTypeHandler.class.getMethod("constructNBTPath", String.class, TagCompound.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, NBTPathTypeHandler.class.getMethod("constructNBTPath", TagCompound.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, NBTPathTypeHandler.class.getMethod("constructNBTPath"))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, NBTPathTypeHandler.class.getMethod("constructNBTPath", int.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, NBTPathTypeHandler.class.getMethod("constructNBTPath", String.class, TagCompound.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, NBTPathTypeHandler.class.getMethod("constructNBTPath", TagCompound.class, Boolean.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -84,7 +85,7 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
     }
 
     @Override
-    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx, GenericSupplier genericSupplier) {
         return members.getConstructor();
     }
 

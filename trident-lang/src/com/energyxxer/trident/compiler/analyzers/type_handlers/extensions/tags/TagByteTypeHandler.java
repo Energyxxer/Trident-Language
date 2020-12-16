@@ -9,6 +9,7 @@ import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
+import com.energyxxer.prismarine.typesystem.generics.GenericSupplier;
 
 public class TagByteTypeHandler implements TypeHandler<TagByte> {
     private TypeHandlerMemberCollection<TagByte> members;
@@ -73,7 +74,7 @@ public class TagByteTypeHandler implements TypeHandler<TagByte> {
     }
 
     @Override
-    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx, GenericSupplier genericSupplier) {
         return members.getConstructor();
     }
 

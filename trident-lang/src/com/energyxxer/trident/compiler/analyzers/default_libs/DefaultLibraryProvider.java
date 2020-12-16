@@ -90,12 +90,12 @@ public class DefaultLibraryProvider {
                 //constructor
                 allStatic = false;
                 if(constructors == null) constructors = tridentClass.createConstructorFamily();
-                constructors.putOverload(new ClassMethod(tridentClass, null, nativeMethodsToFunction(parentContext.getTypeSystem(), tridentClass.getInnerStaticContext(), method)).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+                constructors.putOverload(new ClassMethod(tridentClass, null, nativeMethodsToFunction(parentContext.getTypeSystem(), tridentClass.getInnerStaticContext(), method)).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
             } else if(method.getName().equals("__onClassCreation")) {
                 creationCallback = method;
             } else if(method.getParameterCount() >= 1 && method.getParameters()[0].isAnnotationPresent(NativeFunctionAnnotations.ThisArg.class)) {
                 //instance method
-                instanceMethods.put(new ClassMethod(tridentClass, null, nativeMethodsToFunction(parentContext.getTypeSystem(), tridentClass.getInnerStaticContext(), method)).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
+                instanceMethods.put(new ClassMethod(tridentClass, null, nativeMethodsToFunction(parentContext.getTypeSystem(), tridentClass.getInnerStaticContext(), method)).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, null);
                 allStatic = false;
             } else {
                 //static method
@@ -110,7 +110,7 @@ public class DefaultLibraryProvider {
                     if((field.getModifiers() & Modifier.FINAL) != 0) {
                         tridentClass.putStaticFinalMember(field.getName(), field.get(null));
                     } else {
-                        tridentClass.putStaticMember(field.getName(), new Symbol(field.getName(), TridentSymbolVisibility.PUBLIC, field.get(null)));
+                        tridentClass.putStaticMember(field.getName(), new Symbol(field.getName(), SymbolVisibility.PUBLIC, field.get(null)));
                     }
                 } else {
                     Debug.log("Could not add instance field to via-reflection class " + cls.getSimpleName());

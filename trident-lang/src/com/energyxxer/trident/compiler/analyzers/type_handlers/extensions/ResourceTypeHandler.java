@@ -2,6 +2,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.NativeMethodWrapper;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
@@ -9,6 +10,7 @@ import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
+import com.energyxxer.prismarine.typesystem.generics.GenericSupplier;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
@@ -16,7 +18,6 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
-import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -45,8 +46,8 @@ public class ResourceTypeHandler implements TypeHandler<ResourceLocation> {
         ClassMethodFamily constructorFamily = new ClassMethodFamily("new");
         members.setConstructor(constructorFamily);
         try {
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, ResourceTypeHandler.class.getMethod("constructResource", String.class, TokenPattern.class, ISymbolContext.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, ResourceTypeHandler.class.getMethod("constructResource", String.class, ListObject.class, String.class, TokenPattern.class, ISymbolContext.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, ResourceTypeHandler.class.getMethod("constructResource", String.class, TokenPattern.class, ISymbolContext.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, ResourceTypeHandler.class.getMethod("constructResource", String.class, ListObject.class, String.class, TokenPattern.class, ISymbolContext.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -61,8 +62,8 @@ public class ResourceTypeHandler implements TypeHandler<ResourceLocation> {
         resolveFamily.setUseExternalThis(true);
         members.put("resolve", new NativeMethodWrapper<>(resolveFamily));
         try {
-            resolveFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(typeSystem, globalCtx, ResourceTypeHandler.class.getMethod("resolve", String.class, String.class, ResourceLocation.class, TokenPattern.class, ISymbolContext.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            resolveFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(typeSystem, globalCtx, ResourceTypeHandler.class.getMethod("resolve", ResourceLocation.class, String.class, ResourceLocation.class, TokenPattern.class, ISymbolContext.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            resolveFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(typeSystem, globalCtx, ResourceTypeHandler.class.getMethod("resolve", String.class, String.class, ResourceLocation.class, TokenPattern.class, ISymbolContext.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            resolveFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(typeSystem, globalCtx, ResourceTypeHandler.class.getMethod("resolve", ResourceLocation.class, String.class, ResourceLocation.class, TokenPattern.class, ISymbolContext.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
 
             members.putMethod("subLoc", ResourceTypeHandler.class.getMethod("subLoc", int.class, int.class, ResourceLocation.class));
         } catch (NoSuchMethodException e) {
@@ -94,7 +95,7 @@ public class ResourceTypeHandler implements TypeHandler<ResourceLocation> {
     }
 
     @Override
-    public Iterator<?> getIterator(ResourceLocation loc, ISymbolContext ctx) {
+    public Iterator<?> getIterator(ResourceLocation loc, TokenPattern<?> pattern, ISymbolContext ctx) {
         return Arrays.stream(loc.getParts()).iterator();
     }
 
@@ -109,7 +110,7 @@ public class ResourceTypeHandler implements TypeHandler<ResourceLocation> {
     }
 
     @Override
-    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx, GenericSupplier genericSupplier) {
         return members.getConstructor();
     }
 

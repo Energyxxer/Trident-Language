@@ -97,7 +97,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
     }
 
     @Override
-    public Iterator<?> getIterator(ListObject list, ISymbolContext ctx) {
+    public Iterator<?> getIterator(ListObject list, TokenPattern<?> pattern, ISymbolContext ctx) {
         return list.iterator();
     }
 

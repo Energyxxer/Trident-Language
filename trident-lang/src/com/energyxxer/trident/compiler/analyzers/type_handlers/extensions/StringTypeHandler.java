@@ -109,7 +109,7 @@ public class StringTypeHandler implements TypeHandler<String> {
     }
 
     @Override
-    public Iterator<?> getIterator(String str, ISymbolContext ctx) {
+    public Iterator<?> getIterator(String str, TokenPattern<?> pattern, ISymbolContext ctx) {
         return new Iterator<Object>() {
             int i = 0;
 

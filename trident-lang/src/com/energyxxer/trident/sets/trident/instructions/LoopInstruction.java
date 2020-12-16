@@ -173,7 +173,7 @@ public abstract class LoopInstruction implements InstructionDefinition {
                     Object iterable = pattern.find("INTERPOLATION_VALUE").evaluate(ctx);
                     TypeHandler handler = ctx.getTypeSystem().getHandlerForObject(iterable, pattern, ctx);
                     Iterator it;
-                    if ((it = handler.getIterator(iterable, ctx)) != null) {
+                    if ((it = handler.getIterator(iterable, pattern, ctx)) != null) {
                         if (!it.hasNext()) return null;
                         TokenPattern<?> finalPattern = pattern;
                         return new LoopHeader() {

@@ -11,15 +11,21 @@ import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.prismarine.typesystem.generics.GenericSupplier;
+import com.energyxxer.prismarine.typesystem.generics.GenericSupplierImplementer;
+import com.energyxxer.prismarine.typesystem.generics.GenericWrapperType;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 
-public class CustomClassObject implements TypeHandler<CustomClassObject>, ParameterizedMemberHolder, ContextualToString {
+public class CustomClassObject implements TypeHandler<CustomClassObject>, ParameterizedMemberHolder, ContextualToString, GenericSupplierImplementer {
     private final CustomClass type;
     final HashMap<String, Symbol> instanceMembers = new HashMap<>();
     private HashMap<String, Object> hiddenData = null;
     final ClassInstanceMethodTable instanceMethods;
+
+    private GenericSupplier genericSupplier;
 
     public CustomClassObject(CustomClass type) {
         this.type = type;
@@ -59,6 +65,27 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
             throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot resolve function or method '" + memberName + "' of " + ctx.getTypeSystem().getTypeIdentifierForObject(this), pattern, ctx);
         }
         return foundClassMethod;
+    }
+
+    @Override
+    public Iterator<?> getIterator(CustomClassObject object, TokenPattern<?> pattern, ISymbolContext ctx) {
+        Object foundClassMethod = instanceMethods.findAndWrap("getIterator", new ActualParameterList(pattern), ctx);
+        if(foundClassMethod == null) return null;
+        Object returned = null;
+        if(foundClassMethod instanceof PrismarineFunction.FixedThisFunctionSymbol) {
+            returned = ((PrismarineFunction.FixedThisFunctionSymbol) foundClassMethod).safeCall(new ActualParameterList(pattern), ctx);
+        } else {
+            returned = ((PrimitivePrismarineFunction) foundClassMethod).safeCall(new ActualParameterList(pattern), ctx, this);
+        }
+
+        while(returned != null && !(returned instanceof Iterator<?>)) {
+            TypeHandler handler = ctx.getTypeSystem().getHandlerForObject(returned);
+            if(handler == null) returned = null;
+            else {
+                returned = handler.getIterator(returned, pattern, ctx);
+            }
+        }
+        return (Iterator<?>) returned;
     }
 
     @Override
@@ -191,5 +218,33 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
     @Override
     public PrismarineTypeSystem getTypeSystem() {
         return type.getTypeSystem();
+    }
+
+    @Override
+    public GenericSupplier getGenericSupplier() {
+        return genericSupplier;
+    }
+
+    public GenericSupplier getOrCreateGenericSupplier() {
+        if(genericSupplier == null) genericSupplier = new GenericSupplier();
+        return genericSupplier;
+    }
+
+    public void putGenericInfo(Object binding, TypeHandler[] types) {
+        if(genericSupplier == null) genericSupplier = new GenericSupplier();
+        genericSupplier.put(binding, types);
+    }
+
+    @Override
+    public GenericWrapperType<?> getGenericWrapper() {
+        if(isGenericSupplier()) {
+            TypeHandler<?>[] types = genericSupplier.get(type);
+            if(types != null) {
+                GenericWrapperType<?> wrapper = new GenericWrapperType<>(type);
+                wrapper.putGenericInfo(type, types);
+                return wrapper;
+            }
+        }
+        return null;
     }
 }

@@ -60,7 +60,7 @@ public class TagListTypeHandler implements TypeHandler<TagList> {
     }
 
     @Override
-    public Iterator<?> getIterator(TagList object, ISymbolContext ctx) {
+    public Iterator<?> getIterator(TagList object, TokenPattern<?> pattern, ISymbolContext ctx) {
         return object.getAllTags().iterator();
     }
 

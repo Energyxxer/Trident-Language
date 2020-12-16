@@ -45,6 +45,7 @@ public class DefineInstruction implements InstructionDefinition {
 
     @Override
     public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+        ValueAccessExpressionSet vae = productions.getProviderSet(ValueAccessExpressionSet.class);
 
         OperatorPool operatorPool = productions.unitConfig.getOperatorPool();
 
@@ -236,7 +237,7 @@ public class DefineInstruction implements InstructionDefinition {
         classBodyEntry.addTags(TridentSuggestionTags.CONTEXT_CLASS_BODY);
 
         TokenPatternMatch classBody = group(
-                TridentProductions.brace("{").addProcessor(startComplexValue),
+                TridentProductions.brace("{").addProcessor(vae.capturePreBlockDeclarations).addProcessor(startComplexValue),
                 list(classBodyEntry).setOptional().setName("CLASS_BODY_ENTRIES"),
                 TridentProductions.brace("}")
         ).setOptional().setName("CLASS_DECLARATION_BODY").addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);});
@@ -347,7 +348,7 @@ public class DefineInstruction implements InstructionDefinition {
                                                 ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
                                             }
                                         }),
-                                optional(TridentProductions.colon(), list(productions.getOrCreateStructure("INTERPOLATION_TYPE"), TridentProductions.comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST").addProcessor((p, l) -> checkDuplicates(((TokenList) p), "Duplicate superclass", l))).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
+                                wrapperOptional(productions.getOrCreateStructure("FORMAL_TYPE_PARAMETERS")).setName("FORMAL_TYPE_PARAMETERS"), optional(TridentProductions.colon(), list(productions.getOrCreateStructure("INTERPOLATION_TYPE"), TridentProductions.comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST").addProcessor((p, l) -> checkDuplicates(((TokenList) p), "Duplicate superclass", l))).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
                                 .addProcessor((p, l) -> {
                                     if(l.getSummaryModule() != null) {
                                         SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();

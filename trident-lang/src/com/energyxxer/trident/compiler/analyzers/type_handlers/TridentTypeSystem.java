@@ -111,7 +111,7 @@ public class TridentTypeSystem extends PrismarineTypeSystem {
         } else if(obj instanceof PrimitivePrismarineFunction && !(obj instanceof PrismarineFunction)) {
             return "<internal function>";
         } else if(obj instanceof TypeHandler && ((TypeHandler) obj).isStaticHandler()) {
-            return "type_definition<" + ((TypeHandler) obj).getTypeIdentifier() + ">";
+            return "type_definition<" + typeHandlerToString((TypeHandler) obj) + ">";
         } else {
             return super.castToString(obj);
         }
@@ -124,7 +124,7 @@ public class TridentTypeSystem extends PrismarineTypeSystem {
         } else if(obj instanceof PrimitivePrismarineFunction && !(obj instanceof PrismarineFunction)) {
             return "<internal function>";
         } else if(obj instanceof TypeHandler && ((TypeHandler) obj).isStaticHandler()) {
-            return "type_definition<" + ((TypeHandler) obj).getTypeIdentifier() + ">";
+            return "type_definition<" + typeHandlerToString((TypeHandler) obj) + ">";
         } else if(obj instanceof Command) {
             return ((Command) obj).resolveCommand(new ExecutionContext()).construct();
         } else if(obj instanceof ContextualToString) {

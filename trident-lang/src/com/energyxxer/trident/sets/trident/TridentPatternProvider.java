@@ -12,10 +12,7 @@ import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenGroupMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenItemMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenItem;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.enxlex.pattern_matching.structures.*;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternProviderSet;
@@ -40,6 +37,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
+import static com.energyxxer.trident.compiler.TridentProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
 public class TridentPatternProvider extends PatternProviderSet {
@@ -148,16 +146,53 @@ public class TridentPatternProvider extends PatternProviderSet {
         productions.putPatternMatch("TYPE_CONSTRAINTS", TYPE_CONSTRAINTS);
         productions.putPatternMatch("INFERRABLE_TYPE_CONSTRAINTS", INFERRABLE_TYPE_CONSTRAINTS);
 
-        TokenPatternMatch FORMAL_PARAMETER = group(TridentProductions.identifierX().setName("FORMAL_PARAMETER_NAME"), TYPE_CONSTRAINTS).setName("FORMAL_PARAMETER");
+        TokenPatternMatch FORMAL_PARAMETER = group(identifierX().setName("FORMAL_PARAMETER_NAME"), TYPE_CONSTRAINTS).setName("FORMAL_PARAMETER");
 
         TokenPatternMatch FORMAL_PARAMETERS = group(
-                TridentProductions.brace("("),
-                list(FORMAL_PARAMETER, TridentProductions.comma()).setOptional().setName("FORMAL_PARAMETER_LIST"),
-                TridentProductions.brace(")")
+                brace("("),
+                list(FORMAL_PARAMETER, comma()).setOptional().setName("FORMAL_PARAMETER_LIST"),
+                brace(")")
         ).setName("FORMAL_PARAMETERS");
 
         productions.putPatternMatch("FORMAL_PARAMETER", FORMAL_PARAMETER);
         productions.putPatternMatch("FORMAL_PARAMETERS", FORMAL_PARAMETERS);
+
+        productions.getOrCreateStructure("FORMAL_TYPE_PARAMETERS").add(
+                group(
+                        brace("<"),
+                        list(
+                                group(identifierX().addProcessor((p, l) -> vae.addPreBlockDeclaration(p))),
+                                comma()
+                        ),
+                        brace(">")
+                ).setEvaluator((p, d) -> {
+                    ISymbolContext ctx = (ISymbolContext) d[0];
+                    TokenPattern<?>[] rawGenericTypes = ((TokenList) ((TokenGroup) p).getContents()[1]).getContentsExcludingSeparators();
+                    String[] typeParamNames = new String[rawGenericTypes.length];
+                    for(int i = 0; i < rawGenericTypes.length; i++) {
+                        typeParamNames[i] = rawGenericTypes[i].flatten(false);
+                    }
+                    return typeParamNames;
+                })
+        );
+        productions.getOrCreateStructure("ACTUAL_TYPE_PARAMETERS").add(
+                group(
+                        brace("<"),
+                        list(
+                                productions.getOrCreateStructure("INTERPOLATION_TYPE"),
+                                comma()
+                        ),
+                        brace(">")
+                ).setEvaluator((p, d) -> {
+                    ISymbolContext ctx = (ISymbolContext) d[0];
+                    TokenPattern<?>[] rawGenericTypes = ((TokenList) ((TokenGroup) p).getContents()[1]).getContentsExcludingSeparators();
+                    TypeHandler<?>[] handlers = new TypeHandler<?>[rawGenericTypes.length];
+                    for(int i = 0; i < rawGenericTypes.length; i++) {
+                        handlers[i] = (TypeHandler<?>) rawGenericTypes[i].evaluate(ctx);
+                    }
+                    return handlers;
+                })
+        );
 
         TokenPatternMatch DYNAMIC_FUNCTION = group(
                 TridentProductions.noToken().addFailProcessor((a, l) -> startClosure.accept(null, l)),
@@ -234,9 +269,9 @@ public class TridentPatternProvider extends PatternProviderSet {
 
 
 
-        productions.getOrCreateStructure("INNER_FUNCTION").add(group(group(productions.getOrCreateStructure("RESOURCE_LOCATION")).setName("INNER_FUNCTION_NAME"), TridentProductions.brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), TridentProductions.brace("}")).setGreedy(true).addProcessor(surroundBlock));
-        productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION").add(group(TridentProductions.brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), TridentProductions.brace("}")).setGreedy(true).addProcessor(surroundBlock));
-        productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION").add(group(group(productions.getOrCreateStructure("RESOURCE_LOCATION")).setOptional().setName("INNER_FUNCTION_NAME"), TridentProductions.brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), TridentProductions.brace("}")).setGreedy(true).addProcessor(surroundBlock));
+        productions.getOrCreateStructure("INNER_FUNCTION").add(group(group(productions.getOrCreateStructure("RESOURCE_LOCATION")).setName("INNER_FUNCTION_NAME"), brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), brace("}")).setGreedy(true).addProcessor(surroundBlock));
+        productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION").add(group(brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), brace("}")).setGreedy(true).addProcessor(surroundBlock));
+        productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION").add(group(group(productions.getOrCreateStructure("RESOURCE_LOCATION")).setOptional().setName("INNER_FUNCTION_NAME"), brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), brace("}")).setGreedy(true).addProcessor(surroundBlock));
 
 
 

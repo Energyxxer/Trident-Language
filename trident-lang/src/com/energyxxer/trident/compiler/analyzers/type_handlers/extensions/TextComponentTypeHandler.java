@@ -13,6 +13,7 @@ import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.prismarine.typesystem.generics.GenericSupplier;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
@@ -61,7 +62,7 @@ public class TextComponentTypeHandler implements TypeHandler<TextComponent> {
     }
 
     @Override
-    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx, GenericSupplier genericSupplier) {
         return CONSTRUCTOR;
     }
 

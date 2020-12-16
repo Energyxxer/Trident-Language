@@ -80,7 +80,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
     }
 
     @Override
-    public Iterator<?> getIterator(DictionaryObject dict, ISymbolContext ctx) {
+    public Iterator<?> getIterator(DictionaryObject dict, TokenPattern<?> pattern, ISymbolContext ctx) {
         return dict.iterator();
     }
 

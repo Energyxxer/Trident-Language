@@ -11,22 +11,7 @@ import java.util.Objects;
 
 public class TridentSymbolVisibility {
     private TridentSymbolVisibility() {}
-    public static final SymbolVisibility PUBLIC = new SymbolVisibility(3) {
-        @Override
-        public boolean isVisibleFromContext(Symbol symbol, ISymbolContext containingContext, ISymbolContext accessingContext) {
-            return true;
-        }
 
-        @Override
-        public boolean isVisibleFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            return "PUBLIC";
-        }
-    };
     public static final SymbolVisibility LOCAL = new SymbolVisibility(2) {
         @Override
         public boolean isVisibleFromContext(Symbol symbol, ISymbolContext containingContext, ISymbolContext accessingContext) {

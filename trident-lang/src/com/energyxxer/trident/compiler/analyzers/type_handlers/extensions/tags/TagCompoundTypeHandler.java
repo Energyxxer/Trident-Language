@@ -6,12 +6,14 @@ import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.Symbol;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
+import com.energyxxer.prismarine.typesystem.generics.GenericSupplier;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
@@ -20,7 +22,6 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
-import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -40,16 +41,16 @@ public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
         members.setConstructor(constructorFamily);
 
         try {
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct"))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", int.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", double.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", NBTTag.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", String.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", boolean.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", TextComponent.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", ResourceLocation.class, Boolean.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", ListObject.class, Boolean.class, TokenPattern.class, ISymbolContext.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
-            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", DictionaryObject.class, Boolean.class, TokenPattern.class, ISymbolContext.class))).setVisibility(TridentSymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct"))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", int.class, Boolean.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", double.class, Boolean.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", NBTTag.class, Boolean.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", String.class, Boolean.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", boolean.class, Boolean.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", TextComponent.class, Boolean.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", ResourceLocation.class, Boolean.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", ListObject.class, Boolean.class, TokenPattern.class, ISymbolContext.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
+            constructorFamily.putOverload(new ClassMethod(((TridentTypeSystem) typeSystem).getBaseClass(), null, nativeMethodsToFunction(this.typeSystem, globalCtx, TagCompoundTypeHandler.class.getMethod("construct", DictionaryObject.class, Boolean.class, TokenPattern.class, ISymbolContext.class))).setVisibility(SymbolVisibility.PUBLIC), CustomClass.MemberParentMode.FORCE, null, globalCtx);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -93,7 +94,7 @@ public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
     }
 
     @Override
-    public Iterator<?> getIterator(TagCompound object, ISymbolContext ctx) {
+    public Iterator<?> getIterator(TagCompound object, TokenPattern<?> pattern, ISymbolContext ctx) {
         return object.getAllTags().stream().map(t -> {
             DictionaryObject entry = new DictionaryObject(typeSystem);
             entry.put("key", t.getName());
@@ -118,7 +119,7 @@ public class TagCompoundTypeHandler implements TypeHandler<TagCompound> {
     }
 
     @Override
-    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx, GenericSupplier genericSupplier) {
         return members.getConstructor();
     }
 

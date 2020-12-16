@@ -15,6 +15,7 @@ import com.energyxxer.prismarine.typesystem.TypeConstraints;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.functions.*;
 import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
+import com.energyxxer.prismarine.typesystem.generics.*;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunctionBranch;
@@ -65,8 +66,12 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     private TridentFile definitionFile;
     private ISymbolContext definitionContext;
 
-    private ClassMethodSymbolContext innerStaticContext;
     private String typeIdentifier;
+
+    private ClassMethodSymbolContext innerStaticContext;
+
+    private String[] typeParamNames = null;
+    private GenericSupplier inheritedGenericSuppliers = null;
 
     //Constructor exclusively for base class
     private CustomClass(PrismarineTypeSystem typeSystem) {
@@ -80,8 +85,12 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
         try {
             ClassMethod baseToStringMethod = new ClassMethod(this, null, nativeMethodsToFunction(typeSystem, null, "toString", CustomClass.class.getMethod("defaultToString", CustomClassObject.class)));
-            baseToStringMethod.setVisibility(TridentSymbolVisibility.PUBLIC);
+            baseToStringMethod.setVisibility(SymbolVisibility.PUBLIC);
             this.instanceMethods.put(baseToStringMethod, MemberParentMode.FORCE, null, null);
+
+            ClassMethod baseGetIteratorMethod = new ClassMethod(this, null, nativeMethodsToFunction(typeSystem, null, "getIterator", CustomClass.class.getMethod("getIterator", CustomClassObject.class)));
+            baseGetIteratorMethod.setVisibility(SymbolVisibility.PUBLIC);
+            this.instanceMethods.put(baseGetIteratorMethod, MemberParentMode.FORCE, null, null);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -90,6 +99,10 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     public static @NativeFunctionAnnotations.NotNullReturn
     String defaultToString(@NativeFunctionAnnotations.ThisArg CustomClassObject obj) {
         return obj.toString();
+    }
+
+    public static Object getIterator(@NativeFunctionAnnotations.ThisArg CustomClassObject obj) {
+        return null;
     }
 
     private CustomClass(PrismarineTypeSystem typeSystem, String name) {
@@ -145,10 +158,29 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         ArrayList<CustomClass> oldSuperClasses = classObject.superClasses;
         classObject.superClasses = new ArrayList<>();
         classObject.superClasses.add(((TridentTypeSystem) ctx.getTypeSystem()).getBaseClass());
+
+        if(pattern.find("FORMAL_TYPE_PARAMETERS") != null) {
+            classObject.typeParamNames = (String[]) pattern.find("FORMAL_TYPE_PARAMETERS").evaluate(ctx);
+
+            GenericContext genericContext = new GenericContext(classObject, classObject.typeParamNames);
+
+            for(int i = 0; i < classObject.typeParamNames.length; i++) {
+                GenericStandInType standIn = new GenericStandInType(classObject.typeSystem, genericContext, i);
+                classObject.innerStaticContext.put(new Symbol(classObject.typeParamNames[i], TridentSymbolVisibility.PRIVATE, standIn));
+            }
+        }
+
         if(pattern.find("CLASS_INHERITS") != null) {
             TokenList inheritsList = ((TokenList) pattern.find("CLASS_INHERITS.SUPERCLASS_LIST"));
             for(TokenPattern<?> rawParent : inheritsList.searchByName("INTERPOLATION_TYPE")) {
                 TypeHandler parentType = (TypeHandler) rawParent.evaluate(ctx);
+                while(parentType instanceof GenericWrapperType) {
+                    if(classObject.inheritedGenericSuppliers == null) classObject.inheritedGenericSuppliers = new GenericSupplier();
+                    ((GenericWrapperType) parentType).getGenericSupplier().dumpInto(classObject.inheritedGenericSuppliers);
+
+                    parentType = ((GenericWrapperType) parentType).getSourceType();
+                }
+
                 if(parentType instanceof CustomClass) {
                     if(((CustomClass) parentType)._final || ((CustomClass) parentType)._static) {
                         throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot inherit a static or final class: " + parentType, rawParent, ctx);
@@ -431,7 +463,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                         )
                 ).setModifiers(
                         new VariableInstruction.SymbolModifierMap().setModifier(TridentTempFindABetterHome.SymbolModifier.STATIC)
-                ).setVisibility(TridentSymbolVisibility.PUBLIC);
+                ).setVisibility(SymbolVisibility.PUBLIC);
 
                 OperatorManager operatorManager = typeSystem.getOperatorManager();
                 if(associatedOperator instanceof UnaryOperator) {
@@ -462,14 +494,14 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                         value.getBranch(),
                         this.prepareFunctionContext()
                 )
-        ).setVisibility(TridentSymbolVisibility.PUBLIC);
+        ).setVisibility(SymbolVisibility.PUBLIC);
 
         this.staticMethods.put(method, MemberParentMode.FORCE, null, null);
         this.innerStaticContext.putMethod(this.staticMethods.getFamily(value.getFunctionName()));
     }
 
     public void putStaticFinalMember(String name, Object value) {
-        Symbol sym = new Symbol(name, TridentSymbolVisibility.PUBLIC, value);
+        Symbol sym = new Symbol(name, SymbolVisibility.PUBLIC, value);
         sym.setValue(value);
         sym.setFinalAndLock();
         putStaticMember(name, sym);
@@ -632,18 +664,33 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     }
 
     @Override
-    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public PrimitivePrismarineFunction getConstructor(TokenPattern<?> pattern, ISymbolContext ctx, GenericSupplier genericSupplier) {
         assertComplete(pattern, ctx);
         if(_static) {
             throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class '" + getClassTypeIdentifier() + "' is static; cannot be instantiated.", pattern, ctx);
         }
+        if(genericSupplier != null && !isGeneric()) {
+            throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Class '" + getClassTypeIdentifier() + "' is not generic.", pattern, ctx);
+        }
         return (params, ctx2, thisObject) -> {
             CustomClassObject created = new CustomClassObject(this);
 
+            if(genericSupplier != null) {
+                created.putGenericInfo(this, genericSupplier.get(this));
+            }
+            if(inheritedGenericSuppliers != null) {
+                created.getOrCreateGenericSupplier().dumpFrom(GenericUtils.resolveStandIns(inheritedGenericSuppliers, created, params, ctx));
+            }
+
             for(CustomClass cls : getInheritanceTree()) {
                 for(InstanceMemberSupplier symbolSupplier : cls.instanceMemberSuppliers.values()) {
-                    if(!created.containsMember(symbolSupplier.getName()))
-                        created.putMemberIfAbsent(symbolSupplier.constructSymbol(created));
+                    if(!created.containsMember(symbolSupplier.getName())) {
+                        Symbol sym = symbolSupplier.constructSymbol(created);
+                        if(sym.getTypeConstraints().isGeneric()) {
+                            sym.setTypeConstraints(GenericUtils.nonGeneric(sym.getTypeConstraints(), created, params, ctx));
+                        }
+                        created.putMemberIfAbsent(sym);
+                    }
                 }
             }
 
@@ -659,6 +706,10 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
             return created;
         };
+    }
+
+    public boolean isGeneric() {
+        return typeParamNames != null;
     }
 
     public CustomClassObject forceInstantiate() {
@@ -685,7 +736,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     }
 
     public boolean hasAccess(ISymbolContext ctx, SymbolVisibility visibility) {
-        return visibility == TridentSymbolVisibility.PUBLIC ||
+        return visibility == SymbolVisibility.PUBLIC ||
                 (visibility == TridentSymbolVisibility.LOCAL && (getDeclaringFile().getPathFromRoot().equals(ctx.getPathFromRoot()) || isProtectedAncestor(ctx))) ||
                 (visibility == TridentSymbolVisibility.PRIVATE && ctx.isAncestor(this.innerStaticContext));
     }
@@ -760,4 +811,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         return typeSystem;
     }
 
+    public String[] getTypeParamNames() {
+        return typeParamNames;
+    }
 }

@@ -207,7 +207,7 @@ public class CommonParsers {
         if(pattern == null) return defaultValue;
         switch(pattern.flatten(false)) {
             case "global": return SymbolVisibility.GLOBAL;
-            case "public": return TridentSymbolVisibility.PUBLIC;
+            case "public": return SymbolVisibility.PUBLIC;
             case "local": return TridentSymbolVisibility.LOCAL;
             case "private": return TridentSymbolVisibility.PRIVATE;
             default: {

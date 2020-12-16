@@ -27,6 +27,7 @@ import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.prismarine.typesystem.generics.GenericWrapperType;
 import com.energyxxer.trident.TridentSuiteConfiguration;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
@@ -122,7 +123,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                             ISymbolContext ctx = (ISymbolContext) d[0];
                             TypeHandler<?> handler = (TypeHandler<?>) p.find("INTERPOLATION_TYPE").evaluate(ctx);
 
-                            PrimitivePrismarineFunction constructor = handler.getConstructor(p, ctx);
+                            PrimitivePrismarineFunction constructor = handler.getConstructor(p, ctx, null);
 
                             if (constructor == null) {
                                 throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "There is no constructor for type '" + ctx.getTypeSystem().getTypeIdentifierForType(handler) + "'", p.find("INTERPOLATION_TYPE"), ctx);
@@ -183,8 +184,27 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         productions.getOrCreateStructure("INTERPOLATION_VALUE").add(new TokenExpressionMatch(MID_INTERPOLATION_VALUE, productions.unitConfig.getOperatorPool(), ofType(COMPILER_OPERATOR)).setName("EXPRESSION").setEvaluator((p, d) -> ((ISymbolContext) d[0]).getTypeSystem().getOperatorManager().evaluate((TokenExpression) p, (ISymbolContext) d[0])));
         productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE").setName("INTERPOLATION_VALUE").add(new TokenExpressionMatch(MID_INTERPOLATION_VALUE, productions.unitConfig.getOperatorPool(), group(TridentProductions.sameLine(), ofType(COMPILER_OPERATOR))).setName("EXPRESSION").setEvaluator((p, d) -> ((ISymbolContext) d[0]).getTypeSystem().getOperatorManager().evaluate((TokenExpression) p, (ISymbolContext) d[0])));
 
+        TokenPatternMatch NON_PRIMITIVE_INTERPOLATION_TYPE = group(
+                PrismarineTypeSystem.validatorGroup(createChainForRoot(productions.getOrCreateStructure("ROOT_INTERPOLATION_TYPE"), productions, TYPE_CHAIN_CONFIG), false, TypeHandler.class).setName("INTERPOLATION_TYPE_CHAIN_VALIDATION"),
+                wrapperOptional(productions.getOrCreateStructure("ACTUAL_TYPE_PARAMETERS")).setName("ACTUAL_TYPE_PARAMETERS")
+        ).setName("NON_PRIMITIVE_INTERPOLATION_TYPE").setSimplificationFunction(d -> {
+            if(d.pattern.find("ACTUAL_TYPE_PARAMETERS") == null) {
+                d.pattern = ((TokenGroup) d.pattern).getContents()[0];
+            }
+        }).setEvaluator((p, d) -> {
+            ISymbolContext ctx = (ISymbolContext) d[0];
+            TypeHandler<?> sourceType = (TypeHandler<?>) ((TokenGroup) p).getContents()[0].evaluate(ctx);
+
+            TypeHandler<?>[] genericTypes = (TypeHandler<?>[]) ((TokenGroup) p).getContents()[1].evaluate(ctx);
+
+            GenericWrapperType<?> wrapperType = new GenericWrapperType<>(sourceType);
+            wrapperType.putGenericInfo(sourceType, genericTypes);
+            return wrapperType;
+        });
+        productions.getOrCreateStructure("NON_PRIMITIVE_INTERPOLATION_TYPE").setName("INTERPOLATION_TYPE").add(NON_PRIMITIVE_INTERPOLATION_TYPE);
+
         productions.getOrCreateStructure("INTERPOLATION_TYPE")
-                .add(PrismarineTypeSystem.validatorGroup(createChainForRoot(productions.getOrCreateStructure("ROOT_INTERPOLATION_TYPE"), productions, TYPE_CHAIN_CONFIG), false, TypeHandler.class).setName("INTERPOLATION_TYPE_CHAIN_VALIDATION"))
+                .add(NON_PRIMITIVE_INTERPOLATION_TYPE)
                 .add(ofType(PRIMITIVE_TYPE).setName("PRIMITIVE_ROOT_TYPE").addTags(TridentSuggestionTags.PRIMITIVE_TYPE).setEvaluator((p, d) -> ((ISymbolContext) d[0]).getTypeSystem().getPrimitiveHandlerForShorthand(p.flatten(false))));
 
     }
@@ -250,7 +270,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
 
         if(inner != null) {
-            if("INTERPOLATION_TYPE_CHAIN_VALIDATION".equals(inner.getName())) inner = ((TokenGroup) inner).getContents()[0];
+            if("NON_PRIMITIVE_INTERPOLATION_TYPE".equals(inner.getName())) inner = ((TokenGroup) inner.find("INTERPOLATION_TYPE_CHAIN_VALIDATION")).getContents()[0];
 
             switch(inner.getName()) {
                 case "PRIMITIVE_ROOT_TYPE": {
