@@ -262,7 +262,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                     }
                     Symbol sym = decl.getSupplier().get();
 
-                    if(sym.getTypeConstraints().isGeneric()) {
+                    if(sym.getTypeConstraints() != null && sym.getTypeConstraints().isGeneric()) {
                         throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "A static field cannot be constrained to a type parameter: " + sym.getTypeConstraints(), entry.tryFind("TYPE_CONSTRAINT"), ctx);
                     }
                     this.putStaticMember(decl.getName(), sym);
@@ -475,7 +475,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                         throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a static property.", entry.find("MEMBER_PARENT_MODE"), ctx);
                     }
                     Symbol sym = property.createSymbol(null);
-                    if(sym.getTypeConstraints().isGeneric()) {
+                    if(sym.getTypeConstraints() != null && sym.getTypeConstraints().isGeneric()) {
                         throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "A static property cannot be constrained to a type parameter: " + sym.getTypeConstraints(), entry.tryFind("TYPE_CONSTRAINT"), ctx);
                     }
                     this.putStaticMember(propertyName, sym);
