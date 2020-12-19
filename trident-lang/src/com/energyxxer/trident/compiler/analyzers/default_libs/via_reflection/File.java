@@ -16,24 +16,52 @@ import java.nio.file.Paths;
 public class File {
     public static class in {
         public static Object read(String inPath, ISymbolContext callingCtx) throws IOException {
-            String rawPath = inPath.replace("\\", "/");
+            String rawPath = inPath.replace(java.io.File.separator, "/");
             while(rawPath.startsWith("/")) {
                 rawPath = rawPath.substring(1);
             }
-            Path path = callingCtx.getCompiler().getRootCompiler().getRootDir().toPath().resolve(Paths.get(rawPath).normalize());
+            Path path = callingCtx.getCompiler().getRootCompiler().getRootPath().resolve(Paths.get(rawPath).normalize());
             if(!path.startsWith(callingCtx.getCompiler().getRootCompiler().getRootDir().toPath())) {
-                throw new IllegalArgumentException("Cannot read files outside of the current project: " + path.toString().replace("\\", "/"));
+                throw new IllegalArgumentException("Cannot read files outside of the current project: " + path.toString().replace(java.io.File.separator, "/"));
             }
             if(Files.exists(path)) {
                 if(Files.isDirectory(path)) return path.toFile().list();
                 return new String(Files.readAllBytes(path), Trident.DEFAULT_CHARSET);
-            } else throw new FileNotFoundException(path.toString().replace("\\", "/"));
+            } else throw new FileNotFoundException(path.toString().replace(java.io.File.separator, "/"));
+        }
+
+        public static Object write(String inPath, String content, ISymbolContext callingCtx) throws IOException {
+            String rawPath = inPath.replace(java.io.File.separator, "/");
+            while(rawPath.startsWith("/")) {
+                rawPath = rawPath.substring(1);
+            }
+            Path path = Paths.get(rawPath).normalize();
+            if(!path.startsWith(callingCtx.getCompiler().getRootCompiler().getRootDir().toPath())) {
+                throw new IllegalArgumentException("Cannot write files outside the project: " + path);
+            }
+            path = callingCtx.getCompiler().getRootCompiler().getRootPath().resolve(path);
+            path.toFile().getParentFile().mkdirs();
+            Files.write(path, content.getBytes(Trident.DEFAULT_CHARSET));
+            return null;
+        }
+
+        public static boolean wasFileChanged(String inPath, ISymbolContext callingCtx) throws IOException {
+            String rawPath = inPath.replace(java.io.File.separator, "/");
+            while(rawPath.startsWith("/")) {
+                rawPath = rawPath.substring(1);
+            }
+            Path relPath = Paths.get(rawPath).normalize();
+            Path path = callingCtx.getCompiler().getRootCompiler().getRootPath().resolve(relPath);
+            if(!path.startsWith(callingCtx.getCompiler().getRootCompiler().getRootDir().toPath())) {
+                throw new IllegalArgumentException("Cannot read files outside of the current project: " + path.toString().replace(java.io.File.separator, "/"));
+            }
+            return callingCtx.getCompiler().getRootCompiler().getProjectReader().startQuery(relPath).perform().wasChangedSinceCached();
         }
     }
 
     public static class out {
         public static Object writeResource(String outPath, String content, ISymbolContext callingCtx) {
-            String rawPath = outPath.replace("\\", "/");
+            String rawPath = outPath.replace(java.io.File.separator, "/");
             while(rawPath.startsWith("/")) {
                 rawPath = rawPath.substring(1);
             }
@@ -43,13 +71,13 @@ public class File {
             }
             ResourcePackGenerator resourcePack = callingCtx.get(SetupResourcePackTask.INSTANCE);
             if(resourcePack != null) {
-                resourcePack.exportables.add(new RawExportable(path.toString().replace("\\", "/"), content.getBytes(Trident.DEFAULT_CHARSET)));
+                resourcePack.exportables.add(new RawExportable(path.toString().replace(java.io.File.separator, "/"), content.getBytes(Trident.DEFAULT_CHARSET)));
             }
             return null;
         }
 
         public static Object writeData(String outPath, String content, ISymbolContext callingCtx) {
-            String rawPath = outPath.replace("\\", "/");
+            String rawPath = outPath.replace(java.io.File.separator, "/");
             while(rawPath.startsWith("/")) {
                 rawPath = rawPath.substring(1);
             }
@@ -57,7 +85,7 @@ public class File {
             if(path.startsWith(Paths.get("../"))) {
                 throw new IllegalArgumentException("Cannot write files outside the data pack: " + path);
             }
-            callingCtx.get(SetupModuleTask.INSTANCE).exportables.add(new RawExportable(path.toString().replace("\\", "/"), content.getBytes(Trident.DEFAULT_CHARSET)));
+            callingCtx.get(SetupModuleTask.INSTANCE).exportables.add(new RawExportable(path.toString().replace(java.io.File.separator, "/"), content.getBytes(Trident.DEFAULT_CHARSET)));
             return null;
 
         }

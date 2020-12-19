@@ -15,6 +15,8 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 import com.energyxxer.trident.worker.tasks.SetupWritingStackTask;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
@@ -88,6 +90,11 @@ public class Reflection {
 
     public static ResourceLocation getWritingFile(ISymbolContext ctx) {
         return ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile().getResourceLocation();
+    }
+
+    public static String getCurrentFilePath(ISymbolContext ctx) {
+        Path path = ctx.getStaticParentUnit().getPathFromRoot();
+        return path.toString().replace(File.separatorChar, '/');
     }
 
     public static Object getSymbol(String name, ISymbolContext ctx) {
