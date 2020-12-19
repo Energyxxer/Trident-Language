@@ -253,7 +253,17 @@ public class DefineInstruction implements InstructionDefinition {
                         classGetter,
                         classSetter,
                         brace("}")
-                ).setName("CLASS_PROPERTY"),
+                ).setName("CLASS_PROPERTY").addFailProcessor((ip, l) -> {
+                    if(l.getSummaryModule() != null && ip.find("SYMBOL_NAME") != null) {
+                        //Remove the symbol that was pushed by the name
+                        String symbolName = ip.find("SYMBOL_NAME").flatten(false);
+                        SummarySymbol peekingSymbol = ((TridentSummaryModule) l.getSummaryModule()).peekSubSymbol();
+                        if(peekingSymbol == null || !peekingSymbol.getName().equals(symbolName)) {
+                            Debug.log("POPPING WRONG SYMBOL");
+                        }
+                        ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
+                    }
+                }),
                 group(literal("operator"), ofType(COMPILER_OPERATOR).setName("OPERATOR_SYMBOL"), productions.getOrCreateStructure("DYNAMIC_FUNCTION")).setName("CLASS_OPERATOR")
                         .addProcessor((p, l) -> {
                             String operatorSymbol = p.find("OPERATOR_SYMBOL").flatten(false);
