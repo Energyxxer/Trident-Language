@@ -39,6 +39,7 @@ import com.energyxxer.util.logger.Debug;
 import java.util.ArrayList;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
+import static com.energyxxer.trident.compiler.TridentProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.COMPILER_OPERATOR;
 
 public class DefineInstruction implements InstructionDefinition {
@@ -55,10 +56,10 @@ public class DefineInstruction implements InstructionDefinition {
 
         TokenStructureMatch entityBodyEntry = choice(
                 group(literal("default"), literal("nbt"), productions.getOrCreateStructure("NBT_COMPOUND")).setName("DEFAULT_NBT"),
-                group(literal("default"), literal("passengers"), TridentProductions.brace("["), list(productions.getOrCreateStructure("NEW_ENTITY_LITERAL"), TridentProductions.comma()).setName("PASSENGER_LIST"), TridentProductions.brace("]")).setName("DEFAULT_PASSENGERS"),
-                group(literal("default"), literal("health"), TridentProductions.real(productions).setName("HEALTH").addTags("cspn:Health")).setName("DEFAULT_HEALTH"),
+                group(literal("default"), literal("passengers"), brace("["), list(productions.getOrCreateStructure("NEW_ENTITY_LITERAL"), comma()).setName("PASSENGER_LIST"), brace("]")).setName("DEFAULT_PASSENGERS"),
+                group(literal("default"), literal("health"), real(productions).setName("HEALTH").addTags("cspn:Health")).setName("DEFAULT_HEALTH"),
                 group(literal("default"), literal("name"), productions.getOrCreateStructure("TEXT_COMPONENT")).setName("DEFAULT_NAME"),
-                group(literal("var"), SYMBOL_MODIFIER_LIST, TridentProductions.identifierX().setName("SYMBOL_NAME").addTags("cspn:Field Name"), productions.getPatternMatch("INFERRABLE_TYPE_CONSTRAINTS"), optional(TridentProductions.equals(), choice(productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE"), productions.getOrCreateStructure("INTERPOLATION_BLOCK")).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("ENTITY_FIELD"),
+                group(literal("var"), SYMBOL_MODIFIER_LIST, identifierX().setName("SYMBOL_NAME").addTags("cspn:Field Name"), productions.getPatternMatch("INFERRABLE_TYPE_CONSTRAINTS"), optional(TridentProductions.equals(), choice(productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE"), productions.getOrCreateStructure("INTERPOLATION_BLOCK")).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("ENTITY_FIELD"),
                 group(literal("eval"), productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE")).setName("ENTITY_EVAL"),
                 group(literal("on"), PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_VALUE"), false, EntityEvent.class).setName("EVENT_NAME"), group(productions.getOrCreateStructure("MODIFIER_LIST")).setName("EVENT_MODIFIERS").setEvaluator((p, d) -> p.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, d)), literal("function"),
                         productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION")).setName("ENTITY_EVENT_IMPLEMENTATION"),
@@ -68,9 +69,9 @@ public class DefineInstruction implements InstructionDefinition {
         entityBodyEntry.addTags(TridentSuggestionTags.CONTEXT_ENTITY_BODY);
 
         TokenPatternMatch entityBody = group(
-                TridentProductions.brace("{"),
+                brace("{"),
                 list(entityBodyEntry).setOptional().setName("ENTITY_BODY_ENTRIES"),
-                TridentProductions.brace("}")
+                brace("}")
         ).setOptional().setName("ENTITY_DECLARATION_BODY");
 
 
@@ -85,32 +86,38 @@ public class DefineInstruction implements InstructionDefinition {
                         literal("function"),
                         productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION")).setName("ITEM_INNER_FUNCTION"),
                 group(literal("default"), literal("name"), productions.getOrCreateStructure("TEXT_COMPONENT")).setName("DEFAULT_NAME"),
-                group(literal("default"), literal("lore"), TridentProductions.brace("["), list(productions.getOrCreateStructure("TEXT_COMPONENT"), TridentProductions.comma()).setOptional().setName("LORE_LIST"), TridentProductions.brace("]")).setName("DEFAULT_LORE"),
+                group(literal("default"), literal("lore"), brace("["), list(productions.getOrCreateStructure("TEXT_COMPONENT"), comma()).setOptional().setName("LORE_LIST"), brace("]")).setName("DEFAULT_LORE"),
                 productions.getOrCreateStructure("COMMENT"),
-                group(literal("var"), SYMBOL_MODIFIER_LIST, TridentProductions.identifierX().setName("SYMBOL_NAME").addTags("cspn:Field Name"), productions.getPatternMatch("INFERRABLE_TYPE_CONSTRAINTS"), optional(TridentProductions.equals(), choice(productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE"), productions.getOrCreateStructure("INTERPOLATION_BLOCK")).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("ITEM_FIELD"),
+                group(literal("var"), SYMBOL_MODIFIER_LIST, identifierX().setName("SYMBOL_NAME").addTags("cspn:Field Name"), productions.getPatternMatch("INFERRABLE_TYPE_CONSTRAINTS"), optional(TridentProductions.equals(), choice(productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE"), productions.getOrCreateStructure("INTERPOLATION_BLOCK")).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("ITEM_FIELD"),
                 group(literal("eval"), productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE")).setName("ITEM_EVAL")
         );
         itemBodyEntry.addTags(TridentSuggestionTags.CONTEXT_ITEM_BODY);
 
         TokenPatternMatch itemBody = group(
-                TridentProductions.brace("{"),
+                brace("{"),
                 list(itemBodyEntry).setOptional().setName("ITEM_BODY_ENTRIES"),
-                TridentProductions.brace("}")
+                brace("}")
         ).setOptional().setName("ITEM_DECLARATION_BODY");
 
         TokenPatternMatch classGetter = group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("get"), productions.getPatternMatch("TYPE_CONSTRAINTS"), productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setName("CLASS_GETTER");
-        TokenPatternMatch classSetter = group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("set"), TridentProductions.brace("("), productions.getPatternMatch("FORMAL_PARAMETER"), TridentProductions.brace(")"), productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setName("CLASS_SETTER").setOptional();
+        TokenPatternMatch classSetter = group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("set"), brace("("), productions.getPatternMatch("FORMAL_PARAMETER"), brace(")"), productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setName("CLASS_SETTER").setOptional();
 
         TokenStructureMatch classBodyEntry = choice(
-                group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("var"), TridentProductions.identifierX().setName("SYMBOL_NAME").addProcessor((p, l) -> {
-                    if(l.getSummaryModule() != null) {
-                        SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index);
-                        ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
-                        sym.setDeclarationPattern(p);
-                        //sym.addUsage(p);
-                        ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
-                    }
-                }), productions.getPatternMatch("INFERRABLE_TYPE_CONSTRAINTS"), optional(TridentProductions.equals(), wrapper(productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("CLASS_MEMBER")
+                group(
+                        choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(),
+                        SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"),
+                        literal("var"), identifierX().setName("SYMBOL_NAME").addProcessor((p, l) -> {
+                            if(l.getSummaryModule() != null) {
+                                SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index);
+                                ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
+                                sym.setDeclarationPattern(p);
+                                //sym.addUsage(p);
+                                ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
+                            }
+                        }),
+                        productions.getPatternMatch("INFERRABLE_TYPE_CONSTRAINTS"),
+                        optional(TridentProductions.equals(), wrapper(productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")
+                ).setName("CLASS_MEMBER")
                         .addFailProcessor((ip, l) -> {
                             if(l.getSummaryModule() != null && ip.find("SYMBOL_NAME") != null) {
                                 //Remove the symbol that was pushed by the name
@@ -131,7 +138,7 @@ public class DefineInstruction implements InstructionDefinition {
                         ).addProcessor((p, l) -> {
                     if(l.getSummaryModule() != null) {
                         SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
-                        sym.setVisibility(TridentProductions.parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
+                        sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
                         sym.addTag(TridentSuggestionTags.TAG_FIELD);
 
                         ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(s -> {
@@ -174,7 +181,15 @@ public class DefineInstruction implements InstructionDefinition {
                         }
                     }
                 }),
-                group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"), choice(literal("new").setName("CONSTRUCTOR_LABEL"), TridentProductions.identifierX()).setName("SYMBOL_NAME"), productions.getOrCreateStructure("DYNAMIC_FUNCTION")).setName("CLASS_FUNCTION").addProcessor(
+                group(
+                        choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(),
+                        SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"),
+                        choice(
+                                literal("new").setName("CONSTRUCTOR_LABEL"),
+                                identifierX()
+                        ).setName("SYMBOL_NAME"),
+                        productions.getOrCreateStructure("DYNAMIC_FUNCTION")
+                ).setName("CLASS_FUNCTION").addProcessor(
                         (p, lx) -> {
                             boolean overriding = p.find("MEMBER_PARENT_MODE") != null;
                             boolean _static = p.find("SYMBOL_MODIFIER_LIST") != null && p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static");
@@ -198,7 +213,7 @@ public class DefineInstruction implements InstructionDefinition {
                         ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p.find("SYMBOL_NAME"));
                         sym.setDeclarationPattern(p.find("SYMBOL_NAME"));
                         //sym.addUsage(p.find("SYMBOL_NAME"));
-                        sym.setVisibility(TridentProductions.parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
+                        sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
                         sym.addTag(TridentSuggestionTags.TAG_METHOD);
                         if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                             sym.setInstanceField(true);
@@ -209,7 +224,36 @@ public class DefineInstruction implements InstructionDefinition {
                         }
                     }
                 }),
-                group(choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), literal("override").setOptional().setName("MEMBER_PARENT_MODE"), literal("this"), TridentProductions.brace("["), productions.getPatternMatch("FORMAL_PARAMETER"), TridentProductions.brace("]"), TridentProductions.brace("{"), classGetter, classSetter, TridentProductions.brace("}")).setName("CLASS_INDEXER"),
+                group(
+                        choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(),
+                        list(choice("final")).setOptional().setName("SYMBOL_MODIFIER_LIST"),
+                        literal("override").setOptional().setName("MEMBER_PARENT_MODE"),
+                        literal("this"),
+                        brace("["),
+                        productions.getPatternMatch("FORMAL_PARAMETER"),
+                        brace("]"),
+                        brace("{"),
+                        classGetter,
+                        classSetter,
+                        brace("}")
+                ).setName("CLASS_INDEXER"),
+                group(
+                        choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(),
+                        SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"),
+                        TridentProductions.identifierX().setName("SYMBOL_NAME").addProcessor((p, l) -> {
+                            if(l.getSummaryModule() != null) {
+                                SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index);
+                                ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
+                                sym.setDeclarationPattern(p);
+                                //sym.addUsage(p);
+                                ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
+                            }
+                        }),
+                        brace("{"),
+                        classGetter,
+                        classSetter,
+                        brace("}")
+                ).setName("CLASS_PROPERTY"),
                 group(literal("operator"), ofType(COMPILER_OPERATOR).setName("OPERATOR_SYMBOL"), productions.getOrCreateStructure("DYNAMIC_FUNCTION")).setName("CLASS_OPERATOR")
                         .addProcessor((p, l) -> {
                             String operatorSymbol = p.find("OPERATOR_SYMBOL").flatten(false);
@@ -231,35 +275,35 @@ public class DefineInstruction implements InstructionDefinition {
                                 l.getNotices().add(new Notice(NoticeType.ERROR, "There is no operator " + operatorSymbol + " for " + operandCount + " operands", p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK")));
                             }
                         }),
-                group(literal("override").setOptional(), choice("explicit", "implicit").setName("CLASS_TRANSFORM_TYPE"), TridentProductions.brace("<"), productions.getOrCreateStructure("INTERPOLATION_TYPE"), TridentProductions.brace(">"), productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setName("CLASS_OVERRIDE"),
+                group(literal("override").setOptional(), choice("explicit", "implicit").setName("CLASS_TRANSFORM_TYPE"), brace("<"), productions.getOrCreateStructure("INTERPOLATION_TYPE"), brace(">"), productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setName("CLASS_OVERRIDE"),
                 productions.getOrCreateStructure("COMMENT")
         ).setName("CLASS_BODY_ENTRY");
         classBodyEntry.addTags(TridentSuggestionTags.CONTEXT_CLASS_BODY);
 
         TokenPatternMatch classBody = group(
-                TridentProductions.brace("{").addProcessor(vae.capturePreBlockDeclarations).addProcessor(startComplexValue),
+                brace("{").addProcessor(vae.capturePreBlockDeclarations).addProcessor(startComplexValue),
                 list(classBodyEntry).setOptional().setName("CLASS_BODY_ENTRIES"),
-                TridentProductions.brace("}")
+                brace("}")
         ).setOptional().setName("CLASS_DECLARATION_BODY").addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);});
 
-        return group(TridentProductions.instructionKeyword("define"),
+        return group(instructionKeyword("define"),
                 choice(
-                        group(literal("objective"), group(TridentProductions.identifierA(productions)).setName("OBJECTIVE_NAME").addTags("cspn:Objective Name"), optional(TridentProductions.sameLine(), group(TridentProductions.identifierB(productions)).setName("CRITERIA"), optional(productions.getOrCreateStructure("TEXT_COMPONENT")))).setName("DEFINE_OBJECTIVE")
+                        group(literal("objective"), group(identifierA(productions)).setName("OBJECTIVE_NAME").addTags("cspn:Objective Name"), optional(sameLine(), group(identifierB(productions)).setName("CRITERIA"), optional(productions.getOrCreateStructure("TEXT_COMPONENT")))).setName("DEFINE_OBJECTIVE")
                                 .addProcessor((p, l) -> {
                                     if(l.getSummaryModule() != null) {
                                         ((TridentSummaryModule) l.getSummaryModule()).addObjective(new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.find("OBJECTIVE_NAME").flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index).addTag(TridentSuggestionTags.TAG_OBJECTIVE));
                                     }
                                 }),
                         group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("entity"), choice(
-                                group(choice(TridentProductions.identifierA(productions), TridentProductions.identifierX().addTags("cspn:Entity Name"), literal("default")).setName("ENTITY_NAME").addTags("cspn:Entity Type Name"), choice(TridentProductions.symbol("*"), productions.getOrCreateStructure("TRIDENT_ENTITY_ID_TAGGED")).setName("ENTITY_BASE").addTags("cspn:Base Type")).setName("CONCRETE_ENTITY_DECLARATION").addProcessor(
+                                group(choice(identifierA(productions), identifierX().addTags("cspn:Entity Name"), literal("default")).setName("ENTITY_NAME").addTags("cspn:Entity Type Name"), choice(symbol("*"), productions.getOrCreateStructure("TRIDENT_ENTITY_ID_TAGGED")).setName("ENTITY_BASE").addTags("cspn:Base Type")).setName("CONCRETE_ENTITY_DECLARATION").addProcessor(
                                         (p, lx) -> {
                                             if("*".equals(p.find("ENTITY_BASE").flatten(false)) && !"default".equals(p.find("ENTITY_NAME").flatten(false))) {
                                                 lx.getNotices().add(new Notice(NoticeType.ERROR, "The wildcard entity base may only be used on default entities", p.find("ENTITY_BASE")));
                                             }
                                         }
                                 ),
-                                group(literal("component"), choice(TridentProductions.identifierA(productions), TridentProductions.identifierX()).setName("ENTITY_NAME").addTags("cspn:Component Name")).setName("ABSTRACT_ENTITY_DECLARATION")
-                        ).setName("ENTITY_DECLARATION_HEADER"), optional(TridentProductions.keyword("implements"), wrapper(productions.getOrCreateStructure("COMPONENT_LIST_BRACELESS")).setName("COMPONENT_LIST").addTags("cspn:Implemented Components")).setName("IMPLEMENTED_COMPONENTS"), entityBody).setName("DEFINE_ENTITY")
+                                group(literal("component"), choice(identifierA(productions), identifierX()).setName("ENTITY_NAME").addTags("cspn:Component Name")).setName("ABSTRACT_ENTITY_DECLARATION")
+                        ).setName("ENTITY_DECLARATION_HEADER"), optional(keyword("implements"), wrapper(productions.getOrCreateStructure("COMPONENT_LIST_BRACELESS")).setName("COMPONENT_LIST").addTags("cspn:Implemented Components")).setName("IMPLEMENTED_COMPONENTS"), entityBody).setName("DEFINE_ENTITY")
                                 .addProcessor((p, l) -> {
                                     if(l.getSummaryModule() != null) {
                                         TokenPattern<?> namePattern = p.find("ENTITY_DECLARATION_HEADER.ENTITY_NAME");
@@ -272,7 +316,7 @@ public class DefineInstruction implements InstructionDefinition {
                                             //sym.addUsage(p);
                                             sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
                                             sym.addTag(TridentSuggestionTags.TAG_CUSTOM_ENTITY);
-                                            sym.setVisibility(TridentProductions.parseVisibility(p.find("SYMBOL_VISIBILITY"), SymbolVisibility.GLOBAL));
+                                            sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), SymbolVisibility.GLOBAL));
                                             if(p.find("ENTITY_DECLARATION_HEADER.LITERAL_COMPONENT") != null) sym.addTag(TridentSuggestionTags.TAG_ENTITY_COMPONENT);
                                             ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                         } else {
@@ -291,7 +335,7 @@ public class DefineInstruction implements InstructionDefinition {
                                         }
                                     }
                                 }),
-                        group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("event"), group(TridentProductions.identifierX().addTags("cspn:Event Name")).setName("EVENT_NAME"), optional(productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setName("EVENT_INITIALIZATION")).setName("DEFINE_EVENT")
+                        group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("event"), group(identifierX().addTags("cspn:Event Name")).setName("EVENT_NAME"), optional(productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setName("EVENT_INITIALIZATION")).setName("DEFINE_EVENT")
                                 .addProcessor((p, l) -> {
                                     if(l.getSummaryModule() != null) {
                                         TokenPattern<?> namePattern = p.find("EVENT_NAME");
@@ -301,11 +345,11 @@ public class DefineInstruction implements InstructionDefinition {
                                         sym.setDeclarationPattern(p);
                                         //sym.addUsage(p);
                                         sym.addTag(TridentSuggestionTags.TAG_ENTITY_EVENT);
-                                        sym.setVisibility(TridentProductions.parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
+                                        sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
                                         ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                     }
                                 }),
-                        group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("item"), choice(TridentProductions.identifierA(productions), TridentProductions.identifierX().addTags("cspn:Item Type Name"), literal("default")).setName("ITEM_NAME"), TridentProductions.noToken().addTags("cspn:Base Type"), TridentProductions.resourceLocationFixer, productions.getOrCreateStructure("ITEM_ID"), optional(TridentProductions.hash(), TridentProductions.integer(productions).addTags("cspn:Model Index")).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM")
+                        group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), literal("item"), choice(identifierA(productions), identifierX().addTags("cspn:Item Type Name"), literal("default")).setName("ITEM_NAME"), noToken().addTags("cspn:Base Type"), resourceLocationFixer, productions.getOrCreateStructure("ITEM_ID"), optional(hash(), integer(productions).addTags("cspn:Model Index")).setName("CUSTOM_MODEL_DATA"), itemBody).setName("DEFINE_ITEM")
                                 .addProcessor((p, l) -> {
                                     if(l.getSummaryModule() != null) {
                                         TokenPattern<?> namePattern = p.find("ITEM_NAME");
@@ -317,7 +361,7 @@ public class DefineInstruction implements InstructionDefinition {
                                             sym.setDeclarationPattern(p);
                                             //sym.addUsage(p);
                                             sym.addTag(TridentSuggestionTags.TAG_CUSTOM_ITEM);
-                                            sym.setVisibility(TridentProductions.parseVisibility(p.find("SYMBOL_VISIBILITY"), SymbolVisibility.GLOBAL));
+                                            sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), SymbolVisibility.GLOBAL));
                                             ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                         } else {
                                             if(p.find("CUSTOM_MODEL_DATA") != null) {
@@ -336,7 +380,7 @@ public class DefineInstruction implements InstructionDefinition {
                                     }
                                 }),
                         group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), SYMBOL_MODIFIER_LIST, literal("class"),
-                                group(TridentProductions.identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME")
+                                group(identifierX().addTags("cspn:Class Name")).setName("CLASS_NAME")
                                         .addProcessor((p, l) -> {
                                             if(l.getSummaryModule() != null) {
                                                 SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index);
@@ -348,11 +392,11 @@ public class DefineInstruction implements InstructionDefinition {
                                                 ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
                                             }
                                         }),
-                                wrapperOptional(productions.getOrCreateStructure("FORMAL_TYPE_PARAMETERS")).setName("FORMAL_TYPE_PARAMETERS"), optional(TridentProductions.colon(), list(productions.getOrCreateStructure("INTERPOLATION_TYPE"), TridentProductions.comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST").addProcessor((p, l) -> checkDuplicates(((TokenList) p), "Duplicate superclass", l))).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
+                                wrapperOptional(productions.getOrCreateStructure("FORMAL_TYPE_PARAMETERS")).setName("FORMAL_TYPE_PARAMETERS"), optional(colon(), list(productions.getOrCreateStructure("INTERPOLATION_TYPE"), comma()).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST").addProcessor((p, l) -> checkDuplicates(((TokenList) p), "Duplicate superclass", l))).setName("CLASS_INHERITS"), classBody).setName("DEFINE_CLASS")
                                 .addProcessor((p, l) -> {
                                     if(l.getSummaryModule() != null) {
                                         SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
-                                        sym.setVisibility(TridentProductions.parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
+                                        sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
                                         if(!sym.hasSubBlock()) {
                                             ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                         }

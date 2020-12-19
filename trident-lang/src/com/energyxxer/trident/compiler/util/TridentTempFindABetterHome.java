@@ -18,14 +18,14 @@ public class TridentTempFindABetterHome {
         TokenList paramNames = (TokenList) pattern.find("PRE_CODE_BLOCK.FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
         if (paramNames != null) {
             for (TokenPattern<?> param : paramNames.searchByName("FORMAL_PARAMETER")) {
-                formalParams.add(createFormalParams(param, ctx));
+                formalParams.add(createFormalParam(param, ctx));
             }
         }
 
         return new TridentUserFunctionBranch(ctx.getTypeSystem(), formalParams, pattern.find("ANONYMOUS_INNER_FUNCTION"), returnConstraints);
     }
 
-    public static FormalParameter createFormalParams(TokenPattern<?> pattern, ISymbolContext ctx) {
+    public static FormalParameter createFormalParam(TokenPattern<?> pattern, ISymbolContext ctx) {
         return new FormalParameter(pattern.find("FORMAL_PARAMETER_NAME").flatten(false), (TypeConstraints) pattern.find("TYPE_CONSTRAINTS").evaluate(ctx));
     }
 

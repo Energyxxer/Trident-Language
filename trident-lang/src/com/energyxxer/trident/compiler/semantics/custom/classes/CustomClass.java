@@ -260,7 +260,12 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                     if(mode != MemberParentMode.CREATE) {
                         throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a static field.", entry.find("MEMBER_PARENT_MODE"), ctx);
                     }
-                    this.putStaticMember(decl.getName(), decl.getSupplier().get());
+                    Symbol sym = decl.getSupplier().get();
+
+                    if(sym.getTypeConstraints().isGeneric()) {
+                        throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "A static field cannot be constrained to a type parameter: " + sym.getTypeConstraints(), entry.tryFind("TYPE_CONSTRAINT"), ctx);
+                    }
+                    this.putStaticMember(decl.getName(), sym);
                 } else {
                     if(_static) {
                         throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have instance field.", entry, ctx);
@@ -268,7 +273,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                     if(mode == MemberParentMode.CREATE) {
                         InstanceMemberSupplier alreadyDefinedSupplier = this.getInstanceMemberSupplier(decl.getName());
                         if(alreadyDefinedSupplier != null && alreadyDefinedSupplier.getDefiningClass() == this) {
-                            throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Duplicate field '" + decl.getName() + "': it's already defined in the same class.", entry, ctx);
+                            throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Duplicate member '" + decl.getName() + "': it's already defined in the same class.", entry, ctx);
                         } if(alreadyDefinedSupplier != null) {
                             throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Member '" + decl.getName() + "' is already defined in inherited class " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ". Use the 'override' keyword to change its default value.", entry, ctx);
                         }
@@ -277,12 +282,14 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                         if(alreadyDefinedSupplier == null) {
                             throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': not found in any of the inherited classes.", entry, ctx);
                         } else if(alreadyDefinedSupplier.getDefiningClass() == this) {
-                            throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Cannot override field '" + decl.getName() + "': it's already defined in the same class.", entry, ctx);
+                            throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Cannot override member '" + decl.getName() + "': it's already defined in the same class.", entry, ctx);
                         }
                         if(((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().hasModifier(TridentTempFindABetterHome.SymbolModifier.FINAL)) {
                             throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "': it's defined as final in " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier, entry, ctx);
                         } else if(decl.hasModifier(TridentTempFindABetterHome.SymbolModifier.FINAL)) {
                             throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override field '" + decl.getName() + "' with a final field.", entry, ctx);
+                        } else if(((InstanceFieldSupplier) alreadyDefinedSupplier).isProperty) {
+                            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override property '" + decl.getName() + "' with a field.", entry, ctx);
                         }
 
                         TypeConstraints thisConstraints = decl.getConstraint(null);
@@ -292,7 +299,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                         }
                     }
 
-                    this.putInstanceMember(decl.getName(), new InstanceFieldSupplier(decl) {
+                    this.putInstanceMember(decl.getName(), new InstanceFieldSupplier(decl, false) {
                         @Override
                         public String getName() {
                             return decl.getName();
@@ -384,7 +391,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                     mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
                 }
 
-                FormalParameter indexParam = TridentTempFindABetterHome.createFormalParams(entry.find("FORMAL_PARAMETER"), ctx);
+                FormalParameter indexParam = TridentTempFindABetterHome.createFormalParam(entry.find("FORMAL_PARAMETER"), ctx);
 
                 TridentUserFunctionBranch getterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.singletonList(indexParam), entry.find("CLASS_GETTER.ANONYMOUS_INNER_FUNCTION"), (TypeConstraints) entry.find("CLASS_GETTER.TYPE_CONSTRAINTS").evaluate(ctx));
                 SymbolVisibility getterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_GETTER.SYMBOL_VISIBILITY"), this.definitionContext, defaultVisibility);
@@ -398,7 +405,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 SymbolVisibility setterVisibility = TridentSymbolVisibility.LOCAL;
                 if(entry.find("CLASS_SETTER") != null) {
                     setterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_SETTER.SYMBOL_VISIBILITY"), this.definitionContext, defaultVisibility);
-                    TridentUserFunctionBranch setterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Arrays.asList(indexParam, TridentTempFindABetterHome.createFormalParams(entry.find("CLASS_SETTER.FORMAL_PARAMETER"), ctx)), entry.find("CLASS_SETTER.ANONYMOUS_INNER_FUNCTION"), null);
+                    TridentUserFunctionBranch setterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Arrays.asList(indexParam, TridentTempFindABetterHome.createFormalParam(entry.find("CLASS_SETTER.FORMAL_PARAMETER"), ctx)), entry.find("CLASS_SETTER.ANONYMOUS_INNER_FUNCTION"), null);
                     setter = new PrismarineFunction(
                             "<indexer setter>",
                             setterBranch,
@@ -418,6 +425,114 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 indexer.setSetterVisibility(setterVisibility);
 
                 this.indexers.put(indexer, mode, entry, ctx);
+                break;
+            }
+            case "CLASS_PROPERTY": {
+                VariableInstruction.SymbolModifierMap modifiers = VariableInstruction.SymbolModifierMap.createFromList(((TokenList) entry.find("SYMBOL_MODIFIER_LIST")), ctx);
+                if(!shouldParseStatic && modifiers.hasModifier(TridentTempFindABetterHome.SymbolModifier.STATIC)) {
+                    return true;
+                }
+                MemberParentMode mode = MemberParentMode.CREATE;
+                if(entry.find("MEMBER_PARENT_MODE") != null) {
+                    mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
+                }
+                String propertyName = entry.find("SYMBOL_NAME").flatten(false);
+                SymbolVisibility defaultVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), this.definitionContext, TridentSymbolVisibility.LOCAL);
+
+                TridentUserFunctionBranch getterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.emptyList(), entry.find("CLASS_GETTER.ANONYMOUS_INNER_FUNCTION"), (TypeConstraints) entry.find("CLASS_GETTER.TYPE_CONSTRAINTS").evaluate(ctx));
+                SymbolVisibility getterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_GETTER.SYMBOL_VISIBILITY"), this.definitionContext, defaultVisibility);
+                PrismarineFunction getter = new PrismarineFunction(
+                        "<property getter>",
+                        getterBranch,
+                        this.prepareFunctionContext()
+                );
+
+                PrismarineFunction setter = null;
+                SymbolVisibility setterVisibility = TridentSymbolVisibility.LOCAL;
+                if(entry.find("CLASS_SETTER") != null) {
+                    setterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_SETTER.SYMBOL_VISIBILITY"), this.definitionContext, defaultVisibility);
+                    TridentUserFunctionBranch setterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.singletonList(TridentTempFindABetterHome.createFormalParam(entry.find("CLASS_SETTER.FORMAL_PARAMETER"), ctx)), entry.find("CLASS_SETTER.ANONYMOUS_INNER_FUNCTION"), new TypeConstraints(typeSystem, (TypeHandler<?>) null, true));
+                    setter = new PrismarineFunction(
+                            "<property setter>",
+                            setterBranch,
+                            this.prepareFunctionContext()
+                    );
+                }
+
+                if(getterVisibility.getVisibilityIndex() > defaultVisibility.getVisibilityIndex()) {
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Getter access privileges must not be more accessible than the property's. Property access: '" + defaultVisibility.toString().toLowerCase() + "', Getter access: " + getterVisibility.toString().toLowerCase(), entry.tryFind("CLASS_GETTER.SYMBOL_VISIBILITY"), ctx);
+                }
+                if(setter != null && setterVisibility.getVisibilityIndex() > defaultVisibility.getVisibilityIndex()) {
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Setter access privileges must not be more accessible than the property's. Property access: '" + defaultVisibility.toString().toLowerCase() + "', Setter access: " + setterVisibility.toString().toLowerCase(), entry.tryFind("CLASS_SETTER.SYMBOL_VISIBILITY"), ctx);
+                }
+
+                ClassProperty property = new ClassProperty(this, entry, propertyName, getter, setter);
+                property.setGetterVisibility(getterVisibility);
+                property.setSetterVisibility(setterVisibility);
+
+                if(modifiers.hasModifier(TridentTempFindABetterHome.SymbolModifier.STATIC)) {
+                    if(mode != MemberParentMode.CREATE) {
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot " + mode.toString().toLowerCase() + " a static property.", entry.find("MEMBER_PARENT_MODE"), ctx);
+                    }
+                    Symbol sym = property.createSymbol(null);
+                    if(sym.getTypeConstraints().isGeneric()) {
+                        throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "A static property cannot be constrained to a type parameter: " + sym.getTypeConstraints(), entry.tryFind("TYPE_CONSTRAINT"), ctx);
+                    }
+                    this.putStaticMember(propertyName, sym);
+                } else {
+                    if(_static) {
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have properties.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
+                    }
+                    VariableInstruction.SymbolDeclaration decl = new VariableInstruction.SymbolDeclaration(propertyName);
+                    decl.setVisibility(defaultVisibility);
+
+                    if(mode == MemberParentMode.CREATE) {
+                        InstanceMemberSupplier alreadyDefinedSupplier = this.getInstanceMemberSupplier(propertyName);
+                        if(alreadyDefinedSupplier != null && alreadyDefinedSupplier.getDefiningClass() == this) {
+                            throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Duplicate member '" + propertyName + "': it's already defined in the same class.", entry, ctx);
+                        } if(alreadyDefinedSupplier != null) {
+                            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Member '" + propertyName + "' is already defined in inherited class " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ". Use the 'override' keyword to change its default value.", entry, ctx);
+                        }
+                    } else if(mode == MemberParentMode.OVERRIDE) {
+                        InstanceMemberSupplier alreadyDefinedSupplier = this.getInstanceMemberSupplier(propertyName);
+                        if(alreadyDefinedSupplier == null) {
+                            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override property '" + propertyName + "': not found in any of the inherited classes.", entry, ctx);
+                        } else if(alreadyDefinedSupplier.getDefiningClass() == this) {
+                            throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Cannot override member '" + propertyName + "': it's already defined in the same class.", entry, ctx);
+                        } else if(!((InstanceFieldSupplier) alreadyDefinedSupplier).isProperty) {
+                            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override field '" + propertyName + "' with a property.", entry, ctx);
+                        }
+//
+//                    TypeConstraints thisConstraints = decl.getConstraint(null);
+//                    TypeConstraints otherConstraints = ((InstanceFieldSupplier) alreadyDefinedSupplier).getDecl().getConstraint(null);
+//                    if (!TypeConstraints.constraintsEqual(thisConstraints, otherConstraints)) {
+//                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override member '" + decl.getName() + "': Mismatch of type constraints. Defined in superclass " + alreadyDefinedSupplier.getDefiningClass().typeIdentifier + ": " + otherConstraints + "; Found: " + thisConstraints, entry, ctx);
+//                    }
+                    }
+
+                    this.putInstanceMember(propertyName, new InstanceFieldSupplier(decl, true) {
+                        @Override
+                        public CustomClass getDefiningClass() {
+                            return CustomClass.this;
+                        }
+
+                        @Override
+                        public String getName() {
+                            return propertyName;
+                        }
+
+                        @Override
+                        public Symbol constructSymbol(CustomClassObject thiz) {
+                            return property.createSymbol(thiz);
+                        }
+
+                        @Override
+                        public SymbolVisibility getVisibility() {
+                            return defaultVisibility;
+                        }
+                    });
+                }
+
                 break;
             }
             case "CLASS_OVERRIDE": {
@@ -686,7 +801,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 for(InstanceMemberSupplier symbolSupplier : cls.instanceMemberSuppliers.values()) {
                     if(!created.containsMember(symbolSupplier.getName())) {
                         Symbol sym = symbolSupplier.constructSymbol(created);
-                        if(sym.getTypeConstraints().isGeneric()) {
+                        if(sym.getTypeConstraints() != null && sym.getTypeConstraints().isGeneric()) {
                             sym.setTypeConstraints(GenericUtils.nonGeneric(sym.getTypeConstraints(), created, params, ctx));
                         }
                         created.putMemberIfAbsent(sym);
@@ -781,9 +896,11 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     private static abstract class InstanceFieldSupplier implements InstanceMemberSupplier {
         private final VariableInstruction.SymbolDeclaration decl;
+        private final boolean isProperty;
 
-        public InstanceFieldSupplier(VariableInstruction.SymbolDeclaration decl) {
+        public InstanceFieldSupplier(VariableInstruction.SymbolDeclaration decl, boolean isProperty) {
             this.decl = decl;
+            this.isProperty = isProperty;
         }
 
         public VariableInstruction.SymbolDeclaration getDecl() {

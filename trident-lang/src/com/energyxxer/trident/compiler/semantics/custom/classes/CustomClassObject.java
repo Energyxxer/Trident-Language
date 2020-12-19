@@ -125,7 +125,14 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
 
     @Override
     public boolean canCoerce(Object object, TypeHandler into, ISymbolContext ctx) {
-        return type.isInstance(object) && type.implicitCasts.containsKey(into);
+        if(!type.isInstance(object)) return false;
+        for(CustomClass type : type.getInheritanceTree()) {
+            PrismarineFunction castMethod = type.implicitCasts.get(into);
+            if(castMethod != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
