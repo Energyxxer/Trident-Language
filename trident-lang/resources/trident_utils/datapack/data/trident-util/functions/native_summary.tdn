@@ -92,6 +92,7 @@ define global static final class Reflection {
     public static insertToFile() {}
     public static getCurrentFile() {}
     public static getWritingFile() {}
+    public static getCurrentFilePath() {}
     public static getSymbol() {}
     public static getVisibleSymbols() {}
     public static getDefinedObjectives() {}
@@ -99,11 +100,13 @@ define global static final class Reflection {
 
 define global static final class File {
     public static final var in = {
-        read: 0
+        read: function() {},
+        write: function() {},
+        wasFileChanged: function() {}
     }
     public static final var out = {
-        writeData: 0,
-        writeResource: 0
+        writeData: function() {},
+        writeResource: function() {}
     }
 }
 
@@ -156,4 +159,8 @@ define global final class Random {
     public nextGaussian() {}
 
     public nextBoolean() {}
+}
+
+define global class type_definition {
+    public static of(obj) {}
 }
