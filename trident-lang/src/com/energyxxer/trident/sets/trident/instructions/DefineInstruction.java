@@ -17,6 +17,7 @@ import com.energyxxer.prismarine.operators.OperatorPool;
 import com.energyxxer.prismarine.operators.TernaryOperator;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
+import com.energyxxer.prismarine.summaries.SummaryBlock;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
@@ -149,9 +150,8 @@ public class DefineInstruction implements InstructionDefinition {
                         if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                             sym.setInstanceField(true);
                         }
-                        if(!sym.hasSubBlock()) {
-                            ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
-                        }
+                        SummarySymbol classSym = ((PrismarineSummaryModule) l.getSummaryModule()).peekSubSymbol();
+                        classSym.putElement(sym);
                         if(l.getInspectionModule() != null) {
                             if(p.find("TYPE_CONSTRAINTS.TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER") == null && p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE") != null) {
                                 ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_CODE_ACTIONS_TYPES, s -> {
@@ -220,9 +220,9 @@ public class DefineInstruction implements InstructionDefinition {
                             sym.setInstanceField(true);
                         }
                         sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint((PrismarineSummaryModule) l.getSummaryModule(), p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
-                        if(!sym.hasSubBlock()) {
-                            ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
-                        }
+
+                        SummarySymbol classSym = ((PrismarineSummaryModule) l.getSummaryModule()).peekSubSymbol();
+                        classSym.putElement(sym);
                     }
                 }),
                 group(
@@ -246,7 +246,7 @@ public class DefineInstruction implements InstructionDefinition {
                                 SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index);
                                 ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
                                 sym.setDeclarationPattern(p);
-                                sym.addTag(TridentSuggestionTags.TAG_COMMAND);
+                                sym.addTag(TridentSuggestionTags.TAG_FIELD);
                                 //sym.addUsage(p);
                                 ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
                             }
@@ -265,7 +265,19 @@ public class DefineInstruction implements InstructionDefinition {
                         }
                         ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
                     }
-                }).addProcessor(endComplexValue),
+                }).addProcessor((p, l) -> {
+                    if(l.getSummaryModule() != null) {
+                        SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
+                        sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
+                        sym.addTag(TridentSuggestionTags.TAG_FIELD);
+
+                        if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
+                            sym.setInstanceField(true);
+                        }
+                        SummarySymbol classSym = ((PrismarineSummaryModule) l.getSummaryModule()).peekSubSymbol();
+                        classSym.putElement(sym);
+                    }
+                }),
                 group(literal("operator"), ofType(COMPILER_OPERATOR).setName("OPERATOR_SYMBOL"), productions.getOrCreateStructure("DYNAMIC_FUNCTION")).setName("CLASS_OPERATOR")
                         .addProcessor((p, l) -> {
                             String operatorSymbol = p.find("OPERATOR_SYMBOL").flatten(false);
@@ -397,6 +409,7 @@ public class DefineInstruction implements InstructionDefinition {
                                             if(l.getSummaryModule() != null) {
                                                 SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index);
                                                 sym.setDeclarationPattern(p);
+                                                sym.setSubBlock(new SummaryBlock((PrismarineSummaryModule) l.getSummaryModule(), 0, Integer.MAX_VALUE, sym));
                                                 ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
                                                 //sym.addUsage(p);
                                                 sym.addTag(TridentSuggestionTags.TAG_CLASS);
