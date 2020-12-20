@@ -18,6 +18,7 @@ import com.energyxxer.prismarine.typesystem.TypeConstraints;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
+import com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
@@ -52,7 +53,7 @@ public class VariableInstruction implements InstructionDefinition {
             if(l.getSummaryModule() != null) {
                 SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
 
-                ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(s -> {
+                ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_SET_SYMBOL_TYPES, s -> {
                     sym.setType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(s, p.find("TYPE_CONSTRAINTS")));
                 });
 
@@ -113,7 +114,7 @@ public class VariableInstruction implements InstructionDefinition {
                 }
 
                 if(p.find("TYPE_CONSTRAINTS.TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER") == null && p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE") != null) {
-                    ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(s -> {
+                    ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_CODE_ACTIONS_TYPES, s -> {
                         TokenPattern<?> contents = p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE");
                         if (contents instanceof TokenGroup || contents instanceof TokenStructure) {
                             SummarySymbol initSymbol = ValueAccessExpressionSet.getSymbolForChain(s, (TokenPattern<?>) contents.getContents());

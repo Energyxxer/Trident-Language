@@ -23,6 +23,7 @@ import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
+import com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -141,7 +142,7 @@ public class DefineInstruction implements InstructionDefinition {
                         sym.setVisibility(parseVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL));
                         sym.addTag(TridentSuggestionTags.TAG_FIELD);
 
-                        ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(s -> {
+                        ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_SET_SYMBOL_TYPES, s -> {
                             sym.setType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(s, p.find("TYPE_CONSTRAINTS")));
                         });
 
@@ -153,7 +154,7 @@ public class DefineInstruction implements InstructionDefinition {
                         }
                         if(l.getInspectionModule() != null) {
                             if(p.find("TYPE_CONSTRAINTS.TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER") == null && p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE") != null) {
-                                ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(s -> {
+                                ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_CODE_ACTIONS_TYPES, s -> {
                                     TokenPattern<?> contents = p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE");
                                     if(contents instanceof TokenGroup || contents instanceof TokenStructure) {
                                         SummarySymbol initSymbol = ValueAccessExpressionSet.getSymbolForChain(s, (TokenPattern<?>) contents.getContents());
@@ -245,6 +246,7 @@ public class DefineInstruction implements InstructionDefinition {
                                 SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index);
                                 ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
                                 sym.setDeclarationPattern(p);
+                                sym.addTag(TridentSuggestionTags.TAG_COMMAND);
                                 //sym.addUsage(p);
                                 ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);
                             }
@@ -263,7 +265,7 @@ public class DefineInstruction implements InstructionDefinition {
                         }
                         ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
                     }
-                }),
+                }).addProcessor(endComplexValue),
                 group(literal("operator"), ofType(COMPILER_OPERATOR).setName("OPERATOR_SYMBOL"), productions.getOrCreateStructure("DYNAMIC_FUNCTION")).setName("CLASS_OPERATOR")
                         .addProcessor((p, l) -> {
                             String operatorSymbol = p.find("OPERATOR_SYMBOL").flatten(false);

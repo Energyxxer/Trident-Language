@@ -14,6 +14,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TridentProjectSummary extends PrismarineProjectSummary {
+    public static final int PASS_DIRECTIVES = 0;
+    public static final int PASS_SET_SYMBOL_TYPES = 1;
+    public static final int PASS_CODE_ACTIONS_TYPES = 2;
+    public static final int PASS_MEMBER_SUGGESTION = 3;
+
     private ArrayList<ResourceLocation> rawFunctions = new ArrayList<>();
     private HashMap<String, Set<ResourceLocation>> types = new HashMap<>();
     private HashMap<String, Set<ResourceLocation>> tags = new HashMap<>();

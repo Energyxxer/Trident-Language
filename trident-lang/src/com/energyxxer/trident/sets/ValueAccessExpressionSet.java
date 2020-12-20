@@ -100,16 +100,29 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         ).setOptional().setName("ACTUAL_PARAMETERS");
         productions.putPatternMatch("ACTUAL_PARAMETERS", ACTUAL_PARAMETERS);
 
+        TokenPatternMatch VARIABLE_NAME = choice(
+                TridentProductions.identifierX(),
+                literal("this").addProcessor((p, l) -> {
+                    if(l.getSummaryModule() != null) {
+                        for(SummarySymbol sym : ((PrismarineSummaryModule) l.getSummaryModule()).getSubSymbolStack()) {
+                            if(sym != null && sym.getSuggestionTags().contains(TridentSuggestionTags.TAG_CLASS) && sym.getParentFileSummary() != null) {
+                                p.addTag(TridentSuggestionTags.__THIS_TYPE + sym.getName());
+                            }
+                        }
+                    }
+                })
+        )
+        .setName("VARIABLE_NAME")
+        .addTags(SuggestionTags.ENABLED_INDEX, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE)
+        .addProcessor((p, l) -> {
+            if(l.getSummaryModule() != null) {
+                ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
+            }
+        }).setEvaluator(ValueAccessExpressionSet::parseVariable);
+
         productions.getOrCreateStructure("ROOT_INTERPOLATION_VALUE")
                 .add(
-                        choice(TridentProductions.identifierX(), literal("this"))
-                                .setName("VARIABLE_NAME")
-                                .addTags(SuggestionTags.ENABLED_INDEX, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE)
-                                .addProcessor((p, l) -> {
-                                    if(l.getSummaryModule() != null) {
-                                        ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
-                                    }
-                                }).setEvaluator(ValueAccessExpressionSet::parseVariable)
+                        VARIABLE_NAME
                 )
                 .add(
                         group(
@@ -329,7 +342,25 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         SummarySymbol symbol = null;
         switch(((TokenStructure) root).getContents().getName()) {
             case "VARIABLE_NAME": {
-                symbol = fileSummary.getSymbolForName(root.flatten(false), root.getStringLocation().index);
+                String varName = root.flatten(false);
+                symbol = fileSummary.getSymbolForName(varName, root.getStringLocation().index);
+                if(symbol == null) {
+                    if("this".equals(varName)) {
+                        TokenPattern<?> literalPattern = ((TokenStructure)((TokenStructure) root).getContents()).getContents();
+                        for(String tag : literalPattern.getTags()) {
+                            if(tag.startsWith(TridentSuggestionTags.__THIS_TYPE)) {
+                                String className = tag.substring(TridentSuggestionTags.__THIS_TYPE.length());
+
+                                SummarySymbol typeSym = fileSummary.getSymbolForName(className, root.getStringLocation().index);
+
+                                if(typeSym != null) {
+                                    symbol = new SummarySymbol(fileSummary, "", 0);
+                                    symbol.setType(typeSym);
+                                }
+                            }
+                        }
+                    }
+                }
                 if(symbol == null) return null;
                 break;
             }
@@ -372,7 +403,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
             Path filePath = fileSummary.getFileLocation();
 
-            fileSummary.addFileAwareProcessor(fs -> {
+            fileSummary.addFileAwareProcessor(TridentProjectSummary.PASS_MEMBER_SUGGESTION, fs -> {
                 boolean[] broken = new boolean[] {false};
 
                 SummarySymbol obtainedSymbol = getSymbolForChain(root, memberAccesses, fs, (m, s) -> {
