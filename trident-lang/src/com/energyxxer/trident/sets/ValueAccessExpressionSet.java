@@ -106,7 +106,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 TridentProductions.identifierX().addProcessor((p, l) -> {
                     if(l.getSummaryModule() != null) {
                         ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_HIGHLIGHT_TYPE_ERRORS, s -> {
-                            if(p.isValidated()) {
+                            if(p.isValidated() && s.getParentSummary() != null) {
                                 String varName = p.flatten(false);
                                 SummarySymbol relatedSym = s.getSymbolForName(varName, p.getStringLocation().index);
                                 if(relatedSym == null) {
