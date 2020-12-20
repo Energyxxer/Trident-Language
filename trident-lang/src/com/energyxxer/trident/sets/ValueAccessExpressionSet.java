@@ -8,6 +8,8 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.enxlex.suggestions.SuggestionModule;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.prismarine.PrismarineProductions;
@@ -101,7 +103,19 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         productions.putPatternMatch("ACTUAL_PARAMETERS", ACTUAL_PARAMETERS);
 
         TokenPatternMatch VARIABLE_NAME = choice(
-                TridentProductions.identifierX(),
+                TridentProductions.identifierX().addProcessor((p, l) -> {
+                    if(l.getSummaryModule() != null) {
+                        ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_HIGHLIGHT_TYPE_ERRORS, s -> {
+                            if(p.isValidated()) {
+                                String varName = p.flatten(false);
+                                SummarySymbol relatedSym = s.getSymbolForName(varName, p.getStringLocation().index);
+                                if(relatedSym == null) {
+                                    l.getNotices().add(new Notice(NoticeType.ERROR, "Cannot resolve symbol '" + varName + "'", p));
+                                }
+                            }
+                        });
+                    }
+                }),
                 literal("this").addProcessor((p, l) -> {
                     if(l.getSummaryModule() != null) {
                         for(SummarySymbol sym : ((PrismarineSummaryModule) l.getSummaryModule()).getSubSymbolStack()) {
@@ -393,7 +407,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         PrismarineSummaryModule fileSummary = (PrismarineSummaryModule) l.getSummaryModule();
         SuggestionModule suggestionModule = l.getSuggestionModule();
         if(fileSummary == null || suggestionModule == null) return;
-        if(memberAccesses == null || (memberAccesses.getContents().length == 0 && failingAccess == null)) return;
+        if(memberAccesses == null || (memberAccesses.getContents().length == 0 && failingAccess == null) || (failingAccess != null && failingAccess.getCharLength() == 0)) return;
 
         StringLocation start = root.getStringLocation();
         StringLocation end = failingAccess != null ? failingAccess.getStringBounds().end : memberAccesses.getStringBounds().end;
