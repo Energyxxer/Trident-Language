@@ -33,7 +33,7 @@ public class ExpandCommandDefinition implements CommandDefinition {
     }
 
     @Override
-    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> modifiers) { //TODO
+    public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> modifiers) {
         TridentFile writingFile = ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile();
 
         int lengthBefore = writingFile.getWritingModifiers().size();

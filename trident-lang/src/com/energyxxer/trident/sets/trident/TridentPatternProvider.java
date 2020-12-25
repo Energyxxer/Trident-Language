@@ -269,9 +269,33 @@ public class TridentPatternProvider extends PatternProviderSet {
 
 
 
-        productions.getOrCreateStructure("INNER_FUNCTION").add(group(group(productions.getOrCreateStructure("RESOURCE_LOCATION")).setName("INNER_FUNCTION_NAME"), brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), brace("}")).setGreedy(true).addProcessor(surroundBlock));
-        productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION").add(group(brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), brace("}")).setGreedy(true).addProcessor(surroundBlock));
-        productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION").add(group(group(productions.getOrCreateStructure("RESOURCE_LOCATION")).setOptional().setName("INNER_FUNCTION_NAME"), brace("{").addProcessor(vae.capturePreBlockDeclarations), productions.getOrCreateStructure("FILE_INNER"), brace("}")).setGreedy(true).addProcessor(surroundBlock));
+        productions.getOrCreateStructure("INNER_FUNCTION").add(
+                group(
+                        group(
+                                productions.getOrCreateStructure("RESOURCE_LOCATION")
+                        ).setName("INNER_FUNCTION_NAME"),
+                        brace("{").addProcessor(vae.capturePreBlockDeclarations),
+                        productions.getOrCreateStructure("FILE_INNER"),
+                        brace("}")
+                ).setGreedy(true).addProcessor(surroundBlock)
+        );
+        productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION").add(
+                group(
+                        brace("{").addProcessor(vae.capturePreBlockDeclarations),
+                        productions.getOrCreateStructure("FILE_INNER"),
+                        brace("}")
+                ).setGreedy(true).addProcessor(surroundBlock)
+        );
+        productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION").add(
+                group(
+                        group(
+                                productions.getOrCreateStructure("RESOURCE_LOCATION")
+                        ).setOptional().setName("INNER_FUNCTION_NAME"),
+                        brace("{").addProcessor(vae.capturePreBlockDeclarations),
+                        productions.getOrCreateStructure("FILE_INNER"),
+                        brace("}")
+                ).setGreedy(true).addProcessor(surroundBlock)
+        );
 
 
 
