@@ -22,6 +22,7 @@ public class TridentInstructionSet extends PatternProviderSet {
                 LogInstruction.class,
                 ReturnInstruction.class,
                 ThrowInstruction.class,
+                TryInstruction.class,
                 UsingInstruction.class,
                 VariableInstruction.class,
                 WithinInstruction.class
