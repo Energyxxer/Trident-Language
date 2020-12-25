@@ -29,7 +29,7 @@ public abstract class LoopInstruction implements InstructionDefinition {
     public static class ForInstruction extends LoopInstruction {
         @Override
         public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
-            TokenGroupMatch blockLabel = optional(TridentProductions.identifierX().setName("LABEL"), TridentProductions.colon()).setName("BLOCK_LABEL");
+            TokenGroupMatch blockLabel = optional(TridentProductions.identifierX().setName("LABEL").setRecessive(), TridentProductions.colon()).setName("BLOCK_LABEL");
 
             TokenPatternMatch FOR_HEADER = choice(
                     group(TridentProductions.identifierX().setName("VARIABLE_NAME").addTags("cspn:Iterator Name"), TridentProductions.instructionKeyword("in", false), TridentProductions.noToken().addTags("cspn:Iterable"), productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("ITERATOR_FOR"),
@@ -55,7 +55,7 @@ public abstract class LoopInstruction implements InstructionDefinition {
     public static class WhileInstruction extends LoopInstruction {
         @Override
         public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
-            TokenGroupMatch blockLabel = optional(TridentProductions.identifierX().setName("LABEL"), TridentProductions.colon()).setName("BLOCK_LABEL");
+            TokenGroupMatch blockLabel = optional(TridentProductions.identifierX().setName("LABEL").setRecessive(), TridentProductions.colon()).setName("BLOCK_LABEL");
 
             TokenPatternMatch WHILE_HEADER = choice(
                     group(productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("WHILE_HEADER").addTags("cspn:Loop Condition")

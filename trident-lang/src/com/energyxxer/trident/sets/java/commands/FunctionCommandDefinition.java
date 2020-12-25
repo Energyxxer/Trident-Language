@@ -34,7 +34,7 @@ public class FunctionCommandDefinition implements SimpleCommandDefinition {
                         ).setEvaluator((p, d) -> {
                             ISymbolContext ctx = (ISymbolContext) d[0];
 
-                            return new FunctionCommand(CommonParsers.parseFunctionTag((TokenStructure) p.find("FUNCTION_REFERENCE.RESOURCE_LOCATION_TAGGED"), ctx)); //TODO
+                            return new FunctionCommand(CommonParsers.parseFunctionTag((TokenStructure) p.find("FUNCTION_REFERENCE.RESOURCE_LOCATION_TAGGED"), ctx));
                         }),
                         group(productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION")).setEvaluator((p, d) -> {
                             ISymbolContext ctx = (ISymbolContext) d[0];
