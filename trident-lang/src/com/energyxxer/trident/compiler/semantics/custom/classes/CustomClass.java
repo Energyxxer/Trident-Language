@@ -741,7 +741,12 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     @Override
     public boolean isSubType(TypeHandler<?> other) {
-        return other instanceof CustomClass && ((CustomClass) other).getInheritanceTree().contains(this);
+        if(!(other instanceof CustomClass)) return false;
+        for(CustomClass type : ((CustomClass) other).getInheritanceTree()) {
+            if(type == this || type.getTypeIdentifier().equals(this.getTypeIdentifier())) return true;
+            //Comparing strings, just in case the class has been duplicated (e.g. native in dependencies)
+        }
+        return false;
     }
 
     @Override
@@ -761,7 +766,12 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     @Override
     public boolean isInstance(Object obj) {
-        return obj instanceof CustomClassObject && ((CustomClassObject) obj).getType().getInheritanceTree().contains(this);
+        if(!(obj instanceof CustomClassObject)) return false;
+        for(CustomClass type : ((CustomClassObject) obj).getType().getInheritanceTree()) {
+            if(type == this || type.getTypeIdentifier().equals(this.getTypeIdentifier())) return true;
+            //Comparing strings, just in case the class has been duplicated (e.g. native in dependencies)
+        }
+        return false;
     }
 
     @Override
