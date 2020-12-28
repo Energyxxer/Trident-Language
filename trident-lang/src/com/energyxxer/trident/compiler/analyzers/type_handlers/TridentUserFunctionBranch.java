@@ -83,7 +83,7 @@ public class TridentUserFunctionBranch extends PrismarineFunctionBranch {
             sym.setTypeConstraints(GenericUtils.nonGeneric(param.getConstraints(), thisObject, params, callingCtx));
 
             Object[] actualValue = TypedFunction.getActualParameterByFormalIndex(i, formalParameters, params, callingCtx, thisObject);
-            TokenPattern<?> actualValuePattern = ((int) actualValue[1]) < params.size() ? params.getPattern(((int) actualValue[1])) : params.getPattern();
+            TokenPattern<?> actualValuePattern = (((int) actualValue[1]) >= 0 && ((int) actualValue[1]) < params.size()) ? params.getPattern(((int) actualValue[1])) : params.getPattern();
 
             sym.safeSetValue(
                     actualValue[0],
