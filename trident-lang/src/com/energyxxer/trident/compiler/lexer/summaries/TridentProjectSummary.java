@@ -15,10 +15,11 @@ import java.util.stream.Stream;
 
 public class TridentProjectSummary extends PrismarineProjectSummary {
     public static final int PASS_DIRECTIVES = 0;
-    public static final int PASS_SET_SYMBOL_TYPES = 1;
-    public static final int PASS_CODE_ACTIONS_TYPES = 2;
-    public static final int PASS_HIGHLIGHT_TYPE_ERRORS = 2;
-    public static final int PASS_MEMBER_SUGGESTION = 4;
+    public static final int PASS_FILE_SYMBOLS = 1;
+    public static final int PASS_SET_SYMBOL_TYPES = 2;
+    public static final int PASS_CODE_ACTIONS_TYPES = 3;
+    public static final int PASS_HIGHLIGHT_TYPE_ERRORS = 4;
+    public static final int PASS_MEMBER_SUGGESTION = 5;
 
     private ArrayList<ResourceLocation> rawFunctions = new ArrayList<>();
     private HashMap<String, Set<ResourceLocation>> types = new HashMap<>();

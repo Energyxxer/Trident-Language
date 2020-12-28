@@ -17,6 +17,9 @@ import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternProviderSet;
 import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
+import com.energyxxer.prismarine.summaries.SummarySymbol;
+import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeConstraints;
@@ -24,6 +27,7 @@ import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
+import com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -334,7 +338,23 @@ public class TridentPatternProvider extends PatternProviderSet {
                             }
                         }),
                         list(productions.getOrCreateStructure("ENTRY")).setOptional().setName("ENTRIES")
-                ).setGreedy(true).addProcessor(uninstallCommands).addFailProcessor(uninstallCommands)
+                ).setGreedy(true).addProcessor(uninstallCommands).addFailProcessor(uninstallCommands).addProcessor(TridentPatternProvider::addFileSymbols).addFailProcessor(TridentPatternProvider::addFileSymbols)
         );
+    }
+
+    private static void addFileSymbols(TokenPattern<?> p, Lexer l) {
+        if (l.getSummaryModule() != null) {
+            ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_FILE_SYMBOLS, f -> {
+                if (f.getFileLocation() == null) {
+                    SummarySymbol argsSym = new SummarySymbol(
+                            f, "args", SymbolVisibility.PUBLIC, 0
+                    );
+                    if (f.getParentSummary() != null) {
+                        argsSym.setType(((TridentProjectSummary) f.getParentSummary()).getPrimitiveSymbol("dictionary"));
+                    }
+                    f.addElement(argsSym);
+                }
+            });
+        }
     }
 }
