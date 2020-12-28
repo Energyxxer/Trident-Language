@@ -233,7 +233,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 )
                 .add(
                         entityVariable
-                ).addTags("cspn:Entity");
+                ).setName("ENTITY").addTags("cspn:Entity");
 
 
         productions.getOrCreateStructure("TEXT_COMPONENT")

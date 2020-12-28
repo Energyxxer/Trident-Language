@@ -117,7 +117,7 @@ public class TridentLiteralSet extends PatternProviderSet { //pointers, type_def
                 .setEvaluator((p, d) -> {
                     ISymbolContext ctx = (ISymbolContext) d[0];
 
-                    Object target = p.find("LIMITED_ENTITY").evaluate(ctx);
+                    Object target = p.find("ENTITY").evaluate(ctx);
 
                     PointerObject pointer = new PointerObject(ctx.getTypeSystem(), target, null);
 
