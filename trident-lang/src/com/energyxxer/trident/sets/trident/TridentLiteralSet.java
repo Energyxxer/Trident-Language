@@ -353,7 +353,10 @@ public class TridentLiteralSet extends PatternProviderSet { //pointers, type_def
                                 TridentProductions.brace("{").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED),
                                 productions.getOrCreateStructure("INTERPOLATION_VALUE"),
                                 TridentProductions.brace("}").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED)
-                        ).setName("INTERPOLATION_WRAPPER").setSimplificationFunctionFind("INTERPOLATION_VALUE")
+                        ).setName("INTERPOLATION_WRAPPER").setSimplificationFunction(d -> {
+                            d.pattern = d.pattern.find("INTERPOLATION_VALUE");
+                            d.data = new Object[] {(ISymbolContext) d.data[0]};
+                        })
                 );
     }
 
