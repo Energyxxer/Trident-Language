@@ -873,7 +873,10 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                 group(
                                         wrapper(TridentProductions.identifierA(productions)).setName("BLOCKSTATE_PROPERTY_KEY").addTags("cspn:Blockstate Key"),
                                         TridentProductions.equals(),
-                                        wrapper(TridentProductions.identifierA(productions)).setName("BLOCKSTATE_PROPERTY_VALUE").addTags("cspn:Blockstate Value")
+                                        choice(
+                                                TridentProductions.identifierA(productions),
+                                                PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), data -> new Object[] {(ISymbolContext) data[0]}, (v, p, d) -> v.toString(), false, String.class, Integer.class, Boolean.class)
+                                        ).setName("BLOCKSTATE_PROPERTY_VALUE").addTags("cspn:Blockstate Value")
                                 ).setName("BLOCKSTATE_PROPERTY"),
                                 TridentProductions.comma()
                         ).setOptional().setName("BLOCKSTATE_LIST"),
