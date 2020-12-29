@@ -231,7 +231,9 @@ public class DefineInstruction implements InstructionDefinition {
                         literal("override").setOptional().setName("MEMBER_PARENT_MODE"),
                         literal("this"),
                         brace("["),
-                        productions.getPatternMatch("FORMAL_PARAMETER"),
+                        productions.getPatternMatch("FORMAL_PARAMETER").addProcessor((p, l) -> {
+                            vae.addPreBlockDeclaration(p.find("FORMAL_PARAMETER_NAME"), p.find("TYPE_CONSTRAINTS"));
+                        }),
                         brace("]"),
                         brace("{"),
                         classGetter,
