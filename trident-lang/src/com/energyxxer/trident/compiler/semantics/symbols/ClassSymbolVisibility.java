@@ -21,7 +21,7 @@ public class ClassSymbolVisibility {
         //is visible in subclasses
         @Override
         public boolean isVisibleFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
-            return isAccessedBySameClass(symbol, fromPath, inFileIndex);
+            return isAccessedBySameClass(symbol, fromPath, inFileIndex) ? true : symbol.isInstanceField();
         }
 
         //is accessible via dot notation
