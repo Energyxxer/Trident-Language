@@ -36,7 +36,6 @@ import com.energyxxer.trident.sets.ValueAccessExpressionSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -80,22 +79,30 @@ public class TridentPatternProvider extends PatternProviderSet {
                         group(productions.getOrCreateStructure("MODIFIER_LIST"), literal("run").setOptional(), productions.getOrCreateStructure("COMMAND")).setName("COMMAND_WRAPPER")
                         .setEvaluator((p, d) -> {
                             ISymbolContext ctx = (ISymbolContext) d[0];
+                            TridentFile tridentFile = ((TridentFile) ctx.getStaticParentUnit());
 
                             FunctionSection appendTo = ((FunctionSection) d[1]);
                             if(appendTo != null) {
                                 ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) p.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx);
-                                Object commands = p.find("COMMAND").evaluate((ISymbolContext) ctx, Collections.emptyList());
+                                Object commands = p.find("COMMAND").evaluate((ISymbolContext) ctx, modifiers);
+
+                                ArrayList<ExecuteModifier> modifiersForCommand = modifiers;
+                                if(!tridentFile.getWritingModifiers().isEmpty()) {
+                                    modifiersForCommand = new ArrayList<>(tridentFile.getWritingModifiers());
+                                    modifiersForCommand.addAll(modifiers);
+                                }
+
                                 if(commands instanceof Command) {
-                                    if (modifiers.isEmpty()) appendTo.append(((Command) commands));
-                                    else appendTo.append(new ExecuteCommand(((Command) commands), modifiers));
+                                    if (modifiersForCommand.isEmpty()) appendTo.append(((Command) commands));
+                                    else appendTo.append(new ExecuteCommand(((Command) commands), modifiersForCommand));
                                 } else {
                                     for(Command command : ((Collection<Command>) commands)) {
-                                        if (modifiers.isEmpty()) appendTo.append(command);
-                                        else appendTo.append(new ExecuteCommand(command, modifiers));
+                                        if (modifiersForCommand.isEmpty()) appendTo.append(command);
+                                        else appendTo.append(new ExecuteCommand(command, modifiersForCommand));
                                     }
                                 }
-                            } else if(!((TridentFile) ctx.getStaticParentUnit()).reportedNoCommands) {
-                                ((TridentFile) ctx.getStaticParentUnit()).reportedNoCommands = true;
+                            } else if(!tridentFile.reportedNoCommands) {
+                                tridentFile.reportedNoCommands = true;
                                 throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "A compile-only function may not have commands", p, ctx);
                             }
                             return null;

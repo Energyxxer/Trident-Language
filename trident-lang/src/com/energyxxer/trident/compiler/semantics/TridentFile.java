@@ -550,34 +550,6 @@ public class TridentFile extends PrismarineLanguageUnit {
     public static void resolveEntry(TokenPattern<?> inner, ISymbolContext parent, FunctionSection appendTo, boolean compileOnly) {
         try {
             inner.evaluate(parent, appendTo);
-//            switch (inner.getName()) {
-//                case "COMMAND_WRAPPER":
-//                    if (!compileOnly && appendTo != null) {
-//
-//                        ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) inner.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, parent);
-//
-//                        TokenPattern<?> commandPattern = inner.find("COMMAND");
-//                        Collection<Command> commands = (Collection<Command>) commandPattern.evaluate(parent, Collections.emptyList());
-//                        for(Command command : commands) {
-//                            if (modifiers.isEmpty()) appendTo.append(command);
-//                            else appendTo.append(new ExecuteCommand(command, modifiers));
-//                        }
-//                    } else if (!((TridentFile) parent.getStaticParentUnit()).reportedNoCommands) {
-//                        ((TridentFile) parent.getStaticParentUnit()).reportedNoCommands = true;
-//                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "A compile-only function may not have commands", inner, parent);
-//                    }
-//                    break;
-//                case "COMMENT":
-//                    if (exportComments && appendTo != null)
-//                        appendTo.append(new FunctionComment(inner.flattenTokens().get(0).value.substring(1)));
-//                    break;
-//                case "INSTRUCTION": {
-//                    inner.evaluate(parent);
-//                    break;
-//                } default: {
-//                    throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Unknown grammar branch name '" + inner.getName() + "'", inner, parent);
-//                }
-//            }
         } catch(CommodoreException x) {
             if(x.getSource() == CommodoreException.Source.VERSION_ERROR) {
                 throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, x.getSource() + ": " + x.getMessage(), inner, parent);
