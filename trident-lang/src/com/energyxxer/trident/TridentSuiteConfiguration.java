@@ -64,6 +64,12 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
         try {
             standardLibrary
                     .registerUnit(
+                            PRIMITIVES_SUMMARY_PATH,
+                            TridentFileUnitConfiguration.INSTANCE,
+                            read("/trident_utils/datapack/data/trident-util/functions/primitives.tdn"),
+                            PrismarineLibraryUnit.Availability.SUMMARY_ONLY
+                    )
+                    .registerUnit(
                             Paths.get("datapack/data/trident-util/functions/native.tdn"),
                             TridentFileUnitConfiguration.INSTANCE,
                             read("/trident_utils/datapack/data/trident-util/functions/native_compiler.tdn"),
@@ -73,12 +79,6 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
                             Paths.get("datapack/data/trident-util/functions/native.tdn"),
                             TridentFileUnitConfiguration.INSTANCE,
                             read("/trident_utils/datapack/data/trident-util/functions/native_summary.tdn"),
-                            PrismarineLibraryUnit.Availability.SUMMARY_ONLY
-                    )
-                    .registerUnit(
-                            PRIMITIVES_SUMMARY_PATH,
-                            TridentFileUnitConfiguration.INSTANCE,
-                            read("/trident_utils/datapack/data/trident-util/functions/primitives.tdn"),
                             PrismarineLibraryUnit.Availability.SUMMARY_ONLY
                     )
                     .registerUnit(

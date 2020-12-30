@@ -18,45 +18,45 @@ define global final class RotationType {
 }
 
 define global static final class Block {
-    public static exists() {}
-    public static getAll() {}
+    public static exists() : boolean {}
+    public static getAll() : list {}
 }
 
 define global static final class Character {
-    public static fromCodePoint() {}
-    public static toCodePoint() {}
-    public static getName() {}
-    public static isLetter() {}
-    public static isDigit() {}
-    public static isWhitespace() {}
-    public static isUpperCase() {}
-    public static isLowerCase() {}
+    public static fromCodePoint() : string {}
+    public static toCodePoint() : int {}
+    public static getName() : string {}
+    public static isLetter() : boolean {}
+    public static isDigit() : boolean {}
+    public static isWhitespace() : boolean {}
+    public static isUpperCase() : boolean {}
+    public static isLowerCase() : boolean {}
 }
 
 define global static final class Item {
-    public static exists() {}
-    public static getAll() {}
+    public static exists() : boolean {}
+    public static getAll() : list {}
 }
 
 define global static final class Tags {
     public static createTag() {}
-    public static tagContainsValue() {}
+    public static tagContainsValue() : boolean {}
 }
 
 define global static final class MinecraftTypes {
-    public static getDefinitionsForCategory() {}
-    public static exists() {}
+    public static getDefinitionsForCategory() : dictionary {}
+    public static exists() : boolean {}
 }
 
 define global static final class Text {
-    public static parse() {}
+    public static parse() : text_component {}
 }
 
 define global static final class Project {
-    public static getTargetVersion() {}
-    public static getFeatureBoolean() {}
-    public static getFeatureInt() {}
-    public static getFeatureString() {}
+    public static getTargetVersion() : list {}
+    public static getFeatureBoolean() : boolean? {}
+    public static getFeatureInt() : int? {}
+    public static getFeatureString() : string? {}
 }
 
 define global static final class Real {
@@ -65,44 +65,44 @@ define global static final class Real {
     public static final var MIN_VALUE : real = 0
     public static final var MAX_VALUE : real = 0
     public static final var MIN_POSITIVE_VALUE : real = 0
-    public static parseReal() {}
-    public static isFinite() {}
-    public static isNaN() {}
-    public static toString() {}
+    public static parseReal() : real {}
+    public static isFinite() : boolean {}
+    public static isNaN() : boolean {}
+    public static toString() : string {}
 }
 
 define global static final class Integer {
     public static final var MIN_VALUE : int = 0
     public static final var MAX_VALUE : int = 0
-    public static parseInt() {}
-    public static toString() {}
-    public static parseUnsignedInt() {}
-    public static toUnsignedString() {}
+    public static parseInt() : int {}
+    public static toString() : string {}
+    public static parseUnsignedInt() : string {}
+    public static toUnsignedString() : string {}
 }
 
 define global static final class JSON {
     public static parse() {}
-    public static stringify() {}
+    public static stringify() : string? {}
 }
 
 define global static final class Reflection {
-    public static getMetadata() {}
-    public static getFilesWithTag() {}
-    public static getFilesWithMetaTag() {}
-    public static insertToFile() {}
-    public static getCurrentFile() {}
-    public static getWritingFile() {}
-    public static getCurrentFilePath() {}
-    public static getSymbol() {}
-    public static getVisibleSymbols() {}
-    public static getDefinedObjectives() {}
+    public static getMetadata() : dictionary? {}
+    public static getFilesWithTag() : list {}
+    public static getFilesWithMetaTag() : list {}
+    public static insertToFile(function : function) {}
+    public static getCurrentFile() : resource {}
+    public static getWritingFile() : resource {}
+    public static getCurrentFilePath() : string {}
+    public static getSymbol(name : string) {}
+    public static getVisibleSymbols() : dictionary {}
+    public static getDefinedObjectives() : dictionary {}
 }
 
 define global static final class File {
     public static final var in = {
         read: function() {},
         write: function() {},
-        wasFileChanged: function() {}
+        wasFileChanged: function() : boolean {}
     }
     public static final var out = {
         writeData: function() {},
@@ -113,7 +113,7 @@ define global static final class File {
 define global static final class Math {
     public static final var PI : real = 0
     public static final var E : real = 0
-    public static pow() {}
+    public static pow() : real {}
     public static min() {}
     public static max() {}
     public static abs() {}
@@ -122,26 +122,26 @@ define global static final class Math {
     public static round() {}
     public static floorMod() {}
     public static floorDiv() {}
-    public static sin() {}
-    public static cos() {}
-    public static tan() {}
-    public static sinh() {}
-    public static cosh() {}
-    public static tanh() {}
-    public static asin() {}
-    public static acos() {}
-    public static atan() {}
-    public static atan2() {}
-    public static toRadians() {}
-    public static toDegrees() {}
-    public static log() {}
-    public static log10() {}
-    public static log2() {}
-    public static sqrt() {}
-    public static cbrt() {}
-    public static exp() {}
-    public static signum() {}
-    public static random() {}
+    public static sin() : real {}
+    public static cos() : real {}
+    public static tan() : real {}
+    public static sinh() : real {}
+    public static cosh() : real {}
+    public static tanh() : real {}
+    public static asin() : real {}
+    public static acos() : real {}
+    public static atan() : real {}
+    public static atan2() : real {}
+    public static toRadians() : real {}
+    public static toDegrees() : real {}
+    public static log() : real {}
+    public static log10() : real {}
+    public static log2() : real {}
+    public static sqrt() : real {}
+    public static cbrt() : real {}
+    public static exp() : real {}
+    public static signum() : int {}
+    public static random() : real {}
 }
 
 define global final class Random {
@@ -151,16 +151,16 @@ define global final class Random {
 
     public new(seed : int) {}
 
-    public nextInt() {}
-    public nextInt(bound : int) {}
+    public nextInt() : int {}
+    public nextInt(bound : int) : int {}
 
-    public nextReal() {}
+    public nextReal() : real {}
 
-    public nextGaussian() {}
+    public nextGaussian() : real {}
 
-    public nextBoolean() {}
+    public nextBoolean() : boolean {}
 }
 
 define global class type_definition {
-    public static of(obj) {}
+    public static of(obj) : type_definition? {}
 }

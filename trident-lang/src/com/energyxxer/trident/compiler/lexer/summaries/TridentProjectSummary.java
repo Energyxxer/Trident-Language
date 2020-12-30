@@ -6,7 +6,6 @@ import com.energyxxer.prismarine.summaries.SummaryBlock;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
 import com.energyxxer.trident.TridentSuiteConfiguration;
 import com.energyxxer.trident.compiler.ResourceLocation;
-import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
 import java.util.*;
@@ -107,8 +106,6 @@ public class TridentProjectSummary extends PrismarineProjectSummary {
             if(classBlock != null) {
                 return classBlock.getAssociatedSymbol();
             }
-        } else {
-            Debug.log("HOW (missing primitive package)");
         }
         return null;
     }
