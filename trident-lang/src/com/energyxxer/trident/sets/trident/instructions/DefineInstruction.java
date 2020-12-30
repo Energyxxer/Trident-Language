@@ -32,6 +32,7 @@ import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
+import com.energyxxer.trident.compiler.semantics.symbols.ClassSymbolVisibility;
 import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.trident.sets.ValueAccessExpressionSet;
 import com.energyxxer.trident.worker.tasks.SetupModuleTask;
@@ -141,7 +142,7 @@ public class DefineInstruction implements InstructionDefinition {
                         ).addProcessor((p, l) -> {
                     if(l.getSummaryModule() != null) {
                         SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
-                        sym.setVisibility(parseSummaryClassVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.SUMMARY_CLASS_LOCAL));
+                        sym.setVisibility(parseClassMemberVisibility(p.find("SYMBOL_VISIBILITY"), ClassSymbolVisibility.LOCAL));
                         sym.addTag(TridentSuggestionTags.TAG_FIELD);
 
                         ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(PASS_SET_SYMBOL_TYPES, s -> {
@@ -215,7 +216,7 @@ public class DefineInstruction implements InstructionDefinition {
                         ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p.find("SYMBOL_NAME"));
                         sym.setDeclarationPattern(p.find("SYMBOL_NAME"));
                         //sym.addUsage(p.find("SYMBOL_NAME"));
-                        sym.setVisibility(parseSummaryClassVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.SUMMARY_CLASS_LOCAL));
+                        sym.setVisibility(parseClassMemberVisibility(p.find("SYMBOL_VISIBILITY"), ClassSymbolVisibility.LOCAL));
                         sym.addTag(TridentSuggestionTags.TAG_METHOD);
                         if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                             sym.setInstanceField(true);
@@ -271,7 +272,7 @@ public class DefineInstruction implements InstructionDefinition {
                 }).addProcessor((p, l) -> {
                     if(l.getSummaryModule() != null) {
                         SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
-                        sym.setVisibility(parseSummaryClassVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.SUMMARY_CLASS_LOCAL));
+                        sym.setVisibility(parseClassMemberVisibility(p.find("SYMBOL_VISIBILITY"), ClassSymbolVisibility.LOCAL));
                         sym.addTag(TridentSuggestionTags.TAG_FIELD);
 
                         if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
@@ -372,7 +373,7 @@ public class DefineInstruction implements InstructionDefinition {
                                         sym.setDeclarationPattern(p);
                                         //sym.addUsage(p);
                                         sym.addTag(TridentSuggestionTags.TAG_ENTITY_EVENT);
-                                        sym.setVisibility(parseSummaryClassVisibility(p.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.SUMMARY_CLASS_LOCAL));
+                                        sym.setVisibility(parseClassMemberVisibility(p.find("SYMBOL_VISIBILITY"), ClassSymbolVisibility.LOCAL));
                                         ((TridentSummaryModule) l.getSummaryModule()).addElement(sym);
                                     }
                                 }),

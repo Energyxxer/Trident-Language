@@ -3,12 +3,6 @@ package com.energyxxer.trident.compiler;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatures;
-import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
-import com.energyxxer.trident.compiler.plugin.TridentPluginUnitConfiguration;
-import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
-import com.energyxxer.trident.sets.BasicLiteralSet;
-import com.energyxxer.trident.sets.MinecraftLiteralSet;
-import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
@@ -25,9 +19,17 @@ import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
+import com.energyxxer.trident.compiler.plugin.TridentPluginUnitConfiguration;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
+import com.energyxxer.trident.compiler.semantics.symbols.ClassSymbolVisibility;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
+import com.energyxxer.trident.sets.BasicLiteralSet;
+import com.energyxxer.trident.sets.MinecraftLiteralSet;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 
-import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 import static com.energyxxer.prismarine.PrismarineProductions.*;
+import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
 public class TridentProductions {
 
@@ -144,13 +146,22 @@ public class TridentProductions {
         }
     }
 
-    public static SymbolVisibility parseSummaryClassVisibility(TokenPattern<?> pattern, SymbolVisibility defaultValue) {
+    public static SymbolVisibility parseClassMemberVisibility(TokenPattern<?> pattern, SymbolVisibility defaultValue) {
         if(pattern == null) return defaultValue;
         switch(pattern.flatten(false)) {
-            case "global": return SymbolVisibility.GLOBAL;
-            case "public": return TridentSymbolVisibility.SUMMARY_CLASS_PUBLIC;
-            case "local": return TridentSymbolVisibility.SUMMARY_CLASS_LOCAL;
-            case "private": return TridentSymbolVisibility.SUMMARY_CLASS_PRIVATE;
+            case "public": return ClassSymbolVisibility.PUBLIC;
+            case "local": return ClassSymbolVisibility.LOCAL;
+            case "private": return ClassSymbolVisibility.PRIVATE;
+            default: return defaultValue;
+        }
+    }
+
+    public static SymbolVisibility parseClassMemberVisibility(TokenPattern<?> pattern, SymbolVisibility defaultValue, CustomClass definingClass) {
+        if(pattern == null) return defaultValue;
+        switch(pattern.flatten(false)) {
+            case "public": return ClassSymbolVisibility.PUBLIC;
+            case "local": return ClassSymbolVisibility.LOCAL(definingClass);
+            case "private": return ClassSymbolVisibility.PRIVATE(definingClass);
             default: return defaultValue;
         }
     }

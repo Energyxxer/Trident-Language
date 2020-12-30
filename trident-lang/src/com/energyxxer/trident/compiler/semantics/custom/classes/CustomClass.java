@@ -16,6 +16,7 @@ import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.functions.*;
 import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
 import com.energyxxer.prismarine.typesystem.generics.*;
+import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentUserFunctionBranch;
@@ -25,6 +26,7 @@ import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.compiler.semantics.symbols.ClassMethodSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
+import com.energyxxer.trident.sets.DataStructureLiteralSet;
 import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
 
 import java.util.*;
@@ -32,7 +34,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
 import static com.energyxxer.prismarine.typesystem.functions.natives.PrismarineNativeFunctionBranch.nativeMethodsToFunction;
-import static com.energyxxer.trident.sets.trident.instructions.VariableInstruction.parseSymbolDeclaration;
 
 public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMemberHolder {
 
@@ -342,7 +343,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                     throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "'static' modifier not allowed here.", entry.find("SYMBOL_MODIFIER_LIST.LITERAL_STATIC"), this.definitionContext);
                 }
 
-                SymbolVisibility memberVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), this.definitionContext, TridentSymbolVisibility.LOCAL);
+                SymbolVisibility memberVisibility = TridentProductions.parseClassMemberVisibility(entry.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL, this);
 
                 PrismarineFunctionBranch branch = TridentTempFindABetterHome.parseDynamicFunction(entry.find("DYNAMIC_FUNCTION"), ctx);
 
@@ -385,7 +386,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 if(_static) {
                     throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have indexers.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
                 }
-                SymbolVisibility defaultVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), this.definitionContext, TridentSymbolVisibility.LOCAL);
+                SymbolVisibility defaultVisibility = TridentProductions.parseClassMemberVisibility(entry.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL, this);
                 MemberParentMode mode = MemberParentMode.CREATE;
                 if(entry.find("MEMBER_PARENT_MODE") != null) {
                     mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
@@ -394,7 +395,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 FormalParameter indexParam = TridentTempFindABetterHome.createFormalParam(entry.find("FORMAL_PARAMETER"), ctx);
 
                 TridentUserFunctionBranch getterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.singletonList(indexParam), entry.find("CLASS_GETTER.ANONYMOUS_INNER_FUNCTION"), (TypeConstraints) entry.find("CLASS_GETTER.TYPE_CONSTRAINTS").evaluate(ctx));
-                SymbolVisibility getterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_GETTER.SYMBOL_VISIBILITY"), this.definitionContext, defaultVisibility);
+                SymbolVisibility getterVisibility = TridentProductions.parseClassMemberVisibility(entry.find("CLASS_GETTER.SYMBOL_VISIBILITY"), defaultVisibility, this);
                 PrismarineFunction getter = new PrismarineFunction(
                         "<indexer getter>",
                         getterBranch,
@@ -404,7 +405,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 PrismarineFunction setter = null;
                 SymbolVisibility setterVisibility = TridentSymbolVisibility.LOCAL;
                 if(entry.find("CLASS_SETTER") != null) {
-                    setterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_SETTER.SYMBOL_VISIBILITY"), this.definitionContext, defaultVisibility);
+                    setterVisibility = TridentProductions.parseClassMemberVisibility(entry.find("CLASS_SETTER.SYMBOL_VISIBILITY"), defaultVisibility, this);
                     TridentUserFunctionBranch setterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Arrays.asList(indexParam, TridentTempFindABetterHome.createFormalParam(entry.find("CLASS_SETTER.FORMAL_PARAMETER"), ctx)), entry.find("CLASS_SETTER.ANONYMOUS_INNER_FUNCTION"), null);
                     setter = new PrismarineFunction(
                             "<indexer setter>",
@@ -437,10 +438,10 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                     mode = MemberParentMode.valueOf(entry.find("MEMBER_PARENT_MODE").flatten(false).toUpperCase());
                 }
                 String propertyName = entry.find("SYMBOL_NAME").flatten(false);
-                SymbolVisibility defaultVisibility = CommonParsers.parseVisibility(entry.find("SYMBOL_VISIBILITY"), this.definitionContext, TridentSymbolVisibility.LOCAL);
+                SymbolVisibility defaultVisibility = TridentProductions.parseClassMemberVisibility(entry.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL, this);
 
                 TridentUserFunctionBranch getterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.emptyList(), entry.find("CLASS_GETTER.ANONYMOUS_INNER_FUNCTION"), (TypeConstraints) entry.find("CLASS_GETTER.TYPE_CONSTRAINTS").evaluate(ctx));
-                SymbolVisibility getterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_GETTER.SYMBOL_VISIBILITY"), this.definitionContext, defaultVisibility);
+                SymbolVisibility getterVisibility = TridentProductions.parseClassMemberVisibility(entry.find("CLASS_GETTER.SYMBOL_VISIBILITY"), defaultVisibility, this);
                 PrismarineFunction getter = new PrismarineFunction(
                         "<property getter>",
                         getterBranch,
@@ -450,7 +451,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 PrismarineFunction setter = null;
                 SymbolVisibility setterVisibility = TridentSymbolVisibility.LOCAL;
                 if(entry.find("CLASS_SETTER") != null) {
-                    setterVisibility = CommonParsers.parseVisibility(entry.find("CLASS_SETTER.SYMBOL_VISIBILITY"), this.definitionContext, defaultVisibility);
+                    setterVisibility = TridentProductions.parseClassMemberVisibility(entry.find("CLASS_SETTER.SYMBOL_VISIBILITY"), defaultVisibility, this);
                     TridentUserFunctionBranch setterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.singletonList(TridentTempFindABetterHome.createFormalParam(entry.find("CLASS_SETTER.FORMAL_PARAMETER"), ctx)), entry.find("CLASS_SETTER.ANONYMOUS_INNER_FUNCTION"), new TypeConstraints(typeSystem, (TypeHandler<?>) null, true));
                     setter = new PrismarineFunction(
                             "<property setter>",
@@ -861,9 +862,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     }
 
     public boolean hasAccess(ISymbolContext ctx, SymbolVisibility visibility) {
-        return (visibility == SymbolVisibility.PUBLIC) ||
-                (visibility == TridentSymbolVisibility.LOCAL && (getDeclaringFile().getPathFromRoot().equals(ctx.getPathFromRoot()) || isProtectedAncestor(ctx))) ||
-                (visibility == TridentSymbolVisibility.PRIVATE && ctx.isAncestor(this.innerStaticContext));
+        return visibility.isVisibleFromContext(null, this.innerStaticContext, ctx);
     }
 
     public boolean isProtectedAncestor(ISymbolContext ctx) {
@@ -940,5 +939,38 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
     public String[] getTypeParamNames() {
         return typeParamNames;
+    }
+
+
+
+    private VariableInstruction.SymbolDeclaration parseSymbolDeclaration(TokenPattern<?> pattern, ISymbolContext ctx) {
+        String memberName = pattern.find("SYMBOL_NAME").flatten(false);
+        SymbolVisibility memberVisibility = TridentProductions.parseClassMemberVisibility(pattern.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL, this);
+        final TokenPattern<?> entryFinal = pattern;
+
+
+        VariableInstruction.SymbolDeclaration response = new VariableInstruction.SymbolDeclaration(memberName);
+        response.setName(memberName);
+        response.setVisibility(memberVisibility);
+        response.setConstraintSupplier(initialValue -> (TypeConstraints) entryFinal.find("TYPE_CONSTRAINTS").evaluate(ctx, initialValue));
+        response.setSupplier(() -> {
+            Object initialValue = null;
+            boolean initialized = false;
+            if(pattern.find("SYMBOL_INITIALIZATION") != null) {
+                DataStructureLiteralSet.setNextFunctionName(memberName);
+                initialValue = pattern.find("SYMBOL_INITIALIZATION.INITIAL_VALUE").evaluate(ctx);
+                DataStructureLiteralSet.setNextFunctionName(null);
+                initialized = true;
+            }
+            Symbol sym = new Symbol(memberName, memberVisibility);
+            sym.setTypeConstraints(response.getConstraint(initialValue));
+            sym.setFinal(response.hasModifier(TridentTempFindABetterHome.SymbolModifier.FINAL));
+            if(initialized) sym.safeSetValue(initialValue, entryFinal, ctx);
+            return sym;
+        });
+
+        response.populate((TokenList) pattern.find("SYMBOL_MODIFIER_LIST"), ctx);
+
+        return response;
     }
 }
