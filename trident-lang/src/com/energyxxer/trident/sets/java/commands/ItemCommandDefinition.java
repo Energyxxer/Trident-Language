@@ -8,8 +8,9 @@ import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.defaults.ItemModifier;
-import com.energyxxer.enxlex.lexical_analysis.inspections.ReplacementInspectionAction;
-import com.energyxxer.enxlex.lexical_analysis.inspections.SuggestionInspection;
+import com.energyxxer.enxlex.lexical_analysis.inspections.CodeChainAction;
+import com.energyxxer.enxlex.lexical_analysis.inspections.CodeReplacementAction;
+import com.energyxxer.enxlex.lexical_analysis.inspections.Inspection;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
@@ -118,20 +119,22 @@ public class ItemCommandDefinition implements SimpleCommandDefinition {
 
                         StringBounds replaceLiteralBounds = p.find("SUBCOMMAND.LITERAL_REPLACE").getStringBounds();
 
-                        SuggestionInspection inspection = new SuggestionInspection("Convert to replaceitem command")
+                        Inspection inspection = new Inspection("Convert to replaceitem command")
                                 .setStartIndex(bounds.start.index)
                                 .setEndIndex(bounds.end.index)
                                 .addAction(
-                                        new ReplacementInspectionAction()
-                                                .setReplacementStartIndex(replaceLiteralBounds.start.index-1)
-                                                .setReplacementEndIndex(replaceLiteralBounds.end.index)
-                                                .setReplacementText("")
-                                )
-                                .addAction(
-                                        new ReplacementInspectionAction()
-                                                .setReplacementStartIndex(bounds.start.index)
-                                                .setReplacementEndIndex(bounds.start.index + "item".length())
-                                                .setReplacementText("replaceitem")
+                                        new CodeChainAction(
+                                                "Convert to replaceitem command",
+
+                                                new CodeReplacementAction()
+                                                        .setReplacementStartIndex(replaceLiteralBounds.start.index-1)
+                                                        .setReplacementEndIndex(replaceLiteralBounds.end.index)
+                                                        .setReplacementText(""),
+                                                new CodeReplacementAction()
+                                                        .setReplacementStartIndex(bounds.start.index)
+                                                        .setReplacementEndIndex(bounds.start.index + "item".length())
+                                                        .setReplacementText("replaceitem")
+                                        )
                                 );
 
                         l.getInspectionModule().addInspection(inspection);

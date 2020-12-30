@@ -1,7 +1,7 @@
 package com.energyxxer.trident.sets.trident.instructions;
 
-import com.energyxxer.enxlex.lexical_analysis.inspections.ReplacementInspectionAction;
-import com.energyxxer.enxlex.lexical_analysis.inspections.SuggestionInspection;
+import com.energyxxer.enxlex.lexical_analysis.inspections.CodeReplacementAction;
+import com.energyxxer.enxlex.lexical_analysis.inspections.Inspection;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
@@ -100,11 +100,11 @@ public class VariableInstruction implements InstructionDefinition {
 
                     StringBounds bounds = p.getStringBounds();
 
-                    SuggestionInspection inspection = new SuggestionInspection("Make final")
+                    Inspection inspection = new Inspection("Make final")
                             .setStartIndex(bounds.start.index)
                             .setEndIndex(bounds.end.index)
                             .addAction(
-                                    new ReplacementInspectionAction()
+                                    new CodeReplacementAction("Make final")
                                     .setReplacementStartIndex(startIndex)
                                     .setReplacementEndIndex(startIndex)
                                     .setReplacementText("final ")
@@ -125,11 +125,11 @@ public class VariableInstruction implements InstructionDefinition {
 
                                 StringBounds bounds = p.getStringBounds();
 
-                                SuggestionInspection inspection = new SuggestionInspection("Constrain variable to initialization type")
+                                Inspection inspection = new Inspection("Constrain variable to initialization type")
                                         .setStartIndex(bounds.start.index)
                                         .setEndIndex(bounds.end.index)
                                         .addAction(
-                                                new ReplacementInspectionAction()
+                                                new CodeReplacementAction("Constrain variable to initialization type")
                                                 .setReplacementStartIndex(replacementStartIndex)
                                                 .setReplacementEndIndex(replacementEndIndex)
                                                 .setReplacementText(" : " + initSymbol.getType().getName() + " ")

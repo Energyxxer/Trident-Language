@@ -10,8 +10,9 @@ import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.item.Item;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.defaults.ItemSlot;
-import com.energyxxer.enxlex.lexical_analysis.inspections.ReplacementInspectionAction;
-import com.energyxxer.enxlex.lexical_analysis.inspections.SuggestionInspection;
+import com.energyxxer.enxlex.lexical_analysis.inspections.CodeChainAction;
+import com.energyxxer.enxlex.lexical_analysis.inspections.CodeReplacementAction;
+import com.energyxxer.enxlex.lexical_analysis.inspections.Inspection;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenGroupMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -61,20 +62,22 @@ public class ReplaceItemCommandDefinition implements SimpleCommandDefinition {
 
                     int slotIdEndIndex = p.find("SLOT_ID").getStringBounds().end.index;
 
-                    SuggestionInspection inspection = new SuggestionInspection("Convert to item command")
+                    Inspection inspection = new Inspection("Convert to item command")
                             .setStartIndex(bounds.start.index)
                             .setEndIndex(bounds.end.index)
                             .addAction(
-                                    new ReplacementInspectionAction()
-                                            .setReplacementStartIndex(slotIdEndIndex)
-                                            .setReplacementEndIndex(slotIdEndIndex)
-                                            .setReplacementText(" replace")
-                            )
-                            .addAction(
-                                    new ReplacementInspectionAction()
-                                            .setReplacementStartIndex(bounds.start.index)
-                                            .setReplacementEndIndex(bounds.start.index + "replaceitem".length())
-                                            .setReplacementText("item")
+                                    new CodeChainAction(
+                                            "Convert to item command",
+
+                                            new CodeReplacementAction()
+                                                    .setReplacementStartIndex(slotIdEndIndex)
+                                                    .setReplacementEndIndex(slotIdEndIndex)
+                                                    .setReplacementText(" replace"),
+                                            new CodeReplacementAction()
+                                                    .setReplacementStartIndex(bounds.start.index)
+                                                    .setReplacementEndIndex(bounds.start.index + "replaceitem".length())
+                                                    .setReplacementText("item")
+                                    )
                             );
 
                     l.getInspectionModule().addInspection(inspection);
