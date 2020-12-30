@@ -68,7 +68,7 @@ public class ExecuteCommandDefinition implements CommandDefinition {
                                         new CodeReplacementAction("Insert newline")
                                         .setReplacementStartIndex(bounds.start.index)
                                         .setReplacementEndIndex(commandStartIndex)
-                                        .setReplacementText("\n\bINDENT+1\b")
+                                        .setReplacementText("\n\bINDENT\b")
                                 );
 
                                 l.getInspectionModule().addInspection(inspection);
