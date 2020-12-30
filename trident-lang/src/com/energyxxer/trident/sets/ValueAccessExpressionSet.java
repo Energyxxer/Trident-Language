@@ -52,6 +52,7 @@ import java.util.function.Supplier;
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.COMPILER_OPERATOR;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.PRIMITIVE_TYPE;
+import static com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary.PASS_VALIDATION;
 
 public class ValueAccessExpressionSet extends PatternProviderSet {
 
@@ -130,7 +131,9 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         .addTags(SuggestionTags.ENABLED_INDEX, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE)
         .addProcessor((p, l) -> {
             if(l.getSummaryModule() != null) {
-                ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
+                ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(PASS_VALIDATION, f -> {
+                    if(p.isValidated()) f.addSymbolUsage(p);
+                });
             }
         }).setEvaluator(ValueAccessExpressionSet::parseVariable);
 
@@ -170,7 +173,9 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                                 .addTags(SuggestionTags.ENABLED_INDEX, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE)
                                 .addProcessor((p, l) -> {
                                     if(l.getSummaryModule() != null) {
-                                        ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
+                                        ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(PASS_VALIDATION, f -> {
+                                            if(p.isValidated()) f.addSymbolUsage(p);
+                                        });
                                     }
                                 })
                                 .setEvaluator(ValueAccessExpressionSet::parseVariable)
@@ -284,7 +289,33 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 })
                 .setEvaluator(
                         (p, d) -> parseAccessorChain(p, ((ISymbolContext) d[0]), (d.length > 1 && (boolean) d[1]))
-                );
+                ).addProcessor((p, l) -> {
+                    if(l.getSummaryModule() != null) {
+                        TokenList memberAccesses = (TokenList) p.find("MEMBER_ACCESSES");
+                        if(memberAccesses != null) {
+                            ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(PASS_VALIDATION, f -> {
+                                if(p.isValidated()) {
+                                    for(TokenPattern<?> memberAccess : memberAccesses.getContentsExcludingSeparators()) {
+                                        switch(((TokenStructure) memberAccess).getContents().getName()) {
+                                            case "MEMBER_KEY": {
+                                                TokenPattern<?> symbolNamePattern = memberAccess.find("SYMBOL_NAME");
+                                                PrismarineSummaryModule.SymbolUsage usage = new PrismarineSummaryModule.SymbolUsage(symbolNamePattern, symbolNamePattern.flatten(false));
+                                                usage.symbolGetter = (f2, u) -> getSymbolForChain(
+                                                        p.find(rootMatch.name),
+                                                        memberAccesses,
+                                                        f2,
+                                                        (p2, symbol) -> p2.getStringLocation().index > memberAccess.getStringLocation().index
+                                                );
+                                                f.addSymbolUsage(usage);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
     }
 
     public static SummarySymbol getTypeSymbolFromConstraint(PrismarineSummaryModule fileSummary, TokenPattern<?> pattern) {
