@@ -24,6 +24,7 @@ import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeConstraints;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.trident.TridentFileUnitConfiguration;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
@@ -33,7 +34,6 @@ import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.sets.ValueAccessExpressionSet;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -256,7 +256,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                 group(literal("require").setName("DIRECTIVE_LABEL"), TridentProductions.resourceLocationFixer, ofType(RESOURCE_LOCATION).addTags(TridentSuggestionTags.RESOURCE, TridentSuggestionTags.TRIDENT_FUNCTION)
                         .addProcessor((p, l) -> {
                             if(l.getSummaryModule() != null) {
-                                ((TridentSummaryModule) l.getSummaryModule()).addRequires(Paths.get(new ResourceLocation(p.flatten(false)).body)); //TODO stop using resource locations as middleman
+                                ((TridentSummaryModule) l.getSummaryModule()).addRequires(TridentFileUnitConfiguration.resourceLocationToFunctionPath(new ResourceLocation(p.flatten(false))));
                             }
                         })).setName("REQUIRE_DIRECTIVE"),
                 group(literal("meta_tag").setName("DIRECTIVE_LABEL"), ofType(RESOURCE_LOCATION).addTags(TridentSuggestionTags.RESOURCE)).setName("META_TAG_DIRECTIVE"),

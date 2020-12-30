@@ -144,6 +144,17 @@ public class TridentProductions {
         }
     }
 
+    public static SymbolVisibility parseSummaryClassVisibility(TokenPattern<?> pattern, SymbolVisibility defaultValue) {
+        if(pattern == null) return defaultValue;
+        switch(pattern.flatten(false)) {
+            case "global": return SymbolVisibility.GLOBAL;
+            case "public": return TridentSymbolVisibility.SUMMARY_CLASS_PUBLIC;
+            case "local": return TridentSymbolVisibility.SUMMARY_CLASS_LOCAL;
+            case "private": return TridentSymbolVisibility.SUMMARY_CLASS_PRIVATE;
+            default: return defaultValue;
+        }
+    }
+
     public static TokenPatternMatch noToken() {
         return ofType(NO_TOKEN).setOptional();
     }

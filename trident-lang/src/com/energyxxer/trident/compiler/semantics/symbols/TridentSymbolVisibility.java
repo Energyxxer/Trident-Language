@@ -20,7 +20,7 @@ public class TridentSymbolVisibility {
 
         @Override
         public boolean isVisibleFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
-            return (symbol.getStartIndex() <= inFileIndex || symbol.getDeclarationPattern().getStringLocation().index == inFileIndex) && Objects.equals(fromPath, symbol.getParentFileSummary().getFileLocation());
+            return (symbol.getStartIndex() <= inFileIndex || symbol.getDeclarationPattern().getStringLocation().index == inFileIndex) || !Objects.equals(fromPath, symbol.getParentFileSummary().getFileLocation());
         }
 
         @Override
@@ -71,4 +71,99 @@ public class TridentSymbolVisibility {
             return "PRIVATE";
         }
     };
+
+
+
+
+
+
+
+
+
+
+
+    public static final SymbolVisibility SUMMARY_CLASS_PUBLIC = new SymbolVisibility(3) {
+        @Override
+        public boolean isVisibleFromContext(Symbol symbol, ISymbolContext containingContext, ISymbolContext accessingContext) {
+            throw new UnsupportedOperationException();
+        }
+
+        //is visible in subclasses
+        @Override
+        public boolean isVisibleFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
+            return isAccessedBySameClass(symbol, fromPath, inFileIndex);
+        }
+
+        //is accessible via dot notation
+        @Override
+        public boolean isVisibleMemberFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "SUMMARY_CLASS_PUBLIC";
+        }
+    };
+    public static final SymbolVisibility SUMMARY_CLASS_LOCAL = new SymbolVisibility(2) {
+        @Override
+        public boolean isVisibleFromContext(Symbol symbol, ISymbolContext containingContext, ISymbolContext accessingContext) {
+            throw new UnsupportedOperationException();
+        }
+
+        //is visible in subclasses
+        @Override
+        public boolean isVisibleFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
+            return isAccessedBySameClass(symbol, fromPath, inFileIndex) || (symbol.isInstanceField() && (isAccessedBySubClass(symbol, inFileIndex, fromPath) || true));
+        }
+
+        //is accessible via dot notation
+        @Override
+        public boolean isVisibleMemberFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
+            return isAccessedBySameFile(symbol, fromPath) || isAccessedBySubClass(symbol, inFileIndex, fromPath);
+        }
+
+        @Override
+        public String toString() {
+            return "SUMMARY_CLASS_LOCAL";
+        }
+    };
+    public static final SymbolVisibility SUMMARY_CLASS_PRIVATE = new SymbolVisibility(1) {
+        @Override
+        public boolean isVisibleFromContext(Symbol symbol, ISymbolContext containingContext, ISymbolContext accessingContext) {
+            throw new UnsupportedOperationException();
+        }
+
+        //is visible in subclasses
+        @Override
+        public boolean isVisibleFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
+            return isAccessedBySameClass(symbol, fromPath, inFileIndex);
+        }
+
+        //is accessible via dot notation
+        @Override
+        public boolean isVisibleMemberFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
+            return isAccessedBySameClass(symbol, fromPath, inFileIndex);
+        }
+
+        @Override
+        public String toString() {
+            return "SUMMARY_CLASS_PRIVATE";
+        }
+    };
+
+
+    private static boolean isAccessedBySameClass(SummarySymbol symbol, Path fromPath, int inFileIndex) {
+        return ((symbol.getScopeEnd() == 0 || (symbol.getScopeStart() <= inFileIndex && inFileIndex <= symbol.getScopeEnd())) || symbol.getDeclarationPattern().getStringLocation().index == inFileIndex) && isAccessedBySameFile(symbol, fromPath);
+    }
+
+    private static boolean isAccessedBySameFile(SummarySymbol symbol, Path fromPath) {
+        Path filePath = symbol.getParentFileSummary() != null ? symbol.getParentFileSummary().getFileLocation() : null;
+        return fromPath == null || filePath == null || Objects.equals(fromPath, filePath);
+    }
+
+    private static boolean isAccessedBySubClass(SummarySymbol symbol, int inFileIndex, Path fromPath) {
+        //TODO
+        return false;
+    }
 }

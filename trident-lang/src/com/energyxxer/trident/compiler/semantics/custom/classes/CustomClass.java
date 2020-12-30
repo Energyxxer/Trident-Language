@@ -861,7 +861,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
     }
 
     public boolean hasAccess(ISymbolContext ctx, SymbolVisibility visibility) {
-        return visibility == SymbolVisibility.PUBLIC ||
+        return (visibility == SymbolVisibility.PUBLIC) ||
                 (visibility == TridentSymbolVisibility.LOCAL && (getDeclaringFile().getPathFromRoot().equals(ctx.getPathFromRoot()) || isProtectedAncestor(ctx))) ||
                 (visibility == TridentSymbolVisibility.PRIVATE && ctx.isAncestor(this.innerStaticContext));
     }

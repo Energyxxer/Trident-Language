@@ -49,7 +49,7 @@ public class DataStructureLiteralSet extends PatternProviderSet { //dictionaries
                                                     }
                                                 }
                                                 SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), key, TridentSymbolVisibility.MEMBER_ACCESS_ONLY, p.getStringLocation().index);
-                                                ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(new TridentSummaryModule.SymbolUsage(p, key));
+//                                                ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(new TridentSummaryModule.SymbolUsage(p, key));
                                                 sym.setDeclarationPattern(p);
                                                 //sym.addUsage(p);
                                                 ((TridentSummaryModule) l.getSummaryModule()).pushSubSymbol(sym);

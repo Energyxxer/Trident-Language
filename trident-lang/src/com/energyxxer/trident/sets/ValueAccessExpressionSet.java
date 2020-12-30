@@ -292,7 +292,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         return getTypeSymbolFromTypePattern(fileSummary, pattern.find("TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER.TYPE_CONSTRAINTS_EXPLICIT.INTERPOLATION_TYPE"));
     }
 
-    private static SummarySymbol getTypeSymbolFromTypePattern(PrismarineSummaryModule fileSummary, TokenPattern<?> pattern) {
+    public static SummarySymbol getTypeSymbolFromTypePattern(PrismarineSummaryModule fileSummary, TokenPattern<?> pattern) {
         if(pattern == null || !pattern.getName().equals("INTERPOLATION_TYPE") || !(pattern instanceof TokenStructure)) return null;
         TokenPattern<?> inner = ((TokenStructure) pattern).getContents();
 
