@@ -62,7 +62,7 @@ public class ExecuteCommandDefinition implements CommandDefinition {
                                         new CodeReplacementAction("Insert 'noop'")
                                                 .setReplacementStartIndex(bounds.start.index)
                                                 .setReplacementEndIndex(commandStartIndex)
-                                                .setReplacementText(" noop ")
+                                                .setReplacementText(" noop\n\bINDENT\b")
                                 );
                                 inspection.addAction(
                                         new CodeReplacementAction("Insert newline")
