@@ -74,13 +74,17 @@ public class TickingFunction extends SpecialFile {
         public void onAppend(@NotNull FunctionSection section) {
             if(entityEvents.size() == 1) {
                 EntityEvent singleEvent = entityEvents.get(0);
-                Selector selector = singleEvent.getSelector(true);
+                Selector selector = singleEvent.getSelector(false);
                 resolvedCommand = new ExecuteCommand(singleEvent.command, new ExecuteAsEntity(selector), new ExecuteAtEntity(new Selector(Selector.BaseSelector.SENDER)));
             } else {
                 Function entityTickFunction = parent.getNamespace().functions.getOrCreate("trident/" + getFunctionName() + "/entity");
                 for(EntityEvent entityEvent : entityEvents) {
-                    Selector selector = entityEvent.getSelector(false);
-                    entityTickFunction.append(new ExecuteCommand(entityEvent.command, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, selector)));
+                    Selector selector = entityEvent.getSelector(true);
+                    if(!selector.getAllArguments().isEmpty()) {
+                        entityTickFunction.append(new ExecuteCommand(entityEvent.command, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, selector)));
+                    } else {
+                        entityTickFunction.append(entityEvent.command);
+                    }
                 }
                 resolvedCommand = new ExecuteCommand(new FunctionCommand(entityTickFunction), new ExecuteAsEntity(new Selector(Selector.BaseSelector.ALL_ENTITIES)), new ExecuteAtEntity(new Selector(Selector.BaseSelector.SENDER)));
             }
@@ -102,11 +106,11 @@ public class TickingFunction extends SpecialFile {
             this.command = command;
         }
 
-        Selector getSelector(boolean single) {
-            if(single) {
-                return new Selector(Selector.BaseSelector.ALL_ENTITIES, entityFilter);
-            } else {
+        Selector getSelector(boolean narrowedDownToSender) {
+            if(narrowedDownToSender) {
                 return new Selector(Selector.BaseSelector.SENDER, entityFilter);
+            } else {
+                return new Selector(Selector.BaseSelector.ALL_ENTITIES, entityFilter);
             }
         }
     }
