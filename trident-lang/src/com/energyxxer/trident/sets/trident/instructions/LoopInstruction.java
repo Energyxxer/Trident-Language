@@ -13,10 +13,10 @@ import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.BreakException;
 import com.energyxxer.trident.compiler.semantics.ContinueException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.sets.ValueAccessExpressionSet;
 import com.energyxxer.trident.worker.tasks.SetupWritingStackTask;
 
 import java.util.ConcurrentModificationException;
@@ -46,7 +46,7 @@ public abstract class LoopInstruction implements InstructionDefinition {
                 if(l.getSummaryModule() != null) {
                     TokenPattern<?> iteratorName = p.find("LOOP_HEADER.VARIABLE_NAME");
                     if(iteratorName != null) {
-                        productions.getProviderSet(ValueAccessExpressionSet.class).addPreBlockDeclaration(iteratorName);
+                        ((TridentSummaryModule) l.getSummaryModule()).addPreBlockDeclaration(iteratorName);
                     }
                 }
             }), wrapper(productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setName("LOOP_BODY")).setName("FOR_STATEMENT");

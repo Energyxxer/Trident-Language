@@ -34,7 +34,6 @@ import com.energyxxer.trident.TridentSuiteConfiguration;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary;
-import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ParameterizedMemberHolder;
 import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.trident.extensions.EObject;
@@ -60,32 +59,10 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         super(null);
     }
 
-    private final ArrayList<PreBlockDeclaration> preBlockDeclarations = new ArrayList<>();
-    public final BiConsumer<TokenPattern<?>, Lexer> clearPreBlockDeclarations = (p, l) -> preBlockDeclarations.clear();
-
-    public final BiConsumer<TokenPattern<?>, Lexer> capturePreBlockDeclarations = (p, l) -> {
-        if(l.getSummaryModule() != null) {
-            for(PreBlockDeclaration declaration : preBlockDeclarations) {
-                SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), declaration.declarationPattern.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index + 1);
-                ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(declaration.declarationPattern);
-                sym.setDeclarationPattern(declaration.declarationPattern);
-                sym.setType(getTypeSymbolFromConstraint((PrismarineSummaryModule) l.getSummaryModule(), declaration.constraintsPattern));
-                if(declaration.tags != null) {
-                    for(String tag : declaration.tags) {
-                        sym.addTag(tag);
-                    }
-                }
-                sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
-                ((TridentSummaryModule) l.getSummaryModule()).peek().putElement(sym);
-            }
-        }
-        preBlockDeclarations.clear();
-    };
-
-    private final Stack<ArrayList<TokenPattern<?>>> memberAccessStack = new Stack<>();
+    private final ThreadLocal<Stack<ArrayList<TokenPattern<?>>>> memberAccessStack = ThreadLocal.withInitial(Stack::new);
 
     private BiConsumer<TokenPattern<?>, Lexer> resetMemberAccessStack = (ip, l) -> {
-        memberAccessStack.push(new ArrayList<>());
+        memberAccessStack.get().push(new ArrayList<>());
     };
 
     @Override
@@ -261,12 +238,12 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     }
                 }) : null
         ).setName("MEMBER_ACCESS");
-        MEMBER_ACCESS.addFailProcessor((ip, l) -> memberAccessStack.peek().add(ip));
+        MEMBER_ACCESS.addFailProcessor((ip, l) -> memberAccessStack.get().peek().add(ip));
 
         return group(
                 TridentProductions.noToken().addFailProcessor(resetMemberAccessStack),
                 rootMatch,
-                list(MEMBER_ACCESS).setOptional().setName("MEMBER_ACCESSES").addFailProcessor((ip, l) -> memberAccessStack.peek().add(0, ip)),
+                list(MEMBER_ACCESS).setOptional().setName("MEMBER_ACCESSES").addFailProcessor((ip, l) -> memberAccessStack.get().peek().add(0, ip)),
                 config.tail ? wrapperOptional(productions.getOrCreateStructure("INTERPOLATION_CHAIN_TAIL")).setName("INTERPOLATION_CHAIN_TAIL") : null
         ).setName("INTERPOLATION_CHAIN")
                 .setSimplificationFunction(d -> {
@@ -275,11 +252,11 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     }
                 })
                 .addProcessor((p, l) -> {
-                    memberAccessStack.pop(); //all succeeded, so no use
+                    memberAccessStack.get().pop(); //all succeeded, so no use
                     suggestMemberAccessData(l, ((TokenGroup) p).getContents()[0], ((TokenList) p.find("MEMBER_ACCESSES")), null);
                 })
                 .addFailProcessor((ip, l) -> {
-                    ArrayList<TokenPattern<?>> memberAccessData = memberAccessStack.pop();
+                    ArrayList<TokenPattern<?>> memberAccessData = memberAccessStack.get().pop();
                     if(memberAccessData.size() <= 1) return; //Meaning it failed, not in the member accesses, but rather in the tail.
                     TokenPattern<?>[] ipContents = ((TokenGroup) ip).getContents();
                     TokenPattern<?> rootPattern = ipContents.length > 0 ? ipContents[0] : null;
@@ -717,39 +694,6 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
             i++;
         }
         return new ActualParameterList(params.toArray(), names != null ? names.toArray(new String[0]) : null, patterns.toArray(new TokenPattern<?>[0]), pattern);
-    }
-
-
-    public PreBlockDeclaration addPreBlockDeclaration(TokenPattern<?> declarationPattern) {
-        PreBlockDeclaration declaration = new PreBlockDeclaration(declarationPattern);
-        preBlockDeclarations.add(declaration);
-        return declaration;
-    }
-
-    public PreBlockDeclaration addPreBlockDeclaration(TokenPattern<?> declarationPattern, TokenPattern<?> constraintsPattern) {
-        PreBlockDeclaration declaration = new PreBlockDeclaration(declarationPattern, constraintsPattern);
-        preBlockDeclarations.add(declaration);
-        return declaration;
-    }
-
-    public static class PreBlockDeclaration {
-        public TokenPattern<?> declarationPattern;
-        public TokenPattern<?> constraintsPattern;
-        public String[] tags = null;
-
-        public PreBlockDeclaration(TokenPattern<?> declarationPattern) {
-            this(declarationPattern, null);
-        }
-
-        public PreBlockDeclaration(TokenPattern<?> declarationPattern, TokenPattern<?> constraintsPattern) {
-            this.declarationPattern = declarationPattern;
-            this.constraintsPattern = constraintsPattern;
-        }
-
-        public PreBlockDeclaration setTags(String[] tags) {
-            this.tags = tags;
-            return this;
-        }
     }
 
     private static class ValueChainConfiguration {

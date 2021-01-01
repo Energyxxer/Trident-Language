@@ -236,7 +236,9 @@ public class DefineInstruction implements InstructionDefinition {
                         literal("this"),
                         brace("["),
                         productions.getPatternMatch("FORMAL_PARAMETER").addProcessor((p, l) -> {
-                            vae.addPreBlockDeclaration(p.find("FORMAL_PARAMETER_NAME"), p.find("TYPE_CONSTRAINTS"));
+                            if(l.getSummaryModule() != null) {
+                                ((TridentSummaryModule) l.getSummaryModule()).addPreBlockDeclaration(p.find("FORMAL_PARAMETER_NAME"), p.find("TYPE_CONSTRAINTS"));
+                            }
                         }),
                         brace("]"),
                         brace("{"),
@@ -247,7 +249,7 @@ public class DefineInstruction implements InstructionDefinition {
                 group(
                         choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(),
                         SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"),
-                        TridentProductions.identifierX().setName("SYMBOL_NAME").addProcessor((p, l) -> {
+                        identifierX().setName("SYMBOL_NAME").addProcessor((p, l) -> {
                             if(l.getSummaryModule() != null) {
                                 SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), p.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index);
                                 ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
@@ -311,7 +313,7 @@ public class DefineInstruction implements InstructionDefinition {
         classBodyEntry.addTags(TridentSuggestionTags.CONTEXT_CLASS_BODY);
 
         TokenPatternMatch classBody = group(
-                brace("{").addProcessor(vae.capturePreBlockDeclarations).addProcessor(startComplexValue),
+                brace("{").addProcessor(TridentSummaryModule.CAPTURE_PRE_BLOCK_DECLARATIONS).addProcessor(startComplexValue),
                 list(classBodyEntry).setOptional().setName("CLASS_BODY_ENTRIES"),
                 brace("}")
         ).setOptional().setName("CLASS_DECLARATION_BODY").addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);});

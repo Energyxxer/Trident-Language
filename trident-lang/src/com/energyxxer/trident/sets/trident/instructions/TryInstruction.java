@@ -9,8 +9,8 @@ import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
+import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
-import com.energyxxer.trident.sets.ValueAccessExpressionSet;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 import static com.energyxxer.trident.compiler.TridentProductions.*;
@@ -27,7 +27,9 @@ public class TryInstruction implements InstructionDefinition {
                         instructionKeyword("catch").addTags(SuggestionTags.ENABLED),
                         brace("("),
                         identifierX().setName("EXCEPTION_VARIABLE").addTags("cspn:Exception Variable Name").addProcessor((p, l) -> {
-                            productions.getProviderSet(ValueAccessExpressionSet.class).addPreBlockDeclaration(p);
+                            if(l.getSummaryModule() != null) {
+                                ((TridentSummaryModule) l.getSummaryModule()).addPreBlockDeclaration(p);
+                            }
                         }),
                         brace(")"),
                         executionBlock

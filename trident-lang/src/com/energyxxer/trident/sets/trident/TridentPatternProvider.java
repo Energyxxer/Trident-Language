@@ -172,7 +172,11 @@ public class TridentPatternProvider extends PatternProviderSet {
                 group(
                         brace("<"),
                         list(
-                                group(identifierX().addProcessor((p, l) -> vae.addPreBlockDeclaration(p))),
+                                group(identifierX().addProcessor((p, l) -> {
+                                    if(l.getSummaryModule() != null) {
+                                        ((TridentSummaryModule) l.getSummaryModule()).addPreBlockDeclaration(p);
+                                    }
+                                })),
                                 comma()
                         ),
                         brace(">")
@@ -206,13 +210,13 @@ public class TridentPatternProvider extends PatternProviderSet {
         );
 
         TokenPatternMatch DYNAMIC_FUNCTION = group(
-                TridentProductions.noToken().addFailProcessor((a, l) -> startClosure.accept(null, l)),
+                noToken().addFailProcessor((a, l) -> startClosure.accept(null, l)),
                 group(FORMAL_PARAMETERS, TYPE_CONSTRAINTS).setName("PRE_CODE_BLOCK").addProcessor((p, l) -> {
                         if(l.getSummaryModule() != null) {
                             TokenList paramList = (TokenList) p.find("FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
                             if(paramList != null) {
                                 for(TokenPattern<?> paramPattern : paramList.searchByName("FORMAL_PARAMETER")) {
-                                    vae.addPreBlockDeclaration(paramPattern.find("FORMAL_PARAMETER_NAME"), paramPattern.find("TYPE_CONSTRAINTS"));
+                                    ((TridentSummaryModule) l.getSummaryModule()).addPreBlockDeclaration(paramPattern.find("FORMAL_PARAMETER_NAME"), paramPattern.find("TYPE_CONSTRAINTS"));
                                 }
                             }
                         }
@@ -285,14 +289,14 @@ public class TridentPatternProvider extends PatternProviderSet {
                         group(
                                 productions.getOrCreateStructure("RESOURCE_LOCATION")
                         ).setName("INNER_FUNCTION_NAME"),
-                        brace("{").addProcessor(vae.capturePreBlockDeclarations),
+                        brace("{").addProcessor(TridentSummaryModule.CAPTURE_PRE_BLOCK_DECLARATIONS),
                         productions.getOrCreateStructure("FILE_INNER"),
                         brace("}")
                 ).setGreedy(true).addProcessor(surroundBlock)
         );
         productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION").add(
                 group(
-                        brace("{").addProcessor(vae.capturePreBlockDeclarations),
+                        brace("{").addProcessor(TridentSummaryModule.CAPTURE_PRE_BLOCK_DECLARATIONS),
                         productions.getOrCreateStructure("FILE_INNER"),
                         brace("}")
                 ).setGreedy(true).addProcessor(surroundBlock)
@@ -302,7 +306,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                         group(
                                 productions.getOrCreateStructure("RESOURCE_LOCATION")
                         ).setOptional().setName("INNER_FUNCTION_NAME"),
-                        brace("{").addProcessor(vae.capturePreBlockDeclarations),
+                        brace("{").addProcessor(TridentSummaryModule.CAPTURE_PRE_BLOCK_DECLARATIONS),
                         productions.getOrCreateStructure("FILE_INNER"),
                         brace("}")
                 ).setGreedy(true).addProcessor(surroundBlock)
