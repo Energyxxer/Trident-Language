@@ -1,8 +1,6 @@
 package com.energyxxer.trident.compiler.plugin;
 
-import com.energyxxer.commodore.functionlogic.commands.CommandGroup;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
-import com.energyxxer.trident.compiler.lexer.TridentTokens;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenItemMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.PrismarineProductions;
@@ -10,6 +8,9 @@ import com.energyxxer.prismarine.plugins.PrismarinePluginUnit;
 import com.energyxxer.prismarine.plugins.PrismarinePluginUnitConfiguration;
 import com.energyxxer.prismarine.plugins.syntax.PrismarineMetaBuilder;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.trident.compiler.lexer.TridentTokens;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.worker.tasks.SetupWritingStackTask;
 
 import java.util.Collections;
 import java.util.List;
@@ -46,9 +47,9 @@ public class TDNMetaBuilder extends PrismarineMetaBuilder {
         super.build(unit);
 
         returnValue.setEvaluator((pattern, data) -> {
-            CommandGroup group = new CommandGroup();
-            new PluginCommandParser().handleCommand(unit, pattern, (List<ExecuteModifier>) data[1], (ISymbolContext) data[0], group);
-            return Collections.singletonList(group);
+            TridentFile writingFile = ((ISymbolContext) data[0]).get(SetupWritingStackTask.INSTANCE).getWritingFile();
+            new PluginCommandParser().handleCommand(unit, pattern, (List<ExecuteModifier>) data[1], writingFile, writingFile.getFunction());
+            return Collections.emptyList();
         });
 
         String pluginName = unit.getDefiningPlugin().getName();
