@@ -33,6 +33,7 @@ import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.sets.ValueAccessExpressionSet;
+import com.energyxxer.trident.worker.tasks.SetupWritingStackTask;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -80,6 +81,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                         .setEvaluator((p, d) -> {
                             ISymbolContext ctx = (ISymbolContext) d[0];
                             TridentFile tridentFile = ((TridentFile) ctx.getStaticParentUnit());
+                            TridentFile writingFile = ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile();
 
                             FunctionSection appendTo = ((FunctionSection) d[1]);
                             if(appendTo != null) {
@@ -87,8 +89,8 @@ public class TridentPatternProvider extends PatternProviderSet {
                                 Object commands = p.find("COMMAND").evaluate((ISymbolContext) ctx, modifiers);
 
                                 ArrayList<ExecuteModifier> modifiersForCommand = modifiers;
-                                if(!tridentFile.getWritingModifiers().isEmpty()) {
-                                    modifiersForCommand = new ArrayList<>(tridentFile.getWritingModifiers());
+                                if(!writingFile.getWritingModifiers().isEmpty()) {
+                                    modifiersForCommand = new ArrayList<>(writingFile.getWritingModifiers());
                                     modifiersForCommand.addAll(modifiers);
                                 }
 
@@ -106,8 +108,6 @@ public class TridentPatternProvider extends PatternProviderSet {
                                 throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "A compile-only function may not have commands", p, ctx);
                             }
                             return null;
-
-                            //ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile().getFunction()
                         })
                 )
                 .addTags(SuggestionTags.ENABLED)
