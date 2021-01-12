@@ -973,4 +973,8 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
         return response;
     }
+
+    public GenericSupplier getInheritedGenericSuppliers() {
+        return inheritedGenericSuppliers;
+    }
 }

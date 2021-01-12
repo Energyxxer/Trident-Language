@@ -95,24 +95,6 @@ public class VariableInstruction implements InstructionDefinition {
             }
 
             if(l.getInspectionModule() != null) {
-                if(p.find("SYMBOL_MODIFIER_LIST") == null) { //assume it's not final since there is only one option
-                    int startIndex = p.find("INSTRUCTION_KEYWORD").getStringLocation().index;
-
-                    StringBounds bounds = p.getStringBounds();
-
-                    Inspection inspection = new Inspection("Make final")
-                            .setStartIndex(bounds.start.index)
-                            .setEndIndex(bounds.end.index)
-                            .addAction(
-                                    new CodeReplacementAction("Make final")
-                                    .setReplacementStartIndex(startIndex)
-                                    .setReplacementEndIndex(startIndex)
-                                    .setReplacementText("final ")
-                            );
-
-                    l.getInspectionModule().addInspection(inspection);
-                }
-
                 if(p.find("TYPE_CONSTRAINTS.TYPE_CONSTRAINTS_WRAPPED.TYPE_CONSTRAINTS_INNER") == null && p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE") != null) {
                     ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_CODE_ACTIONS_TYPES, s -> {
                         TokenPattern<?> contents = p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE");
@@ -139,6 +121,24 @@ public class VariableInstruction implements InstructionDefinition {
                             }
                         }
                     });
+                }
+
+                if(p.find("SYMBOL_MODIFIER_LIST") == null) { //assume it's not final since there is only one option
+                    int startIndex = p.find("INSTRUCTION_KEYWORD").getStringLocation().index;
+
+                    StringBounds bounds = p.getStringBounds();
+
+                    Inspection inspection = new Inspection("Make final")
+                            .setStartIndex(bounds.start.index)
+                            .setEndIndex(bounds.end.index)
+                            .addAction(
+                                    new CodeReplacementAction("Make final")
+                                            .setReplacementStartIndex(startIndex)
+                                            .setReplacementEndIndex(startIndex)
+                                            .setReplacementText("final ")
+                            );
+
+                    l.getInspectionModule().addInspection(inspection);
                 }
             }
         });

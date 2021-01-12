@@ -12,6 +12,7 @@ import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.FormalParameter;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunctionBranch;
 import com.energyxxer.prismarine.typesystem.functions.typed.TypedFunctionFamily;
+import com.energyxxer.prismarine.typesystem.generics.GenericSupplier;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
@@ -39,8 +40,9 @@ public class ClassMethodFamily extends TypedFunctionFamily<ClassMethod> {
     }
 
     public void putOverload(ClassMethod method, CustomClass.MemberParentMode mode, TokenPattern<?> pattern, ISymbolContext ctx) {
-        ClassMethod existing = findOverloadForParameters(method.getFormalParameters());
+        ClassMethod existing = findOverloadForParameters(method.getFormalParameters(), method.getDefiningClass().getInheritedGenericSuppliers(), pattern, ctx);
         if(mode != CustomClass.MemberParentMode.FORCE) {
+            //Check for duplication
             if(mode == CustomClass.MemberParentMode.CREATE && existing != null) {
                 if(existing.getDefiningClass() == method.getDefiningClass()) {
                     throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Duplicate method " + existing + ": it's already defined with the same parameter types in the same class", pattern, ctx);
@@ -48,11 +50,20 @@ public class ClassMethodFamily extends TypedFunctionFamily<ClassMethod> {
                     throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Method " + existing + " is already defined in inherited class " + existing.getDefiningClass().getTypeIdentifier() + " with the same parameter types. Use the 'override' keyword to replace it", pattern, ctx);
                 }
             }
+            //Check for inherited method conflicts
             if(mode == CustomClass.MemberParentMode.INHERIT && existing != null) {
-                if(existing.getDefiningClass() != method.getDefiningClass() && existing.getDefiningClass() != ((TridentTypeSystem) ctx.getTypeSystem()).getBaseClass()) {
-                    //Make note for later
-                    registerClashingMethods(existing, method);
-                }
+                if(existing.hasModifier(TridentTempFindABetterHome.SymbolModifier.VIRTUAL) == method.hasModifier(TridentTempFindABetterHome.SymbolModifier.VIRTUAL)) {
+                    if(existing.getDefiningClass() != method.getDefiningClass() && existing.getDefiningClass() != ((TridentTypeSystem) ctx.getTypeSystem()).getBaseClass()) {
+                        //Make note for later
+                        registerClashingMethods(existing, method);
+                    }
+                } else if(method.hasModifier(TridentTempFindABetterHome.SymbolModifier.VIRTUAL)) {
+                    //only method is virtual, keep existing
+                    implementations.remove(existing);
+                    method = existing;
+                    existing = null;
+                } //else
+                //only existing is virtual, keep method
             }
             if(existing == null && mode == CustomClass.MemberParentMode.OVERRIDE) {
                 throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Cannot override " + method + ": couldn't find existing overload with parameter types: " + method.getFormalParameters().toString(), pattern, ctx);
@@ -63,6 +74,7 @@ public class ClassMethodFamily extends TypedFunctionFamily<ClassMethod> {
                     throw new PrismarineException(TridentExceptionUtil.Source.DUPLICATION_ERROR, "Cannot override " + existing + ": a branch with the same parameter types is already defined in the same class", pattern, ctx);
                 }
 
+                //Check for overriding a final method
                 if(existing.getModifiers() != null && existing.getModifiers().hasModifier(TridentTempFindABetterHome.SymbolModifier.FINAL)) {
                     if(mode == CustomClass.MemberParentMode.INHERIT) {
                         throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": it's defined as final in " + existing.getDefiningClass().getTypeIdentifier(), pattern, ctx);
@@ -96,12 +108,26 @@ public class ClassMethodFamily extends TypedFunctionFamily<ClassMethod> {
                 TypeConstraints existingReturnConstraints = existingBranch.getReturnConstraints();
                 TypeConstraints newReturnConstraints = newBranch.getReturnConstraints();
 
-                if(mode == CustomClass.MemberParentMode.INHERIT && !TypeConstraints.constraintsEqual(existingReturnConstraints, newReturnConstraints)) {
-                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": Incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                GenericSupplier inheritedGenericSupplier = method.getDefiningClass().getInheritedGenericSuppliers();
+                if(existingReturnConstraints != null && existingReturnConstraints.isGeneric() && inheritedGenericSupplier != null) {
+                    existingReturnConstraints.startGenericSubstitution(inheritedGenericSupplier, pattern, ctx);
                 }
+                if(newReturnConstraints != null && newReturnConstraints.isGeneric() && inheritedGenericSupplier != null) {
+                    newReturnConstraints.startGenericSubstitution(inheritedGenericSupplier, pattern, ctx);
+                }
+                try {
+                    if(mode == CustomClass.MemberParentMode.INHERIT && !TypeConstraints.constraintsEqual(existingReturnConstraints, newReturnConstraints)) {
+                        throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Clashing inherited implementations of " + existing + ": Incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                    }
 
-                if(!TypeConstraints.constraintAContainsB(existingReturnConstraints, newReturnConstraints)) {
-                    throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot override " + existing + " due to incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                    if(!TypeConstraints.constraintAContainsB(existingReturnConstraints, newReturnConstraints)) {
+                        throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot override " + existing + " due to incompatible return constraints.\n    Constraint:        " + existingReturnConstraints + " in " + existing.getDefiningClass().getTypeIdentifier() + "\n    clashes with:    " + newReturnConstraints + " in " + method.getDefiningClass().getTypeIdentifier(), pattern, ctx);
+                    }
+                } finally {
+                    if (existingReturnConstraints != null && existingReturnConstraints.isGeneric())
+                        existingReturnConstraints.endGenericSubstitution();
+                    if (newReturnConstraints != null && newReturnConstraints.isGeneric())
+                        newReturnConstraints.endGenericSubstitution();
                 }
 
                 //Check parameter names (warn)
@@ -141,11 +167,14 @@ public class ClassMethodFamily extends TypedFunctionFamily<ClassMethod> {
         clashingInheritedMethods.add(new ClashingInheritedMethods(existing, method));
     }
 
-    public void checkClashingInheritedMethodsResolved(CustomClass resolvingClass, TokenPattern<?> pattern, ISymbolContext ctx) {
+    public void checkClashingInheritedMethodsResolved(CustomClass owningClass, TokenPattern<?> pattern, ISymbolContext ctx) {
         for(ClashingInheritedMethods clashingMethods : clashingInheritedMethods) {
-            if(findOverloadForParameters(clashingMethods.getFormalParameters()).getDefiningClass() != resolvingClass) {
-                //Did not change
-                throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Method '" + clashingMethods + "' is defined in multiple inherited classes: " + clashingMethods.getMethods().stream().map(m -> m.getDefiningClass().getTypeIdentifier()).collect(Collectors.joining(", ")) + ". Override it in the class body", pattern, ctx);
+            CustomClass resolvingClass = findOverloadForParameters(clashingMethods.getFormalParameters(), owningClass.getInheritedGenericSuppliers(), pattern, ctx).getDefiningClass();
+            for(ClassMethod clashingMethod : clashingMethods.methods) {
+                if(clashingMethod.getDefiningClass() == resolvingClass) {
+                    //Did not change
+                    throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Method '" + clashingMethods + "' is defined in multiple inherited classes: " + clashingMethods.getMethods().stream().map(m -> m.getDefiningClass().getTypeIdentifier()).collect(Collectors.joining(", ")) + ".\nOverride it in the class body, or mark one of the two methods as virtual", pattern, ctx);
+                }
             }
         }
     }

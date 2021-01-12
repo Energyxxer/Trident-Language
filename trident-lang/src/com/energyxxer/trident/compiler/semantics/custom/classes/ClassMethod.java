@@ -5,6 +5,7 @@ import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.typesystem.functions.FormalParameter;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.typed.TypedFunction;
+import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
 import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
 
 import java.util.List;
@@ -31,6 +32,10 @@ public class ClassMethod extends TypedFunction {
 
     public VariableInstruction.SymbolModifierMap getModifiers() {
         return modifiers;
+    }
+
+    public boolean hasModifier(TridentTempFindABetterHome.SymbolModifier modifier) {
+        return modifiers != null && modifiers.hasModifier(modifier);
     }
 
     public ClassMethod setModifiers(VariableInstruction.SymbolModifierMap modifiers) {

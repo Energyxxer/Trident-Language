@@ -37,7 +37,7 @@ public class TridentProductions {
         if(l.getSuggestionModule() != null) {
             if(l.getCurrentIndex() <= l.getSuggestionModule().getSuggestionIndex()+1) {
                 int targetIndex = l.getLookingIndexTrimmed();
-                String str = ((LazyLexer) l).getCurrentReadingString();
+                String str = ((LazyLexer) l).getFullText();
                 int index = l.getSuggestionModule().getSuggestionIndex();
 
                 if(index > 0) {

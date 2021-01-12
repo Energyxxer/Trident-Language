@@ -320,12 +320,12 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     break;
                 }
                 case "INTERPOLATION_CHAIN": {
-                    if(inner.find("MEMBER_ACCESSES") != null) {
-                        //not dealing with this
-                        return null;
+                    SummarySymbol symbolForChain = getSymbolForChain(fileSummary, inner);
+
+                    if(symbolForChain != null && symbolForChain.getSuggestionTags().contains(TridentSuggestionTags.TAG_CLASS)) {
+                        return symbolForChain;
                     }
-                    String typeName = inner.find("ROOT_INTERPOLATION_TYPE").flatten(false);
-                    return fileSummary.getSymbolForName(typeName, inner.getStringLocation().index);
+                    return null;
                 }
             }
         }

@@ -50,11 +50,9 @@ public class DefineInstruction implements InstructionDefinition {
 
     @Override
     public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
-        ValueAccessExpressionSet vae = productions.getProviderSet(ValueAccessExpressionSet.class);
-
         OperatorPool operatorPool = productions.unitConfig.getOperatorPool();
 
-        TokenPatternMatch SYMBOL_MODIFIER_LIST = list(choice("static", "final")).setOptional().setName("SYMBOL_MODIFIER_LIST").addProcessor(
+        TokenPatternMatch SYMBOL_MODIFIER_LIST = list(choice("static", "final", "virtual")).setOptional().setName("SYMBOL_MODIFIER_LIST").addProcessor(
                 (p, lx) -> checkDuplicates(((TokenList) p), "Duplicate modifier", lx)
         );
 

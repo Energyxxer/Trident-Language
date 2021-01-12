@@ -30,7 +30,7 @@ public class TridentTempFindABetterHome {
     }
 
     public enum SymbolModifier {
-        STATIC(0b1), FINAL(0b10);
+        STATIC(0b1), FINAL(0b10), VIRTUAL(0b100);
         private final int bit;
         SymbolModifier(int bit) {
             this.bit = bit;
