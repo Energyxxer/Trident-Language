@@ -47,8 +47,9 @@ public class TDNMetaBuilder extends PrismarineMetaBuilder {
         super.build(unit);
 
         returnValue.setEvaluator((pattern, data) -> {
-            TridentFile writingFile = ((ISymbolContext) data[0]).get(SetupWritingStackTask.INSTANCE).getWritingFile();
-            new PluginCommandParser().handleCommand(unit, pattern, (List<ExecuteModifier>) data[1], writingFile, writingFile.getFunction());
+            ISymbolContext ctx = (ISymbolContext) data[0];
+            TridentFile writingFile = ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile();
+            new PluginCommandParser().handleCommand(unit, pattern, (List<ExecuteModifier>) data[1], ctx, writingFile.getFunction());
             return Collections.emptyList();
         });
 
