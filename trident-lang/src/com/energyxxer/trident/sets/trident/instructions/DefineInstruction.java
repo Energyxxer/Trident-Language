@@ -45,6 +45,7 @@ import static com.energyxxer.prismarine.PrismarineProductions.*;
 import static com.energyxxer.trident.compiler.TridentProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.COMPILER_OPERATOR;
 import static com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary.PASS_SET_SYMBOL_TYPES;
+import static com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule.CAPTURE_PRE_BLOCK_DECLARATIONS;
 
 public class DefineInstruction implements InstructionDefinition {
 
@@ -239,11 +240,11 @@ public class DefineInstruction implements InstructionDefinition {
                             }
                         }),
                         brace("]"),
-                        brace("{"),
+                        brace("{").setName("__START_BRACE").addProcessor(CAPTURE_PRE_BLOCK_DECLARATIONS).addProcessor(startClosure),
                         classGetter,
                         classSetter,
                         brace("}")
-                ).setName("CLASS_INDEXER"),
+                ).setName("CLASS_INDEXER").addProcessor(endComplexValue).addFailProcessor((ip, l) -> {if(ip != null && ip.find("__START_BRACE") != null) endComplexValue.accept(null, l);}),
                 group(
                         choice("public", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(),
                         SYMBOL_MODIFIER_LIST, literal("override").setOptional().setName("MEMBER_PARENT_MODE"),
@@ -311,7 +312,7 @@ public class DefineInstruction implements InstructionDefinition {
         classBodyEntry.addTags(TridentSuggestionTags.CONTEXT_CLASS_BODY);
 
         TokenPatternMatch classBody = group(
-                brace("{").addProcessor(TridentSummaryModule.CAPTURE_PRE_BLOCK_DECLARATIONS).addProcessor(startComplexValue),
+                brace("{").addProcessor(CAPTURE_PRE_BLOCK_DECLARATIONS).addProcessor(startComplexValue),
                 list(classBodyEntry).setOptional().setName("CLASS_BODY_ENTRIES"),
                 brace("}")
         ).setOptional().setName("CLASS_DECLARATION_BODY").addProcessor(claimTopSymbol).addProcessor(endComplexValue).addFailProcessor((ip, l) -> {if(ip != null && ip.getCharLength() > 0) endComplexValue.accept(null, l);});

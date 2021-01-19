@@ -39,7 +39,7 @@ public class GiveCommandDefinition implements SimpleCommandDefinition {
         Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
 
         Item item = (Item) pattern.find("ITEM").evaluate(ctx, NBTMode.SETTING);
-        int amount = (int) pattern.findThenEvaluate("AMOUNT", 1);
+        int amount = (int) pattern.findThenEvaluate("AMOUNT", 1, ctx);
 
         try {
             return new GiveCommand(entity, item, amount);
