@@ -115,7 +115,7 @@ public class StringTypeHandler implements TypeHandler<String> {
 
             @Override
             public boolean hasNext() {
-                return i < str.length()-1;
+                return i < str.length();
             }
 
             @Override

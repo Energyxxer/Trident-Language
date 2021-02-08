@@ -221,7 +221,7 @@ public class DefineInstruction implements InstructionDefinition {
                             sym.setInstanceField(true);
                         }
                         ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(PASS_SET_SYMBOL_TYPES, f -> {
-                            sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint((PrismarineSummaryModule) l.getSummaryModule(), p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
+                            sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(f, p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
                         });
 
                         SummarySymbol classSym = ((PrismarineSummaryModule) l.getSummaryModule()).peekSubSymbol();

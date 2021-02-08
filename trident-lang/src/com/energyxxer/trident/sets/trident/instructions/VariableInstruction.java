@@ -82,7 +82,9 @@ public class VariableInstruction implements InstructionDefinition {
                             if(dynamicFunctionPattern != null && ((TokenGroup) dynamicFunctionPattern).getContents()[0].getName().equals("DYNAMIC_FUNCTION")) {
                                 sym.addTag(TridentSuggestionTags.TAG_METHOD);
 
-                                sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint((PrismarineSummaryModule) l.getSummaryModule(), dynamicFunctionPattern.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
+                                ((TridentSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_SET_SYMBOL_TYPES, f -> {
+                                    sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(f, dynamicFunctionPattern.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
+                                });
                             }
                             break;
                         }
