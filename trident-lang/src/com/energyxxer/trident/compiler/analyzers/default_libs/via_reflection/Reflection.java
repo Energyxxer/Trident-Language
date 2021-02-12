@@ -17,7 +17,6 @@ import com.energyxxer.trident.worker.tasks.SetupWritingStackTask;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 
 public class Reflection {
@@ -44,7 +43,7 @@ public class Reflection {
 
     public static DictionaryObject getMetadata(ResourceLocation fileLoc, ISymbolContext ctx) {
         if(fileLoc.isTag) throw new IllegalArgumentException("Cannot get metadata of a tag: " + fileLoc);
-        TridentFile file = ctx.getCompiler().getUnit(TridentFileUnitConfiguration.INSTANCE, Paths.get(fileLoc.body)); //TODO
+        TridentFile file = ctx.getCompiler().getUnit(TridentFileUnitConfiguration.INSTANCE, TridentFileUnitConfiguration.resourceLocationToFunctionPath(fileLoc));
         if(file == null) {
             throw new IllegalArgumentException("File '" + fileLoc + "' does not exist");
         } else {
