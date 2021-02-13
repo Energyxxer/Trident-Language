@@ -58,6 +58,7 @@ public class Tags {
         TagGroup tagGroup = ns.getTagManager().getGroup(category);
 
         Tag tag = tagGroup.getOrCreate(tagLoc.body);
+        tag.setExport(true);
 
         for(Object rawValue : values) {
 
