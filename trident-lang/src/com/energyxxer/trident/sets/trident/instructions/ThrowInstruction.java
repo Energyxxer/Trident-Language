@@ -14,12 +14,16 @@ import static com.energyxxer.prismarine.PrismarineProductions.*;
 public class ThrowInstruction implements InstructionDefinition {
     @Override
     public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
-        return group(TridentProductions.instructionKeyword("throw"), TridentProductions.noToken().addTags("cspn:Cause"), PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE"), false, String.class).setName("CAUSE")).setName("THROW_STATEMENT");
+        return group(TridentProductions.instructionKeyword("throw"), TridentProductions.noToken().addTags("cspn:Cause"), PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE"), false, String.class, PrismarineException.class).setName("CAUSE")).setName("THROW_STATEMENT");
     }
 
     @Override
     public void run(TokenPattern<?> pattern, ISymbolContext ctx) {
-        String message = (String) pattern.find("CAUSE").evaluate(ctx);
-        throw new PrismarineException(TridentExceptionUtil.Source.USER_EXCEPTION, message, pattern, ctx).setBreaking(true);
+        Object exception = pattern.find("CAUSE").evaluate(ctx);
+        if(exception instanceof PrismarineException) {
+            throw (PrismarineException) exception;
+        } else {
+            throw new PrismarineException(TridentExceptionUtil.Source.USER_EXCEPTION, (String) exception, pattern, ctx).setBreaking(true);
+        }
     }
 }

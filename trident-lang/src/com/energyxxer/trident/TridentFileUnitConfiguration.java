@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.energyxxer.prismarine.PrismarineCompiler.PassResult.OK;
 import static com.energyxxer.trident.Trident.FUNCTION_EXTENSION;
 
 public class TridentFileUnitConfiguration extends PrismarineLanguageUnitConfiguration<TridentFile> {
@@ -54,17 +55,17 @@ public class TridentFileUnitConfiguration extends PrismarineLanguageUnitConfigur
     }
 
     @Override
-    public void performPass(TridentFile unit, PrismarineCompiler compiler, int passNumber) {
+    public PrismarineCompiler.PassResult performPass(TridentFile unit, PrismarineCompiler compiler, int passNumber) {
         switch(passNumber) {
             case 1: {
                 compiler.setProgress("Resolving requires");
                 unit.checkCircularRequires();
-                return;
+                return OK;
             }
             case 2: {
                 compiler.setProgress("Resolving requires");
                 this.getAllRequires(unit, compiler);
-                return;
+                return OK;
             }
             case 3: {
                 compiler.setProgress("Analyzing " + unit.getResourceLocation());
@@ -77,7 +78,7 @@ public class TridentFileUnitConfiguration extends PrismarineLanguageUnitConfigur
                 } catch(ContinueException c) {
                     compiler.getReport().addNotice(new Notice(NoticeType.ERROR, "Continue instruction outside loop", c.getPattern()));
                 }
-                return;
+                return OK;
             }
             default:
                 throw new IllegalArgumentException("Cannot perform pass " + passNumber + " on this unit type"); //TODO make a better exception class for this
