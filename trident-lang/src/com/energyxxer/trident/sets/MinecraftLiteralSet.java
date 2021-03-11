@@ -116,7 +116,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         RAW_RESOURCE_LOCATION
                 )
                 .add(
-                        PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, ResourceLocation.class) //todo decide if this should require a non-tagged rl
+                        PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, ResourceLocation.class)
                 );
 
         productions.getOrCreateStructure("RESOURCE_LOCATION_TAGGED")
@@ -1159,7 +1159,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             if(clonedNBT != null) clonedNBT = clonedNBT.clone();
             item = new Item(((Item) obj).getItemType(), clonedNBT);
         } else if(obj instanceof CustomItem) {
-            item = ((CustomItem) obj).constructItem(mode); //TODO TEST THIS WHEN CUSTOM ITEMS ARE BACK
+            item = ((CustomItem) obj).constructItem(mode);
         } else if(obj instanceof Type) {
             if(!allowTags && !((Type) obj).isStandalone()) {
                 throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Item tags aren't allowed in this context", root, (ISymbolContext) d[0]);

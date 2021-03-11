@@ -62,7 +62,7 @@ public class TridentFile extends PrismarineLanguageUnit {
 
     private ArrayList<Runnable> postProcessingActions = new ArrayList<>();
 
-    public TridentFile(PrismarineCompiler compiler, Path relSourcePath, TokenPattern<?> filePattern) { //TODO figure out constructors
+    public TridentFile(PrismarineCompiler compiler, Path relSourcePath, TokenPattern<?> filePattern) {
         this(compiler, null, relSourcePath, filePattern, compiler.get(ValidatePropertiesTask.INSTANCE).languageLevel);
     }
 

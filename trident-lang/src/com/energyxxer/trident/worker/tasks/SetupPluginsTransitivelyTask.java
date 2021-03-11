@@ -17,8 +17,6 @@ public class SetupPluginsTransitivelyTask extends PrismarineProjectWorkerTask<Ar
         ArrayList<PrismarinePlugin> transitivePlugins = new ArrayList<>(worker.output.get(SetupPluginsTask.INSTANCE));
         for(PrismarineProjectWorker dependency : worker.output.getDependencies()) {
             transitivePlugins.addAll(dependency.output.get(SetupPluginsTransitivelyTask.INSTANCE));
-            //TODO please check if this works
-            // can't trust it lol
         }
         return transitivePlugins;
     }

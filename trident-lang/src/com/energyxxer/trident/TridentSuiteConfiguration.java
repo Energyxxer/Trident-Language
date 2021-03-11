@@ -269,7 +269,6 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
         CommandModule module = thisCompiler.getWorker().output.get(SetupModuleTask.INSTANCE);
         CommandModule subModule = subCompiler.getWorker().output.get(SetupModuleTask.INSTANCE);
 
-        //TODO changed from dependencyWorker to subCompiler.getWorker(). Assuming they're the same
         if(!subCompiler.getWorker().getDependencyInfo().doExport) {
             subModule.propagateExport(false);
         }
