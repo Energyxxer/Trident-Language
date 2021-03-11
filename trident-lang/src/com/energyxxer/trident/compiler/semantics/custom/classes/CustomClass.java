@@ -31,13 +31,10 @@ import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.function.Consumer;
 
 import static com.energyxxer.prismarine.typesystem.functions.natives.PrismarineNativeFunctionBranch.nativeMethodsToFunction;
 
 public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMemberHolder {
-
-    private static final HashMap<String, ArrayList<Consumer<CustomClass>>> stringIdentifiedClassListeners = new HashMap<>();
 
     public enum MemberParentMode {
         CREATE, OVERRIDE, FORCE, INHERIT
@@ -794,6 +791,9 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         assertComplete(pattern, ctx);
         if(_static) {
             throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class '" + getClassTypeIdentifier() + "' is static; cannot be instantiated.", pattern, ctx);
+        }
+        if(genericSupplier == null && isGeneric()) {
+            throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Class '" + getClassTypeIdentifier() + "' is generic, but no type parameters were supplied.", pattern, ctx);
         }
         if(genericSupplier != null && !isGeneric()) {
             throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Class '" + getClassTypeIdentifier() + "' is not generic.", pattern, ctx);

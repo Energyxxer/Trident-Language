@@ -456,8 +456,8 @@ public class TridentLexerProfile extends LexerProfile {
 
     @Override
     public void putHeaderInfo(Token header) {
-        header.attributes.put("TYPE","tdn");
-        header.attributes.put("DESC","Trident Function File");
+        header.putAttribute("TYPE","tdn");
+        header.putAttribute("DESC","Trident Function File");
     }
 
     private static int indexOf(String base, String... substrings) {

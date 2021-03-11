@@ -34,6 +34,7 @@ import com.energyxxer.trident.TridentSuiteConfiguration;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary;
+import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ParameterizedMemberHolder;
 import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.trident.extensions.EObject;
@@ -97,7 +98,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 literal("this").addProcessor((p, l) -> {
                     if(l.getSummaryModule() != null) {
                         for(SummarySymbol sym : ((PrismarineSummaryModule) l.getSummaryModule()).getSubSymbolStack()) {
-                            if(sym != null && sym.getSuggestionTags().contains(TridentSuggestionTags.TAG_CLASS) && sym.getParentFileSummary() != null) {
+                            if(sym != null && sym.hasSuggestionTag(TridentSuggestionTags.TAG_CLASS) && sym.getParentFileSummary() != null) {
                                 p.addTag(TridentSuggestionTags.__THIS_TYPE + sym.getName());
                             }
                         }
@@ -204,7 +205,19 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
             ISymbolContext ctx = (ISymbolContext) d[0];
             TypeHandler<?> sourceType = (TypeHandler<?>) ((TokenGroup) p).getContents()[0].evaluate(ctx);
 
+            if(!(sourceType instanceof CustomClass)) {
+                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Not a class", p, ctx);
+            }
+
             TypeHandler<?>[] genericTypes = (TypeHandler<?>[]) ((TokenGroup) p).getContents()[1].evaluate(ctx);
+
+            if(((CustomClass) sourceType).isGeneric()) {
+                if(genericTypes.length != ((CustomClass) sourceType).getTypeParamNames().length) {
+                    throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Wrong number of type parameters " + genericTypes.length + "; required: " + ((CustomClass) sourceType).getTypeParamNames().length, p, ctx);
+                }
+            } else {
+                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Class '" + sourceType.getTypeIdentifier() + "' is not generic", p, ctx);
+            }
 
             GenericWrapperType<?> wrapperType = new GenericWrapperType<>(sourceType);
             wrapperType.putGenericInfo(sourceType, genericTypes);
@@ -322,7 +335,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 case "INTERPOLATION_CHAIN": {
                     SummarySymbol symbolForChain = getSymbolForChain(fileSummary, inner);
 
-                    if(symbolForChain != null && symbolForChain.getSuggestionTags().contains(TridentSuggestionTags.TAG_CLASS)) {
+                    if(symbolForChain != null && symbolForChain.hasSuggestionTag(TridentSuggestionTags.TAG_CLASS)) {
                         return symbolForChain;
                     }
                     return null;
