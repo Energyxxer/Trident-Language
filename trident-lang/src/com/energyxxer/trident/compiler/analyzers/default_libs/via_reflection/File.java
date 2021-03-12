@@ -30,13 +30,37 @@ public class File {
             } else throw new FileNotFoundException(path.toString().replace(java.io.File.separator, "/"));
         }
 
+        public static Object exists(String inPath, ISymbolContext callingCtx) {
+            String rawPath = inPath.replace("\\", "/");
+            while(rawPath.startsWith("/")) {
+                rawPath = rawPath.substring(1);
+            }
+            Path path = callingCtx.getCompiler().getRootCompiler().getRootPath().resolve(Paths.get(rawPath).normalize());
+            if(!path.startsWith(callingCtx.getCompiler().getRootCompiler().getRootDir().toPath())) {
+                throw new IllegalArgumentException("Cannot read files outside of the current project: " + path.toString().replace("\\", "/"));
+            }
+            return Files.exists(path);
+        }
+
+        public static Object isDirectory(String inPath, ISymbolContext callingCtx) {
+            String rawPath = inPath.replace("\\", "/");
+            while(rawPath.startsWith("/")) {
+                rawPath = rawPath.substring(1);
+            }
+            Path path = callingCtx.getCompiler().getRootCompiler().getRootPath().resolve(Paths.get(rawPath).normalize());
+            if(!path.startsWith(callingCtx.getCompiler().getRootCompiler().getRootDir().toPath())) {
+                throw new IllegalArgumentException("Cannot read files outside of the current project: " + path.toString().replace("\\", "/"));
+            }
+            return Files.exists(path) && Files.isDirectory(path);
+        }
+
         public static Object write(String inPath, String content, ISymbolContext callingCtx) throws IOException {
             String rawPath = inPath.replace(java.io.File.separator, "/");
             while(rawPath.startsWith("/")) {
                 rawPath = rawPath.substring(1);
             }
             Path path = Paths.get(rawPath).normalize();
-            if(!path.startsWith(callingCtx.getCompiler().getRootCompiler().getRootDir().toPath())) {
+            if(path.startsWith(Paths.get("../"))) {
                 throw new IllegalArgumentException("Cannot write files outside the project: " + path);
             }
             path = callingCtx.getCompiler().getRootCompiler().getRootPath().resolve(path);

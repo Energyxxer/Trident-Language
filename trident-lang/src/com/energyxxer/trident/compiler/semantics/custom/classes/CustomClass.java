@@ -554,7 +554,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 if(operandCount == 1) {
                     associatedOperator = operatorPool.getUnaryLeftOperatorForSymbol(operatorSymbol);
                     if(associatedOperator == null) {
-                        associatedOperator = operatorPool.getUnaryLeftOperatorForSymbol(operatorSymbol);
+                        associatedOperator = operatorPool.getUnaryRightOperatorForSymbol(operatorSymbol);
                     }
                 } else {
                     associatedOperator = operatorPool.getBinaryOrTernaryOperatorForSymbol(operatorSymbol);
