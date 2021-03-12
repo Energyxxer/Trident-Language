@@ -15,7 +15,7 @@ public class Trident {
     public static final String PROJECT_BUILD_FILE_NAME = ".tdnbuild";
     public static final String FUNCTION_EXTENSION = ".tdn";
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
-    public static final ThreeNumberVersion TRIDENT_LANGUAGE_VERSION = new ThreeNumberVersion(1,2,1);
+    public static final ThreeNumberVersion TRIDENT_LANGUAGE_VERSION = new ThreeNumberVersion(1,3,0);
 
     private Trident() {}
 
