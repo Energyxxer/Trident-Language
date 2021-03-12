@@ -66,6 +66,20 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         memberAccessStack.get().push(new ArrayList<>());
     };
 
+    public static final BiConsumer<TokenPattern<?>, Lexer> verifySymbol = (p, l) -> {
+        if(l.getSummaryModule() != null) {
+            ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_HIGHLIGHT_TYPE_ERRORS, s -> {
+                if(p.isValidated() && s.getParentSummary() != null) {
+                    String varName = p.flatten(false);
+                    SummarySymbol relatedSym = s.getSymbolForName(varName, p.getStringLocation().index);
+                    if(relatedSym == null) {
+                        l.getNotices().add(new Notice(NoticeType.ERROR, "Cannot resolve symbol '" + varName + "'", p));
+                    }
+                }
+            });
+        }
+    };
+
     @Override
     protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
 
@@ -82,19 +96,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         productions.putPatternMatch("ACTUAL_PARAMETERS", ACTUAL_PARAMETERS);
 
         TokenPatternMatch VARIABLE_NAME = choice(
-                TridentProductions.identifierX().addProcessor((p, l) -> {
-                    if(l.getSummaryModule() != null) {
-                        ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_HIGHLIGHT_TYPE_ERRORS, s -> {
-                            if(p.isValidated() && s.getParentSummary() != null) {
-                                String varName = p.flatten(false);
-                                SummarySymbol relatedSym = s.getSymbolForName(varName, p.getStringLocation().index);
-                                if(relatedSym == null) {
-                                    l.getNotices().add(new Notice(NoticeType.ERROR, "Cannot resolve symbol '" + varName + "'", p));
-                                }
-                            }
-                        });
-                    }
-                }),
+                TridentProductions.identifierX().addProcessor(ValueAccessExpressionSet.verifySymbol),
                 literal("this").addProcessor((p, l) -> {
                     if(l.getSummaryModule() != null) {
                         for(SummarySymbol sym : ((PrismarineSummaryModule) l.getSummaryModule()).getSubSymbolStack()) {
@@ -146,7 +148,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("ROOT_INTERPOLATION_TYPE")
                 .add(
-                        TridentProductions.identifierX()
+                        TridentProductions.identifierX().addProcessor(ValueAccessExpressionSet.verifySymbol)
                                 .setName("VARIABLE_NAME")
                                 .addTags(SuggestionTags.ENABLED_INDEX, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE)
                                 .addProcessor((p, l) -> {

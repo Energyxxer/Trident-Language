@@ -340,7 +340,7 @@ public class TridentLiteralSet extends PatternProviderSet { //pointers, type_def
                                         if(l.getSummaryModule() != null) {
                                             ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(p);
                                         }
-                                })
+                                }).addProcessor(ValueAccessExpressionSet.verifySymbol)
                         ).setName("VARIABLE").setSimplificationFunction(d -> {
                             d.pattern = d.pattern.find("VARIABLE_NAME");
                             d.data = new Object[] {(ISymbolContext) d.data[0]};
