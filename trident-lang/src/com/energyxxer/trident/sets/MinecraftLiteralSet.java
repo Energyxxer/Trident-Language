@@ -1258,7 +1258,10 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         break;
                     }
                     case "item": {
-                        argsGroupMatch.append(productions.getOrCreateStructure("ITEM"));
+                        argsGroupMatch.append(group(productions.getOrCreateStructure("ITEM")).setSimplificationFunction(d -> {
+                            d.data = new Object[] {(ISymbolContext) d.data[0], NBTMode.SETTING};
+                            d.pattern = d.pattern.find("ITEM");
+                        }));
                         break;
                     }
                     default: {
