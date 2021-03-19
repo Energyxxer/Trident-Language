@@ -269,10 +269,23 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
         CommandModule module = thisCompiler.getWorker().output.get(SetupModuleTask.INSTANCE);
         CommandModule subModule = subCompiler.getWorker().output.get(SetupModuleTask.INSTANCE);
 
+        ResourcePackGenerator resourcePack = thisCompiler.getWorker().output.get(SetupResourcePackTask.INSTANCE);
+        ResourcePackGenerator subResourcePack = subCompiler.getWorker().output.get(SetupResourcePackTask.INSTANCE);
+
         if(!subCompiler.getWorker().getDependencyInfo().doExport) {
             subModule.propagateExport(false);
+
+            if(subResourcePack != null) {
+                for(Exportable exportable : subResourcePack.exportables) {
+                    exportable.setExport(false);
+                }
+            }
         }
         module.join(subModule);
+
+        if(resourcePack != null && subResourcePack != null) {
+            resourcePack.exportables.addAll(0, subResourcePack.exportables);
+        }
     }
 
     @Override
