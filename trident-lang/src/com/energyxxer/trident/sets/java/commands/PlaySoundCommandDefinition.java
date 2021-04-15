@@ -5,18 +5,18 @@ import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.playsound.PlaySoundCommand;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.prismarine.reporting.PrismarineException;
-import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
-import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
@@ -58,15 +58,20 @@ public class PlaySoundCommandDefinition implements SimpleCommandDefinition {
                 float pitch = 1;
                 float minVol = 0;
 
-                List<TokenPattern<?>> numberArgs = sub.searchByName("REAL");
-                if (numberArgs.size() >= 1) {
-                    maxVol = (float) (double) numberArgs.get(0).evaluate(ctx);
-                    if (numberArgs.size() >= 2) {
-                        pitch = (float) (double) numberArgs.get(1).evaluate(ctx);
-                        if (numberArgs.size() >= 3) {
-                            minVol = (float) (double) numberArgs.get(2).evaluate(ctx);
+                ArrayList<TokenPattern<?>> numberArgs = TokenPattern.PATTERN_LIST_POOL.get().claim();
+                sub.collectByName("REAL", numberArgs);
+                try {
+                    if (numberArgs.size() >= 1) {
+                        maxVol = (float) (double) numberArgs.get(0).evaluate(ctx);
+                        if (numberArgs.size() >= 2) {
+                            pitch = (float) (double) numberArgs.get(1).evaluate(ctx);
+                            if (numberArgs.size() >= 3) {
+                                minVol = (float) (double) numberArgs.get(2).evaluate(ctx);
+                            }
                         }
                     }
+                } finally {
+                    TokenPattern.PATTERN_LIST_POOL.get().free(numberArgs);
                 }
 
                 return new PlaySoundCommand(soundEvent.toString(), channel, entity, pos, maxVol, pitch, minVol);
@@ -74,9 +79,9 @@ public class PlaySoundCommandDefinition implements SimpleCommandDefinition {
         } catch (CommodoreException x) {
             TridentExceptionUtil.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))
-                    .map("MAX_VOLUME", () -> sub.searchByName("REAL").get(0))
-                    .map("PITCH", () -> sub.searchByName("REAL").get(1))
-                    .map("MIN_VOLUME", () -> sub.searchByName("REAL").get(2))
+                    .map("MAX_VOLUME", () -> sub.getByName("REAL"))
+                    .map("PITCH", () -> sub.getByName("REAL"))
+                    .map("MIN_VOLUME", () -> sub.getByName("REAL"))
                     .invokeThrow();
             throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Impossible code reached", sub, ctx);
         }

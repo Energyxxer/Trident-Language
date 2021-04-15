@@ -75,7 +75,7 @@ public class DataStructureLiteralSet extends PatternProviderSet { //dictionaries
             TokenList entryList = (TokenList) p.find("DICTIONARY_ENTRY_LIST");
 
             if (entryList != null) {
-                for (TokenPattern<?> entry : entryList.searchByName("DICTIONARY_ENTRY")) {
+                for (TokenPattern<?> entry : entryList.getContentsExcludingSeparators()) {
                     String key = entry.find("DICTIONARY_KEY").flatten(false);
                     if (key.startsWith("\"")) {
                         key = BasicLiteralSet.parseQuotedString(key, p, ctx);
@@ -108,7 +108,7 @@ public class DataStructureLiteralSet extends PatternProviderSet { //dictionaries
             TokenList entryList = (TokenList) p.find("LIST_ENTRIES");
 
             if (entryList != null) {
-                for (TokenPattern<?> entry : entryList.searchByName("INTERPOLATION_VALUE")) {
+                for (TokenPattern<?> entry : entryList.getContentsExcludingSeparators()) {
                     nextThis = list;
                     list.add(entry.evaluate(ctx));
                     nextThis = null;

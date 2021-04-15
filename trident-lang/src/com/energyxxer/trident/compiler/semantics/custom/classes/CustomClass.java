@@ -170,7 +170,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
         if(pattern.find("CLASS_INHERITS") != null) {
             TokenList inheritsList = ((TokenList) pattern.find("CLASS_INHERITS.SUPERCLASS_LIST"));
-            for(TokenPattern<?> rawParent : inheritsList.searchByName("INTERPOLATION_TYPE")) {
+            for(TokenPattern<?> rawParent : inheritsList.getContentsExcludingSeparators()) {
                 TypeHandler parentType = (TypeHandler) rawParent.evaluate(ctx);
                 while(parentType instanceof GenericWrapperType) {
                     if(classObject.inheritedGenericSuppliers == null) classObject.inheritedGenericSuppliers = new GenericSupplier();

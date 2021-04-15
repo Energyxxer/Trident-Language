@@ -17,7 +17,7 @@ public class TridentTempFindABetterHome {
         ArrayList<FormalParameter> formalParams = new ArrayList<>();
         TokenList paramNames = (TokenList) pattern.find("PRE_CODE_BLOCK.FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
         if (paramNames != null) {
-            for (TokenPattern<?> param : paramNames.searchByName("FORMAL_PARAMETER")) {
+            for (TokenPattern<?> param : paramNames.getContentsExcludingSeparators()) {
                 formalParams.add(createFormalParam(param, ctx));
             }
         }

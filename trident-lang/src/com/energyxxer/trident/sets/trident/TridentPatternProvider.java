@@ -215,7 +215,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                         if(l.getSummaryModule() != null) {
                             TokenList paramList = (TokenList) p.find("FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
                             if(paramList != null) {
-                                for(TokenPattern<?> paramPattern : paramList.searchByName("FORMAL_PARAMETER")) {
+                                for(TokenPattern<?> paramPattern : paramList.getContentsExcludingSeparators()) {
                                     ((TridentSummaryModule) l.getSummaryModule()).addPreBlockDeclaration(paramPattern.find("FORMAL_PARAMETER_NAME"), paramPattern.find("TYPE_CONSTRAINTS"));
                                 }
                             }

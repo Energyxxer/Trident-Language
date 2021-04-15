@@ -268,7 +268,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                             TagCompound compound = new TagCompound();
                                             TokenList entries = (TokenList) p.find("NBT_COMPOUND_ENTRIES");
                                             if (entries != null) {
-                                                for (TokenPattern<?> inner : entries.searchByName("NBT_COMPOUND_ENTRY")) {
+                                                for (TokenPattern<?> inner : entries.getContentsExcludingSeparators()) {
                                                     String key = (String) inner.find("NBT_KEY").evaluate((ISymbolContext) d[0]);
                                                     NBTTag value = (NBTTag) inner.find("NBT_VALUE").evaluate((ISymbolContext) d[0]);
                                                     value.setName(key);
@@ -296,7 +296,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                         TagList list = new TagList();
                                         TokenList entries = (TokenList) p.find("NBT_LIST_ENTRIES");
                                         if (entries != null) {
-                                            for (TokenPattern<?> inner : entries.searchByName("NBT_VALUE")) {
+                                            for (TokenPattern<?> inner : entries.getContentsExcludingSeparators()) {
                                                 list.add((NBTTag)inner.evaluate(d));
                                             }
                                         }
@@ -317,7 +317,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                     TagByteArray arr = new TagByteArray();
                                     TokenList entries = (TokenList) p.find("NBT_ARRAY_ENTRIES");
                                     if (entries != null) {
-                                        for (TokenPattern<?> inner : entries.searchByName("NBT_VALUE")) {
+                                        for (TokenPattern<?> inner : entries.getContentsExcludingSeparators()) {
                                             NBTTag value = (NBTTag)inner.evaluate(d);
                                             if (value instanceof TagByte) {
                                                 arr.add(value);
@@ -343,7 +343,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                     TagIntArray arr = new TagIntArray();
                                     TokenList entries = (TokenList) p.find("NBT_ARRAY_ENTRIES");
                                     if (entries != null) {
-                                        for (TokenPattern<?> inner : entries.searchByName("NBT_VALUE")) {
+                                        for (TokenPattern<?> inner : entries.getContentsExcludingSeparators()) {
                                             NBTTag value = (NBTTag)inner.evaluate(d);
                                             if (value instanceof TagInt) {
                                                 arr.add(value);
@@ -369,7 +369,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                     TagLongArray arr = new TagLongArray();
                                     TokenList entries = (TokenList) p.find("NBT_ARRAY_ENTRIES");
                                     if (entries != null) {
-                                        for (TokenPattern<?> inner : entries.searchByName("NBT_VALUE")) {
+                                        for (TokenPattern<?> inner : entries.getContentsExcludingSeparators()) {
                                             NBTTag value = (NBTTag)inner.evaluate(d);
                                             if (value instanceof TagLong) {
                                                 arr.add(value);
@@ -885,7 +885,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                     TokenList blockstateList = (TokenList) p.find("BLOCKSTATE_LIST");
                     if(blockstateList == null) return null;
                     Blockstate properties = new Blockstate();
-                    for(TokenPattern<?> rawProperty : blockstateList.searchByName("BLOCKSTATE_PROPERTY")) {
+                    for(TokenPattern<?> rawProperty : blockstateList.getContentsExcludingSeparators()) {
                         String key = (String) rawProperty.find("BLOCKSTATE_PROPERTY_KEY").evaluate(d[0]);
                         String value = (String) rawProperty.find("BLOCKSTATE_PROPERTY_VALUE").evaluate(d[0]);
                         properties.put(key, value);
