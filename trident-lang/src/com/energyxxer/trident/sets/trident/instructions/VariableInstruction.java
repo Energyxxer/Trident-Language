@@ -195,6 +195,7 @@ public class VariableInstruction implements InstructionDefinition {
         private TypeConstraints constraint;
         private boolean constraintForced = false;
         private Function<Object, TypeConstraints> constraintSupplier = null;
+        private Object supplierData = null;
 
         public SymbolDeclaration(String symbolName) {
             this.symbolName = symbolName;
@@ -236,6 +237,14 @@ public class VariableInstruction implements InstructionDefinition {
 
         public TypeConstraints getConstraint(Object initialValue) {
             return constraintForced ? constraint : (constraintSupplier != null ? constraintSupplier.apply(initialValue) : null);
+        }
+
+        public Object getSupplierData() {
+            return supplierData;
+        }
+
+        public void setSupplierData(Object supplierData) {
+            this.supplierData = supplierData;
         }
     }
 

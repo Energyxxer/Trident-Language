@@ -305,6 +305,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
                         @Override
                         public Symbol constructSymbol(CustomClassObject thiz) {
+                            decl.setSupplierData(thiz);
                             return decl.getSupplier().get();
                         }
 
@@ -965,7 +966,19 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             Symbol sym = new Symbol(memberName, memberVisibility);
             sym.setTypeConstraints(response.getConstraint(initialValue));
             sym.setFinal(response.hasModifier(TridentTempFindABetterHome.SymbolModifier.FINAL));
-            if(initialized) sym.safeSetValue(initialValue, entryFinal, ctx);
+            if(initialized) {
+                CustomClassObject instance = (CustomClassObject) response.getSupplierData();
+                if(sym.getTypeConstraints().isGeneric()) {
+                    sym.getTypeConstraints().startGenericSubstitution(instance, new ActualParameterList(pattern), ctx);
+                }
+                try {
+                    sym.safeSetValue(initialValue, entryFinal, ctx);
+                } finally {
+                    if(sym.getTypeConstraints().isGeneric()) {
+                        sym.getTypeConstraints().endGenericSubstitution();
+                    }
+                }
+            }
             return sym;
         });
 
