@@ -73,7 +73,7 @@ public class TridentLexerProfile extends LexerProfile {
                     if(length <= 0) return ScannerContextResponse.FAILED;
 
                     String substring = str.substring(startIndex, startIndex + length);
-                    TokenType obtainedType = length >= 2 && Character.isLetter(str.charAt(startIndex+length-1)) && ((length == 2) == (Character.isLetter(str.charAt(startIndex+1)))) ? TYPED_NUMBER : ((substring.contains(".") || substring.contains("e") || substring.contains("E")) ? REAL_NUMBER : INTEGER_NUMBER);
+                    TokenType obtainedType = length >= 3 && str.charAt(startIndex+1) == 'x' ? INTEGER_NUMBER : length >= 2 && Character.isLetter(str.charAt(startIndex+length-1)) && ((length == 2) == (Character.isLetter(str.charAt(startIndex+1)))) ? TYPED_NUMBER : ((substring.contains(".") || substring.contains("e") || substring.contains("E")) ? REAL_NUMBER : INTEGER_NUMBER);
 
                     if(type == JSON_NUMBER && obtainedType != TYPED_NUMBER) obtainedType = type;
 
