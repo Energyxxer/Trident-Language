@@ -210,7 +210,7 @@ public class TridentLexerProfile extends LexerProfile {
             public ScannerContextResponse analyzeExpectingType(String str, int startIndex, TokenType type, LexerProfile profile) {
                 if(str.indexOf("\n", startIndex) != -1) {
                     return new ScannerContextResponse(true, str.substring(startIndex, str.indexOf("\n", startIndex)), TRAILING_STRING);
-                } else return new ScannerContextResponse(true, str, TRAILING_STRING);
+                } else return new ScannerContextResponse(true, str.substring(startIndex), TRAILING_STRING);
             }
 
             @Override
