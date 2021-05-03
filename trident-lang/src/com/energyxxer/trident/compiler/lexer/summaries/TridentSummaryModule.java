@@ -2,6 +2,7 @@ package com.energyxxer.trident.compiler.lexer.summaries;
 
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.summaries.CachedSymbolReference;
 import com.energyxxer.prismarine.summaries.PrismarineProjectSummary;
 import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
@@ -28,7 +29,7 @@ public class TridentSummaryModule extends PrismarineSummaryModule {
                 SummarySymbol sym = new SummarySymbol((TridentSummaryModule) l.getSummaryModule(), declaration.declarationPattern.flatten(false), TridentSymbolVisibility.LOCAL, p.getStringLocation().index + 1);
                 ((TridentSummaryModule) l.getSummaryModule()).addSymbolUsage(declaration.declarationPattern);
                 sym.setDeclarationPattern(declaration.declarationPattern);
-                sym.setType(ValueAccessExpressionSet.getTypeSymbolFromConstraint((PrismarineSummaryModule) l.getSummaryModule(), declaration.constraintsPattern));
+                sym.setType(new CachedSymbolReference(fs -> ValueAccessExpressionSet.getTypeSymbolFromConstraint(fs, declaration.constraintsPattern)));
                 if(declaration.tags != null) {
                     for(String tag : declaration.tags) {
                         sym.addTag(tag);

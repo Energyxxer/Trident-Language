@@ -17,6 +17,7 @@ import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternProviderSet;
 import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.summaries.CachedSymbolReference;
 import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
@@ -360,9 +361,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                     SummarySymbol argsSym = new SummarySymbol(
                             f, "args", SymbolVisibility.PUBLIC, 0
                     );
-                    if (f.getParentSummary() != null) {
-                        argsSym.setType(((TridentProjectSummary) f.getParentSummary()).getPrimitiveSymbol("dictionary"));
-                    }
+                    argsSym.setType(new CachedSymbolReference(fs -> ((TridentProjectSummary) fs.getParentSummary()).getPrimitiveSymbol("dictionary")));
                     f.addElement(argsSym);
                 }
             });

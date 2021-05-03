@@ -450,7 +450,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                         if(m.getName().equals("MEMBER_KEY")) {
                             shouldBreak = true;
                             if(s != null) {
-                                for(SummarySymbol subSymbol : s.getSubSymbols(filePath, start.index)) {
+                                for(SummarySymbol subSymbol : s.collectSubSymbols(filePath, start.index, new ArrayList<>(), fs)) {
                                     SymbolSuggestion suggestion = new SymbolSuggestion(subSymbol);
                                     suggestionModule.addSuggestion(suggestion);
                                 }
@@ -469,7 +469,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
                 if(obtainedSymbol != null && !broken[0] && failingAccess != null) {
                     if(failingAccess.getName().equals("MEMBER_KEY")) {
-                        for(SummarySymbol subSymbol : obtainedSymbol.getSubSymbols(filePath, start.index)) {
+                        for(SummarySymbol subSymbol : obtainedSymbol.collectSubSymbols(filePath, start.index, new ArrayList<>(), fs)) {
                             SymbolSuggestion suggestion = new SymbolSuggestion(subSymbol);
                             suggestionModule.addSuggestion(suggestion);
                         }
@@ -503,7 +503,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                         TokenPattern<?> memberName = memberAccess.find("SYMBOL_NAME");
                         boolean looped = false;
                         if(memberName != null) {
-                            for(SummarySymbol subSymbol : symbol.getSubSymbolsByName(memberName.flatten(false), filePath, rootIndex)) {
+                            for(SummarySymbol subSymbol : symbol.collectSubSymbolsByName(memberName.flatten(false), filePath, rootIndex, new ArrayList<>(), fileSummary)) {
                                 symbol = subSymbol;
                                 looped = true;
                             }
@@ -514,7 +514,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                         break;
                     }
                     case "METHOD_CALL": {
-                        SummarySymbol returnType = symbol.getReturnType();
+                        SummarySymbol returnType = symbol.getReturnType(fileSummary);
                         if(returnType == null) {
                             return null;
                         }

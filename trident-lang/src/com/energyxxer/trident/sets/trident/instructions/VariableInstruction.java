@@ -9,6 +9,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.summaries.CachedSymbolReference;
 import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
 import com.energyxxer.prismarine.symbols.Symbol;
@@ -53,9 +54,7 @@ public class VariableInstruction implements InstructionDefinition {
             if(l.getSummaryModule() != null) {
                 SummarySymbol sym = ((TridentSummaryModule) l.getSummaryModule()).popSubSymbol();
 
-                ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_SET_SYMBOL_TYPES, s -> {
-                    sym.setType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(s, p.find("TYPE_CONSTRAINTS")));
-                });
+                sym.setType(new CachedSymbolReference(s -> ValueAccessExpressionSet.getTypeSymbolFromConstraint(s, p.find("TYPE_CONSTRAINTS"))));
 
                 sym.addTag(TridentSuggestionTags.TAG_VARIABLE);
                 TokenPattern<?> root = p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE.ROOT_INTERPOLATION_VALUE");
@@ -81,10 +80,7 @@ public class VariableInstruction implements InstructionDefinition {
                             TokenPattern<?> dynamicFunctionPattern = ((TokenStructure)root.find("NEW_FUNCTION.NEW_FUNCTION_SPLIT")).getContents();
                             if(dynamicFunctionPattern != null && ((TokenGroup) dynamicFunctionPattern).getContents()[0].getName().equals("DYNAMIC_FUNCTION")) {
                                 sym.addTag(TridentSuggestionTags.TAG_METHOD);
-
-                                ((TridentSummaryModule) l.getSummaryModule()).addFileAwareProcessor(TridentProjectSummary.PASS_SET_SYMBOL_TYPES, f -> {
-                                    sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(f, dynamicFunctionPattern.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
-                                });
+                                sym.setReturnType(new CachedSymbolReference(f -> ValueAccessExpressionSet.getTypeSymbolFromConstraint(f, dynamicFunctionPattern.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS"))));
                             }
                             break;
                         }
@@ -103,7 +99,7 @@ public class VariableInstruction implements InstructionDefinition {
                         if (contents instanceof TokenGroup || contents instanceof TokenStructure) {
                             SummarySymbol initSymbol = ValueAccessExpressionSet.getSymbolForChain(s, (TokenPattern<?>) contents.getContents());
 
-                            if(initSymbol != null && initSymbol.getType() != null) {
+                            if(initSymbol != null && initSymbol.getType(s) != null) {
                                 int replacementStartIndex = p.find("SYMBOL_NAME").getStringBounds().end.index;
                                 int replacementEndIndex = p.find("SYMBOL_INITIALIZATION").getStringLocation().index;
 
@@ -116,7 +112,7 @@ public class VariableInstruction implements InstructionDefinition {
                                                 new CodeReplacementAction("Constrain variable to initialization type")
                                                 .setReplacementStartIndex(replacementStartIndex)
                                                 .setReplacementEndIndex(replacementEndIndex)
-                                                .setReplacementText(" : " + initSymbol.getType().getName() + " ")
+                                                .setReplacementText(" : " + initSymbol.getType(s).getName() + " ")
                                         );
 
                                 l.getInspectionModule().addInspection(inspection);

@@ -16,6 +16,7 @@ import com.energyxxer.prismarine.operators.Operator;
 import com.energyxxer.prismarine.operators.OperatorPool;
 import com.energyxxer.prismarine.operators.TernaryOperator;
 import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.summaries.CachedSymbolReference;
 import com.energyxxer.prismarine.summaries.PrismarineSummaryModule;
 import com.energyxxer.prismarine.summaries.SummaryBlock;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
@@ -44,7 +45,6 @@ import java.util.ArrayList;
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 import static com.energyxxer.trident.compiler.TridentProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.COMPILER_OPERATOR;
-import static com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary.PASS_SET_SYMBOL_TYPES;
 import static com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule.CAPTURE_PRE_BLOCK_DECLARATIONS;
 
 public class DefineInstruction implements InstructionDefinition {
@@ -144,9 +144,7 @@ public class DefineInstruction implements InstructionDefinition {
                         sym.setVisibility(parseClassMemberVisibility(p.find("SYMBOL_VISIBILITY"), ClassSymbolVisibility.LOCAL));
                         sym.addTag(TridentSuggestionTags.TAG_FIELD);
 
-                        ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(PASS_SET_SYMBOL_TYPES, s -> {
-                            sym.setType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(s, p.find("TYPE_CONSTRAINTS")));
-                        });
+                        sym.setType(new CachedSymbolReference(s -> ValueAccessExpressionSet.getTypeSymbolFromConstraint(s, p.find("TYPE_CONSTRAINTS"))));
 
                         if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                             sym.setInstanceField(true);
@@ -159,7 +157,7 @@ public class DefineInstruction implements InstructionDefinition {
                                     TokenPattern<?> contents = p.find("SYMBOL_INITIALIZATION.INITIAL_VALUE.INTERPOLATION_VALUE.MID_INTERPOLATION_VALUE");
                                     if(contents instanceof TokenGroup || contents instanceof TokenStructure) {
                                         SummarySymbol initSymbol = ValueAccessExpressionSet.getSymbolForChain(s, (TokenPattern<?>) contents.getContents());
-                                        if (initSymbol != null && initSymbol.getType() != null) {
+                                        if (initSymbol != null && initSymbol.getType(s) != null) {
                                             int replacementStartIndex = p.find("SYMBOL_NAME").getStringBounds().end.index;
                                             int replacementEndIndex = p.find("SYMBOL_INITIALIZATION").getStringLocation().index;
 
@@ -172,7 +170,7 @@ public class DefineInstruction implements InstructionDefinition {
                                                             new CodeReplacementAction("Constrain field to initialization type")
                                                             .setReplacementStartIndex(replacementStartIndex)
                                                             .setReplacementEndIndex(replacementEndIndex)
-                                                            .setReplacementText(" : " + initSymbol.getType().getName() + " ")
+                                                            .setReplacementText(" : " + initSymbol.getType(s).getName() + " ")
                                                     );
 
                                             l.getInspectionModule().addInspection(inspection);
@@ -220,9 +218,7 @@ public class DefineInstruction implements InstructionDefinition {
                         if (p.find("SYMBOL_MODIFIER_LIST") == null || !p.find("SYMBOL_MODIFIER_LIST").flatten(false).contains("static")) {
                             sym.setInstanceField(true);
                         }
-                        ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(PASS_SET_SYMBOL_TYPES, f -> {
-                            sym.setReturnType(ValueAccessExpressionSet.getTypeSymbolFromConstraint(f, p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS")));
-                        });
+                        sym.setReturnType(new CachedSymbolReference(f -> ValueAccessExpressionSet.getTypeSymbolFromConstraint(f, p.find("DYNAMIC_FUNCTION.PRE_CODE_BLOCK.TYPE_CONSTRAINTS"))));
 
                         SummarySymbol classSym = ((PrismarineSummaryModule) l.getSummaryModule()).peekSubSymbol();
                         classSym.putElement(sym);
@@ -433,14 +429,9 @@ public class DefineInstruction implements InstructionDefinition {
                                         ).addTags("cspn:Superclasses").setName("SUPERCLASS_LIST").addProcessor((p, l) -> checkDuplicates(((TokenList) p), "Duplicate superclass", l)).addProcessor((p, l) -> {
                                             if(l.getSummaryModule() != null) {
                                                 SummarySymbol classSymbol = ((PrismarineSummaryModule) l.getSummaryModule()).peekSubSymbol();
-                                                ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(PASS_SET_SYMBOL_TYPES, f -> {
-                                                    for(TokenPattern<?> rawType : ((TokenList) p).getContentsExcludingSeparators()) {
-                                                        SummarySymbol superType = ValueAccessExpressionSet.getTypeSymbolFromTypePattern(f, rawType);
-                                                        if(superType != null) {
-                                                            classSymbol.getSubBlock().addFallbackSymbol(superType);
-                                                        }
-                                                    }
-                                                });
+                                                for(TokenPattern<?> rawType : ((TokenList) p).getContentsExcludingSeparators()) {
+                                                    classSymbol.getSubBlock().addFallbackSymbol(new CachedSymbolReference(f -> ValueAccessExpressionSet.getTypeSymbolFromTypePattern(f, rawType)));
+                                                }
                                             }
                                         })
                                 ).setName("CLASS_INHERITS"),
