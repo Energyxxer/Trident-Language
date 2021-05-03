@@ -9,23 +9,17 @@ import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeConstraints;
-import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.FormalParameter;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunctionBranch;
 import com.energyxxer.prismarine.typesystem.functions.typed.TypedFunction;
-import com.energyxxer.prismarine.typesystem.generics.GenericSupplierImplementer;
 import com.energyxxer.prismarine.typesystem.generics.GenericUtils;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethodFamily;
-import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClassObject;
-import com.energyxxer.trident.compiler.semantics.symbols.ClassMethodSymbolContext;
 import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.trident.worker.tasks.SetupWritingStackTask;
 
 import java.util.Collection;
-import java.util.Map;
 
 public class TridentUserFunctionBranch extends PrismarineFunctionBranch {
     private TokenPattern<?> functionPattern;
@@ -51,30 +45,9 @@ public class TridentUserFunctionBranch extends PrismarineFunctionBranch {
         params.reportInvalidNames(formalParameters, callingCtx);
 
         if(thisObject instanceof CustomClassObject) {
-            innerFrame = new ClassMethodSymbolContext(declaringCtx, (CustomClassObject) thisObject);
-            for(ClassMethodFamily family : ((CustomClassObject) thisObject).getInstanceMethods().getMethodTable().getAllFamilies()) {
-                ((ClassMethodSymbolContext) innerFrame).putClassFunction(family);
-            }
-            for(Symbol sym : ((CustomClassObject) thisObject).getMemberSymbols()) {
-                innerFrame.put(sym);
-            }
+            innerFrame = ((CustomClassObject) thisObject).createInnerFrame(declaringCtx, params, callingCtx);
         } else {
             innerFrame = new SymbolContext(declaringCtx);
-        }
-
-        if(thisObject instanceof GenericSupplierImplementer && ((GenericSupplierImplementer) thisObject).isGenericSupplier()) {
-            for(Map.Entry<Object, TypeHandler[]> entry : ((GenericSupplierImplementer) thisObject).getGenericSupplier().entrySet()) {
-                if(!(entry.getKey() instanceof CustomClass)) continue;
-                if(declaringCtx.isAncestor(((CustomClass) entry.getKey()).getInnerStaticContext())) {
-                    for(int i = 0; i < entry.getValue().length; i++) {
-                        String typeParamName = ((CustomClass) entry.getKey()).getTypeParamNames()[i];
-                        TypeHandler<?> nonGenericType = entry.getValue()[i];
-                        nonGenericType = GenericUtils.nonGeneric(nonGenericType, thisObject, params, callingCtx);
-                        Symbol sym = new Symbol(typeParamName, TridentSymbolVisibility.PRIVATE, nonGenericType);
-                        innerFrame.put(sym);
-                    }
-                }
-            }
         }
 
         for(int i = 0; i < formalParameters.size(); i++) {

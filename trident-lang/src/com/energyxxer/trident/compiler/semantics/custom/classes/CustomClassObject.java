@@ -5,6 +5,7 @@ import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
 import com.energyxxer.prismarine.typesystem.ContextualToString;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
@@ -13,11 +14,15 @@ import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunctio
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
 import com.energyxxer.prismarine.typesystem.generics.GenericSupplier;
 import com.energyxxer.prismarine.typesystem.generics.GenericSupplierImplementer;
+import com.energyxxer.prismarine.typesystem.generics.GenericUtils;
 import com.energyxxer.prismarine.typesystem.generics.GenericWrapperType;
+import com.energyxxer.trident.compiler.semantics.symbols.ClassMethodSymbolContext;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class CustomClassObject implements TypeHandler<CustomClassObject>, ParameterizedMemberHolder, ContextualToString, GenericSupplierImplementer {
     private final CustomClass type;
@@ -253,5 +258,30 @@ public class CustomClassObject implements TypeHandler<CustomClassObject>, Parame
             }
         }
         return null;
+    }
+
+    public SymbolContext createInnerFrame(ISymbolContext declaringCtx, ActualParameterList params, ISymbolContext callingCtx) {
+        ClassMethodSymbolContext innerFrame = new ClassMethodSymbolContext(declaringCtx, this);
+        for(ClassMethodFamily family : this.getInstanceMethods().getMethodTable().getAllFamilies()) {
+            innerFrame.putClassFunction(family);
+        }
+        for(Symbol sym : this.getMemberSymbols()) {
+            innerFrame.put(sym);
+        }
+        if(this.isGenericSupplier()) {
+            for(Map.Entry<Object, TypeHandler[]> entry : this.getGenericSupplier().entrySet()) {
+                if(!(entry.getKey() instanceof CustomClass)) continue;
+                if(declaringCtx.isAncestor(((CustomClass) entry.getKey()).getInnerStaticContext())) {
+                    for(int i = 0; i < entry.getValue().length; i++) {
+                        String typeParamName = ((CustomClass) entry.getKey()).getTypeParamNames()[i];
+                        TypeHandler<?> nonGenericType = entry.getValue()[i];
+                        nonGenericType = GenericUtils.nonGeneric(nonGenericType, this, params, callingCtx);
+                        Symbol sym = new Symbol(typeParamName, TridentSymbolVisibility.PRIVATE, nonGenericType);
+                        innerFrame.put(sym);
+                    }
+                }
+            }
+        }
+        return innerFrame;
     }
 }

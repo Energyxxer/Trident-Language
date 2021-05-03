@@ -955,11 +955,14 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         response.setVisibility(memberVisibility);
         response.setConstraintSupplier(initialValue -> (TypeConstraints) entryFinal.find("TYPE_CONSTRAINTS").evaluate(ctx, initialValue));
         response.setSupplier(() -> {
+            CustomClassObject instance = (CustomClassObject) response.getSupplierData();
+            ISymbolContext innerFrame = instance != null ? instance.createInnerFrame(ctx, new ActualParameterList(pattern), ctx) : ctx;
+
             Object initialValue = null;
             boolean initialized = false;
             if(pattern.find("SYMBOL_INITIALIZATION") != null) {
                 DataStructureLiteralSet.setNextFunctionName(memberName);
-                initialValue = pattern.find("SYMBOL_INITIALIZATION.INITIAL_VALUE").evaluate(ctx);
+                initialValue = pattern.find("SYMBOL_INITIALIZATION.INITIAL_VALUE").evaluate(innerFrame);
                 DataStructureLiteralSet.setNextFunctionName(null);
                 initialized = true;
             }
@@ -967,12 +970,11 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             sym.setTypeConstraints(response.getConstraint(initialValue));
             sym.setFinal(response.hasModifier(TridentTempFindABetterHome.SymbolModifier.FINAL));
             if(initialized) {
-                CustomClassObject instance = (CustomClassObject) response.getSupplierData();
                 if(sym.getTypeConstraints().isGeneric()) {
-                    sym.getTypeConstraints().startGenericSubstitution(instance, new ActualParameterList(pattern), ctx);
+                    sym.getTypeConstraints().startGenericSubstitution(instance, new ActualParameterList(pattern), innerFrame);
                 }
                 try {
-                    sym.safeSetValue(initialValue, entryFinal, ctx);
+                    sym.safeSetValue(initialValue, entryFinal, innerFrame);
                 } finally {
                     if(sym.getTypeConstraints().isGeneric()) {
                         sym.getTypeConstraints().endGenericSubstitution();
