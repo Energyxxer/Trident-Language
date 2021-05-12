@@ -1,14 +1,11 @@
 package com.energyxxer.trident.compiler.analyzers.default_libs.via_reflection;
 
 import com.energyxxer.prismarine.typesystem.functions.natives.NativeFunctionAnnotations;
-import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClassObject;
 
 public class Random {
-    @DefaultLibraryProvider.HideFromCustomClass
-
     public static void __new(@NativeFunctionAnnotations.ThisArg CustomClassObject thiz) {
         thiz.putHidden("random", new java.util.Random());
     }
