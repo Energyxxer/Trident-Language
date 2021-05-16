@@ -29,6 +29,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -118,20 +119,29 @@ public class TextParser {
             } else if(obj.has("selector")) {
                 using(getAsStringOrNumberOrNull(obj.get("selector")))
                         .notIfNull()
-                        .run(t -> component[0] = new SelectorTextComponent(new RawEntity(t)))
+                        .run(t -> {
+                            TextComponent separator = null;
+                            JsonElement rawSeparator = obj.get("separator");
+                            if(rawSeparator != null) {
+                                separator = jsonToTextComponent(rawSeparator, ctx, pattern, textContext);
+                            }
+                            component[0] = new SelectorTextComponent(new RawEntity(t), null, separator);
+                        })
                         .otherwise(t -> delegate.report("Expected string in 'selector'", obj.get("selector")));
             } else if(obj.has("nbt")) {
+                JsonElement rawSeparator = obj.get("separator");
+                TextComponent separator = rawSeparator != null ? jsonToTextComponent(rawSeparator, ctx, pattern, textContext) : null;
                 using(getAsStringOrNumberOrNull(obj.get("nbt"))).notIfNull().run(s -> {
                     Boolean rawInterpret = getAsBooleanOrNull(obj.get("interpret"));
                     boolean interpret = rawInterpret != null && rawInterpret;
 
                     using(getAsStringOrNumberOrNull(obj.get("entity"))).notIfNull()
-                            .run(e -> component[0] = new RawNBTTextComponent(s, "entity", e, interpret))
+                            .run(e -> component[0] = new RawNBTTextComponent(s, "entity", e, interpret, separator))
                             .otherwise(
                                     v -> using(getAsStringOrNumberOrNull(obj.get("block"))).notIfNull().run(b ->
-                                            component[0] = new RawNBTTextComponent(s, "block", b, interpret))
+                                            component[0] = new RawNBTTextComponent(s, "block", b, interpret, separator))
                                             .otherwise(w -> using(getAsStringOrNumberOrNull(obj.get("storage"))).notIfNull().run(b ->
-                                            component[0] = new RawNBTTextComponent(s, "storage", b, interpret)
+                                            component[0] = new RawNBTTextComponent(s, "storage", b, interpret, separator)
                                                     ).otherwise(x -> delegate.report("Expected either 'entity', 'block' or 'storage' in nbt text component, got neither.", obj)))
                     );
                 }).otherwise(v -> delegate.report("Expected object in 'nbt'", obj.get("nbt")));
@@ -387,12 +397,14 @@ public class TextParser {
         @NotNull
         private final String toPrint;
         private final boolean interpret;
+        private final TextComponent separator;
 
-        RawNBTTextComponent(@NotNull String path, @NotNull String key, @NotNull String toPrint, boolean interpret) {
+        RawNBTTextComponent(@NotNull String path, @NotNull String key, @NotNull String toPrint, boolean interpret, @Nullable TextComponent separator) {
             this.path = path;
             this.key = key;
             this.toPrint = toPrint;
             this.interpret = interpret;
+            this.separator = separator;
         }
 
         @Override
@@ -408,8 +420,17 @@ public class TextParser {
             if(interpret) extra += ",\"interpret\":true";
             return "{\"nbt\":\"" + CommandUtils.escape(path) + "\"," +
                     extra +
+                    (separator != null ? ",\"separator\":" + separator.toString(style) : "") +
                     (baseProperties != null ? "," + baseProperties : "") +
                     '}';
+        }
+
+        @Override
+        public void assertAvailable() {
+            VersionFeatureManager.assertEnabled("textcomponent.nbt");
+            super.assertAvailable();
+            VersionFeatureManager.assertEnabled("nbt.access");
+            if(separator != null) VersionFeatureManager.assertEnabled("textcomponent.separators");
         }
     }
 

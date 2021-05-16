@@ -72,11 +72,11 @@ public class ReplaceItemCommandDefinition implements SimpleCommandDefinition {
                                             new CodeReplacementAction()
                                                     .setReplacementStartIndex(slotIdEndIndex)
                                                     .setReplacementEndIndex(slotIdEndIndex)
-                                                    .setReplacementText(" replace"),
+                                                    .setReplacementText(" with"),
                                             new CodeReplacementAction()
                                                     .setReplacementStartIndex(bounds.start.index)
                                                     .setReplacementEndIndex(bounds.start.index + "replaceitem".length())
-                                                    .setReplacementText("item")
+                                                    .setReplacementText("item replace")
                                     )
                             );
 
