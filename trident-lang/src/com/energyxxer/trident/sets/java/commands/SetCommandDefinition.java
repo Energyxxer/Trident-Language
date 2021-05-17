@@ -266,7 +266,7 @@ public class SetCommandDefinition implements SimpleCommandDefinition {
                         TridentUtil.assertLanguageLevel(ctx, 2, "Score constants in operations are ", pattern);
                         return new ScorePlayersOperation(
                                 a.score,
-                                ScorePlayersOperation.Operation.MULTIPLY,
+                                ScorePlayersOperation.Operation.LESS_THAN,
                                 ((ObjectiveCreationFile) ctx.get(SetupSpecialFileManagerTask.INSTANCE).get("create_objectives"))
                                         .getConstant(((TagInt) b.value).getValue())
                         );
@@ -281,7 +281,7 @@ public class SetCommandDefinition implements SimpleCommandDefinition {
                         TridentUtil.assertLanguageLevel(ctx, 2, "Score constants in operations are ", pattern);
                         return new ScorePlayersOperation(
                                 a.score,
-                                ScorePlayersOperation.Operation.MULTIPLY,
+                                ScorePlayersOperation.Operation.GREATER_THAN,
                                 ((ObjectiveCreationFile) ctx.get(SetupSpecialFileManagerTask.INSTANCE).get("create_objectives"))
                                         .getConstant(((TagInt) b.value).getValue())
                         );
