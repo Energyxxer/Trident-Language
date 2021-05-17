@@ -78,7 +78,7 @@ public class SetCommandDefinition implements SimpleCommandDefinition {
     }
 
     public enum SetOperator {
-        ASSIGN("="), ADD("+="), SUBTRACT("-="), MULTIPLY("*="), DIVIDE("/="), MODULO("%="), LESS_THAN("<"), GREATER_THAN(">"), SWAP("<>");
+        ASSIGN("="), ADD("+="), SUBTRACT("-="), MULTIPLY("*="), DIVIDE("/="), MODULO("%="), LESS_THAN("<"), GREATER_THAN(">"), SWAP("><");
 
         private String shorthand;
 
