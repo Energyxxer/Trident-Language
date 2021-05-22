@@ -1,5 +1,6 @@
 package com.energyxxer.trident.compiler.analyzers.default_libs.via_reflection;
 
+import com.energyxxer.commodore.functionlogic.functions.Function;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.reporting.PrismarineException;
@@ -39,6 +40,19 @@ public class Reflection {
         }
 
         return null;
+    }
+
+    public static String getFunctionContents(ResourceLocation functionLoc, TokenPattern<?> callingPattern, ISymbolContext ctx) {
+        if(functionLoc.isTag) throw new IllegalArgumentException("Cannot get contents of a function tag: " + functionLoc);
+
+        Function function = ctx.getCompiler().get(SetupModuleTask.INSTANCE).getNamespace(functionLoc.namespace).functions.get(functionLoc.body);
+        if(function == null) {
+            throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "No such function: '" + functionLoc + "'", callingPattern, ctx);
+        } else if(!function.shouldExport()) {
+            throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Function '" + functionLoc + "' is not a Trident-generated function. Cannot retrieve its contents.", callingPattern, ctx);
+        } else {
+            return function.getResolvedContent();
+        }
     }
 
     public static DictionaryObject getMetadata(ResourceLocation fileLoc, ISymbolContext ctx) {

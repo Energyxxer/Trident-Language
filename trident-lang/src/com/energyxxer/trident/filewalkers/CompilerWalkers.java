@@ -44,11 +44,12 @@ public class CompilerWalkers {
     public static final FileWalkerStop<PrismarineCompiler> FUNCTION_STOP = new FileWalkerStop<PrismarineCompiler>("datapack/data/(*)/functions/(**).mcfunction") {
         @Override
         public boolean accept(File file, Path relativePath, PathMatcher.Result pathMatchResult, PrismarineProjectWorker worker, FileWalker<PrismarineCompiler> walker) throws IOException {
-            String functionName = pathMatchResult.groups[1] + '/' + pathMatchResult.groups[2];
-            Debug.log("Function name: " + functionName);
+            String namespace = pathMatchResult.groups[1];
+            String body = pathMatchResult.groups[2];
+            Debug.log("Function name: " + namespace + ":" + body);
             Namespace ns = worker.output.get(SetupModuleTask.INSTANCE).getNamespace(pathMatchResult.groups[1]);
-            if(!ns.functions.exists(functionName)) {
-                ns.functions.create(functionName).setExport(false);
+            if(!ns.functions.exists(body)) {
+                ns.functions.create(body).setExport(false);
             }
 
             return false;

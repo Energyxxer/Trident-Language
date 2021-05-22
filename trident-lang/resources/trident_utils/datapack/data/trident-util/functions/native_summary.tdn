@@ -96,13 +96,15 @@ define global static final class Reflection {
     public static getSymbol(name : string) {}
     public static getVisibleSymbols() : dictionary {}
     public static getDefinedObjectives() : dictionary {}
+    public static getFunctionContents(functionLoc : resource) : string {}
 }
 
 define global static final class File {
     public static final var in = {
         read: function() {},
         write: function() {},
-        wasFileChanged: function() : boolean {}
+        wasFileChanged: function() : boolean {},
+        delete: function() {}
     }
     public static final var out = {
         writeData: function() {},

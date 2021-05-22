@@ -72,6 +72,7 @@ import org.jetbrains.annotations.Contract;
 import java.util.*;
 import java.util.regex.Matcher;
 
+import static com.energyxxer.trident.compiler.TridentProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 import static com.energyxxer.trident.sets.BasicLiteralSet.parseQuotedString;
 import static com.energyxxer.nbtmapper.tags.PathProtocol.BLOCK_ENTITY;
@@ -121,7 +122,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("RESOURCE_LOCATION_TAGGED")
                 .add(
-                        group(TridentProductions.resourceLocationFixer, optional(TridentProductions.hash().setName("TAG_HEADER"), TridentProductions.glue()).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.FUNCTION_TAG).setName("TAG_HEADER_WRAPPER"), ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION")).setName("RAW_RESOURCE_LOCATION_TAGGED")
+                        group(TridentProductions.resourceLocationFixer, optional(TridentProductions.hash().setName("TAG_HEADER"), glue()).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.FUNCTION_TAG).setName("TAG_HEADER_WRAPPER"), ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION")).setName("RAW_RESOURCE_LOCATION_TAGGED")
                         .setEvaluator((p, d) -> CommonParsers.parseResourceLocation(p.flatten(false), p, (ISymbolContext) d[0]))
                 )
                 .add(
@@ -130,7 +131,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
 
         TokenPatternMatch selectorArgumentBlock = optional(
-                TridentProductions.glue(),
+                glue(),
                 TridentProductions.brace("["),
                 list(productions.getOrCreateStructure("SELECTOR_ARGUMENT"), TridentProductions.comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST").setEvaluator((p, d) -> {
                     PathContext pathContext = new PathContext().setIsSetting(false).setProtocol(PathProtocol.ENTITY);
@@ -423,7 +424,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             NBT_PATH_NODE.add(
                     group(
                             TridentProductions.dot().setName("NBT_PATH_SEPARATOR"),
-                            TridentProductions.glue(),
+                            glue(),
                             group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL"),
                             optional(productions.getOrCreateStructure("NBT_COMPOUND")).setName("NBT_PATH_COMPOUND_MATCH")
                     ).setName("NBT_PATH_KEY").setEvaluator(pathKeyEvaluator));
@@ -431,7 +432,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             NBT_PATH_NODE.add(
                     group(
                             TridentProductions.dot().setOptional(),
-                            TridentProductions.glue(),
+                            glue(),
                             TridentProductions.brace("["),
                             choice(
                                     group(TridentProductions.integer(productions)).setEvaluator((p, d) -> new NBTPathIndex((int) p.find("INTEGER").evaluate(d))),
@@ -556,15 +557,15 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         //range
                         group(
                                 TridentProductions.integer(productions).setName("MIN"),
-                                TridentProductions.glue(),
-                                TridentProductions.dot(), TridentProductions.glue(), TridentProductions.dot(),
-                                optional(TridentProductions.glue(), TridentProductions.integer(productions).setName("MAX")).setName("MAX").setSimplificationFunctionContentIndex(1)
+                                glue(),
+                                TridentProductions.dot(), glue(), TridentProductions.dot(),
+                                optional(glue(), TridentProductions.integer(productions).setName("MAX")).setName("MAX").setSimplificationFunctionContentIndex(1)
                         ).setEvaluator(intRangeEvaluator)
                 )
                 .add(
                         //range
                         group(
-                                TridentProductions.dot(), TridentProductions.glue(), TridentProductions.dot(),
+                                TridentProductions.dot(), glue(), TridentProductions.dot(),
                                 TridentProductions.integer(productions).setName("MAX")
                         ).setEvaluator(intRangeEvaluator)
                 ).addTags("cspn:Integer Range");
@@ -594,7 +595,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         productions.getOrCreateStructure("REAL_NUMBER_RANGE")
                 .add(
                         //exact
-                        group(TridentProductions.real(productions)).setEvaluator((p, d) -> new DoubleRange((double) p.find("REAL").evaluate(d)))
+                        group(real(productions)).setEvaluator((p, d) -> new DoubleRange((double) p.find("REAL").evaluate(d)))
                 )
                 .add(
                         //interpolation block
@@ -613,17 +614,17 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 .add(
                         //range
                         group(
-                                TridentProductions.real(productions).setName("MIN"),
-                                TridentProductions.glue(),
-                                TridentProductions.dot(), TridentProductions.glue(), TridentProductions.dot(),
-                                optional(TridentProductions.glue(), TridentProductions.real(productions).setName("MAX")).setName("MAX").setSimplificationFunctionContentIndex(1)
+                                real(productions).setName("MIN"),
+                                glue(),
+                                TridentProductions.dot(), glue(), TridentProductions.dot(),
+                                optional(glue(), real(productions).setName("MAX")).setName("MAX").setSimplificationFunctionContentIndex(1)
                         ).setEvaluator(realRangeEvaluator)
                 )
                 .add(
                         //range
                         group(
-                                TridentProductions.dot(), TridentProductions.glue(), TridentProductions.dot(),
-                                TridentProductions.real(productions).setName("MAX")
+                                TridentProductions.dot(), glue(), TridentProductions.dot(),
+                                real(productions).setName("MAX")
                         ).setEvaluator(realRangeEvaluator)
                 ).addTags("cspn:Real Range");
 
@@ -632,7 +633,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         //region Coordinates
 
 
-        TokenPatternMatch LOCAL_COORDINATE = productions.getOrCreateStructure("LOCAL_COORDINATE").add(group(TridentProductions.caret(), optional(TridentProductions.glue(), ofType(SHORT_REAL_NUMBER)).setName("COORDINATE_MAGNITUDE")).setEvaluator(
+        TokenPatternMatch LOCAL_COORDINATE = productions.getOrCreateStructure("LOCAL_COORDINATE").add(group(caret(), optional(glue(), ofType(SHORT_REAL_NUMBER)).setName("COORDINATE_MAGNITUDE")).setEvaluator(
                 (p, d) -> {
                     double magnitude = 0;
                     TokenPattern<?> magnitudePattern = p.find("COORDINATE_MAGNITUDE");
@@ -641,9 +642,11 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                     }
                     return new Coordinate(Coordinate.Type.LOCAL, magnitude);
                 }
-        ));
+        )).add(
+                group(caret(), glue(), real(productions)).setEvaluator((p, d) -> new Coordinate(Coordinate.Type.LOCAL, (double) p.find("REAL").evaluate((ISymbolContext) d[0])))
+        );
 
-        TokenPatternMatch ABSOLUTE_COORDINATE = productions.getOrCreateStructure("ABSOLUTE_COORDINATE").add(ofType(SHORT_REAL_NUMBER).setEvaluator(
+        TokenPatternMatch ABSOLUTE_COORDINATE = productions.getOrCreateStructure("ABSOLUTE_COORDINATE").add(group(optional(symbol("*"), glue()), ofType(SHORT_REAL_NUMBER).setEvaluator(
                 (p, d) -> {
                     Axis axis = (Axis) d[1];
                     String magnitudeString = p.flatten(false);
@@ -651,9 +654,22 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                     if(axis != Axis.Y && !magnitudeString.contains(".")) magnitude += 0.5;
                     return new Coordinate(Coordinate.Type.ABSOLUTE, magnitude);
                 }
+        )).setSimplificationFunction(d -> {
+            TokenPattern<?>[] contents = ((TokenGroup) d.pattern).getContents();
+            d.pattern = contents[contents.length-1];
+        })).add(group(symbol("*"), glue(), PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, Integer.class, Double.class)).setEvaluator(
+                (p, d) -> {
+                    Axis axis = (Axis) d[1];
+                    Number magnitude = (Number) ((TokenGroup) p).getContents()[2].evaluate((ISymbolContext) d[0]);
+                    double realMagnitude = magnitude.doubleValue();
+                    if(axis != Axis.Y && magnitude instanceof Integer) {
+                        realMagnitude = magnitude.doubleValue() + 0.5;
+                    }
+                    return new Coordinate(Coordinate.Type.ABSOLUTE, realMagnitude);
+                }
         ));
 
-        TokenPatternMatch RELATIVE_COORDINATE = productions.getOrCreateStructure("RELATIVE_COORDINATE").add(group(TridentProductions.tilde(), optional(TridentProductions.glue(), ofType(SHORT_REAL_NUMBER)).setName("COORDINATE_MAGNITUDE")).setEvaluator(
+        TokenPatternMatch RELATIVE_COORDINATE = productions.getOrCreateStructure("RELATIVE_COORDINATE").add(group(TridentProductions.tilde(), optional(glue(), ofType(SHORT_REAL_NUMBER)).setName("COORDINATE_MAGNITUDE")).setEvaluator(
                 (p, d) -> {
                     double magnitude = 0;
                     TokenPattern<?> magnitudePattern = p.find("COORDINATE_MAGNITUDE");
@@ -662,7 +678,9 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                     }
                     return new Coordinate(Coordinate.Type.RELATIVE, magnitude);
                 }
-        ));
+        )).add(
+                group(tilde(), glue(), real(productions)).setEvaluator((p, d) -> new Coordinate(Coordinate.Type.RELATIVE, (double) p.find("REAL").evaluate((ISymbolContext) d[0])))
+        );
 
         TokenPatternMatch MIXABLE_COORDINATE = productions.getOrCreateStructure("MIXABLE_COORDINATE")
                 .add(ABSOLUTE_COORDINATE)
@@ -737,7 +755,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         )
                 )
                 .add(
-                        group(TridentProductions.tilde(), optional(TridentProductions.glue(), ofType(SHORT_REAL_NUMBER)).setName("ROTATION_MAGNITUDE")).setEvaluator(
+                        group(TridentProductions.tilde(), optional(glue(), ofType(SHORT_REAL_NUMBER)).setName("ROTATION_MAGNITUDE")).setEvaluator(
                                 (p, d) -> {
                                     double magnitude = 0;
                                     TokenPattern<?> magnitudePattern = p.find("ROTATION_MAGNITUDE");
@@ -770,9 +788,9 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("COLOR").add(
                 group(
-                        TridentProductions.real(productions).setName("RED_COMPONENT").addTags("cspn:Red Component (0..1)"),
-                        TridentProductions.real(productions).setName("GREEN_COMPONENT").addTags("cspn:Green Component (0..1)"),
-                        TridentProductions.real(productions).setName("BLUE_COMPONENT").addTags("cspn:Blue Component (0..1)")
+                        real(productions).setName("RED_COMPONENT").addTags("cspn:Red Component (0..1)"),
+                        real(productions).setName("GREEN_COMPONENT").addTags("cspn:Green Component (0..1)"),
+                        real(productions).setName("BLUE_COMPONENT").addTags("cspn:Blue Component (0..1)")
                 ).setName("COLOR").addTags("cspn:RGB Color").setEvaluator((p, d) -> new ParticleColor(
                         (double) p.find("RED_COMPONENT").evaluate(d),
                         (double) p.find("GREEN_COMPONENT").evaluate(d),
@@ -822,7 +840,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                         group(
                                                 TridentProductions.resourceLocationFixer,
                                                 TridentProductions.hash().setName("TAG_HEADER").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.__TAG_TEMPLATE + category),
-                                                TridentProductions.glue(),
+                                                glue(),
                                                 RAW_RESOURCE_LOCATION
                                         ).setEvaluator((p, d) -> {
                                             ResourceLocation loc = (ResourceLocation) p.find("RAW_RESOURCE_LOCATION").evaluate(d);
@@ -899,8 +917,8 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         group(
                                 TridentProductions.resourceLocationFixer,
                                 productions.getOrCreateStructure("BLOCK_ID"),
-                                optional(TridentProductions.glue(), productions.getOrCreateStructure("BLOCKSTATE")).setSimplificationFunctionContentIndex(1).setName("APPENDED_BLOCKSTATE"),
-                                optional(TridentProductions.glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
+                                optional(glue(), productions.getOrCreateStructure("BLOCKSTATE")).setSimplificationFunctionContentIndex(1).setName("APPENDED_BLOCKSTATE"),
+                                optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
                         ).setEvaluator((p, d) -> {
                             Type blockId = (Type) p.find("BLOCK_ID").evaluate(d[0], d.length > 1 && (boolean) d[1]);
                             return evaluateBlock(blockId, p, p.find("BLOCK_ID"), d);
@@ -909,8 +927,8 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 .add(
                         group(
                                 PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, Block.class, ResourceLocation.class, String.class).setName("INTERPOLATION_BLOCK"),
-                                optional(TridentProductions.glue(), productions.getOrCreateStructure("BLOCKSTATE")).setSimplificationFunctionContentIndex(1).setName("APPENDED_BLOCKSTATE"),
-                                optional(TridentProductions.glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
+                                optional(glue(), productions.getOrCreateStructure("BLOCKSTATE")).setSimplificationFunctionContentIndex(1).setName("APPENDED_BLOCKSTATE"),
+                                optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
                         ).setEvaluator((p, d) -> {
                             Object inBlock = p.find("INTERPOLATION_BLOCK").evaluate(d[0]);
                             return evaluateBlock(inBlock, p, p.find("INTERPOLATION_BLOCK"), d);
@@ -928,10 +946,10 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         group(
                                 TridentProductions.resourceLocationFixer,
                                 TridentProductions.hash().setName("TAG_HEADER").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.BLOCK_TAG),
-                                TridentProductions.glue(),
+                                glue(),
                                 RAW_RESOURCE_LOCATION,
-                                optional(TridentProductions.glue(), productions.getOrCreateStructure("BLOCKSTATE")).setSimplificationFunctionContentIndex(1).setName("APPENDED_BLOCKSTATE"),
-                                optional(TridentProductions.glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
+                                optional(glue(), productions.getOrCreateStructure("BLOCKSTATE")).setSimplificationFunctionContentIndex(1).setName("APPENDED_BLOCKSTATE"),
+                                optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
                         ).setEvaluator((p, d) -> {
                             d = new Object[] {(ISymbolContext) d[0], true};
                             ResourceLocation loc = (ResourceLocation) p.find("RAW_RESOURCE_LOCATION").evaluate(d);
@@ -950,8 +968,8 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         group(
                                 TridentProductions.resourceLocationFixer,
                                 productions.getOrCreateStructure("ITEM_ID"),
-                                optional(TridentProductions.glue(), TridentProductions.hash(), TridentProductions.integer(productions).addTags("cspn:Model Index")).setSimplificationFunctionContentIndex(2).setName("APPENDED_MODEL_DATA"),
-                                optional(TridentProductions.glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
+                                optional(glue(), TridentProductions.hash(), TridentProductions.integer(productions).addTags("cspn:Model Index")).setSimplificationFunctionContentIndex(2).setName("APPENDED_MODEL_DATA"),
+                                optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
                         ).setEvaluator((p, d) -> {
                             Type itemId = (Type) p.find("ITEM_ID").evaluate((ISymbolContext) d[0], d.length > 2 && (boolean) d[2]);
                             return evaluateItem(itemId, p, p.find("ITEM_ID"), d);
@@ -960,8 +978,8 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 .add(
                         group(
                                 PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, Item.class, CustomItem.class, ResourceLocation.class, String.class).setName("INTERPOLATION_BLOCK"),
-                                optional(TridentProductions.glue(), TridentProductions.hash(), TridentProductions.integer(productions).addTags("cspn:Model Index")).setSimplificationFunctionContentIndex(2).setName("APPENDED_MODEL_DATA"),
-                                optional(TridentProductions.glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
+                                optional(glue(), TridentProductions.hash(), TridentProductions.integer(productions).addTags("cspn:Model Index")).setSimplificationFunctionContentIndex(2).setName("APPENDED_MODEL_DATA"),
+                                optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
                         ).setEvaluator((p, d) -> {
                             Object inBlock = p.find("INTERPOLATION_BLOCK").evaluate(d[0]);
                             return evaluateItem(inBlock, p, p.find("INTERPOLATION_BLOCK"), d);
@@ -979,10 +997,10 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         group(
                                 TridentProductions.resourceLocationFixer,
                                 TridentProductions.hash().setName("TAG_HEADER").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.ITEM_TAG),
-                                TridentProductions.glue(),
+                                glue(),
                                 RAW_RESOURCE_LOCATION,
-                                optional(TridentProductions.glue(), TridentProductions.hash(), TridentProductions.integer(productions).addTags("cspn:Model Index")).setSimplificationFunctionContentIndex(2).setName("APPENDED_MODEL_DATA"),
-                                optional(TridentProductions.glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
+                                optional(glue(), TridentProductions.hash(), TridentProductions.integer(productions).addTags("cspn:Model Index")).setSimplificationFunctionContentIndex(2).setName("APPENDED_MODEL_DATA"),
+                                optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
                         ).setEvaluator((p, d) -> {
                             d = new Object[] {(ISymbolContext) d[0], (NBTMode) d[1], true};
                             ResourceLocation loc = (ResourceLocation) p.find("RAW_RESOURCE_LOCATION").evaluate(d);
@@ -1246,7 +1264,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         break;
                     }
                     case "double": {
-                        argsGroupMatch.append(TridentProductions.real(productions).addTags("cspn:Real"));
+                        argsGroupMatch.append(real(productions).addTags("cspn:Real"));
                         break;
                     }
                     case "color": {
@@ -1309,7 +1327,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 break;
             }
             case "double": {
-                g.append(TridentProductions.real(productions).addTags("cspn:Real"));
+                g.append(real(productions).addTags("cspn:Real"));
                 break;
             }
             case "color": {

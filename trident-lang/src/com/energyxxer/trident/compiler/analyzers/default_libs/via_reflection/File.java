@@ -1,11 +1,15 @@
 package com.energyxxer.trident.compiler.analyzers.default_libs.via_reflection;
 
 import com.energyxxer.commodore.module.RawExportable;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.trident.Trident;
 import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
 import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 import com.energyxxer.trident.worker.tasks.SetupResourcePackTask;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.util.FileUtil;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -67,6 +71,25 @@ public class File {
             path.toFile().getParentFile().mkdirs();
             Files.write(path, content.getBytes(Trident.DEFAULT_CHARSET));
             return null;
+        }
+
+        public static void delete(String inPath, TokenPattern<?> callingPattern, ISymbolContext callingCtx) throws IOException {
+            String rawPath = inPath.replace(java.io.File.separator, "/");
+            while(rawPath.startsWith("/")) {
+                rawPath = rawPath.substring(1);
+            }
+            Path path = Paths.get(rawPath).normalize();
+            if(path.startsWith(Paths.get("../"))) {
+                throw new IllegalArgumentException("Cannot delete files outside the project: " + path);
+            }
+            path = callingCtx.getCompiler().getRootCompiler().getRootPath().resolve(path);
+            java.io.File file = path.toFile();
+            if(file.exists()) {
+                Notice notice = new Notice(NoticeType.DEBUG, path.toString().replace(java.io.File.separatorChar, '/'), callingPattern);
+                notice.setGroup("Deleted files");
+                callingCtx.getCompiler().getReport().addNotice(notice);
+            }
+            FileUtil.recursivelyDelete(path.toFile());
         }
 
         public static boolean wasFileChanged(String inPath, ISymbolContext callingCtx) throws IOException {
