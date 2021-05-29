@@ -1,6 +1,7 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers.extensions;
 
 import com.energyxxer.commodore.functionlogic.nbt.TagIntArray;
+import com.energyxxer.commodore.functionlogic.score.PlayerName;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
@@ -97,6 +98,19 @@ public class UUIDTypeHandler implements TypeHandler<UUID> {
             }
         }
         throw new ClassCastException();
+    }
+
+    @Override
+    public Object coerce(UUID object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
+        if("primitive(entity)".equals(typeSystem.getInternalTypeIdentifierForType(targetType))) {
+            return new PlayerName(object.toString());
+        }
+        return null;
+    }
+
+    @Override
+    public boolean canCoerce(Object object, TypeHandler into, ISymbolContext ctx) {
+        return object instanceof UUID && "primitive(entity)".equals(typeSystem.getInternalTypeIdentifierForType(into));
     }
 
     @Override
