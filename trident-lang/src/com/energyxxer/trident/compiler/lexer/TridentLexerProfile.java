@@ -183,9 +183,12 @@ public class TridentLexerProfile extends LexerProfile {
                     else return ScannerContextResponse.FAILED;
                 } else {
                     if(str.startsWith("$", startIndex) || str.startsWith(">", startIndex)) return ScannerContextResponse.FAILED;
-                    int endIndex = str.length();
-                    if(str.indexOf("\n", startIndex) != -1) {
-                        endIndex = str.indexOf("\n", startIndex);
+
+                    int endIndex = str.indexOf("\n", startIndex);
+                    if(endIndex != -1) {
+                        if (endIndex > 0 && str.charAt(endIndex - 1) == '\r') endIndex--;
+                    } else {
+                        endIndex = str.length();
                     }
 
                     return new ScannerContextResponse(true, str.substring(startIndex, endIndex), VERBATIM_COMMAND);
@@ -208,8 +211,10 @@ public class TridentLexerProfile extends LexerProfile {
 
             @Override
             public ScannerContextResponse analyzeExpectingType(String str, int startIndex, TokenType type, LexerProfile profile) {
-                if(str.indexOf("\n", startIndex) != -1) {
-                    return new ScannerContextResponse(true, str.substring(startIndex, str.indexOf("\n", startIndex)), TRAILING_STRING);
+                int endIndex = str.indexOf("\n", startIndex);
+                if(endIndex != -1) {
+                    if(endIndex > 0 && str.charAt(endIndex-1) == '\r') endIndex--;
+                    return new ScannerContextResponse(true, str.substring(startIndex, endIndex), TRAILING_STRING);
                 } else return new ScannerContextResponse(true, str.substring(startIndex), TRAILING_STRING);
             }
 
@@ -232,6 +237,7 @@ public class TridentLexerProfile extends LexerProfile {
                 int endIndex = startIndex;
                 while(endIndex < str.length()) {
                     char c = str.charAt(endIndex);
+                    if(c == '\r') break;
                     if(c == '\n') break;
                     if(c == '@' && endIndex < str.length()-1 && "pears".indexOf(str.charAt(endIndex+1)) != -1) {
                         break;
