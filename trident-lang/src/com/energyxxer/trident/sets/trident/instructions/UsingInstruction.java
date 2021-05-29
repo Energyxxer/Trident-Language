@@ -160,8 +160,11 @@ public class UsingInstruction implements InstructionDefinition {
                 zDist = 0;
             }
             double distance = Math.sqrt(xDist*xDist + yDist*yDist + zDist*zDist);
-            double epsilon = 0.01;
-            summoned.addArguments(new DistanceArgument(new DoubleRange(Math.max(distance-epsilon, 0), distance+epsilon)));
+            double margin = 0.01;
+            if("true".equals(data.type.getProperty("snaps_to_grid"))) {
+                margin += Math.sqrt(3);
+            }
+            summoned.addArguments(new DistanceArgument(new DoubleRange(Math.max(distance-margin, 0), distance+margin)));
         }
 
         Command tagRemoveCommand = new TagCommand(TagCommand.Action.REMOVE, new Selector(Selector.BaseSelector.SENDER), tag);
