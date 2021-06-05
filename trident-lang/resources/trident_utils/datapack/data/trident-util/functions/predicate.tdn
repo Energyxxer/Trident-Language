@@ -3,6 +3,16 @@
 
 private var generatedPredicates = {}
 
+define private class Predicate : JSONSerializable
+define private class EntityPredicate : Predicate
+define private class EntityPropertiesPredicate : EntityPredicate, Entity
+define private class EntityScoresPredicate : EntityPredicate
+define private class BlockStatePropertyPredicate : Predicate
+define private class LocationCheckPredicate : Predicate, Location
+define private class WeatherCheckPredicate : Predicate
+define private class MatchToolPredicate : Predicate, Shared.Item
+define private class DamageSourcePropertiesPredicate : Predicate
+
 define class Predicate : JSONSerializable {
     public var output = {}
 
@@ -46,6 +56,38 @@ define class Predicate : JSONSerializable {
         })
     }
 
+    public static timeCheck(min : Number, max : Number, period : int?) : Predicate {
+        return new Predicate({
+            "condition": "minecraft:time_check",
+            "value": {
+                    "min": min,
+                    "max": max
+            },
+            "period": period
+        })
+    }
+
+    public static valueCheck(value : Number, range : Number) : Predicate {
+        if(Project.getTargetVersion()[1] < 16) throw "Predicate value_check is only supported for target versions 1.16 and later"
+        return new Predicate({
+            "condition": "minecraft:value_check",
+            "value": value,
+            "range": range
+        })
+    }
+
+    public static valueCheck(value : Number, min : Number, max : Number) : Predicate {
+        if(Project.getTargetVersion()[1] < 16) throw "Predicate value_check is only supported for target versions 1.16 and later"
+        return new Predicate({
+            "condition": "minecraft:value_check",
+            "value": value,
+            "range": {
+                "min": min,
+                "max": max
+            }
+        })
+    }
+
     public static inverted(term : Predicate) : Predicate {
         if(term.isInverted) {
             return term.output.term
@@ -58,23 +100,33 @@ define class Predicate : JSONSerializable {
         return rv
     }
 
-    public static entityProperties() : Predicate {
+    public static entityProperties() : EntityPropertiesPredicate {
         return new EntityPropertiesPredicate()
     }
 
-    public static locationCheck() : Predicate {
+    public static blockStateProperty() : BlockStatePropertyPredicate {
+        if(Project.getTargetVersion()[1] < 16) throw "Predicate block_state_property is only supported for target versions 1.16 and later"
+        return new BlockStatePropertyPredicate()
+    }
+
+    public static locationCheck() : LocationCheckPredicate {
         return new LocationCheckPredicate()
     }
 
-    public static entityScores() : Predicate {
+    public static entityScores() : EntityScoresPredicate {
         return new EntityScoresPredicate()
     }
 
-    public static weatherCheck() : Predicate {
+    public static weatherCheck() : WeatherCheckPredicate {
         return new WeatherCheckPredicate()
     }
 
-    public static damageSourceProperties() : Predicate {
+    public static matchTool() : MatchToolPredicate {
+        if(Project.getTargetVersion()[1] < 16) throw "Predicate match_tool is only supported for target versions 1.16 and later"
+        return new MatchToolPredicate()
+    }
+
+    public static damageSourceProperties() : DamageSourcePropertiesPredicate {
         return new DamageSourcePropertiesPredicate()
     }
 
@@ -96,6 +148,12 @@ define class Predicate : JSONSerializable {
         return new Predicate({
             "condition": "minecraft:reference",
             "name": loc
+        })
+    }
+
+    public static survivesExplosion() : Predicate {
+        return new Predicate({
+            "condition": "minecraft:survives_explosion"
         })
     }
 
@@ -152,7 +210,7 @@ define private class EntityPredicate : Predicate {
     }
 }
 
-define private class EntityPropertiesPredicate : EntityPredicate, Shared.Entity {
+define private class EntityPropertiesPredicate : EntityPredicate, Entity {
 
     public override serializeToJSON() {
         return {
@@ -171,6 +229,22 @@ define private class EntityScoresPredicate : EntityPredicate {
         return scoreRaw(objective, rangeToObj(value))
     }
 
+    public score(objective : string, min : int, max : int) : Predicate {
+        return scoreRaw(objective, {"min": min, "max": max})
+    }
+
+    public score(objective : string, min : int, max : Number) : Predicate {
+        return scoreRaw(objective, {"min": min, "max": max})
+    }
+
+    public score(objective : string, min : Number, max : int) : Predicate {
+        return scoreRaw(objective, {"min": min, "max": max})
+    }
+
+    public score(objective : string, min : Number, max : Number) : Predicate {
+        return scoreRaw(objective, {"min": min, "max": max})
+    }
+
     private scoreRaw(objective : string, value) : Predicate {
         if(scores == null) eval scores = {}
         eval scores[objective] = value
@@ -186,7 +260,38 @@ define private class EntityScoresPredicate : EntityPredicate {
     }
 }
 
-define private class LocationCheckPredicate : Predicate, Shared.Location {
+define private class BlockStatePropertyPredicate : Predicate {
+
+    private var block : string?
+    private var properties : dictionary?
+
+    public override serializeToJSON() {
+        return {
+            "condition": "minecraft:block_state_property",
+            "block": block,
+            "properties": properties
+        }
+    }
+
+    public block(block : block) : BlockStatePropertyPredicate {
+        eval this.block = block.blockType
+        if(block.blockState != null) eval properties(block.blockState)
+        return this
+    }
+
+    public block(blockId : string) : BlockStatePropertyPredicate {
+        eval this.block = blockId
+        return this
+    }
+
+    public properties(properties : dictionary) : BlockStatePropertyPredicate {
+        if(this.properties == null) eval this.properties = {}
+        eval this.properties = this.properties.merge(properties)
+        return this
+    }
+}
+
+define private class LocationCheckPredicate : Predicate, Location {
 
     private var offsetX : real? = null
     private var offsetY : real? = null
@@ -239,6 +344,16 @@ define private class WeatherCheckPredicate : Predicate {
     }
 }
 
+define private class MatchToolPredicate : Predicate, Shared.Item {
+
+    public override serializeToJSON() {
+        return {
+            "condition": "minecraft:match_tool",
+            "predicate": output
+        }
+    }
+}
+
 define private class DamageSourcePropertiesPredicate : Predicate {
 
     private override var output = {
@@ -285,12 +400,12 @@ define private class DamageSourcePropertiesPredicate : Predicate {
         return this
     }
 
-    public sourceEntity(value : Shared.Entity) : Predicate {
+    public sourceEntity(value : Entity) : Predicate {
         eval this.output.source_entity = value
         return this
     }
 
-    public directEntity(value : Shared.Entity) : Predicate {
+    public directEntity(value : Entity) : Predicate {
         eval this.output.direct_entity = value
         return this
     }

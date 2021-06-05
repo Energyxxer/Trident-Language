@@ -41,32 +41,33 @@ define private class Distance
 define private class Location
 define private class Entity
 define private class Effect
-define private class Item
+define private class SharedItem
 define private class Enchantment
-define private class Block
+define private class SharedBlock
 define private class Fluid
+define private class Number
 
 define private class Entity : JSONSerializable {
     var output = {}
 
-    public type(type : resource) {
+    public type(type : resource) : Entity {
         if(type.isTag && !Tags.exists("entity", type)) throw "Given tag '" + type + "' does not exist as an entity tag"
         if(!type.isTag && !MinecraftTypes.exists("entity", type)) throw "Given type '" + type + "' does not exist as an entity type"
         eval this.output.type = type
         return this
     }
-    public distance(distance : Distance) {
+    public distance(distance : Distance) : Entity {
         eval output.distance = distance
         return this
     }
-    public location(location : Location) {
+    public location(location : Location) : Entity {
         eval output.location = location
         return this
     }
-    public effects(obj : Effect) {
+    public effects(obj : Effect) : Entity {
         return effects([obj])
     }
-    public effects(obj : list) {
+    public effects(obj : list) : Entity {
         if(this.output.effects == null) eval this.output.effects = {}
         for(element in obj) {
             var effect : Effect = element
@@ -76,17 +77,17 @@ define private class Entity : JSONSerializable {
         }
         return this
     }
-    public nbt(tag : nbt) {
+    public nbt(tag : nbt) : Entity {
         if(this.output.nbt == null) eval this.output.nbt = nbt<{}>
         eval this.output.nbt = this.output.nbt.merge(tag)
         return this
     }
-    public isOnFire(bool : boolean) {
+    public isOnFire(bool : boolean) : Entity {
         if(this.output.flags == null) eval this.output.flags = {}
         eval this.output.flags.is_on_fire = bool
         return this
     }
-    public isSneaking(bool : boolean) {
+    public isSneaking(bool : boolean) : Entity {
         if(this.output.flags == null) eval this.output.flags = {}
         eval this.output.flags.is_sneaking = bool
         return this
@@ -96,67 +97,105 @@ define private class Entity : JSONSerializable {
         eval this.output.flags.is_sprinting = bool
         return this
     }
-    public isSwimming(bool : boolean) {
+    public isSwimming(bool : boolean) : Entity {
         if(this.output.flags == null) eval this.output.flags = {}
         eval this.output.flags.is_swimming = bool
         return this
     }
-    public isBaby(bool : boolean) {
+    public isBaby(bool : boolean) : Entity {
         if(this.output.flags == null) eval this.output.flags = {}
         eval this.output.flags.is_baby = bool
         return this
     }
-    public equipment(slot : string, itm : item) {
-        return equipment(slot, new Shared.Item(itm))
+    public equipment(slot : string, itm : item) : Entity {
+        return equipment(slot, new SharedItem(itm))
     }
-    public equipment(slot : string, itm : custom_item) {
-        return equipment(slot, new Shared.Item(itm))
+    public equipment(slot : string, itm : custom_item) : Entity {
+        return equipment(slot, new SharedItem(itm))
     }
-    public equipment(slot : string, itm : Item) {
+    public equipment(slot : string, itm : SharedItem) : Entity {
         if(this.output.equipment == null) eval this.output.equipment = {}
         eval assertOneOf(slot, ["mainhand", "offhand", "head", "chest", "legs", "feet"])
         eval this.output.equipment[slot] = itm
         return this
     }
-    public team(teamName : string) {
+    public team(teamName : string) : Entity {
         eval this.output.team = teamName
         return this
     }
-    public level(value : int_range) {
+    public level(value : int_range) : Entity {
         if(this.output.player == null) eval this.output.player = {}
         eval this.output.player.level = rangeToObj(value)
         return this
     }
-    public gamemode(gamemode : string) {
+    public gamemode(gamemode : string) : Entity {
         if(this.output.player == null) eval this.output.player = {}
         if(!MinecraftTypes.exists("gamemode", gamemode)) throw "Given type '" + gamemode + "' does not exist as a gamemode type"
         eval this.output.player.gamemode = gamemode
         return this
     }
     private static final var STAT_BASES : list = ["minecraft:custom", "minecraft:crafted", "minecraft:used", "minecraft:broken", "minecraft:mined", "minecraft:killed", "minecraft:picked_up", "minecraft:dropped", "minecraft:killed_by", "killedByTeam", "teamkill"]
-    public matchStats(base : string, criterion : string, value : int_range) {
+    public matchStats(base : string, criterion : string, value : int_range) : Entity {
         eval assertOneOf(base, STAT_BASES)
         if(this.output.player == null) eval this.output.player = {}
         if(this.output.player.stats == null) eval this.output.player.stats = []
         eval this.output.player.stats.add({type: base, stat: criterion, value: rangeToObj(value)})
         return this
     }
-    public matchRecipes(id : resource, value : boolean) {
-        return matchRecipes((string) resource, value)
+    public matchRecipes(id : resource, value : boolean) : Entity {
+        return matchRecipes((string) id, value)
     }
-    public matchRecipes(id : string, value : boolean) {
+    public matchRecipes(id : string, value : boolean) : Entity {
         if(this.output.player == null) eval this.output.player = {}
         if(this.output.player.recipes == null) eval this.output.player.recipes = {}
         eval this.output.player.recipes[id] = value
         return this
     }
-    public catType(texture : resource) {
+    public catType(texture : resource) : Entity {
         eval this.output.catType = texture
         return this
     }
-    public isInOpenWater(bool : boolean) {
+    public isInOpenWater(bool : boolean) : Entity {
         if(this.output.fishing_hook == null) eval this.output.fishing_hook = {}
         eval this.output.fishing_hook.in_open_water = bool
+        return this
+    }
+    public blocksSetOnFire(blocksSetOnFire : int) : Entity {
+        if(Project.getTargetVersion()[1] < 17) throw "Entity property 'lightning_bolt' is only supported for target versions 1.17 and later"
+        if(this.output.lightning_bolt == null) eval this.output.lightning_bolt = {}
+        eval output.lightning_bolt.blocks_set_on_fire = blocksSetOnFire
+        return this
+    }
+    public entityStruck(entity : Entity) : Entity {
+        if(Project.getTargetVersion()[1] < 17) throw "Entity property 'lightning_bolt' is only supported for target versions 1.17 and later"
+        if(this.output.lightning_bolt == null) eval this.output.lightning_bolt = {}
+        eval output.lightning_bolt.entity_struck = entity
+        return this
+    }
+    public passenger(passenger : Entity) : Entity {
+        if(Project.getTargetVersion()[1] < 17) throw "Entity property 'passenger' is only supported for target versions 1.17 and later"
+        eval this.output.passenger = passenger
+        return this
+    }
+    public lookingAt(entity : Entity) : Entity {
+        if(Project.getTargetVersion()[1] < 17) throw "Entity property 'looking_at' is only supported for target versions 1.17 and later"
+        if(this.output.player == null) eval this.output.player = {}
+        eval this.output.player.looking_at = entity
+        return this
+    }
+    public steppingOn(location : Location) : Entity {
+        if(Project.getTargetVersion()[1] < 17) throw "Entity property 'stepping_on' is only supported for target versions 1.17 and later"
+        eval this.output.stepping_on = location
+        return this
+    }
+    public targetedEntity(entity : Entity) : Entity {
+        if(Project.getTargetVersion()[1] < 16) throw "Entity property 'targeted_entity' is only supported for target versions 1.16 and later"
+        eval this.output.targeted_entity = entity
+        return this
+    }
+    public vehicle(entity : Entity) : Entity {
+        if(Project.getTargetVersion()[1] < 16) throw "Entity property 'vehicle' is only supported for target versions 1.16 and later"
+        eval this.output.vehicle = entity
         return this
     }
 
@@ -209,7 +248,7 @@ define private class Distance : JSONSerializable {
 define private class Location : JSONSerializable {
     var output = {}
 
-    public block(block : Block) {
+    public block(block : SharedBlock) {
         eval this.output.block = block
         return this
     }
@@ -271,7 +310,7 @@ define private class Location : JSONSerializable {
     }
 
     public smokey(value : boolean) {
-        if(Project.getTargetVersion()[1] < 16) throw "Location property 'smokey' is only available for versions 1.16 and up"
+        if(Project.getTargetVersion()[1] < 16) throw "Location property 'smokey' is only supported for target versions 1.16 and up"
         eval this.output.smokey = value
         return this
     }
@@ -295,7 +334,7 @@ define private class Effect : JSONSerializable {
     }
 
     public duration(ticks : int_range) {
-        eval this.output.duration = rangeToObj(value)
+        eval this.output.duration = rangeToObj(ticks)
         return this
     }
 
@@ -314,7 +353,7 @@ define private class Effect : JSONSerializable {
     }
 }
 
-define private class Item : JSONSerializable {
+define private class SharedItem : JSONSerializable {
     var output = {}
 
     public new() {}
@@ -342,7 +381,17 @@ define private class Item : JSONSerializable {
     public type(type : resource) {
         if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
         if(!MinecraftTypes.exists("item", type)) throw "Given type '" + type + "' does not exist as an item type"
-        eval this.output.item = type
+        if(this.output.items != null) {
+            eval this.output.items.add(type)
+        } else if(this.output.item != null) {
+            if(Project.getTargetVersion()[1] < 17) throw "Multiple types in Shared.Block are only supported for target versions 1.17 and later"
+            eval this.output.items = [this.output.item, type]
+            eval this.output.item = null
+        } else if(Project.getTargetVersion()[1] >= 17) {
+            eval this.output.items = [type]
+        } else {
+            eval this.output.item = type
+        }
         eval this.output.tag = null
         return this
     }
@@ -372,7 +421,7 @@ define private class Item : JSONSerializable {
     }
 
     public enchantments(obj : Enchantment) {
-        return effects([obj])
+        return enchantments([obj])
     }
     public enchantments (enchantments : list) {
         if(this.output.enchantments == null) eval this.output.enchantments = []
@@ -383,7 +432,7 @@ define private class Item : JSONSerializable {
     }
 
     public storedEnchantments(obj : Enchantment) {
-        return effects([obj])
+        return storedEnchantments([obj])
     }
     public storedEnchantments(enchantments : list) {
         if(this.output.stored_enchantments == null) eval this.output.stored_enchantments = []
@@ -427,7 +476,7 @@ define private class Enchantment : JSONSerializable {
     }
 }
 
-define private class Block : JSONSerializable {
+define private class SharedBlock : JSONSerializable {
     var output = {}
 
     public new(base : block?) {
@@ -452,7 +501,18 @@ define private class Block : JSONSerializable {
     public type(type : resource) {
         if(type.isTag) throw "Given location '" + type + "' is a tag, expected a type"
         if(!MinecraftTypes.exists("block", type)) throw "Given type '" + type + "' does not exist as a block type"
-        eval this.output.block = type
+
+        if(this.output.blocks != null) {
+            eval this.output.blocks.add(type)
+        } else if(this.output.block != null) {
+            if(Project.getTargetVersion()[1] < 17) throw "Multiple types in Shared.Block are only supported for target versions 1.17 and later"
+            eval this.output.blocks = [this.output.block, type]
+            eval this.output.block = null
+        } else if(Project.getTargetVersion()[1] >= 17) {
+            eval this.output.blocks = [type]
+        } else {
+            eval this.output.block = type
+        }
         eval this.output.tag = null
         return this
     }
@@ -544,25 +604,75 @@ define private class Fluid : JSONSerializable {
     }
 }
 
+define private class Number : JSONSerializable {
+    var output
+
+    private new(output) {
+        eval this.output = output
+    }
+
+    public static constant(value : real) {
+        return value
+    }
+
+    public static uniform(min, max) {
+        if(Project.getTargetVersion()[1] < 16) throw "Number Providers are only supported for target versions 1.16 and later"
+        if(!(min is int || min is real || min is Number)) {
+            throw "Expected int, real or Shared.Number for min, instead got " + type_definition.of(min)
+        }
+        if(!(max is int || max is real || max is Number)) {
+            throw "Expected int, real or Shared.Number for max, instead got " + type_definition.of(max)
+        }
+        return new Number({"type": "uniform", "min": min, "max": max})
+    }
+
+    public static binomial(n, p) {
+        if(Project.getTargetVersion()[1] < 16) throw "Number Providers are only supported for target versions 1.16 and later"
+        if(!(n is int || n is Number)) {
+            throw "Expected int or Shared.Number for n, instead got " + type_definition.of(n)
+        }
+        if(!(p is real || p is Number)) {
+            throw "Expected real or Shared.Number for p, instead got " + type_definition.of(p)
+        }
+        return new Number({"type": "binomial", "n": n, "p": p})
+    }
+
+    public static scoreFixed(uuid : uuid, objective : string, scale : real?) {
+        if(Project.getTargetVersion()[1] < 17) throw "Score Number Providers are only supported for target versions 1.17 or later"
+        return scoreFixed((string) uuid, objective, scale)
+    }
+
+    public static scoreFixed(name : string, objective : string, scale : real?) {
+        if(Project.getTargetVersion()[1] < 17) throw "Score Number Providers are only supported for target versions 1.17 or later"
+        return new Number({"type": "score", "target": {"type": "fixed", "name": name}, "score": objective, "scale": scale})
+    }
+
+    public static scoreContext(target : string, objective : string, scale : real?) {
+        if(Project.getTargetVersion()[1] < 17) throw "Score number providers are only supported for target versions 1.17 or later"
+        return new Number({"type": "score", "target": target, "score": objective, "scale": scale})
+    }
+}
+
 define static final class Shared {
     public static final var Distance = Distance
     public static final var Location = Location
     public static final var Entity = Entity
     public static final var Effect = Effect
-    public static final var Item = Item
+    public static final var Item = SharedItem
     public static final var Enchantment = Enchantment
-    public static final var Block = Block
+    public static final var Block = SharedBlock
     public static final var Fluid = Fluid
+    public static final var Number = Number
 
     # For backwards compatibility:
-    public static Distance() {return new Distance()}
-    public static Location() {return new Location()}
-    public static Entity() {return new Entity()}
-    public static Effect(type : resource) {return new Effect(type)}
-    public static Item() {return new Item()}
-    public static Item(base : item) {return new Item(base)}
-    public static Item(base : custom_item, allData : boolean?) {return new Item(base, allData)}
-    public static Enchantment(base : resource?) {return new Enchantment(base)}
-    public static Block(base : block?) {return new Block(base)}
-    public static Fluid(base : resource?) {return new Fluid(base)}
+    public static Distance() : Distance {return new Distance()}
+    public static Location() : Location {return new Location()}
+    public static Entity() : Entity {return new Entity()}
+    public static Effect(type : resource) : Effect {return new Effect(type)}
+    public static Item() : SharedItem {return new SharedItem()}
+    public static Item(base : item) : SharedItem {return new SharedItem(base)}
+    public static Item(base : custom_item, allData : boolean?) : SharedItem {return new SharedItem(base, allData)}
+    public static Enchantment(base : resource?) : Enchantment {return new Enchantment(base)}
+    public static Block(base : block?) : SharedBlock {return new SharedBlock(base)}
+    public static Fluid(base : resource?) : Fluid {return new Fluid(base)}
 }

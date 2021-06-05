@@ -148,17 +148,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("ROOT_INTERPOLATION_TYPE")
                 .add(
-                        TridentProductions.identifierX().addProcessor(ValueAccessExpressionSet.verifySymbol)
-                                .setName("VARIABLE_NAME")
-                                .addTags(SuggestionTags.ENABLED_INDEX, TridentSuggestionTags.IDENTIFIER, TridentSuggestionTags.IDENTIFIER_EXISTING, TridentSuggestionTags.TAG_VARIABLE)
-                                .addProcessor((p, l) -> {
-                                    if(l.getSummaryModule() != null) {
-                                        ((PrismarineSummaryModule) l.getSummaryModule()).addFileAwareProcessor(PASS_VALIDATION, f -> {
-                                            if(p.isValidated()) f.addSymbolUsage(p);
-                                        });
-                                    }
-                                })
-                                .setEvaluator(ValueAccessExpressionSet::parseVariable)
+                        VARIABLE_NAME
                 );
 
 
