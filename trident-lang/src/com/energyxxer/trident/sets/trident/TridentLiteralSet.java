@@ -10,24 +10,10 @@ import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.nbt.TagString;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
+import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathNode;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.types.defaults.EntityType;
-import com.energyxxer.trident.compiler.ResourceLocation;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
-import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
-import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
-import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
-import com.energyxxer.trident.sets.DataStructureLiteralSet;
-import com.energyxxer.trident.sets.MinecraftLiteralSet;
-import com.energyxxer.trident.sets.ValueAccessExpressionSet;
-import com.energyxxer.trident.sets.java.commands.VerbatimCommandDefinition;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenGroupMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
@@ -44,13 +30,28 @@ import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.PointerObject;
+import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
+import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
+import com.energyxxer.trident.compiler.util.TridentTempFindABetterHome;
+import com.energyxxer.trident.sets.DataStructureLiteralSet;
+import com.energyxxer.trident.sets.MinecraftLiteralSet;
+import com.energyxxer.trident.sets.ValueAccessExpressionSet;
+import com.energyxxer.trident.sets.java.commands.VerbatimCommandDefinition;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
+import static com.energyxxer.prismarine.PrismarineProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.ARROW;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.COMPILER_OPERATOR;
-import static com.energyxxer.prismarine.PrismarineProductions.*;
 
 public class TridentLiteralSet extends PatternProviderSet { //pointers, type_definitions
 
@@ -84,6 +85,29 @@ public class TridentLiteralSet extends PatternProviderSet { //pointers, type_def
             PointerObject pointer = (PointerObject) d[1];
 
             NBTPath path = (NBTPath) p.find("NBT_PATH").evaluate(ctx);
+
+            if(pointer.getTarget() instanceof PointerObject) {
+                PointerObject basePointer = (PointerObject) pointer.getTarget();
+                if(basePointer.getMember() instanceof NBTPath) {
+                    NBTPath start = (NBTPath) basePointer.getMember();
+                    NBTPath end = path;
+                    ArrayList<NBTPathNode> nodes = new ArrayList<>();
+                    do {
+                        nodes.add(start.getNode());
+                        start = start.getNext();
+                    } while(start != null);
+                    do {
+                        nodes.add(end.getNode());
+                        end = end.getNext();
+                    } while(end != null);
+                    NBTPath merged = new NBTPath(nodes.toArray(new NBTPathNode[0]));
+
+                    pointer.setTarget(basePointer.getTarget());
+                    path = merged;
+                } else {
+                    throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot concatenate a NBT path to a non-NBT pointer. Found member of type " + ctx.getTypeSystem().getTypeIdentifierForObject(basePointer.getMember()), p, ctx);
+                }
+            }
             pointer.setMember(path);
             pointer.setScale((double) p.findThenEvaluate("SCALE", 1.0, ctx));
             pointer.setNumericType((NumericNBTType) p.findThenEvaluate("EXPLICIT_TYPE", null, ctx));
@@ -103,7 +127,7 @@ public class TridentLiteralSet extends PatternProviderSet { //pointers, type_def
                     Object target = targetPattern.evaluate(ctx);
 
                     if(p.find("POINTER_HEAD_WRAPPER") != null) {
-                        target = PrismarineTypeSystem.assertOfClass(target, targetPattern, ctx, Entity.class, CoordinateSet.class, ResourceLocation.class);
+                        target = PrismarineTypeSystem.assertOfClass(target, targetPattern, ctx, Entity.class, CoordinateSet.class, ResourceLocation.class, PointerObject.class);
 
                         PointerObject pointer = new PointerObject(ctx.getTypeSystem(), target, null);
 
