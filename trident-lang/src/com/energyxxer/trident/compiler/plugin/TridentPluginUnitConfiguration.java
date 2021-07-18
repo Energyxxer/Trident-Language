@@ -190,11 +190,11 @@ public class TridentPluginUnitConfiguration extends PrismarinePluginUnitConfigur
         }
 
         public void registerImportedCommand(TokenStructureMatch COMMAND) {
-            COMMAND.add(importedPattern);
+            COMMAND.addDynamic(importedPattern);
         }
 
         public void uninstallImportedCommand(TokenStructureMatch COMMAND) {
-            COMMAND.remove(importedPattern);
+            COMMAND.removeDynamic(importedPattern);
         }
 
 
