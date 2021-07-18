@@ -18,7 +18,7 @@ public class Random {
         return ((java.util.Random) thiz.getHidden("random")).nextInt();
     }
 
-    public static int nextInt(int bound, @NativeFunctionAnnotations.ThisArg CustomClassObject thiz) {
+    public static int nextInt(@NativeFunctionAnnotations.ThisArg CustomClassObject thiz, int bound) {
         return ((java.util.Random) thiz.getHidden("random")).nextInt(bound);
     }
 
