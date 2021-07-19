@@ -349,6 +349,9 @@ public class TridentPatternProvider extends PatternProviderSet {
                                 ((TridentSummaryModule) lx.getSummaryModule()).lockDirectives();
                             }
                         }),
+                        noToken().addFailProcessor((p, l) -> {
+                            TridentProductions.installAllPluginCommands(productions);
+                        }),
                         list(productions.getOrCreateStructure("ENTRY")).setOptional().setName("ENTRIES")
                 ).setGreedy(true).addProcessor(uninstallCommands).addFailProcessor(uninstallCommands).addProcessor(TridentPatternProvider::addFileSymbols).addFailProcessor(TridentPatternProvider::addFileSymbols)
         );
@@ -361,7 +364,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                     SummarySymbol argsSym = new SummarySymbol(
                             f, "args", SymbolVisibility.PUBLIC, 0
                     );
-                    argsSym.setType(new CachedSymbolReference(fs -> ((TridentProjectSummary) fs.getParentSummary()).getPrimitiveSymbol("dictionary")));
+                    argsSym.setType(new CachedSymbolReference(fs -> fs.getParentSummary() != null ? ((TridentProjectSummary) fs.getParentSummary()).getPrimitiveSymbol("dictionary") : null));
                     f.addElement(argsSym);
                 }
             });

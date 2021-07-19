@@ -14,6 +14,7 @@ import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.prismarine.worker.tasks.SetupProductionsTask;
 import com.energyxxer.trident.TridentFileUnitConfiguration;
 import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
 import java.io.IOException;

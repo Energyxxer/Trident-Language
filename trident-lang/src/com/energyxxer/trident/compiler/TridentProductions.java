@@ -18,6 +18,7 @@ import com.energyxxer.prismarine.plugins.PrismarinePluginUnit;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.util.JsonTraverser;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
 import com.energyxxer.trident.compiler.plugin.TridentPluginUnitConfiguration;
@@ -27,6 +28,7 @@ import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility
 import com.energyxxer.trident.sets.BasicLiteralSet;
 import com.energyxxer.trident.sets.MinecraftLiteralSet;
 import com.energyxxer.trident.worker.tasks.SetupModuleTask;
+import com.energyxxer.trident.worker.tasks.SetupPropertiesTask;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
@@ -261,6 +263,18 @@ public class TridentProductions {
                 ((TridentPluginUnitConfiguration.CustomCommandProduction)
                         unit.get(TridentPluginUnitConfiguration.CommandSyntaxFile.INSTANCE).getOutput()
                 ).uninstallImportedCommand(productions.getOrCreateStructure("COMMAND"));
+            }
+        }
+    }
+
+    public static void installAllPluginCommands(PrismarineProductions productions) {
+        if(JsonTraverser.INSTANCE.reset(productions.getWorker().output.get(SetupPropertiesTask.INSTANCE)).get("using-all-plugins").asBoolean(true)) {
+            if(productions.getPluginUnits() != null) {
+                for(PrismarinePluginUnit unit : productions.getPluginUnits()) {
+                    ((TridentPluginUnitConfiguration.CustomCommandProduction)
+                            unit.get(TridentPluginUnitConfiguration.CommandSyntaxFile.INSTANCE).getOutput()
+                    ).registerImportedCommand(productions.getOrCreateStructure("COMMAND"));
+                }
             }
         }
     }
