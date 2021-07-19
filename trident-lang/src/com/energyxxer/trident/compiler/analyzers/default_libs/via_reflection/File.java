@@ -6,9 +6,12 @@ import com.energyxxer.enxlex.report.Notice;
 import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.trident.Trident;
+import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.resourcepack.ResourcePackGenerator;
 import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 import com.energyxxer.trident.worker.tasks.SetupResourcePackTask;
+import com.energyxxer.trident.worker.tasks.SetupRootDirectoryListTask;
 import com.energyxxer.util.FileUtil;
 
 import java.io.FileNotFoundException;
@@ -16,54 +19,73 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 public class File {
     public static class in {
+        @DefaultLibraryProvider.HideFromCustomClass
+        public static java.io.File inPathToFile(String inPath, ISymbolContext ctx) {
+            Path path = Paths.get(inPath.replace("/",java.io.File.separator)).normalize();
+            if(path.startsWith(Paths.get("../"))) {
+                throw new IllegalArgumentException("Cannot write files outside the project: " + path);
+            }
+
+            for(java.io.File rootDir : ctx.get(SetupRootDirectoryListTask.INSTANCE)) {
+                Path rootPath = rootDir.toPath();
+
+                Path pathInThisRoot = rootPath.resolve(path);
+
+                if(Files.exists(pathInThisRoot)) {
+                    return pathInThisRoot.toFile();
+                }
+            }
+
+            return null;
+        }
+
+        @DefaultLibraryProvider.HideFromCustomClass
+        public static ArrayList<String> listSubFileNames(String inPath, ISymbolContext ctx) {
+            ArrayList<String> all = new ArrayList<>();
+
+            Path path = Paths.get(inPath.replace("/",java.io.File.separator)).normalize();
+            if(path.startsWith(Paths.get("../"))) {
+                throw new IllegalArgumentException("Cannot write files outside the project: " + path);
+            }
+
+            for(java.io.File rootDir : ctx.get(SetupRootDirectoryListTask.INSTANCE)) {
+                Path rootPath = rootDir.toPath();
+
+                Path pathInThisRoot = rootPath.resolve(path);
+
+                if(Files.exists(pathInThisRoot) && Files.isDirectory(pathInThisRoot)) {
+                    for(String filename : pathInThisRoot.toFile().list()) {
+                        if(!all.contains(filename)) all.add(filename);
+                    }
+                }
+            }
+
+            return all;
+        }
+
         public static Object read(String inPath, ISymbolContext callingCtx) throws IOException {
-            String rawPath = inPath.replace(java.io.File.separator, "/");
-            while(rawPath.startsWith("/")) {
-                rawPath = rawPath.substring(1);
-            }
-            Path path = callingCtx.getCompiler().getRootCompiler().getRootPath().resolve(Paths.get(rawPath).normalize());
-            if(!path.startsWith(callingCtx.getCompiler().getRootCompiler().getRootDir().toPath())) {
-                throw new IllegalArgumentException("Cannot read files outside of the current project: " + path.toString().replace(java.io.File.separator, "/"));
-            }
-            if(Files.exists(path)) {
-                if(Files.isDirectory(path)) return path.toFile().list();
-                return new String(Files.readAllBytes(path), Trident.DEFAULT_CHARSET);
-            } else throw new FileNotFoundException(path.toString().replace(java.io.File.separator, "/"));
+            java.io.File file = inPathToFile(inPath, callingCtx);
+            if(file != null && file.exists()) {
+                if (Files.isDirectory(file.toPath())) return new ListObject(callingCtx.getTypeSystem(), listSubFileNames(inPath, callingCtx));
+                return new String(Files.readAllBytes(file.toPath()), Trident.DEFAULT_CHARSET);
+            } else throw new FileNotFoundException(inPath.toString());
         }
 
         public static Object exists(String inPath, ISymbolContext callingCtx) {
-            String rawPath = inPath.replace("\\", "/");
-            while(rawPath.startsWith("/")) {
-                rawPath = rawPath.substring(1);
-            }
-            Path path = callingCtx.getCompiler().getRootCompiler().getRootPath().resolve(Paths.get(rawPath).normalize());
-            if(!path.startsWith(callingCtx.getCompiler().getRootCompiler().getRootDir().toPath())) {
-                throw new IllegalArgumentException("Cannot read files outside of the current project: " + path.toString().replace("\\", "/"));
-            }
-            return Files.exists(path);
+            return inPathToFile(inPath, callingCtx) != null;
         }
 
         public static Object isDirectory(String inPath, ISymbolContext callingCtx) {
-            String rawPath = inPath.replace("\\", "/");
-            while(rawPath.startsWith("/")) {
-                rawPath = rawPath.substring(1);
-            }
-            Path path = callingCtx.getCompiler().getRootCompiler().getRootPath().resolve(Paths.get(rawPath).normalize());
-            if(!path.startsWith(callingCtx.getCompiler().getRootCompiler().getRootDir().toPath())) {
-                throw new IllegalArgumentException("Cannot read files outside of the current project: " + path.toString().replace("\\", "/"));
-            }
-            return Files.exists(path) && Files.isDirectory(path);
+            java.io.File file = inPathToFile(inPath, callingCtx);
+            return file != null && file.isDirectory();
         }
 
         public static Object write(String inPath, String content, ISymbolContext callingCtx) throws IOException {
-            String rawPath = inPath.replace(java.io.File.separator, "/");
-            while(rawPath.startsWith("/")) {
-                rawPath = rawPath.substring(1);
-            }
-            Path path = Paths.get(rawPath).normalize();
+            Path path = Paths.get(inPath.replace("/",java.io.File.separator)).normalize();
             if(path.startsWith(Paths.get("../"))) {
                 throw new IllegalArgumentException("Cannot write files outside the project: " + path);
             }
@@ -93,16 +115,12 @@ public class File {
         }
 
         public static boolean wasFileChanged(String inPath, ISymbolContext callingCtx) throws IOException {
-            String rawPath = inPath.replace(java.io.File.separator, "/");
-            while(rawPath.startsWith("/")) {
-                rawPath = rawPath.substring(1);
+            Path relPath = Paths.get(inPath.replace("/",java.io.File.separator));
+            try {
+                return callingCtx.getCompiler().getRootCompiler().getProjectReader().startQuery(relPath).perform().wasChangedSinceCached();
+            } catch(FileNotFoundException x) {
+                return false;
             }
-            Path relPath = Paths.get(rawPath).normalize();
-            Path path = callingCtx.getCompiler().getRootCompiler().getRootPath().resolve(relPath);
-            if(!path.startsWith(callingCtx.getCompiler().getRootCompiler().getRootDir().toPath())) {
-                throw new IllegalArgumentException("Cannot read files outside of the current project: " + path.toString().replace(java.io.File.separator, "/"));
-            }
-            return callingCtx.getCompiler().getRootCompiler().getProjectReader().startQuery(relPath).perform().wasChangedSinceCached();
         }
     }
 

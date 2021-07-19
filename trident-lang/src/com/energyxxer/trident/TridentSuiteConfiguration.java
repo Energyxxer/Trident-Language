@@ -142,6 +142,7 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
                 SetupProductionsTask.INSTANCE,
                 SetupPluginsTask.INSTANCE,
                 SetupDependenciesTask.INSTANCE,
+                SetupRootDirectoryListTask.INSTANCE,
                 SetupPluginsTransitivelyTask.INSTANCE,
                 SetupPluginProductionsTask.INSTANCE,
                 SetupResourcePackTask.INSTANCE,
