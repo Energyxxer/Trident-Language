@@ -46,7 +46,7 @@ public class RawModifierDefinition implements ExecuteModifierDefinition {
                                     if (!((String) elem).isEmpty())
                                         modifiers.add(new RawExecuteModifier(((String) elem)));
                                 } else {
-                                    throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot turn an object of type " + ctx.getTypeSystem().getTypeIdentifierForObject(elem) + " into a string for a raw execute modifier", p.find("RAW_MODIFIER_VALUE"), ctx);
+                                    throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot turn an object of type " + ctx.getTypeSystem().getTypeIdentifierForObject(elem) + " into a string for a raw execute modifier", p, ctx);
                                 }
                             }
                             return modifiers;
