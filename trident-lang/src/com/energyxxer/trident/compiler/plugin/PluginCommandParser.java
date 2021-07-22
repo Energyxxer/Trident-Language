@@ -216,7 +216,7 @@ public class PluginCommandParser {
             case "NUMERIC_DATA_TYPE":
             case "TRAILING_STRING":
             case "ANCHOR": return pattern.flatten(false);
-            default: throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Don't know how to store this into a variable: '" + pattern.getName() + "'", pattern, ctx);
+            default: throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Don't know how to store this into a variable: '" + pattern.getName() + "'", pattern, ctx);
         }
     }
 
