@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+import static com.energyxxer.trident.compiler.plugin.TDNMetaBuilder.*;
+
 public class PluginCommandParser {
     private static final ExecutionContext DEFAULT_EXEC_CONTEXT = new ExecutionContext();
 
@@ -57,15 +59,19 @@ public class PluginCommandParser {
         while(pattern.hasTag(PrismarineMetaBuilder.PLUGIN_CREATED_TAG)) {
             boolean storingInVar = false;
             for(String tag : pattern.getTags()) {
-                if(tag.startsWith(PrismarineMetaBuilder.STORE_VAR_TAG_PREFIX)) {
+                if(tag.startsWith(STORE_VAR_TAG_PREFIX)) {
                     storingInVar = true;
-                    String storeVar = tag.substring(PrismarineMetaBuilder.STORE_VAR_TAG_PREFIX.length());
+                    String storeVar = tag.substring(STORE_VAR_TAG_PREFIX.length());
                     TokenPattern<?> argPattern = ((TokenGroup) pattern).getContents()[0];
 
-                    Object value;
-                    if(pattern.hasTag(PrismarineMetaBuilder.STORE_FLAT_TAG_PREFIX)) {
-                        value = pattern.flatten(true);
-                    } else {
+                    Object value = null;
+                    for(String tag2 : pattern.getTags()) {
+                        if(tag2.startsWith(STORE_FLAT_TAG_PREFIX)) {
+                            value = pattern.flatten(tag2.substring(STORE_FLAT_TAG_PREFIX.length()));
+                            break;
+                        }
+                    }
+                    if(value == null) {
                         value = parseVar(argPattern, ctx, pattern);
                     }
 
@@ -82,18 +88,16 @@ public class PluginCommandParser {
                     }
                 }
             }
-            if(!storingInVar) {
-                if(pattern instanceof TokenStructure) {
-                    pattern = ((TokenStructure) pattern).getContents();
-                    continue;
+            if(pattern instanceof TokenStructure) {
+                pattern = ((TokenStructure) pattern).getContents();
+                continue;
+            }
+            if(pattern instanceof TokenGroup || pattern instanceof TokenList) {
+                TokenPattern<?>[] contents = ((TokenPattern<?>[]) pattern.getContents());
+                for(TokenPattern<?> subPattern : contents) {
+                    scanPattern(subPattern, argsObj, ctx);
                 }
-                if(pattern instanceof TokenGroup || pattern instanceof TokenList) {
-                    TokenPattern<?>[] contents = ((TokenPattern<?>[]) pattern.getContents());
-                    for(TokenPattern<?> subPattern : contents) {
-                        scanPattern(subPattern, argsObj, ctx);
-                    }
-                    break;
-                }
+                break;
             }
             break;
         }
@@ -108,7 +112,7 @@ public class PluginCommandParser {
             }
             case "ANONYMOUS_INNER_FUNCTION": {
                 PrismarineFunction function = new PrismarineFunction(null, new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.emptyList(), pattern, null), ctx);
-                if(parentPattern.hasTag(PrismarineMetaBuilder.STORE_METADATA_TAG_PREFIX + "STATS")) {
+                if(parentPattern.hasTag(STORE_METADATA_TAG_PREFIX + "STATS")) {
                     DictionaryObject dict = new DictionaryObject(ctx.getTypeSystem());
 
                     getInnerFunctionStats(dict, pattern);
@@ -168,7 +172,7 @@ public class PluginCommandParser {
             case "ITEM":
             case "ITEM_TAGGED": {
                 NBTMode mode = NBTMode.SETTING;
-                if(parentPattern.hasTag(PrismarineMetaBuilder.STORE_METADATA_TAG_PREFIX + "TESTING")) mode = NBTMode.TESTING;
+                if(parentPattern.hasTag(STORE_METADATA_TAG_PREFIX + "TESTING")) mode = NBTMode.TESTING;
                 return pattern.evaluate(ctx, mode);
             }
             case "NEW_ENTITY_LITERAL": {
