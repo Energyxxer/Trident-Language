@@ -77,6 +77,7 @@ public class PointerObject implements TypeHandler<PointerObject> {
         this.isStaticHandler = true;
         this.target = new Symbol("target", TridentSymbolVisibility.LOCAL, null);
         this.member = new Symbol("member", TridentSymbolVisibility.LOCAL, null);
+        this.scale = new Symbol("scale", TridentSymbolVisibility.LOCAL, 1.0);
     }
 
     public PointerObject(PrismarineTypeSystem typeSystem, Object target, Object member) {
@@ -202,6 +203,7 @@ public class PointerObject implements TypeHandler<PointerObject> {
         return Double.compare(that.getScale(), getScale()) == 0 &&
                 Objects.equals(target.getValue(null, null), that.target.getValue(null, null)) &&
                 Objects.equals(member.getValue(null, null), that.member.getValue(null, null)) &&
+                Objects.equals(getScale(), that.getScale()) &&
                 Objects.equals(numericType, that.numericType);
     }
 
