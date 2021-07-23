@@ -96,6 +96,10 @@ public class TDNMetaBuilder extends PrismarineMetaBuilder {
     public void build(PrismarinePluginUnit unit) {
         super.build(unit);
 
+        if(!returnValue.tags.contains(PLUGIN_CREATED_TAG)) {
+            returnValue = new TokenGroupMatch().append(returnValue).addTags(PLUGIN_CREATED_TAG);
+        }
+
         returnValue.setEvaluator((pattern, data) -> {
             ISymbolContext ctx = (ISymbolContext) data[0];
             TridentFile writingFile = ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile();
