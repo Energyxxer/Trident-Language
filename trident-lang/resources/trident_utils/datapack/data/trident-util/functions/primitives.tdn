@@ -133,6 +133,7 @@ define private class function {}
 define private class nbt_path {
     public resolveKey(key : string, compound : nbt?) : nbt_path {}
     public resolveIndex(index : int) : nbt_path {}
+    public resolveListMatch(compound : tag_compound) : nbt_path {}
 }
 
 define private class tag_compound {

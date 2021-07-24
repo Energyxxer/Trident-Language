@@ -54,6 +54,7 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
         try {
             members.putMethod(NBTPathTypeHandler.class.getMethod("resolveKey", String.class, TagCompound.class, NBTPath.class));
             members.putMethod(NBTPathTypeHandler.class.getMethod("resolveIndex", int.class, NBTPath.class));
+            members.putMethod(NBTPathTypeHandler.class.getMethod("resolveListMatch", TagCompound.class, NBTPath.class));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
