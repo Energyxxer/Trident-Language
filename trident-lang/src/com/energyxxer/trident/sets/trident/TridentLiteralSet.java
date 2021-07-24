@@ -372,12 +372,16 @@ public class TridentLiteralSet extends PatternProviderSet { //pointers, type_def
                 )
                 .add(
                         group(
-                                TridentProductions.symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED),
+                                TridentProductions.symbol("$").setName("INTERPOLATION_HEADER").addTags(SuggestionTags.DISABLED).addProcessor(startClosure),
                                 TridentProductions.glue(),
                                 TridentProductions.brace("{").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED),
                                 productions.getOrCreateStructure("INTERPOLATION_VALUE"),
-                                TridentProductions.brace("}").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED)
-                        ).setName("INTERPOLATION_WRAPPER").setSimplificationFunction(d -> {
+                                TridentProductions.brace("}").setName("INTERPOLATION_BRACE").addTags(SuggestionTags.DISABLED).addProcessor(endComplexValue)
+                        ).addFailProcessor((p, l) -> {
+                            if(((TokenGroup) p).getContents().length > 1) {
+                                endComplexValue.accept(p, l);
+                            }
+                        }).setName("INTERPOLATION_WRAPPER").setSimplificationFunction(d -> {
                             d.pattern = d.pattern.find("INTERPOLATION_VALUE");
                             d.data = new Object[] {(ISymbolContext) d.data[0]};
                         })
