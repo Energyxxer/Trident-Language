@@ -34,7 +34,7 @@ public class TridentTypeSystem extends PrismarineTypeSystem {
 
 
         int defaultSeed = globalCtx.getCompiler().getRootDir().getName().hashCode();
-        int projectSeed = JsonTraverser.INSTANCE.reset(globalCtx.get(SetupPropertiesTask.INSTANCE)).get("random-seed").asInt(defaultSeed);
+        int projectSeed = JsonTraverser.getThreadInstance().reset(globalCtx.get(SetupPropertiesTask.INSTANCE)).get("random-seed").asInt(defaultSeed);
 
         projectRandom = new java.util.Random(projectSeed);
     }

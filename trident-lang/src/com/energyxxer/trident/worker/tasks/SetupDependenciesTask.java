@@ -24,7 +24,7 @@ public class SetupDependenciesTask extends PrismarineProjectWorkerTask<List<Pris
 
         JsonObject properties = worker.output.get(SetupPropertiesTask.INSTANCE);
 
-        for(JsonElement rawElem : JsonTraverser.INSTANCE.reset(properties).get("dependencies").iterateAsArray()) {
+        for(JsonElement rawElem : JsonTraverser.getThreadInstance().reset(properties).get("dependencies").iterateAsArray()) {
             if(rawElem.isJsonObject()) {
                 JsonObject obj = rawElem.getAsJsonObject();
                 if(obj.has("path") && obj.get("path").isJsonPrimitive() && obj.get("path").getAsJsonPrimitive().isString()) {

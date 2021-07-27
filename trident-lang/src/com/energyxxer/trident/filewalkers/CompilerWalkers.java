@@ -84,10 +84,10 @@ public class CompilerWalkers {
                         return false;
                     }
 
-                    tag.setOverridePolicy(Tag.OverridePolicy.valueOf(JsonTraverser.INSTANCE.reset(obj).get("replace").asBoolean(Tag.OverridePolicy.DEFAULT_POLICY.valueBool)));
+                    tag.setOverridePolicy(Tag.OverridePolicy.valueOf(JsonTraverser.getThreadInstance().reset(obj).get("replace").asBoolean(Tag.OverridePolicy.DEFAULT_POLICY.valueBool)));
                     tag.setExport(true);
 
-                    JsonArray values = JsonTraverser.INSTANCE.reset(obj).get("values").asJsonArray();
+                    JsonArray values = JsonTraverser.getThreadInstance().reset(obj).get("values").asJsonArray();
 
                     if(values != null) {
                         for(JsonElement elem : values) {

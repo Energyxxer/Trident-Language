@@ -268,7 +268,7 @@ public class TridentProductions {
     }
 
     public static void installAllPluginCommands(PrismarineProductions productions) {
-        if(JsonTraverser.INSTANCE.reset(productions.getWorker().output.get(SetupPropertiesTask.INSTANCE)).get("using-all-plugins").asBoolean(true)) {
+        if(JsonTraverser.getThreadInstance().reset(productions.getWorker().output.get(SetupPropertiesTask.INSTANCE)).get("using-all-plugins").asBoolean(true)) {
             if(productions.getPluginUnits() != null) {
                 for(PrismarinePluginUnit unit : productions.getPluginUnits()) {
                     ((TridentPluginUnitConfiguration.CustomCommandProduction)

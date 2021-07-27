@@ -24,7 +24,7 @@ public class SetupPluginProductionsTask extends PrismarineProjectWorkerTask {
 
             p.attachToProjectWorker(worker);
 
-            if(JsonTraverser.INSTANCE.reset(worker.output.get(SetupPropertiesTask.INSTANCE)).get("using-all-plugins").asBoolean(true)) {
+            if(JsonTraverser.getThreadInstance().reset(worker.output.get(SetupPropertiesTask.INSTANCE)).get("using-all-plugins").asBoolean(true)) {
                 TridentProductions.importPlugin(productions, p.getName(), null, null);
             }
         }

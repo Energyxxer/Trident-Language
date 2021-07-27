@@ -30,7 +30,7 @@ public class SetupPluginsTask extends PrismarineProjectWorkerTask<ArrayList<Pris
         JsonObject properties = worker.output.get(SetupPropertiesTask.INSTANCE);
         TridentBuildConfiguration buildConfig = worker.output.get(SetupBuildConfigTask.INSTANCE);
 
-        for(JsonElement rawElement : JsonTraverser.INSTANCE.reset(properties).get("use-plugins").iterateAsArray()) {
+        for(JsonElement rawElement : JsonTraverser.getThreadInstance().reset(properties).get("use-plugins").iterateAsArray()) {
             if(rawElement.isJsonPrimitive() && rawElement.getAsJsonPrimitive().isString()) {
                 String element = rawElement.getAsString();
                 File pathToPack = worker.rootDir.toPath().resolve("plugins").resolve(element).toFile();

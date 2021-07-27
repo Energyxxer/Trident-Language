@@ -16,7 +16,7 @@ public class SetupSpecialFileManagerTask extends PrismarineProjectWorkerTask<Spe
         SpecialFileManager specialFileManager = new SpecialFileManager(worker);
 
         specialFileManager.setDefaultNamespace(
-                JsonTraverser.INSTANCE.reset(worker.output.get(SetupPropertiesTask.INSTANCE))
+                JsonTraverser.getThreadInstance().reset(worker.output.get(SetupPropertiesTask.INSTANCE))
                         .get("default-namespace")
                         .asNonEmptyString()
         );

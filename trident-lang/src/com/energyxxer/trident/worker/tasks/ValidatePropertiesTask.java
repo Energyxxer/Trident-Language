@@ -18,13 +18,13 @@ public class ValidatePropertiesTask extends PrismarineProjectWorkerTask<TridentP
     public TridentProjectProperties perform(PrismarineProjectWorker worker) throws Exception {
         JsonObject properties = worker.output.get(SetupPropertiesTask.INSTANCE);
 
-        int languageLevel = JsonTraverser.INSTANCE.reset(properties).get("language-level").asInt(1);
+        int languageLevel = JsonTraverser.getThreadInstance().reset(properties).get("language-level").asInt(1);
         if(languageLevel < 1 || languageLevel > 3) {
             worker.report.addNotice(new Notice(NoticeType.ERROR, "Invalid language level: " + languageLevel));
             languageLevel = 1;
         }
 
-        String anonymousFunctionTemplate = JsonTraverser.INSTANCE.reset(properties).get("anonymous-function-name").asNonEmptyString("_anonymous*");
+        String anonymousFunctionTemplate = JsonTraverser.getThreadInstance().reset(properties).get("anonymous-function-name").asNonEmptyString("_anonymous*");
 
         TridentProjectProperties propertiesObject = new TridentProjectProperties();
         propertiesObject.languageLevel = languageLevel;
