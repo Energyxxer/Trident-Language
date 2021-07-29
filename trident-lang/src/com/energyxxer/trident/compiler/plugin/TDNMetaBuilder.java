@@ -30,13 +30,13 @@ public class TDNMetaBuilder extends PrismarineMetaBuilder {
         registerFunction("storeVar", TokenMatchValue.class, (value, args) -> {
             if(args.size() >= 1) {
                 if(args.get(0) instanceof StringLiteralValue) {
-                    if(!((TokenMatchValue) value).patternMatch.tags.contains(PLUGIN_CREATED_TAG)) {
+                    if(!((TokenMatchValue) value).patternMatch.hasTag(PLUGIN_CREATED_TAG)) {
                         TokenGroupMatch match = new TokenGroupMatch().append(((TokenMatchValue) value).patternMatch);
-                        match.addTags(PLUGIN_CREATED_TAG).addTags(STORE_VAR_TAG_PREFIX + ((StringLiteralValue) args.get(0)).stringValue);
+                        match.addTag(PLUGIN_CREATED_TAG).addTag(STORE_VAR_TAG_PREFIX + ((StringLiteralValue) args.get(0)).stringValue);
                         for(int i = 1; i < args.size(); i++) {
                             Value arg = args.get(i);
                             if(arg instanceof StringLiteralValue) {
-                                match.addTags(STORE_METADATA_TAG_PREFIX + ((StringLiteralValue) arg).stringValue);
+                                match.addTag(STORE_METADATA_TAG_PREFIX + ((StringLiteralValue) arg).stringValue);
                             } else {
                                 throw new IllegalArgumentException("Function 'storeVar' only accepts String Literal values at arguments 1 and later, found " + arg.getClass().getSimpleName());
                             }
@@ -96,7 +96,7 @@ public class TDNMetaBuilder extends PrismarineMetaBuilder {
     public void build(PrismarinePluginUnit unit) {
         super.build(unit);
 
-        if(!returnValue.tags.contains(PLUGIN_CREATED_TAG)) {
+        if(!returnValue.hasTag(PLUGIN_CREATED_TAG)) {
             returnValue = new TokenGroupMatch().append(returnValue).addTags(PLUGIN_CREATED_TAG);
         }
 

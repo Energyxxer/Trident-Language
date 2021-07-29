@@ -1,5 +1,6 @@
 package com.energyxxer.trident.sets.java;
 
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenSwitchMatch;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
 import com.energyxxer.prismarine.providers.PatternSwitchProviderSet;
@@ -87,6 +88,11 @@ public class JavaCommandSet extends PatternSwitchProviderSet {
                 WhitelistCommandDefinition.class,
                 WorldBorderCommandDefinition.class
         );
+    }
+
+    @Override
+    protected void switchCreated(TokenSwitchMatch switchMatch) {
+        switchMatch.addTags(TridentSuggestionTags.TAG_COMMAND);
     }
 
     @Override

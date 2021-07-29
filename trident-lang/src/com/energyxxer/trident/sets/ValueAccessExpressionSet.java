@@ -374,15 +374,17 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 if(symbol == null) {
                     if("this".equals(varName)) {
                         TokenPattern<?> literalPattern = ((TokenStructure)((TokenStructure) root).getContents()).getContents();
-                        for(String tag : literalPattern.getTags()) {
-                            if(tag.startsWith(TridentSuggestionTags.__THIS_TYPE)) {
-                                String className = tag.substring(TridentSuggestionTags.__THIS_TYPE.length());
+                        if(literalPattern.getTags() != null) {
+                            for(String tag : literalPattern.getTags()) {
+                                if(tag.startsWith(TridentSuggestionTags.__THIS_TYPE)) {
+                                    String className = tag.substring(TridentSuggestionTags.__THIS_TYPE.length());
 
-                                SummarySymbol typeSym = fileSummary.getSymbolForName(className, root.getStringLocation().index);
+                                    SummarySymbol typeSym = fileSummary.getSymbolForName(className, root.getStringLocation().index);
 
-                                if(typeSym != null) {
-                                    symbol = new SummarySymbol(fileSummary, "", 0);
-                                    symbol.setType(typeSym);
+                                    if(typeSym != null) {
+                                        symbol = new SummarySymbol(fileSummary, "", 0);
+                                        symbol.setType(typeSym);
+                                    }
                                 }
                             }
                         }
@@ -402,12 +404,14 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
             }
             default: {
                 boolean primitiveFound = false;
-                for(String tag : ((TokenStructure) root).getContents().getTags()) {
-                    if(tag.startsWith("primitive:")) {
-                        symbol = createSymbolForPrimitiveValue(tag.substring("primitive:".length()), fileSummary);
-                        if(symbol == null) return null;
-                        primitiveFound = true;
-                        break;
+                if(((TokenStructure) root).getContents().getTags() != null) {
+                    for(String tag : ((TokenStructure) root).getContents().getTags()) {
+                        if(tag.startsWith("primitive:")) {
+                            symbol = createSymbolForPrimitiveValue(tag.substring("primitive:".length()), fileSummary);
+                            if(symbol == null) return null;
+                            primitiveFound = true;
+                            break;
+                        }
                     }
                 }
                 if(!primitiveFound) return null;

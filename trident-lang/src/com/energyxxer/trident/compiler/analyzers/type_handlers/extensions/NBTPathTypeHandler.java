@@ -132,7 +132,7 @@ public class NBTPathTypeHandler implements TypeHandler<NBTPath> {
     }
 
     @NativeFunctionAnnotations.NotNullReturn
-    public static NBTPath resolveListMatch(TagCompound compound, @NativeFunctionAnnotations.ThisArg NBTPath instance) {
+    public static NBTPath resolveListMatch(@NativeFunctionAnnotations.NullableArg TagCompound compound, @NativeFunctionAnnotations.ThisArg NBTPath instance) {
         ArrayList<NBTPathNode> nodes = new ArrayList<>();
         for (NBTPath subPath : instance) {
             nodes.add(subPath.getNode());

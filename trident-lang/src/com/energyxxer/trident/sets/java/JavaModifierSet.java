@@ -2,6 +2,7 @@ package com.energyxxer.trident.sets.java;
 
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenSwitchMatch;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.prismarine.PrismarineProductions;
@@ -35,6 +36,11 @@ public class JavaModifierSet extends PatternSwitchProviderSet {
                 RotatedModifierDefinition.class,
                 StoreModifierDefinition.class
         );
+    }
+
+    @Override
+    protected void switchCreated(TokenSwitchMatch switchMatch) {
+        switchMatch.addTags(TridentSuggestionTags.TAG_MODIFIER);
     }
 
     @Override

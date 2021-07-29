@@ -58,33 +58,35 @@ public class PluginCommandParser {
     private void scanPattern(TokenPattern<?> pattern, DictionaryObject argsObj, ISymbolContext ctx) {
         while(pattern.hasTag(PrismarineMetaBuilder.PLUGIN_CREATED_TAG)) {
             boolean storingInVar = false;
-            for(String tag : pattern.getTags()) {
-                if(tag.startsWith(STORE_VAR_TAG_PREFIX)) {
-                    storingInVar = true;
-                    String storeVar = tag.substring(STORE_VAR_TAG_PREFIX.length());
-                    TokenPattern<?> argPattern = ((TokenGroup) pattern).getContents()[0];
+            if(pattern.getTags() != null) {
+                for(String tag : pattern.getTags()) {
+                    if(tag.startsWith(STORE_VAR_TAG_PREFIX)) {
+                        storingInVar = true;
+                        String storeVar = tag.substring(STORE_VAR_TAG_PREFIX.length());
+                        TokenPattern<?> argPattern = ((TokenGroup) pattern).getContents()[0];
 
-                    Object value = null;
-                    for(String tag2 : pattern.getTags()) {
-                        if(tag2.startsWith(STORE_FLAT_TAG_PREFIX)) {
-                            value = pattern.flatten(tag2.substring(STORE_FLAT_TAG_PREFIX.length()));
-                            break;
+                        Object value = null;
+                        for(String tag2 : pattern.getTags()) {
+                            if(tag2.startsWith(STORE_FLAT_TAG_PREFIX)) {
+                                value = pattern.flatten(tag2.substring(STORE_FLAT_TAG_PREFIX.length()));
+                                break;
+                            }
                         }
-                    }
-                    if(value == null) {
-                        value = parseVar(argPattern, ctx, pattern);
-                    }
+                        if(value == null) {
+                            value = parseVar(argPattern, ctx, pattern);
+                        }
 
-                    if(!argsObj.containsKey(storeVar)) {
-                        argsObj.put(storeVar, value);
-                    } else if(multiVars.contains(storeVar)) {
-                        ((ListObject) argsObj.get(storeVar)).add(value);
-                    } else {
-                        ListObject newList = new ListObject(ctx.getTypeSystem());
-                        newList.add(argsObj.get(storeVar));
-                        newList.add(value);
-                        argsObj.put(storeVar, newList);
-                        multiVars.add(storeVar);
+                        if(!argsObj.containsKey(storeVar)) {
+                            argsObj.put(storeVar, value);
+                        } else if(multiVars.contains(storeVar)) {
+                            ((ListObject) argsObj.get(storeVar)).add(value);
+                        } else {
+                            ListObject newList = new ListObject(ctx.getTypeSystem());
+                            newList.add(argsObj.get(storeVar));
+                            newList.add(value);
+                            argsObj.put(storeVar, newList);
+                            multiVars.add(storeVar);
+                        }
                     }
                 }
             }
