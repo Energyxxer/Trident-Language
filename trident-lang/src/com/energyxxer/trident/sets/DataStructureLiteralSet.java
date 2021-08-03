@@ -42,7 +42,7 @@ public class DataStructureLiteralSet extends PatternProviderSet { //dictionaries
                                         .addProcessor((p, l) -> {
                                             if(l.getSummaryModule() != null) {
                                                 String key = p.flatten(false);
-                                                if(key.startsWith("\"")) {
+                                                if(key.startsWith("\"") || key.startsWith("'")) {
                                                     try {
                                                         key = CommandUtils.parseQuotedString(key);
                                                     } catch(CommodoreException ignore) {
