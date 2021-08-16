@@ -16,6 +16,7 @@ import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.TypeConstraints;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
@@ -36,7 +37,7 @@ import static com.energyxxer.prismarine.PrismarineProductions.*;
 public class VariableInstruction implements InstructionDefinition {
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
 
         TokenPatternMatch VARIABLE_DECLARATION = group(choice("global", "local", "private").setName("SYMBOL_VISIBILITY").setOptional(), list(choice("final")).setOptional().setName("SYMBOL_MODIFIER_LIST"), TridentProductions.instructionKeyword("var"),
                 TridentProductions.identifierX().setName("SYMBOL_NAME").addTags("cspn:Variable Name").addProcessor((p, l) -> {

@@ -6,12 +6,6 @@ import com.energyxxer.commodore.functionlogic.commands.team.*;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.commodore.types.defaults.TeamReference;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.prismarine.reporting.PrismarineException;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.enxlex.pattern_matching.PatternEvaluator;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenGroupMatch;
@@ -19,6 +13,13 @@ import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
@@ -29,7 +30,7 @@ public class TeamCommandDefinition implements SimpleCommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         PatternEvaluator teamOptionEvaluator = (p, d) -> {
             ISymbolContext ctx = (ISymbolContext) d[0];
             TeamReference team = (TeamReference) d[1];

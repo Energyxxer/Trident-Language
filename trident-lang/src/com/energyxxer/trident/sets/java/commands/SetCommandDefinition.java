@@ -14,6 +14,13 @@ import com.energyxxer.commodore.functionlogic.nbt.*;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.types.defaults.StorageTarget;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.TridentUtil;
@@ -26,19 +33,13 @@ import com.energyxxer.trident.compiler.semantics.custom.special.ObjectiveCreatio
 import com.energyxxer.trident.sets.MinecraftLiteralSet;
 import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 import com.energyxxer.trident.worker.tasks.SetupSpecialFileManagerTask;
-import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.reporting.PrismarineException;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
-import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.util.Lazy;
 
 import java.util.HashMap;
 
+import static com.energyxxer.prismarine.PrismarineProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.NULL;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.SCOREBOARD_OPERATOR;
-import static com.energyxxer.prismarine.PrismarineProductions.*;
 
 public class SetCommandDefinition implements SimpleCommandDefinition {
     @Override
@@ -47,7 +48,7 @@ public class SetCommandDefinition implements SimpleCommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 TridentProductions.commandHeader("set"),
                 productions.getOrCreateStructure("POINTER"),

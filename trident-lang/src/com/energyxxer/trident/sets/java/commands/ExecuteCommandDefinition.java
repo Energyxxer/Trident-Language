@@ -12,6 +12,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.analyzers.commands.CommandDefinition;
 import com.energyxxer.trident.worker.tasks.SetupWritingStackTask;
@@ -32,7 +33,7 @@ public class ExecuteCommandDefinition implements CommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 TridentProductions.commandHeader("execute"),
                 productions.getOrCreateStructure("MODIFIER_LIST"),

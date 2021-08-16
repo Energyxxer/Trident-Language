@@ -14,7 +14,6 @@ import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.prismarine.worker.tasks.SetupProductionsTask;
 import com.energyxxer.trident.TridentFileUnitConfiguration;
 import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.util.logger.Debug;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +39,7 @@ public class TridentPluginUnitConfiguration extends PrismarinePluginUnitConfigur
     public void onStaticWalkerStop(PrismarinePluginUnit unit, File file, Path relativePath, PathMatcher.Result pathMatchResult, PrismarineProjectWorker worker, FileWalker<PrismarinePlugin> walker) throws IOException {
         unit.set(CommandName.INSTANCE, pathMatchResult.groups[2]);
 
-        PrismarineSyntaxFile syntaxFile = unit.createSyntaxFile(Paths.get(pathMatchResult.groups[1] + "syntax.tdnmeta"));
+        PrismarineSyntaxFile syntaxFile = unit.createSyntaxFile(worker, Paths.get(pathMatchResult.groups[1] + "syntax.tdnmeta"));
         unit.set(CommandSyntaxFile.INSTANCE, syntaxFile);
 
         PrismarinePluginFile handlerFile = unit.createFile(relativePath);
@@ -52,8 +51,8 @@ public class TridentPluginUnitConfiguration extends PrismarinePluginUnitConfigur
         PrismarineSyntaxFile syntaxFile = unit.get(CommandSyntaxFile.INSTANCE);
         PrismarinePluginFile handlerFile = unit.get(CommandHandlerFile.INSTANCE);
 
-        syntaxFile.update();
-        handlerFile.update(TridentFileUnitConfiguration.INSTANCE);
+        syntaxFile.update(projectWorker);
+        handlerFile.update(TridentFileUnitConfiguration.INSTANCE, projectWorker);
 
         PrismarineProductions productions = projectWorker.output.get(SetupProductionsTask.INSTANCE).get(TridentFileUnitConfiguration.INSTANCE);
 

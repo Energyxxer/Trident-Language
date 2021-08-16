@@ -9,6 +9,7 @@ import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
@@ -21,7 +22,7 @@ import static com.energyxxer.prismarine.PrismarineProductions.*;
 
 public class WithinInstruction implements InstructionDefinition {
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 TridentProductions.instructionKeyword("within"),
                 TridentProductions.identifierX().setName("VARIABLE_NAME").addProcessor((p, l) -> {

@@ -1,10 +1,11 @@
 package com.energyxxer.trident.sets.java;
 
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.providers.PatternProviderSet;
-import com.energyxxer.trident.sets.java.selector_arguments.*;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.providers.PatternProviderSet;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.sets.java.selector_arguments.*;
 
 public class SelectorArgumentSet extends PatternProviderSet {
     public SelectorArgumentSet() {
@@ -37,7 +38,7 @@ public class SelectorArgumentSet extends PatternProviderSet {
     }
 
     @Override
-    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
+    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure, PrismarineProjectWorker worker) {
         providerStructure.addTags(SuggestionTags.ENABLED);
     }
 }

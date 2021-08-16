@@ -7,6 +7,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.analyzers.commands.CommandDefinition;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.worker.tasks.SetupWritingStackTask;
@@ -24,7 +25,7 @@ public class ExpandCommandDefinition implements CommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 commandHeader("expand"),
                 productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")

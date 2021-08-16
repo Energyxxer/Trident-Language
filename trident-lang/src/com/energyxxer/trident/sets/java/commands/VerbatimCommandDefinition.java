@@ -2,11 +2,12 @@ package com.energyxxer.trident.sets.java.commands;
 
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.RawCommand;
-import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternProviderUnit;
-import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.VERBATIM_COMMAND;
@@ -19,7 +20,7 @@ public class VerbatimCommandDefinition implements PatternProviderUnit {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 ofType(VERBATIM_COMMAND_HEADER),
                 TridentProductions.sameLine(),

@@ -64,7 +64,7 @@ public class SummaryWalkers {
             TridentProjectSummary summary = ((TridentProjectSummary) walker.getSubject());
 
             try {
-                ProjectReader.Result result = walker.getReader().startQuery(relativePath)
+                ProjectReader.Result result = walker.getReader().startQuery(relativePath, worker)
                         .needsJSON()
                         .perform();
 

@@ -1,14 +1,15 @@
 package com.energyxxer.trident.sets.java.selector_arguments;
 
 import com.energyxxer.commodore.functionlogic.selector.arguments.TagArgument;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternSwitchProviderUnit;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 
 import static com.energyxxer.prismarine.PrismarineProductions.group;
 import static com.energyxxer.prismarine.PrismarineProductions.literal;
@@ -20,7 +21,7 @@ public class ComponentArgumentParser implements PatternSwitchProviderUnit {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 literal("component").setName("SELECTOR_ARGUMENT_KEY"),
                 TridentProductions.equals(),

@@ -4,15 +4,16 @@ import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.commands.tag.TagCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.commands.CommandDefinition;
-import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.commands.CommandDefinition;
+import com.energyxxer.trident.compiler.semantics.custom.entities.CustomEntity;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -27,7 +28,7 @@ public class ComponentCommandDefinition implements CommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 TridentProductions.commandHeader("component"),
                 productions.getOrCreateStructure("ENTITY"),

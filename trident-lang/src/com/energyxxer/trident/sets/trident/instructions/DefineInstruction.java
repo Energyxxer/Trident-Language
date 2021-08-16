@@ -23,6 +23,7 @@ import com.energyxxer.prismarine.summaries.SummarySymbol;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentProjectSummary;
@@ -50,7 +51,7 @@ import static com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModu
 public class DefineInstruction implements InstructionDefinition {
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         OperatorPool operatorPool = productions.unitConfig.getOperatorPool();
 
         TokenPatternMatch SYMBOL_MODIFIER_LIST = list(choice("static", "final", "virtual")).setOptional().setName("SYMBOL_MODIFIER_LIST").addProcessor(

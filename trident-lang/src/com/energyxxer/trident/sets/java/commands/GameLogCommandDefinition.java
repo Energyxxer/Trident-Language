@@ -8,6 +8,11 @@ import com.energyxxer.commodore.textcomponents.ListTextComponent;
 import com.energyxxer.commodore.textcomponents.SelectorTextComponent;
 import com.energyxxer.commodore.textcomponents.StringTextComponent;
 import com.energyxxer.commodore.textcomponents.TextComponent;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.commands.CommandDefinition;
@@ -15,10 +20,6 @@ import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.semantics.custom.special.GameLogFetcherFile;
 import com.energyxxer.trident.worker.tasks.SetupBuildConfigTask;
 import com.energyxxer.trident.worker.tasks.SetupSpecialFileManagerTask;
-import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +35,7 @@ public class GameLogCommandDefinition implements CommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(TridentProductions.commandHeader("gamelog"), choice("info", "debug", "warning", "error", "fatal").setName("DEBUG_GROUP"), productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE"));
     }
 

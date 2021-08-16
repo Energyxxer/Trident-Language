@@ -9,18 +9,19 @@ import com.energyxxer.commodore.functionlogic.score.LocalScore;
 import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.commodore.types.Type;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 
-import static com.energyxxer.trident.compiler.lexer.TridentTokens.SCOREBOARD_OPERATOR;
 import static com.energyxxer.prismarine.PrismarineProductions.*;
+import static com.energyxxer.trident.compiler.lexer.TridentTokens.SCOREBOARD_OPERATOR;
 
 public class ScoreboardCommandDefinition implements SimpleCommandDefinition {
     @Override
@@ -29,7 +30,7 @@ public class ScoreboardCommandDefinition implements SimpleCommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 TridentProductions.commandHeader("scoreboard"),
                 choice(

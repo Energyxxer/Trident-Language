@@ -12,6 +12,7 @@ import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
 import com.energyxxer.trident.compiler.semantics.BreakException;
@@ -28,7 +29,7 @@ public abstract class LoopInstruction implements InstructionDefinition {
 
     public static class ForInstruction extends LoopInstruction {
         @Override
-        public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+        public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
             TokenGroupMatch blockLabel = optional(TridentProductions.identifierX().setName("LABEL").setRecessive(), TridentProductions.colon()).setName("BLOCK_LABEL");
 
             TokenPatternMatch FOR_HEADER = choice(
@@ -54,7 +55,7 @@ public abstract class LoopInstruction implements InstructionDefinition {
     }
     public static class WhileInstruction extends LoopInstruction {
         @Override
-        public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+        public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
             TokenGroupMatch blockLabel = optional(TridentProductions.identifierX().setName("LABEL").setRecessive(), TridentProductions.colon()).setName("BLOCK_LABEL");
 
             TokenPatternMatch WHILE_HEADER = choice(

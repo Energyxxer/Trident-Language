@@ -67,7 +67,7 @@ public class CompilerWalkers {
             CommandModule module = worker.output.get(SetupModuleTask.INSTANCE);
             Namespace namespace = module.getNamespace(namespaceName);
 
-            ProjectReader.Result result = walker.getReader().startQuery(relativePath)
+            ProjectReader.Result result = walker.getReader().startQuery(relativePath, worker)
                     .needsString()
                     .perform();
             String content = result.getString();
@@ -143,7 +143,7 @@ public class CompilerWalkers {
         public boolean accept(File file, Path relativePath, PathMatcher.Result pathMatchResult, PrismarineProjectWorker worker, FileWalker<PrismarineCompiler> walker) throws IOException {
             if(relativePath.getFileName().endsWith(Trident.FUNCTION_EXTENSION)) return true;
 
-            ProjectReader.Result result = walker.getReader().startQuery(relativePath)
+            ProjectReader.Result result = walker.getReader().startQuery(relativePath, worker)
                     .needsBytes()
                     .perform();
 
@@ -162,7 +162,7 @@ public class CompilerWalkers {
 
             TridentBuildConfiguration buildConfig = worker.output.get(SetupBuildConfigTask.INSTANCE);
 
-            ProjectReader.Query query = walker.getReader().startQuery(relativePath)
+            ProjectReader.Query query = walker.getReader().startQuery(relativePath, worker)
                     .needsBytes();
 
             if(resourcePack.getOutputType() == ModulePackGenerator.OutputType.FOLDER && !buildConfig.cleanResourcePackOutput) {
@@ -183,7 +183,7 @@ public class CompilerWalkers {
         @Override
         public boolean accept(File file, Path relativePath, PathMatcher.Result pathMatchResult, PrismarineProjectWorker worker, FileWalker<PrismarineCompiler> walker) throws IOException {
 
-            ProjectReader.Result result = walker.getReader().startQuery(relativePath)
+            ProjectReader.Result result = walker.getReader().startQuery(relativePath, worker)
                     .needsString()
                     .perform();
 

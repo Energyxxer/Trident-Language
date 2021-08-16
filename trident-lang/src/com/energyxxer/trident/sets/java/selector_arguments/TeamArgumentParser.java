@@ -2,11 +2,12 @@ package com.energyxxer.trident.sets.java.selector_arguments;
 
 import com.energyxxer.commodore.functionlogic.selector.arguments.TeamArgument;
 import com.energyxxer.commodore.types.defaults.TeamReference;
-import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternSwitchProviderUnit;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
-import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
@@ -17,7 +18,7 @@ public class TeamArgumentParser implements PatternSwitchProviderUnit {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 literal("team").setName("SELECTOR_ARGUMENT_KEY"),
                 TridentProductions.equals(),

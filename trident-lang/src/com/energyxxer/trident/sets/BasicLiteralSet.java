@@ -2,7 +2,6 @@ package com.energyxxer.trident.sets;
 
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.CommodoreException;
-import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
@@ -10,11 +9,13 @@ import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternProviderSet;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
 import org.jetbrains.annotations.NotNull;
 
-import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 import static com.energyxxer.prismarine.PrismarineProductions.group;
 import static com.energyxxer.prismarine.PrismarineProductions.ofType;
+import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
 
 public class BasicLiteralSet extends PatternProviderSet {
 
@@ -23,7 +24,7 @@ public class BasicLiteralSet extends PatternProviderSet {
     }
 
     @Override
-    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
+    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure, PrismarineProjectWorker worker) {
 
         productions.getOrCreateStructure("ROOT_INTERPOLATION_VALUE")
                 .add(

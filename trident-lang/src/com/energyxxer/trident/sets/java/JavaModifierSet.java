@@ -2,17 +2,18 @@ package com.energyxxer.trident.sets.java;
 
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
-import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenSwitchMatch;
-import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.providers.PatternSwitchProviderSet;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
-import com.energyxxer.trident.sets.java.modifiers.*;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenSwitchMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.providers.PatternSwitchProviderSet;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.sets.java.modifiers.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,8 +45,8 @@ public class JavaModifierSet extends PatternSwitchProviderSet {
     }
 
     @Override
-    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
-        super.installUtilityProductions(productions, providerStructure);
+    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure, PrismarineProjectWorker worker) {
+        super.installUtilityProductions(productions, providerStructure, worker);
 
         productions.getOrCreateStructure("MODIFIER").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.CONTEXT_MODIFIER);
 

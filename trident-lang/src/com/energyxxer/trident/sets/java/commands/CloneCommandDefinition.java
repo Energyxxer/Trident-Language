@@ -6,12 +6,13 @@ import com.energyxxer.commodore.functionlogic.commands.clone.CloneCommand;
 import com.energyxxer.commodore.functionlogic.commands.clone.CloneFilteredCommand;
 import com.energyxxer.commodore.functionlogic.commands.clone.CloneMaskedCommand;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
@@ -22,7 +23,7 @@ public class CloneCommandDefinition implements SimpleCommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         TokenPatternMatch modeMatch = enumChoice(CloneCommand.SourceMode.class).setOptional().setName("CLONE_MODE").addTags("cspn:Clone Mode");
 
         return group(

@@ -30,6 +30,7 @@ import com.energyxxer.prismarine.typesystem.functions.ActualParameterList;
 import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
 import com.energyxxer.prismarine.typesystem.generics.GenericWrapperType;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.TridentSuiteConfiguration;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
@@ -81,7 +82,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
     };
 
     @Override
-    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
+    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure, PrismarineProjectWorker worker) {
 
         TokenPatternMatch ACTUAL_PARAMETERS = list(
                 group(

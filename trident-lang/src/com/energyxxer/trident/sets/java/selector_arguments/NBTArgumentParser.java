@@ -2,15 +2,17 @@ package com.energyxxer.trident.sets.java.selector_arguments;
 
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.selector.arguments.NBTArgument;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternSwitchProviderUnit;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
-import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
-import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
 
-import static com.energyxxer.prismarine.PrismarineProductions.*;
+import static com.energyxxer.prismarine.PrismarineProductions.group;
+import static com.energyxxer.prismarine.PrismarineProductions.literal;
 
 public class NBTArgumentParser implements PatternSwitchProviderUnit {
     @Override
@@ -19,7 +21,7 @@ public class NBTArgumentParser implements PatternSwitchProviderUnit {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 literal("nbt").setName("SELECTOR_ARGUMENT_KEY"),
                 TridentProductions.equals(),

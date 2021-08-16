@@ -1,12 +1,13 @@
 package com.energyxxer.trident.sets.java;
 
-import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenSwitchMatch;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
-import com.energyxxer.prismarine.providers.PatternSwitchProviderSet;
-import com.energyxxer.trident.sets.java.commands.*;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
+import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenSwitchMatch;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.providers.PatternSwitchProviderSet;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
+import com.energyxxer.trident.sets.java.commands.*;
 
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.COMMAND_HEADER;
 
@@ -96,8 +97,8 @@ public class JavaCommandSet extends PatternSwitchProviderSet {
     }
 
     @Override
-    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
-        super.installUtilityProductions(productions, providerStructure);
+    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure, PrismarineProjectWorker worker) {
+        super.installUtilityProductions(productions, providerStructure, worker);
         productions.getOrCreateStructure("COMMAND").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.CONTEXT_COMMAND);
     }
 }

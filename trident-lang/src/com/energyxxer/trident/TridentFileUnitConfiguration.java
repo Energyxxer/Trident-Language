@@ -12,6 +12,7 @@ import com.energyxxer.prismarine.in.ProjectReader;
 import com.energyxxer.prismarine.operators.OperatorPool;
 import com.energyxxer.prismarine.summaries.PrismarineProjectSummary;
 import com.energyxxer.prismarine.util.PathMatcher;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentOperatorPool;
@@ -107,23 +108,23 @@ public class TridentFileUnitConfiguration extends PrismarineLanguageUnitConfigur
     }
 
     @Override
-    public void setupProductions(PrismarineProductions productions) {
+    public void setupProductions(PrismarineProductions productions, PrismarineProjectWorker worker) {
 
-        productions.installProviderSet(new ValueAccessExpressionSet());
-        productions.installProviderSet(new BasicLiteralSet());
-        productions.installProviderSet(new DataStructureLiteralSet());
+        productions.installProviderSet(new ValueAccessExpressionSet(), worker);
+        productions.installProviderSet(new BasicLiteralSet(), worker);
+        productions.installProviderSet(new DataStructureLiteralSet(), worker);
 
-        productions.installProviderSet(new JavaCommandSet());
-        productions.installProviderSet(new JavaModifierSet());
-        productions.installProviderSet(new SelectorArgumentSet());
-        productions.installProviderSet(new JsonLiteralSet());
-        productions.installProviderSet(new MinecraftLiteralSet());
-        productions.installProviderSet(new MinecraftWrapperLiteralSet());
+        productions.installProviderSet(new JavaCommandSet(), worker);
+        productions.installProviderSet(new JavaModifierSet(), worker);
+        productions.installProviderSet(new SelectorArgumentSet(), worker);
+        productions.installProviderSet(new JsonLiteralSet(), worker);
+        productions.installProviderSet(new MinecraftLiteralSet(), worker);
+        productions.installProviderSet(new MinecraftWrapperLiteralSet(), worker);
 
-        productions.installProviderSet(new TridentPatternProvider());
+        productions.installProviderSet(new TridentPatternProvider(), worker);
 
-        productions.installProviderSet(new TridentLiteralSet());
-        productions.installProviderSet(new TridentInstructionSet());
+        productions.installProviderSet(new TridentLiteralSet(), worker);
+        productions.installProviderSet(new TridentInstructionSet(), worker);
 
     }
 

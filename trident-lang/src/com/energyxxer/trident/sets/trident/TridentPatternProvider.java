@@ -25,6 +25,7 @@ import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeConstraints;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.TridentFileUnitConfiguration;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.TridentProductions;
@@ -52,7 +53,7 @@ public class TridentPatternProvider extends PatternProviderSet {
     }
 
     @Override
-    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
+    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure, PrismarineProjectWorker worker) {
         ValueAccessExpressionSet vae = productions.getProviderSet(ValueAccessExpressionSet.class);
         
         productions.getOrCreateStructure("COMMENT").add(new TokenItemMatch(COMMENT).setName("COMMENT").addProcessor(
@@ -350,7 +351,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                             }
                         }),
                         noToken().addFailProcessor((p, l) -> {
-                            TridentProductions.installAllPluginCommands(productions);
+                            TridentProductions.installAllPluginCommands(productions, worker);
                         }),
                         list(productions.getOrCreateStructure("ENTRY")).setOptional().setName("ENTRIES")
                 ).setGreedy(true).addProcessor(uninstallCommands).addFailProcessor(uninstallCommands).addProcessor(TridentPatternProvider::addFileSymbols).addFailProcessor(TridentPatternProvider::addFileSymbols)

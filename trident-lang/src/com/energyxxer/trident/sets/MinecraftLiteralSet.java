@@ -31,21 +31,6 @@ import com.energyxxer.commodore.types.TypeDictionary;
 import com.energyxxer.commodore.types.TypeNotFoundException;
 import com.energyxxer.commodore.types.defaults.*;
 import com.energyxxer.commodore.util.*;
-import com.energyxxer.trident.compiler.ResourceLocation;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
-import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
-import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.ItemTypeHandler;
-import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
-import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
-import com.energyxxer.trident.compiler.lexer.TridentTokens;
-import com.energyxxer.trident.compiler.semantics.AliasType;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
-import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
-import com.energyxxer.trident.worker.tasks.SetupModuleTask;
-import com.energyxxer.trident.worker.tasks.SetupPropertiesTask;
 import com.energyxxer.enxlex.pattern_matching.PatternEvaluator;
 import com.energyxxer.enxlex.pattern_matching.StandardTags;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
@@ -65,19 +50,36 @@ import com.energyxxer.prismarine.providers.PatternProviderSet;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
+import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.ItemTypeHandler;
+import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
+import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
+import com.energyxxer.trident.compiler.lexer.TridentTokens;
+import com.energyxxer.trident.compiler.semantics.AliasType;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
+import com.energyxxer.trident.compiler.semantics.custom.items.NBTMode;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
+import com.energyxxer.trident.worker.tasks.SetupPropertiesTask;
 import com.energyxxer.util.logger.Debug;
 import com.google.gson.JsonElement;
 import org.jetbrains.annotations.Contract;
 
+import java.util.UUID;
 import java.util.*;
 import java.util.regex.Matcher;
 
-import static com.energyxxer.trident.compiler.TridentProductions.*;
-import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
-import static com.energyxxer.trident.sets.BasicLiteralSet.parseQuotedString;
 import static com.energyxxer.nbtmapper.tags.PathProtocol.BLOCK_ENTITY;
 import static com.energyxxer.nbtmapper.tags.PathProtocol.DEFAULT;
 import static com.energyxxer.prismarine.PrismarineProductions.*;
+import static com.energyxxer.trident.compiler.TridentProductions.*;
+import static com.energyxxer.trident.compiler.lexer.TridentTokens.*;
+import static com.energyxxer.trident.sets.BasicLiteralSet.parseQuotedString;
 
 public class MinecraftLiteralSet extends PatternProviderSet {
     private static final HashMap<String, String> HUMAN_READABLE_CATEGORY_NAMES = new HashMap<>();
@@ -98,13 +100,13 @@ public class MinecraftLiteralSet extends PatternProviderSet {
     }
 
     @Override
-    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
+    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure, PrismarineProjectWorker worker) {
 
-        if(TridentProductions.checkVersionFeature(productions.worker, "custom_dimensions", false)) {
+        if(TridentProductions.checkVersionFeature(worker, "custom_dimensions", false)) {
             noValidationCategories.add(DimensionType.CATEGORY);
         }
 
-        if(TridentProductions.checkVersionFeature(productions.worker, "custom_biomes", false)) {
+        if(TridentProductions.checkVersionFeature(worker, "custom_biomes", false)) {
             noValidationCategories.add(BiomeType.CATEGORY);
         }
 
@@ -800,7 +802,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
         HashMap<String, TokenStructureMatch> categoryMap = new HashMap<>();
 
-        for(Namespace namespace : productions.worker.output.get(SetupModuleTask.INSTANCE).getAllNamespaces()) {
+        for(Namespace namespace : worker.output.get(SetupModuleTask.INSTANCE).getAllNamespaces()) {
             TokenGroupMatch namespaceMatch = (TokenGroupMatch) group(literal(namespace.getName()), TridentProductions.colon()).setOptional(namespace.getName().equals("minecraft")).setName("NAMESPACE");
             for(TypeDictionary typeDict : namespace.types.getAllDictionaries()) {
                 String category = typeDict.getCategory();

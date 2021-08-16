@@ -2,11 +2,6 @@ package com.energyxxer.trident.sets;
 
 import com.energyxxer.commodore.CommandUtils;
 import com.energyxxer.commodore.CommodoreException;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
-import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
-import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
-import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
@@ -14,9 +9,15 @@ import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternProviderSet;
 import com.energyxxer.prismarine.summaries.SummarySymbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
+import com.energyxxer.trident.compiler.lexer.summaries.TridentSummaryModule;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 
-import static com.energyxxer.trident.compiler.lexer.TridentTokens.STRING_LITERAL;
 import static com.energyxxer.prismarine.PrismarineProductions.*;
+import static com.energyxxer.trident.compiler.lexer.TridentTokens.STRING_LITERAL;
 
 public class DataStructureLiteralSet extends PatternProviderSet { //dictionaries, lists
 
@@ -32,7 +33,7 @@ public class DataStructureLiteralSet extends PatternProviderSet { //dictionaries
     }
 
     @Override
-    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
+    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure, PrismarineProjectWorker worker) {
         productions.getOrCreateStructure("DICTIONARY").add(group(
                 TridentProductions.brace("{").addProcessor(startComplexValue),
                 list(

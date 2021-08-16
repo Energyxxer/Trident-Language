@@ -1,17 +1,18 @@
 package com.energyxxer.trident.sets;
 
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.prismarine.reporting.PrismarineException;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.providers.PatternProviderSet;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenGroupMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenListMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenGroup;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.providers.PatternProviderSet;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -28,7 +29,7 @@ public class JsonLiteralSet extends PatternProviderSet {
     }
 
     @Override
-    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
+    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure, PrismarineProjectWorker worker) {
         TokenStructureMatch JSON_ROOT = productions.getOrCreateStructure("JSON_ROOT");
         TokenStructureMatch JSON_ELEMENT = productions.getOrCreateStructure("JSON_ELEMENT");
 

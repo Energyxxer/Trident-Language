@@ -9,6 +9,7 @@ import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
 import com.energyxxer.trident.extensions.EObject;
@@ -18,7 +19,7 @@ import static com.energyxxer.prismarine.PrismarineProductions.*;
 
 public class IfInstruction implements InstructionDefinition {
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         TokenStructureMatch executionBlock = choice(productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION"), productions.getOrCreateStructure("ENTRY")).setName("EXECUTION_BLOCK");
         return group(TridentProductions.instructionKeyword("do").setOptional(), TridentProductions.instructionKeyword("if"), TridentProductions.brace("("), PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_VALUE"), false, Boolean.class).setName("CONDITION").addTags("cspn:Condition"), TridentProductions.brace(")"), executionBlock, optional(TridentProductions.instructionKeyword("else", false), executionBlock).setName("ELSE_CLAUSE")).setName("IF_STATEMENT");
     }

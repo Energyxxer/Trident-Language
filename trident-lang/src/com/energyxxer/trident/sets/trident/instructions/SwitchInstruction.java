@@ -9,6 +9,7 @@ import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.semantics.BreakException;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -21,7 +22,7 @@ import static com.energyxxer.trident.sets.trident.instructions.LoopInstruction.g
 
 public class SwitchInstruction implements InstructionDefinition {
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         TokenGroupMatch blockLabel = optional(TridentProductions.identifierX().setName("LABEL").setRecessive(), TridentProductions.colon()).setName("BLOCK_LABEL");
 
         return group(blockLabel, TridentProductions.instructionKeyword("switch"), TridentProductions.brace("("), group(productions.getOrCreateStructure("INTERPOLATION_VALUE")).setName("SWITCH_VALUE").addTags("cspn:Switch Value"), TridentProductions.brace(")"),

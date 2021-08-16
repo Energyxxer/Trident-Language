@@ -5,14 +5,15 @@ import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.attribute.*;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
 import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.prismarine.reporting.PrismarineException;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
-import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 
 import java.util.UUID;
 
@@ -25,8 +26,8 @@ public class AttributeCommandDefinition implements SimpleCommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
-        return TridentProductions.versionLimited(productions.worker, "command.attribute", false, group(
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
+        return TridentProductions.versionLimited(worker, "command.attribute", false, group(
                 TridentProductions.commandHeader("attribute"),
                 productions.getOrCreateStructure("ENTITY"),
                 productions.getOrCreateStructure("ATTRIBUTE_ID"),

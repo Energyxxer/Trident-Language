@@ -5,16 +5,17 @@ import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteAsEntity;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteCommand;
 import com.energyxxer.commodore.functionlogic.commands.function.FunctionCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
+import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
 
-import static com.energyxxer.trident.compiler.TridentProductions.commandHeader;
 import static com.energyxxer.prismarine.PrismarineProductions.group;
+import static com.energyxxer.trident.compiler.TridentProductions.commandHeader;
 
 public class EventCommandDefinition implements SimpleCommandDefinition {
     @Override
@@ -23,7 +24,7 @@ public class EventCommandDefinition implements SimpleCommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 commandHeader("event"),
                 productions.getOrCreateStructure("ENTITY"),

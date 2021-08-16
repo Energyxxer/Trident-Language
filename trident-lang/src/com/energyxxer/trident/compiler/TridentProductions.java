@@ -3,7 +3,6 @@ package com.energyxxer.trident.compiler;
 import com.energyxxer.commodore.module.CommandModule;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatureManager;
 import com.energyxxer.commodore.versioning.compatibility.VersionFeatures;
-import com.energyxxer.enxlex.lexical_analysis.LazyLexer;
 import com.energyxxer.enxlex.lexical_analysis.Lexer;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenItemMatch;
@@ -39,15 +38,13 @@ public class TridentProductions {
         if(l.getSuggestionModule() != null) {
             if(l.getCurrentIndex() <= l.getSuggestionModule().getSuggestionIndex()+1) {
                 int targetIndex = l.getLookingIndexTrimmed();
-                String str = ((LazyLexer) l).getFullText();
+                String str = l.getFullText();
                 int index = l.getSuggestionModule().getSuggestionIndex();
 
-                if(index > 0) {
-                    while (true) {
-                        char c = str.charAt(index-1);
-                        if (!(Character.isJavaIdentifierPart(c) || "#:/.-".contains(c+"")) || --index <= 1)
-                            break;
-                    }
+                while (index > 0 && index <= str.length()) {
+                    char c = str.charAt(index-1);
+                    if (!(Character.isJavaIdentifierPart(c) || "#:/.-".contains(c+"")) || --index <= 1)
+                        break;
                 }
 
                 if(index == targetIndex) {
@@ -267,8 +264,8 @@ public class TridentProductions {
         }
     }
 
-    public static void installAllPluginCommands(PrismarineProductions productions) {
-        if(JsonTraverser.getThreadInstance().reset(productions.getWorker().output.get(SetupPropertiesTask.INSTANCE)).get("using-all-plugins").asBoolean(true)) {
+    public static void installAllPluginCommands(PrismarineProductions productions, PrismarineProjectWorker worker) {
+        if(JsonTraverser.getThreadInstance().reset(worker.output.get(SetupPropertiesTask.INSTANCE)).get("using-all-plugins").asBoolean(true)) {
             if(productions.getPluginUnits() != null) {
                 for(PrismarinePluginUnit unit : productions.getPluginUnits()) {
                     ((TridentPluginUnitConfiguration.CustomCommandProduction)

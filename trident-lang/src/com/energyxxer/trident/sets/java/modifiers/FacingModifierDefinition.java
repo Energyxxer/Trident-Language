@@ -7,12 +7,13 @@ import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteFacingEnti
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
@@ -23,7 +24,7 @@ public class FacingModifierDefinition implements SimpleExecuteModifierDefinition
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 TridentProductions.modifierHeader("facing"),
                 choice(

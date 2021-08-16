@@ -1,11 +1,12 @@
 package com.energyxxer.trident.sets.trident;
 
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
-import com.energyxxer.prismarine.providers.PatternProviderSet;
-import com.energyxxer.trident.sets.trident.instructions.*;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.providers.PatternProviderSet;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
+import com.energyxxer.trident.sets.trident.instructions.*;
 
 public class TridentInstructionSet extends PatternProviderSet {
     public TridentInstructionSet() {
@@ -30,7 +31,7 @@ public class TridentInstructionSet extends PatternProviderSet {
     }
 
     @Override
-    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure) {
+    protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure, PrismarineProjectWorker worker) {
         providerStructure.addTags(SuggestionTags.ENABLED, TridentSuggestionTags.CONTEXT_ENTRY);
     }
 }

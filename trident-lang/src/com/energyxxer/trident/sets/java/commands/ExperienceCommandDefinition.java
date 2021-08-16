@@ -6,13 +6,14 @@ import com.energyxxer.commodore.functionlogic.commands.experience.ExperienceComm
 import com.energyxxer.commodore.functionlogic.commands.experience.ExperienceQueryCommand;
 import com.energyxxer.commodore.functionlogic.commands.experience.ExperienceSetCommand;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenGroupMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
@@ -23,7 +24,7 @@ public class ExperienceCommandDefinition implements SimpleCommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         TokenPatternMatch unitMatch = enumChoice(ExperienceCommand.Unit.class).setName("UNIT").setOptional();
 
         TokenGroupMatch g = new TokenGroupMatch();

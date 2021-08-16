@@ -13,15 +13,16 @@ import com.energyxxer.commodore.functionlogic.commands.bossbar.set.*;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.textcomponents.TextComponent;
 import com.energyxxer.commodore.types.defaults.BossbarReference;
-import com.energyxxer.trident.compiler.ResourceLocation;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
-import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
@@ -32,7 +33,7 @@ public class BossbarCommandDefinition implements SimpleCommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return PrismarineProductions.group(
                 TridentProductions.commandHeader("bossbar"),
                 choice(

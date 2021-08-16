@@ -4,14 +4,16 @@ import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.commands.gamerule.GameruleQueryCommand;
 import com.energyxxer.commodore.functionlogic.commands.gamerule.GameruleSetCommand;
 import com.energyxxer.commodore.types.Type;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
 
-import static com.energyxxer.prismarine.PrismarineProductions.*;
+import static com.energyxxer.prismarine.PrismarineProductions.choice;
+import static com.energyxxer.prismarine.PrismarineProductions.group;
 
 public class GameruleCommandDefinition implements SimpleCommandDefinition {
     @Override
@@ -20,7 +22,7 @@ public class GameruleCommandDefinition implements SimpleCommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 TridentProductions.commandHeader("gamerule"),
                 choice(

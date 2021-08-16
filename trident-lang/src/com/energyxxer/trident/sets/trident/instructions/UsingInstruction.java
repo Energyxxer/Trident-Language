@@ -26,6 +26,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.semantics.TridentFile;
@@ -39,7 +40,7 @@ import static com.energyxxer.prismarine.PrismarineProductions.*;
 
 public class UsingInstruction implements InstructionDefinition {
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(TridentProductions.instructionKeyword("using"),
                 choice(
                         group(literal("tag"), wrapper(TridentProductions.identifierA(productions)).setName("USING_TAG_NAME").addTags("cspn:Tag"), productions.getOrCreateStructure("ENTITY"), productions.getOrCreateStructure("MODIFIER_LIST")).setName("USING_TAG"),

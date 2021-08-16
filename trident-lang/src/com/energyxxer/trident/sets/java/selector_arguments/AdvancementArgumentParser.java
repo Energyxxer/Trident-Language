@@ -6,18 +6,19 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.advancement.Adv
 import com.energyxxer.commodore.functionlogic.selector.arguments.advancement.AdvancementCompletionEntry;
 import com.energyxxer.commodore.functionlogic.selector.arguments.advancement.AdvancementCriterionEntry;
 import com.energyxxer.commodore.functionlogic.selector.arguments.advancement.AdvancementCriterionGroupEntry;
-import com.energyxxer.trident.compiler.ResourceLocation;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.prismarine.reporting.PrismarineException;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.providers.PatternSwitchProviderUnit;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.providers.PatternSwitchProviderUnit;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.TridentProductions;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
@@ -28,7 +29,7 @@ public class AdvancementArgumentParser implements PatternSwitchProviderUnit {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         TokenPatternMatch advancementArgumentBlock = group(
                 TridentProductions.brace("{"),
                 list(

@@ -1,6 +1,5 @@
 package com.energyxxer.trident.sets.trident.instructions;
 
-import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.report.Notice;
@@ -8,13 +7,15 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
 
 import static com.energyxxer.prismarine.PrismarineProductions.choice;
 import static com.energyxxer.prismarine.PrismarineProductions.group;
 
 public class LogInstruction implements InstructionDefinition {
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(TridentProductions.instructionKeyword("log"), choice("info", "warning", "error").setName("NOTICE_GROUP"), TridentProductions.noToken().addTags("cspn:Value"), productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE"));
     }
 

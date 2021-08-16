@@ -17,6 +17,7 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
@@ -36,7 +37,7 @@ public class ItemCommandDefinition implements SimpleCommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         TokenPatternMatch ITEM_HOLDER = choice(
                 group(literal("block"), productions.getOrCreateStructure("COORDINATE_SET"), productions.getOrCreateStructure("SLOT_ID")).setEvaluator((p, d) -> {
                     ISymbolContext ctx = (ISymbolContext) d[0];
@@ -52,7 +53,7 @@ public class ItemCommandDefinition implements SimpleCommandDefinition {
                 })
         ).setName("ITEM_HOLDER");
 
-        return TridentProductions.versionLimited(productions.worker, "command.item", false, group(
+        return TridentProductions.versionLimited(worker, "command.item", false, group(
                 TridentProductions.commandHeader("item"),
                 choice(
                         group(

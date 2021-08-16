@@ -10,17 +10,18 @@ import com.energyxxer.commodore.functionlogic.nbt.path.NBTListMatch;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathCompoundRoot;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPathNode;
-import com.energyxxer.trident.compiler.TridentProductions;
-import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
-import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.prismarine.reporting.PrismarineException;
-import com.energyxxer.prismarine.PrismarineProductions;
-import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.nbtmapper.PathContext;
+import com.energyxxer.prismarine.PrismarineProductions;
+import com.energyxxer.prismarine.reporting.PrismarineException;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
+import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.analyzers.commands.SimpleCommandDefinition;
+import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
 
 import java.util.ArrayList;
 
@@ -33,7 +34,7 @@ public class DataCommandDefinition implements SimpleCommandDefinition {
     }
 
     @Override
-    public TokenPatternMatch createPatternMatch(PrismarineProductions productions) {
+    public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
 
         TokenStructureMatch sourceMatch = choice(
                 group(literal("from"), productions.getOrCreateStructure("DATA_HOLDER"), optional(TridentProductions.sameLine(), productions.getOrCreateStructure("NBT_PATH")).setSimplificationFunctionContentIndex(1).setName("PATH_CLAUSE")).setEvaluator((p, d) -> {

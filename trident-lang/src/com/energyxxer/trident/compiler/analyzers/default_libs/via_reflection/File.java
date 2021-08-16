@@ -117,7 +117,7 @@ public class File {
         public static boolean wasFileChanged(String inPath, ISymbolContext callingCtx) throws IOException {
             Path relPath = Paths.get(inPath.replace("/",java.io.File.separator));
             try {
-                return callingCtx.getCompiler().getRootCompiler().getProjectReader().startQuery(relPath).perform().wasChangedSinceCached();
+                return callingCtx.getCompiler().getRootCompiler().getProjectReader().startQuery(relPath, callingCtx.getCompiler().getRootCompiler().getWorker()).perform().wasChangedSinceCached();
             } catch(FileNotFoundException x) {
                 return false;
             }
