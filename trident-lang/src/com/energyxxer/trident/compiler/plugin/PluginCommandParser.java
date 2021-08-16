@@ -204,8 +204,11 @@ public class PluginCommandParser {
             }
             case "SLOT_ID":
             case "GAMEMODE":
+            case "GAMEMODE_ID":
             case "GAMERULE":
+            case "GAMERULE_ID":
             case "STRUCTURE":
+            case "STRUCTURE_ID":
             case "DIFFICULTY": return ((Type) pattern.evaluate(ctx)).toString();
             case "OBJECTIVE_NAME": return pattern.evaluate(ctx, String.class);
             case "SCORE":
