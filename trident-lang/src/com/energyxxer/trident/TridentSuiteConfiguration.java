@@ -370,7 +370,7 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
 
     @Override
     public PrismarineLibrary getStandardLibrary() {
-        return null;
+        return standardLibrary;
     }
 
 
