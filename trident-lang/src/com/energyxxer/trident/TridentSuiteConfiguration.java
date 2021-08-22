@@ -13,6 +13,7 @@ import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.prismarine.PrismarineCompiler;
 import com.energyxxer.prismarine.PrismarineSuiteConfiguration;
 import com.energyxxer.prismarine.libraries.PrismarineLibrary;
+import com.energyxxer.prismarine.libraries.PrismarineLibraryUnit;
 import com.energyxxer.prismarine.plugins.PrismarinePlugin;
 import com.energyxxer.prismarine.summaries.PrismarineProjectSummarizer;
 import com.energyxxer.prismarine.summaries.PrismarineProjectSummary;
@@ -52,63 +53,63 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
 
     public static final TridentSuiteConfiguration INSTANCE = new TridentSuiteConfiguration();
 
-//    private final PrismarineLibrary standardLibrary;
+    private final PrismarineLibrary standardLibrary;
 
     public TridentSuiteConfiguration() {
         this.putLanguageUnitConfiguration(TridentFileUnitConfiguration.INSTANCE);
         this.putPluginUnitConfiguration(TridentPluginUnitConfiguration.INSTANCE);
 
-//        standardLibrary = new PrismarineLibrary("Trident Standard Library", this);
-//
-//        try {
-//            standardLibrary
-//                    .registerUnit(
-//                            PRIMITIVES_SUMMARY_PATH,
-//                            TridentFileUnitConfiguration.INSTANCE,
-//                            read("/trident_utils/datapack/data/trident-util/functions/primitives.tdn"),
-//                            PrismarineLibraryUnit.Availability.SUMMARY_ONLY
-//                    )
-//                    .registerUnit(
-//                            Paths.get("datapack/data/trident-util/functions/native.tdn"),
-//                            TridentFileUnitConfiguration.INSTANCE,
-//                            read("/trident_utils/datapack/data/trident-util/functions/native_compiler.tdn"),
-//                            PrismarineLibraryUnit.Availability.COMPILER_ONLY
-//                    )
-//                    .registerUnit(
-//                            Paths.get("datapack/data/trident-util/functions/native.tdn"),
-//                            TridentFileUnitConfiguration.INSTANCE,
-//                            read("/trident_utils/datapack/data/trident-util/functions/native_summary.tdn"),
-//                            PrismarineLibraryUnit.Availability.SUMMARY_ONLY
-//                    )
-//                    .registerUnit(
-//                            Paths.get("datapack/data/trident-util/functions/type_checking.tdn"),
-//                            TridentFileUnitConfiguration.INSTANCE,
-//                            read("/trident_utils/datapack/data/trident-util/functions/type_checking.tdn")
-//                    )
-//                    .registerUnit(
-//                            Paths.get("datapack/data/trident-util/functions/generators.tdn"),
-//                            TridentFileUnitConfiguration.INSTANCE,
-//                            read("/trident_utils/datapack/data/trident-util/functions/generators.tdn")
-//                    )
-//                    .registerUnit(
-//                            Paths.get("datapack/data/trident-util/functions/shared.tdn"),
-//                            TridentFileUnitConfiguration.INSTANCE,
-//                            read("/trident_utils/datapack/data/trident-util/functions/shared.tdn")
-//                    )
-//                    .registerUnit(
-//                            Paths.get("datapack/data/trident-util/functions/predicate.tdn"),
-//                            TridentFileUnitConfiguration.INSTANCE,
-//                            read("/trident_utils/datapack/data/trident-util/functions/predicate.tdn")
-//                    )
-//                    .registerUnit(
-//                            Paths.get("datapack/data/trident-util/functions/advancement_triggers.tdn"),
-//                            TridentFileUnitConfiguration.INSTANCE,
-//                            read("/trident_utils/datapack/data/trident-util/functions/advancement_triggers.tdn")
-//                    )
-//                    .start();
-//        } catch (Exception x) {
-//            x.printStackTrace();
-//        }
+        standardLibrary = new PrismarineLibrary("Trident Standard Library", this);
+
+        try {
+            standardLibrary
+                    .registerUnit(
+                            PRIMITIVES_SUMMARY_PATH,
+                            TridentFileUnitConfiguration.INSTANCE,
+                            read("/trident_utils/datapack/data/trident-util/functions/primitives.tdn"),
+                            PrismarineLibraryUnit.Availability.SUMMARY_ONLY
+                    )
+                    .registerUnit(
+                            Paths.get("datapack/data/trident-util/functions/native.tdn"),
+                            TridentFileUnitConfiguration.INSTANCE,
+                            read("/trident_utils/datapack/data/trident-util/functions/native_compiler.tdn"),
+                            PrismarineLibraryUnit.Availability.COMPILER_ONLY
+                    )
+                    .registerUnit(
+                            Paths.get("datapack/data/trident-util/functions/native.tdn"),
+                            TridentFileUnitConfiguration.INSTANCE,
+                            read("/trident_utils/datapack/data/trident-util/functions/native_summary.tdn"),
+                            PrismarineLibraryUnit.Availability.SUMMARY_ONLY
+                    )
+                    .registerUnit(
+                            Paths.get("datapack/data/trident-util/functions/type_checking.tdn"),
+                            TridentFileUnitConfiguration.INSTANCE,
+                            read("/trident_utils/datapack/data/trident-util/functions/type_checking.tdn")
+                    )
+                    .registerUnit(
+                            Paths.get("datapack/data/trident-util/functions/generators.tdn"),
+                            TridentFileUnitConfiguration.INSTANCE,
+                            read("/trident_utils/datapack/data/trident-util/functions/generators.tdn")
+                    )
+                    .registerUnit(
+                            Paths.get("datapack/data/trident-util/functions/shared.tdn"),
+                            TridentFileUnitConfiguration.INSTANCE,
+                            read("/trident_utils/datapack/data/trident-util/functions/shared.tdn")
+                    )
+                    .registerUnit(
+                            Paths.get("datapack/data/trident-util/functions/predicate.tdn"),
+                            TridentFileUnitConfiguration.INSTANCE,
+                            read("/trident_utils/datapack/data/trident-util/functions/predicate.tdn")
+                    )
+                    .registerUnit(
+                            Paths.get("datapack/data/trident-util/functions/advancement_triggers.tdn"),
+                            TridentFileUnitConfiguration.INSTANCE,
+                            read("/trident_utils/datapack/data/trident-util/functions/advancement_triggers.tdn")
+                    )
+                    .start();
+        } catch (Exception x) {
+            x.printStackTrace();
+        }
     }
 
     @Override
