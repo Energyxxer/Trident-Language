@@ -418,7 +418,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
             PatternEvaluator pathKeyEvaluator = (p, d) -> {
                 TagCompound compoundMatch = null; //may be null
-                TokenPattern<?> compoundPattern = p.find("NBT_PATH_COMPOUND_MATCH.NBT_COMPOUND");
+                TokenPattern<?> compoundPattern = p.find("NBT_PATH_COMPOUND_MATCH");
                 if(compoundPattern != null) compoundMatch = (TagCompound) compoundPattern.evaluate(d);
                 return new NBTPathKey((String) p.find("NBT_PATH_KEY_LABEL.STRING_LITERAL_OR_IDENTIFIER_D").evaluate(d), compoundMatch);
             };
@@ -428,7 +428,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                             TridentProductions.dot().setName("NBT_PATH_SEPARATOR"),
                             glue(),
                             group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL"),
-                            optional(productions.getOrCreateStructure("NBT_COMPOUND")).setName("NBT_PATH_COMPOUND_MATCH")
+                            optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setName("NBT_PATH_COMPOUND_MATCH").setSimplificationFunctionContentIndex(1)
                     ).setName("NBT_PATH_KEY").setEvaluator(pathKeyEvaluator));
 
             NBT_PATH_NODE.add(
@@ -468,7 +468,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                     choice(
                                             group(
                                                     group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL"),
-                                                    optional(productions.getOrCreateStructure("NBT_COMPOUND")).setName("NBT_PATH_COMPOUND_MATCH")
+                                                    optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setName("NBT_PATH_COMPOUND_MATCH").setSimplificationFunctionContentIndex(1)
                                             ).setName("NBT_PATH_KEY").setEvaluator(pathKeyEvaluator),
                                             group(productions.getOrCreateStructure("NBT_COMPOUND")).setName("NBT_PATH_COMPOUND_ROOT").setEvaluator((p, d) -> new NBTPathCompoundRoot((TagCompound) p.find("NBT_COMPOUND").evaluate(d)))
                                     ).setName("NBT_PATH_ROOT"),
