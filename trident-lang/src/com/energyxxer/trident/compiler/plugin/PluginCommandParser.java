@@ -63,7 +63,9 @@ public class PluginCommandParser {
                     if(tag.startsWith(STORE_VAR_TAG_PREFIX)) {
                         storingInVar = true;
                         String storeVar = tag.substring(STORE_VAR_TAG_PREFIX.length());
-                        TokenPattern<?> argPattern = ((TokenGroup) pattern).getContents()[0];
+                        TokenPattern<?>[] contents = ((TokenGroup) pattern).getContents();
+                        if(contents.length == 0) continue;
+                        TokenPattern<?> argPattern = contents[0];
 
                         Object value = null;
                         for(String tag2 : pattern.getTags()) {
