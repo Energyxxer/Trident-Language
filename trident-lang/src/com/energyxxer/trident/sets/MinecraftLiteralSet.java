@@ -283,7 +283,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                 )
                 );
 
-                productions.getOrCreateStructure("NBT_COMPOUND").add(productions.getOrCreateStructure("INTERPOLATION_BLOCK"));
+                productions.getOrCreateStructure("NBT_COMPOUND").add(PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, TagCompound.class));
             }
             productions.getOrCreateStructure("NBT_VALUE").add(
                     productions.getOrCreateStructure("NBT_LIST")
