@@ -59,7 +59,6 @@ public class CompilerWalkers {
     public static final FileWalkerStop<PrismarineCompiler> TAG_STOP = new FileWalkerStop<PrismarineCompiler>("datapack/data/(*)/tags/(*)/(**).json") {
         @Override
         public boolean accept(File file, Path relativePath, PathMatcher.Result pathMatchResult, PrismarineProjectWorker worker, FileWalker<PrismarineCompiler> walker) throws IOException {
-
             String namespaceName = pathMatchResult.groups[1];
             String categoryDirName = pathMatchResult.groups[2];
             String tagName = pathMatchResult.groups[3];
@@ -134,7 +133,7 @@ public class CompilerWalkers {
                 }
             }
 
-            return false;
+            return true;
         }
     };
 
