@@ -84,7 +84,7 @@ public class Tags {
                         throw new IllegalArgumentException("Tag '" + value + "' does not exist");
                     }
                 } else {
-                    type = module.getNamespace(value.namespace).getTypeManager().getDictionary(category).get(value.body);
+                    type = module.getNamespace(value.namespace).getTypeManager().getOrCreateDictionary(category, true).get(value.body);
                 }
                 tag.addValue(type, valueMode);
             } else {
