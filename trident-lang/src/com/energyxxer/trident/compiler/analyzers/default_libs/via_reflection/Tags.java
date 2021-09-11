@@ -5,6 +5,7 @@ import com.energyxxer.commodore.module.Namespace;
 import com.energyxxer.commodore.tags.Tag;
 import com.energyxxer.commodore.tags.TagGroup;
 import com.energyxxer.commodore.types.Type;
+import com.energyxxer.commodore.types.defaults.FunctionReference;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.DictionaryObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
@@ -84,7 +85,15 @@ public class Tags {
                         throw new IllegalArgumentException("Tag '" + value + "' does not exist");
                     }
                 } else {
-                    type = module.getNamespace(value.namespace).getTypeManager().getOrCreateDictionary(category, true).get(value.body);
+                    if(FunctionReference.CATEGORY.equals(category)) {
+                        if(module.getNamespace(value.namespace).functions.exists(value.body)) {
+                            type = new FunctionReference(module.getNamespace(value.namespace), value.body);
+                        } else {
+                            throw new IllegalArgumentException("Function '" + value + "' does not exist");
+                        }
+                    } else {
+                        type = module.getNamespace(value.namespace).getTypeManager().getOrCreateDictionary(category, true).get(value.body);
+                    }
                 }
                 tag.addValue(type, valueMode);
             } else {
