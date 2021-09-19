@@ -86,28 +86,31 @@ public class TridentPatternProvider extends PatternProviderSet {
                             TridentFile writingFile = ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile();
 
                             FunctionSection appendTo = ((FunctionSection) d[1]);
-                            if(appendTo != null) {
-                                ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) p.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx);
-                                Object commands = p.find("COMMAND").evaluate((ISymbolContext) ctx, modifiers);
+                            ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) p.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx);
+                            Object commands = p.find("COMMAND").evaluate((ISymbolContext) ctx, modifiers);
 
-                                ArrayList<ExecuteModifier> modifiersForCommand = modifiers;
-                                if(!writingFile.getWritingModifiers().isEmpty()) {
-                                    modifiersForCommand = new ArrayList<>(writingFile.getWritingModifiers());
-                                    modifiersForCommand.addAll(modifiers);
+                            ArrayList<ExecuteModifier> modifiersForCommand = modifiers;
+                            if(!writingFile.getWritingModifiers().isEmpty()) {
+                                modifiersForCommand = new ArrayList<>(writingFile.getWritingModifiers());
+                                modifiersForCommand.addAll(modifiers);
+                            }
+
+                            if(commands instanceof Command) {
+                                if(appendTo == null) {
+                                    tridentFile.reportNoCommands(p, ctx);
+                                    return null;
                                 }
-
-                                if(commands instanceof Command) {
-                                    if (modifiersForCommand.isEmpty()) appendTo.append(((Command) commands));
-                                    else appendTo.append(new ExecuteCommand(((Command) commands), modifiersForCommand));
-                                } else {
-                                    for(Command command : ((Collection<Command>) commands)) {
-                                        if (modifiersForCommand.isEmpty()) appendTo.append(command);
-                                        else appendTo.append(new ExecuteCommand(command, modifiersForCommand));
+                                if (modifiersForCommand.isEmpty()) appendTo.append(((Command) commands));
+                                else appendTo.append(new ExecuteCommand(((Command) commands), modifiersForCommand));
+                            } else {
+                                for(Command command : ((Collection<Command>) commands)) {
+                                    if(appendTo == null) {
+                                        tridentFile.reportNoCommands(p, ctx);
+                                        return null;
                                     }
+                                    if (modifiersForCommand.isEmpty()) appendTo.append(command);
+                                    else appendTo.append(new ExecuteCommand(command, modifiersForCommand));
                                 }
-                            } else if(!tridentFile.reportedNoCommands) {
-                                tridentFile.reportedNoCommands = true;
-                                throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "A compile-only function may not have commands", p, ctx);
                             }
                             return null;
                         })

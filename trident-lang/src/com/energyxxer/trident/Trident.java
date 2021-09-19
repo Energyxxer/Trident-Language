@@ -2,6 +2,7 @@ package com.energyxxer.trident;
 
 import com.energyxxer.commodore.versioning.ThreeNumberVersion;
 import com.energyxxer.nbtmapper.NBTTypeMap;
+import com.energyxxer.prismarine.plugins.syntax.PrismarineMetaLexerProfile;
 import com.energyxxer.util.logger.Debug;
 
 import java.io.BufferedReader;
@@ -16,6 +17,11 @@ public class Trident {
     public static final String FUNCTION_EXTENSION = ".tdn";
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
     public static final ThreeNumberVersion TRIDENT_LANGUAGE_VERSION = new ThreeNumberVersion(1,3,3);
+
+    static {
+        PrismarineMetaLexerProfile.functionNames.add("storeVar");
+        PrismarineMetaLexerProfile.functionNames.add("storeFlat");
+    }
 
     private Trident() {}
 

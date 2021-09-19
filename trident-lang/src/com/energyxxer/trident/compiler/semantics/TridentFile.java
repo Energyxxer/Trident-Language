@@ -266,6 +266,13 @@ public class TridentFile extends PrismarineLanguageUnit {
 
     public boolean reportedNoCommands = false;
 
+    public void reportNoCommands(TokenPattern<?> p, ISymbolContext ctx) {
+        if(!reportedNoCommands) {
+            reportedNoCommands = true;
+            throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "A compile-only function may not have commands", p, ctx);
+        }
+    }
+
     public void resolveEntries() {
         if(!valid) return;
         if(entriesResolved) return;
