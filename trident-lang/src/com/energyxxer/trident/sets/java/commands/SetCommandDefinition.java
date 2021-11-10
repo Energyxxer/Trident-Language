@@ -329,6 +329,7 @@ public class SetCommandDefinition implements SimpleCommandDefinition {
         PointerDecorator target = decorate((PointerObject) pattern.find("POINTER").evaluate(ctx), pattern.find("POINTER"), ctx);
         SetOperator operator = SetOperator.getOperatorForSymbol(pattern.find("OPERATOR").flatten(false));
         PointerDecorator source = (PointerDecorator) pattern.find("VALUE").evaluate(ctx);
+        if(source == null) source = new PointerDecorator.NullPointer();
 
         String key = target.getClass().getName() + " " + operator.getShorthand() + " " + source.getClass().getName();
 
