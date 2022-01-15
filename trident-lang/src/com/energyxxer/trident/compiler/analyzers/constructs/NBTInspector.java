@@ -109,7 +109,7 @@ public class NBTInspector {
                             boolean matched = false;
                             ResourceLocation location = ResourceLocation.createStrict(((TagString)tag).getValue());
                             if(location == null) {
-                                delegate.report("String at path '" + path + "' is a type; but it doesn't look like a resource location");
+                                delegate.report("String at path '" + path + "' is a type; but it doesn't look like a resource location: '" + ((TagString) tag).getValue() + "'");
                                 continue;
                             }
                             for(String category : flags.getTypeCategories()) {
