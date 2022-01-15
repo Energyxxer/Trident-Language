@@ -11,30 +11,14 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgumen
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.commodore.util.TimeSpan;
-import com.energyxxer.commodore.util.attributes.Attribute;
-import com.energyxxer.trident.Trident;
-import com.energyxxer.trident.compiler.ResourceLocation;
-import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
-import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
-import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
-import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
-import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
-import com.energyxxer.trident.compiler.semantics.TridentFile;
-import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
-import com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger;
-import com.energyxxer.trident.compiler.semantics.custom.special.TickingFunction;
-import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
-import com.energyxxer.trident.sets.java.selector_arguments.TypeArgumentParser;
-import com.energyxxer.trident.sets.trident.TridentLiteralSet;
-import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
-import com.energyxxer.trident.worker.tasks.SetupSpecialFileManagerTask;
-import com.energyxxer.trident.worker.tasks.SetupTypeMapTask;
+import com.energyxxer.commodore.versioning.JavaEditionVersion;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.nbtmapper.tags.DataType;
 import com.energyxxer.nbtmapper.tags.DataTypeQueryResponse;
+import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.Symbol;
 import com.energyxxer.prismarine.symbols.SymbolVisibility;
@@ -42,15 +26,32 @@ import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.symbols.contexts.SymbolContext;
 import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
+import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunction;
+import com.energyxxer.trident.Trident;
+import com.energyxxer.trident.compiler.ResourceLocation;
+import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
+import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
+import com.energyxxer.trident.compiler.semantics.ExceptionCollector;
+import com.energyxxer.trident.compiler.semantics.TridentExceptionUtil;
+import com.energyxxer.trident.compiler.semantics.TridentFile;
+import com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger;
+import com.energyxxer.trident.compiler.semantics.custom.special.TickingFunction;
+import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
+import com.energyxxer.trident.sets.java.selector_arguments.TypeArgumentParser;
+import com.energyxxer.trident.sets.trident.TridentLiteralSet;
+import com.energyxxer.trident.sets.trident.instructions.VariableInstruction;
+import com.energyxxer.trident.worker.tasks.SetupModuleTask;
+import com.energyxxer.trident.worker.tasks.SetupSpecialFileManagerTask;
+import com.energyxxer.trident.worker.tasks.SetupTypeMapTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 import static com.energyxxer.trident.compiler.semantics.custom.TypeAwareNBTMerger.REPLACE;
 import static com.energyxxer.trident.sets.trident.instructions.VariableInstruction.parseSymbolDeclaration;
-import static com.energyxxer.nbtmapper.tags.PathProtocol.ENTITY;
 
 public class CustomEntity implements TypeHandler<CustomEntity> {
     private final PrismarineTypeSystem typeSystem;
@@ -333,9 +334,17 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                     break;
                                 }
 
+                                String attributeName;
+
+                                if(ctx.get(SetupModuleTask.INSTANCE).getSettingsManager().getTargetVersion().compare(new JavaEditionVersion(1, 16, 0)) >= 0) {
+                                    attributeName = "minecraft:generic.max_health";
+                                } else {
+                                    attributeName = "generic.maxHealth";
+                                }
+
                                 TagCompound healthNBT = new TagCompound();
                                 healthNBT.add(new TagFloat("Health", (float) health));
-                                healthNBT.add(new TagList("Attributes", new TagCompound(new TagString("Name", Attribute.MAX_HEALTH), new TagDouble("Base", health))));
+                                healthNBT.add(new TagList("Attributes", new TagCompound(new TagString("Name", attributeName), new TagDouble("Base", health))));
 
                                 entityDecl.mergeNBT(healthNBT, ctx);
                                 break;
