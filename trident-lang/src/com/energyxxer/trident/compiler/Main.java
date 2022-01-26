@@ -35,13 +35,14 @@ public class Main {
             return;
         }
         System.out.println("Compiling project at directory " + rootDir);
-        System.out.println();
 
         File buildFile = rootDir.toPath().resolve(Trident.PROJECT_BUILD_FILE_NAME).toFile();
 
         if(args.length >= 2) {
             buildFile = newFileObject(args[1], rootDir);
         }
+        System.out.println("Using build file " + buildFile);
+        System.out.println();
 
         TridentBuildConfiguration resources = new TridentBuildConfiguration();
         resources.populateFromJson(buildFile, rootDir);

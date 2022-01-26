@@ -90,7 +90,7 @@ public class TridentBuildConfiguration {
             String featureMapPath = traverser.reset().get("input-resources").get("feature-map").asString();
             if(featureMapPath != null) {
                 try(FileReader fr = new FileReader(newFileObject(featureMapPath, rootDir))) {
-                    this.featureMap = VersionFeatureManager.parseFeatureMap(fr);
+                    this.featureMap = VersionFeatureManager.loadFeatureMap(fr);
                 }
             }
         }
