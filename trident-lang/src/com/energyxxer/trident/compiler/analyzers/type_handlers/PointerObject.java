@@ -1,10 +1,12 @@
 package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.commodore.CommandUtils;
+import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.coordinates.CoordinateSet;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.nbt.NumericNBTType;
 import com.energyxxer.commodore.functionlogic.nbt.path.NBTPath;
+import com.energyxxer.commodore.functionlogic.score.Objective;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.controlflow.MemberNotFoundException;
 import com.energyxxer.prismarine.reporting.PrismarineException;
@@ -16,7 +18,6 @@ import com.energyxxer.prismarine.typesystem.TypeConstraints;
 import com.energyxxer.prismarine.typesystem.TypeHandler;
 import com.energyxxer.prismarine.typesystem.TypeHandlerMemberCollection;
 import com.energyxxer.trident.compiler.ResourceLocation;
-import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.semantics.symbols.TridentSymbolVisibility;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,10 +111,13 @@ public class PointerObject implements TypeHandler<PointerObject> {
         if(!(target.getValue(null, null) instanceof Entity || target.getValue(null, null) instanceof CoordinateSet || target.getValue(null, null) instanceof ResourceLocation)) return WRONG_TARGET_TYPE;
         if(!(member.getValue(null, null) instanceof String || member.getValue(null, null) instanceof NBTPath)) return WRONG_MEMBER_TYPE;
         if(target.getValue(null, null) instanceof ResourceLocation && ((ResourceLocation) target.getValue(null, null)).isTag) return TARGET_NOT_STANDALONE;
-        if(member.getValue(null, null) instanceof String &&
-                (((String) member.getValue(null, null)).length() > 16 ||
-                        !TridentLexerProfile.IDENTIFIER_A_REGEX.matcher((String) member.getValue(null, null)).matches()))
-            return ILLEGAL_OBJECTIVE_NAME;
+        if(member.getValue(null, null) instanceof String) {
+            try {
+                Objective.assertNameValid((String)member.getValue(null, null));
+            } catch(CommodoreException x) {
+                return ILLEGAL_OBJECTIVE_NAME;
+            }
+        }
         if(member.getValue(null, null) instanceof String && !(target.getValue(null, null) instanceof Entity)) return ILLEGAL_TYPE_COMBINATION;
         return 0;
     }
