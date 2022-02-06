@@ -282,7 +282,7 @@ public class TridentLiteralSet extends PatternProviderSet { //pointers, type_def
         productions.getOrCreateStructure("COMPONENT_LIST").add(
                 group(
                         TridentProductions.brace("["),
-                        wrapperOptional(productions.getOrCreateStructure("COMPONENT_LIST_BRACELESS")),
+                        wrapperOptional(productions.getOrCreateStructure("COMPONENT_LIST_BRACELESS")).setName("COMPONENT_LIST_BRACELESS"),
                         TridentProductions.brace("]")
                 ).setEvaluator((p, d) -> {
                     ISymbolContext ctx = (ISymbolContext) d[0];
