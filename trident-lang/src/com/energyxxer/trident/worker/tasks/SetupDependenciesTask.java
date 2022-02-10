@@ -1,5 +1,7 @@
 package com.energyxxer.trident.worker.tasks;
 
+import com.energyxxer.enxlex.report.Notice;
+import com.energyxxer.enxlex.report.NoticeType;
 import com.energyxxer.prismarine.PrismarineCompiler;
 import com.energyxxer.prismarine.util.JsonTraverser;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
@@ -7,6 +9,7 @@ import com.energyxxer.prismarine.worker.PrismarineProjectWorkerTask;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +32,12 @@ public class SetupDependenciesTask extends PrismarineProjectWorkerTask<List<Pris
                 JsonObject obj = rawElem.getAsJsonObject();
                 if(obj.has("path") && obj.get("path").isJsonPrimitive() && obj.get("path").getAsJsonPrimitive().isString()) {
                     String dependencyPath = obj.get("path").getAsString();
-                    PrismarineProjectWorker dependency = new PrismarineProjectWorker(worker.suiteConfig, newFileObject(dependencyPath, worker.rootDir));
+                    File file = newFileObject(dependencyPath, worker.rootDir);
+                    if(!file.exists()) {
+                        if(worker.setup.useReport) worker.report.addNotice(new Notice(NoticeType.ERROR, "Missing dependency: " + dependencyPath));
+                        continue;
+                    }
+                    PrismarineProjectWorker dependency = new PrismarineProjectWorker(worker.suiteConfig, file);
                     dependency.setDependencyInfo(new PrismarineProjectWorker.DependencyInfo());
                     dependency.setup.copyFrom(worker.setup);
                     dependency.output.put(SetupBuildConfigTask.INSTANCE, worker.output.get(SetupBuildConfigTask.INSTANCE));
