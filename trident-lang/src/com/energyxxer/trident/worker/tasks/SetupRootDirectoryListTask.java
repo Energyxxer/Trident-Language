@@ -1,6 +1,5 @@
 package com.energyxxer.trident.worker.tasks;
 
-import com.energyxxer.prismarine.PrismarineCompiler;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorkerTask;
 
@@ -17,11 +16,6 @@ public class SetupRootDirectoryListTask extends PrismarineProjectWorkerTask<Arra
     public ArrayList<File> perform(PrismarineProjectWorker worker) throws Exception {
         ArrayList<File> rootDirectories = new ArrayList<>();
         rootDirectories.add(worker.rootDir);
-        for(PrismarineProjectWorker subWorker : worker.output.get(SetupDependenciesTask.INSTANCE)) {
-            if(subWorker.getDependencyInfo().mode == PrismarineCompiler.Dependency.Mode.COMBINE && !rootDirectories.contains(subWorker.rootDir)) {
-                rootDirectories.addAll(subWorker.output.get(INSTANCE));
-            }
-        }
         return rootDirectories;
     }
 
@@ -32,6 +26,6 @@ public class SetupRootDirectoryListTask extends PrismarineProjectWorkerTask<Arra
 
     @Override
     public PrismarineProjectWorkerTask[] getImplications() {
-        return new PrismarineProjectWorkerTask[] {SetupDependenciesTask.INSTANCE};
+        return new PrismarineProjectWorkerTask[0];
     }
 }

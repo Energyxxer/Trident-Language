@@ -12,9 +12,7 @@ public class SetupBuildConfigTask extends PrismarineProjectWorkerTask<TridentBui
 
     @Override
     public TridentBuildConfiguration perform(PrismarineProjectWorker worker) throws Exception {
-        TridentBuildConfiguration buildConfig = new TridentBuildConfiguration();
-        buildConfig.populateFromProjectRoot(worker.rootDir);
-        return buildConfig;
+        throw new IllegalStateException("Build configuration was not set by IDE or CLI");
     }
 
     @Override

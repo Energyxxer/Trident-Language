@@ -37,10 +37,16 @@ public class SetupDependenciesTask extends PrismarineProjectWorkerTask<List<Pris
                         if(worker.setup.useReport) worker.report.addNotice(new Notice(NoticeType.ERROR, "Missing dependency: " + dependencyPath));
                         continue;
                     }
+                    if(worker.output.get(SetupRootDirectoryListTask.INSTANCE).contains(file)) {
+                        if(worker.setup.useReport) worker.report.addNotice(new Notice(NoticeType.ERROR, "Circular dependencies: " + dependencyPath));
+                        continue;
+                    }
+                    worker.output.get(SetupRootDirectoryListTask.INSTANCE).add(file);
                     PrismarineProjectWorker dependency = new PrismarineProjectWorker(worker.suiteConfig, file);
                     dependency.setDependencyInfo(new PrismarineProjectWorker.DependencyInfo());
                     dependency.setup.copyFrom(worker.setup);
                     dependency.output.put(SetupBuildConfigTask.INSTANCE, worker.output.get(SetupBuildConfigTask.INSTANCE));
+                    dependency.output.put(SetupRootDirectoryListTask.INSTANCE, worker.output.get(SetupRootDirectoryListTask.INSTANCE));
                     if(obj.has("export") && obj.get("export").isJsonPrimitive() && obj.get("export").getAsJsonPrimitive().isBoolean()) {
                         dependency.getDependencyInfo().doExport = obj.get("export").getAsBoolean();
                     }
@@ -79,6 +85,6 @@ public class SetupDependenciesTask extends PrismarineProjectWorkerTask<List<Pris
 
     @Override
     public PrismarineProjectWorkerTask[] getImplications() {
-        return new PrismarineProjectWorkerTask[] {SetupPropertiesTask.INSTANCE};
+        return new PrismarineProjectWorkerTask[] {SetupPropertiesTask.INSTANCE, SetupRootDirectoryListTask.INSTANCE};
     }
 }

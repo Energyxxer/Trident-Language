@@ -141,8 +141,8 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
                 SetupModuleTask.INSTANCE,
                 SetupProductionsTask.INSTANCE,
                 SetupPluginsTask.INSTANCE,
-                SetupDependenciesTask.INSTANCE,
                 SetupRootDirectoryListTask.INSTANCE,
+                SetupDependenciesTask.INSTANCE,
                 SetupPluginsTransitivelyTask.INSTANCE,
                 SetupPluginProductionsTask.INSTANCE,
                 SetupResourcePackTask.INSTANCE,
@@ -160,6 +160,7 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
                 SetupModuleTask.INSTANCE,
                 SetupProductionsTask.INSTANCE,
                 SetupPluginsTask.INSTANCE,
+                SetupRootDirectoryListTask.INSTANCE,
                 SetupDependenciesTask.INSTANCE,
                 SetupPluginsTransitivelyTask.INSTANCE,
                 SetupPluginProductionsTask.INSTANCE
