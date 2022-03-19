@@ -124,6 +124,14 @@ define private class entity {
     public withoutArguments(type : type_handler) : entity {}
 }
 
+# Primitive representing a Minecraft entity selector argument.
+#
+# The literal <code>selector_argument&lt;<i>key=value</i>&gt;</code> is used to create selector arguments.
+# Inside the angle brackets, you can type a selector argument, just as you would in a command.
+define private class selector_argument {
+    public final var key : string = null
+}
+
 define private class int_range {
     public var min : int?
     public var max : int?
@@ -210,4 +218,105 @@ define private class tag_long : nbt_value {}
 define private class type_definition {
     public static of(object) : type_definition? {}
     public is(object) : boolean {}
+}
+
+# Represents a generic entity selector that's not built into the language.
+define private class selector_argument_raw : selector_argument {
+    public final var value
+
+    public new(key : string, value) {}
+}
+define private class selector_argument_distance : selector_argument {
+    public final var value : real_range
+    public new(value : real_range) {}
+}
+define private class selector_argument_dx : selector_argument {
+    public final var value : real
+    public new(value : real) {}
+}
+define private class selector_argument_dy : selector_argument {
+    public final var value : real
+    public new(value : real) {}
+}
+define private class selector_argument_dz : selector_argument {
+    public final var value : real
+    public new(value : real) {}
+}
+define private class selector_argument_gamemode : selector_argument {
+    public final var value : string
+    public final var negated : boolean
+    public new(value : string, negated : boolean?) {}
+}
+define private class selector_argument_level : selector_argument {
+    public final var value : int_range
+    public new(value : int_range) {}
+}
+define private class selector_argument_limit : selector_argument {
+    public final var value : int
+    public new(value : int) {}
+}
+define private class selector_argument_name : selector_argument {
+    public final var value : string?
+    public final var negated : boolean
+    public new(value : string?, negated : boolean?) {}
+}
+define private class selector_argument_nbt : selector_argument {
+    public final var value : tag_compound
+    public final var negated : boolean
+    public new(value : tag_compound, negated : boolean?) {}
+}
+define private class selector_argument_predicate : selector_argument {
+    public final var value : resource?
+    public final var negated : boolean
+    public new(value : resource?, negated : boolean?) {}
+}
+define private class selector_argument_sort : selector_argument {
+    public final var value : string
+    public final var negated : boolean
+    public new(value : string, negated : boolean?) {}
+}
+define private class selector_argument_tag : selector_argument {
+    public final var value : string?
+    public final var negated : boolean
+    public new(value : string?, negated : boolean?) {}
+}
+define private class selector_argument_team : selector_argument {
+    public final var value : string?
+    public final var negated : boolean
+    public new(value : string?, negated : boolean?) {}
+}
+define private class selector_argument_type : selector_argument {
+    public final var value : resource
+    public final var negated : boolean
+    public new(value : resource, negated : boolean?) {}
+}
+define private class selector_argument_x : selector_argument {
+    public final var value : real
+    public new(value : real) {}
+}
+define private class selector_argument_x_rotation : selector_argument {
+    public final var value : real_range
+    public new(value : real_range) {}
+}
+define private class selector_argument_y : selector_argument {
+    public final var value : real
+    public new(value : real) {}
+}
+define private class selector_argument_y_rotation : selector_argument {
+    public final var value : real_range
+    public new(value : real_range) {}
+}
+define private class selector_argument_z : selector_argument {
+    public final var value : real
+    public new(value : real) {}
+}
+define private class selector_argument_advancements : selector_argument {
+    public final var value : dictionary
+
+    public new(value : dictionary) {}
+}
+define private class selector_argument_scores : selector_argument {
+    public final var value : dictionary
+
+    public new(value : dictionary) {}
 }
