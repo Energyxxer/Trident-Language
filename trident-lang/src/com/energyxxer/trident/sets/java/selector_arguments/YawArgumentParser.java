@@ -13,13 +13,13 @@ import static com.energyxxer.prismarine.PrismarineProductions.*;
 public class YawArgumentParser implements PatternSwitchProviderUnit {
     @Override
     public String[] getSwitchKeys() {
-        return new String[] {"x_rotation"};
+        return new String[] {"y_rotation"};
     }
 
     @Override
     public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
-                literal("x_rotation").setName("SELECTOR_ARGUMENT_KEY"),
+                literal("y_rotation").setName("SELECTOR_ARGUMENT_KEY"),
                 TridentProductions.equals(),
                 wrapper(productions.getOrCreateStructure("REAL_NUMBER_RANGE"), (v, p, d) -> new YawArgument((DoubleRange) v))
         ).setSimplificationFunctionContentIndex(2);

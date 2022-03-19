@@ -13,13 +13,13 @@ import static com.energyxxer.prismarine.PrismarineProductions.*;
 public class PitchArgumentParser implements PatternSwitchProviderUnit {
     @Override
     public String[] getSwitchKeys() {
-        return new String[] {"y_rotation"};
+        return new String[] {"x_rotation"};
     }
 
     @Override
     public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
-                literal("y_rotation").setName("SELECTOR_ARGUMENT_KEY"),
+                literal("x_rotation").setName("SELECTOR_ARGUMENT_KEY"),
                 TridentProductions.equals(),
                 wrapper(productions.getOrCreateStructure("REAL_NUMBER_RANGE"), (v, p, d) -> new PitchArgument((DoubleRange) v))
         ).setSimplificationFunctionContentIndex(2);

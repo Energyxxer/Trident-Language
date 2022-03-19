@@ -2,6 +2,7 @@ package com.energyxxer.trident.compiler.analyzers.type_handlers;
 
 import com.energyxxer.commodore.functionlogic.commands.Command;
 import com.energyxxer.commodore.functionlogic.inspection.ExecutionContext;
+import com.energyxxer.commodore.util.Negatable;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.PrismarineCompiler;
 import com.energyxxer.prismarine.operators.OperatorManager;
@@ -13,6 +14,7 @@ import com.energyxxer.prismarine.typesystem.functions.PrimitivePrismarineFunctio
 import com.energyxxer.prismarine.typesystem.functions.PrismarineFunction;
 import com.energyxxer.prismarine.util.JsonTraverser;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.*;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.selector_args.*;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.tags.*;
 import com.energyxxer.trident.compiler.semantics.custom.classes.ClassMethod;
 import com.energyxxer.trident.compiler.semantics.custom.classes.CustomClass;
@@ -21,6 +23,8 @@ import com.energyxxer.trident.compiler.semantics.custom.entities.EntityEvent;
 import com.energyxxer.trident.compiler.semantics.custom.items.CustomItem;
 import com.energyxxer.trident.worker.tasks.SetupPropertiesTask;
 import org.jetbrains.annotations.Contract;
+
+import java.util.Collection;
 
 public class TridentTypeSystem extends PrismarineTypeSystem {
 
@@ -54,11 +58,13 @@ public class TridentTypeSystem extends PrismarineTypeSystem {
         registerPrimitiveTypeHandler(new UUIDTypeHandler(this));
         registerPrimitiveTypeHandler(new BlockTypeHandler(this));
         registerPrimitiveTypeHandler(new EntityTypeHandler(this));
+        registerPrimitiveTypeHandler(new SelectorArgumentTypeHandler(this));
         registerPrimitiveTypeHandler(new IntRangeTypeHandler(this));
         registerPrimitiveTypeHandler(new ItemTypeHandler(this));
         registerPrimitiveTypeHandler(new NBTPathTypeHandler(this));
         registerPrimitiveTypeHandler(new RealRangeTypeHandler(this));
 
+        //region tags
         TagCompoundTypeHandler tagCompoundHandler = new TagCompoundTypeHandler(this);
         registerPrimitiveTypeHandler(tagCompoundHandler);
         registerPrimitiveTypeHandler("nbt", tagCompoundHandler);
@@ -77,6 +83,34 @@ public class TridentTypeSystem extends PrismarineTypeSystem {
         registerPrimitiveTypeHandler(new TagLongArrayTypeHandler(this));
 
         registerPrimitiveTypeHandler(new NBTTagTypeHandler(this));
+        //endregion
+
+        //region Selector Arguments
+        registerPrimitiveTypeHandler(new AdvancementsArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new DistanceArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new DXArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new DYArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new DZArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new GamemodeArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new LevelArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new LimitArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new NameArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new NBTArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new PredicateArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new SortArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new ScoresArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new TagArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new TeamArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new TypeArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new XArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new XRotationArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new YArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new YRotationArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new ZArgumentTypeHandler(this));
+
+        registerPrimitiveTypeHandler(new RawArgumentTypeHandler(this));
+        registerPrimitiveTypeHandler(new SelectorArgumentTypeHandler(this));
+        //endregion
 
         registerPrimitiveTypeHandler(new ExceptionTypeHandler(this));
         registerPrimitiveTypeHandler(new FunctionTypeHandler(this));
@@ -97,11 +131,26 @@ public class TridentTypeSystem extends PrismarineTypeSystem {
     @Contract("null -> null")
     @Override
     public Object sanitizeObject(Object obj) {
-        if(obj == null) return null;
-        if(obj.getClass().isArray()) {
-            return new ListObject(this, (Object[]) obj);
+        while (true) {
+            if (obj == null) return null;
+            if (obj.getClass().isArray()) {
+                return new ListObject(this, (Object[]) obj);
+            }
+            if (obj instanceof Collection) {
+                return new ListObject(this, ((Collection) obj).toArray());
+            }
+            if (obj instanceof Negatable<?>) {
+                if (!((Negatable) obj).negated) {
+                    obj = ((Negatable) obj).value;
+                    continue;
+                }
+                DictionaryObject dict = new DictionaryObject(globalCtx.getTypeSystem());
+                dict.put("value", ((Negatable) obj).value);
+                dict.put("negated", ((Negatable) obj).negated);
+                return dict;
+            }
+            return obj;
         }
-        return obj;
     }
 
     @Override
@@ -141,5 +190,20 @@ public class TridentTypeSystem extends PrismarineTypeSystem {
     @Override
     public OperatorManager<ClassMethod> getOperatorManager() {
         return operatorManager;
+    }
+
+    /** @noinspection SameParameterValue, CastCanBeRemovedNarrowingVariableType */
+    public static <T> Negatable<T> dictToNegatable(Object obj, TokenPattern<?> p, ISymbolContext ctx, Class type) {
+        Object rawValue = assertOfClass(obj, p, ctx, DictionaryObject.class, type);
+        if(type.isInstance(rawValue)) {
+            return new Negatable<>((T) rawValue, false);
+        } else {
+            DictionaryObject quantityObj = (DictionaryObject) rawValue;
+
+            return new Negatable<>(
+                    (T) assertOfClass(quantityObj.get("value"), p, ctx, type),
+                    quantityObj.hasOwnProperty("negated") ? assertOfClass(quantityObj.get("negated"), p, ctx, boolean.class) : false
+            );
+        }
     }
 }

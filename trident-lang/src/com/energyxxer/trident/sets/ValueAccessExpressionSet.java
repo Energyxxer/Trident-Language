@@ -133,6 +133,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                         .setEvaluator((p, d) -> {
                             ISymbolContext ctx = (ISymbolContext) d[0];
                             TypeHandler<?> handler = (TypeHandler<?>) p.find("INTERPOLATION_TYPE").evaluate(ctx);
+                            if(handler == null) throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "There's no registered data type for " + p.find("INTERPOLATION_TYPE").flatten(false) + "!", p, ctx);
 
                             PrimitivePrismarineFunction constructor = handler.getConstructor(p, ctx, null);
 

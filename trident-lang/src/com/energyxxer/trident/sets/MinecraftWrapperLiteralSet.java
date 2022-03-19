@@ -27,6 +27,11 @@ public class MinecraftWrapperLiteralSet extends PatternProviderSet {
 
         //entity
         importUnit((productions, worker) -> group(literal("entity").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("LIMITED_ENTITY"), TridentProductions.brace(">")).setName("WRAPPED_ENTITY").addTags("primitive:entity").setSimplificationFunction(wrapperSimplification));
+        importUnit((productions, worker) -> group(literal("selector_argument").setName("VALUE_WRAPPER_KEY").setRecessive(), TridentProductions.brace("<").setRecessive(), productions.getOrCreateStructure("SELECTOR_ARGUMENT"), TridentProductions.brace(">")).setName("WRAPPED_SELECTOR_ARGUMENT").addTags("primitive:selector_argument")
+                .setEvaluator((p, d) -> {
+                    ISymbolContext ctx = (ISymbolContext) d[0];
+                    return ctx.getTypeSystem().sanitizeObject(p.find("SELECTOR_ARGUMENT").evaluate(ctx));
+                }));
 
         //block
         importUnit((productions, worker) -> group(literal("block").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("BLOCK_TAGGED"), TridentProductions.brace(">")).setName("WRAPPED_BLOCK").addTags("primitive:block").setSimplificationFunction(wrapperSimplification));

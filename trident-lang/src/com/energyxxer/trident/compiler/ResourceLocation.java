@@ -33,6 +33,7 @@ public class ResourceLocation {
     public ResourceLocation(Type type) {
         this.namespace = type.useNamespace() ? type.getNamespace().getName() : "minecraft";
         this.body = type.getName();
+        this.isTag = !type.isStandalone();
     }
 
     public ResourceLocation(TokenPattern<?> typeGroup) {

@@ -49,6 +49,7 @@ public class TypeArgumentParser implements PatternSwitchProviderUnit {
                         throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Unknown entity reference return type: " + reference.getClass().getSimpleName(), p.tryFind("TRIDENT_ENTITY_ID_TAGGED"), ctx);
                     }
 
+                    if(args.size() == 1) return args.get(0);
                     return args;
                 })
         ).setSimplificationFunctionContentIndex(2);

@@ -1,10 +1,13 @@
 package com.energyxxer.trident.sets.java;
 
+import com.energyxxer.commodore.functionlogic.selector.arguments.SelectorArgument;
 import com.energyxxer.enxlex.pattern_matching.matching.lazy.TokenStructureMatch;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternProviderSet;
+import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.sets.java.selector_arguments.*;
 
 public class SelectorArgumentSet extends PatternProviderSet {
@@ -40,5 +43,6 @@ public class SelectorArgumentSet extends PatternProviderSet {
     @Override
     protected void installUtilityProductions(PrismarineProductions productions, TokenStructureMatch providerStructure, PrismarineProjectWorker worker) {
         providerStructure.addTags(SuggestionTags.ENABLED);
+        providerStructure.add(PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), true, SelectorArgument.class, ListObject.class));
     }
 }

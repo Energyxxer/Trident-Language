@@ -56,6 +56,7 @@ import com.energyxxer.trident.compiler.TridentProductions;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
+import com.energyxxer.trident.compiler.analyzers.type_handlers.ListObject;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.extensions.ItemTypeHandler;
 import com.energyxxer.trident.compiler.lexer.TridentLexerProfile;
 import com.energyxxer.trident.compiler.lexer.TridentSuggestionTags;
@@ -141,22 +142,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                     Selector selector = ((Selector) d[1]);
                     for(TokenPattern<?> rawArgument : ((TokenList) p).getContentsExcludingSeparators()) {
                         Object result = rawArgument.evaluate((ISymbolContext) d[0], pathContext);
-                        if(result == null) continue;
-                        if(result instanceof SelectorArgument) {
-                            result = Collections.singletonList(result);
-                        }
-                        Collection<SelectorArgument> args = (Collection<SelectorArgument>) result;
-                        if(!args.isEmpty()) {
-                            selector.addArgumentsMerging(args);
-                            for(SelectorArgument arg : args) {
-                                if(arg instanceof TypeArgument && !((TypeArgument) arg).isNegated()) {
-                                    Type entityType = ((TypeArgument) arg).getType();
-                                    if(entityType.isStandalone()) {
-                                        pathContext.setProtocolMetadata(entityType);
-                                    }
-                                }
-                            }
-                        }
+                        dumpSelectorArguments(selector, result, pathContext, p, ((ISymbolContext) d[0]));
                     }
                     return null;
                 }),
@@ -1117,6 +1103,47 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         ).addTags("cspn:Score");
 
         productions.getOrCreateStructure("ANCHOR").add(enumChoice(EntityAnchor.class));
+    }
+
+    public static void dumpSelectorArguments(Selector selector, Object args, TokenPattern<?> p, ISymbolContext ctx) {
+        dumpSelectorArguments(selector, args, null, p, ctx);
+    }
+
+    public static class SelectorMergeData {
+        public static TokenPattern<?> p;
+        public static ISymbolContext ctx;
+    }
+
+    public static void dumpSelectorArguments(Selector selector, Object args, PathContext pathContext, TokenPattern<?> p, ISymbolContext ctx) {
+        if(args == null) return;
+        if(args instanceof SelectorArgument) {
+            try {
+                SelectorMergeData.p = p; // f OOP
+                SelectorMergeData.ctx = ctx;
+                selector.addArgumentMerging((SelectorArgument) args);
+            } finally {
+                SelectorMergeData.p = null;
+                SelectorMergeData.ctx = null;
+            }
+            if(pathContext != null) {
+                if(args instanceof TypeArgument && !((TypeArgument) args).isNegated()) {
+                    Type entityType = ((TypeArgument) args).getType();
+                    if(entityType.isStandalone()) {
+                        pathContext.setProtocolMetadata(entityType);
+                    }
+                }
+            }
+        } else if(args instanceof ListObject) {
+            for(Object obj : ((ListObject) args)) {
+                dumpSelectorArguments(selector, obj, pathContext, p, ctx);
+            }
+        } else if(args instanceof Collection) {
+            for(SelectorArgument arg : ((Collection<SelectorArgument>) args)) {
+                dumpSelectorArguments(selector, arg, pathContext, p, ctx);
+            }
+        } else {
+            throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Expected selector_argument, found " + ctx.getTypeSystem().getTypeIdentifierForObject(args) + ": " + args, p, ctx);
+        }
     }
 
     private Block evaluateBlock(Object obj, TokenPattern<?> p, TokenPattern<?> root, Object[] d) {

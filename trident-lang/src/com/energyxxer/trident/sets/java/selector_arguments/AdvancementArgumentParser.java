@@ -9,12 +9,9 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.advancement.Adv
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenList;
 import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
-import com.energyxxer.enxlex.pattern_matching.structures.TokenStructure;
 import com.energyxxer.enxlex.suggestions.SuggestionTags;
-import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternSwitchProviderUnit;
-import com.energyxxer.prismarine.reporting.PrismarineException;
 import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.ResourceLocation;
@@ -79,11 +76,10 @@ public class AdvancementArgumentParser implements PatternSwitchProviderUnit {
                         TridentProductions.comma()
                 ).setOptional().setName("ADVANCEMENT_LIST").setEvaluator((p, d) -> {
                     ISymbolContext ctx = (ISymbolContext) d[0];
-                    PathContext pathContext = (PathContext) d[1];
                     AdvancementArgument advancements = new AdvancementArgument();
 
                     for(TokenPattern<?> rawArg : ((TokenList) p).getContentsExcludingSeparators()) {
-                        advancements.addEntry((AdvancementArgumentEntry) rawArg.evaluate(ctx, pathContext));
+                        advancements.addEntry((AdvancementArgumentEntry) rawArg.evaluate(ctx));
                     }
 
                     return advancements;
@@ -101,38 +97,8 @@ public class AdvancementArgumentParser implements PatternSwitchProviderUnit {
         ).setSimplificationFunctionContentIndex(2);
     }
 
-    public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx, PathContext pathContext) {
-        if(true) {
-            throw new UnsupportedOperationException(); //this step is optimized away
-        }
-        TokenList advancementList = (TokenList) pattern.find("ADVANCEMENT_LIST");
-
-        AdvancementArgument advancements = new AdvancementArgument();
-
-        if(advancementList != null) {
-            for(TokenPattern<?> rawArg : advancementList.getContents()) {
-                if(rawArg.getName().equals("ADVANCEMENT_ENTRY")) {
-                    ResourceLocation advancementLoc = new ResourceLocation(rawArg.find("ADVANCEMENT_ENTRY_KEY").flatten(false));
-                    TokenPattern<?> rawValue = ((TokenStructure)rawArg.find("ADVANCEMENT_ENTRY_VALUE")).getContents();
-                    switch(rawValue.getName()) {
-                        case "BOOLEAN": {
-                            advancements.addEntry(new AdvancementCompletionEntry(advancementLoc.toString(), rawValue.flatten(false).equals("true")));
-                            break;
-                        }
-                        case "CRITERION_GROUP": {
-                            AdvancementCriterionGroupEntry criteria = parseCriterionGroup(rawValue, ctx, advancementLoc);
-                            advancements.addEntry(criteria);
-                            break;
-                        }
-                        default: {
-                            throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Unknown grammar branch name '" + rawValue.getName() + "'", rawValue, ctx);
-                        }
-                    }
-                }
-            }
-        }
-
-        return advancements;
+    public SelectorArgument parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
+        throw new UnsupportedOperationException(); //this step is optimized away
     }
 
     private AdvancementCriterionGroupEntry parseCriterionGroup(TokenPattern<?> pattern, ISymbolContext ctx, ResourceLocation advancementLoc) {
