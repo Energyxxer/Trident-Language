@@ -37,34 +37,41 @@ public class SetupDependenciesTask extends PrismarineProjectWorkerTask<List<Pris
                         if(worker.setup.useReport) worker.report.addNotice(new Notice(NoticeType.ERROR, "Missing dependency: " + dependencyPath));
                         continue;
                     }
-                    if(worker.output.get(SetupRootDirectoryListTask.INSTANCE).contains(file)) {
+                    if(worker.output.get(ValidateCircularDependenciesTask.INSTANCE).contains(file)) {
                         if(worker.setup.useReport) worker.report.addNotice(new Notice(NoticeType.ERROR, "Circular dependencies: " + dependencyPath));
                         continue;
                     }
+                    boolean doCompile = !worker.output.get(SetupRootDirectoryListTask.INSTANCE).contains(file);
                     worker.output.get(SetupRootDirectoryListTask.INSTANCE).add(file);
-                    PrismarineProjectWorker dependency = new PrismarineProjectWorker(worker.suiteConfig, file);
-                    dependency.setDependencyInfo(new PrismarineProjectWorker.DependencyInfo());
-                    dependency.setup.copyFrom(worker.setup);
-                    dependency.output.put(SetupBuildConfigTask.INSTANCE, worker.output.get(SetupBuildConfigTask.INSTANCE));
-                    dependency.output.put(SetupRootDirectoryListTask.INSTANCE, worker.output.get(SetupRootDirectoryListTask.INSTANCE));
-                    if(obj.has("export") && obj.get("export").isJsonPrimitive() && obj.get("export").getAsJsonPrimitive().isBoolean()) {
-                        dependency.getDependencyInfo().doExport = obj.get("export").getAsBoolean();
-                    }
-                    if(obj.has("mode") && obj.get("mode").isJsonPrimitive() && obj.get("mode").getAsJsonPrimitive().isString()) {
-                        switch(obj.get("mode").getAsString()) {
-                            case "precompile": {
-                                dependency.getDependencyInfo().mode = PrismarineCompiler.Dependency.Mode.PRECOMPILE;
-                                break;
-                            }
-                            case "combine": {
-                                dependency.getDependencyInfo().mode = PrismarineCompiler.Dependency.Mode.COMBINE;
-                                break;
+                    worker.output.get(ValidateCircularDependenciesTask.INSTANCE).add(file);
+                    try {
+                        PrismarineProjectWorker dependency = new PrismarineProjectWorker(worker.suiteConfig, file);
+                        dependency.setDependencyInfo(new PrismarineProjectWorker.DependencyInfo());
+                        if(!doCompile) dependency.getDependencyInfo().doCompile = false;
+                        dependency.setup.copyFrom(worker.setup);
+                        dependency.output.put(SetupBuildConfigTask.INSTANCE, worker.output.get(SetupBuildConfigTask.INSTANCE));
+                        dependency.output.put(SetupRootDirectoryListTask.INSTANCE, worker.output.get(SetupRootDirectoryListTask.INSTANCE));
+                        if (obj.has("export") && obj.get("export").isJsonPrimitive() && obj.get("export").getAsJsonPrimitive().isBoolean()) {
+                            dependency.getDependencyInfo().doExport = obj.get("export").getAsBoolean();
+                        }
+                        if (obj.has("mode") && obj.get("mode").isJsonPrimitive() && obj.get("mode").getAsJsonPrimitive().isString()) {
+                            switch (obj.get("mode").getAsString()) {
+                                case "precompile": {
+                                    dependency.getDependencyInfo().mode = PrismarineCompiler.Dependency.Mode.PRECOMPILE;
+                                    break;
+                                }
+                                case "combine": {
+                                    dependency.getDependencyInfo().mode = PrismarineCompiler.Dependency.Mode.COMBINE;
+                                    break;
+                                }
                             }
                         }
-                    }
 
-                    worker.output.addDependency(dependency);
-                    dependencies.add(dependency);
+                        worker.output.addDependency(dependency);
+                        dependencies.add(dependency);
+                    } finally {
+                        worker.output.get(ValidateCircularDependenciesTask.INSTANCE).remove(file);
+                    }
                 }
             }
         }
@@ -85,6 +92,6 @@ public class SetupDependenciesTask extends PrismarineProjectWorkerTask<List<Pris
 
     @Override
     public PrismarineProjectWorkerTask[] getImplications() {
-        return new PrismarineProjectWorkerTask[] {SetupPropertiesTask.INSTANCE, SetupRootDirectoryListTask.INSTANCE};
+        return new PrismarineProjectWorkerTask[] {SetupPropertiesTask.INSTANCE, SetupRootDirectoryListTask.INSTANCE, ValidateCircularDependenciesTask.INSTANCE};
     }
 }
