@@ -48,7 +48,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
         this.isStaticHandler = isStaticHandler;
     }
 
-    private HashMap<String, Symbol> map = new HashMap<>();
+    private HashMap<String, Symbol> map = new LinkedHashMap<>();
 
     @Override
     public Object getMember(DictionaryObject dict, String member, TokenPattern<?> pattern, ISymbolContext ctx, boolean keepSymbol) {
