@@ -83,6 +83,45 @@ define private class entity {
     public isPlayer() : boolean {}
     public isUnknownType() : boolean {}
     public getLimit() : int {}
+
+    # If this is a selector, retrieves the base of this selector.
+    # Throws an exception if this is not a selector.
+    public getBase() : SelectorBase {}
+    # If this is a selector, returns a copy of this selector whose base has been changed to the one specified.
+    # Throws an exception if this is not a selector.
+    public deriveBase(base : SelectorBase ) : entity {}
+
+    # If this is a selector, returns a list with all the selector arguments in this selector.
+    # Throws an exception if this is not a selector.
+    public getArguments() : list {}
+    # If this is a selector, returns a list with all the selector arguments of the specified key in this selector.
+    # Throws an exception if this is not a selector.
+    public getArguments(key : string) : list {}
+    # If this is a selector, returns a list with all the selector arguments of the specified type in this selector.
+    # Throws an exception if this is not a selector.
+    public getArguments(type : type_handler) : list {}
+
+    # If this is a selector, returns a copy of this selector, with the given selector arguments appended to the end.
+    # Arguments are merged wherever possible.
+    # Throws an exception if this is not a selector.
+    public withArguments(args : list) : entity {}
+    # If this is a selector, returns a copy of this selector, with the given selector arguments appended to the end.
+    # Arguments are merged wherever possible.
+    # Throws an exception if this is not a selector.
+    public withArguments(args : selector_argument) : entity {}
+
+    # If this is a selector, returns a copy of this selector, without the given argument.
+    # Throws an exception if this is not a selector.
+    public withoutArguments(args : selector_argument) : entity {}
+    # If this is a selector, returns a copy of this selector, without the given arguments.
+    # Throws an exception if this is not a selector.
+    public withoutArguments(args : list) : entity {}
+    # If this is a selector, returns a copy of this selector, without arguments of the given key.
+    # Throws an exception if this is not a selector.
+    public withoutArguments(key : string) : entity {}
+    # If this is a selector, returns a copy of this selector, without arguments of the given type.
+    # Throws an exception if this is not a selector.
+    public withoutArguments(type : type_handler) : entity {}
 }
 
 define private class int_range {

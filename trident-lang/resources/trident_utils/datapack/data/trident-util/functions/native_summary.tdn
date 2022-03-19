@@ -17,6 +17,36 @@ define global final class RotationType {
     public static final var RELATIVE : RotationType = null
 }
 
+# Enumerator class selector base types (p, e, a, r, s)
+# Used for native entity methods.
+define global final class SelectorBase {
+    # Targets the nearest, alive, online player.
+    public static final var NEAREST_PLAYER : SelectorBase = new SelectorBase(0, "SelectorBase.NEAREST_PLAYER", "p")
+    # Targets all alive entities, in arbitrary order.
+    public static final var ALL_ENTITIES : SelectorBase = new SelectorBase(1, "SelectorBase.ALL_ENTITIES", "e")
+    # Targets all online players (alive or dead), sorted by distance, ascending.
+    public static final var ALL_PLAYERS : SelectorBase = new SelectorBase(2, "SelectorBase.ALL_PLAYERS", "a")
+    # Targets a single online player chosen at random.
+    public static final var RANDOM : SelectorBase = new SelectorBase(3, "SelectorBase.RANDOM", "r")
+    # Targets the executor of the command.
+    public static final var SENDER : SelectorBase = new SelectorBase(4, "SelectorBase.SENDER", "s")
+
+    private final var index : int
+    private final var name : string
+    # The shorthand used for this selector base (the letter or letters that come after the <code>@</code>)
+    public final var header : string
+
+    private new(index : int, name : string, header : string) {
+        eval this.index = index
+        eval this.name = name
+        eval this.header = header
+    }
+
+    public override toString() : string {
+        return name
+    }
+}
+
 define global static final class Block {
     public static exists() : boolean {}
     public static getAll() : list {}
