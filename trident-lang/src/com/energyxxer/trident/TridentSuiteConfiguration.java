@@ -24,6 +24,7 @@ import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.prismarine.worker.tasks.SetupProductionsTask;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.TridentBuildConfiguration;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.default_libs.DefaultLibraryProvider;
 import com.energyxxer.trident.compiler.analyzers.general.AnalyzerManager;
 import com.energyxxer.trident.compiler.analyzers.type_handlers.TridentTypeSystem;
@@ -244,7 +245,7 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
         // Add default minecraft types and tags:
         for(Namespace ns : module.getAllNamespaces()) {
             for(TypeDictionary typeDict : ns.types.getAllDictionaries()) {
-                String category = typeDict.getCategory();
+                String category = TridentUtil.backCompatCategoryName(typeDict.getCategory());
                 for(Type type : typeDict.list()) {
                     if(type instanceof AliasType) {
                         summary.addType(category, new ResourceLocation(((AliasType) type).getAliasNamespace().getName() + ":" + ((AliasType) type).getAliasName()));
@@ -254,7 +255,7 @@ public class TridentSuiteConfiguration extends PrismarineSuiteConfiguration {
                 }
             }
             for(TagGroup<?> group : ns.tags.getGroups()) {
-                String category = group.getCategory();
+                String category = TridentUtil.backCompatCategoryName(group.getCategory());
                 for(Tag tag : group.getAll()) {
                     summary.addTag(category, new ResourceLocation(tag.toString()));
                 }

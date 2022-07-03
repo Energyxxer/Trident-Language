@@ -35,4 +35,27 @@ public class TridentUtil {
             }
         }
     }
+
+    public static String backCompatCategoryName(String name) {
+        switch(name) {
+            case "entity_type":
+                return "entity";
+            case "block_entity_type":
+                return "block_entity";
+            case "particle_type":
+                return "particle";
+            case "dimension_type":
+                return "dimension";
+            case "worldgen/structure":
+                return "structure";
+            case "worldgen/biome":
+                return "biome";
+            case "mob_effect":
+                return "effect";
+            case "painting_variant":
+                return "motive";
+            default:
+                return name;
+        }
+    }
 }

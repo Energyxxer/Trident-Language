@@ -53,6 +53,7 @@ import com.energyxxer.prismarine.typesystem.PrismarineTypeSystem;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.ResourceLocation;
 import com.energyxxer.trident.compiler.TridentProductions;
+import com.energyxxer.trident.compiler.TridentUtil;
 import com.energyxxer.trident.compiler.analyzers.constructs.CommonParsers;
 import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
 import com.energyxxer.trident.compiler.analyzers.constructs.TextParser;
@@ -109,6 +110,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
         if(TridentProductions.checkVersionFeature(worker, "custom_biomes", false)) {
             noValidationCategories.add(BiomeType.CATEGORY);
+            noValidationCategories.add(StructureType.CATEGORY);
         }
 
 
@@ -791,7 +793,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         for(Namespace namespace : worker.output.get(SetupModuleTask.INSTANCE).getAllNamespaces()) {
             TokenGroupMatch namespaceMatch = (TokenGroupMatch) group(literal(namespace.getName()), TridentProductions.colon()).setOptional(namespace.getName().equals("minecraft")).setName("NAMESPACE");
             for(TypeDictionary typeDict : namespace.types.getAllDictionaries()) {
-                String category = typeDict.getCategory();
+                String category = TridentUtil.backCompatCategoryName(typeDict.getCategory());
                 TokenStructureMatch categoryStructure;
                 if(!categoryMap.containsKey(category)) {
                     categoryMap.put(category, categoryStructure = productions.getOrCreateStructure(category.toUpperCase(Locale.ENGLISH) + "_ID"));
@@ -821,7 +823,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         categoryStructure.addTags(SuggestionTags.ENABLED, TridentSuggestionTags.__TYPE_TEMPLATE + category);
                     }
 
-                    if(CATEGORIES_WITH_TAGS.contains(category)) {
+                    if(CATEGORIES_WITH_TAGS.contains(category) || checkVersionFeature(worker, "type_tags.universal", false)) {
                         productions.getOrCreateStructure(category.toUpperCase(Locale.ENGLISH) + "_ID_TAGGED")
                                 .add(group(categoryStructure).setEvaluator((p, d) -> ((TokenGroup) p).getContents()[0].evaluate(d[0], true)))
                                 .add(
