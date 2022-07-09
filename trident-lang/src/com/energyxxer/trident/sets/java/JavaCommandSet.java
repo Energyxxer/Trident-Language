@@ -57,6 +57,7 @@ public class JavaCommandSet extends PatternSwitchProviderSet {
                 PardonIpCommandDefinition.class,
                 PardonCommandDefinition.class,
                 ParticleCommandDefinition.class,
+                PlaceCommandDefinition.class,
                 PlaySoundCommandDefinition.class,
                 RecipeCommandDefinition.class,
                 ReloadCommandDefinition.class,

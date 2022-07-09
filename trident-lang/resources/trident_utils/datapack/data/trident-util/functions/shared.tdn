@@ -152,6 +152,7 @@ define private class Entity : JSONSerializable {
         return this
     }
     public catType(texture : resource) : Entity {
+        if(Project.getTargetVersion()[1] >= 19) throw "Entity property 'cat_type' is not supported for target versions 1.19 and later"
         eval this.output.catType = texture
         return this
     }

@@ -95,6 +95,6 @@ public class LocateCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return new LocateCommand((Type) pattern.find("STRUCTURE").evaluate(ctx));
+        throw new UnsupportedOperationException(); //this step is optimized away
     }
 }

@@ -111,7 +111,12 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         if(TridentProductions.checkVersionFeature(worker, "custom_biomes", false)) {
             noValidationCategories.add(BiomeType.CATEGORY);
             noValidationCategories.add(StructureType.CATEGORY);
+            noValidationCategories.add("worldgen/configured_feature");
+            noValidationCategories.add("worldgen/template_pool");
+            noValidationCategories.add("jigsaw_target");
         }
+
+        noValidationCategories.add("template");
 
 
         TokenPatternMatch RAW_RESOURCE_LOCATION = ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION")
