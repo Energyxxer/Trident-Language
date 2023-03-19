@@ -33,7 +33,7 @@ public class OpCommandDefinition implements SimpleCommandDefinition {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
-            return new OpCommand((Entity) pattern.find("ENTITY").evaluate(ctx));
+            return new OpCommand((Entity) pattern.find("ENTITY").evaluate(ctx, null));
         } catch (CommodoreException x) {
             TridentExceptionUtil.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))

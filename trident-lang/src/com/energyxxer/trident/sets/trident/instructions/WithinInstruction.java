@@ -47,10 +47,10 @@ public class WithinInstruction implements InstructionDefinition {
         Symbol symbol = new Symbol(pattern.find("VARIABLE_NAME").flatten(false), TridentSymbolVisibility.LOCAL);
         innerFrame.put(symbol);
 
-        CoordinateSet from = (CoordinateSet) pattern.find("FROM").evaluate(ctx);
-        CoordinateSet to = (CoordinateSet) pattern.find("TO").evaluate(ctx);
+        CoordinateSet from = (CoordinateSet) pattern.find("FROM").evaluate(ctx, null);
+        CoordinateSet to = (CoordinateSet) pattern.find("TO").evaluate(ctx, null);
 
-        double step = (double) pattern.findThenEvaluate("STEP", 1.0, ctx);
+        double step = (double) pattern.findThenEvaluate("STEP", 1.0, ctx, null);
         if (step <= 0) {
             throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Within step must be positive", pattern.tryFind("STEP"), ctx);
         }

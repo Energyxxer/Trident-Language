@@ -34,8 +34,8 @@ public class EventCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
-        EntityEvent event = (EntityEvent) pattern.find("EVENT").evaluate(ctx);
+        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
+        EntityEvent event = (EntityEvent) pattern.find("EVENT").evaluate(ctx, null);
 
         return new ExecuteCommand(new FunctionCommand(event.getFunction()), new ExecuteAsEntity(entity));
     }

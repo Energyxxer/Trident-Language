@@ -151,13 +151,13 @@ public abstract class LoopInstruction implements InstructionDefinition {
                             if (initializationVariableDecl != null) {
                                 new VariableInstruction().run(initializationVariableDecl, ctx);
                             } else {
-                                initialization.evaluate(ctx);
+                                initialization.evaluate(ctx, null);
                             }
                         }
 
                         @Override
                         public boolean condition() {
-                            Object returnValue = condition.evaluate(ctx);
+                            Object returnValue = condition.evaluate(ctx, null);
                             if (returnValue != null && returnValue.getClass() == Boolean.class)
                                 return (boolean) returnValue;
                             throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Required boolean in 'for' condition", condition, ctx);
@@ -165,13 +165,13 @@ public abstract class LoopInstruction implements InstructionDefinition {
 
                         @Override
                         public void iterate() {
-                            iteration.evaluate(ctx);
+                            iteration.evaluate(ctx, null);
                         }
                     };
                 }
                 case "ITERATOR_FOR": {
                     String varName = pattern.find("VARIABLE_NAME").flatten(false);
-                    Object iterable = pattern.find("INTERPOLATION_VALUE").evaluate(ctx);
+                    Object iterable = pattern.find("INTERPOLATION_VALUE").evaluate(ctx, null);
                     TypeHandler handler = ctx.getTypeSystem().getHandlerForObject(iterable, pattern, ctx);
                     Iterator it;
                     if ((it = handler.getIterator(iterable, pattern, ctx)) != null) {
@@ -214,7 +214,7 @@ public abstract class LoopInstruction implements InstructionDefinition {
 
                         @Override
                         public boolean condition() {
-                            Object returnValue = condition.evaluate(ctx);
+                            Object returnValue = condition.evaluate(ctx, null);
                             if (returnValue != null && returnValue.getClass() == Boolean.class)
                                 return (boolean) returnValue;
                             throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Required boolean in 'while' condition", condition, ctx);

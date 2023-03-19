@@ -25,28 +25,27 @@ public class DatapackCommandDefinition implements SimpleCommandDefinition {
         return group(
                 TridentProductions.commandHeader("datapack"),
                 choice(
-                        group(literal("list"), enumChoice(DataPackListCommand.Filter.class).setOptional().setName("DATAPACK_FILTER")).setEvaluator((p, d) -> new DataPackListCommand((DataPackListCommand.Filter) p.findThenEvaluate("DATAPACK_FILTER", null))),
+                        group(literal("list"), enumChoice(DataPackListCommand.Filter.class).setOptional().setName("DATAPACK_FILTER")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new DataPackListCommand((DataPackListCommand.Filter) p.findThenEvaluate("DATAPACK_FILTER", null, ctx, null))),
                         group(
                                 literal("enable"),
                                 TridentProductions.noToken().addTags("cspn:Data Pack"),
                                 wrapper(productions.getOrCreateStructure("STRING_LITERAL_OR_IDENTIFIER_A")).setName("DATAPACK_NAME"),
                                 choice(
-                                        group(literal("first")).setEvaluator((p, d) -> DataPackEnableCommand.Order.FIRST()),
-                                        group(literal("last")).setEvaluator((p, d) -> DataPackEnableCommand.Order.LAST()),
-                                        group(literal("before"), TridentProductions.noToken().addTags("cspn:Before Data Pack"), productions.getOrCreateStructure("STRING_LITERAL_OR_IDENTIFIER_A")).setEvaluator((p, d) -> DataPackEnableCommand.Order.BEFORE((String) p.find("STRING_LITERAL_OR_IDENTIFIER_A").evaluate((ISymbolContext) d[0]))),
-                                        group(literal("after"), TridentProductions.noToken().addTags("cspn:After Data Pack"), productions.getOrCreateStructure("STRING_LITERAL_OR_IDENTIFIER_A")).setEvaluator((p, d) -> DataPackEnableCommand.Order.AFTER((String) p.find("STRING_LITERAL_OR_IDENTIFIER_A").evaluate((ISymbolContext) d[0])))
+                                        group(literal("first")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> DataPackEnableCommand.Order.FIRST()),
+                                        group(literal("last")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> DataPackEnableCommand.Order.LAST()),
+                                        group(literal("before"), TridentProductions.noToken().addTags("cspn:Before Data Pack"), productions.getOrCreateStructure("STRING_LITERAL_OR_IDENTIFIER_A")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> DataPackEnableCommand.Order.BEFORE((String) p.find("STRING_LITERAL_OR_IDENTIFIER_A").evaluate(ctx, null))),
+                                        group(literal("after"), TridentProductions.noToken().addTags("cspn:After Data Pack"), productions.getOrCreateStructure("STRING_LITERAL_OR_IDENTIFIER_A")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> DataPackEnableCommand.Order.AFTER((String) p.find("STRING_LITERAL_OR_IDENTIFIER_A").evaluate(ctx, null)))
                                 ).setOptional().setName("DATAPACK_ORDER")
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            String datapackName = (String) p.find("DATAPACK_NAME").evaluate(ctx);
-                            DataPackEnableCommand.Order order = (DataPackEnableCommand.Order) p.findThenEvaluate("DATAPACK_ORDER", DataPackEnableCommand.Order.LAST(), ctx);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            String datapackName = (String) p.find("DATAPACK_NAME").evaluate(ctx, null);
+                            DataPackEnableCommand.Order order = (DataPackEnableCommand.Order) p.findThenEvaluate("DATAPACK_ORDER", DataPackEnableCommand.Order.LAST(), ctx, null);
                             return new DataPackEnableCommand(datapackName, order);
                         }),
                         group(
                                 literal("disable"),
                                 TridentProductions.noToken().addTags("cspn:Data Pack"),
                                 wrapper(productions.getOrCreateStructure("STRING_LITERAL_OR_IDENTIFIER_A")).setName("DATAPACK_NAME")
-                        ).setEvaluator((p, d) -> new DataPackDisableCommand((String) p.find("DATAPACK_NAME").evaluate((ISymbolContext) d[0])))
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new DataPackDisableCommand((String) p.find("DATAPACK_NAME").evaluate(ctx, null)))
                 ).setName("INNER")
         ).setSimplificationFunctionFind("INNER");
     }

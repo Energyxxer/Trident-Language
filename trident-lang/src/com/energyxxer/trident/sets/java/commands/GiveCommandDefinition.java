@@ -37,10 +37,10 @@ public class GiveCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
+        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
 
-        Item item = (Item) pattern.find("ITEM").evaluate(ctx, NBTMode.SETTING);
-        int amount = (int) pattern.findThenEvaluate("AMOUNT", 1, ctx);
+        Item item = (Item) pattern.find("ITEM").evaluate(ctx, new Object[] {NBTMode.SETTING});
+        int amount = (int) pattern.findThenEvaluate("AMOUNT", 1, ctx, null);
 
         try {
             return new GiveCommand(entity, item, amount);

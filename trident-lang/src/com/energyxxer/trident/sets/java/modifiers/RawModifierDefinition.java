@@ -32,9 +32,8 @@ public class RawModifierDefinition implements ExecuteModifierDefinition {
                                 TridentProductions.string(productions),
                                 PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), true, String.class, ListObject.class)
                         ),
-                        d -> new Object[] {d[0]},
-                        (v, p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
+                        d -> null,
+                        (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                             if (v == null) return Collections.emptyList();
                             if (v instanceof String) {
                                 if (((String) v).isEmpty()) return Collections.emptyList();

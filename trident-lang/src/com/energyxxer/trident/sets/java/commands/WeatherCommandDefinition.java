@@ -33,8 +33,8 @@ public class WeatherCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        WeatherCommand.Mode mode = (WeatherCommand.Mode) pattern.find("WEATHER_MODE").evaluate();
-        int duration = (int) pattern.findThenEvaluate("DURATION", WeatherCommand.DEFAULT_DURATION, ctx);
+        WeatherCommand.Mode mode = (WeatherCommand.Mode) pattern.find("WEATHER_MODE").evaluate(ctx, null);
+        int duration = (int) pattern.findThenEvaluate("DURATION", WeatherCommand.DEFAULT_DURATION, ctx, null);
 
         try {
             return new WeatherCommand(mode, duration);

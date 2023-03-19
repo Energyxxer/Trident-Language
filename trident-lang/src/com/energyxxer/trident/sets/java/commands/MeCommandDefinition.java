@@ -24,12 +24,12 @@ public class MeCommandDefinition implements SimpleCommandDefinition {
     public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 TridentProductions.commandHeader("me"),
-                ofType(TRAILING_STRING).setName("MESSAGE").addTags("cspn:Message").setEvaluator((p, d) -> p.flatten(false))
+                ofType(TRAILING_STRING).setName("MESSAGE").addTags("cspn:Message").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false))
         );
     }
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return new RawCommand("me " + pattern.find("MESSAGE").evaluate(ctx));
+        return new RawCommand("me " + pattern.find("MESSAGE").evaluate(ctx, null));
     }
 }

@@ -39,13 +39,13 @@ public class SpreadPlayersCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        CoordinateSet pos = (CoordinateSet) pattern.find("TWO_COORDINATE_SET").evaluate(ctx);
-        double spreadDistance = (double) pattern.find("SPREAD_DISTANCE").evaluate(ctx);
-        double maxRange = (double) pattern.find("MAX_RANGE").evaluate(ctx);
-        boolean respectTeams = (boolean) pattern.find("RESPECT_TEAMS").evaluate(ctx);
-        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
+        CoordinateSet pos = (CoordinateSet) pattern.find("TWO_COORDINATE_SET").evaluate(ctx, null);
+        double spreadDistance = (double) pattern.find("SPREAD_DISTANCE").evaluate(ctx, null);
+        double maxRange = (double) pattern.find("MAX_RANGE").evaluate(ctx, null);
+        boolean respectTeams = (boolean) pattern.find("RESPECT_TEAMS").evaluate(ctx, null);
+        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
 
-        Integer under = (Integer) pattern.findThenEvaluate("UNDER_CLAUSE", null, ctx);
+        Integer under = (Integer) pattern.findThenEvaluate("UNDER_CLAUSE", null, ctx, null);
 
         try {
             if (under != null) {

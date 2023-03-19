@@ -32,7 +32,7 @@ public class PardonIpCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        String ip = (String) pattern.find("IDENTIFIER_A").evaluate(ctx);
+        String ip = (String) pattern.find("IDENTIFIER_A").evaluate(ctx, null);
 
         try {
             return new PardonIpCommand(ip);

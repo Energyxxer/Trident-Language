@@ -28,26 +28,26 @@ public class BasicLiteralSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("ROOT_INTERPOLATION_VALUE")
                 .add(
-                        productions.putPatternMatch("REAL_NUMBER", ofType(REAL_NUMBER).setName("RAW_REAL").addTags("primitive:real").setEvaluator((p, d) -> Double.parseDouble(p.flatten(false))))
+                        productions.putPatternMatch("REAL_NUMBER", ofType(REAL_NUMBER).setName("RAW_REAL").addTags("primitive:real").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> Double.parseDouble(p.flatten(false))))
                 )
                 .add(
                         productions.putPatternMatch("INTEGER_NUMBER", ofType(INTEGER_NUMBER).setName("RAW_INTEGER").addTags("primitive:int").setEvaluator(BasicLiteralSet::evaluateIntegerPattern))
                 )
                 .add(
-                        productions.putPatternMatch("BOOLEAN", ofType(BOOLEAN).addTags("primitive:boolean").addTags(SuggestionTags.ENABLED).setEvaluator((p, d) -> "true".equals(p.flatten(false))))
+                        productions.putPatternMatch("BOOLEAN", ofType(BOOLEAN).addTags("primitive:boolean").addTags(SuggestionTags.ENABLED).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> "true".equals(p.flatten(false))))
                 )
                 .add(
-                        productions.putPatternMatch("STRING_LITERAL", ofType(STRING_LITERAL).setName("STRING_LITERAL").addTags("primitive:string").setEvaluator((p, d) -> parseQuotedString(p.flatten(false), p, (ISymbolContext) d[0])))
+                        productions.putPatternMatch("STRING_LITERAL", ofType(STRING_LITERAL).setName("STRING_LITERAL").addTags("primitive:string").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseQuotedString(p.flatten(false), p, ctx)))
                 )
                 .add(
-                        productions.putPatternMatch("NULL", ofType(NULL).setName("NULL_VALUE").setEvaluator((p, d) -> null))
+                        productions.putPatternMatch("NULL", ofType(NULL).setName("NULL_VALUE").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> null))
                 )
                 .add(
                         group(TridentProductions.brace("("), productions.getOrCreateStructure("INTERPOLATION_VALUE"), TridentProductions.brace(")")).setName("PARENTHESIZED_VALUE").setSimplificationFunctionContentIndex(1)
                 );
     }
 
-    public static int evaluateIntegerPattern(TokenPattern<?> p, Object... d) {
+    public static int evaluateIntegerPattern(TokenPattern<?> p, ISymbolContext ctx, Object[] data) {
         try {
             String raw = p.flatten(false);
             if(raw.toLowerCase().startsWith("0x")) {
@@ -55,18 +55,18 @@ public class BasicLiteralSet extends PatternProviderSet {
                 if(Long.highestOneBit(asLong) <= (long)Integer.MAX_VALUE+1) {
                     return (int) asLong;
                 }
-                throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Integer out of range", p, (ISymbolContext) d[0]);
+                throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Integer out of range", p, ctx);
             } else if(raw.toLowerCase().startsWith("0b")) {
                 long asLong = Long.parseLong(raw.substring(2), 2);
                 if(Long.highestOneBit(asLong) <= (long)Integer.MAX_VALUE+1) {
                     return (int) asLong;
                 }
-                throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Integer out of range", p, (ISymbolContext) d[0]);
+                throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Integer out of range", p, ctx);
             } else {
                 return Integer.parseInt(raw);
             }
         } catch(NumberFormatException x) {
-            throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Integer out of range", p, (ISymbolContext) d[0]);
+            throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Integer out of range", p, ctx);
         }
     }
 

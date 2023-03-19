@@ -36,9 +36,9 @@ public class EnchantCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
-        Type enchantment = (Type) pattern.find("ENCHANTMENT_ID").evaluate(ctx);
-        int level = (int) pattern.findThenEvaluate("LEVEL", 1, ctx);
+        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
+        Type enchantment = (Type) pattern.find("ENCHANTMENT_ID").evaluate(ctx, null);
+        int level = (int) pattern.findThenEvaluate("LEVEL", 1, ctx, null);
 
         try {
             return new EnchantCommand(entity, enchantment, level);

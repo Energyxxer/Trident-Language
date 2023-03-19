@@ -26,23 +26,23 @@ public class WhitelistCommandDefinition implements SimpleCommandDefinition {
         return group(
                 TridentProductions.commandHeader("whitelist"),
                 choice(
-                        literal("on").setEvaluator((p, d) -> new SetWhitelistEnabledCommand(true)),
-                        literal("off").setEvaluator((p, d) -> new SetWhitelistEnabledCommand(false)),
-                        literal("list").setEvaluator((p, d) -> new WhitelistListCommand()),
-                        literal("reload").setEvaluator((p, d) -> new WhitelistReloadCommand()),
-                        group(literal("add"), wrapper(productions.getOrCreateStructure("ENTITY"), (v, p, d) -> {
+                        literal("on").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new SetWhitelistEnabledCommand(true)),
+                        literal("off").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new SetWhitelistEnabledCommand(false)),
+                        literal("list").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new WhitelistListCommand()),
+                        literal("reload").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new WhitelistReloadCommand()),
+                        group(literal("add"), wrapper(productions.getOrCreateStructure("ENTITY"), (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                             try {
                                 return new WhitelistAddCommand((Entity) v);
                             } catch (CommodoreException x) {
-                                TridentExceptionUtil.handleCommodoreException(x, p, (ISymbolContext) d[0]).invokeThrow();
+                                TridentExceptionUtil.handleCommodoreException(x, p, ctx).invokeThrow();
                                 return null;
                             }
                         })).setSimplificationFunctionContentIndex(1),
-                        group(literal("remove"), wrapper(productions.getOrCreateStructure("ENTITY"), (v, p, d) -> {
+                        group(literal("remove"), wrapper(productions.getOrCreateStructure("ENTITY"), (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                             try {
                                 return new WhitelistRemoveCommand((Entity) v);
                             } catch (CommodoreException x) {
-                                TridentExceptionUtil.handleCommodoreException(x, p, (ISymbolContext) d[0]).invokeThrow();
+                                TridentExceptionUtil.handleCommodoreException(x, p, ctx).invokeThrow();
                                 return null;
                             }
                         })).setSimplificationFunctionContentIndex(1)

@@ -192,13 +192,13 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
 
         switch (headerDeclaration.getName()) {
             case "CONCRETE_ENTITY_DECLARATION": {
-                entityName = (String) headerDeclaration.findThenEvaluate("ENTITY_NAME.IDENTIFIER_A", null, ctx);
+                entityName = (String) headerDeclaration.findThenEvaluate("ENTITY_NAME.IDENTIFIER_A", null, ctx, null);
                 if(entityName == null) { //Is not an IDENTIFIER_A
                     entityName = headerDeclaration.find("ENTITY_NAME").flatten(false);
                 }
 
                 if (headerDeclaration.find("ENTITY_BASE.TRIDENT_ENTITY_ID_TAGGED") != null) {
-                    Object referencedType = headerDeclaration.find("ENTITY_BASE.TRIDENT_ENTITY_ID_TAGGED").evaluate(ctx);
+                    Object referencedType = headerDeclaration.find("ENTITY_BASE.TRIDENT_ENTITY_ID_TAGGED").evaluate(ctx, null);
                     if (referencedType instanceof Type) {
                         defaultType = ((Type) referencedType);
 
@@ -219,7 +219,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                 break;
             }
             case "ABSTRACT_ENTITY_DECLARATION": {
-                entityName = (String) headerDeclaration.findThenEvaluate("ENTITY_NAME.IDENTIFIER_A", null, ctx);
+                entityName = (String) headerDeclaration.findThenEvaluate("ENTITY_NAME.IDENTIFIER_A", null, ctx, null);
                 if(entityName == null) { //Is not an IDENTIFIER_A
                     entityName = headerDeclaration.find("ENTITY_NAME").flatten(false);
                 }
@@ -234,7 +234,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
         TokenPattern<?> rawComponentList = pattern.find("IMPLEMENTED_COMPONENTS.COMPONENT_LIST");
         if (rawComponentList != null) {
             if(!entityName.equals("default")) {
-                rawComponentList.evaluate(ctx, implemented);
+                rawComponentList.evaluate(ctx, new Object[] {implemented});
             } else {
                 throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Default entities may not implement components", rawComponentList, ctx);
             }
@@ -287,7 +287,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                     break;
                                 }
 
-                                TagCompound newNBT = (TagCompound) entry.find("NBT_COMPOUND").evaluate(ctx);
+                                TagCompound newNBT = (TagCompound) entry.find("NBT_COMPOUND").evaluate(ctx, null);
                                 if (newNBT != null) {
                                     PathContext context = new PathContext().setIsSetting(true).setProtocol(ENTITY).setProtocolMetadata(defaultType);
                                     NBTInspector.inspectTag(newNBT, context, entry.find("NBT_COMPOUND"), ctx);
@@ -309,7 +309,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
 
                                         TagCompound passengerCompound;
 
-                                        TridentLiteralSet.SummonData passengerData = (TridentLiteralSet.SummonData) rawPassenger.evaluate(ctx);
+                                        TridentLiteralSet.SummonData passengerData = (TridentLiteralSet.SummonData) rawPassenger.evaluate(ctx, null);
 
                                         passengerData.fillDefaults();
 
@@ -328,7 +328,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                     break;
                                 }
 
-                                double health = (double) entry.find("HEALTH").evaluate(ctx);
+                                double health = (double) entry.find("HEALTH").evaluate(ctx, null);
                                 if (health < 0) {
                                     collector.log(new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Health must be non-negative", entry.find("HEALTH"), ctx));
                                     break;
@@ -355,7 +355,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                     break;
                                 }
 
-                                entityDecl.defaultNBT = entityDecl.defaultNBT.merge(new TagCompound(new TagString("CustomName", entry.find("TEXT_COMPONENT").evaluate(ctx).toString())));
+                                entityDecl.defaultNBT = entityDecl.defaultNBT.merge(new TagCompound(new TagString("CustomName", entry.find("TEXT_COMPONENT").evaluate(ctx, null).toString())));
                                 break;
                             }
                             case "ENTITY_INNER_FUNCTION": {
@@ -389,11 +389,11 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                         functionModifier = ((TokenStructure) functionModifier).getContents();
                                         switch (functionModifier.getName()) {
                                             case "TICKING_ENTITY_FUNCTION": {
-                                                ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) functionModifier.findThenEvaluateLazyDefault("TICKING_MODIFIERS.MODIFIER_LIST", ArrayList::new, finalCtx);
+                                                ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) functionModifier.findThenEvaluateLazyDefault("TICKING_MODIFIERS.MODIFIER_LIST", ArrayList::new, finalCtx, null);
 
                                                 int interval = 1;
                                                 if(functionModifier.find("TICKING_INTERVAL") != null) {
-                                                    interval = ((TimeSpan)functionModifier.find("TICKING_INTERVAL").evaluate(finalCtx)).getTicks();
+                                                    interval = ((TimeSpan)functionModifier.find("TICKING_INTERVAL").evaluate(finalCtx, null)).getTicks();
                                                     if(interval <= 0) {
                                                         throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Ticking interval must be greater than zero", functionModifier.find("TICKING_INTERVAL"), finalCtx);
                                                     }
@@ -441,7 +441,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                     }
                                 }
 
-                                EntityEvent event = (EntityEvent) entry.find("EVENT_NAME").evaluate(ctx);
+                                EntityEvent event = (EntityEvent) entry.find("EVENT_NAME").evaluate(ctx, null);
 
                                 ((TridentFile) ctx.getStaticParentUnit()).schedulePostResolutionAction(innerFile::resolveEntries);
 
@@ -452,7 +452,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                     filter = new SelectorArgument[] {new TypeArgument(finalDefaultType)};
                                 }
 
-                                ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) entry.find("EVENT_MODIFIERS").evaluate(ctx);
+                                ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) entry.find("EVENT_MODIFIERS").evaluate(ctx, null);
                                 modifiers.add(0, new ExecuteConditionEntity(ExecuteCondition.ConditionType.IF, new Selector(Selector.BaseSelector.SENDER, filter)));
 
                                 event.getFunction().append(new ExecuteCommand(new FunctionCommand(innerFile.getFunction()), modifiers));
@@ -469,7 +469,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
                                 break;
                             }
                             case "ENTITY_EVAL": {
-                                ((TokenStructure) entry.find("INTERPOLATION_VALUE")).getContents().evaluate(ctx);
+                                ((TokenStructure) entry.find("INTERPOLATION_VALUE")).getContents().evaluate(ctx, null);
                                 break;
                             }
                             case "COMMENT": {

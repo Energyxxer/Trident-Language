@@ -35,8 +35,8 @@ public class GamemodeCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Type gamemode = (Type) pattern.find("GAMEMODE_ID").evaluate(ctx);
-        Entity entity = (Entity) pattern.findThenEvaluate("PLAYER", null, ctx);
+        Type gamemode = (Type) pattern.find("GAMEMODE_ID").evaluate(ctx, null);
+        Entity entity = (Entity) pattern.findThenEvaluate("PLAYER", null, ctx, null);
 
         try {
             return new GamemodeCommand(gamemode, entity);

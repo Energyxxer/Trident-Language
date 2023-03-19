@@ -17,6 +17,6 @@ public class EvalInstruction implements InstructionDefinition {
 
     @Override
     public void run(TokenPattern<?> pattern, ISymbolContext ctx) {
-        pattern.find("INTERPOLATION_VALUE").evaluate(ctx);
+        pattern.find("INTERPOLATION_VALUE").evaluate(ctx, null);
     }
 }

@@ -33,7 +33,7 @@ public class PardonCommandDefinition implements SimpleCommandDefinition {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
 
-        Entity player = (Entity) pattern.find("ENTITY").evaluate(ctx);
+        Entity player = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
 
         try {
             return new PardonCommand(player);

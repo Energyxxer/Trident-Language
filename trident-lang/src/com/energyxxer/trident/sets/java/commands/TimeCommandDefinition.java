@@ -26,12 +26,12 @@ public class TimeCommandDefinition implements SimpleCommandDefinition {
         return group(
                 TridentProductions.commandHeader("time"),
                 choice(
-                        group(literal("query"), enumChoice(TimeQueryCommand.TimeCounter.class).setName("TIME_COUNTER")).setEvaluator((p, d) -> new TimeQueryCommand((TimeQueryCommand.TimeCounter) p.find("TIME_COUNTER").evaluate())),
+                        group(literal("query"), enumChoice(TimeQueryCommand.TimeCounter.class).setName("TIME_COUNTER")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new TimeQueryCommand((TimeQueryCommand.TimeCounter) p.find("TIME_COUNTER").evaluate(ctx, null))),
                         group(literal("set"), choice(
-                                wrapper(productions.getOrCreateStructure("TIME"), (v, p, d) -> new TimeSetCommand((TimeSpan) v)),
-                                wrapper(enumChoice(TimeSetCommand.TimeOfDay.class), (v, p, d) -> new TimeSetCommand((TimeSetCommand.TimeOfDay) v))
+                                wrapper(productions.getOrCreateStructure("TIME"), (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new TimeSetCommand((TimeSpan) v)),
+                                wrapper(enumChoice(TimeSetCommand.TimeOfDay.class), (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new TimeSetCommand((TimeSetCommand.TimeOfDay) v))
                         )).setSimplificationFunctionContentIndex(1),
-                        group(literal("add"), productions.getOrCreateStructure("TIME")).setEvaluator((p, d) -> new TimeAddCommand((TimeSpan) p.find("TIME").evaluate((ISymbolContext) d[0])))
+                        group(literal("add"), productions.getOrCreateStructure("TIME")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new TimeAddCommand((TimeSpan) p.find("TIME").evaluate(ctx, null)))
                 ).setName("INNER")
         ).setSimplificationFunctionFind("INNER");
     }

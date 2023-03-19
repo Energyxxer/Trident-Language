@@ -46,21 +46,20 @@ public class TeleportCommandDefinition implements SimpleCommandDefinition {
                                                         group(
                                                                 literal("facing"),
                                                                 choice(
-                                                                        group(TridentProductions.noToken().addTags("cspn:Facing Coordinate"), productions.getOrCreateStructure("COORDINATE_SET")).setEvaluator((p, d) -> {
-                                                                            CoordinateSet pos = (CoordinateSet) p.find("COORDINATE_SET").evaluate((ISymbolContext) d[0]);
+                                                                        group(TridentProductions.noToken().addTags("cspn:Facing Coordinate"), productions.getOrCreateStructure("COORDINATE_SET")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                                                                            CoordinateSet pos = (CoordinateSet) p.find("COORDINATE_SET").evaluate(ctx, null);
 
                                                                             try {
                                                                                 return new BlockFacing(pos);
                                                                             } catch (CommodoreException x) {
-                                                                                TridentExceptionUtil.handleCommodoreException(x, p, (ISymbolContext) d[0])
+                                                                                TridentExceptionUtil.handleCommodoreException(x, p, ctx)
                                                                                         .invokeThrow();
                                                                                 return null;
                                                                             }
                                                                         }),
-                                                                        group(TridentProductions.noToken().addTags("cspn:Facing Entity"), literal("entity"), productions.getOrCreateStructure("ENTITY"), wrapperOptional(productions.getOrCreateStructure("ANCHOR")).setName("ANCHOR")).setEvaluator((p, d) -> {
-                                                                            ISymbolContext ctx = (ISymbolContext) d[0];
-                                                                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx);
-                                                                            EntityAnchor anchor = (EntityAnchor) p.findThenEvaluate("ANCHOR", EntityAnchor.FEET, ctx);
+                                                                        group(TridentProductions.noToken().addTags("cspn:Facing Entity"), literal("entity"), productions.getOrCreateStructure("ENTITY"), wrapperOptional(productions.getOrCreateStructure("ANCHOR")).setName("ANCHOR")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                                                                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx, null);
+                                                                            EntityAnchor anchor = (EntityAnchor) p.findThenEvaluate("ANCHOR", EntityAnchor.FEET, ctx, null);
                                                                             try {
                                                                                 return new EntityFacing(entity, anchor);
                                                                             } catch (CommodoreException x) {
@@ -72,28 +71,27 @@ public class TeleportCommandDefinition implements SimpleCommandDefinition {
                                                                         })
                                                                 )
                                                         ).setSimplificationFunctionContentIndex(1),
-                                                        wrapper(productions.getOrCreateStructure("ROTATION"), (v, p, d) -> {
+                                                        wrapper(productions.getOrCreateStructure("ROTATION"), (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                                             try {
                                                                 return new RotationFacing((Rotation) v);
                                                             } catch (CommodoreException x) {
-                                                                TridentExceptionUtil.handleCommodoreException(x, p, (ISymbolContext) d[0])
+                                                                TridentExceptionUtil.handleCommodoreException(x, p, ctx)
                                                                         .invokeThrow();
                                                                 return null;
                                                             }
                                                         })
                                                 ).setOptional().setName("ROTATION_OPTION").addTags("cspn:Rotation")
-                                        ).setEvaluator((p, d) -> {
-                                            ISymbolContext ctx = (ISymbolContext) d[0];
-                                            BlockDestination destination = new BlockDestination((CoordinateSet) p.find("COORDINATE_SET").evaluate(ctx));
-                                            TeleportFacing facing = (TeleportFacing) p.findThenEvaluate("ROTATION_OPTION", null, ctx);
+                                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                                            BlockDestination destination = new BlockDestination((CoordinateSet) p.find("COORDINATE_SET").evaluate(ctx, null));
+                                            TeleportFacing facing = (TeleportFacing) p.findThenEvaluate("ROTATION_OPTION", null, ctx, null);
                                             return new Object[]{destination, facing};
                                         }),
-                                        group(TridentProductions.sameLine(), productions.getOrCreateStructure("ENTITY")).setEvaluator((p, d) -> {
-                                            Entity entity = (Entity) p.find("ENTITY").evaluate((ISymbolContext) d[0]);
+                                        group(TridentProductions.sameLine(), productions.getOrCreateStructure("ENTITY")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx, null);
                                             try {
                                                 return new Object[]{new EntityDestination(entity)};
                                             } catch (CommodoreException x) {
-                                                TridentExceptionUtil.handleCommodoreException(x, p, (ISymbolContext) d[0])
+                                                TridentExceptionUtil.handleCommodoreException(x, p, ctx)
                                                         .map(CommodoreException.Source.ENTITY_ERROR, p.tryFind("ENTITY"))
                                                         .invokeThrow();
                                                 return null;
@@ -101,14 +99,14 @@ public class TeleportCommandDefinition implements SimpleCommandDefinition {
                                         }),
                                         PrismarineTypeSystem.validatorGroup(
                                                 productions.getOrCreateStructure("INTERPOLATION_BLOCK"),
-                                                d -> new Object[] {d[0]},
-                                                (v, p, d) -> {
+                                                d -> null,
+                                                (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                                     try {
                                                         if (v instanceof CoordinateSet)
                                                             return new Object[]{new BlockDestination((CoordinateSet) v)};
                                                         else return new Object[]{new EntityDestination((Entity) v)};
                                                     } catch (CommodoreException x) {
-                                                        TridentExceptionUtil.handleCommodoreException(x, p, (ISymbolContext) d[0])
+                                                        TridentExceptionUtil.handleCommodoreException(x, p, ctx)
                                                                 .invokeThrow();
                                                         return null;
                                                     }
@@ -118,10 +116,9 @@ public class TeleportCommandDefinition implements SimpleCommandDefinition {
                                                 Entity.class
                                         )
                                 ).setOptional().addTags("cspn:Destination").setName("DESTINATION")
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx);
-                            Object[] destinationAndFacing = (Object[]) p.findThenEvaluate("DESTINATION", null, ctx);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx, null);
+                            Object[] destinationAndFacing = (Object[]) p.findThenEvaluate("DESTINATION", null, ctx, null);
 
                             try {
                                 if (destinationAndFacing == null) {
@@ -132,13 +129,13 @@ public class TeleportCommandDefinition implements SimpleCommandDefinition {
                                     return new TeleportCommand(entity, destination, facing);
                                 }
                             } catch (CommodoreException x) {
-                                TridentExceptionUtil.handleCommodoreException(x, p, (ISymbolContext) d[0])
+                                TridentExceptionUtil.handleCommodoreException(x, p, ctx)
                                         .map(CommodoreException.Source.ENTITY_ERROR, p.tryFind("ENTITY"))
                                         .invokeThrow();
                                 return null;
                             }
                         }),
-                        group(productions.getOrCreateStructure("COORDINATE_SET")).setEvaluator((p, d) -> new TeleportCommand(new BlockDestination((CoordinateSet) p.find("COORDINATE_SET").evaluate((ISymbolContext) d[0]))))
+                        group(productions.getOrCreateStructure("COORDINATE_SET")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new TeleportCommand(new BlockDestination((CoordinateSet) p.find("COORDINATE_SET").evaluate(ctx, null))))
                 ).setName("INNER")
         ).setSimplificationFunctionFind("INNER");
     }

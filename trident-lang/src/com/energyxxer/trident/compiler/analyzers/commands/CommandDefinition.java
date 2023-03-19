@@ -11,15 +11,15 @@ import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 
 import java.util.Collection;
 
-public interface CommandDefinition extends PatternSwitchProviderUnit {
+public interface CommandDefinition extends PatternSwitchProviderUnit<ISymbolContext> {
     @Override
     default String[] getTargetProductionNames() {
         return null;
     }
 
     @Override
-    default Object evaluate(TokenPattern<?> pattern, Object... data) {
-        return parse(pattern, ((ISymbolContext) data[0]), ((Collection<ExecuteModifier>) data[1]));
+    default Object evaluate(TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) {
+        return parse(pattern, ctx, ((Collection<ExecuteModifier>) data[0]));
     }
 
     Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> modifiers);

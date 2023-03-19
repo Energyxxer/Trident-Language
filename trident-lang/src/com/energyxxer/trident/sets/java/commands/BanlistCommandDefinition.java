@@ -23,14 +23,14 @@ public class BanlistCommandDefinition implements SimpleCommandDefinition {
         return group(
                 TridentProductions.commandHeader("banlist"),
                 choice(
-                        literal("players").setEvaluator((p, d) -> BanListCommand.QueryType.PLAYERS),
-                        literal("ips").setEvaluator((p, d) -> BanListCommand.QueryType.IPS)
+                        literal("players").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> BanListCommand.QueryType.PLAYERS),
+                        literal("ips").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> BanListCommand.QueryType.IPS)
                 ).setOptional().setName("BANLIST_QUERY_TYPE")
         );
     }
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return new BanListCommand((BanListCommand.QueryType) pattern.findThenEvaluate("BANLIST_QUERY_TYPE", null, ctx));
+        return new BanListCommand((BanListCommand.QueryType) pattern.findThenEvaluate("BANLIST_QUERY_TYPE", null, ctx, null));
     }
 }

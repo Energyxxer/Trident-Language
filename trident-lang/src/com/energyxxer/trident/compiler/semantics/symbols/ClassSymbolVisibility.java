@@ -97,7 +97,7 @@ public class ClassSymbolVisibility {
 
 
     private static boolean isAccessedBySameClass(SummarySymbol symbol, Path fromPath, int inFileIndex) {
-        return ((symbol.getScopeEnd() == 0 || (symbol.getScopeStart() <= inFileIndex && inFileIndex <= symbol.getScopeEnd())) || symbol.getDeclarationPattern().getStringLocation().index == inFileIndex) && isAccessedBySameFile(symbol, fromPath);
+        return ((symbol.getScopeEnd() == 0 || (symbol.getScopeStart() <= inFileIndex && inFileIndex <= symbol.getScopeEnd())) || symbol.getStringBounds().start.index == inFileIndex) && isAccessedBySameFile(symbol, fromPath);
     }
 
     private static boolean isAccessedBySameFile(SummarySymbol symbol, Path fromPath) {

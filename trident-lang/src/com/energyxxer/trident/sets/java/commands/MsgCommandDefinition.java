@@ -28,14 +28,14 @@ public class MsgCommandDefinition implements SimpleCommandDefinition {
         return group(
                 choice(TridentProductions.commandHeader("msg"), TridentProductions.commandHeader("tell"), TridentProductions.commandHeader("w")),
                 productions.getOrCreateStructure("ENTITY"),
-                ofType(TRAILING_STRING).setName("MESSAGE").addTags("cspn:Message").setEvaluator((p, d) -> p.flatten(false))
+                ofType(TRAILING_STRING).setName("MESSAGE").addTags("cspn:Message").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false))
         );
     }
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
-        String message = (String) pattern.find("MESSAGE").evaluate(ctx);
+        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
+        String message = (String) pattern.find("MESSAGE").evaluate(ctx, null);
 
         try {
             return new TellCommand(entity, message);

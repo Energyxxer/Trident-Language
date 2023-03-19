@@ -28,6 +28,6 @@ public class AtModifierDefinition implements SimpleExecuteModifierDefinition {
 
     @Override
     public ExecuteModifier parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return new ExecuteAtEntity((Entity) pattern.find("ENTITY").evaluate(ctx));
+        return new ExecuteAtEntity((Entity) pattern.find("ENTITY").evaluate(ctx, null));
     }
 }

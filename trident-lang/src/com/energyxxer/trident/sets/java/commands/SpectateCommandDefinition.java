@@ -45,8 +45,8 @@ public class SpectateCommandDefinition implements SimpleCommandDefinition {
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
             if (pattern.find("INNER") == null) return new SpectateStopCommand();
-            Entity target = (Entity) pattern.find("INNER.ENTITY").evaluate(ctx);
-            Entity spectator = (Entity) pattern.findThenEvaluate("INNER.INNER.ENTITY", null, ctx);
+            Entity target = (Entity) pattern.find("INNER.ENTITY").evaluate(ctx, null);
+            Entity spectator = (Entity) pattern.findThenEvaluate("INNER.INNER.ENTITY", null, ctx, null);
             return new SpectateStartCommand(target, spectator);
         } catch (CommodoreException x) {
             TridentExceptionUtil.handleCommodoreException(x, pattern, ctx)

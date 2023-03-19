@@ -52,23 +52,23 @@ public class ParticleCommandDefinition implements SimpleCommandDefinition {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
-            Particle particle = (Particle) pattern.find("PARTICLE").evaluate(ctx);
+            Particle particle = (Particle) pattern.find("PARTICLE").evaluate(ctx, null);
             TokenPattern<?> sub = pattern.find("");
             if (sub != null) {
-                CoordinateSet pos = (CoordinateSet) sub.find("COORDINATE_SET").evaluate(ctx);
+                CoordinateSet pos = (CoordinateSet) sub.find("COORDINATE_SET").evaluate(ctx, null);
                 TokenPattern<?> sub1 = sub.find("");
                 if (sub1 != null) {
                     Delta delta = new Delta(
-                            (double) sub1.find("DELTA.DX").evaluate(ctx),
-                            (double) sub1.find("DELTA.DY").evaluate(ctx),
-                            (double) sub1.find("DELTA.DZ").evaluate(ctx)
+                            (double) sub1.find("DELTA.DX").evaluate(ctx, null),
+                            (double) sub1.find("DELTA.DY").evaluate(ctx, null),
+                            (double) sub1.find("DELTA.DZ").evaluate(ctx, null)
                     );
-                    double speed = (double) sub1.find("SPEED").evaluate(ctx);
-                    int count = (int) sub1.find("COUNT").evaluate(ctx);
+                    double speed = (double) sub1.find("SPEED").evaluate(ctx, null);
+                    int count = (int) sub1.find("COUNT").evaluate(ctx, null);
                     TokenPattern<?> sub2 = sub1.find("");
                     if (sub2 != null) {
                         boolean force = sub2.find("CHOICE").flatten(false).equals("force");
-                        Entity entity = (Entity) sub2.findThenEvaluate(".ENTITY", null, ctx);
+                        Entity entity = (Entity) sub2.findThenEvaluate(".ENTITY", null, ctx, null);
                         return new ParticleCommand(particle, pos, delta, speed, count, force, entity);
                     } else return new ParticleCommand(particle, pos, delta, speed, count);
                 } else return new ParticleCommand(particle, pos);

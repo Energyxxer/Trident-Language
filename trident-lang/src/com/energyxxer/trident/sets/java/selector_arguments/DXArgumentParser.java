@@ -2,14 +2,16 @@ package com.energyxxer.trident.sets.java.selector_arguments;
 
 import com.energyxxer.commodore.functionlogic.selector.arguments.DXArgument;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternSwitchProviderUnit;
+import com.energyxxer.prismarine.symbols.contexts.ISymbolContext;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.trident.compiler.TridentProductions;
 
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 
-public class DXArgumentParser implements PatternSwitchProviderUnit {
+public class DXArgumentParser implements PatternSwitchProviderUnit<ISymbolContext> {
     @Override
     public String[] getSwitchKeys() {
         return new String[] {"dx"};
@@ -20,7 +22,7 @@ public class DXArgumentParser implements PatternSwitchProviderUnit {
         return group(
                 literal("dx").setName("SELECTOR_ARGUMENT_KEY"),
                 TridentProductions.equals(),
-                wrapper(TridentProductions.real(productions), (v, p, d) -> new DXArgument((double)v))
+                wrapper(TridentProductions.real(productions), (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new DXArgument((double)v))
         ).setSimplificationFunctionContentIndex(2);
     }
 }

@@ -123,7 +123,7 @@ public class TridentLexerProfile extends LexerProfile {
                     int length = matcher.end() - matcher.start();
                     if(length <= 0) return ScannerContextResponse.FAILED;
                     String substring = str.substring(startIndex, startIndex + length);
-                    return new ScannerContextResponse(true, substring, (Character.isLetter(str.charAt(startIndex+length-1)) ? TYPED_NUMBER : ((substring.contains(".")) ? REAL_NUMBER : INTEGER_NUMBER)));
+                    return ScannerContextResponse.success(substring, (Character.isLetter(str.charAt(startIndex+length-1)) ? TYPED_NUMBER : ((substring.contains(".")) ? REAL_NUMBER : INTEGER_NUMBER)));
                 } else return ScannerContextResponse.FAILED;
             } //substring done
 
@@ -144,7 +144,7 @@ public class TridentLexerProfile extends LexerProfile {
                     else if(type == REAL_NUMBER && obtainedType == INTEGER_NUMBER) obtainedType = REAL_NUMBER;
 
                     if(type == obtainedType) {
-                        return new ScannerContextResponse(true, substring, type);
+                        return ScannerContextResponse.success(substring, type);
                     } else return ScannerContextResponse.FAILED;
                 } else return ScannerContextResponse.FAILED;
             } //substring done
@@ -155,8 +155,12 @@ public class TridentLexerProfile extends LexerProfile {
             }
 
             @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Arrays.asList(TYPED_NUMBER, INTEGER_NUMBER, REAL_NUMBER, JSON_NUMBER);
+            public boolean handlesType(TokenType type) {
+                return type == TYPED_NUMBER
+                        || type == INTEGER_NUMBER
+                        || type == REAL_NUMBER
+                        || type == JSON_NUMBER
+                        ;
             }
         });
 
@@ -185,12 +189,12 @@ public class TridentLexerProfile extends LexerProfile {
             @Override
             public ScannerContextResponse analyzeExpectingType(String str, int startIndex, TokenType type, LexerProfile profile) {
                 if(str.length() - startIndex > 0 && Character.isWhitespace(str.charAt(startIndex))) return ScannerContextResponse.FAILED;
-                return new ScannerContextResponse(true, "", GLUE);
+                return ScannerContextResponse.success("", GLUE);
             }
 
             @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(GLUE);
+            public boolean handlesType(TokenType type) {
+                return type == GLUE;
             }
 
             @Override
@@ -211,14 +215,14 @@ public class TridentLexerProfile extends LexerProfile {
                 for(int i = startIndex; i < str.length(); i++) {
                     char c = str.charAt(i);
                     if(c == '\n') return ScannerContextResponse.FAILED;
-                    if(!Character.isWhitespace(c)) return new ScannerContextResponse(true, "", LINE_GLUE);
+                    if(!Character.isWhitespace(c)) return ScannerContextResponse.success("", LINE_GLUE);
                 }
-                return new ScannerContextResponse(true, "", LINE_GLUE);
+                return ScannerContextResponse.success("", LINE_GLUE);
             }
 
             @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(LINE_GLUE);
+            public boolean handlesType(TokenType type) {
+                return type == LINE_GLUE;
             }
 
             @Override
@@ -242,7 +246,7 @@ public class TridentLexerProfile extends LexerProfile {
                 if(str.length() - startIndex <= 0) return ScannerContextResponse.FAILED;
 
                 if(type == VERBATIM_COMMAND_HEADER) {
-                    if(str.startsWith("/", startIndex) && !str.startsWith("/>", startIndex)) return new ScannerContextResponse(true, "/", VERBATIM_COMMAND_HEADER);
+                    if(str.startsWith("/", startIndex) && !str.startsWith("/>", startIndex)) return ScannerContextResponse.success("/", VERBATIM_COMMAND_HEADER);
                     else return ScannerContextResponse.FAILED;
                 } else {
                     if(str.startsWith("$", startIndex) || str.startsWith(">", startIndex)) return ScannerContextResponse.FAILED;
@@ -254,13 +258,15 @@ public class TridentLexerProfile extends LexerProfile {
                         endIndex = str.length();
                     }
 
-                    return new ScannerContextResponse(true, str.substring(startIndex, endIndex), VERBATIM_COMMAND);
+                    return ScannerContextResponse.success(str.substring(startIndex, endIndex), VERBATIM_COMMAND);
                 }
             }
 
             @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Arrays.asList(VERBATIM_COMMAND, VERBATIM_COMMAND_HEADER);
+            public boolean handlesType(TokenType type) {
+                return type == VERBATIM_COMMAND
+                        || type == VERBATIM_COMMAND_HEADER
+                        ;
             }
         });
 
@@ -277,13 +283,13 @@ public class TridentLexerProfile extends LexerProfile {
                 int endIndex = str.indexOf("\n", startIndex);
                 if(endIndex != -1) {
                     if(endIndex > 0 && str.charAt(endIndex-1) == '\r') endIndex--;
-                    return new ScannerContextResponse(true, str.substring(startIndex, endIndex), TRAILING_STRING);
-                } else return new ScannerContextResponse(true, str.substring(startIndex), TRAILING_STRING);
+                    return ScannerContextResponse.success(str.substring(startIndex, endIndex), TRAILING_STRING);
+                } else return ScannerContextResponse.success(str.substring(startIndex), TRAILING_STRING);
             }
 
             @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(TRAILING_STRING);
+            public boolean handlesType(TokenType type) {
+                return type == TRAILING_STRING;
             }
         });
 
@@ -308,12 +314,12 @@ public class TridentLexerProfile extends LexerProfile {
                     endIndex++;
                 }
                 if(endIndex == startIndex) return ScannerContextResponse.FAILED;
-                return new ScannerContextResponse(true, str.substring(startIndex, endIndex), SAY_STRING);
+                return ScannerContextResponse.success(str.substring(startIndex, endIndex), SAY_STRING);
             }
 
             @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(SAY_STRING);
+            public boolean handlesType(TokenType type) {
+                return type == SAY_STRING;
             }
 
             @Override
@@ -332,13 +338,13 @@ public class TridentLexerProfile extends LexerProfile {
 
             @Override
             public ScannerContextResponse analyzeExpectingType(String str, int startIndex, TokenType type, LexerProfile profile) {
-                if(str.startsWith(" ", startIndex)) return new ScannerContextResponse(true, " ", WHITESPACE);
+                if(str.startsWith(" ", startIndex)) return ScannerContextResponse.success(" ", WHITESPACE);
                 return ScannerContextResponse.FAILED;
             }
 
             @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(WHITESPACE);
+            public boolean handlesType(TokenType type) {
+                return type == WHITESPACE;
             }
 
             @Override
@@ -360,7 +366,7 @@ public class TridentLexerProfile extends LexerProfile {
                 if(str.length() - startIndex < 2) return ScannerContextResponse.FAILED;
                 if(!str.startsWith("@", startIndex)) return ScannerContextResponse.FAILED;
                 if(headers.contains(str.charAt(startIndex+1) + "")) {
-                    return new ScannerContextResponse(true, str.substring(startIndex,startIndex+2), SELECTOR_HEADER);
+                    return ScannerContextResponse.success(str.substring(startIndex,startIndex+2), SELECTOR_HEADER);
                 }
                 return ScannerContextResponse.FAILED;
             }
@@ -371,8 +377,8 @@ public class TridentLexerProfile extends LexerProfile {
             }
 
             @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(SELECTOR_HEADER);
+            public boolean handlesType(TokenType type) {
+                return type == SELECTOR_HEADER;
             }
         });
 
@@ -418,16 +424,16 @@ public class TridentLexerProfile extends LexerProfile {
                     }
                 }
 
-                return new ScannerContextResponse(true, str, SWIZZLE);
+                return ScannerContextResponse.success(str, SWIZZLE);
             }
 
             @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(SWIZZLE);
+            public boolean handlesType(TokenType type) {
+                return type == SWIZZLE;
             }
         });
 
-        contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_A, "[a-zA-Z0-9._\\-+]"));
+        contexts.add(new RegexLexerContext(Pattern.compile("[a-zA-Z0-9._\\-+]+"), IDENTIFIER_TYPE_A, false));
 
         contexts.add(new RegexLexerContext(IDENTIFIER_B_TOKEN_REGEX, IDENTIFIER_TYPE_B, true) {
             @Override
@@ -444,18 +450,18 @@ public class TridentLexerProfile extends LexerProfile {
         });
 
 
-        contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_C, "\\S"));
-        contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_D, "[^\\s\\[\\].{}\"<>]"));
+        contexts.add(new RegexLexerContext(Pattern.compile("\\S+"), IDENTIFIER_TYPE_C, false));
+        contexts.add(new RegexLexerContext(Pattern.compile("[^\\s\\[\\].{}\"<>]+"), IDENTIFIER_TYPE_D, false));
 
-        contexts.add(new IdentifierLexerContext(IDENTIFIER_TYPE_X, "[a-zA-Z0-9_]", "[a-zA-Z_]"));
+        contexts.add(new RegexLexerContext(Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*"), IDENTIFIER_TYPE_X, false));
 
         contexts.add(new StringMatchLexerContext(PRIMITIVE_TYPE, allPrimitiveTypes.toArray(new String[0])).setOnlyWhenExpected(true));
 
         contexts.add(new StringMatchLexerContext(KEYWORD, "var", "define", "do", "while", "within", "using", "eval", "as", "append", "for", "in", "switch", "function", "if", "else", "try", "catch", "throw", "tdndebug", "switch", "case", "default", "implements", "log", "break", "return", "continue", "is"));
         contexts.add(new StringMatchLexerContext(CUSTOM_COMMAND_KEYWORD, "isset", "update"));
         contexts.add(new StringMatchLexerContext(BOOLEAN, "true", "false"));
-        contexts.add(new IdentifierLexerContext(COMMAND_HEADER, "[a-zA-Z0-9._\\-+:]"));
-        contexts.add(new IdentifierLexerContext(MODIFIER_HEADER, "[a-zA-Z0-9._\\-+]"));
+        contexts.add(new RegexLexerContext(Pattern.compile("[a-zA-Z0-9._\\-+:]+"), COMMAND_HEADER, false));
+        contexts.add(new RegexLexerContext(Pattern.compile("[a-zA-Z0-9._\\-+]+"), MODIFIER_HEADER, false));
 
         contexts.add(new StringMatchLexerContext(SYMBOL, "*", "<=", ">=", "<", ">", "!=", "=", "$", ";", "?"));
         contexts.add(new StringMatchLexerContext(ARROW, "->"));
@@ -476,8 +482,8 @@ public class TridentLexerProfile extends LexerProfile {
             }
 
             @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(NO_TOKEN);
+            public boolean handlesType(TokenType type) {
+                return type == NO_TOKEN;
             }
 
             @Override
@@ -494,12 +500,12 @@ public class TridentLexerProfile extends LexerProfile {
 
             @Override
             public ScannerContextResponse analyzeExpectingType(String str, int startIndex, TokenType type, LexerProfile profile) {
-                return new ScannerContextResponse(true, "", EMPTY_TOKEN);
+                return ScannerContextResponse.success("", EMPTY_TOKEN);
             }
 
             @Override
-            public Collection<TokenType> getHandledTypes() {
-                return Collections.singletonList(EMPTY_TOKEN);
+            public boolean handlesType(TokenType type) {
+                return type == EMPTY_TOKEN;
             }
 
             @Override
@@ -591,13 +597,13 @@ public class TridentLexerProfile extends LexerProfile {
                     tokenSections.put(new TokenSection(0, 1), "resource_location.relative");
                 }
 
-                return new ScannerContextResponse(true, str.substring(startIndex, startIndex+length), tokenType, tokenSections);
+                return ScannerContextResponse.success(str.substring(startIndex, startIndex+length), tokenType, tokenSections);
             }
         } //substring done
 
         @Override
-        public Collection<TokenType> getHandledTypes() {
-            return Collections.singletonList(tokenType);
+        public boolean handlesType(TokenType type) {
+            return type == tokenType;
         }
     }
 }

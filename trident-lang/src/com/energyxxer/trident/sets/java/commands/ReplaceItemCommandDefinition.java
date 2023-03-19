@@ -39,15 +39,13 @@ public class ReplaceItemCommandDefinition implements SimpleCommandDefinition {
         TokenGroupMatch pattern = group(
                 TridentProductions.commandHeader("replaceitem"),
                 choice(
-                        group(literal("block"), productions.getOrCreateStructure("COORDINATE_SET")).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            CoordinateSet pos = (CoordinateSet) p.find("COORDINATE_SET").evaluate(ctx);
-                            return new ItemReplaceCommand(new ItemHolderBlock(pos, (ItemSlot) d[1]), (Item) d[2], (int) d[3]);
+                        group(literal("block"), productions.getOrCreateStructure("COORDINATE_SET")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            CoordinateSet pos = (CoordinateSet) p.find("COORDINATE_SET").evaluate(ctx, null);
+                            return new ItemReplaceCommand(new ItemHolderBlock(pos, (ItemSlot) d[0]), (Item) d[1], (int) d[2]);
                         }),
-                        group(literal("entity"), productions.getOrCreateStructure("ENTITY")).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx);
-                            return new ItemReplaceCommand(new ItemHolderEntity(entity, (ItemSlot) d[1]), (Item) d[2], (int) d[3]);
+                        group(literal("entity"), productions.getOrCreateStructure("ENTITY")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx, null);
+                            return new ItemReplaceCommand(new ItemHolderEntity(entity, (ItemSlot) d[0]), (Item) d[1], (int) d[2]);
                         })
                 ).setName("TARGET"),
                 productions.getOrCreateStructure("SLOT_ID"),
@@ -91,12 +89,12 @@ public class ReplaceItemCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Type slot = (Type) pattern.find("SLOT_ID").evaluate(ctx);
-        Item item = (Item) pattern.find("ITEM").evaluate(ctx, NBTMode.SETTING, false);
-        int count = (int) pattern.findThenEvaluate("COUNT", 1, ctx);
+        Type slot = (Type) pattern.find("SLOT_ID").evaluate(ctx, null);
+        Item item = (Item) pattern.find("ITEM").evaluate(ctx, new Object[] {NBTMode.SETTING, false});
+        int count = (int) pattern.findThenEvaluate("COUNT", 1, ctx, null);
 
         try {
-            return (Command) pattern.find("TARGET").evaluate(ctx, slot, item, count);
+            return (Command) pattern.find("TARGET").evaluate(ctx, new Object[] {slot, item, count});
         } catch (CommodoreException x) {
             TridentExceptionUtil.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("TARGET.ENTITY"))

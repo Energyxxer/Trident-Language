@@ -31,22 +31,22 @@ public class FillCommandDefinition implements SimpleCommandDefinition {
                 group(productions.getOrCreateStructure("COORDINATE_SET")).setName("TO").addTags("cspn:To"),
                 productions.getOrCreateStructure("BLOCK"),
                 choice(
-                        literal("destroy").setEvaluator((p, d) -> new FillDestroyMode()),
-                        literal("hollow").setEvaluator((p, d) -> new FillHollowMode()),
-                        literal("keep").setEvaluator((p, d) -> new FillKeepMode()),
-                        literal("outline").setEvaluator((p, d) -> new FillOutlineMode()),
-                        group(literal("replace"), wrapperOptional(productions.getOrCreateStructure("BLOCK_TAGGED")).setName("BLOCK_TO_REPLACE")).setEvaluator((p, d) -> new FillReplaceMode((Block) p.findThenEvaluate("BLOCK_TO_REPLACE", null, (ISymbolContext) d[0])))
+                        literal("destroy").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new FillDestroyMode()),
+                        literal("hollow").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new FillHollowMode()),
+                        literal("keep").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new FillKeepMode()),
+                        literal("outline").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new FillOutlineMode()),
+                        group(literal("replace"), wrapperOptional(productions.getOrCreateStructure("BLOCK_TAGGED")).setName("BLOCK_TO_REPLACE")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new FillReplaceMode((Block) p.findThenEvaluate("BLOCK_TO_REPLACE", null, ctx, null)))
                 ).setOptional().setName("FILL_MODE")
         );
     }
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        CoordinateSet from = (CoordinateSet) pattern.find("FROM.COORDINATE_SET").evaluate(ctx);
-        CoordinateSet to = (CoordinateSet) pattern.find("TO.COORDINATE_SET").evaluate(ctx);
+        CoordinateSet from = (CoordinateSet) pattern.find("FROM.COORDINATE_SET").evaluate(ctx, null);
+        CoordinateSet to = (CoordinateSet) pattern.find("TO.COORDINATE_SET").evaluate(ctx, null);
 
-        Block block = (Block) pattern.find("BLOCK").evaluate(ctx);
-        FillCommand.FillMode mode = (FillCommand.FillMode) pattern.findThenEvaluateLazyDefault("FILL_MODE", FillReplaceMode::new, ctx);
+        Block block = (Block) pattern.find("BLOCK").evaluate(ctx, null);
+        FillCommand.FillMode mode = (FillCommand.FillMode) pattern.findThenEvaluateLazyDefault("FILL_MODE", FillReplaceMode::new, ctx, null);
 
         try {
             return new FillCommand(from, to, block, mode);

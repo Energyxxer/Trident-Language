@@ -27,14 +27,14 @@ public class BanIpCommandDefinition implements SimpleCommandDefinition {
         return group(
                 TridentProductions.commandHeader("ban-ip"),
                 wrapper(TridentProductions.identifierA(productions)).setName("IP").addTags("cspn:IP"),
-                group(TridentProductions.sameLine(), ofType(TRAILING_STRING).setEvaluator((p, d) -> p.flatten(false))).setSimplificationFunctionContentIndex(1).setOptional().setName("REASON").addTags("cspn:Reason")
+                group(TridentProductions.sameLine(), ofType(TRAILING_STRING).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false))).setSimplificationFunctionContentIndex(1).setOptional().setName("REASON").addTags("cspn:Reason")
         );
     }
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        String ip = (String) pattern.find("IP").evaluate(ctx);
-        String reason = (String) pattern.findThenEvaluate("REASON", null, ctx);
+        String ip = (String) pattern.find("IP").evaluate(ctx, null);
+        String reason = (String) pattern.findThenEvaluate("REASON", null, ctx, null);
 
         try {
             return new BanIpCommand(ip, reason);

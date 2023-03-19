@@ -28,6 +28,6 @@ public class AnchoredModifierDefinition implements SimpleExecuteModifierDefiniti
 
     @Override
     public ExecuteModifier parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return new ExecuteAnchor((EntityAnchor) pattern.find("ANCHOR").evaluate(ctx));
+        return new ExecuteAnchor((EntityAnchor) pattern.find("ANCHOR").evaluate(ctx, null));
     }
 }

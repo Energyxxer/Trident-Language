@@ -40,10 +40,10 @@ public class ComponentCommandDefinition implements CommandDefinition {
 
     @Override
     public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> modifiers) {
-        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
-        TagCommand.Action action = (TagCommand.Action) pattern.find("COMPONENT_ACTION").evaluate();
+        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
+        TagCommand.Action action = (TagCommand.Action) pattern.find("COMPONENT_ACTION").evaluate(ctx, null);
 
-        CustomEntity component = (CustomEntity) pattern.find("COMPONENT").evaluate(ctx);
+        CustomEntity component = (CustomEntity) pattern.find("COMPONENT").evaluate(ctx, null);
         if (!component.isComponent()) {
             throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Expected entity component, instead got custom entity", pattern, ctx);
         }

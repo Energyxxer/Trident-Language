@@ -31,7 +31,7 @@ public class DifficultyCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Type newDifficulty = (Type) pattern.findThenEvaluate("NEW_DIFFICULTY", null, ctx);
+        Type newDifficulty = (Type) pattern.findThenEvaluate("NEW_DIFFICULTY", null, ctx, null);
         if (newDifficulty != null) {
             return new DifficultySetCommand(newDifficulty);
         } else {

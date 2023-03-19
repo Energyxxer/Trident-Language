@@ -158,7 +158,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         classObject.superClasses.add(((TridentTypeSystem) ctx.getTypeSystem()).getBaseClass());
 
         if(pattern.find("FORMAL_TYPE_PARAMETERS") != null) {
-            classObject.typeParamNames = (String[]) pattern.find("FORMAL_TYPE_PARAMETERS").evaluate(ctx);
+            classObject.typeParamNames = (String[]) pattern.find("FORMAL_TYPE_PARAMETERS").evaluate(ctx, null);
 
             GenericContext genericContext = new GenericContext(classObject, classObject.typeParamNames);
 
@@ -171,7 +171,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         if(pattern.find("CLASS_INHERITS") != null) {
             TokenList inheritsList = ((TokenList) pattern.find("CLASS_INHERITS.SUPERCLASS_LIST"));
             for(TokenPattern<?> rawParent : inheritsList.getContentsExcludingSeparators()) {
-                TypeHandler parentType = (TypeHandler) rawParent.evaluate(ctx);
+                TypeHandler parentType = (TypeHandler) rawParent.evaluate(ctx, null);
                 while(parentType instanceof GenericWrapperType) {
                     if(classObject.inheritedGenericSuppliers == null) classObject.inheritedGenericSuppliers = new GenericSupplier();
                     ((GenericWrapperType) parentType).getGenericSupplier().dumpInto(classObject.inheritedGenericSuppliers);
@@ -392,7 +392,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
 
                 FormalParameter indexParam = TridentTempFindABetterHome.createFormalParam(entry.find("FORMAL_PARAMETER"), ctx);
 
-                TridentUserFunctionBranch getterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.singletonList(indexParam), entry.find("CLASS_GETTER.ANONYMOUS_INNER_FUNCTION"), (TypeConstraints) entry.find("CLASS_GETTER.TYPE_CONSTRAINTS").evaluate(ctx));
+                TridentUserFunctionBranch getterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.singletonList(indexParam), entry.find("CLASS_GETTER.ANONYMOUS_INNER_FUNCTION"), (TypeConstraints) entry.find("CLASS_GETTER.TYPE_CONSTRAINTS").evaluate(ctx, null));
                 SymbolVisibility getterVisibility = TridentProductions.parseClassMemberVisibility(entry.find("CLASS_GETTER.SYMBOL_VISIBILITY"), defaultVisibility, this);
                 PrismarineFunction getter = new PrismarineFunction(
                         "<indexer getter>",
@@ -438,7 +438,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                 String propertyName = entry.find("SYMBOL_NAME").flatten(false);
                 SymbolVisibility defaultVisibility = TridentProductions.parseClassMemberVisibility(entry.find("SYMBOL_VISIBILITY"), TridentSymbolVisibility.LOCAL, this);
 
-                TridentUserFunctionBranch getterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.emptyList(), entry.find("CLASS_GETTER.ANONYMOUS_INNER_FUNCTION"), (TypeConstraints) entry.find("CLASS_GETTER.TYPE_CONSTRAINTS").evaluate(ctx));
+                TridentUserFunctionBranch getterBranch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.emptyList(), entry.find("CLASS_GETTER.ANONYMOUS_INNER_FUNCTION"), (TypeConstraints) entry.find("CLASS_GETTER.TYPE_CONSTRAINTS").evaluate(ctx, null));
                 SymbolVisibility getterVisibility = TridentProductions.parseClassMemberVisibility(entry.find("CLASS_GETTER.SYMBOL_VISIBILITY"), defaultVisibility, this);
                 PrismarineFunction getter = new PrismarineFunction(
                         "<property getter>",
@@ -539,7 +539,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
                     throw new PrismarineException(TridentExceptionUtil.Source.STRUCTURAL_ERROR, "Class " + getTypeIdentifier() + " is static; cannot have type conversion definitions.", entry.tryFind("SYMBOL_MODIFIER_LIST"), ctx);
                 }
                 boolean implicit = "implicit".equals(entry.find("CLASS_TRANSFORM_TYPE").flatten(false));
-                TypeHandler toType = (TypeHandler) entry.find("INTERPOLATION_TYPE").evaluate(this.getInnerStaticContext());
+                TypeHandler toType = (TypeHandler) entry.find("INTERPOLATION_TYPE").evaluate(this.getInnerStaticContext(), null);
                 PrismarineFunctionBranch branch = new TridentUserFunctionBranch(ctx.getTypeSystem(), Collections.emptyList(), entry.find("ANONYMOUS_INNER_FUNCTION"), new TypeConstraints(typeSystem, toType, false));
                 PrismarineFunction function = new PrismarineFunction(toType.getTypeIdentifier(), branch, this.getInnerStaticContext());
                 if(implicit) branch.setShouldCoerceReturn(false);
@@ -953,7 +953,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
         VariableInstruction.SymbolDeclaration response = new VariableInstruction.SymbolDeclaration(memberName);
         response.setName(memberName);
         response.setVisibility(memberVisibility);
-        response.setConstraintSupplier(initialValue -> (TypeConstraints) entryFinal.find("TYPE_CONSTRAINTS").evaluate(ctx, initialValue));
+        response.setConstraintSupplier(initialValue -> (TypeConstraints) entryFinal.find("TYPE_CONSTRAINTS").evaluate(ctx, new Object[] {initialValue}));
         response.setSupplier(() -> {
             CustomClassObject instance = (CustomClassObject) response.getSupplierData();
             ISymbolContext innerFrame = instance != null ? instance.createInnerFrame(ctx, new ActualParameterList(pattern), ctx) : ctx;
@@ -962,7 +962,7 @@ public class CustomClass implements TypeHandler<CustomClass>, ParameterizedMembe
             boolean initialized = false;
             if(pattern.find("SYMBOL_INITIALIZATION") != null) {
                 DataStructureLiteralSet.setNextFunctionName(memberName);
-                initialValue = pattern.find("SYMBOL_INITIALIZATION.INITIAL_VALUE").evaluate(innerFrame);
+                initialValue = pattern.find("SYMBOL_INITIALIZATION.INITIAL_VALUE").evaluate(innerFrame, null);
                 DataStructureLiteralSet.setNextFunctionName(null);
                 initialized = true;
             }

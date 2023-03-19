@@ -42,7 +42,7 @@ public class SwitchInstruction implements InstructionDefinition {
         String label = getLabel(pattern);
         try {
             SymbolContext innerFrame = new SymbolContext(ctx);
-            Object switchValue = pattern.find("SWITCH_VALUE.INTERPOLATION_VALUE").evaluate(innerFrame);
+            Object switchValue = pattern.find("SWITCH_VALUE.INTERPOLATION_VALUE").evaluate(innerFrame, null);
 
             TokenList switchCases = (TokenList) pattern.find("SWITCH_CASES");
             if (switchCases != null) {
@@ -52,7 +52,7 @@ public class SwitchInstruction implements InstructionDefinition {
                     TokenPattern<?> branch = ((TokenStructure) rawCase.find("CASE_BRANCH")).getContents();
                     if (!passed) {
                         if (branch.find("INTERPOLATION_VALUE") != null) {
-                            if (Objects.equals(switchValue, branch.find("INTERPOLATION_VALUE").evaluate(innerFrame))) {
+                            if (Objects.equals(switchValue, branch.find("INTERPOLATION_VALUE").evaluate(innerFrame, null))) {
                                 passed = true;
                             }
                         } else {

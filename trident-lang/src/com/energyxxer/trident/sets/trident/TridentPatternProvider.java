@@ -69,7 +69,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                         }
                     }
                 }
-        ).setEvaluator((p, d) -> p.flatten(false).substring(1)));
+        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false).substring(1)));
 
         productions.getOrCreateStructure("ENTRY")
                 .add(
@@ -80,14 +80,13 @@ public class TridentPatternProvider extends PatternProviderSet {
                 )
                 .add(
                         group(productions.getOrCreateStructure("MODIFIER_LIST"), literal("run").setOptional(), productions.getOrCreateStructure("COMMAND")).setName("COMMAND_WRAPPER")
-                        .setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
+                        .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                             TridentFile tridentFile = ((TridentFile) ctx.getStaticParentUnit());
                             TridentFile writingFile = ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile();
 
-                            FunctionSection appendTo = ((FunctionSection) d[1]);
-                            ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) p.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx);
-                            Object commands = p.find("COMMAND").evaluate((ISymbolContext) ctx, modifiers);
+                            FunctionSection appendTo = ((FunctionSection) d[0]);
+                            ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) p.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx, null);
+                            Object commands = p.find("COMMAND").evaluate(ctx, new Object[] {modifiers});
 
                             ArrayList<ExecuteModifier> modifiersForCommand = modifiers;
                             if(!writingFile.getWritingModifiers().isEmpty()) {
@@ -122,9 +121,8 @@ public class TridentPatternProvider extends PatternProviderSet {
         TokenPatternMatch TYPE_CONSTRAINTS_EXPLICIT = group(
                 productions.getOrCreateStructure("INTERPOLATION_TYPE"),
                 TridentProductions.symbol("?").setOptional().setName("VARIABLE_NULLABLE")
-        ).setName("TYPE_CONSTRAINTS_EXPLICIT").setEvaluator((p, d) -> {
-            ISymbolContext ctx = (ISymbolContext) d[0];
-            TypeHandler type = (TypeHandler) p.find("INTERPOLATION_TYPE").evaluate(ctx);
+        ).setName("TYPE_CONSTRAINTS_EXPLICIT").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+            TypeHandler type = (TypeHandler) p.find("INTERPOLATION_TYPE").evaluate(ctx, null);
             boolean nullable = p.find("VARIABLE_NULLABLE") != null;
             return new TypeConstraints(ctx.getTypeSystem(), type, nullable);
         });
@@ -136,7 +134,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                 ).setName("TYPE_CONSTRAINTS_WRAPPED").setSimplificationFunctionContentIndex(1)
         ).setName("TYPE_CONSTRAINTS")
                 .setSimplificationFunction(d -> d.pattern = d.pattern.tryFind("TYPE_CONSTRAINTS_WRAPPED"))
-                .setEvaluator((p, d) -> new TypeConstraints(((ISymbolContext) d[0]).getTypeSystem(), (TypeHandler<?>) null, true));
+                .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new TypeConstraints(ctx.getTypeSystem(), (TypeHandler<?>) null, true));
 
         TokenPatternMatch INFERRABLE_TYPE_CONSTRAINTS = group(
                 optional(
@@ -144,9 +142,8 @@ public class TridentPatternProvider extends PatternProviderSet {
                         wrapperOptional(TYPE_CONSTRAINTS_EXPLICIT).setName("TYPE_CONSTRAINTS_INNER")
                 ).setName("TYPE_CONSTRAINTS_WRAPPED")
                         .setSimplificationFunction(d -> d.pattern = d.pattern.tryFind("TYPE_CONSTRAINTS_INNER"))
-                        .setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Object value = d[1];
+                        .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Object value = d[0];
                             if(value == TypeConstraints.SpecialInferInstruction.NO_INSTANCE_INFER) {
                                 throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Cannot infer type constraints for instance fields", p, ctx);
                             } else if(value != null) {
@@ -157,7 +154,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                         })
         ).setName("TYPE_CONSTRAINTS")
                 .setSimplificationFunction(d -> d.pattern = d.pattern.tryFind("TYPE_CONSTRAINTS_WRAPPED"))
-                .setEvaluator((p, d) -> new TypeConstraints(((ISymbolContext) d[0]).getTypeSystem(), (TypeHandler<?>) null, true));
+                .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new TypeConstraints(ctx.getTypeSystem(), (TypeHandler<?>) null, true));
 
         productions.putPatternMatch("TYPE_CONSTRAINTS", TYPE_CONSTRAINTS);
         productions.putPatternMatch("INFERRABLE_TYPE_CONSTRAINTS", INFERRABLE_TYPE_CONSTRAINTS);
@@ -185,8 +182,7 @@ public class TridentPatternProvider extends PatternProviderSet {
                                 comma()
                         ),
                         brace(">")
-                ).setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
+                ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     TokenPattern<?>[] rawGenericTypes = ((TokenList) ((TokenGroup) p).getContents()[1]).getContentsExcludingSeparators();
                     String[] typeParamNames = new String[rawGenericTypes.length];
                     for(int i = 0; i < rawGenericTypes.length; i++) {
@@ -203,12 +199,11 @@ public class TridentPatternProvider extends PatternProviderSet {
                                 comma()
                         ),
                         brace(">")
-                ).setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
+                ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     TokenPattern<?>[] rawGenericTypes = ((TokenList) ((TokenGroup) p).getContents()[1]).getContentsExcludingSeparators();
                     TypeHandler<?>[] handlers = new TypeHandler<?>[rawGenericTypes.length];
                     for(int i = 0; i < rawGenericTypes.length; i++) {
-                        handlers[i] = (TypeHandler<?>) rawGenericTypes[i].evaluate(ctx);
+                        handlers[i] = (TypeHandler<?>) rawGenericTypes[i].evaluate(ctx, null);
                     }
                     return handlers;
                 })
@@ -236,19 +231,17 @@ public class TridentPatternProvider extends PatternProviderSet {
         productions.getOrCreateStructure("INTERPOLATION_CHAIN_TAIL")
                 .add(
                         group(TridentProductions.sameLine(), TridentProductions.keyword("is"), productions.getOrCreateStructure("INTERPOLATION_TYPE")).setName("INTERPOLATION_CHAIN_TAIL_IS")
-                        .setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Object value = d[1];
-                            TypeHandler type = (TypeHandler<?>) p.find("INTERPOLATION_TYPE").evaluate(ctx);
+                        .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Object value = d[0];
+                            TypeHandler type = (TypeHandler<?>) p.find("INTERPOLATION_TYPE").evaluate(ctx, null);
                             return type.isInstance(value);
                         })
                 )
                 .add(
                         group(TridentProductions.sameLine(), TridentProductions.keyword("as"), productions.getOrCreateStructure("INTERPOLATION_TYPE")).setName("INTERPOLATION_CHAIN_TAIL_AS")
-                        .setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Object value = d[1];
-                            TypeHandler type = (TypeHandler<?>) p.find("INTERPOLATION_TYPE").evaluate(ctx);
+                        .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Object value = d[0];
+                            TypeHandler type = (TypeHandler<?>) p.find("INTERPOLATION_TYPE").evaluate(ctx, null);
                             return ctx.getTypeSystem().castOrCoerce(value, type, p, ctx, false);
                         })
                 );
@@ -330,15 +323,15 @@ public class TridentPatternProvider extends PatternProviderSet {
                 ).setGreedy(true)
         );
 
-        productions.getOrCreateStructure("COMMAND").setEvaluator((p, d) -> {
+        productions.getOrCreateStructure("COMMAND").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
             TokenPattern<?> inner = ((TokenStructure) p).getContents();
             try {
-                return inner.evaluate(d);
+                return inner.evaluate(ctx, d);
             } catch(CommodoreException x) {
                 if(x.getSource() == CommodoreException.Source.VERSION_ERROR) {
-                    throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, x.getSource() + ": " + x.getMessage(), inner, (ISymbolContext) d[0]);
+                    throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, x.getSource() + ": " + x.getMessage(), inner, ctx);
                 } else {
-                    throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Commodore Exception of type " + x.getSource() + ": " + x.getMessage(), inner, (ISymbolContext) d[0]);
+                    throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "Commodore Exception of type " + x.getSource() + ": " + x.getMessage(), inner, ctx);
                 }
             }
         });

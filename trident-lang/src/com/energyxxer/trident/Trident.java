@@ -18,6 +18,8 @@ public class Trident {
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
     public static final ThreeNumberVersion TRIDENT_LANGUAGE_VERSION = new ThreeNumberVersion(1,4,2);
 
+    public static int NUM_IO_THREADS = 0;
+
     static {
         PrismarineMetaLexerProfile.functionNames.add("storeVar");
         PrismarineMetaLexerProfile.functionNames.add("storeFlat");

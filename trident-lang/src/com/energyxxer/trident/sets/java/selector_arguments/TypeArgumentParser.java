@@ -5,6 +5,7 @@ import com.energyxxer.commodore.functionlogic.selector.arguments.TagArgument;
 import com.energyxxer.commodore.functionlogic.selector.arguments.TypeArgument;
 import com.energyxxer.commodore.types.Type;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternSwitchProviderUnit;
 import com.energyxxer.prismarine.reporting.PrismarineException;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 import static com.energyxxer.prismarine.PrismarineProductions.choice;
 import static com.energyxxer.prismarine.PrismarineProductions.group;
 
-public class TypeArgumentParser implements PatternSwitchProviderUnit {
+public class TypeArgumentParser implements PatternSwitchProviderUnit<ISymbolContext> {
     @Override
     public String[] getSwitchKeys() {
         return new String[] {"type"};
@@ -29,12 +30,10 @@ public class TypeArgumentParser implements PatternSwitchProviderUnit {
         return group(
                 choice("type").setName("SELECTOR_ARGUMENT_KEY"),
                 TridentProductions.equals(),
-                group(TridentProductions.not().setOptional(), productions.getOrCreateStructure("TRIDENT_ENTITY_ID_TAGGED")).setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
-
+                group(TridentProductions.not().setOptional(), productions.getOrCreateStructure("TRIDENT_ENTITY_ID_TAGGED")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     boolean negated = p.find("NEGATED") != null;
 
-                    Object reference = p.find("TRIDENT_ENTITY_ID_TAGGED").evaluate(ctx);
+                    Object reference = p.find("TRIDENT_ENTITY_ID_TAGGED").evaluate(ctx, null);
 
                     ArrayList<SelectorArgument> args = new ArrayList<>();
 

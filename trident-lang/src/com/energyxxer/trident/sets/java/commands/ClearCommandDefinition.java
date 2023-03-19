@@ -43,12 +43,12 @@ public class ClearCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Item item = (Item) pattern.findThenEvaluate("INNER.INNER.ITEM_TAGGED", null, ctx, NBTMode.TESTING);
+        Item item = (Item) pattern.findThenEvaluate("INNER.INNER.ITEM_TAGGED", null, ctx, new Object[] {NBTMode.TESTING});
 
-        int amount = (int) pattern.findThenEvaluate("INNER.INNER.AMOUNT", -1, ctx);
+        int amount = (int) pattern.findThenEvaluate("INNER.INNER.AMOUNT", -1, ctx, null);
 
         try {
-            return new ClearCommand((Entity) pattern.findThenEvaluate("INNER.ENTITY", null, ctx), item, amount);
+            return new ClearCommand((Entity) pattern.findThenEvaluate("INNER.ENTITY", null, ctx, null), item, amount);
         } catch (CommodoreException x) {
             TridentExceptionUtil.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("INNER.ENTITY"))

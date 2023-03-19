@@ -3,6 +3,7 @@ package com.energyxxer.trident.sets.java.selector_arguments;
 import com.energyxxer.commodore.functionlogic.nbt.TagCompound;
 import com.energyxxer.commodore.functionlogic.selector.arguments.NBTArgument;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.nbtmapper.PathContext;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternSwitchProviderUnit;
@@ -14,7 +15,7 @@ import com.energyxxer.trident.compiler.analyzers.constructs.NBTInspector;
 import static com.energyxxer.prismarine.PrismarineProductions.group;
 import static com.energyxxer.prismarine.PrismarineProductions.literal;
 
-public class NBTArgumentParser implements PatternSwitchProviderUnit {
+public class NBTArgumentParser implements PatternSwitchProviderUnit<ISymbolContext> {
     @Override
     public String[] getSwitchKeys() {
         return new String[] {"nbt"};
@@ -25,10 +26,9 @@ public class NBTArgumentParser implements PatternSwitchProviderUnit {
         return group(
                 literal("nbt").setName("SELECTOR_ARGUMENT_KEY"),
                 TridentProductions.equals(),
-                group(TridentProductions.not().setOptional(), productions.getOrCreateStructure("NBT_COMPOUND")).setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
-                    PathContext pathContext = (PathContext) d[1];
-                    TagCompound nbt = (TagCompound) p.find("NBT_COMPOUND").evaluate(ctx);
+                group(TridentProductions.not().setOptional(), productions.getOrCreateStructure("NBT_COMPOUND")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                    PathContext pathContext = (PathContext) d[0];
+                    TagCompound nbt = (TagCompound) p.find("NBT_COMPOUND").evaluate(ctx, null);
                     NBTInspector.inspectTag(nbt, pathContext, p.find("NBT_COMPOUND"), ctx);
                     return new NBTArgument(nbt, p.find("NEGATED") != null);
                 })

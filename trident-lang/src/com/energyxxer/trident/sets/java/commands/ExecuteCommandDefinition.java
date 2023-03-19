@@ -38,7 +38,7 @@ public class ExecuteCommandDefinition implements CommandDefinition {
                 TridentProductions.commandHeader("execute"),
                 productions.getOrCreateStructure("MODIFIER_LIST"),
                 choice(
-                        literal("noop").setEvaluator((p, d) -> Collections.singletonList(new EmptyCommand())),
+                        literal("noop").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> Collections.singletonList(new EmptyCommand())),
                         group(
                                 literal("run"),
                                 productions.getOrCreateStructure("COMMAND")
@@ -81,7 +81,7 @@ public class ExecuteCommandDefinition implements CommandDefinition {
 
     @Override
     public Collection<Command> parse(TokenPattern<?> pattern, ISymbolContext ctx, Collection<ExecuteModifier> ignore) {
-        ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) pattern.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx);
+        ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) pattern.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx, null);
         modifiers.addAll(0, ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile().getWritingModifiers());
         Object returnedCommands = pattern.findThenEvaluateLazyDefault("EXECUTE_END", () -> {
             if (modifiers.isEmpty()) {
@@ -89,7 +89,7 @@ public class ExecuteCommandDefinition implements CommandDefinition {
             } else {
                 return Collections.singletonList(new EmptyCommand());
             }
-        }, ctx, modifiers);
+        }, ctx, new Object[] {modifiers});
         if(returnedCommands instanceof Command) {
             returnedCommands = Collections.singletonList((Command)returnedCommands);
         }

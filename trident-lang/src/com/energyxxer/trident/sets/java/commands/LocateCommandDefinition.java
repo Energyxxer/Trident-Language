@@ -35,26 +35,26 @@ public class LocateCommandDefinition implements SimpleCommandDefinition {
                 choice(
                         checkVersionFeature(worker, "command.locate.merge", false) ? choice(
                                 group(literal("structure"), productions.getOrCreateStructure("STRUCTURE_ID_TAGGED"))
-                                        .setEvaluator((p, d) -> {
-                                            Type structure = (Type) p.find("STRUCTURE_ID_TAGGED").evaluate((ISymbolContext) d[0]);
+                                        .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                                            Type structure = (Type) p.find("STRUCTURE_ID_TAGGED").evaluate(ctx, null);
                                             return new LocateCommand(structure);
                                         }),
                                 group(literal("poi"), productions.getOrCreateStructure("POINT_OF_INTEREST_TYPE_ID_TAGGED"))
-                                        .setEvaluator((p, d) -> {
-                                            Type poi = (Type) p.find("POINT_OF_INTEREST_TYPE_ID_TAGGED").evaluate((ISymbolContext) d[0]);
+                                        .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                                            Type poi = (Type) p.find("POINT_OF_INTEREST_TYPE_ID_TAGGED").evaluate(ctx, null);
                                             return new LocatePOICommand(poi);
                                         }),
                                 group(literal("biome"), productions.getOrCreateStructure("BIOME_ID_TAGGED"))
-                                        .setEvaluator((p, d) -> {
-                                            Type biome = (Type) p.find("BIOME_ID_TAGGED").evaluate((ISymbolContext) d[0]);
+                                        .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                                            Type biome = (Type) p.find("BIOME_ID_TAGGED").evaluate(ctx, null);
                                             return new LocateBiomeCommand(biome);
                                         })
                         ) : null,
                         checkVersionFeature(worker, "type_tags.universal", false) ?
                                 group(
                                         productions.getOrCreateStructure("LEGACY_STRUCTURE_ID")
-                                ).setEvaluator((p, d) -> {
-                                    Type legacyType = (Type) p.find("LEGACY_STRUCTURE_ID").evaluate((ISymbolContext) d[0]);
+                                ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                                    Type legacyType = (Type) p.find("LEGACY_STRUCTURE_ID").evaluate(ctx, null);
                                     Type structure = legacyType.getNamespace().tags.getGroup(StructureType.CATEGORY).get(legacyType.getName());
 
                                     return new LocateCommand(structure);
@@ -85,8 +85,8 @@ public class LocateCommandDefinition implements SimpleCommandDefinition {
                                 }) :
                                 group(
                                         productions.getOrCreateStructure("STRUCTURE_ID")
-                                ).setEvaluator((p, d) -> {
-                                    Type structure = (Type) p.find("STRUCTURE_ID").evaluate((ISymbolContext) d[0]);
+                                ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                                    Type structure = (Type) p.find("STRUCTURE_ID").evaluate(ctx, null);
                                     return new LocateCommand(structure);
                                 })
                 )

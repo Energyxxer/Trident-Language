@@ -23,6 +23,8 @@ import java.util.Objects;
 import static com.energyxxer.prismarine.typesystem.functions.natives.PrismarineNativeFunctionBranch.nativeMethodsToFunction;
 
 public class DefaultOperators {
+    private static final Object[] DATA_FALSE = new Object[]{false};
+    private static final Object[] DATA_TRUE = new Object[]{true};
 
     @OperatorManager.NativeOperator(symbol = "+", grade = 2)
     public static int add(int a, int b) {
@@ -271,14 +273,14 @@ public class DefaultOperators {
         operatorManager.specialBinaryOperators.put("||", (expr, ctx) -> {
             TypeConstraints boolConstraint = new TypeConstraints(typeSystem, (TypeHandler<?>) typeSystem.getHandlerForHandlerClass(BooleanTypeHandler.class), false);
 
-            Object a = expr.getOperands()[0].evaluate(ctx);
+            Object a = expr.getOperands()[0].evaluate(ctx, null);
             Object b = expr.getOperands()[1];
             if(boolConstraint.verify(a, ctx)) {
                 boolean aAsBool = (boolean) boolConstraint.adjustValue(a, expr.getOperands()[0], ctx);
                 if(aAsBool) {
                     return true; //short circuit
                 } else {
-                    b = ((TokenPattern<?>) b).evaluate(ctx);
+                    b = ((TokenPattern<?>) b).evaluate(ctx, null);
                     if(boolConstraint.verify(b, ctx)) {
                         return boolConstraint.adjustValue(b, expr.getOperands()[1], ctx);
                     }
@@ -290,14 +292,14 @@ public class DefaultOperators {
         operatorManager.specialBinaryOperators.put("&&", (expr, ctx) -> {
             TypeConstraints boolConstraint = new TypeConstraints(typeSystem, (TypeHandler<?>) typeSystem.getHandlerForHandlerClass(BooleanTypeHandler.class), false);
 
-            Object a = expr.getOperands()[0].evaluate(ctx);
+            Object a = expr.getOperands()[0].evaluate(ctx, null);
             Object b = expr.getOperands()[1];
             if(boolConstraint.verify(a, ctx)) {
                 boolean aAsBool = (boolean) boolConstraint.adjustValue(a, expr.getOperands()[0], ctx);
                 if(!aAsBool) {
                     return false; //short circuit
                 } else {
-                    b = ((TokenPattern<?>) b).evaluate(ctx);
+                    b = ((TokenPattern<?>) b).evaluate(ctx, null);
                     if(boolConstraint.verify(b, ctx)) {
                         return boolConstraint.adjustValue(b, expr.getOperands()[1], ctx);
                     }
@@ -307,27 +309,27 @@ public class DefaultOperators {
             throw new OperatorManager.SpecialOperatorFailure(new Object[] {a, b});
         });
         operatorManager.specialBinaryOperators.put("??", (expr, ctx) -> {
-            Object a = expr.getOperands()[0].evaluate(ctx);
+            Object a = expr.getOperands()[0].evaluate(ctx, null);
             if(a != null) return a;
-            return expr.getOperands()[1].evaluate(ctx);
+            return expr.getOperands()[1].evaluate(ctx, null);
         });
         operatorManager.specialTernaryOperators.put("?", (expr, ctx) -> {
             TypeConstraints boolConstraint = new TypeConstraints(typeSystem, (TypeHandler<?>) typeSystem.getHandlerForHandlerClass(BooleanTypeHandler.class), false);
 
-            Object a = expr.getOperands()[0].evaluate(ctx);
+            Object a = expr.getOperands()[0].evaluate(ctx, null);
             TokenPattern<?> b = expr.getOperands()[1];
             TokenPattern<?> c = expr.getOperands()[2];
             if(boolConstraint.verify(a, ctx)) {
                 boolean aAsBool = (boolean) boolConstraint.adjustValue(a, expr.getOperands()[0], ctx);
-                return (aAsBool ? b : c).evaluate(ctx);
+                return (aAsBool ? b : c).evaluate(ctx, null);
             }
             //alright neither worked
             throw new OperatorManager.SpecialOperatorFailure(new Object[] {a, b, c});
         });
 
         operatorManager.specialBinaryOperators.put("=", (expr, ctx) -> {
-            Object a = expr.getOperands()[0].evaluate(ctx, true);
-            Object b = expr.getOperands()[1].evaluate(ctx, false);
+            Object a = expr.getOperands()[0].evaluate(ctx, DATA_TRUE);
+            Object b = expr.getOperands()[1].evaluate(ctx, DATA_FALSE);
             if(a instanceof Symbol) {
                 ((Symbol) a).safeSetValue(b, expr, ctx);
                 return b;
@@ -350,7 +352,7 @@ public class DefaultOperators {
         operatorManager.specialUnaryLeftOperators.put("++", (expr, ctx) -> {
             // do not throw any SpecialOperatorFailure exceptions here; this operator is not allowed
             // to pass through the standard overload list if there is not a symbol involved.
-            Object a = expr.getOperands()[0].evaluate(ctx, true);
+            Object a = expr.getOperands()[0].evaluate(ctx, DATA_TRUE);
             if(a instanceof Symbol) {
                 Object oldValue = ((Symbol) a).getValue(expr, ctx);
                 Object newValue = operatorManager.evaluateUnaryLeft("++", new Object[] {oldValue}, expr, ctx);
@@ -363,7 +365,7 @@ public class DefaultOperators {
         operatorManager.specialUnaryRightOperators.put("++", (expr, ctx) -> {
             // do not throw any SpecialOperatorFailure exceptions here; this operator is not allowed
             // to pass through the standard overload list if there is not a symbol involved.
-            Object a = ((TokenUnaryExpression) expr).getOperands()[0].evaluate(ctx, true);
+            Object a = ((TokenUnaryExpression) expr).getOperands()[0].evaluate(ctx, DATA_TRUE);
             if(a instanceof Symbol) {
                 Object oldValue = ((Symbol) a).getValue(expr, ctx);
                 Object newValue = operatorManager.evaluateUnaryRight("++", new Object[] {oldValue}, expr, ctx);
@@ -377,7 +379,7 @@ public class DefaultOperators {
         operatorManager.specialUnaryLeftOperators.put("--", (expr, ctx) -> {
             // do not throw any SpecialOperatorFailure exceptions here; this operator is not allowed
             // to pass through the standard overload list if there is not a symbol involved.
-            Object a = expr.getOperands()[0].evaluate(ctx, true);
+            Object a = expr.getOperands()[0].evaluate(ctx, DATA_TRUE);
             if(a instanceof Symbol) {
                 Object oldValue = ((Symbol) a).getValue(expr, ctx);
                 Object newValue = operatorManager.evaluateUnaryLeft("--", new Object[] {oldValue}, expr, ctx);
@@ -390,7 +392,7 @@ public class DefaultOperators {
         operatorManager.specialUnaryRightOperators.put("--", (expr, ctx) -> {
             // do not throw any SpecialOperatorFailure exceptions here; this operator is not allowed
             // to pass through the standard overload list if there is not a symbol involved.
-            Object a = expr.getOperands()[0].evaluate(ctx, true);
+            Object a = expr.getOperands()[0].evaluate(ctx, DATA_TRUE);
             if(a instanceof Symbol) {
                 Object oldValue = ((Symbol) a).getValue(expr, ctx);
                 Object newValue = operatorManager.evaluateUnaryRight("--", new Object[] {oldValue}, expr, ctx);
@@ -404,8 +406,8 @@ public class DefaultOperators {
 
     private static void addCompoundAssignmentOperator(String baseOperator, OperatorManager<ClassMethod> operatorManager) {
         operatorManager.specialBinaryOperators.put(baseOperator + "=", (expr, ctx) -> {
-            Object a = expr.getOperands()[0].evaluate(ctx, true);
-            Object b = expr.getOperands()[1].evaluate(ctx);
+            Object a = expr.getOperands()[0].evaluate(ctx, DATA_TRUE);
+            Object b = expr.getOperands()[1].evaluate(ctx, null);
             if(a instanceof Symbol) {
                 Object newValue = operatorManager.evaluateBinary(baseOperator, new Object[] {((Symbol) a).getValue(expr, ctx), b}, expr, ctx);
                 ((Symbol) a).safeSetValue(newValue, expr, ctx);

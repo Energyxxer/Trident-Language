@@ -26,13 +26,13 @@ public class TeamMsgCommandDefinition implements SimpleCommandDefinition {
     public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 choice(TridentProductions.commandHeader("teammsg"), TridentProductions.commandHeader("tm")),
-                ofType(TRAILING_STRING).setName("MESSAGE").addTags("cspn:Message").setEvaluator((p, d) -> p.flatten(false))
+                ofType(TRAILING_STRING).setName("MESSAGE").addTags("cspn:Message").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false))
         );
     }
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        String message = (String) pattern.find("MESSAGE").evaluate(ctx);
+        String message = (String) pattern.find("MESSAGE").evaluate(ctx, null);
 
         try {
             return new TeamMessageCommand(message);

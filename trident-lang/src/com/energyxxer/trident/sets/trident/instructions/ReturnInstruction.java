@@ -19,6 +19,6 @@ public class ReturnInstruction implements InstructionDefinition {
 
     @Override
     public void run(TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ReturnException(pattern, pattern.findThenEvaluate("RETURN_VALUE", null, ctx), ctx);
+        throw new ReturnException(pattern, pattern.findThenEvaluate("RETURN_VALUE", null, ctx, null), ctx);
     }
 }

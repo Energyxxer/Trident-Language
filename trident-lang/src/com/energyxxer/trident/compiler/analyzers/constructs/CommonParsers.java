@@ -121,7 +121,7 @@ public class CommonParsers {
 
         TokenPattern<?> inner = pattern.getContents();
 
-        ResourceLocation typeLoc = (ResourceLocation) inner.evaluate(ctx);
+        ResourceLocation typeLoc = (ResourceLocation) inner.evaluate(ctx, null);
         Namespace ns = ctx.get(SetupModuleTask.INSTANCE).getNamespace(typeLoc.namespace);
         Type type = null;
         if(typeLoc.isTag) {

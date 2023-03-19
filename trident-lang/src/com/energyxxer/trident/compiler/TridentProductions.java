@@ -119,7 +119,7 @@ public class TridentProductions {
     }
 
     public static TokenPatternMatch rawBoolean() {
-        return ofType(BOOLEAN).setEvaluator((p, d) -> p.flatten(false).equals("true")).setName("BOOLEAN");
+        return ofType(BOOLEAN).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false).equals("true")).setName("BOOLEAN");
     }
 
     public static TokenPatternMatch identifierC() {
@@ -192,7 +192,7 @@ public class TridentProductions {
 
     public static TokenStructureMatch string(PrismarineProductions productions) {
         return choice(
-                ofType(STRING_LITERAL).setName("STRING_LITERAL").setEvaluator((p, d) -> BasicLiteralSet.parseQuotedString(p.flatten(false), p, (ISymbolContext) d[0])),
+                ofType(STRING_LITERAL).setName("STRING_LITERAL").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> BasicLiteralSet.parseQuotedString(p.flatten(false), p, ctx)),
                 PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, String.class)
         ).setName("STRING");
     }
@@ -202,22 +202,22 @@ public class TridentProductions {
     }
 
     public static TokenStructureMatch real(PrismarineProductions productions) {
-        return choice(ofType(REAL_NUMBER).setName("RAW_REAL").setEvaluator((p, d) -> Double.parseDouble(p.flatten(false))), PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, Double.class)).setName("REAL");
+        return choice(ofType(REAL_NUMBER).setName("RAW_REAL").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> Double.parseDouble(p.flatten(false))), PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, Double.class)).setName("REAL");
     }
 
     public static TokenStructureMatch identifierA(PrismarineProductions productions) {
-        return choice(string(productions), ofType(IDENTIFIER_TYPE_A).setName("RAW_IDENTIFIER_A").setEvaluator((p, d) -> p.flatten(false))).setName("IDENTIFIER_A");
+        return choice(string(productions), ofType(IDENTIFIER_TYPE_A).setName("RAW_IDENTIFIER_A").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false))).setName("IDENTIFIER_A");
     }
 
     public static TokenPatternMatch identifierA(String literal) {
-        return matchItem(IDENTIFIER_TYPE_A, literal).setName("RAW_IDENTIFIER_A").setEvaluator((p, d) -> p.flatten(false));
+        return matchItem(IDENTIFIER_TYPE_A, literal).setName("RAW_IDENTIFIER_A").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false));
     }
 
     public static TokenStructureMatch identifierB(PrismarineProductions productions) {
         return choice(
-                ofType(IDENTIFIER_TYPE_B).setName("RAW_IDENTIFIER_B").setEvaluator((p, d) -> p.flatten(false)),
-                wrapper(string(productions), (v, p, d) -> {
-                    MinecraftLiteralSet.validateIdentifierB((String) v, p, (ISymbolContext) d[0]);
+                ofType(IDENTIFIER_TYPE_B).setName("RAW_IDENTIFIER_B").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false)),
+                wrapper(string(productions), (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                    MinecraftLiteralSet.validateIdentifierB((String) v, p, ctx);
                     return v;
                 })
         ).setName("IDENTIFIER_B");
@@ -225,9 +225,9 @@ public class TridentProductions {
 
     public static TokenStructureMatch identifierBLimited(PrismarineProductions productions) {
         return choice(
-                ofType(IDENTIFIER_TYPE_B_LIMITED).setName("RAW_IDENTIFIER_B").setEvaluator((p, d) -> p.flatten(false)),
-                wrapper(string(productions), (v, p, d) -> {
-                    MinecraftLiteralSet.validateIdentifierB((String) v, p, (ISymbolContext) d[0]);
+                ofType(IDENTIFIER_TYPE_B_LIMITED).setName("RAW_IDENTIFIER_B").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false)),
+                wrapper(string(productions), (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                    MinecraftLiteralSet.validateIdentifierB((String) v, p, ctx);
                     return v;
                 })
         ).setName("IDENTIFIER_B");

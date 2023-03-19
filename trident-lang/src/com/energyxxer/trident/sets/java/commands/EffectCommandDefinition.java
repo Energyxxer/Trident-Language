@@ -37,11 +37,9 @@ public class EffectCommandDefinition implements SimpleCommandDefinition {
                                         productions.getOrCreateStructure("ENTITY"),
                                         wrapperOptional(productions.getOrCreateStructure("EFFECT_ID")).setName("EFFECT_TO_CLEAR")
                                 ).setName("INNER")
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-
-                            Entity entity = (Entity) p.findThenEvaluate("INNER.ENTITY", null, ctx);
-                            Type effectToClear = (Type) p.findThenEvaluate("INNER.EFFECT_TO_CLEAR", null, ctx);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity entity = (Entity) p.findThenEvaluate("INNER.ENTITY", null, ctx, null);
+                            Type effectToClear = (Type) p.findThenEvaluate("INNER.EFFECT_TO_CLEAR", null, ctx, null);
                             return new EffectClearCommand(entity, effectToClear);
                         }),
                         group(
@@ -55,15 +53,13 @@ public class EffectCommandDefinition implements SimpleCommandDefinition {
                                                 TridentProductions.rawBoolean().setOptional().setName("HIDE_PARTICLES").addTags(SuggestionTags.ENABLED, "cspn:Hide Particles?")
                                         ).setName("INNER")
                                 ).setName("INNER")
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-
-                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx);
-                            Type effectToGive = (Type) p.find("EFFECT_ID").evaluate(ctx);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx, null);
+                            Type effectToGive = (Type) p.find("EFFECT_ID").evaluate(ctx, null);
 
                             StatusEffect effect = new StatusEffect(effectToGive);
 
-                            int duration = (int) p.findThenEvaluate("INNER.DURATION", StatusEffect.DEFAULT_DURATION / 20, ctx) * 20;
+                            int duration = (int) p.findThenEvaluate("INNER.DURATION", StatusEffect.DEFAULT_DURATION / 20, ctx, null) * 20;
                             try {
                                 effect.setDuration(duration);
                             } catch (CommodoreException ex) {
@@ -72,7 +68,7 @@ public class EffectCommandDefinition implements SimpleCommandDefinition {
                                         .invokeThrow();
                             }
 
-                            int amplifier = (int) p.findThenEvaluate("INNER.INNER.AMPLIFIER", StatusEffect.DEFAULT_AMPLIFIER, ctx);
+                            int amplifier = (int) p.findThenEvaluate("INNER.INNER.AMPLIFIER", StatusEffect.DEFAULT_AMPLIFIER, ctx, null);
                             try {
                                 effect.setAmplifier(amplifier);
                             } catch (CommodoreException ex) {
@@ -81,7 +77,7 @@ public class EffectCommandDefinition implements SimpleCommandDefinition {
                                         .invokeThrow();
                             }
 
-                            boolean hideParticles = (boolean) p.findThenEvaluate("INNER.INNER.HIDE_PARTICLES", false, ctx);
+                            boolean hideParticles = (boolean) p.findThenEvaluate("INNER.INNER.HIDE_PARTICLES", false, ctx, null);
                             effect.setVisibility(hideParticles ? StatusEffect.ParticleVisibility.HIDDEN : StatusEffect.ParticleVisibility.VISIBLE);
 
                             return new EffectGiveCommand(entity, effect);

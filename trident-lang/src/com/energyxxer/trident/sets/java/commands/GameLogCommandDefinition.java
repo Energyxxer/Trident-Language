@@ -53,7 +53,7 @@ public class GameLogCommandDefinition implements CommandDefinition {
 
         commands.add(new FunctionCommand(fetchFile.getFunction()));
 
-        TextComponent message = objectToTextComponent(pattern.find("INTERPOLATION_VALUE").evaluate(ctx), pattern, ctx);
+        TextComponent message = objectToTextComponent(pattern.find("INTERPOLATION_VALUE").evaluate(ctx, null), pattern, ctx);
         String key = pattern.find("DEBUG_GROUP").flatten(false);
 
         commands.add(fetchFile.getTellrawCommandFor(key, message, pattern, ctx));

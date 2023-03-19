@@ -46,14 +46,14 @@ public class PlaySoundCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        ResourceLocation soundEvent = (ResourceLocation) pattern.find("SOUND_EVENT").evaluate(ctx);
-        PlaySoundCommand.Source channel = (PlaySoundCommand.Source) pattern.find("SOUND_CHANNEL").evaluate(ctx);
-        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
+        ResourceLocation soundEvent = (ResourceLocation) pattern.find("SOUND_EVENT").evaluate(ctx, null);
+        PlaySoundCommand.Source channel = (PlaySoundCommand.Source) pattern.find("SOUND_CHANNEL").evaluate(ctx, null);
+        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
 
         TokenPattern<?> sub = pattern.find("");
         try {
             if (sub != null) {
-                CoordinateSet pos = (CoordinateSet) sub.find("COORDINATE_SET").evaluate(ctx);
+                CoordinateSet pos = (CoordinateSet) sub.find("COORDINATE_SET").evaluate(ctx, null);
 
                 float maxVol = 1;
                 float pitch = 1;
@@ -63,11 +63,11 @@ public class PlaySoundCommandDefinition implements SimpleCommandDefinition {
                 sub.collectByName("REAL", numberArgs);
                 try {
                     if (numberArgs.size() >= 1) {
-                        maxVol = (float) (double) numberArgs.get(0).evaluate(ctx);
+                        maxVol = (float) (double) numberArgs.get(0).evaluate(ctx, null);
                         if (numberArgs.size() >= 2) {
-                            pitch = (float) (double) numberArgs.get(1).evaluate(ctx);
+                            pitch = (float) (double) numberArgs.get(1).evaluate(ctx, null);
                             if (numberArgs.size() >= 3) {
-                                minVol = (float) (double) numberArgs.get(2).evaluate(ctx);
+                                minVol = (float) (double) numberArgs.get(2).evaluate(ctx, null);
                             }
                         }
                     }

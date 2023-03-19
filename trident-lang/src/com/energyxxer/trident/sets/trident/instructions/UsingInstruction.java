@@ -74,11 +74,11 @@ public class UsingInstruction implements InstructionDefinition {
         TridentUtil.assertLanguageLevel(ctx, 2, "The using-tag instruction is", pattern);
         FunctionSection function = ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile().getFunction();
 
-        String tag = (String) pattern.find("USING_TAG_NAME").evaluate(ctx);
+        String tag = (String) pattern.find("USING_TAG_NAME").evaluate(ctx, null);
 
-        Entity startEntity = (Entity) pattern.find("ENTITY").evaluate(ctx);
+        Entity startEntity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
 
-        ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) pattern.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx);
+        ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) pattern.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx, null);
         modifiers.addAll(0, ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile().getWritingModifiers());
 
         if(modifiers.isEmpty()) {
@@ -97,11 +97,11 @@ public class UsingInstruction implements InstructionDefinition {
         TridentUtil.assertLanguageLevel(ctx, 2, "The using-summon instruction is", pattern);
         FunctionSection function = ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile().getFunction();
 
-        String tag = (String) pattern.find("USING_SUMMON_TAG_NAME").evaluate(ctx);
+        String tag = (String) pattern.find("USING_SUMMON_TAG_NAME").evaluate(ctx, null);
 
-        TridentLiteralSet.SummonData data = (TridentLiteralSet.SummonData) pattern.find("NEW_ENTITY_LITERAL").evaluate(ctx);
-        data.pos = (CoordinateSet) pattern.findThenEvaluate(".COORDINATE_SET", null, ctx);
-        data.mergeNBT((TagCompound) pattern.findThenEvaluate("..NBT_COMPOUND", null, ctx));
+        TridentLiteralSet.SummonData data = (TridentLiteralSet.SummonData) pattern.find("NEW_ENTITY_LITERAL").evaluate(ctx, null);
+        data.pos = (CoordinateSet) pattern.findThenEvaluate(".COORDINATE_SET", null, ctx, null);
+        data.mergeNBT((TagCompound) pattern.findThenEvaluate("..NBT_COMPOUND", null, ctx, null));
         data.analyzeNBT(pattern, ctx);
         data.mergeNBT(new TagCompound(new TagList("Tags", new TagString(tag))));
         function.append(new ExecuteCommand(data.constructSummon(), ctx.get(SetupWritingStackTask.INSTANCE).getWritingFile().getWritingModifiers()));
@@ -109,7 +109,7 @@ public class UsingInstruction implements InstructionDefinition {
         data.fillDefaults();
 
 
-        ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) pattern.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx);
+        ArrayList<ExecuteModifier> modifiers = (ArrayList<ExecuteModifier>) pattern.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx, null);
 
         TridentFile innerFile = TridentFile.createInnerFile(executionBlock, ctx);
 

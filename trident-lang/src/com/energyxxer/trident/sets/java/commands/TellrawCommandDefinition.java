@@ -35,8 +35,8 @@ public class TellrawCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        TextComponent text = (TextComponent) pattern.find("TEXT_COMPONENT").evaluate(ctx, TextComponentContext.CHAT);
-        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
+        TextComponent text = (TextComponent) pattern.find("TEXT_COMPONENT").evaluate(ctx, new Object[] {TextComponentContext.CHAT});
+        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
         try {
             return new TellrawCommand(entity, text);
         } catch (CommodoreException x) {

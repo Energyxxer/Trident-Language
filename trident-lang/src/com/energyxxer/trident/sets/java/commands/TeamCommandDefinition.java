@@ -31,115 +31,110 @@ public class TeamCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
-        PatternEvaluator teamOptionEvaluator = (p, d) -> {
-            ISymbolContext ctx = (ISymbolContext) d[0];
-            TeamReference team = (TeamReference) d[1];
+        PatternEvaluator<ISymbolContext> teamOptionEvaluator = (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+            TeamReference team = (TeamReference) d[0];
 
             TokenPattern<?>[] contents = ((TokenGroup) p).getContents();
-            TeamModifyCommand.TeamModifyKey key = (TeamModifyCommand.TeamModifyKey) contents[0].evaluate(ctx);
-            Object value = contents[1].evaluate(ctx);
+            TeamModifyCommand.TeamModifyKey key = (TeamModifyCommand.TeamModifyKey) contents[0].evaluate(ctx, null);
+            Object value = contents[1].evaluate(ctx, null);
             return new TeamModifyCommand(team, key, value);
         };
 
         TokenStructureMatch teamOptions = choice(
                 group(
-                        literal("collisionRule").setEvaluator((p, d) -> TeamModifyCommand.TeamModifyKey.COLLISION_RULE),
+                        literal("collisionRule").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.TeamModifyKey.COLLISION_RULE),
                         choice(
-                                literal("always").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.ALL),
-                                literal("never").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.NONE),
-                                literal("pushOtherTeams").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.OTHER_TEAMS),
-                                literal("pushOwnTeam").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.OWN_TEAM)
+                                literal("always").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.ALL),
+                                literal("never").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.NONE),
+                                literal("pushOtherTeams").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.OTHER_TEAMS),
+                                literal("pushOwnTeam").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.OWN_TEAM)
                         )
                 ).setEvaluator(teamOptionEvaluator),
                 group(
-                        literal("color").setEvaluator((p, d) -> TeamModifyCommand.TeamModifyKey.COLOR),
+                        literal("color").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.TeamModifyKey.COLOR),
                         productions.getOrCreateStructure("TEXT_COLOR")
                 ).setEvaluator(teamOptionEvaluator),
                 group(
-                        literal("deathMessageVisibility").setEvaluator((p, d) -> TeamModifyCommand.TeamModifyKey.DEATH_MESSAGE_VISIBILITY),
+                        literal("deathMessageVisibility").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.TeamModifyKey.DEATH_MESSAGE_VISIBILITY),
                         choice(
-                                literal("always").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.ALL),
-                                literal("never").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.NONE),
-                                literal("hideForOwnTeam").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.OTHER_TEAMS),
-                                literal("hideForOtherTeams").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.OWN_TEAM)
+                                literal("always").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.ALL),
+                                literal("never").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.NONE),
+                                literal("hideForOwnTeam").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.OTHER_TEAMS),
+                                literal("hideForOtherTeams").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.OWN_TEAM)
                         )
                 ).setEvaluator(teamOptionEvaluator),
                 group(
-                        literal("displayName").setEvaluator((p, d) -> TeamModifyCommand.TeamModifyKey.DISPLAY_NAME),
+                        literal("displayName").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.TeamModifyKey.DISPLAY_NAME),
                         productions.getOrCreateStructure("TEXT_COMPONENT")
                 ).setEvaluator(teamOptionEvaluator),
                 group(
-                        literal("friendlyFire").setEvaluator((p, d) -> TeamModifyCommand.TeamModifyKey.FRIENDLY_FIRE),
+                        literal("friendlyFire").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.TeamModifyKey.FRIENDLY_FIRE),
                         TridentProductions.rawBoolean().setName("BOOLEAN").addTags(SuggestionTags.ENABLED, "cspn:Friendly Fire?")
                 ).setEvaluator(teamOptionEvaluator),
                 group(
-                        literal("nametagVisibility").setEvaluator((p, d) -> TeamModifyCommand.TeamModifyKey.NAMETAG_VISIBILITY),
+                        literal("nametagVisibility").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.TeamModifyKey.NAMETAG_VISIBILITY),
                         choice(
-                                literal("always").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.ALL),
-                                literal("never").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.NONE),
-                                literal("hideForOwnTeam").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.OTHER_TEAMS),
-                                literal("hideForOtherTeams").setEvaluator((p, d) -> TeamModifyCommand.AppliesTo.OWN_TEAM)
+                                literal("always").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.ALL),
+                                literal("never").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.NONE),
+                                literal("hideForOwnTeam").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.OTHER_TEAMS),
+                                literal("hideForOtherTeams").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.AppliesTo.OWN_TEAM)
                         )
                 ).setEvaluator(teamOptionEvaluator),
                 group(
-                        literal("prefix").setEvaluator((p, d) -> TeamModifyCommand.TeamModifyKey.PREFIX),
+                        literal("prefix").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.TeamModifyKey.PREFIX),
                         productions.getOrCreateStructure("TEXT_COMPONENT")
                 ).setEvaluator(teamOptionEvaluator),
                 group(
-                        literal("suffix").setEvaluator((p, d) -> TeamModifyCommand.TeamModifyKey.SUFFIX),
+                        literal("suffix").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.TeamModifyKey.SUFFIX),
                         productions.getOrCreateStructure("TEXT_COMPONENT")
                 ).setEvaluator(teamOptionEvaluator),
                 group(
-                        literal("seeFriendlyInvisibles").setEvaluator((p, d) -> TeamModifyCommand.TeamModifyKey.SEE_FRIENDLY_INVISIBLES),
+                        literal("seeFriendlyInvisibles").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TeamModifyCommand.TeamModifyKey.SEE_FRIENDLY_INVISIBLES),
                         TridentProductions.rawBoolean().setName("BOOLEAN").addTags("cspn:See Friendly Invisibles?")
                 ).setEvaluator(teamOptionEvaluator)
         ).setName("TEAM_OPTIONS");
 
-        TokenGroupMatch teamMatch = (TokenGroupMatch) group(TridentProductions.identifierA(productions)).setName("TEAM").addTags("cspn:Team").setEvaluator((p, d) -> {
-            ISymbolContext ctx = (ISymbolContext) d[0];
-            String teamName = (String) ((TokenGroup) p).getContents()[0].evaluate(ctx);
+        TokenGroupMatch teamMatch = (TokenGroupMatch) group(TridentProductions.identifierA(productions)).setName("TEAM").addTags("cspn:Team").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+            String teamName = (String) ((TokenGroup) p).getContents()[0].evaluate(ctx, null);
             return new TeamReference(teamName);
         });
 
         return group(
                 TridentProductions.commandHeader("team"),
                 choice(
-                        group(literal("add"), teamMatch, wrapperOptional(productions.getOrCreateStructure("TEXT_COMPONENT")).setName("DISPLAY_NAME").addTags("cspn:Display Name")).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            TeamReference team = (TeamReference) p.find("TEAM").evaluate(ctx);
-                            TextComponent displayName = (TextComponent) p.findThenEvaluate("DISPLAY_NAME", null, ctx);
+                        group(literal("add"), teamMatch, wrapperOptional(productions.getOrCreateStructure("TEXT_COMPONENT")).setName("DISPLAY_NAME").addTags("cspn:Display Name")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            TeamReference team = (TeamReference) p.find("TEAM").evaluate(ctx, null);
+                            TextComponent displayName = (TextComponent) p.findThenEvaluate("DISPLAY_NAME", null, ctx, null);
                             return new TeamCreateCommand(team, displayName);
                         }),
-                        group(literal("empty"), teamMatch).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            TeamReference team = (TeamReference) p.find("TEAM").evaluate(ctx);
+                        group(literal("empty"), teamMatch).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            TeamReference team = (TeamReference) p.find("TEAM").evaluate(ctx, null);
                             return new TeamEmptyCommand(team);
                         }),
-                        group(literal("join"), teamMatch, optional(TridentProductions.sameLine(), productions.getOrCreateStructure("ENTITY")).setSimplificationFunctionContentIndex(1).setName("SUBJECT")).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            TeamReference team = (TeamReference) p.find("TEAM").evaluate(ctx);
-                            Entity entity = (Entity) p.findThenEvaluate("SUBJECT", null, ctx);
+                        group(literal("join"), teamMatch, optional(TridentProductions.sameLine(), productions.getOrCreateStructure("ENTITY")).setSimplificationFunctionContentIndex(1).setName("SUBJECT")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            TeamReference team = (TeamReference) p.find("TEAM").evaluate(ctx, null);
+                            Entity entity = (Entity) p.findThenEvaluate("SUBJECT", null, ctx, null);
                             return new TeamJoinCommand(team, entity);
                         }),
-                        group(literal("leave"), productions.getOrCreateStructure("ENTITY")).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx);
+                        group(literal("leave"), productions.getOrCreateStructure("ENTITY")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx, null);
                             return new TeamLeaveCommand(entity);
                         }),
-                        group(literal("list"), optional(TridentProductions.sameLine(), teamMatch).setSimplificationFunctionContentIndex(1).setName("TEAM").addTags("cspn:Team")).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            TeamReference team = (TeamReference) p.findThenEvaluate("TEAM", null, ctx);
+                        group(literal("list"), optional(TridentProductions.sameLine(), teamMatch).setSimplificationFunctionContentIndex(1).setName("TEAM").addTags("cspn:Team")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            TeamReference team = (TeamReference) p.findThenEvaluate("TEAM", null, ctx, null);
                             return new TeamListCommand(team);
                         }),
                         group(literal("modify"), teamMatch, teamOptions).setSimplificationFunction(d -> {
-                            ISymbolContext ctx = (ISymbolContext) d.data[0];
-                            TeamReference team = (TeamReference) d.pattern.find("TEAM").evaluate(ctx);
-                            d.data = new Object[]{ctx, team};
-                            d.pattern = d.pattern.find("TEAM_OPTIONS");
+                            TokenPattern<?> pattern = d.pattern;
+                            ISymbolContext ctx = (ISymbolContext) d.ctx;
+
+                            d.unlock(); d = null;
+                            TeamReference team = (TeamReference) pattern.find("TEAM").evaluate(ctx, null);
+
+                            TokenPattern.SimplificationDomain.get(pattern.find("TEAM_OPTIONS"), ctx, new Object[] {team});
                         }),
-                        group(literal("remove"), teamMatch).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            TeamReference team = (TeamReference) p.find("TEAM").evaluate(ctx);
+                        group(literal("remove"), teamMatch).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            TeamReference team = (TeamReference) p.find("TEAM").evaluate(ctx, null);
                             return new TeamRemoveCommand(team);
                         })
                 ).setName("INNER")
@@ -149,7 +144,7 @@ public class TeamCommandDefinition implements SimpleCommandDefinition {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         try {
-            return (Command) pattern.find("INNER").evaluate(ctx);
+            return (Command) pattern.find("INNER").evaluate(ctx, null);
         } catch (CommodoreException x) {
             TridentExceptionUtil.handleCommodoreException(x, pattern, ctx)
                     .invokeThrow();

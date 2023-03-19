@@ -163,13 +163,13 @@ public class VariableInstruction implements InstructionDefinition {
         SymbolDeclaration response = new SymbolDeclaration(memberName);
         response.setName(memberName);
         response.setVisibility(memberVisibility);
-        response.setConstraintSupplier(initialValue -> (TypeConstraints) entryFinal.find("TYPE_CONSTRAINTS").evaluate(ctx, initialValue));
+        response.setConstraintSupplier(initialValue -> (TypeConstraints) entryFinal.find("TYPE_CONSTRAINTS").evaluate(ctx, new Object[] {initialValue}));
         response.setSupplier(() -> {
             Object initialValue = null;
             boolean initialized = false;
             if(pattern.find("SYMBOL_INITIALIZATION") != null) {
                 DataStructureLiteralSet.setNextFunctionName(memberName);
-                initialValue = pattern.find("SYMBOL_INITIALIZATION.INITIAL_VALUE").evaluate(ctx);
+                initialValue = pattern.find("SYMBOL_INITIALIZATION.INITIAL_VALUE").evaluate(ctx, null);
                 DataStructureLiteralSet.setNextFunctionName(null);
                 initialized = true;
             }

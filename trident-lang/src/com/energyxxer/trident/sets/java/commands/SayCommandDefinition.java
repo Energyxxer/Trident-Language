@@ -28,7 +28,7 @@ public class SayCommandDefinition implements SimpleCommandDefinition {
                 ofType(WHITESPACE),
                 list(
                         choice(
-                                ofType(SAY_STRING).setEvaluator((p, d) -> p.flatten(false)),
+                                ofType(SAY_STRING).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false)),
                                 group(TridentProductions.sameLine(), productions.getOrCreateStructure("SELECTOR")).setSimplificationFunctionContentIndex(1)
                         ).setName("SAY_PART")
                 ).setName("SAY_MESSAGE").addTags("cspn:Message")
@@ -39,7 +39,7 @@ public class SayCommandDefinition implements SimpleCommandDefinition {
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
         StringBuilder sb = new StringBuilder();
         for (TokenPattern<?> part : ((TokenList) pattern.find("SAY_MESSAGE")).getContents()) {
-            sb.append(part.evaluate(ctx));
+            sb.append(part.evaluate(ctx, null));
         }
         return new SayCommand(sb.toString());
     }

@@ -37,38 +37,37 @@ public class CloneCommandDefinition implements SimpleCommandDefinition {
                                 TridentProductions.sameLine(),
                                 productions.getOrCreateStructure("BLOCK_TAGGED"),
                                 modeMatch
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            CoordinateSet from = (CoordinateSet) d[1];
-                            CoordinateSet to = (CoordinateSet) d[2];
-                            CoordinateSet destination = (CoordinateSet) d[3];
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            CoordinateSet from = (CoordinateSet) d[0];
+                            CoordinateSet to = (CoordinateSet) d[1];
+                            CoordinateSet destination = (CoordinateSet) d[2];
 
-                            Block filterBlock = (Block) p.find("BLOCK_TAGGED").evaluate(ctx);
-                            CloneCommand.SourceMode mode = (CloneCommand.SourceMode) p.findThenEvaluate("CLONE_MODE", CloneCommand.SourceMode.DEFAULT);
+                            Block filterBlock = (Block) p.find("BLOCK_TAGGED").evaluate(ctx, null);
+                            CloneCommand.SourceMode mode = (CloneCommand.SourceMode) p.findThenEvaluate("CLONE_MODE", CloneCommand.SourceMode.DEFAULT, ctx, null);
 
                             return new CloneFilteredCommand(from, to, destination, filterBlock, mode);
                         }),
                         group(
                                 literal("masked"),
                                 modeMatch
-                        ).setEvaluator((p, d) -> {
-                            CoordinateSet from = (CoordinateSet) d[1];
-                            CoordinateSet to = (CoordinateSet) d[2];
-                            CoordinateSet destination = (CoordinateSet) d[3];
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            CoordinateSet from = (CoordinateSet) d[0];
+                            CoordinateSet to = (CoordinateSet) d[1];
+                            CoordinateSet destination = (CoordinateSet) d[2];
 
-                            CloneCommand.SourceMode mode = (CloneCommand.SourceMode) p.findThenEvaluate("CLONE_MODE", CloneCommand.SourceMode.DEFAULT);
+                            CloneCommand.SourceMode mode = (CloneCommand.SourceMode) p.findThenEvaluate("CLONE_MODE", CloneCommand.SourceMode.DEFAULT, ctx, null);
 
                             return new CloneMaskedCommand(from, to, destination, mode);
                         }),
                         group(
                                 literal("replace"),
                                 modeMatch
-                        ).setEvaluator((p, d) -> {
-                            CoordinateSet from = (CoordinateSet) d[1];
-                            CoordinateSet to = (CoordinateSet) d[2];
-                            CoordinateSet destination = (CoordinateSet) d[3];
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            CoordinateSet from = (CoordinateSet) d[0];
+                            CoordinateSet to = (CoordinateSet) d[1];
+                            CoordinateSet destination = (CoordinateSet) d[2];
 
-                            CloneCommand.SourceMode mode = (CloneCommand.SourceMode) p.findThenEvaluate("CLONE_MODE", CloneCommand.SourceMode.DEFAULT);
+                            CloneCommand.SourceMode mode = (CloneCommand.SourceMode) p.findThenEvaluate("CLONE_MODE", CloneCommand.SourceMode.DEFAULT, ctx, null);
 
                             return new CloneCommand(from, to, destination, mode);
                         })
@@ -78,13 +77,13 @@ public class CloneCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        CoordinateSet from = (CoordinateSet) pattern.findThenEvaluate("FROM.COORDINATE_SET", null, ctx);
-        CoordinateSet to = (CoordinateSet) pattern.findThenEvaluate("TO.COORDINATE_SET", null, ctx);
-        CoordinateSet destination = (CoordinateSet) pattern.findThenEvaluate("DESTINATION.COORDINATE_SET", null, ctx);
+        CoordinateSet from = (CoordinateSet) pattern.findThenEvaluate("FROM.COORDINATE_SET", null, ctx, null);
+        CoordinateSet to = (CoordinateSet) pattern.findThenEvaluate("TO.COORDINATE_SET", null, ctx, null);
+        CoordinateSet destination = (CoordinateSet) pattern.findThenEvaluate("DESTINATION.COORDINATE_SET", null, ctx, null);
 
         TokenPattern<?> inner = pattern.find("INNER");
         if (inner != null) {
-            return (Command) inner.evaluate(ctx, from, to, destination);
+            return (Command) inner.evaluate(ctx, new Object[] {from, to, destination});
         }
         return new CloneCommand(from, to, destination);
     }

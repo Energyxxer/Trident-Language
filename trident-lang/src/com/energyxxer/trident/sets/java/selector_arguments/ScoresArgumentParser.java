@@ -15,7 +15,7 @@ import com.energyxxer.trident.compiler.TridentProductions;
 import static com.energyxxer.prismarine.PrismarineProductions.*;
 import static com.energyxxer.trident.compiler.lexer.TridentTokens.CUSTOM_COMMAND_KEYWORD;
 
-public class ScoresArgumentParser implements PatternSwitchProviderUnit {
+public class ScoresArgumentParser implements PatternSwitchProviderUnit<ISymbolContext> {
     @Override
     public String[] getSwitchKeys() {
         return new String[] {"scores"};
@@ -31,31 +31,29 @@ public class ScoresArgumentParser implements PatternSwitchProviderUnit {
                                 productions.getOrCreateStructure("OBJECTIVE_NAME"),
                                 TridentProductions.equals(),
                                 choice(
-                                        matchItem(CUSTOM_COMMAND_KEYWORD, "isset").setName("ISSET").setEvaluator((p, d) -> new IntegerRange(null, null)),
+                                        matchItem(CUSTOM_COMMAND_KEYWORD, "isset").setName("ISSET").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new IntegerRange(null, null)),
                                         productions.getOrCreateStructure("INTEGER_NUMBER_RANGE")
                                 ).setName("SCORE_VALUE")
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            ScoreArgument scores = (ScoreArgument) d[1];
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            ScoreArgument scores = (ScoreArgument) d[0];
 
-                            Objective objective = (Objective) p.find("OBJECTIVE_NAME").evaluate(ctx, Objective.class);
+                            Objective objective = (Objective) p.find("OBJECTIVE_NAME").evaluate(ctx, new Object[] {Objective.class});
 
-                            IntegerRange range = (IntegerRange) p.find("SCORE_VALUE").evaluate(ctx);
+                            IntegerRange range = (IntegerRange) p.find("SCORE_VALUE").evaluate(ctx, null);
                             scores.put(objective, range);
                             return null;
                         }),
                         TridentProductions.comma()
                 ).setOptional().setName("SCORE_LIST"),
                 TridentProductions.brace("}")
-        ).setEvaluator((p, d) -> {
-            ISymbolContext ctx = (ISymbolContext) d[0];
+        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
             TokenList scoreList = (TokenList) p.find("SCORE_LIST");
 
             ScoreArgument scores = new ScoreArgument();
 
             if(scoreList != null) {
                 for(TokenPattern<?> entry : scoreList.getContentsExcludingSeparators()) {
-                    entry.evaluate(ctx, scores);
+                    entry.evaluate(ctx, new Object[] {scores});
                 }
             }
 

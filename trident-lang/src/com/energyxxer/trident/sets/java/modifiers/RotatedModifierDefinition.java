@@ -30,9 +30,8 @@ public class RotatedModifierDefinition implements SimpleExecuteModifierDefinitio
                         group(
                                 literal("as").setOptional(),
                                 productions.getOrCreateStructure("ENTITY")
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx, null);
                             try {
                                 return new ExecuteRotatedAsEntity(entity);
                             } catch (CommodoreException x) {
@@ -45,13 +44,13 @@ public class RotatedModifierDefinition implements SimpleExecuteModifierDefinitio
                         productions.getOrCreateStructure("ROTATION"),
                         PrismarineTypeSystem.validatorGroup(
                                 productions.getOrCreateStructure("INTERPOLATION_BLOCK"),
-                                d -> new Object[] {d[0]},
-                                (v, p, d) -> {
+                                d -> null,
+                                (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                     if (v instanceof Rotation) return v;
                                     try {
                                         return new ExecuteRotatedAsEntity((Entity) v);
                                     } catch (CommodoreException x) {
-                                        TridentExceptionUtil.handleCommodoreException(x, p, (ISymbolContext) d[0])
+                                        TridentExceptionUtil.handleCommodoreException(x, p, ctx)
                                                 .invokeThrow();
                                         return null;
                                     }

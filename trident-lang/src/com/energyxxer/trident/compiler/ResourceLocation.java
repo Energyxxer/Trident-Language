@@ -60,6 +60,7 @@ public class ResourceLocation {
     public static ResourceLocation createStrict(String str) {
         boolean isTag = str.startsWith("#");
         ScannerContextResponse valueResult = TridentLexerProfile.RESOURCE_LOCATION_CONTEXT.analyzeExpectingType(str.substring(isTag ? 1 : 0), 0, null, null);
+        valueResult.unlock();
         if(valueResult.success && valueResult.endLocation.index == str.length() - (isTag ? 1 : 0)) {
             return new ResourceLocation(str);
         } else return null;

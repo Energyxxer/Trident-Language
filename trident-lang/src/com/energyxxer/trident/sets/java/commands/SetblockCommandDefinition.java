@@ -36,9 +36,9 @@ public class SetblockCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        CoordinateSet pos = (CoordinateSet) pattern.find("COORDINATE_SET").evaluate(ctx);
-        Block block = (Block) pattern.find("BLOCK").evaluate(ctx);
-        SetblockCommand.OldBlockHandlingMode mode = (SetblockCommand.OldBlockHandlingMode) pattern.findThenEvaluate("OLD_BLOCK_HANDLING", SetblockCommand.OldBlockHandlingMode.DEFAULT);
+        CoordinateSet pos = (CoordinateSet) pattern.find("COORDINATE_SET").evaluate(ctx, null);
+        Block block = (Block) pattern.find("BLOCK").evaluate(ctx, null);
+        SetblockCommand.OldBlockHandlingMode mode = (SetblockCommand.OldBlockHandlingMode) pattern.findThenEvaluate("OLD_BLOCK_HANDLING", SetblockCommand.OldBlockHandlingMode.DEFAULT, ctx, null);
 
         try {
             return new SetblockCommand(pos, block, mode);

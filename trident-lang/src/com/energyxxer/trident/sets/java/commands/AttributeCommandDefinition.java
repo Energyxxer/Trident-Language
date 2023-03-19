@@ -64,68 +64,62 @@ public class AttributeCommandDefinition implements SimpleCommandDefinition {
         );
     }
 
-    private static Command getBranch(TokenPattern<?> pattern, Object... data) {
-        ISymbolContext ctx = (ISymbolContext) data[0];
-        Entity entity = (Entity) data[1];
-        Type attributeType = (Type) data[2];
-        double scale = (double) pattern.findThenEvaluate("SCALE", 1d, ctx);
+    private static Command getBranch(TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) {
+        Entity entity = (Entity) data[0];
+        Type attributeType = (Type) data[1];
+        double scale = (double) pattern.findThenEvaluate("SCALE", 1d, ctx, null);
         return new AttributeGetCommand(entity, attributeType, scale);
     }
 
-    private static Command baseGetBranch(TokenPattern<?> pattern, Object... data) {
-        ISymbolContext ctx = (ISymbolContext) data[0];
-        Entity entity = (Entity) data[1];
-        Type attributeType = (Type) data[2];
-        double scale = (double) pattern.findThenEvaluate("SCALE", 1d, ctx);
+    private static Command baseGetBranch(TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) {
+        Entity entity = (Entity) data[0];
+        Type attributeType = (Type) data[1];
+        double scale = (double) pattern.findThenEvaluate("SCALE", 1d, ctx, null);
         return new AttributeBaseGetCommand(entity, attributeType, scale);
     }
 
-    private static Command baseSetBranch(TokenPattern<?> pattern, Object... data) {
-        ISymbolContext ctx = (ISymbolContext) data[0];
-        Entity entity = (Entity) data[1];
-        Type attributeType = (Type) data[2];
-        double value = (double) pattern.find("VALUE").evaluate(ctx);
+    private static Command baseSetBranch(TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) {
+        Entity entity = (Entity) data[0];
+        Type attributeType = (Type) data[1];
+        double value = (double) pattern.find("VALUE").evaluate(ctx, null);
         return new AttributeBaseSetCommand(entity, attributeType, value);
     }
 
-    private static Command baseModifierAddBranch(TokenPattern<?> pattern, Object... data) {
-        ISymbolContext ctx = (ISymbolContext) data[0];
-        Entity entity = (Entity) data[1];
-        Type attributeType = (Type) data[2];
+    private static Command baseModifierAddBranch(TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) {
+        Entity entity = (Entity) data[0];
+        Type attributeType = (Type) data[1];
 
-        UUID uuid = (UUID) pattern.find("UUID").evaluate(ctx);
-        String modifierName = (String) pattern.find("ATTRIBUTE_MODIFIER_NAME").evaluate(ctx);
-        double value = (double) pattern.find("VALUE").evaluate(ctx);
-        AttributeModifierAddCommand.Operation operation = (AttributeModifierAddCommand.Operation) pattern.find("ATTRIBUTE_MODIFIER_OPERATION").evaluate(ctx);
+        UUID uuid = (UUID) pattern.find("UUID").evaluate(ctx, null);
+        String modifierName = (String) pattern.find("ATTRIBUTE_MODIFIER_NAME").evaluate(ctx, null);
+        double value = (double) pattern.find("VALUE").evaluate(ctx, null);
+        AttributeModifierAddCommand.Operation operation = (AttributeModifierAddCommand.Operation) pattern.find("ATTRIBUTE_MODIFIER_OPERATION").evaluate(ctx, null);
         return new AttributeModifierAddCommand(entity, attributeType, uuid, modifierName, value, operation);
     }
 
-    private static Command baseModifierGetBranch(TokenPattern<?> pattern, Object... data) {
-        ISymbolContext ctx = (ISymbolContext) data[0];
-        Entity entity = (Entity) data[1];
-        Type attributeType = (Type) data[2];
+    private static Command baseModifierGetBranch(TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) {
+        Entity entity = (Entity) data[0];
+        Type attributeType = (Type) data[1];
 
-        UUID uuid = (UUID) pattern.find("UUID").evaluate(ctx);
-        double scale = (double) pattern.findThenEvaluate("SCALE", 1d, ctx);
+        UUID uuid = (UUID) pattern.find("UUID").evaluate(ctx, null);
+        double scale = (double) pattern.findThenEvaluate("SCALE", 1d, ctx, null);
         return new AttributeModifierGetCommand(entity, attributeType, uuid, scale);
     }
 
-    private static Command baseModifierRemoveBranch(TokenPattern<?> pattern, Object... data) {
-        ISymbolContext ctx = (ISymbolContext) data[0];
-        Entity entity = (Entity) data[1];
-        Type attributeType = (Type) data[2];
+    private static Command baseModifierRemoveBranch(TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) {
+        Entity entity = (Entity) data[0];
+        Type attributeType = (Type) data[1];
 
-        UUID uuid = (UUID) pattern.find("UUID").evaluate(ctx);
+        UUID uuid = (UUID) pattern.find("UUID").evaluate(ctx, null);
         return new AttributeModifierRemoveCommand(entity, attributeType, uuid);
     }
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
-        Type attributeType = (Type) pattern.find("ATTRIBUTE_ID").evaluate(ctx);
+        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
+        Type attributeType = (Type) pattern.find("ATTRIBUTE_ID").evaluate(ctx, null);
 
         try {
-            return (Command) pattern.find("SUBCOMMAND").evaluate(ctx, entity, attributeType);
+            return (Command) pattern.find("SUBCOMMAND").evaluate(ctx, new Object[] {entity, attributeType});
         } catch (CommodoreException x) {
             TridentExceptionUtil.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))

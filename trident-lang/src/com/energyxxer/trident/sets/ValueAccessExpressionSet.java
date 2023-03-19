@@ -89,7 +89,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                         optional(
                                 TridentProductions.identifierX(),
                                 TridentProductions.colon()
-                        ).setName("ACTUAL_PARAMETER_LABEL").setEvaluator((p, d) -> ((TokenGroup) p).getContents()[0].flatten(false)),
+                        ).setName("ACTUAL_PARAMETER_LABEL").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> ((TokenGroup) p).getContents()[0].flatten(false)),
                         productions.getOrCreateStructure("INTERPOLATION_VALUE")
                 ),
                 TridentProductions.comma()
@@ -130,9 +130,8 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                                 productions.getPatternMatch("ACTUAL_PARAMETERS"),
                                 TridentProductions.brace(")")
                         ).setName("CONSTRUCTOR_CALL")
-                        .setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            TypeHandler<?> handler = (TypeHandler<?>) p.find("INTERPOLATION_TYPE").evaluate(ctx);
+                        .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            TypeHandler<?> handler = (TypeHandler<?>) p.find("INTERPOLATION_TYPE").evaluate(ctx, null);
                             if(handler == null) throw new PrismarineException(PrismarineException.Type.IMPOSSIBLE, "There's no registered data type for " + p.find("INTERPOLATION_TYPE").flatten(false) + "!", p, ctx);
 
                             PrimitivePrismarineFunction constructor = handler.getConstructor(p, ctx, null);
@@ -174,19 +173,18 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                                 ).setName(
                                         "EXPRESSION"
                                 ).setEvaluator(
-                                        (p, d) -> ((ISymbolContext) d[0]).getTypeSystem().getOperatorManager().evaluate((TokenExpression) p, (ISymbolContext) d[0])
+                                        (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> ctx.getTypeSystem().getOperatorManager().evaluate((TokenExpression) p, ctx)
                                 )).setName("CAST_VALUE")
-                ).setName("CAST").setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
-                    Object parent = p.find("CAST_VALUE").evaluate(ctx);
-                    TypeHandler targetType = (TypeHandler) p.find("CAST_TYPE").evaluate(ctx);
+                ).setName("CAST").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                    Object parent = p.find("CAST_VALUE").evaluate(ctx, null);
+                    TypeHandler targetType = (TypeHandler) p.find("CAST_TYPE").evaluate(ctx, null);
                     return ctx.getTypeSystem().cast(parent, targetType, p, ctx);
                 })
         );
 
 
-        productions.getOrCreateStructure("INTERPOLATION_VALUE").add(new TokenExpressionMatch(MID_INTERPOLATION_VALUE, productions.unitConfig.getOperatorPool(), ofType(COMPILER_OPERATOR)).setName("EXPRESSION").setEvaluator((p, d) -> ((ISymbolContext) d[0]).getTypeSystem().getOperatorManager().evaluate((TokenExpression) p, (ISymbolContext) d[0])));
-        productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE").setName("INTERPOLATION_VALUE").add(new TokenExpressionMatch(MID_INTERPOLATION_VALUE, productions.unitConfig.getOperatorPool(), group(TridentProductions.sameLine(), ofType(COMPILER_OPERATOR))).setName("EXPRESSION").setEvaluator((p, d) -> ((ISymbolContext) d[0]).getTypeSystem().getOperatorManager().evaluate((TokenExpression) p, (ISymbolContext) d[0])));
+        productions.getOrCreateStructure("INTERPOLATION_VALUE").add(new TokenExpressionMatch(MID_INTERPOLATION_VALUE, productions.unitConfig.getOperatorPool(), ofType(COMPILER_OPERATOR)).setName("EXPRESSION").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> ctx.getTypeSystem().getOperatorManager().evaluate((TokenExpression) p, ctx)));
+        productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE").setName("INTERPOLATION_VALUE").add(new TokenExpressionMatch(MID_INTERPOLATION_VALUE, productions.unitConfig.getOperatorPool(), group(TridentProductions.sameLine(), ofType(COMPILER_OPERATOR))).setName("EXPRESSION").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> ctx.getTypeSystem().getOperatorManager().evaluate((TokenExpression) p, ctx)));
 
         TokenPatternMatch NON_PRIMITIVE_INTERPOLATION_TYPE = group(
                 PrismarineTypeSystem.validatorGroup(createChainForRoot(productions.getOrCreateStructure("ROOT_INTERPOLATION_TYPE"), productions, TYPE_CHAIN_CONFIG), false, TypeHandler.class).setName("INTERPOLATION_TYPE_CHAIN_VALIDATION"),
@@ -195,15 +193,14 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
             if(d.pattern.find("ACTUAL_TYPE_PARAMETERS") == null) {
                 d.pattern = ((TokenGroup) d.pattern).getContents()[0];
             }
-        }).setEvaluator((p, d) -> {
-            ISymbolContext ctx = (ISymbolContext) d[0];
-            TypeHandler<?> sourceType = (TypeHandler<?>) ((TokenGroup) p).getContents()[0].evaluate(ctx);
+        }).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+            TypeHandler<?> sourceType = (TypeHandler<?>) ((TokenGroup) p).getContents()[0].evaluate(ctx, null);
 
             if(!(sourceType instanceof CustomClass)) {
                 throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Not a class", p, ctx);
             }
 
-            TypeHandler<?>[] genericTypes = (TypeHandler<?>[]) ((TokenGroup) p).getContents()[1].evaluate(ctx);
+            TypeHandler<?>[] genericTypes = (TypeHandler<?>[]) ((TokenGroup) p).getContents()[1].evaluate(ctx, null);
 
             if(((CustomClass) sourceType).isGeneric()) {
                 if(genericTypes.length != ((CustomClass) sourceType).getTypeParamNames().length) {
@@ -221,7 +218,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("INTERPOLATION_TYPE")
                 .add(NON_PRIMITIVE_INTERPOLATION_TYPE)
-                .add(ofType(PRIMITIVE_TYPE).setName("PRIMITIVE_ROOT_TYPE").addTags(TridentSuggestionTags.PRIMITIVE_TYPE).setEvaluator((p, d) -> ((ISymbolContext) d[0]).getTypeSystem().getPrimitiveHandlerForShorthand(p.flatten(false))));
+                .add(ofType(PRIMITIVE_TYPE).setName("PRIMITIVE_ROOT_TYPE").addTags(TridentSuggestionTags.PRIMITIVE_TYPE).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> ctx.getTypeSystem().getPrimitiveHandlerForShorthand(p.flatten(false))));
 
     }
 
@@ -272,7 +269,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     suggestMemberAccessData(l, rootPattern, memberAccessData.size() > 0 ? ((TokenList) memberAccessData.get(0)) : null, memberAccessData.size() > 1 ? memberAccessData.get(1) : null);
                 })
                 .setEvaluator(
-                        (p, d) -> parseAccessorChain(p, ((ISymbolContext) d[0]), (d.length > 1 && (boolean) d[1]))
+                        (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseAccessorChain(p, ctx, (d != null && d.length > 0 && (boolean) d[0]))
                 ).addProcessor((p, l) -> {
                     if(l.getSummaryModule() != null) {
                         TokenList memberAccesses = (TokenList) p.find("MEMBER_ACCESSES");
@@ -551,7 +548,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
 
             ActualParameterList[] firstAccessorParameters = new ActualParameterList[] {null};
 
-            parent = toBlame.evaluate(ctx, false, (Supplier<ActualParameterList>) () -> {
+            parent = toBlame.evaluate(ctx, new Object[] {false, (Supplier<ActualParameterList>) () -> {
                 TokenPattern<?> firstAccessor = accessors[0];
                 if(firstAccessor.getName().equals("METHOD_CALL")) {
                     ActualParameterList parameterList = parseActualParameterList(firstAccessor, ctx);
@@ -559,7 +556,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                     return parameterList;
                 }
                 return null;
-            });
+            }});
 
             if(firstAccessorParameters[0] != null) {
                 //Evaluated first accessor, gotta be a function
@@ -608,13 +605,13 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
             }
 
         } else {
-            parent = toBlame.evaluate(ctx, keepSymbol);
+            parent = toBlame.evaluate(ctx, new Object[] {keepSymbol});
         }
 
         TokenPattern<?> rawTail = pattern.find("INTERPOLATION_CHAIN_TAIL");
 
         if(rawTail != null) {
-            parent = rawTail.evaluate(ctx, parent);
+            parent = rawTail.evaluate(ctx, new Object[] {parent});
         }
         return parent;
     }
@@ -641,7 +638,7 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
                 }
             }
             case "MEMBER_INDEX": {
-                Object index = accessorPattern.find("INDEX.INTERPOLATION_VALUE").evaluate(ctx);
+                Object index = accessorPattern.find("INDEX.INTERPOLATION_VALUE").evaluate(ctx, null);
                 TypeHandler handler = ctx.getTypeSystem().getHandlerForObject(parent, parentPattern, ctx);
                 while (true) {
                     try {
@@ -668,10 +665,9 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         }
     }
 
-    public static Object parseVariable(TokenPattern<?> pattern, Object... data) {
-        ISymbolContext ctx = (ISymbolContext) data[0];
-        boolean keepSymbol = data.length > 1 && (boolean) data[1];
-        Supplier<ActualParameterList> followingFunctionParams = data.length > 2 ? (Supplier<ActualParameterList>) data[2] : null;
+    public static Object parseVariable(TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) {
+        boolean keepSymbol = data != null && data.length > 0 && (boolean) data[0];
+        Supplier<ActualParameterList> followingFunctionParams = data != null && data.length > 1 ? (Supplier<ActualParameterList>) data[1] : null;
         Symbol symbol = ctx.search(pattern.flatten(false), ctx, followingFunctionParams != null ? followingFunctionParams.get() : null);
         if (symbol == null) {
             throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Symbol '" + pattern.flatten(false) + "' is not defined", pattern, ctx);
@@ -687,11 +683,11 @@ public class ValueAccessExpressionSet extends PatternProviderSet {
         ArrayList<TokenPattern<?>> patterns = new ArrayList<>();
         int i = 0;
         for (TokenPattern<?> rawParam : paramList.getContentsExcludingSeparators()) {
-            Object value = rawParam.find("INTERPOLATION_VALUE").evaluate(ctx);
+            Object value = rawParam.find("INTERPOLATION_VALUE").evaluate(ctx, null);
             params.add(value);
             patterns.add(rawParam);
 
-            String name = (String) rawParam.findThenEvaluate("ACTUAL_PARAMETER_LABEL", null);
+            String name = (String) rawParam.findThenEvaluate("ACTUAL_PARAMETER_LABEL", null, ctx, null);
             if(name != null || names != null) {
                 if(names == null) {
                     names = new ArrayList<>();

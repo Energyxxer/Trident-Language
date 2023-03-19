@@ -54,15 +54,15 @@ public class SetCommandDefinition implements SimpleCommandDefinition {
                 productions.getOrCreateStructure("POINTER"),
                 ofType(SCOREBOARD_OPERATOR).setName("OPERATOR"),
                 choice(
-                        group(productions.getOrCreateStructure("POINTER")).setEvaluator((p, d) -> decorate((PointerObject) p.find("POINTER").evaluate((ISymbolContext) d[0]), p, (ISymbolContext) d[0])),
-                        group(productions.getOrCreateStructure("NBT_VALUE")).setEvaluator((p, d) -> new PointerDecorator.ValuePointer((NBTTag) p.find("NBT_VALUE").evaluate((ISymbolContext) d[0]))),
+                        group(productions.getOrCreateStructure("POINTER")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> decorate((PointerObject) p.find("POINTER").evaluate(ctx, null), p, ctx)),
+                        group(productions.getOrCreateStructure("NBT_VALUE")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new PointerDecorator.ValuePointer((NBTTag) p.find("NBT_VALUE").evaluate(ctx, null))),
                         PrismarineTypeSystem.validatorGroup(
                                 productions.getOrCreateStructure("INTERPOLATION_BLOCK"),
-                                d -> new Object[] {d[0]},
-                                (value, p, d) -> {
+                                d -> null,
+                                (Object value, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                     if (value == null) return new PointerDecorator.NullPointer();
                                     if (value instanceof PointerObject)
-                                        return decorate(((PointerObject) value), p, (ISymbolContext) d[0]);
+                                        return decorate(((PointerObject) value), p, ctx);
                                     if (value instanceof Integer) value = new TagInt((int) value);
                                     else if (value instanceof Double) value = new TagDouble((double) value);
                                     return new PointerDecorator.ValuePointer((NBTTag) value);
@@ -73,7 +73,7 @@ public class SetCommandDefinition implements SimpleCommandDefinition {
                                 Double.class,
                                 PointerObject.class
                         ),
-                        ofType(NULL).setName("NULL").setEvaluator((p, d) -> new PointerDecorator.NullPointer())
+                        ofType(NULL).setName("NULL").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new PointerDecorator.NullPointer())
                 ).setName("VALUE")
         );
     }
@@ -326,9 +326,9 @@ public class SetCommandDefinition implements SimpleCommandDefinition {
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
 
-        PointerDecorator target = decorate((PointerObject) pattern.find("POINTER").evaluate(ctx), pattern.find("POINTER"), ctx);
+        PointerDecorator target = decorate((PointerObject) pattern.find("POINTER").evaluate(ctx, null), pattern.find("POINTER"), ctx);
         SetOperator operator = SetOperator.getOperatorForSymbol(pattern.find("OPERATOR").flatten(false));
-        PointerDecorator source = (PointerDecorator) pattern.find("VALUE").evaluate(ctx);
+        PointerDecorator source = (PointerDecorator) pattern.find("VALUE").evaluate(ctx, null);
         if(source == null) source = new PointerDecorator.NullPointer();
 
         String key = target.getClass().getName() + " " + operator.getShorthand() + " " + source.getClass().getName();

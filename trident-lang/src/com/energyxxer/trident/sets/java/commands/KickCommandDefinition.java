@@ -33,7 +33,7 @@ public class KickCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
+        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
 
         try {
             return new KickCommand(entity);

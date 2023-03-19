@@ -23,7 +23,7 @@ public class InModifierDefinition implements SimpleExecuteModifierDefinition {
     public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 TridentProductions.modifierHeader("in"),
-                wrapper(productions.getOrCreateStructure("DIMENSION_ID"), (v, p, d) -> new ExecuteInDimension((Type) v))
+                wrapper(productions.getOrCreateStructure("DIMENSION_ID"), (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new ExecuteInDimension((Type) v))
         ).setSimplificationFunctionContentIndex(1);
     }
 

@@ -33,9 +33,9 @@ public class TriggerCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Objective objective = (Objective) pattern.find("OBJECTIVE_NAME").evaluate(ctx, Objective.class);
-        TriggerCommand.Action action = (TriggerCommand.Action) pattern.findThenEvaluate("INNER.TRIGGER_ACTION", TriggerCommand.Action.ADD, ctx);
-        int amount = (int) pattern.findThenEvaluate("INNER.INTEGER", 1, ctx);
+        Objective objective = (Objective) pattern.find("OBJECTIVE_NAME").evaluate(ctx, new Object[] {Objective.class});
+        TriggerCommand.Action action = (TriggerCommand.Action) pattern.findThenEvaluate("INNER.TRIGGER_ACTION", TriggerCommand.Action.ADD, ctx, null);
+        int amount = (int) pattern.findThenEvaluate("INNER.INTEGER", 1, ctx, null);
         try {
             return new TriggerCommand(objective, action, amount);
         } catch (CommodoreException x) {

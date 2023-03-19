@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 public class TridentTempFindABetterHome {
     public static PrismarineFunctionBranch parseDynamicFunction(TokenPattern<?> pattern, ISymbolContext ctx) {
-        TypeConstraints returnConstraints = (TypeConstraints) pattern.find("PRE_CODE_BLOCK.TYPE_CONSTRAINTS").evaluate(ctx);
+        TypeConstraints returnConstraints = (TypeConstraints) pattern.find("PRE_CODE_BLOCK.TYPE_CONSTRAINTS").evaluate(ctx, null);
 
         ArrayList<FormalParameter> formalParams = new ArrayList<>();
         TokenList paramNames = (TokenList) pattern.find("PRE_CODE_BLOCK.FORMAL_PARAMETERS.FORMAL_PARAMETER_LIST");
@@ -26,7 +26,7 @@ public class TridentTempFindABetterHome {
     }
 
     public static FormalParameter createFormalParam(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return new FormalParameter(pattern.find("FORMAL_PARAMETER_NAME").flatten(false), (TypeConstraints) pattern.find("TYPE_CONSTRAINTS").evaluate(ctx));
+        return new FormalParameter(pattern.find("FORMAL_PARAMETER_NAME").flatten(false), (TypeConstraints) pattern.find("TYPE_CONSTRAINTS").evaluate(ctx, null));
     }
 
     public enum SymbolModifier {

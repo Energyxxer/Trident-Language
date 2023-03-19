@@ -2,6 +2,7 @@ package com.energyxxer.trident.sets.java.selector_arguments;
 
 import com.energyxxer.commodore.functionlogic.selector.arguments.TagArgument;
 import com.energyxxer.enxlex.pattern_matching.matching.TokenPatternMatch;
+import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 import com.energyxxer.prismarine.PrismarineProductions;
 import com.energyxxer.prismarine.providers.PatternSwitchProviderUnit;
 import com.energyxxer.prismarine.reporting.PrismarineException;
@@ -31,9 +32,8 @@ public class ComponentArgumentParser implements PatternSwitchProviderUnit {
                                 false,
                                 CustomEntity.class
                         ).setName("COMPONENT_NAME")
-                ).setName("SELECTOR_ARGUMENT_VALUE").setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
-                    CustomEntity component = (CustomEntity) p.find("COMPONENT_NAME").evaluate(ctx);
+                ).setName("SELECTOR_ARGUMENT_VALUE").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                    CustomEntity component = (CustomEntity) p.find("COMPONENT_NAME").evaluate(ctx, null);
                     if(!component.isComponent()) {
                         throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Expected entity component, instead got custom entity", p, ctx);
                     }

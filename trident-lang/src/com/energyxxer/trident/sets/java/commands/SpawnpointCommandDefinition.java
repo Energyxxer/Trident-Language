@@ -38,9 +38,9 @@ public class SpawnpointCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Entity entity = (Entity) pattern.findThenEvaluate("INNER.ENTITY", null, ctx);
-        CoordinateSet pos = (CoordinateSet) pattern.findThenEvaluate("INNER.INNER.COORDINATE_SET", null, ctx);
-        RotationUnit angle = (RotationUnit) pattern.findThenEvaluate("INNER.INNER.ANGLE", null, ctx);
+        Entity entity = (Entity) pattern.findThenEvaluate("INNER.ENTITY", null, ctx, null);
+        CoordinateSet pos = (CoordinateSet) pattern.findThenEvaluate("INNER.INNER.COORDINATE_SET", null, ctx, null);
+        RotationUnit angle = (RotationUnit) pattern.findThenEvaluate("INNER.INNER.ANGLE", null, ctx, null);
 
         try {
             return new SpawnpointCommand(entity, pos, angle);

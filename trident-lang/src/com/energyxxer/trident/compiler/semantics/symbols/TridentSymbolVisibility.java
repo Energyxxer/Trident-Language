@@ -20,7 +20,7 @@ public class TridentSymbolVisibility {
 
         @Override
         public boolean isVisibleFromSummaryBlock(SummarySymbol symbol, Path fromPath, int inFileIndex) {
-            return (symbol.getStartIndex() <= inFileIndex || symbol.getDeclarationPattern().getStringLocation().index == inFileIndex) || !Objects.equals(fromPath, symbol.getParentFileSummary().getFileLocation());
+            return (symbol.getStartIndex() <= inFileIndex || symbol.getStringBounds().start.index == inFileIndex) || !Objects.equals(fromPath, symbol.getParentFileSummary().getFileLocation());
         }
 
         @Override

@@ -7,11 +7,11 @@ import com.energyxxer.enxlex.pattern_matching.structures.TokenPattern;
 
 import java.util.Collection;
 
-public interface ExecuteModifierDefinition extends PatternSwitchProviderUnit {
+public interface ExecuteModifierDefinition extends PatternSwitchProviderUnit<ISymbolContext> {
     Collection<ExecuteModifier> parse(TokenPattern<?> pattern, ISymbolContext ctx);
 
     @Override
-    default Object evaluate(TokenPattern<?> tokenPattern, Object... data) {
-        return parse(tokenPattern, (ISymbolContext) data[0]);
+    default Object evaluate(TokenPattern<?> tokenPattern, ISymbolContext ctx, Object[] data) {
+        return parse(tokenPattern, ctx);
     }
 }

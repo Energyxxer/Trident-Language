@@ -57,6 +57,6 @@ public class LocateBiomeCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return new LocateBiomeCommand((Type) pattern.find("BIOME").evaluate(ctx));
+        return new LocateBiomeCommand((Type) pattern.find("BIOME").evaluate(ctx, null));
     }
 }

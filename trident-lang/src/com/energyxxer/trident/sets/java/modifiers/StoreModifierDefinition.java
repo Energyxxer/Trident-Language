@@ -37,12 +37,11 @@ public class StoreModifierDefinition implements SimpleExecuteModifierDefinition 
                                 TridentProductions.noToken().addTags("cspn:Bossbar"),
                                 productions.getOrCreateStructure("RESOURCE_LOCATION"),
                                 enumChoice(ExecuteStoreBossbar.BossbarVariable.class).setName("BOSSBAR_VARIABLE")
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            ExecuteStore.StoreValue storeValue = (ExecuteStore.StoreValue) d[1];
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            ExecuteStore.StoreValue storeValue = (ExecuteStore.StoreValue) d[0];
 
-                            ResourceLocation bossbarLoc = (ResourceLocation) p.find("RESOURCE_LOCATION").evaluate(ctx);
-                            ExecuteStoreBossbar.BossbarVariable bossbarVariable = (ExecuteStoreBossbar.BossbarVariable) p.find("BOSSBAR_VARIABLE").evaluate();
+                            ResourceLocation bossbarLoc = (ResourceLocation) p.find("RESOURCE_LOCATION").evaluate(ctx, null);
+                            ExecuteStoreBossbar.BossbarVariable bossbarVariable = (ExecuteStoreBossbar.BossbarVariable) p.find("BOSSBAR_VARIABLE").evaluate(ctx, null);
 
                             BossbarReference bossbar = new BossbarReference(ctx.get(SetupModuleTask.INSTANCE).getNamespace(bossbarLoc.namespace), bossbarLoc.body);
 
@@ -53,12 +52,11 @@ public class StoreModifierDefinition implements SimpleExecuteModifierDefinition 
                                 productions.getOrCreateStructure("NBT_PATH"),
                                 optionalType,
                                 wrapperOptional(TridentProductions.real(productions).addTags("cspn:Scale")).setName("SCALE")
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            ExecuteStore.StoreValue storeValue = (ExecuteStore.StoreValue) d[1];
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            ExecuteStore.StoreValue storeValue = (ExecuteStore.StoreValue) d[0];
 
-                            DataHolder holder = (DataHolder) p.find("DATA_HOLDER").evaluate(ctx);
-                            NBTPath path = (NBTPath) p.find("NBT_PATH").evaluate(ctx);
+                            DataHolder holder = (DataHolder) p.find("DATA_HOLDER").evaluate(ctx, null);
+                            NBTPath path = (NBTPath) p.find("NBT_PATH").evaluate(ctx, null);
 
                             Object unboxedHolder =
                                     holder instanceof DataHolderEntity ?
@@ -70,7 +68,7 @@ public class StoreModifierDefinition implements SimpleExecuteModifierDefinition 
                                                             : null;
 
                             NumericNBTType type = parseNumericType(p.find("NUMERIC_TYPE"), unboxedHolder, path, ctx, p, true);
-                            double scale = (double) p.findThenEvaluate("SCALE", 1.0, ctx);
+                            double scale = (double) p.findThenEvaluate("SCALE", 1.0, ctx, null);
                             try {
                                 return new ExecuteStoreDataHolder(storeValue, holder, path, type, scale);
                             } catch (CommodoreException x) {
@@ -83,18 +81,20 @@ public class StoreModifierDefinition implements SimpleExecuteModifierDefinition 
                         group(
                                 literal("score"),
                                 productions.getOrCreateStructure("SCORE")
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            ExecuteStore.StoreValue storeValue = (ExecuteStore.StoreValue) d[1];
-                            LocalScore score = (LocalScore) p.find("SCORE").evaluate(ctx);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            ExecuteStore.StoreValue storeValue = (ExecuteStore.StoreValue) d[0];
+                            LocalScore score = (LocalScore) p.find("SCORE").evaluate(ctx, null);
                             return new ExecuteStoreScore(storeValue, score);
                         })
                 ).setName("INNER")
         ).setSimplificationFunction(d -> {
-            ISymbolContext ctx = (ISymbolContext) d.data[0];
-            ExecuteStore.StoreValue storeValue = (ExecuteStore.StoreValue) d.pattern.find("STORE_VALUE").evaluate();
-            d.pattern = d.pattern.find("INNER");
-            d.data = new Object[] {ctx, storeValue};
+            TokenPattern<?> pattern = d.pattern;
+            ISymbolContext ctx = (ISymbolContext) d.ctx;
+
+            d.unlock(); d = null;
+            ExecuteStore.StoreValue storeValue = (ExecuteStore.StoreValue) pattern.find("STORE_VALUE").evaluate(ctx, null);
+
+            TokenPattern.SimplificationDomain.get(pattern.find("INNER"), ctx, new Object[] {storeValue});
         });
     }
 
@@ -107,6 +107,6 @@ public class StoreModifierDefinition implements SimpleExecuteModifierDefinition 
         if(pattern == null) {
             return CommonParsers.getNumericType(body, path, ctx, outer, strict);
         }
-        return (NumericNBTType) pattern.evaluate(ctx);
+        return (NumericNBTType) pattern.evaluate(ctx, null);
     }
 }

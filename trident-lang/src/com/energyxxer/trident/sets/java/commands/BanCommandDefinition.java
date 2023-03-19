@@ -29,14 +29,14 @@ public class BanCommandDefinition implements SimpleCommandDefinition {
         return group(
                 TridentProductions.commandHeader("ban"),
                 productions.getOrCreateStructure("ENTITY"),
-                group(TridentProductions.sameLine(), ofType(TRAILING_STRING).setEvaluator((p, d) -> p.flatten(false))).setSimplificationFunctionContentIndex(1).setOptional().setName("REASON").addTags("cspn:Reason")
+                group(TridentProductions.sameLine(), ofType(TRAILING_STRING).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false))).setSimplificationFunctionContentIndex(1).setOptional().setName("REASON").addTags("cspn:Reason")
         );
     }
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        Entity player = (Entity) pattern.find("ENTITY").evaluate(ctx);
-        String reason = (String) pattern.findThenEvaluate("REASON", null, ctx);
+        Entity player = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
+        String reason = (String) pattern.findThenEvaluate("REASON", null, ctx, null);
 
         try {
             return new BanCommand(player, reason);

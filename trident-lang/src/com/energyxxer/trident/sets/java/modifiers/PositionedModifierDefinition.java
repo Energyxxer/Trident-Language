@@ -30,9 +30,8 @@ public class PositionedModifierDefinition implements SimpleExecuteModifierDefini
                         group(
                                 literal("as").setOptional(),
                                 productions.getOrCreateStructure("ENTITY")
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity entity = (Entity) p.find("ENTITY").evaluate(ctx, null);
                             try {
                                 return new ExecutePositionedAsEntity(entity);
                             } catch (CommodoreException x) {
@@ -44,13 +43,13 @@ public class PositionedModifierDefinition implements SimpleExecuteModifierDefini
                         }),
                         productions.getOrCreateStructure("COORDINATE_SET"),
                         PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"),
-                                d -> new Object[] {d[0]},
-                                (v, p, d) -> {
+                                d -> null,
+                                (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                         if (v instanceof CoordinateSet) return (CoordinateSet) v;
                                         try {
                                             return new ExecutePositionedAsEntity((Entity) v);
                                         } catch (CommodoreException x) {
-                                            TridentExceptionUtil.handleCommodoreException(x, p, (ISymbolContext) d[0])
+                                            TridentExceptionUtil.handleCommodoreException(x, p, null)
                                                     .invokeThrow();
                                             return null;
                                         }

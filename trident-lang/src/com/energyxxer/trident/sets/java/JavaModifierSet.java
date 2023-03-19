@@ -51,15 +51,14 @@ public class JavaModifierSet extends PatternSwitchProviderSet {
         productions.getOrCreateStructure("MODIFIER").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.CONTEXT_MODIFIER);
 
         productions.getOrCreateStructure("MODIFIER_LIST").add(
-                list(productions.getOrCreateStructure("MODIFIER")).setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
+                list(productions.getOrCreateStructure("MODIFIER")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     ArrayList<ExecuteModifier> modifiers = new ArrayList<>();
                     for(TokenPattern<?> rawModifier : ((TokenList) p).getContents()) {
                         Object evaluationResult = null;
                         try {
-                            evaluationResult = rawModifier.evaluate((ISymbolContext) d[0], null);
+                            evaluationResult = rawModifier.evaluate(ctx, null);
                         } catch(CommodoreException x) {
-                            TridentExceptionUtil.handleCommodoreException(x, p, (ISymbolContext) d[0])
+                            TridentExceptionUtil.handleCommodoreException(x, p, ctx)
                                     .invokeThrow();
                         }
                         if(evaluationResult instanceof ExecuteModifier) {

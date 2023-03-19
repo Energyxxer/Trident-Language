@@ -65,7 +65,7 @@ public class DefineInstruction implements InstructionDefinition {
                 group(literal("default"), literal("name"), productions.getOrCreateStructure("TEXT_COMPONENT")).setName("DEFAULT_NAME"),
                 group(literal("var"), SYMBOL_MODIFIER_LIST, identifierX().setName("SYMBOL_NAME").addTags("cspn:Field Name"), productions.getPatternMatch("INFERRABLE_TYPE_CONSTRAINTS"), optional(TridentProductions.equals(), choice(productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE"), productions.getOrCreateStructure("INTERPOLATION_BLOCK")).setName("INITIAL_VALUE")).setName("SYMBOL_INITIALIZATION")).setName("ENTITY_FIELD"),
                 group(literal("eval"), productions.getOrCreateStructure("LINE_SAFE_INTERPOLATION_VALUE")).setName("ENTITY_EVAL"),
-                group(literal("on"), PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_VALUE"), false, EntityEvent.class).setName("EVENT_NAME"), group(productions.getOrCreateStructure("MODIFIER_LIST")).setName("EVENT_MODIFIERS").setEvaluator((p, d) -> p.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, d)), literal("function"),
+                group(literal("on"), PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_VALUE"), false, EntityEvent.class).setName("EVENT_NAME"), group(productions.getOrCreateStructure("MODIFIER_LIST")).setName("EVENT_MODIFIERS").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx, d)), literal("function"),
                         productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION")).setName("ENTITY_EVENT_IMPLEMENTATION"),
                 productions.getOrCreateStructure("COMMENT"),
                 group(choice(group(literal("ticking"), wrapperOptional(productions.getOrCreateStructure("TIME")).setName("TICKING_INTERVAL"), wrapperOptional(productions.getOrCreateStructure("MODIFIER_LIST")).setName("TICKING_MODIFIERS")).setName("TICKING_ENTITY_FUNCTION")).setOptional().setName("ENTITY_FUNCTION_MODIFIER"), literal("function"), productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION")).setName("ENTITY_INNER_FUNCTION")
@@ -85,7 +85,7 @@ public class DefineInstruction implements InstructionDefinition {
                         choice(
                                 group(literal("on"), choice(
                                         group(choice("used", "broken", "crafted", "dropped", "picked_up").setName("ITEM_CRITERIA_KEY")).setName("ITEM_CRITERIA")
-                                ).setName("FUNCTION_ON_INNER"), literal("pure").setOptional(), group(productions.getOrCreateStructure("MODIFIER_LIST")).setEvaluator((p, d) -> p.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, d)).setName("EVENT_MODIFIERS")).setName("FUNCTION_ON")
+                                ).setName("FUNCTION_ON_INNER"), literal("pure").setOptional(), group(productions.getOrCreateStructure("MODIFIER_LIST")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.findThenEvaluateLazyDefault("MODIFIER_LIST", ArrayList::new, ctx, d)).setName("EVENT_MODIFIERS")).setName("FUNCTION_ON")
                         ).setOptional().setName("INNER_FUNCTION_MODIFIERS"),
                         literal("function"),
                         productions.getOrCreateStructure("OPTIONAL_NAME_INNER_FUNCTION")).setName("ITEM_INNER_FUNCTION"),
@@ -484,14 +484,14 @@ public class DefineInstruction implements InstructionDefinition {
     }
 
     private void defineObjective(TokenPattern<?> pattern, ISymbolContext ctx) {
-        String objectiveName = (String) pattern.find("OBJECTIVE_NAME.IDENTIFIER_A").evaluate(ctx);
+        String objectiveName = (String) pattern.find("OBJECTIVE_NAME.IDENTIFIER_A").evaluate(ctx, null);
         String criteria = "dummy";
         TextComponent displayName = null;
 
         TokenPattern<?> sub = pattern.find("");
         if(sub != null) {
-            criteria = (String) sub.find("CRITERIA.IDENTIFIER_B").evaluate(ctx);
-            displayName = (TextComponent) sub.findThenEvaluate(".TEXT_COMPONENT", null, ctx);
+            criteria = (String) sub.find("CRITERIA.IDENTIFIER_B").evaluate(ctx, null);
+            displayName = (TextComponent) sub.findThenEvaluate(".TEXT_COMPONENT", null, ctx, null);
         }
 
         if(ctx.get(SetupModuleTask.INSTANCE).getObjectiveManager().exists(objectiveName)) {

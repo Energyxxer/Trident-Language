@@ -31,41 +31,38 @@ public class TitleCommandDefinition implements SimpleCommandDefinition {
                 TridentProductions.commandHeader("title"),
                 productions.getOrCreateStructure("ENTITY"),
                 choice(
-                        group(enumChoice(TitleShowCommand.Display.class).setName("DISPLAY"), productions.getOrCreateStructure("TEXT_COMPONENT")).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity entity = (Entity) d[1];
+                        group(enumChoice(TitleShowCommand.Display.class).setName("DISPLAY"), productions.getOrCreateStructure("TEXT_COMPONENT")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity entity = (Entity) d[0];
 
-                            TitleShowCommand.Display display = (TitleShowCommand.Display) p.find("DISPLAY").evaluate();
-                            TextComponent text = (TextComponent) p.find("TEXT_COMPONENT").evaluate(ctx);
+                            TitleShowCommand.Display display = (TitleShowCommand.Display) p.find("DISPLAY").evaluate(ctx, null);
+                            TextComponent text = (TextComponent) p.find("TEXT_COMPONENT").evaluate(ctx, null);
 
                             try {
                                 return new TitleShowCommand(entity, display, text);
                             } catch (CommodoreException x) {
                                 TridentExceptionUtil.handleCommodoreException(x, p, ctx)
-                                        .map(CommodoreException.Source.ENTITY_ERROR, (TokenPattern<?>) d[2])
+                                        .map(CommodoreException.Source.ENTITY_ERROR, (TokenPattern<?>) d[1])
                                         .invokeThrow();
                                 return null;
                             }
                         }),
-                        choice(literal("clear").setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity entity = (Entity) d[1];
+                        choice(literal("clear").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity entity = (Entity) d[0];
                             try {
                                 return new TitleClearCommand(entity);
                             } catch (CommodoreException x) {
                                 TridentExceptionUtil.handleCommodoreException(x, p, ctx)
-                                        .map(CommodoreException.Source.ENTITY_ERROR, (TokenPattern<?>) d[2])
+                                        .map(CommodoreException.Source.ENTITY_ERROR, (TokenPattern<?>) d[1])
                                         .invokeThrow();
                                 return null;
                             }
-                        }), literal("reset").setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity entity = (Entity) d[1];
+                        }), literal("reset").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity entity = (Entity) d[0];
                             try {
                                 return new TitleResetCommand(entity);
                             } catch (CommodoreException x) {
                                 TridentExceptionUtil.handleCommodoreException(x, p, ctx)
-                                        .map(CommodoreException.Source.ENTITY_ERROR, (TokenPattern<?>) d[2])
+                                        .map(CommodoreException.Source.ENTITY_ERROR, (TokenPattern<?>) d[1])
                                         .invokeThrow();
                                 return null;
                             }
@@ -75,17 +72,16 @@ public class TitleCommandDefinition implements SimpleCommandDefinition {
                                 TridentProductions.integer(productions).setName("FADE_IN").addTags("cspn:Fade In"),
                                 TridentProductions.integer(productions).setName("STAY").addTags("cspn:Stay"),
                                 TridentProductions.integer(productions).setName("FADE_OUT").addTags("cspn:Fade Out")
-                        ).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity entity = (Entity) d[1];
-                            int in = (int) p.find("FADE_IN").evaluate(ctx);
-                            int stay = (int) p.find("STAY").evaluate(ctx);
-                            int out = (int) p.find("FADE_OUT").evaluate(ctx);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity entity = (Entity) d[0];
+                            int in = (int) p.find("FADE_IN").evaluate(ctx, null);
+                            int stay = (int) p.find("STAY").evaluate(ctx, null);
+                            int out = (int) p.find("FADE_OUT").evaluate(ctx, null);
                             try {
                                 return new TitleTimesCommand(entity, in, stay, out);
                             } catch (CommodoreException x) {
                                 TridentExceptionUtil.handleCommodoreException(x, p, ctx)
-                                        .map(CommodoreException.Source.ENTITY_ERROR, (TokenPattern<?>) d[2])
+                                        .map(CommodoreException.Source.ENTITY_ERROR, (TokenPattern<?>) d[1])
                                         .map("FADE_IN", p.tryFind("FADE_IN"))
                                         .map("STAY", p.tryFind("STAY"))
                                         .map("FADE_OUT", p.tryFind("FADE_OUT"))
@@ -95,12 +91,14 @@ public class TitleCommandDefinition implements SimpleCommandDefinition {
                         })
                 ).setName("INNER")
         ).setSimplificationFunction(d -> {
-            ISymbolContext ctx = (ISymbolContext) d.data[0];
-            TokenPattern<?> entityPattern = d.pattern.find("ENTITY");
-            Entity entity = (Entity) entityPattern.evaluate(ctx);
+            TokenPattern<?> pattern = d.pattern;
+            ISymbolContext ctx = (ISymbolContext) d.ctx;
 
-            d.data = new Object[]{ctx, entity, entityPattern};
-            d.pattern = d.pattern.find("INNER");
+            d.unlock(); d = null;
+            TokenPattern<?> entityPattern = pattern.find("ENTITY");
+            Entity entity = (Entity) entityPattern.evaluate(ctx, null);
+
+            TokenPattern.SimplificationDomain.get(pattern.find("INNER"), ctx, new Object[] {entity, entityPattern});
         });
     }
 

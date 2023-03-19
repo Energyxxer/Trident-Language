@@ -36,24 +36,21 @@ public class ExperienceCommandDefinition implements SimpleCommandDefinition {
         return group(
                 choice(TridentProductions.commandHeader("experience"), TridentProductions.commandHeader("xp")),
                 choice(
-                        group(literal("add"), productions.getOrCreateStructure("ENTITY"), TridentProductions.integer(productions).setName("AMOUNT").addTags("cspn:Amount"), unitMatch).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity player = (Entity) p.find("ENTITY").evaluate(ctx);
-                            int amount = (int) p.find("AMOUNT").evaluate(ctx);
-                            ExperienceCommand.Unit unit = (ExperienceCommand.Unit) p.findThenEvaluate("UNIT", ExperienceCommand.Unit.POINTS, ctx);
+                        group(literal("add"), productions.getOrCreateStructure("ENTITY"), TridentProductions.integer(productions).setName("AMOUNT").addTags("cspn:Amount"), unitMatch).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity player = (Entity) p.find("ENTITY").evaluate(ctx, null);
+                            int amount = (int) p.find("AMOUNT").evaluate(ctx, null);
+                            ExperienceCommand.Unit unit = (ExperienceCommand.Unit) p.findThenEvaluate("UNIT", ExperienceCommand.Unit.POINTS, ctx, null);
                             return new ExperienceAddCommand(player, amount, unit);
                         }),
-                        group(literal("set"), productions.getOrCreateStructure("ENTITY"), TridentProductions.integer(productions).setName("AMOUNT").addTags("cspn:Amount"), unitMatch).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity player = (Entity) p.find("ENTITY").evaluate(ctx);
-                            int amount = (int) p.find("AMOUNT").evaluate(ctx);
-                            ExperienceCommand.Unit unit = (ExperienceCommand.Unit) p.findThenEvaluate("UNIT", ExperienceCommand.Unit.POINTS, ctx);
+                        group(literal("set"), productions.getOrCreateStructure("ENTITY"), TridentProductions.integer(productions).setName("AMOUNT").addTags("cspn:Amount"), unitMatch).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity player = (Entity) p.find("ENTITY").evaluate(ctx, null);
+                            int amount = (int) p.find("AMOUNT").evaluate(ctx, null);
+                            ExperienceCommand.Unit unit = (ExperienceCommand.Unit) p.findThenEvaluate("UNIT", ExperienceCommand.Unit.POINTS, ctx, null);
                             return new ExperienceSetCommand(player, amount, unit);
                         }),
-                        group(literal("query"), productions.getOrCreateStructure("ENTITY"), unitMatch).setEvaluator((p, d) -> {
-                            ISymbolContext ctx = (ISymbolContext) d[0];
-                            Entity player = (Entity) p.find("ENTITY").evaluate(ctx);
-                            ExperienceCommand.Unit unit = (ExperienceCommand.Unit) p.findThenEvaluate("UNIT", ExperienceCommand.Unit.POINTS, ctx);
+                        group(literal("query"), productions.getOrCreateStructure("ENTITY"), unitMatch).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Entity player = (Entity) p.find("ENTITY").evaluate(ctx, null);
+                            ExperienceCommand.Unit unit = (ExperienceCommand.Unit) p.findThenEvaluate("UNIT", ExperienceCommand.Unit.POINTS, ctx, null);
                             return new ExperienceQueryCommand(player, unit);
                         })
                 ).setName("INNER")

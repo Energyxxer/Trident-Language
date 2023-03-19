@@ -28,6 +28,6 @@ public class AsModifierDefinition implements SimpleExecuteModifierDefinition {
 
     @Override
     public ExecuteModifier parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return new ExecuteAsEntity((Entity) pattern.find("ENTITY").evaluate(ctx));
+        return new ExecuteAsEntity((Entity) pattern.find("ENTITY").evaluate(ctx, null));
     }
 }

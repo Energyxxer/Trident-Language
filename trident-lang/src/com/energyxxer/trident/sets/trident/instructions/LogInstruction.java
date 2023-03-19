@@ -21,7 +21,7 @@ public class LogInstruction implements InstructionDefinition {
 
     @Override
     public void run(TokenPattern<?> pattern, ISymbolContext ctx) {
-        String message = ctx.getTypeSystem().castToString(pattern.find("INTERPOLATION_VALUE").evaluate(ctx), pattern, ctx);
+        String message = ctx.getTypeSystem().castToString(pattern.find("INTERPOLATION_VALUE").evaluate(ctx, null), pattern, ctx);
         NoticeType type;
 
         switch(pattern.find("NOTICE_GROUP").flatten(false)) {

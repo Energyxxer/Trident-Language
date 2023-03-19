@@ -19,7 +19,7 @@ public class MinecraftWrapperLiteralSet extends PatternProviderSet {
 
         final Consumer<TokenPattern.SimplificationDomain> wrapperSimplification = (d) -> {
             d.pattern = ((TokenGroup) d.pattern).getContents()[2];
-            d.data = new Object[] {(ISymbolContext) d.data[0]};
+            d.data = null;
         };
 
         //resource
@@ -28,9 +28,8 @@ public class MinecraftWrapperLiteralSet extends PatternProviderSet {
         //entity
         importUnit((productions, worker) -> group(literal("entity").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("LIMITED_ENTITY"), TridentProductions.brace(">")).setName("WRAPPED_ENTITY").addTags("primitive:entity").setSimplificationFunction(wrapperSimplification));
         importUnit((productions, worker) -> group(literal("selector_argument").setName("VALUE_WRAPPER_KEY").setRecessive(), TridentProductions.brace("<").setRecessive(), productions.getOrCreateStructure("SELECTOR_ARGUMENT"), TridentProductions.brace(">")).setName("WRAPPED_SELECTOR_ARGUMENT").addTags("primitive:selector_argument")
-                .setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
-                    return ctx.getTypeSystem().sanitizeObject(p.find("SELECTOR_ARGUMENT").evaluate(ctx));
+                .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                    return ctx.getTypeSystem().sanitizeObject(p.find("SELECTOR_ARGUMENT").evaluate(ctx, null));
                 }));
 
         //block
@@ -39,7 +38,7 @@ public class MinecraftWrapperLiteralSet extends PatternProviderSet {
         //item
         importUnit((productions, worker) -> group(literal("item").setName("VALUE_WRAPPER_KEY"), TridentProductions.brace("<"), productions.getOrCreateStructure("ITEM_TAGGED"), TridentProductions.brace(">")).setName("WRAPPED_ITEM").addTags("primitive:item").setSimplificationFunction(d -> {
             d.pattern = ((TokenGroup) d.pattern).getContents()[2];
-            d.data = new Object[] {(ISymbolContext) d.data[0], NBTMode.SETTING};
+            d.data = new Object[] {NBTMode.SETTING};
         }));
 
         //text component

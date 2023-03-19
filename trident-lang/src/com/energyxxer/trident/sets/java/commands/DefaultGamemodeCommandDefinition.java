@@ -26,6 +26,6 @@ public class DefaultGamemodeCommandDefinition implements SimpleCommandDefinition
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        return new DefaultGamemodeCommand((Type) pattern.find("GAMEMODE_ID").evaluate(ctx));
+        return new DefaultGamemodeCommand((Type) pattern.find("GAMEMODE_ID").evaluate(ctx, null));
     }
 }

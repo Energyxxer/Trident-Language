@@ -44,7 +44,7 @@ public class JsonLiteralSet extends PatternProviderSet {
                 g.append(new TokenListMatch(g2, TridentProductions.comma(), true).setName("JSON_OBJECT_ENTRIES"));
             }
             g.append(TridentProductions.brace("}"));
-            g.setEvaluator((p, d) -> parseJsonObject(p, (ISymbolContext) d[0]));
+            g.setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseJsonObject(p, ctx));
             JSON_ELEMENT.add(g);
             JSON_ROOT.add(g);
         }
@@ -53,20 +53,20 @@ public class JsonLiteralSet extends PatternProviderSet {
             g.append(TridentProductions.brace("["));
             g.append(new TokenListMatch(JSON_ELEMENT, TridentProductions.comma(), true).setName("JSON_ARRAY_ENTRIES"));
             g.append(TridentProductions.brace("]"));
-            g.setEvaluator((p, d) -> parseJsonArray(p, (ISymbolContext) d[0]));
+            g.setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseJsonArray(p, ctx));
             JSON_ELEMENT.add(g);
             JSON_ROOT.add(g);
         }
-        JSON_ELEMENT.add(group(TridentProductions.string(productions)).setEvaluator((p, d) -> new JsonPrimitive((String) ((TokenGroup)p).getContents()[0].evaluate(d))));
-        JSON_ROOT.add(group(TridentProductions.string(productions)).setEvaluator((p, d) -> new JsonPrimitive((String) ((TokenGroup)p).getContents()[0].evaluate(d))));
-        JSON_ELEMENT.add(group(TridentProductions.real(productions)).setEvaluator((p, d) -> new JsonPrimitive((double) ((TokenGroup)p).getContents()[0].evaluate(d))));
-        JSON_ELEMENT.add(PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), d -> new Object[] {d[0]}, (v, p, d) -> parseJsonInterpolationBlock(v, p, (ISymbolContext) d[0]), false, Double.class, Integer.class, Boolean.class, String.class));
-        JSON_ELEMENT.add(group(TridentProductions.rawBoolean()).setEvaluator((p, d) -> new JsonPrimitive((boolean) ((TokenGroup)p).getContents()[0].evaluate(d))));
-        JSON_ELEMENT.add(ofType(JSON_NUMBER).setName("JSON_NUMBER").setEvaluator((p, d) -> new CustomJSONNumber(p.flatten(false))));
+        JSON_ELEMENT.add(group(TridentProductions.string(productions)).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new JsonPrimitive((String) ((TokenGroup)p).getContents()[0].evaluate(ctx, d))));
+        JSON_ROOT.add(group(TridentProductions.string(productions)).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new JsonPrimitive((String) ((TokenGroup)p).getContents()[0].evaluate(ctx, d))));
+        JSON_ELEMENT.add(group(TridentProductions.real(productions)).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new JsonPrimitive((double) ((TokenGroup)p).getContents()[0].evaluate(ctx, d))));
+        JSON_ELEMENT.add(PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), d -> null, (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseJsonInterpolationBlock(v, p, ctx), false, Double.class, Integer.class, Boolean.class, String.class));
+        JSON_ELEMENT.add(group(TridentProductions.rawBoolean()).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new JsonPrimitive((boolean) ((TokenGroup)p).getContents()[0].evaluate(ctx, d))));
+        JSON_ELEMENT.add(ofType(JSON_NUMBER).setName("JSON_NUMBER").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new CustomJSONNumber(p.flatten(false))));
     }
 
 
-    private static HashMap<JsonElement, TokenPattern<?>> patternCache = new HashMap<>();
+    private static final HashMap<JsonElement, TokenPattern<?>> patternCache = new HashMap<>();
 
     public static JsonElement parseJsonInterpolationBlock(Object object, TokenPattern<?> pattern, ISymbolContext ctx) {
         if (object instanceof Double) return new JsonPrimitive((Double) object);
@@ -82,8 +82,8 @@ public class JsonLiteralSet extends PatternProviderSet {
         TokenList entries = (TokenList) pattern.find("JSON_OBJECT_ENTRIES");
         if (entries != null) {
             for (TokenPattern<?> entry : entries.getContentsExcludingSeparators()) {
-                String key = (String) entry.find("JSON_OBJECT_KEY").evaluate(ctx);
-                JsonElement value = (JsonElement) entry.find("JSON_ELEMENT").evaluate(ctx);
+                String key = (String) entry.find("JSON_OBJECT_KEY").evaluate(ctx, null);
+                JsonElement value = (JsonElement) entry.find("JSON_ELEMENT").evaluate(ctx, null);
                 object.add(key, value);
             }
         }
@@ -98,7 +98,7 @@ public class JsonLiteralSet extends PatternProviderSet {
         if (entries != null) {
             for (TokenPattern<?> entry : entries.getContents()) {
                 if (!entry.getName().equals("COMMA")) {
-                    arr.add((JsonElement) entry.evaluate(ctx));
+                    arr.add((JsonElement) entry.evaluate(ctx, null));
                 }
             }
         }

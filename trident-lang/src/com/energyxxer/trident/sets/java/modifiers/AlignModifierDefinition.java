@@ -23,7 +23,7 @@ public class AlignModifierDefinition implements SimpleExecuteModifierDefinition 
     public TokenPatternMatch createPatternMatch(PrismarineProductions productions, PrismarineProjectWorker worker) {
         return group(
                 TridentProductions.modifierHeader("align"),
-                ofType(SWIZZLE).addTags("cspn:Axes").setName("SWIZZLE").setEvaluator((p, d) -> {
+                ofType(SWIZZLE).addTags("cspn:Axes").setName("SWIZZLE").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     String flat = p.flatten(false);
                     return new boolean[]{flat.contains("x"), flat.contains("y"), flat.contains("z")};
                 })
@@ -32,7 +32,7 @@ public class AlignModifierDefinition implements SimpleExecuteModifierDefinition 
 
     @Override
     public ExecuteModifier parseSingle(TokenPattern<?> pattern, ISymbolContext ctx) {
-        boolean[] swizzle = (boolean[]) pattern.find("SWIZZLE").evaluate(ctx);
+        boolean[] swizzle = (boolean[]) pattern.find("SWIZZLE").evaluate(ctx, null);
         return new ExecuteAlignment(swizzle[0], swizzle[1], swizzle[2]);
     }
 }

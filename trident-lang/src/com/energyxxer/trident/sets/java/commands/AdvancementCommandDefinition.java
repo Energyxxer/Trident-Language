@@ -31,8 +31,8 @@ public class AdvancementCommandDefinition implements SimpleCommandDefinition {
         return group(
                 TridentProductions.commandHeader("advancement"),
                 choice(
-                        literal("grant").setEvaluator((p, d) -> AdvancementCommand.Action.GRANT),
-                        literal("revoke").setEvaluator((p, d) -> AdvancementCommand.Action.REVOKE)
+                        literal("grant").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> AdvancementCommand.Action.GRANT),
+                        literal("revoke").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> AdvancementCommand.Action.REVOKE)
                 ).setName("ACTION"),
                 productions.getOrCreateStructure("ENTITY"),
                 choice(
@@ -55,7 +55,7 @@ public class AdvancementCommandDefinition implements SimpleCommandDefinition {
                                         list(
                                                 TridentProductions.identifierC().addTags("cspn:Criterion"),
                                                 TridentProductions.sameLine()
-                                        ).setName("CRITERIA_LIST").setEvaluator((p, d) -> {
+                                        ).setName("CRITERIA_LIST").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                             ArrayList<String> criteria = new ArrayList<>();
                                             for (TokenPattern<?> criterion : ((TokenList) p).getContentsExcludingSeparators()) {
                                                 criteria.add(criterion.flatten(false));
@@ -68,31 +68,29 @@ public class AdvancementCommandDefinition implements SimpleCommandDefinition {
         );
     }
 
-    private static Command everythingBranch(TokenPattern<?> pattern, Object... data) {
-        return new AdvancementCommand((AdvancementCommand.Action) data[1], (Entity) data[2], AdvancementCommand.Limit.EVERYTHING);
+    private static Command everythingBranch(TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) {
+        return new AdvancementCommand((AdvancementCommand.Action) data[0], (Entity) data[1], AdvancementCommand.Limit.EVERYTHING);
     }
 
-    private static Command fromToUntilBranch(TokenPattern<?> pattern, Object... data) {
-        return new AdvancementCommand((AdvancementCommand.Action) data[1], (Entity) data[2], (AdvancementCommand.Limit) pattern.find("LIMIT").evaluate(), ((ResourceLocation) pattern.find("RESOURCE_LOCATION").evaluate((ISymbolContext) data[0])).toString());
+    private static Command fromToUntilBranch(TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) {
+        return new AdvancementCommand((AdvancementCommand.Action) data[0], (Entity) data[1], (AdvancementCommand.Limit) pattern.find("LIMIT").evaluate(ctx, null), ((ResourceLocation) pattern.find("RESOURCE_LOCATION").evaluate(ctx, null)).toString());
     }
 
-    private static Command onlyBranch(TokenPattern<?> pattern, Object... data) {
-        ISymbolContext ctx = (ISymbolContext) data[0];
-
-        ResourceLocation advancement = (ResourceLocation) pattern.find("RESOURCE_LOCATION").evaluate(ctx);
-        ArrayList<String> criteria = (ArrayList<String>) pattern.findThenEvaluate("CRITERIA", null, (ISymbolContext) data[0]);
+    private static Command onlyBranch(TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) {
+        ResourceLocation advancement = (ResourceLocation) pattern.find("RESOURCE_LOCATION").evaluate(ctx, null);
+        ArrayList<String> criteria = (ArrayList<String>) pattern.findThenEvaluate("CRITERIA", null, ctx, null);
         if(criteria == null) criteria = new ArrayList<>();
 
-        return new AdvancementCommand((AdvancementCommand.Action) data[1], (Entity) data[2], AdvancementCommand.Limit.ONLY, advancement.toString(), criteria);
+        return new AdvancementCommand((AdvancementCommand.Action) data[0], (Entity) data[1], AdvancementCommand.Limit.ONLY, advancement.toString(), criteria);
     }
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        AdvancementCommand.Action action = (AdvancementCommand.Action) pattern.find("ACTION").evaluate();
-        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx);
+        AdvancementCommand.Action action = (AdvancementCommand.Action) pattern.find("ACTION").evaluate(ctx, null);
+        Entity entity = (Entity) pattern.find("ENTITY").evaluate(ctx, null);
 
         try {
-            return (Command) pattern.find("INNER").evaluate(ctx, action, entity);
+            return (Command) pattern.find("INNER").evaluate(ctx, new Object[] {action, entity});
         } catch(CommodoreException x) {
             TridentExceptionUtil.handleCommodoreException(x, pattern, ctx)
                     .map(CommodoreException.Source.ENTITY_ERROR, pattern.tryFind("ENTITY"))

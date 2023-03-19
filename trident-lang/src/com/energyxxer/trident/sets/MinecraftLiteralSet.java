@@ -120,7 +120,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
 
         TokenPatternMatch RAW_RESOURCE_LOCATION = ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION")
-                .setEvaluator((p, d) -> CommonParsers.parseResourceLocation(p.flatten(false), p, (ISymbolContext) d[0]));
+                .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> CommonParsers.parseResourceLocation(p.flatten(false), p, ctx));
         
         productions.getOrCreateStructure("RESOURCE_LOCATION")
                 .add(
@@ -133,7 +133,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         productions.getOrCreateStructure("RESOURCE_LOCATION_TAGGED")
                 .add(
                         group(TridentProductions.resourceLocationFixer, optional(TridentProductions.hash().setName("TAG_HEADER"), glue()).addTags(SuggestionTags.ENABLED, TridentSuggestionTags.FUNCTION_TAG).setName("TAG_HEADER_WRAPPER"), ofType(RESOURCE_LOCATION).setName("RAW_RESOURCE_LOCATION")).setName("RAW_RESOURCE_LOCATION_TAGGED")
-                        .setEvaluator((p, d) -> CommonParsers.parseResourceLocation(p.flatten(false), p, (ISymbolContext) d[0]))
+                        .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> CommonParsers.parseResourceLocation(p.flatten(false), p, ctx))
                 )
                 .add(
                         PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, ResourceLocation.class).setName("INTERPOLATION_BLOCK_VALIDATION")
@@ -143,13 +143,13 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         TokenPatternMatch selectorArgumentBlock = optional(
                 glue(),
                 TridentProductions.brace("["),
-                list(productions.getOrCreateStructure("SELECTOR_ARGUMENT"), TridentProductions.comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST").setEvaluator((p, d) -> {
+                list(productions.getOrCreateStructure("SELECTOR_ARGUMENT"), TridentProductions.comma()).setOptional().setName("SELECTOR_ARGUMENT_LIST").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     PathContext pathContext = new PathContext().setIsSetting(false).setProtocol(PathProtocol.ENTITY);
 
-                    Selector selector = ((Selector) d[1]);
+                    Selector selector = ((Selector) d[0]);
                     for(TokenPattern<?> rawArgument : ((TokenList) p).getContentsExcludingSeparators()) {
-                        Object result = rawArgument.evaluate((ISymbolContext) d[0], pathContext);
-                        dumpSelectorArguments(selector, result, pathContext, p, ((ISymbolContext) d[0]));
+                        Object result = rawArgument.evaluate(ctx, new Object[] {pathContext});
+                        dumpSelectorArguments(selector, result, pathContext, p, ctx);
                     }
                     return null;
                 }),
@@ -162,13 +162,12 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                 ofType(SELECTOR_HEADER).setName("SELECTOR_HEADER"),
                                 selectorArgumentBlock
                         ).setEvaluator(
-                                (p, d) -> {
-                                    ISymbolContext ctx = (ISymbolContext) d[0];
+                                (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                     char header = p.find("SELECTOR_HEADER").flatten(false).charAt(1);
                                     Selector selector = new Selector(Selector.BaseSelector.getForHeader(header + ""));
 
                                     try {
-                                        p.findThenEvaluate("SELECTOR_ARGUMENT_BLOCK", null, ctx, selector);
+                                        p.findThenEvaluate("SELECTOR_ARGUMENT_BLOCK", null, ctx, new Object[] {selector});
                                     } catch(CommodoreException x) {
                                         TridentExceptionUtil.handleCommodoreException(x, p, ctx)
                                                 .invokeThrow();
@@ -183,9 +182,8 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, Entity.class, String.class).setName("INTERPOLATION_BLOCK"),
                 selectorArgumentBlock
         ).setName("ENTITY_VARIABLE").setEvaluator(
-                (p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
-                    Object symbol = p.find("INTERPOLATION_BLOCK").evaluate(ctx);
+                (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                    Object symbol = p.find("INTERPOLATION_BLOCK").evaluate(ctx, null);
                     if(symbol instanceof String) {
                         validateIdentifierB((String)symbol, p, ctx);
                     }
@@ -197,7 +195,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
                         Selector copy = ((Selector) entity).clone();
 
-                        p.find("SELECTOR_ARGUMENT_BLOCK").evaluate(ctx, copy);
+                        p.find("SELECTOR_ARGUMENT_BLOCK").evaluate(ctx, new Object[] {copy});
 
                         return copy;
                     } else return entity;
@@ -206,7 +204,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("PLAYER_NAME")
                 .add(
-                        wrapper(TridentProductions.identifierB(productions), (v, p, d) -> new PlayerName((String)v))
+                        wrapper(TridentProductions.identifierB(productions), (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new PlayerName((String)v))
                 );
 
         productions.getOrCreateStructure("ENTITY")
@@ -222,7 +220,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("LIMITED_ENTITY")
                 .add(
-                        wrapper(TridentProductions.identifierBLimited(productions), (v, p, d) -> new PlayerName((String)v))
+                        wrapper(TridentProductions.identifierBLimited(productions), (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new PlayerName((String)v))
                 )
                 .add(
                         productions.getOrCreateStructure("SELECTOR")
@@ -234,7 +232,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("TEXT_COMPONENT")
                 .add(
-                        group(productions.getOrCreateStructure("JSON_ELEMENT")).setEvaluator((p, d) -> TextParser.jsonToTextComponent((JsonElement)p.find("JSON_ELEMENT").evaluate(d), (ISymbolContext) d[0], p, TextComponentContext.CHAT))
+                        group(productions.getOrCreateStructure("JSON_ELEMENT")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TextParser.jsonToTextComponent((JsonElement)p.find("JSON_ELEMENT").evaluate(ctx, d), ctx, p, TextComponentContext.CHAT))
                 )
                 .add(
                         PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, TextComponent.class)
@@ -260,13 +258,13 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                                 ).setOptional().setName("NBT_COMPOUND_ENTRIES"),
                                                 TridentProductions.brace("}")
                                         ).setName("NBT_COMPOUND_GROUP")
-                                        .setEvaluator((p, d) -> {
+                                        .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                             TagCompound compound = new TagCompound();
                                             TokenList entries = (TokenList) p.find("NBT_COMPOUND_ENTRIES");
                                             if (entries != null) {
                                                 for (TokenPattern<?> inner : entries.getContentsExcludingSeparators()) {
-                                                    String key = (String) inner.find("NBT_KEY").evaluate((ISymbolContext) d[0]);
-                                                    NBTTag value = (NBTTag) inner.find("NBT_VALUE").evaluate((ISymbolContext) d[0]);
+                                                    String key = (String) inner.find("NBT_KEY").evaluate(ctx, null);
+                                                    NBTTag value = (NBTTag) inner.find("NBT_VALUE").evaluate(ctx, null);
                                                     value.setName(key);
                                                     compound.add(value);
                                                 }
@@ -288,12 +286,12 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                                     TridentProductions.comma()
                                             ).setOptional().setName("NBT_LIST_ENTRIES"),
                                             TridentProductions.brace("]")
-                                    ).setEvaluator((p, d) -> {
+                                    ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                         TagList list = new TagList();
                                         TokenList entries = (TokenList) p.find("NBT_LIST_ENTRIES");
                                         if (entries != null) {
                                             for (TokenPattern<?> inner : entries.getContentsExcludingSeparators()) {
-                                                list.add((NBTTag)inner.evaluate(d));
+                                                list.add((NBTTag)inner.evaluate(ctx, d));
                                             }
                                         }
                                         return list;
@@ -309,16 +307,16 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                         TridentProductions.symbol(";"),
                                         list(productions.getOrCreateStructure("NBT_VALUE"), TridentProductions.comma()).setOptional().setName("NBT_ARRAY_ENTRIES"),
                                         TridentProductions.brace("]")
-                                ).setName("NBT_BYTE_ARRAY").setEvaluator((p, d) -> {
+                                ).setName("NBT_BYTE_ARRAY").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                     TagByteArray arr = new TagByteArray();
                                     TokenList entries = (TokenList) p.find("NBT_ARRAY_ENTRIES");
                                     if (entries != null) {
                                         for (TokenPattern<?> inner : entries.getContentsExcludingSeparators()) {
-                                            NBTTag value = (NBTTag)inner.evaluate(d);
+                                            NBTTag value = (NBTTag)inner.evaluate(ctx, d);
                                             if (value instanceof TagByte) {
                                                 arr.add(value);
                                             } else {
-                                                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Expected TAG_Byte in TAG_Byte_Array, instead got " + value.getType(), inner, (ISymbolContext) d[0]);
+                                                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Expected TAG_Byte in TAG_Byte_Array, instead got " + value.getType(), inner, ctx);
                                             }
                                         }
                                     }
@@ -335,16 +333,16 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                         TridentProductions.symbol(";"),
                                         list(productions.getOrCreateStructure("NBT_VALUE"), TridentProductions.comma()).setOptional().setName("NBT_ARRAY_ENTRIES"),
                                         TridentProductions.brace("]")
-                                ).setName("NBT_INT_ARRAY").setEvaluator((p, d) -> {
+                                ).setName("NBT_INT_ARRAY").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                     TagIntArray arr = new TagIntArray();
                                     TokenList entries = (TokenList) p.find("NBT_ARRAY_ENTRIES");
                                     if (entries != null) {
                                         for (TokenPattern<?> inner : entries.getContentsExcludingSeparators()) {
-                                            NBTTag value = (NBTTag)inner.evaluate(d);
+                                            NBTTag value = (NBTTag)inner.evaluate(ctx, d);
                                             if (value instanceof TagInt) {
                                                 arr.add(value);
                                             } else {
-                                                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Expected TAG_Int in TAG_Int_Array, instead got " + value.getType(), inner, (ISymbolContext) d[0]);
+                                                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Expected TAG_Int in TAG_Int_Array, instead got " + value.getType(), inner, ctx);
                                             }
                                         }
                                     }
@@ -361,16 +359,16 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                         TridentProductions.symbol(";"),
                                         list(productions.getOrCreateStructure("NBT_VALUE"), TridentProductions.comma()).setOptional().setName("NBT_ARRAY_ENTRIES"),
                                         TridentProductions.brace("]")
-                                ).setName("NBT_LONG_ARRAY").setEvaluator((p, d) -> {
+                                ).setName("NBT_LONG_ARRAY").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                     TagLongArray arr = new TagLongArray();
                                     TokenList entries = (TokenList) p.find("NBT_ARRAY_ENTRIES");
                                     if (entries != null) {
                                         for (TokenPattern<?> inner : entries.getContentsExcludingSeparators()) {
-                                            NBTTag value = (NBTTag)inner.evaluate(d);
+                                            NBTTag value = (NBTTag)inner.evaluate(ctx, d);
                                             if (value instanceof TagLong) {
                                                 arr.add(value);
                                             } else {
-                                                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Expected TAG_Long in TAG_Long_Array, instead got " + value.getType(), inner, (ISymbolContext) d[0]);
+                                                throw new PrismarineException(PrismarineTypeSystem.TYPE_ERROR, "Expected TAG_Long in TAG_Long_Array, instead got " + value.getType(), inner, ctx);
                                             }
                                         }
                                     }
@@ -379,14 +377,14 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         );
             }
             productions.getOrCreateStructure("NBT_VALUE")
-                    .add(group(TridentProductions.string(productions)).setEvaluator((p, d) -> new TagString((String) ((TokenGroup) p).getContents()[0].evaluate(d))))
-                    .add(ofType(IDENTIFIER_TYPE_A).setName("RAW_STRING").setEvaluator((p, d) -> new TagString(p.flatten(false))))
-                    .add(ofType(TYPED_NUMBER).setName("NBT_NUMBER").setEvaluator((p, d) -> parseNumericNBTTag(p, (ISymbolContext) d[0])))
-                    .add(group(TridentProductions.rawBoolean().setName("BOOLEAN")).setEvaluator((p, d) -> new TagByte(((boolean) ((TokenGroup) p).getContents()[0].evaluate(d)) ? 1 : 0)))
+                    .add(group(TridentProductions.string(productions)).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new TagString((String) ((TokenGroup) p).getContents()[0].evaluate(ctx, d))))
+                    .add(ofType(IDENTIFIER_TYPE_A).setName("RAW_STRING").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new TagString(p.flatten(false))))
+                    .add(ofType(TYPED_NUMBER).setName("NBT_NUMBER").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseNumericNBTTag(p, ctx)))
+                    .add(group(TridentProductions.rawBoolean().setName("BOOLEAN")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new TagByte(((boolean) ((TokenGroup) p).getContents()[0].evaluate(ctx, d)) ? 1 : 0)))
                     .add(PrismarineTypeSystem.validatorGroup(
                             productions.getOrCreateStructure("INTERPOLATION_BLOCK"),
-                            d -> new Object[] {d[0]},
-                            (result, pattern, data) -> {
+                            d -> null,
+                            (Object result, TokenPattern<?> pattern, ISymbolContext ctx, Object[] data) -> {
                                 if(result instanceof Item) {
                                     return ItemTypeHandler.getSlotNBT((Item) result);
                                 } else if (result instanceof TextComponent || result instanceof String) {
@@ -403,17 +401,17 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             TokenStructureMatch NBT_PATH_NODE = productions.getOrCreateStructure("NBT_PATH_NODE");
             NBT_PATH_NODE.setGreedy(true);
 
-            TokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_D = choice(TridentProductions.string(productions), ofType(IDENTIFIER_TYPE_D).setName("IDENTIFIER_D").setEvaluator((p, d) -> p.flatten(false))).setName("STRING_LITERAL_OR_IDENTIFIER_D");
+            TokenStructureMatch STRING_LITERAL_OR_IDENTIFIER_D = choice(TridentProductions.string(productions), ofType(IDENTIFIER_TYPE_D).setName("IDENTIFIER_D").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> p.flatten(false))).setName("STRING_LITERAL_OR_IDENTIFIER_D");
 
             NBT_PATH_NODE.add(
-                    TridentProductions.dot().addTags(StandardTags.LIST_TERMINATOR).setName("NBT_PATH_TRAILING_DOT").setEvaluator((p, d) -> null)
+                    TridentProductions.dot().addTags(StandardTags.LIST_TERMINATOR).setName("NBT_PATH_TRAILING_DOT").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> null)
             );
 
-            PatternEvaluator pathKeyEvaluator = (p, d) -> {
+            PatternEvaluator<ISymbolContext> pathKeyEvaluator = (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                 TagCompound compoundMatch = null; //may be null
                 TokenPattern<?> compoundPattern = p.find("NBT_PATH_COMPOUND_MATCH");
-                if(compoundPattern != null) compoundMatch = (TagCompound) compoundPattern.evaluate(d);
-                return new NBTPathKey((String) p.find("NBT_PATH_KEY_LABEL.STRING_LITERAL_OR_IDENTIFIER_D").evaluate(d), compoundMatch);
+                if(compoundPattern != null) compoundMatch = (TagCompound) compoundPattern.evaluate(ctx, d);
+                return new NBTPathKey((String) p.find("NBT_PATH_KEY_LABEL.STRING_LITERAL_OR_IDENTIFIER_D").evaluate(ctx, d), compoundMatch);
             };
 
             NBT_PATH_NODE.add(
@@ -430,12 +428,12 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                             glue(),
                             TridentProductions.brace("["),
                             choice(
-                                    group(TridentProductions.integer(productions)).setEvaluator((p, d) -> new NBTPathIndex((int) p.find("INTEGER").evaluate(d))),
-                                    group(productions.getOrCreateStructure("NBT_COMPOUND")).setEvaluator((p, d) -> new NBTListMatch((TagCompound) p.find("NBT_COMPOUND").evaluate(d))),
+                                    group(TridentProductions.integer(productions)).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new NBTPathIndex((int) p.find("INTEGER").evaluate(ctx, d))),
+                                    group(productions.getOrCreateStructure("NBT_COMPOUND")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new NBTListMatch((TagCompound) p.find("NBT_COMPOUND").evaluate(ctx, d))),
                                     PrismarineTypeSystem.validatorGroup(
                                             productions.getOrCreateStructure("INTERPOLATION_BLOCK"),
-                                            d -> new Object[] {d[0]},
-                                            (v, p, d) -> {
+                                            d -> null,
+                                            (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                                     if(v instanceof Integer) {
                                                         return new NBTPathIndex((int) v);
                                                     } else {
@@ -448,10 +446,10 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                     )
                             ).setOptional().setName("NBT_PATH_LIST_CONTENT"),
                             TridentProductions.brace("]")
-                    ).setName("NBT_PATH_LIST_ACCESS").setEvaluator((p, d) -> {
+                    ).setName("NBT_PATH_LIST_ACCESS").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                         TokenStructure content = ((TokenStructure) p.find("NBT_PATH_LIST_CONTENT"));
                         if (content == null) return new NBTListMatch();
-                        return content.evaluate(d);
+                        return content.evaluate(ctx, d);
                     })
             );
 
@@ -463,18 +461,18 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                                     group(STRING_LITERAL_OR_IDENTIFIER_D).setName("NBT_PATH_KEY_LABEL"),
                                                     optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setName("NBT_PATH_COMPOUND_MATCH").setSimplificationFunctionContentIndex(1)
                                             ).setName("NBT_PATH_KEY").setEvaluator(pathKeyEvaluator),
-                                            group(productions.getOrCreateStructure("NBT_COMPOUND")).setName("NBT_PATH_COMPOUND_ROOT").setEvaluator((p, d) -> new NBTPathCompoundRoot((TagCompound) p.find("NBT_COMPOUND").evaluate(d)))
+                                            group(productions.getOrCreateStructure("NBT_COMPOUND")).setName("NBT_PATH_COMPOUND_ROOT").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new NBTPathCompoundRoot((TagCompound) p.find("NBT_COMPOUND").evaluate(ctx, d)))
                                     ).setName("NBT_PATH_ROOT"),
                                     list(NBT_PATH_NODE).setOptional().setName("NBT_PATH_NODE_SEQUENCE")
-                            ).setName("NBT_PATH_ROOT_WRAPPER").setEvaluator((p, d) -> {
+                            ).setName("NBT_PATH_ROOT_WRAPPER").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
 
                                 ArrayList<NBTPathNode> nodes = new ArrayList<>();
-                                nodes.add((NBTPathNode) p.find("NBT_PATH_ROOT").evaluate(d));
+                                nodes.add((NBTPathNode) p.find("NBT_PATH_ROOT").evaluate(ctx, d));
 
                                 TokenList otherNodes = (TokenList) p.find("NBT_PATH_NODE_SEQUENCE");
                                 if (otherNodes != null) {
                                     for (TokenPattern<?> rawNode : otherNodes.getContents()) {
-                                        NBTPathNode node = (NBTPathNode) rawNode.evaluate(d);
+                                        NBTPathNode node = (NBTPathNode) rawNode.evaluate(ctx, d);
                                         if (node != null) nodes.add(node);
                                     }
                                 }
@@ -489,15 +487,15 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("DATA_HOLDER")
                 .add(
-                        group(literal("block"), productions.getOrCreateStructure("COORDINATE_SET")).setEvaluator((p, d) -> new DataHolderBlock((CoordinateSet) p.find("COORDINATE_SET").evaluate((ISymbolContext) d[0])))
+                        group(literal("block"), productions.getOrCreateStructure("COORDINATE_SET")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new DataHolderBlock((CoordinateSet) p.find("COORDINATE_SET").evaluate(ctx, null)))
                 )
                 .add(
-                        group(literal("entity"), productions.getOrCreateStructure("ENTITY")).setEvaluator((p, d) -> new DataHolderEntity((Entity) p.find("ENTITY").evaluate((ISymbolContext) d[0])))
+                        group(literal("entity"), productions.getOrCreateStructure("ENTITY")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new DataHolderEntity((Entity) p.find("ENTITY").evaluate(ctx, null)))
                 )
                 .add(
-                        group(literal("storage"), TridentProductions.noToken().addTags("cspn:Storage Location"), productions.getOrCreateStructure("RESOURCE_LOCATION")).setEvaluator((p, d) -> {
-                            ResourceLocation loc = (ResourceLocation) p.find("RESOURCE_LOCATION").evaluate((ISymbolContext)d[0]);
-                            return new DataHolderStorage(new StorageTarget(((ISymbolContext) d[0]).get(SetupModuleTask.INSTANCE).getNamespace(loc.namespace), loc.body));
+                        group(literal("storage"), TridentProductions.noToken().addTags("cspn:Storage Location"), productions.getOrCreateStructure("RESOURCE_LOCATION")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            ResourceLocation loc = (ResourceLocation) p.find("RESOURCE_LOCATION").evaluate(ctx, null);
+                            return new DataHolderStorage(new StorageTarget((ctx).get(SetupModuleTask.INSTANCE).getNamespace(loc.namespace), loc.body));
                         })
                 ).addTags("cspn:Data Holder");
 
@@ -505,13 +503,13 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
         productions.getOrCreateStructure("TEXT_COLOR").add(
                 choice("black", "dark_blue", "dark_aqua", "dark_green", "dark_red", "dark_purple", "gold", "gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white", "reset")
-                        .setEvaluator((p, d) -> TextColor.valueOf(p.flatten(false)))
+                        .setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> TextColor.valueOf(p.flatten(false)))
         ).addTags("cspn:Text Color");
 
         productions.getOrCreateStructure("SOUND_CHANNEL").add(enumChoice(PlaySoundCommand.Source.class)).addTags(SuggestionTags.ENABLED).addTags("cspn:Sound Channel");
 
 
-        PatternEvaluator intRangeEvaluator = (p, d) -> {
+        PatternEvaluator<ISymbolContext> intRangeEvaluator = (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
             Integer min = null;
             Integer max = null;
 
@@ -519,11 +517,11 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             TokenPattern<?> maxPattern = p.find("MAX");
 
             if(minPattern != null) {
-                min = (Integer) minPattern.evaluate(d);
+                min = (Integer) minPattern.evaluate(ctx, d);
             }
 
             if(maxPattern != null) {
-                max = (Integer) maxPattern.evaluate(d);
+                max = (Integer) maxPattern.evaluate(ctx, d);
             }
 
             return new IntegerRange(min, max);
@@ -532,14 +530,14 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         productions.getOrCreateStructure("INTEGER_NUMBER_RANGE")
                 .add(
                         //exact
-                        group(TridentProductions.integer(productions)).setEvaluator((p, d) -> new IntegerRange((int) p.find("INTEGER").evaluate(d)))
+                        group(TridentProductions.integer(productions)).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new IntegerRange((int) p.find("INTEGER").evaluate(ctx, d)))
                 )
                 .add(
                         //interpolation block
                         PrismarineTypeSystem.validatorGroup(
                                 productions.getOrCreateStructure("INTERPOLATION_BLOCK"),
-                                d -> new Object[] {d[0]},
-                                (v, p, d) -> {
+                                d -> null,
+                                (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                     if(v instanceof Integer) v = new IntegerRange((int)v);
                                     return v;
                                 },
@@ -569,7 +567,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
 
 
-        PatternEvaluator realRangeEvaluator = (p, d) -> {
+        PatternEvaluator<ISymbolContext> realRangeEvaluator = (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
             Double min = null;
             Double max = null;
 
@@ -577,11 +575,11 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             TokenPattern<?> maxPattern = p.find("MAX");
 
             if(minPattern != null) {
-                min = (Double) minPattern.evaluate(d);
+                min = (Double) minPattern.evaluate(ctx, d);
             }
 
             if(maxPattern != null) {
-                max = (Double) maxPattern.evaluate(d);
+                max = (Double) maxPattern.evaluate(ctx, d);
             }
 
             return new DoubleRange(min, max);
@@ -590,14 +588,14 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         productions.getOrCreateStructure("REAL_NUMBER_RANGE")
                 .add(
                         //exact
-                        group(real(productions)).setEvaluator((p, d) -> new DoubleRange((double) p.find("REAL").evaluate(d)))
+                        group(real(productions)).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new DoubleRange((double) p.find("REAL").evaluate(ctx, d)))
                 )
                 .add(
                         //interpolation block
                         PrismarineTypeSystem.validatorGroup(
                                 productions.getOrCreateStructure("INTERPOLATION_BLOCK"),
-                                d -> new Object[] {d[0]},
-                                (v, p, d) -> {
+                                d -> null,
+                                (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                     if(v instanceof Double) v = new DoubleRange((double)v);
                                     return v;
                                 },
@@ -629,7 +627,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
 
         TokenPatternMatch LOCAL_COORDINATE = productions.getOrCreateStructure("LOCAL_COORDINATE").add(group(caret(), optional(glue(), ofType(SHORT_REAL_NUMBER)).setName("COORDINATE_MAGNITUDE")).setEvaluator(
-                (p, d) -> {
+                (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     double magnitude = 0;
                     TokenPattern<?> magnitudePattern = p.find("COORDINATE_MAGNITUDE");
                     if(magnitudePattern != null) {
@@ -638,11 +636,11 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                     return new Coordinate(Coordinate.Type.LOCAL, magnitude);
                 }
         )).add(
-                group(caret(), glue(), real(productions)).setEvaluator((p, d) -> new Coordinate(Coordinate.Type.LOCAL, (double) p.find("REAL").evaluate((ISymbolContext) d[0])))
+                group(caret(), glue(), real(productions)).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new Coordinate(Coordinate.Type.LOCAL, (double) p.find("REAL").evaluate(ctx, null)))
         );
 
         TokenPatternMatch ABSOLUTE_COORDINATE = productions.getOrCreateStructure("ABSOLUTE_COORDINATE").add(group(optional(symbol("*"), glue()), ofType(SHORT_REAL_NUMBER).setEvaluator(
-                (p, d) -> {
+                (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     Axis axis = (Axis) d[1];
                     String magnitudeString = p.flatten(false);
                     double magnitude = Double.parseDouble(magnitudeString);
@@ -653,9 +651,9 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             TokenPattern<?>[] contents = ((TokenGroup) d.pattern).getContents();
             d.pattern = contents[contents.length-1];
         })).add(group(symbol("*"), glue(), PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, Integer.class, Double.class)).setEvaluator(
-                (p, d) -> {
-                    Axis axis = (Axis) d[1];
-                    Number magnitude = (Number) ((TokenGroup) p).getContents()[2].evaluate((ISymbolContext) d[0]);
+                (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                    Axis axis = (Axis) d[0];
+                    Number magnitude = (Number) ((TokenGroup) p).getContents()[2].evaluate(ctx, d);
                     double realMagnitude = magnitude.doubleValue();
                     if(axis != Axis.Y && magnitude instanceof Integer) {
                         realMagnitude = magnitude.doubleValue() + 0.5;
@@ -665,7 +663,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         ));
 
         TokenPatternMatch RELATIVE_COORDINATE = productions.getOrCreateStructure("RELATIVE_COORDINATE").add(group(TridentProductions.tilde(), optional(glue(), ofType(SHORT_REAL_NUMBER)).setName("COORDINATE_MAGNITUDE")).setEvaluator(
-                (p, d) -> {
+                (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     double magnitude = 0;
                     TokenPattern<?> magnitudePattern = p.find("COORDINATE_MAGNITUDE");
                     if(magnitudePattern != null) {
@@ -674,7 +672,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                     return new Coordinate(Coordinate.Type.RELATIVE, magnitude);
                 }
         )).add(
-                group(tilde(), glue(), real(productions)).setEvaluator((p, d) -> new Coordinate(Coordinate.Type.RELATIVE, (double) p.find("REAL").evaluate((ISymbolContext) d[0])))
+                group(tilde(), glue(), real(productions)).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new Coordinate(Coordinate.Type.RELATIVE, (double) p.find("REAL").evaluate(ctx, d)))
         );
 
         TokenPatternMatch MIXABLE_COORDINATE = productions.getOrCreateStructure("MIXABLE_COORDINATE")
@@ -682,22 +680,22 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 .add(RELATIVE_COORDINATE);
 
 
-        PatternEvaluator coordinateEvaluator = (p, d) -> {
+        PatternEvaluator<ISymbolContext> coordinateEvaluator = (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
             TokenPattern<?>[] parts = ((TokenGroup) p).getContents();
             if(parts.length == 3) {
                 return new CoordinateSet(
-                        (Coordinate) parts[0].evaluate(d[0], Axis.X),
-                        (Coordinate) parts[1].evaluate(d[0], Axis.Y),
-                        (Coordinate) parts[2].evaluate(d[0], Axis.Z)
+                        (Coordinate) parts[0].evaluate(ctx, new Object[] {Axis.X}),
+                        (Coordinate) parts[1].evaluate(ctx, new Object[] {Axis.Y}),
+                        (Coordinate) parts[2].evaluate(ctx, new Object[] {Axis.Z})
                 );
             } else if(parts.length == 2) {
                 return new CoordinateSet(
-                        (Coordinate) parts[0].evaluate(d[0], Axis.X),
+                        (Coordinate) parts[0].evaluate(ctx, new Object[] {Axis.X}),
                         new Coordinate(Coordinate.Type.RELATIVE, 0),
-                        (Coordinate) parts[1].evaluate(d[0], Axis.Z)
+                        (Coordinate) parts[1].evaluate(ctx, new Object[] {Axis.Z})
                 );
             } else {
-                throw new IllegalStateException("(Coordinate Evaluator) parts.length =" + parts.length);
+                throw new IllegalStateException("(Coordinate Evaluator) parts.length = " + parts.length);
             }
         };
 
@@ -735,23 +733,23 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 .addTags("cspn:XZ Position");
 
 
-        PatternEvaluator rotationEvaluator = (p, d) -> {
+        PatternEvaluator<ISymbolContext> rotationEvaluator = (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
             TokenPattern<?>[] parts = ((TokenGroup) p).getContents();
             return new Rotation(
-                    (RotationUnit) parts[0].evaluate(d[0]),
-                    (RotationUnit) parts[1].evaluate(d[0])
+                    (RotationUnit) parts[0].evaluate(ctx, null),
+                    (RotationUnit) parts[1].evaluate(ctx, null)
             );
         };
 
         TokenPatternMatch ROTATION_UNIT = productions.getOrCreateStructure("ROTATION_UNIT")
                 .add(
                         ofType(SHORT_REAL_NUMBER).setEvaluator(
-                                (p, d) -> new RotationUnit(RotationUnit.Type.ABSOLUTE, Double.parseDouble(p.flatten(false)))
+                                (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new RotationUnit(RotationUnit.Type.ABSOLUTE, Double.parseDouble(p.flatten(false)))
                         )
                 )
                 .add(
                         group(TridentProductions.tilde(), optional(glue(), ofType(SHORT_REAL_NUMBER)).setName("ROTATION_MAGNITUDE")).setEvaluator(
-                                (p, d) -> {
+                                (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                                     double magnitude = 0;
                                     TokenPattern<?> magnitudePattern = p.find("ROTATION_MAGNITUDE");
                                     if(magnitudePattern != null) {
@@ -786,10 +784,10 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                         real(productions).setName("RED_COMPONENT").addTags("cspn:Red Component (0..1)"),
                         real(productions).setName("GREEN_COMPONENT").addTags("cspn:Green Component (0..1)"),
                         real(productions).setName("BLUE_COMPONENT").addTags("cspn:Blue Component (0..1)")
-                ).setName("COLOR").addTags("cspn:RGB Color").setEvaluator((p, d) -> new ParticleColor(
-                        (double) p.find("RED_COMPONENT").evaluate(d),
-                        (double) p.find("GREEN_COMPONENT").evaluate(d),
-                        (double) p.find("BLUE_COMPONENT").evaluate(d)
+                ).setName("COLOR").addTags("cspn:RGB Color").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new ParticleColor(
+                        (double) p.find("RED_COMPONENT").evaluate(ctx, d),
+                        (double) p.find("GREEN_COMPONENT").evaluate(ctx, d),
+                        (double) p.find("BLUE_COMPONENT").evaluate(ctx, d)
                 ))
         );
 
@@ -804,19 +802,19 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                     categoryMap.put(category, categoryStructure = productions.getOrCreateStructure(category.toUpperCase(Locale.ENGLISH) + "_ID"));
                     categoryStructure.add(PrismarineTypeSystem.validatorGroup(
                             productions.getOrCreateStructure("INTERPOLATION_BLOCK"),
-                            d -> new Object[] {d[0]},
-                            (v, p, d) -> parseType(v, p, (ISymbolContext) d[0], category, d.length > 1 && (boolean) d[1]),
+                            d -> null,
+                            (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseType(v, p, ctx, category, d.length > 1 && (boolean) d[1]),
                             false,
                             ResourceLocation.class,
                             String.class
                     ));
-                    categoryStructure.add(ofType(STRING_LITERAL).setEvaluator((p, d) -> parseType(parseQuotedString(p.flatten(false), p, (ISymbolContext) d[0]), p, (ISymbolContext) d[0], category, d.length > 1 && (boolean) d[1])));
+                    categoryStructure.add(ofType(STRING_LITERAL).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseType(parseQuotedString(p.flatten(false), p, ctx), p, ctx, category, d != null && d.length > 0 && (boolean) d[0])));
 
                     if(noValidationCategories.contains(category)) {
                         categoryStructure.add(PrismarineTypeSystem.validatorGroup(
                                 RAW_RESOURCE_LOCATION,
-                                d -> new Object[] {d[0]},
-                                (v, p, d) -> parseType(v, p, (ISymbolContext) d[0], category, false),
+                                d -> null,
+                                (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseType(v, p, ctx, category, false),
                                 false,
                                 ResourceLocation.class
                         ));
@@ -830,17 +828,17 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
                     if(CATEGORIES_WITH_TAGS.contains(category) || checkVersionFeature(worker, "type_tags.universal", false)) {
                         productions.getOrCreateStructure(category.toUpperCase(Locale.ENGLISH) + "_ID_TAGGED")
-                                .add(group(categoryStructure).setEvaluator((p, d) -> ((TokenGroup) p).getContents()[0].evaluate(d[0], true)))
+                                .add(group(categoryStructure).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> ((TokenGroup) p).getContents()[0].evaluate(ctx, new Object[] {true})))
                                 .add(
                                         group(
                                                 TridentProductions.resourceLocationFixer,
                                                 TridentProductions.hash().setName("TAG_HEADER").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.__TAG_TEMPLATE + category),
                                                 glue(),
                                                 RAW_RESOURCE_LOCATION
-                                        ).setEvaluator((p, d) -> {
-                                            ResourceLocation loc = (ResourceLocation) p.find("RAW_RESOURCE_LOCATION").evaluate(d);
+                                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                                            ResourceLocation loc = (ResourceLocation) p.find("RAW_RESOURCE_LOCATION").evaluate(ctx, d);
                                             loc.isTag = true;
-                                            return parseType(loc, p, (ISymbolContext) d[0], category, true);
+                                            return parseType(loc, p, ctx, category, true);
                                         })
                                 );
                     }
@@ -868,7 +866,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                     usesNamespace = type.useNamespace();
                 }
                 if(any) {
-                    categoryStructure.add((usesNamespace ? group(TridentProductions.resourceLocationFixer, namespaceMatch, typeNameStructure) : group(typeNameStructure)).setName(category.toUpperCase() + "_ID_DEFAULT").setEvaluator((p, d) -> parseType(p.flatten(false), p, (ISymbolContext) d[0], category, false)));
+                    categoryStructure.add((usesNamespace ? group(TridentProductions.resourceLocationFixer, namespaceMatch, typeNameStructure) : group(typeNameStructure)).setName(category.toUpperCase() + "_ID_DEFAULT").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseType(p.flatten(false), p, ctx, category, false)));
                 }
             }
         }
@@ -888,19 +886,19 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                         TridentProductions.equals(),
                                         choice(
                                                 TridentProductions.identifierA(productions),
-                                                PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), data -> new Object[] {(ISymbolContext) data[0]}, (v, p, d) -> v.toString(), false, String.class, Integer.class, Boolean.class)
+                                                PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), d -> null, (Object v, TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> v.toString(), false, String.class, Integer.class, Boolean.class)
                                         ).setName("BLOCKSTATE_PROPERTY_VALUE").addTags("cspn:Blockstate Value")
                                 ).setName("BLOCKSTATE_PROPERTY"),
                                 TridentProductions.comma()
                         ).setOptional().setName("BLOCKSTATE_LIST"),
                         TridentProductions.brace("]")
-                ).setEvaluator((p, d) -> {
+                ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     TokenList blockstateList = (TokenList) p.find("BLOCKSTATE_LIST");
                     if(blockstateList == null) return null;
                     Blockstate properties = new Blockstate();
                     for(TokenPattern<?> rawProperty : blockstateList.getContentsExcludingSeparators()) {
-                        String key = (String) rawProperty.find("BLOCKSTATE_PROPERTY_KEY").evaluate(d[0]);
-                        String value = (String) rawProperty.find("BLOCKSTATE_PROPERTY_VALUE").evaluate(d[0]);
+                        String key = (String) rawProperty.find("BLOCKSTATE_PROPERTY_KEY").evaluate(ctx, null);
+                        String value = (String) rawProperty.find("BLOCKSTATE_PROPERTY_VALUE").evaluate(ctx, null);
                         properties.put(key, value);
                     }
                     return properties;
@@ -914,9 +912,9 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                 productions.getOrCreateStructure("BLOCK_ID"),
                                 optional(glue(), productions.getOrCreateStructure("BLOCKSTATE")).setSimplificationFunctionContentIndex(1).setName("APPENDED_BLOCKSTATE"),
                                 optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
-                        ).setEvaluator((p, d) -> {
-                            Type blockId = (Type) p.find("BLOCK_ID").evaluate(d[0], d.length > 1 && (boolean) d[1]);
-                            return evaluateBlock(blockId, p, p.find("BLOCK_ID"), d);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Type blockId = (Type) p.find("BLOCK_ID").evaluate(ctx, new Object[] {d != null && d.length > 0 && (boolean) d[0]});
+                            return evaluateBlock(blockId, p, p.find("BLOCK_ID"), ctx, d);
                         })
                 )
                 .add(
@@ -924,9 +922,9 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                 PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, Block.class, ResourceLocation.class, String.class).setName("INTERPOLATION_BLOCK"),
                                 optional(glue(), productions.getOrCreateStructure("BLOCKSTATE")).setSimplificationFunctionContentIndex(1).setName("APPENDED_BLOCKSTATE"),
                                 optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
-                        ).setEvaluator((p, d) -> {
-                            Object inBlock = p.find("INTERPOLATION_BLOCK").evaluate(d[0]);
-                            return evaluateBlock(inBlock, p, p.find("INTERPOLATION_BLOCK"), d);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Object inBlock = p.find("INTERPOLATION_BLOCK").evaluate(ctx, null);
+                            return evaluateBlock(inBlock, p, p.find("INTERPOLATION_BLOCK"), ctx, d);
                         })
                 ).addTags("cspn:Block");
 
@@ -934,7 +932,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 .add(
                         group(productions.getOrCreateStructure("BLOCK")).setSimplificationFunction(d -> {
                             d.pattern = ((TokenGroup) d.pattern).getContents()[0];
-                            d.data = new Object[] {(ISymbolContext) d.data[0], true};
+                            d.data = new Object[] {true};
                         })
                 )
                 .add(
@@ -945,12 +943,12 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                 RAW_RESOURCE_LOCATION,
                                 optional(glue(), productions.getOrCreateStructure("BLOCKSTATE")).setSimplificationFunctionContentIndex(1).setName("APPENDED_BLOCKSTATE"),
                                 optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
-                        ).setEvaluator((p, d) -> {
-                            d = new Object[] {(ISymbolContext) d[0], true};
-                            ResourceLocation loc = (ResourceLocation) p.find("RAW_RESOURCE_LOCATION").evaluate(d);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            d = new Object[] {ctx, true};
+                            ResourceLocation loc = (ResourceLocation) p.find("RAW_RESOURCE_LOCATION").evaluate(ctx, d);
                             loc.isTag = true;
-                            Type blockType = parseType(loc, p, (ISymbolContext) d[0], BlockType.CATEGORY, true);
-                            return evaluateBlock(blockType, p, p.find("RAW_RESOURCE_LOCATION"), d);
+                            Type blockType = parseType(loc, p, ctx, BlockType.CATEGORY, true);
+                            return evaluateBlock(blockType, p, p.find("RAW_RESOURCE_LOCATION"), null, d);
                         })
                 );
 
@@ -965,9 +963,9 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                 productions.getOrCreateStructure("ITEM_ID"),
                                 optional(glue(), TridentProductions.hash(), TridentProductions.integer(productions).addTags("cspn:Model Index")).setSimplificationFunctionContentIndex(2).setName("APPENDED_MODEL_DATA"),
                                 optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
-                        ).setEvaluator((p, d) -> {
-                            Type itemId = (Type) p.find("ITEM_ID").evaluate((ISymbolContext) d[0], d.length > 2 && (boolean) d[2]);
-                            return evaluateItem(itemId, p, p.find("ITEM_ID"), d);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Type itemId = (Type) p.find("ITEM_ID").evaluate(ctx, new Object[] {d != null && d.length > 1 && (boolean) d[1]});
+                            return evaluateItem(itemId, p, p.find("ITEM_ID"), ctx, d);
                         })
                 )
                 .add(
@@ -975,9 +973,9 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                 PrismarineTypeSystem.validatorGroup(productions.getOrCreateStructure("INTERPOLATION_BLOCK"), false, Item.class, CustomItem.class, ResourceLocation.class, String.class).setName("INTERPOLATION_BLOCK"),
                                 optional(glue(), TridentProductions.hash(), TridentProductions.integer(productions).addTags("cspn:Model Index")).setSimplificationFunctionContentIndex(2).setName("APPENDED_MODEL_DATA"),
                                 optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
-                        ).setEvaluator((p, d) -> {
-                            Object inBlock = p.find("INTERPOLATION_BLOCK").evaluate(d[0]);
-                            return evaluateItem(inBlock, p, p.find("INTERPOLATION_BLOCK"), d);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            Object inBlock = p.find("INTERPOLATION_BLOCK").evaluate(ctx, null);
+                            return evaluateItem(inBlock, p, p.find("INTERPOLATION_BLOCK"), ctx, d);
                         })
                 ).addTags("cspn:Item");
 
@@ -985,7 +983,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 .add(
                         group(productions.getOrCreateStructure("ITEM")).setSimplificationFunction(d -> {
                             d.pattern = ((TokenGroup) d.pattern).getContents()[0];
-                            d.data = new Object[] {(ISymbolContext) d.data[0], (NBTMode) d.data[1], true};
+                            d.data = new Object[] {(NBTMode) d.data[0], true};
                         })
                 )
                 .add(
@@ -996,23 +994,23 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                                 RAW_RESOURCE_LOCATION,
                                 optional(glue(), TridentProductions.hash(), TridentProductions.integer(productions).addTags("cspn:Model Index")).setSimplificationFunctionContentIndex(2).setName("APPENDED_MODEL_DATA"),
                                 optional(glue(), productions.getOrCreateStructure("NBT_COMPOUND")).setSimplificationFunctionContentIndex(1).setName("APPENDED_NBT")
-                        ).setEvaluator((p, d) -> {
-                            d = new Object[] {(ISymbolContext) d[0], (NBTMode) d[1], true};
-                            ResourceLocation loc = (ResourceLocation) p.find("RAW_RESOURCE_LOCATION").evaluate(d);
+                        ).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                            d = new Object[] {(NBTMode) d[0], true};
+                            ResourceLocation loc = (ResourceLocation) p.find("RAW_RESOURCE_LOCATION").evaluate(ctx, d);
                             loc.isTag = true;
-                            Type itemType = parseType(loc, p, (ISymbolContext) d[0], ItemType.CATEGORY, true);
-                            return evaluateItem(itemType, p, p.find("RAW_RESOURCE_LOCATION"), d);
+                            Type itemType = parseType(loc, p, ctx, ItemType.CATEGORY, true);
+                            return evaluateItem(itemType, p, p.find("RAW_RESOURCE_LOCATION"), ctx, d);
                         })
                 );
 
 
 
         productions.getOrCreateStructure("UUID")
-                .add(ofType(TridentTokens.UUID).setName("RAW_UUID").setEvaluator((p, d) -> {
+                .add(ofType(TridentTokens.UUID).setName("RAW_UUID").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     try {
                         return java.util.UUID.fromString(p.flatten(false));
                     } catch(NumberFormatException x) {
-                        throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Invalid UUID: " + p.flatten(false), p, (ISymbolContext) d[0]);
+                        throw new PrismarineException(PrismarineException.Type.INTERNAL_EXCEPTION, "Invalid UUID: " + p.flatten(false), p, ctx);
                     }
                 }))
                 .add(
@@ -1022,12 +1020,12 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
 
         productions.getOrCreateStructure("NUMERIC_NBT_TYPE")
-                .add(literal("byte").setEvaluator((p, d) -> NumericNBTType.BYTE))
-                .add(literal("short").setEvaluator((p, d) -> NumericNBTType.SHORT))
-                .add(literal("int").setEvaluator((p, d) -> NumericNBTType.INT))
-                .add(literal("float").setEvaluator((p, d) -> NumericNBTType.FLOAT))
-                .add(literal("long").setEvaluator((p, d) -> NumericNBTType.LONG))
-                .add(literal("double").setEvaluator((p, d) -> NumericNBTType.DOUBLE)).addTags("cspn:Numeric NBT Type");
+                .add(literal("byte").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> NumericNBTType.BYTE))
+                .add(literal("short").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> NumericNBTType.SHORT))
+                .add(literal("int").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> NumericNBTType.INT))
+                .add(literal("float").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> NumericNBTType.FLOAT))
+                .add(literal("long").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> NumericNBTType.LONG))
+                .add(literal("double").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> NumericNBTType.DOUBLE)).addTags("cspn:Numeric NBT Type");
 
 
         productions.getOrCreateStructure("STRING_LITERAL_OR_IDENTIFIER_A")
@@ -1039,8 +1037,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 );
 
         productions.getOrCreateStructure("TIME").add(
-                ofType(TIME).addTags("cspn:Time").setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
+                ofType(TIME).addTags("cspn:Time").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
                     try {
                         String raw = p.flatten(false);
                         TimeSpan.Units units = TimeSpan.Units.TICKS;
@@ -1063,11 +1060,10 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         );
 
         productions.getOrCreateStructure("OBJECTIVE_NAME").add(
-                group(TridentProductions.identifierA(productions)).setName("OBJECTIVE_NAME").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.OBJECTIVE_EXISTING).addTags("cspn:Objective").setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
-                    String objectiveName = (String) ((TokenGroup) p).getContents()[0].evaluate(ctx);
+                group(TridentProductions.identifierA(productions)).setName("OBJECTIVE_NAME").addTags(SuggestionTags.ENABLED, TridentSuggestionTags.OBJECTIVE_EXISTING).addTags("cspn:Objective").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+                    String objectiveName = (String) ((TokenGroup) p).getContents()[0].evaluate(ctx, null);
 
-                    Class expectedClass = (Class) d[1];
+                    Class expectedClass = (Class) d[0];
                     if(expectedClass == String.class) {
                         return objectiveName;
                     } else if(expectedClass == Objective.class) {
@@ -1087,23 +1083,21 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 group(
                         productions.getOrCreateStructure("ENTITY"),
                         productions.getOrCreateStructure("OBJECTIVE_NAME")
-                ).setName("EXPLICIT_SCORE").setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
+                ).setName("EXPLICIT_SCORE").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
 
-                    Entity entity = (Entity) p.find("ENTITY").evaluate(ctx);
-                    Objective objective = (Objective) p.find("OBJECTIVE_NAME").evaluate(ctx, Objective.class);
+                    Entity entity = (Entity) p.find("ENTITY").evaluate(ctx, null);
+                    Objective objective = (Objective) p.find("OBJECTIVE_NAME").evaluate(ctx, new Object[] {Objective.class});
                     return new LocalScore(entity, objective);
                 })
         ).addTags("cspn:Score");
         productions.getOrCreateStructure("SCORE_OPTIONAL_OBJECTIVE").add(
                 group(
-                        choice(TridentProductions.symbol("*").setEvaluator((p, d) -> new PlayerName("*")), productions.getOrCreateStructure("ENTITY")).setName("ENTITY"),
-                        optional(TridentProductions.sameLine(), choice(TridentProductions.symbol("*").setEvaluator((p, d) -> null), productions.getOrCreateStructure("OBJECTIVE_NAME"))).setSimplificationFunctionContentIndex(1).setName("OBJECTIVE_NAME")
-                ).setName("EXPLICIT_SCORE").setEvaluator((p, d) -> {
-                    ISymbolContext ctx = (ISymbolContext) d[0];
+                        choice(TridentProductions.symbol("*").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> new PlayerName("*")), productions.getOrCreateStructure("ENTITY")).setName("ENTITY"),
+                        optional(TridentProductions.sameLine(), choice(TridentProductions.symbol("*").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> null), productions.getOrCreateStructure("OBJECTIVE_NAME"))).setSimplificationFunctionContentIndex(1).setName("OBJECTIVE_NAME")
+                ).setName("EXPLICIT_SCORE").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
 
-                    Entity entity = (Entity) p.find("ENTITY").evaluate(ctx);
-                    Objective objective = (Objective) p.findThenEvaluate("OBJECTIVE_NAME", null, ctx, Objective.class);
+                    Entity entity = (Entity) p.find("ENTITY").evaluate(ctx, null);
+                    Objective objective = (Objective) p.findThenEvaluate("OBJECTIVE_NAME", null, ctx, new Object[] {Objective.class});
 
                     return new LocalScore(entity, objective);
                 })
@@ -1153,13 +1147,13 @@ public class MinecraftLiteralSet extends PatternProviderSet {
         }
     }
 
-    private Block evaluateBlock(Object obj, TokenPattern<?> p, TokenPattern<?> root, Object[] d) {
-        boolean allowTags = d.length > 1 && (boolean) d[1];
+    private Block evaluateBlock(Object obj, TokenPattern<?> p, TokenPattern<?> root, ISymbolContext ctx, Object[] d) {
+        boolean allowTags = d != null && d.length > 0 && (boolean) d[0];
 
         Block block;
         if(obj instanceof Block) {
             if(!allowTags && !((Block) obj).getBlockType().isStandalone()) {
-                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Block tags aren't allowed in this context", root, (ISymbolContext) d[0]);
+                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Block tags aren't allowed in this context", root, ctx);
             }
 
             Blockstate clonedBlockstate = ((Block) obj).getBlockstate();
@@ -1170,15 +1164,15 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             block = new Block(((Block) obj).getBlockType(), clonedBlockstate, clonedNBT);
         } else if(obj instanceof Type) {
             if(!allowTags && !((Type) obj).isStandalone()) {
-                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Block tags aren't allowed in this context", root, (ISymbolContext) d[0]);
+                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Block tags aren't allowed in this context", root, ctx);
             }
             block = new Block((Type)obj);
         } else {
-            block = new Block(parseType(obj, root, (ISymbolContext) d[0], BlockType.CATEGORY, allowTags));
+            block = new Block(parseType(obj, root, ctx, BlockType.CATEGORY, allowTags));
         }
 
-        Blockstate appendedBlockstate = (Blockstate) p.findThenEvaluate("APPENDED_BLOCKSTATE", null, d[0]);
-        TagCompound appendedNBT = (TagCompound) p.findThenEvaluate("APPENDED_NBT", null, d[0]);
+        Blockstate appendedBlockstate = (Blockstate) p.findThenEvaluate("APPENDED_BLOCKSTATE", null, ctx, null);
+        TagCompound appendedNBT = (TagCompound) p.findThenEvaluate("APPENDED_NBT", null, ctx, null);
 
         if(appendedBlockstate != null) {
             Blockstate blockstate = block.getBlockstate();
@@ -1192,21 +1186,21 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             if(nbt == null) nbt = new TagCompound();
             nbt = nbt.merge(appendedNBT);
             PathContext context = new PathContext().setIsSetting(true).setProtocol(BLOCK_ENTITY);
-            NBTInspector.inspectTag(nbt, context, p.find("APPENDED_NBT"), (ISymbolContext) d[0]);
+            NBTInspector.inspectTag(nbt, context, p.find("APPENDED_NBT"), ctx);
             block.setNbt(nbt);
         }
 
         return block;
     }
 
-    private Item evaluateItem(Object obj, TokenPattern<?> p, TokenPattern<?> root, Object[] d) {
-        boolean allowTags = d.length > 2 && (boolean) d[2];
-        NBTMode mode = (NBTMode) d[1];
+    private Item evaluateItem(Object obj, TokenPattern<?> p, TokenPattern<?> root, ISymbolContext ctx, Object[] d) {
+        boolean allowTags = d != null && d.length > 1 && (boolean) d[1];
+        NBTMode mode = d != null && d.length > 0 ? (NBTMode) d[0] : NBTMode.SETTING;
 
         Item item;
         if(obj instanceof Item) {
             if(!allowTags && !((Item) obj).getItemType().isStandalone()) {
-                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Item tags aren't allowed in this context", root, (ISymbolContext) d[0]);
+                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Item tags aren't allowed in this context", root, ctx);
             }
 
             TagCompound clonedNBT = ((Item) obj).getNBT();
@@ -1216,15 +1210,15 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             item = ((CustomItem) obj).constructItem(mode);
         } else if(obj instanceof Type) {
             if(!allowTags && !((Type) obj).isStandalone()) {
-                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Item tags aren't allowed in this context", root, (ISymbolContext) d[0]);
+                throw new PrismarineException(TridentExceptionUtil.Source.COMMAND_ERROR, "Item tags aren't allowed in this context", root, ctx);
             }
             item = new Item((Type)obj);
         } else {
-            item = new Item(parseType(obj, root, (ISymbolContext) d[0], ItemType.CATEGORY, allowTags));
+            item = new Item(parseType(obj, root, ctx, ItemType.CATEGORY, allowTags));
         }
 
-        Integer appendedModelData = (Integer) p.findThenEvaluate("APPENDED_MODEL_DATA", null, d[0]);
-        TagCompound appendedNBT = (TagCompound) p.findThenEvaluate("APPENDED_NBT", null, d[0]);
+        Integer appendedModelData = (Integer) p.findThenEvaluate("APPENDED_MODEL_DATA", null, ctx, null);
+        TagCompound appendedNBT = (TagCompound) p.findThenEvaluate("APPENDED_NBT", null, ctx, null);
 
         if(appendedModelData != null) {
             TagCompound nbt = item.getNBT();
@@ -1237,7 +1231,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             if(nbt == null) nbt = new TagCompound();
             nbt = nbt.merge(appendedNBT);
             PathContext context = new PathContext().setIsSetting(mode == NBTMode.SETTING).setProtocol(DEFAULT, "ITEM_TAG");
-            NBTInspector.inspectTag(nbt, context, p.find("APPENDED_NBT"), (ISymbolContext) d[0]);
+            NBTInspector.inspectTag(nbt, context, p.find("APPENDED_NBT"), ctx);
             item.setNbt(nbt);
         }
 
@@ -1280,7 +1274,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
     private static void processParticleType(PrismarineProductions productions, Type type, TokenPatternMatch nameMatch, TokenGroupMatch namespaceMatch) {
         TokenGroupMatch g = group();
-        g.append((type.useNamespace() ? group(TridentProductions.resourceLocationFixer, namespaceMatch, nameMatch) : nameMatch).setName("PARTICLE_ID_DEFAULT").setEvaluator((p, d) -> parseType(p.flatten(false), p, (ISymbolContext) d[0], ParticleType.CATEGORY, false)));
+        g.append((type.useNamespace() ? group(TridentProductions.resourceLocationFixer, namespaceMatch, nameMatch) : nameMatch).setName("PARTICLE_ID_DEFAULT").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseType(p.flatten(false), p, ctx, ParticleType.CATEGORY, false)));
 
         TokenGroupMatch argsGroupMatch = group().setName("PARTICLE_ARGUMENTS");
 
@@ -1313,7 +1307,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                     }
                     case "item": {
                         argsGroupMatch.append(group(productions.getOrCreateStructure("ITEM")).setSimplificationFunction(d -> {
-                            d.data = new Object[] {(ISymbolContext) d.data[0], NBTMode.SETTING};
+                            d.data = new Object[] {NBTMode.SETTING};
                             d.pattern = d.pattern.find("ITEM");
                         }));
                         break;
@@ -1325,8 +1319,8 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             }
         }
 
-        g.setEvaluator((p, d) -> {
-            Type particleType = (Type) p.find("PARTICLE_ID_DEFAULT").evaluate(d[0]);
+        g.setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+            Type particleType = (Type) p.find("PARTICLE_ID_DEFAULT").evaluate(ctx, null);
             TokenGroup argsGroup = (TokenGroup) p.find("PARTICLE_ARGUMENTS");
             Object[] particleArgs;
             if(argsGroup != null) {
@@ -1334,7 +1328,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
                 particleArgs = new Object[argsGroupContents.length];
                 int i = 0;
                 for(TokenPattern<?> arg : argsGroupContents) {
-                    particleArgs[i] = arg.evaluate(d[0]);
+                    particleArgs[i] = arg.evaluate(ctx, null);
                     i++;
                 }
             } else {
@@ -1348,7 +1342,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
     private static void processGameruleType(PrismarineProductions productions, Type type, TokenPatternMatch nameMatch, TokenGroupMatch namespaceMatch) {
         TokenGroupMatch g = group();
-        g.append((type.useNamespace() ? group(TridentProductions.resourceLocationFixer, namespaceMatch, nameMatch) : nameMatch).setName("GAMERULE_ID_DEFAULT").setEvaluator((p, d) -> parseType(p.flatten(false), p, (ISymbolContext) d[0], GameruleType.CATEGORY, false)));
+        g.append((type.useNamespace() ? group(TridentProductions.resourceLocationFixer, namespaceMatch, nameMatch) : nameMatch).setName("GAMERULE_ID_DEFAULT").setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> parseType(p.flatten(false), p, ctx, GameruleType.CATEGORY, false)));
 
         g.append(TridentProductions.sameLine());
 
@@ -1383,9 +1377,9 @@ public class MinecraftLiteralSet extends PatternProviderSet {
             }
         }
 
-        g.setEvaluator((p, d) -> {
-            Type gameruleType = (Type) p.find("GAMERULE_ID_DEFAULT").evaluate(d[0]);
-            return new GameruleSetCommand(gameruleType, ((TokenGroup) p).getContents()[2].evaluate(d[0]));
+        g.setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
+            Type gameruleType = (Type) p.find("GAMERULE_ID_DEFAULT").evaluate(ctx, null);
+            return new GameruleSetCommand(gameruleType, ((TokenGroup) p).getContents()[2].evaluate(ctx, null));
         });
 
         productions.getOrCreateStructure("GAMERULE_SETTER").add(g);

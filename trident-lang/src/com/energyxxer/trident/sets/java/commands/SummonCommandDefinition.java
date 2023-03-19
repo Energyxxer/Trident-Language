@@ -37,9 +37,9 @@ public class SummonCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        TridentLiteralSet.SummonData data = (TridentLiteralSet.SummonData) pattern.find("NEW_ENTITY_LITERAL").evaluate(ctx);
-        data.pos = (CoordinateSet) pattern.findThenEvaluate("INNER.COORDINATE_SET", null, ctx);
-        data.mergeNBT((TagCompound) pattern.findThenEvaluate("INNER.SUMMON_NBT", null, ctx));
+        TridentLiteralSet.SummonData data = (TridentLiteralSet.SummonData) pattern.find("NEW_ENTITY_LITERAL").evaluate(ctx, null);
+        data.pos = (CoordinateSet) pattern.findThenEvaluate("INNER.COORDINATE_SET", null, ctx, null);
+        data.mergeNBT((TagCompound) pattern.findThenEvaluate("INNER.SUMMON_NBT", null, ctx, null));
         data.analyzeNBT(pattern, ctx);
 
         try {

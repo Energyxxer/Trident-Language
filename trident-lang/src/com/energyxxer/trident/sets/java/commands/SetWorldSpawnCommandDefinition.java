@@ -30,8 +30,8 @@ public class SetWorldSpawnCommandDefinition implements SimpleCommandDefinition {
 
     @Override
     public Command parseSimple(TokenPattern<?> pattern, ISymbolContext ctx) {
-        CoordinateSet pos = (CoordinateSet) pattern.findThenEvaluateLazyDefault("INNER.COORDINATE_SET", CoordinateSet::new, ctx);
-        RotationUnit angle = (RotationUnit) pattern.findThenEvaluate("INNER.ANGLE", null, ctx);
+        CoordinateSet pos = (CoordinateSet) pattern.findThenEvaluateLazyDefault("INNER.COORDINATE_SET", CoordinateSet::new, ctx, null);
+        RotationUnit angle = (RotationUnit) pattern.findThenEvaluate("INNER.ANGLE", null, ctx, null);
 
         return new SetWorldSpawnCommand(pos, angle);
     }
