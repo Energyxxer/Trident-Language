@@ -5,6 +5,7 @@ import com.energyxxer.prismarine.worker.PrismarineProjectWorker;
 import com.energyxxer.prismarine.worker.PrismarineProjectWorkerTask;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class SetupPluginsTransitivelyTask extends PrismarineProjectWorkerTask<ArrayList<PrismarinePlugin>> {
 
@@ -15,8 +16,13 @@ public class SetupPluginsTransitivelyTask extends PrismarineProjectWorkerTask<Ar
     @Override
     public ArrayList<PrismarinePlugin> perform(PrismarineProjectWorker worker) throws Exception {
         ArrayList<PrismarinePlugin> transitivePlugins = new ArrayList<>(worker.output.get(SetupPluginsTask.INSTANCE));
+        HashSet<String> pluginsFound = new HashSet<>();
         for(PrismarineProjectWorker dependency : worker.output.getDependencies()) {
-            transitivePlugins.addAll(dependency.output.get(SetupPluginsTransitivelyTask.INSTANCE));
+            for(PrismarinePlugin plugin : dependency.output.get(SetupPluginsTransitivelyTask.INSTANCE)) {
+                if(pluginsFound.add(plugin.getName())) {
+                    transitivePlugins.add(plugin);
+                }
+            }
         }
         return transitivePlugins;
     }
