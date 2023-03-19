@@ -641,7 +641,7 @@ public class MinecraftLiteralSet extends PatternProviderSet {
 
         TokenPatternMatch ABSOLUTE_COORDINATE = productions.getOrCreateStructure("ABSOLUTE_COORDINATE").add(group(optional(symbol("*"), glue()), ofType(SHORT_REAL_NUMBER).setEvaluator(
                 (TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
-                    Axis axis = (Axis) d[1];
+                    Axis axis = (Axis) d[0];
                     String magnitudeString = p.flatten(false);
                     double magnitude = Double.parseDouble(magnitudeString);
                     if(axis != Axis.Y && !magnitudeString.contains(".")) magnitude += 0.5;

@@ -2,6 +2,7 @@ package com.energyxxer.trident.sets.java.modifiers;
 
 import com.energyxxer.commodore.CommodoreException;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteModifier;
+import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteRotated;
 import com.energyxxer.commodore.functionlogic.commands.execute.ExecuteRotatedAsEntity;
 import com.energyxxer.commodore.functionlogic.entity.Entity;
 import com.energyxxer.commodore.functionlogic.rotation.Rotation;
@@ -41,7 +42,7 @@ public class RotatedModifierDefinition implements SimpleExecuteModifierDefinitio
                                 return null;
                             }
                         }),
-                        productions.getOrCreateStructure("ROTATION"),
+                        wrapper(productions.getOrCreateStructure("ROTATION"), (v, p, ctx, d) -> new ExecuteRotated((Rotation) v)),
                         PrismarineTypeSystem.validatorGroup(
                                 productions.getOrCreateStructure("INTERPOLATION_BLOCK"),
                                 d -> null,

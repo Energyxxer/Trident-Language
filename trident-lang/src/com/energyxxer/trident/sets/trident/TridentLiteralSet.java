@@ -184,7 +184,7 @@ public class TridentLiteralSet extends PatternProviderSet { //pointers, type_def
                                 literal("function").setName("VALUE_WRAPPER_KEY"),
                                 choice(
                                         group(productions.getOrCreateStructure("ANONYMOUS_INNER_FUNCTION")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
-                                            TridentFile innerFile = TridentFile.createInnerFile(((TokenGroup)p).getContents()[0], null);
+                                            TridentFile innerFile = TridentFile.createInnerFile(((TokenGroup)p).getContents()[0], ctx);
                                             return innerFile.getResourceLocation();
                                         }),
                                         group(productions.getOrCreateStructure("DYNAMIC_FUNCTION")).setEvaluator((TokenPattern<?> p, ISymbolContext ctx, Object[] d) -> {
