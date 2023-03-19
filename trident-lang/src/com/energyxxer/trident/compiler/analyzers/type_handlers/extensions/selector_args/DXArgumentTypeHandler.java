@@ -50,7 +50,7 @@ public class DXArgumentTypeHandler implements TypeHandler<DXArgument> {
 
     @Override
     public Object cast(DXArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

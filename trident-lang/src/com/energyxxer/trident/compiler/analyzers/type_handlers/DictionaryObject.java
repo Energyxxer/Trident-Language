@@ -76,7 +76,7 @@ public class DictionaryObject implements TypeHandler<DictionaryObject>, Iterable
     @Override
     public Object cast(DictionaryObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(isStaticHandler) return typeSystem.getMetaTypeHandler().cast(object, targetType, pattern, ctx);
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

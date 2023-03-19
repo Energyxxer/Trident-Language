@@ -61,7 +61,7 @@ public class AdvancementsArgumentTypeHandler implements TypeHandler<AdvancementA
 
     @Override
     public Object cast(AdvancementArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

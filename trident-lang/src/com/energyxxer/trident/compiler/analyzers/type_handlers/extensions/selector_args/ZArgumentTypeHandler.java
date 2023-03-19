@@ -50,7 +50,7 @@ public class ZArgumentTypeHandler implements TypeHandler<ZArgument> {
 
     @Override
     public Object cast(ZArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

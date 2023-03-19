@@ -202,7 +202,7 @@ public class CustomItem implements TypeHandler<CustomItem> {
     @Override
     public Object cast(CustomItem object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().cast(object, targetType, pattern, ctx);
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

@@ -51,7 +51,7 @@ public class FunctionTypeHandler implements TypeHandler<PrimitivePrismarineFunct
 
     @Override
     public Object cast(PrimitivePrismarineFunction object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

@@ -178,7 +178,7 @@ public class CustomEntity implements TypeHandler<CustomEntity> {
     @Override
     public Object cast(CustomEntity object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().cast(object, targetType, pattern, ctx);
-        throw new ClassCastException();
+        return null;
     }
 
     public static void defineEntity(TokenPattern<?> pattern, ISymbolContext ctx) {

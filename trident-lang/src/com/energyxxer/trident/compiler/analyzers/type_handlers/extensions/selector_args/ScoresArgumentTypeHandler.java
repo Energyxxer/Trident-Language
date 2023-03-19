@@ -59,7 +59,7 @@ public class ScoresArgumentTypeHandler implements TypeHandler<ScoreArgument> {
 
     @Override
     public Object cast(ScoreArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

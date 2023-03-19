@@ -55,7 +55,7 @@ public class TagByteTypeHandler implements TypeHandler<TagByte> {
             case "primitive(real)":
                 return object.getValue().doubleValue();
         }
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

@@ -41,7 +41,7 @@ public class RealTypeHandler implements TypeHandler<Double> {
             case "primitive(tag_double)": return new TagDouble(object);
             case "primitive(tag_float)": return new TagFloat(object.floatValue());
         }
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

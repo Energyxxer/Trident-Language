@@ -48,7 +48,7 @@ public class TextComponentTypeHandler implements TypeHandler<TextComponent> {
 
     @Override
     public Object cast(TextComponent object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

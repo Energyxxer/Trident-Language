@@ -55,7 +55,7 @@ public class TagShortTypeHandler implements TypeHandler<TagShort> {
             case "primitive(real)":
                 return object.getValue().doubleValue();
         }
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

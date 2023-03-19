@@ -77,7 +77,7 @@ public class CoordinateTypeHandler implements TypeHandler<CoordinateSet> {
 
     @Override
     public Object cast(CoordinateSet object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

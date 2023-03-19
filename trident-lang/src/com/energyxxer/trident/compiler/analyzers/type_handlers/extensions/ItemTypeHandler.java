@@ -77,7 +77,7 @@ public class ItemTypeHandler implements TypeHandler<Item> {
 
     @Override
     public Object cast(Item object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

@@ -51,7 +51,7 @@ public class NameArgumentTypeHandler implements TypeHandler<NameArgument> {
 
     @Override
     public Object cast(NameArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

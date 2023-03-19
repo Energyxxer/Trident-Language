@@ -50,7 +50,7 @@ public class YArgumentTypeHandler implements TypeHandler<YArgument> {
 
     @Override
     public Object cast(YArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

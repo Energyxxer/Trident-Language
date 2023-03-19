@@ -50,7 +50,7 @@ public class DYArgumentTypeHandler implements TypeHandler<DYArgument> {
 
     @Override
     public Object cast(DYArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

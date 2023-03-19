@@ -67,7 +67,7 @@ public class RotationTypeHandler implements TypeHandler<Rotation> {
 
     @Override
     public Object cast(Rotation object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
 

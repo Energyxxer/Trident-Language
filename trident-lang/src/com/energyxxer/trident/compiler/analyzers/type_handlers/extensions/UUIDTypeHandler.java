@@ -97,7 +97,7 @@ public class UUIDTypeHandler implements TypeHandler<UUID> {
                 return new TagIntArray("", ints);
             }
         }
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

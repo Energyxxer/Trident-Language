@@ -164,7 +164,7 @@ public class PointerObject implements TypeHandler<PointerObject> {
     @Override
     public Object cast(PointerObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(isStaticHandler) return typeSystem.getMetaTypeHandler().cast(object, targetType, pattern, ctx);
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

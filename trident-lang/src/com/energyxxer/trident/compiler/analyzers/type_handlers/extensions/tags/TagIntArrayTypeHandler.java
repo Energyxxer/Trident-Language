@@ -43,7 +43,7 @@ public class TagIntArrayTypeHandler implements TypeHandler<TagIntArray> {
         if ("primitive(list)".equals(typeSystem.getInternalTypeIdentifierForType(targetType))) {
             return new ListObject(typeSystem, object.getAllTags());
         }
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

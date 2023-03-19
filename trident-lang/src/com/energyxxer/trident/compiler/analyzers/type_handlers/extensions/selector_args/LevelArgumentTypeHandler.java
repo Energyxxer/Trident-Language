@@ -51,7 +51,7 @@ public class LevelArgumentTypeHandler implements TypeHandler<LevelArgument> {
 
     @Override
     public Object cast(LevelArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

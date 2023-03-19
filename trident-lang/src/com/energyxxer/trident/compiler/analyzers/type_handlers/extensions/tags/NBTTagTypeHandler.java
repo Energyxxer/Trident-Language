@@ -39,7 +39,7 @@ public class NBTTagTypeHandler implements TypeHandler<NBTTag> {
                 case "primitive(real)": return ((NumericNBTTag) object).getValue().doubleValue();
             }
         }
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

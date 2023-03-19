@@ -93,7 +93,7 @@ public class ListObject implements TypeHandler<ListObject>, Iterable<Object>, Co
     @Override
     public Object cast(ListObject object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(isStaticHandler) return typeSystem.getMetaTypeHandler().cast(object, targetType, pattern, ctx);
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

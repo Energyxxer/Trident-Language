@@ -49,7 +49,7 @@ public class TagStringTypeHandler implements TypeHandler<TagString> {
 
     @Override
     public Object cast(TagString object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

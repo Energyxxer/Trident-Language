@@ -52,7 +52,7 @@ public class TeamArgumentTypeHandler implements TypeHandler<TeamArgument> {
 
     @Override
     public Object cast(TeamArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

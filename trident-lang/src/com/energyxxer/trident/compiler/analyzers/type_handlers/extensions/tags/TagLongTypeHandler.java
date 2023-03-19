@@ -45,7 +45,7 @@ public class TagLongTypeHandler implements TypeHandler<TagLong> {
             case "primitive(real)":
                 return object.getValue().doubleValue();
         }
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

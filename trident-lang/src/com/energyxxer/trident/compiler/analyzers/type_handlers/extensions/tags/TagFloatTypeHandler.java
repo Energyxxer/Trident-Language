@@ -55,7 +55,7 @@ public class TagFloatTypeHandler implements TypeHandler<TagFloat> {
             case "primitive(real)":
                 return object.getValue().doubleValue();
         }
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

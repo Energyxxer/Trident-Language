@@ -50,7 +50,7 @@ public class EntityEvent implements TypeHandler<EntityEvent> {
     @Override
     public Object cast(EntityEvent object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
         if(isStaticHandler) return ctx.getTypeSystem().getMetaTypeHandler().cast(object, targetType, pattern, ctx);
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

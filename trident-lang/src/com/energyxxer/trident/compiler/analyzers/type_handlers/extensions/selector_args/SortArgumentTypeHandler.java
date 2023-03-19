@@ -50,7 +50,7 @@ public class SortArgumentTypeHandler implements TypeHandler<SortArgument> {
 
     @Override
     public Object cast(SortArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

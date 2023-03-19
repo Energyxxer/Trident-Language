@@ -56,7 +56,7 @@ public class RealRangeTypeHandler implements TypeHandler<DoubleRange> {
 
     @Override
     public Object cast(DoubleRange range, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

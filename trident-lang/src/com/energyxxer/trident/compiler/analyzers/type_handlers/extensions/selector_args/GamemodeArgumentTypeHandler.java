@@ -53,7 +53,7 @@ public class GamemodeArgumentTypeHandler implements TypeHandler<GamemodeArgument
 
     @Override
     public Object cast(GamemodeArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

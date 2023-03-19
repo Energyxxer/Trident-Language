@@ -50,7 +50,7 @@ public class DZArgumentTypeHandler implements TypeHandler<DZArgument> {
 
     @Override
     public Object cast(DZArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

@@ -91,7 +91,7 @@ public class ResourceTypeHandler implements TypeHandler<ResourceLocation> {
 
     @Override
     public Object cast(ResourceLocation object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

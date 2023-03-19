@@ -40,7 +40,7 @@ public class ExceptionTypeHandler implements TypeHandler<PrismarineException> {
 
     @Override
     public Object cast(PrismarineException object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override

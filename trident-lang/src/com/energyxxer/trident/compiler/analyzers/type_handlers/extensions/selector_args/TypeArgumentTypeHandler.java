@@ -57,7 +57,7 @@ public class TypeArgumentTypeHandler implements TypeHandler<TypeArgument> {
 
     @Override
     public Object cast(TypeArgument object, TypeHandler targetType, TokenPattern<?> pattern, ISymbolContext ctx) {
-        throw new ClassCastException();
+        return null;
     }
 
     @Override
